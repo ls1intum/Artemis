@@ -97,6 +97,11 @@
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.openEditor"></span>
             </a>
         }
+        @if (fullPageLink(); as link) {
+            <a tumUiButton severity="secondary" variant="outlined" size="small" [routerLink]="link" [queryParams]="{ run: fullPageRunId() }" data-testid="hyperion-run-full-page">
+                {{ 'artemisApp.hyperion.activity.openFullPage' | artemisTranslate }}
+            </a>
+        }
         @if (exerciseLink(); as link) {
             <!--
                 A button-shaped anchor, not a styled one. `global.scss` sets `a { text-decoration: none !important }`

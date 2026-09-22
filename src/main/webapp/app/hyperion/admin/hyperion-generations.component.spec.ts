@@ -1,8 +1,9 @@
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideRouter } from '@angular/router';
 import { AdminTitleBarComponent } from 'app/admin/shared/admin-title-bar/admin-title-bar.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HyperionGenerationsComponent } from './hyperion-generations.component';
 import { AdminAiWorkerApi } from 'app/openapi/api/admin-ai-worker-api';
 import { WorkerStatus } from 'app/openapi/model/worker-status';
@@ -37,6 +38,7 @@ describe('HyperionGenerationsComponent', () => {
         TestBed.configureTestingModule({
             imports: [HyperionGenerationsComponent, AdminTitleBarComponent],
             providers: [
+                { provide: ProfileService, useValue: { isModuleFeatureActive: () => true } },
                 provideRouter([]),
                 { provide: AdminHyperionGenerationMonitoringApi, useValue: generationApi },
                 { provide: AdminAiWorkerApi, useValue: api },
@@ -44,6 +46,55 @@ describe('HyperionGenerationsComponent', () => {
             ],
         });
         fixture = TestBed.createComponent(HyperionGenerationsComponent);
+    });
+
+    it('refreshes both panels together only while visible and stops polling on destruction', () => {
+        vi.useFakeTimers();
+        const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+        try {
+            fixture.detectChanges();
+            vi.advanceTimersByTime(15_000);
+            expect(api.getWorkers).toHaveBeenCalledTimes(2);
+            expect(generationApi.getActiveGenerations).toHaveBeenCalledTimes(2);
+            visibility.mockReturnValue('hidden');
+            vi.advanceTimersByTime(15_000);
+            expect(api.getWorkers).toHaveBeenCalledTimes(2);
+            fixture.destroy();
+            vi.advanceTimersByTime(15_000);
+            expect(api.getWorkers).toHaveBeenCalledTimes(2);
+        } finally {
+            visibility.mockRestore();
+            vi.useRealTimers();
+        }
+    });
+
+    it('prevents overlapping requests and cancels subscriptions when leaving', () => {
+        const pending = new Subject<WorkerStatus[]>();
+        api.getWorkers.mockReturnValue(pending);
+        fixture.detectChanges();
+        fixture.componentInstance['refresh']();
+        expect(api.getWorkers).toHaveBeenCalledOnce();
+        fixture.destroy();
+        expect(pending.observed).toBe(false);
+    });
+
+    it('keeps worker capacity visible when generation monitoring fails', () => {
+        generationApi.getActiveGenerations.mockReturnValue(throwError(() => new Error('generation unavailable')));
+        fixture.detectChanges();
+        expect(fixture.componentInstance['failed']()).toBe(true);
+        expect(fixture.componentInstance['workersFailed']()).toBe(false);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="ai-workers-table"] tbody tr')).toHaveLength(2);
+    });
+
+    it('retains the last worker snapshot and marks it stale when diagnostics fail', () => {
+        fixture.detectChanges();
+        api.getWorkers.mockReturnValue(throwError(() => new Error('offline')));
+        fixture.componentInstance['refresh']();
+        fixture.detectChanges();
+        expect(fixture.componentInstance['workers']()).toEqual(WORKERS);
+        expect(fixture.nativeElement.querySelector('[data-testid="ai-workers-error"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="ai-workers-summary"]')).toBeNull();
+        expect(fixture.componentInstance['failed']()).toBe(false);
     });
 
     it('keeps workload cancellation available when worker diagnostics fail', () => {

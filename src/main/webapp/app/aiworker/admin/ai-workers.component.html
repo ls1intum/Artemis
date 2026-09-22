@@ -1,18 +1,9 @@
 <section class="flex flex-col gap-4" aria-labelledby="ai-workers-title" [attr.aria-busy]="loading()">
-    <h5 *adminTitleBarTitle id="ai-workers-title" class="m-0" jhiTranslate="artemisApp.aiworker.title"></h5>
-    <div *adminTitleBarActions>
-        <tum-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="ai-workers-refresh">
-            <span jhiTranslate="artemisApp.aiworker.refresh"></span>
-        </tum-ui-button>
-    </div>
-    <p class="m-0 text-muted-color" jhiTranslate="artemisApp.aiworker.description"></p>
+    <h2 id="ai-workers-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.aiworker.title"></h2>
     @if (failed()) {
         <tum-ui-message severity="error" data-testid="ai-workers-error">
             <span jhiTranslate="artemisApp.aiworker.loadFailed"></span>
         </tum-ui-message>
-    }
-    @if (updatedAt(); as updated) {
-        <p class="m-0 text-xs text-muted-color" data-testid="ai-workers-updated"><span jhiTranslate="artemisApp.aiworker.updated"></span> {{ updated | date: 'mediumTime' }}</p>
     }
     @if (!failed() && updatedAt()) {
         <dl class="m-0 grid grid-cols-2 gap-4 rounded-md border border-surface p-4 sm:grid-cols-4" data-testid="ai-workers-summary">

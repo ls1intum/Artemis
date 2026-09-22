@@ -111,6 +111,7 @@ describe('HyperionRunPageComponent', () => {
     let service: MockGenerationService;
     let registry: { track: ReturnType<typeof vi.fn>; markSeen: ReturnType<typeof vi.fn> };
     let fixture: ComponentFixture<HyperionRunPageComponent>;
+    let routeQuery: BehaviorSubject<Record<string, string>>;
     let routeParams: BehaviorSubject<{ exerciseId: string }>;
     let routeData: BehaviorSubject<{ programmingExercise: ProgrammingExercise }>;
     /** Everything the page asked the CDK announcer to read out, in order. */
@@ -128,6 +129,7 @@ describe('HyperionRunPageComponent', () => {
             data: { programmingExercise: exercise() },
             pathFromRoot: [{ params: { courseId: String(COURSE_ID) } }, { params: { exerciseId: String(EXERCISE_ID) } }],
         };
+        routeQuery = new BehaviorSubject<Record<string, string>>({});
         routeParams = new BehaviorSubject(routeSnapshot.params);
         routeData = new BehaviorSubject(routeSnapshot.data);
         TestBed.configureTestingModule({
@@ -146,7 +148,7 @@ describe('HyperionRunPageComponent', () => {
                 { provide: HyperionJobRegistryService, useValue: registry },
                 {
                     provide: ActivatedRoute,
-                    useValue: { params: routeParams, data: routeData, snapshot: routeSnapshot },
+                    useValue: { params: routeParams, queryParams: routeQuery, data: routeData, snapshot: routeSnapshot },
                 },
             ],
         });
@@ -170,6 +172,17 @@ describe('HyperionRunPageComponent', () => {
         return fixture;
     }
 
+    it('pins an exact historical run from a query parameter without adding breadcrumb segments', () => {
+        routeQuery.next({ run: 'archived' });
+        fixture = TestBed.createComponent(HyperionRunPageComponent);
+        fixture.detectChanges();
+        expect(fixture.componentInstance['runId']()).toBe('archived');
+        expect(fixture.componentInstance['canonicalLink']()).toEqual(['/course-management', COURSE_ID, 'programming-exercises', EXERCISE_ID, 'generation']);
+        routeQuery.next({ run: 'another-run' });
+        fixture.detectChanges();
+        expect(fixture.componentInstance['runId']()).toBe('another-run');
+    });
+
     it('renders an expired variant from durable history without inventing queued work or fresh usage', () => {
         const archived = status({
             jobId: 'archived',
@@ -189,7 +202,7 @@ describe('HyperionRunPageComponent', () => {
         expect(fixture.componentInstance['startedAt']()).toBe('2025-01-01T00:00:00Z');
         expect(fixture.componentInstance['runAgainAvailable']()).toBe(false);
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-full-page"]').getAttribute('href')).toBe(
-            `/course-management/${COURSE_ID}/programming-exercises/${EXERCISE_ID}/generation/runs/archived`,
+            `/course-management/${COURSE_ID}/programming-exercises/${EXERCISE_ID}/generation?run=archived`,
         );
     });
 

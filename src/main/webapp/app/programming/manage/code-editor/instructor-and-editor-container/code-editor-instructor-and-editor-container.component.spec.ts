@@ -13,7 +13,7 @@ vi.mock('y-monaco', () => {
 });
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Provider, Signal, WritableSignal, signal } from '@angular/core';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -46,7 +46,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { ExerciseReviewCommentService, ReviewAdaptationAvailability, ReviewAdaptationRequest } from 'app/exercise/review/exercise-review-comment.service';
+import { ExerciseReviewCommentService, ReviewAdaptationAvailability } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -215,7 +215,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         getSelectedFeedbackThreadIdsForRepository: ReturnType<typeof vi.fn>;
         threads: WritableSignal<any[]>;
         connectAdaptation: ReturnType<typeof vi.fn>;
-        adaptationRequests: Observable<ReviewAdaptationRequest>;
     };
 
     const mockIssues: ConsistencyIssue[] = [
@@ -361,7 +360,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             getSelectedFeedbackThreadIdsForRepository: vi.fn(() => []),
             threads: signal([]),
             connectAdaptation: vi.fn(),
-            adaptationRequests: new Subject<ReviewAdaptationRequest>().asObservable(),
         };
         reviewCommentService.reloadThreads.mockImplementation((onLoaded?: () => void) => onLoaded?.());
 
@@ -1328,7 +1326,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
     });
 });
 
-describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback', () => {
+describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let generationService: { generate: ReturnType<typeof vi.fn> };
@@ -1347,12 +1345,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         selectedFeedbackThreadIds: WritableSignal<number[]>;
         clearSelectedFeedback: ReturnType<typeof vi.fn>;
         connectAdaptation: ReturnType<typeof vi.fn>;
-        adaptationRequests: Observable<ReviewAdaptationRequest>;
-        requestAdaptation: (threadId: number) => void;
     };
     /** What the container connected; the mock mirrors the real service's guard so a thread request honours it. */
     let adaptation: ReviewAdaptationAvailability | undefined;
-    let adaptationRequests: Subject<ReviewAdaptationRequest>;
 
     const consistencyThread = (id: number) => ({
         id,
@@ -1391,7 +1386,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     beforeEach(async () => {
         selectedIds = signal<number[]>([]);
         adaptation = undefined;
-        adaptationRequests = new Subject<ReviewAdaptationRequest>();
         reviewCommentService = {
             setExercise: vi.fn(),
             reloadThreads: vi.fn((onLoaded?: () => void) => onLoaded?.()),
@@ -1405,15 +1399,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             selectedFeedbackThreadIds: selectedIds,
             clearSelectedFeedback: vi.fn(() => selectedIds.set([])),
             connectAdaptation: vi.fn((availability: ReviewAdaptationAvailability) => (adaptation = availability)),
-            adaptationRequests: adaptationRequests.asObservable(),
-            requestAdaptation: vi.fn((threadId: number) => {
-                if (!adaptation?.offered() || adaptation.blockedReason()) {
-                    return;
-                }
-                const wasAlreadySelected = selectedIds().includes(threadId);
-                (reviewCommentService.selectThreadAsFeedback as (threadId: number) => void)(threadId);
-                adaptationRequests.next({ threadId, wasAlreadySelected });
-            }),
         };
         generationService = { generate: vi.fn(() => of({ jobId: 'job-adapt-1' })) };
         confirm = vi.fn((options) => options.accept?.());
@@ -1479,28 +1464,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).canAdaptNow()).toBe(true);
     });
 
-    it('a thread request selects the thread once, opens the dialog, then dispatches an ADAPT run and attaches it', () => {
-        reviewCommentService.threads.set([consistencyThread(9)]);
-
-        reviewCommentService.requestAdaptation(9);
-        expect(reviewCommentService.selectThreadAsFeedback).toHaveBeenCalledExactlyOnceWith(9);
-        expect(comp.adaptDialogVisible()).toBe(true);
-
-        confirmAdaptDialog('also rename the method');
-
-        expect(comp.adaptDialogVisible()).toBe(false);
-        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
-            mode: 'ADAPT',
-            prompt: 'also rename the method',
-            selectedFeedbackThreadIds: [9],
-        });
-        expect(reviewCommentService.clearSelectedFeedback).toHaveBeenCalledOnce();
-        expect(selectedIds()).toEqual([]);
-        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
-        expect(TestBed.inject(HyperionJobRegistryService).track).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-adapt-1', exerciseId: 42, mode: 'ADAPT' }));
-        expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/course-management', 1, 'programming-exercises', 42, 'generation']);
-    });
-
     it.each([ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_GRADLE])('supports Java generation for project type %s', (projectType) => {
         // Mutating the exercise in place mirrors production, where the object identity is kept and the change is
         // published through the always-notifying exercise signal.
@@ -1527,9 +1490,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).adaptOffered()).toBe(false);
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.unsupportedProjectType');
         expect((comp as any).canAdaptNow()).toBe(false);
-        const onCancel = vi.fn();
-        (comp as any).openAdaptDialog(onCancel);
-        expect(onCancel).toHaveBeenCalledOnce();
+        (comp as any).openAdaptDialog();
         expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
     });
@@ -1541,16 +1502,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
         expect((comp as any).consistencyBlockedReason()).toBe('artemisApp.hyperion.generation.blocker.requiresEditor');
-    });
-
-    it('does not select a thread for a user below the editor role', () => {
-        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: false, releaseDate: dayjs().add(1, 'day') }));
-        reviewCommentService.threads.set([consistencyThread(9)]);
-
-        reviewCommentService.requestAdaptation(9);
-
-        expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
-        expect(comp.adaptDialogVisible()).toBe(false);
     });
 
     it('reports the run state as the adapt blocker once the exercise itself qualifies', () => {
@@ -1640,7 +1591,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     it.each([
         ['status is loading', { statusLoading: true, statusLoadFailed: false }],
         ['status loading failed', { statusLoading: false, statusLoadFailed: true }],
-    ])('disables and guards Adapt with feedback while generation %s', (_description, status) => {
+    ])('disables and guards Adapt exercise while generation %s', (_description, status) => {
         (comp as any).generationActivity = {
             attachToJob,
             running: () => false,
@@ -1651,7 +1602,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
         expect((comp as any).canAdaptNow()).toBe(false);
 
-        reviewCommentService.requestAdaptation(9);
         (comp as any).openAdaptDialog();
 
         expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
@@ -2003,41 +1953,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(generationService.generate).not.toHaveBeenCalled();
         expect(attachToJob).not.toHaveBeenCalled();
-    });
-
-    it('a thread request rolls back a new preview selection when the dialog is dismissed', () => {
-        reviewCommentService.threads.set([consistencyThread(9)]);
-
-        reviewCommentService.requestAdaptation(9);
-        dismissAdaptDialog();
-
-        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledExactlyOnceWith(9);
-        expect(selectedIds()).toEqual([]);
-        expect(generationService.generate).not.toHaveBeenCalled();
-    });
-
-    it('a thread request keeps a selection that existed before the dialog when it is dismissed', () => {
-        reviewCommentService.threads.set([consistencyThread(9)]);
-        selectedIds.set([9]);
-
-        adaptationRequests.next({ threadId: 9, wasAlreadySelected: true });
-        expect(comp.adaptDialogVisible()).toBe(true);
-        dismissAdaptDialog();
-
-        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
-        expect(selectedIds()).toEqual([9]);
-    });
-
-    it('keeps the preview selection when the adapt dialog is closed programmatically rather than dismissed', () => {
-        reviewCommentService.threads.set([consistencyThread(9)]);
-        reviewCommentService.requestAdaptation(9);
-
-        (comp as any).invalidateHyperionLifecycleState();
-        (comp as any).onAdaptDialogHidden();
-
-        expect(comp.adaptDialogVisible()).toBe(false);
-        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
-        expect(selectedIds()).toEqual([9]);
     });
 
     it('closes the adapt dialog on destruction and ignores a late confirmation', () => {

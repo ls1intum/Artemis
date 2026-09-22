@@ -206,33 +206,23 @@
             <div class="monaco-review-comment-actions">
                 @if (showFeedbackAction() && !thread().outdated && (!thread().resolved || isSelectedAsFeedback())) {
                     <button
-                        pButton
+                        tumUiButton
+                        variant="outlined"
                         type="button"
-                        severity="secondary"
+                        severity="primary"
                         size="small"
                         class="monaco-review-comment-feedback-selection-button"
                         [class.monaco-review-comment-feedback-selection-button--selected]="isSelectedAsFeedback()"
+                        [attr.aria-pressed]="isSelectedAsFeedback()"
+                        [tumUiDisabledReason]="adaptBlockedReason() ? (adaptBlockedReason()! | artemisTranslate) : ''"
                         (click)="toggleFeedbackSelection()"
                     >
+                        <fa-icon [icon]="facArtemisIntelligence" />
                         @if (isSelectedAsFeedback()) {
                             {{ 'artemisApp.review.removeThreadFromFeedback' | artemisTranslate }}
                         } @else {
                             {{ 'artemisApp.review.selectThreadAsFeedback' | artemisTranslate }}
                         }
-                    </button>
-                }
-                @if (canAdaptExercise()) {
-                    <button
-                        pButton
-                        type="button"
-                        severity="secondary"
-                        size="small"
-                        class="monaco-review-comment-adapt-button"
-                        [tumUiDisabledReason]="adaptBlockedReason() ? (adaptBlockedReason()! | artemisTranslate) : ''"
-                        (click)="requestAdapt()"
-                    >
-                        <fa-icon [icon]="faScrewdriverWrench" class="monaco-review-comment-button-icon" />
-                        {{ 'artemisApp.review.adaptExercise.threadAction' | artemisTranslate }}
                     </button>
                 }
                 <div class="monaco-review-comment-resolve-controls">

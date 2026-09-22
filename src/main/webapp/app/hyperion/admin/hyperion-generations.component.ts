@@ -1,3 +1,6 @@
+import { AiWorkersComponent } from 'app/aiworker/admin/ai-workers.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
@@ -31,6 +34,7 @@ const MAX_CANCELLATION_REASON_LENGTH = 500;
     templateUrl: './hyperion-generations.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        AiWorkersComponent,
         RouterLink,
         FormsModule,
         TumUiDialogComponent,
@@ -48,6 +52,8 @@ const MAX_CANCELLATION_REASON_LENGTH = 500;
     ],
 })
 export class HyperionGenerationsComponent implements OnInit {
+    protected readonly generationEnabled = inject(ProfileService).isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+    protected readonly workersFailed = signal(false);
     private readonly document = inject(DOCUMENT);
     private readonly api = inject(AdminAiWorkerApi);
     private readonly generationApi = inject(AdminHyperionGenerationMonitoringApi);
@@ -64,6 +70,7 @@ export class HyperionGenerationsComponent implements OnInit {
                 slot: execution?.slot !== undefined ? execution.slot + 1 : undefined,
                 exerciseLink,
                 runLink: exerciseLink ? [...exerciseLink, 'generation'] : undefined,
+                runQuery: { run: run.jobId },
             };
         }),
     );
@@ -146,17 +153,33 @@ export class HyperionGenerationsComponent implements OnInit {
         }
         this.loading.set(true);
         this.failed.set(false);
-        forkJoin({ workers: this.api.getWorkers().pipe(catchError(() => of([]))), generations: this.generationApi.getActiveGenerations() })
+        this.workersFailed.set(false);
+        forkJoin({
+            workers: this.api.getWorkers().pipe(
+                catchError(() => {
+                    this.workersFailed.set(true);
+                    return of(undefined);
+                }),
+            ),
+            generations: this.generationEnabled
+                ? this.generationApi.getActiveGenerations().pipe(
+                      catchError(() => {
+                          this.failed.set(true);
+                          return of(undefined);
+                      }),
+                  )
+                : of([]),
+        })
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.loading.set(false)),
             )
             .subscribe({
                 next: ({ workers, generations }) => {
-                    this.workers.set(workers);
-                    this.generations.set(generations);
+                    if (workers) this.workers.set(workers);
+                    if (generations) this.generations.set(generations);
                     const selected = this.cancelTarget();
-                    if (selected) {
+                    if (selected && generations) {
                         this.cancelTarget.set(generations.find((run) => run.jobId === selected.jobId) ?? cloneWith(selected, { cancellable: false }));
                     }
                     this.updatedAt.set(new Date());

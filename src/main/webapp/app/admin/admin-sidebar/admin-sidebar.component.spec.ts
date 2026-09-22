@@ -30,17 +30,14 @@ describe('AdminSidebarComponent', () => {
         fixture.detectChanges();
     });
 
-    it('offers standalone workers only when whole-exercise generation is enabled', () => {
+    it('offers a single AI Generation destination', () => {
         const workerEntries = () =>
             component
                 .sidebarGroups()
                 .flatMap((group) => group.items)
-                .filter((item) => item.routerLink === '/admin/hyperion-generations');
-        expect(workerEntries()).toHaveLength(0);
-        fixture.componentRef.setInput('hyperionGenerationEnabled', true);
-        fixture.detectChanges();
+                .filter((item) => item.routerLink === '/admin/ai-generation');
         expect(workerEntries()).toHaveLength(1);
-        expect(workerEntries()[0].testId).toBe('admin-hyperion-workers');
+        expect(workerEntries()[0].testId).toBe('admin-ai-generation');
     });
 
     it('should create', () => {

@@ -137,7 +137,7 @@ provider accounting is required. Content telemetry stays off unless explicitly a
 
 ## Capacity and administration
 
-Open **Administration → AI Workers**. It does not depend on Hyperion being enabled.
+Open **Administration → AI Generation**. It does not depend on Hyperion being enabled.
 If coordination is disabled, the status endpoint returns 404 and the view reports that
 status is unavailable rather than claiming an empty healthy pool.
 
@@ -152,9 +152,11 @@ status is unavailable rather than claiming an empty healthy pool.
 
 The view refreshes every 15 seconds while visible, avoids overlapping requests, and
 marks a failed refresh rather than presenting stale data as healthy. Capacity is a
-snapshot, not a reservation. **Hyperion Generations** separately owns exercise links,
-review context and audited cancellation; infrastructure monitoring has no exercise-specific
-mutation controls.
+snapshot, not a reservation. The same page shows active Hyperion generations above
+worker capacity, with exercise links and audited, exact-run cancellation. Worker
+monitoring remains available without Hyperion; a worker-status outage does not disable
+cancellation. The infrastructure and feature APIs retain their separate authorization
+and ownership boundaries.
 
 Budget memory and CPU for the worker JVM **plus every concurrent sandbox**. The slot
 range is 1–16, default 1. Increasing slots does not relax per-execution resource limits,

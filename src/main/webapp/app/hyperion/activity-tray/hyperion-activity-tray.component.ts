@@ -1,10 +1,11 @@
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, computed, inject, input, linkedSignal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowRight, faCheck, faSpinner, faTriangleExclamation, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faCheck, faSpinner, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import {
     TumUiButtonDirective,
@@ -114,7 +115,7 @@ export class HyperionActivityTrayComponent {
         () => this.visibleRows().filter((row) => !row.active && !row.attention && !row.seen && !this.acknowledged().has(row.dismissalKey)).length,
     );
     protected readonly hiddenCount = computed(() => this.rows().filter((row) => !row.recoveryRequired && this.dismissed().has(row.dismissalKey)).length);
-    protected readonly icons = { faArrowRight, faCheck, faSpinner, faTriangleExclamation, faWandMagicSparkles, faXmark };
+    protected readonly icons = { faArrowRight, faCheck, faSpinner, faTriangleExclamation, faXmark, facArtemisIntelligence };
 
     protected open(row: HyperionActivityRow): void {
         this.popover()?.close();

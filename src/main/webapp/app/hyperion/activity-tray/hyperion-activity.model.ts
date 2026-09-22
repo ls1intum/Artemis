@@ -3,7 +3,8 @@ import { HYPERION_STAGES, stageIndexOfPhase } from 'app/hyperion/exercise-genera
 import { VariantJob } from 'app/openapi/model/variant-job';
 import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 
-const VARIANT_PHASES = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORMING', 'VERIFYING', 'REPAIRING', 'FINALIZING'] as const;
+const VARIANT_STAGES = ['analyze', 'plan', 'write', 'verify', 'save'] as const;
+const VARIANT_STAGE_INDEX: Record<string, number> = { ANALYZING: 0, PLANNING: 1, PROVISIONING: 2, TRANSFORMING: 2, VERIFYING: 3, REPAIRING: 3, FINALIZING: 4 };
 
 export type ActivitySource = { kind: 'authoring'; entry: HyperionJobEntry } | { kind: 'variant'; job: VariantJob };
 
@@ -24,8 +25,7 @@ export interface HyperionActivityRow {
     startedAt: number;
     /** A hidden running job reappears when its outcome changes, not on every progress event. */
     dismissalKey: string;
-    steps: { labelKey: string; current: boolean }[];
-    routerLink?: (string | number)[];
+    steps: { labelKey: string; current: boolean; complete: boolean }[];
 }
 
 export function authoringActivity(entry: HyperionJobEntry): HyperionActivityRow {
@@ -49,9 +49,9 @@ export function authoringActivity(entry: HyperionJobEntry): HyperionActivityRow 
             ? HYPERION_STAGES.map((stage, index) => ({
                   labelKey: `artemisApp.hyperion.activity.stage.${stage.key === 'design' && entry.mode === 'ADAPT' ? 'revise' : stage.key}`,
                   current: index === current,
+                  complete: current !== undefined && index < current,
               }))
             : [],
-        routerLink: ['/course-management', entry.courseId, 'programming-exercises', entry.exerciseId, 'generation', 'runs', entry.jobId],
     };
 }
 
@@ -73,6 +73,12 @@ export function variantActivity(job: VariantJob): HyperionActivityRow {
         message: job.failureDetail,
         startedAt: Date.parse(job.startedAt ?? '') || 0,
         dismissalKey: `variant:${job.jobId}:${active ? 'active' : job.phase}`,
-        steps: active ? VARIANT_PHASES.map((phase) => ({ labelKey: `artemisApp.exerciseVariantGeneration.phase.${phase}`, current: phase === job.phase })) : [],
+        steps: active
+            ? VARIANT_STAGES.map((stage, index) => ({
+                  labelKey: `artemisApp.hyperion.activity.variantStage.${stage}`,
+                  current: index === (VARIANT_STAGE_INDEX[job.phase ?? ''] ?? 0),
+                  complete: index < (VARIANT_STAGE_INDEX[job.phase ?? ''] ?? 0),
+              }))
+            : [],
     };
 }

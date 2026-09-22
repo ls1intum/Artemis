@@ -1,3 +1,4 @@
+import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
 import { signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HyperionProgrammingVariantApi } from 'app/openapi/api/hyperion-programming-variant-api';
@@ -7,7 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { NEVER, Subject, of, throwError } from 'rxjs';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
@@ -906,7 +907,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
                 { provide: Router, useValue: routerMock },
                 { provide: AccountService, useValue: { userIdentity: identity } },
                 { provide: HyperionProgrammingVariantApi, useValue: { generateProgrammingVariant: startProgramming } },
-                { provide: HyperionJobRegistryService, useValue: { track } },
+                { provide: HyperionJobRegistryService, useValue: { track, entries: signal([]) } },
                 { provide: ExerciseVariantGenerationService, useValue: { startGeneration: startQuiz, getJobDetail: () => of(), jobEvents: () => of() } },
                 { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: () => of([]) } },
                 { provide: ExerciseService, useValue: { find: () => of({ body: undefined }) } },
@@ -917,8 +918,8 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
             ],
         })
             .overrideComponent(ExerciseVariantAiModalWizardComponent, {
-                remove: { imports: [ArtemisTranslatePipe] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
+                remove: { imports: [ArtemisTranslatePipe, HyperionRunPageComponent] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? ''), MockComponent(HyperionRunPageComponent)] },
             })
             .compileComponents();
         fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
@@ -933,15 +934,49 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
         TestBed.resetTestingModule();
     });
 
+    it('shows programming progress inside the wizard and closes without navigating or cancelling', () => {
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        component.changeDomain.set(true);
+        component.domainText.set('spacecraft');
+        component.startGeneration();
+        started.next({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12 });
+        fixture.detectChanges();
+        expect(document.body.querySelector('jhi-hyperion-run-page')).not.toBeNull();
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+        const closed = vi.fn();
+        component.visibleChange.subscribe(closed);
+        const background = document.body.querySelector('[data-testid="variant-wizard-run-in-background"] button') as HTMLButtonElement;
+        background.click();
+        expect(closed).toHaveBeenCalledWith(false);
+        expect(component.programmingRun()).toBeUndefined();
+        expect(track).toHaveBeenCalledOnce();
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('keeps a late accepted run in the background after the wizard was closed', () => {
+        fixture.componentRef.setInput('visible', true);
+        component.changeDomain.set(true);
+        component.domainText.set('spacecraft');
+        component.startGeneration();
+        component.onClose(false);
+        started.next({ jobId: 'background-run', exerciseId: 81, sourceExerciseId: 12 });
+        expect(track).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'background-run' }));
+        expect(component.programmingRun()).toBeUndefined();
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
     it('sends structured intent to the common lifecycle and tracks the destination separately from its source', () => {
         component.changeDomain.set(true);
         component.domainText.set(' spacecraft ');
         component.startGeneration();
         expect(startProgramming).toHaveBeenCalledWith(12, expect.objectContaining({ domainText: 'spacecraft' }));
         expect(startQuiz).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('visible', true);
         started.next({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12 });
         expect(track).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12, courseId: 7, mode: 'ADAPT' }));
-        expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 7, 'programming-exercises', 81, 'generation']);
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+        expect(component.programmingRun()).toEqual({ exerciseId: 81, jobId: 'run' });
     });
 
     it('does not attach an old account response to the new account', () => {

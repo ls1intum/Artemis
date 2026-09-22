@@ -52,7 +52,7 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
-import { ExerciseReviewCommentService, ReviewAdaptationRequest } from 'app/exercise/review/exercise-review-comment.service';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
@@ -217,7 +217,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private generationStartSequence = 0;
     private pendingGenerationRefreshJobId?: string;
     /** Present exactly while an adapt dialog opened by {@link openAdaptDialog} is still awaiting the user's decision. */
-    private pendingAdaptDialog?: { exerciseId: number; onCancel?: () => void };
+    private pendingAdaptDialog?: { exerciseId: number };
     private readonly generationRegistry = inject(HyperionJobRegistryService);
     private readonly exerciseChanged = new Subject<void>();
 
@@ -275,10 +275,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
         this.generationActivity.generationCompleted.pipe(takeUntilDestroyed()).subscribe((event) => this.onHyperionGenerationCompleted(event));
         this.generationActivity.generationReverted.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterHyperionRepositoryChange());
-        // Review threads offer feedback selection and the adaptation shortcut through the shared review service, so the
+        // Review threads offer feedback selection through the shared review service, so the
         // generic editors between here and the thread widgets carry no Hyperion inputs.
         this.exerciseReviewCommentService.connectAdaptation({ offered: this.adaptOffered, blockedReason: this.adaptBlockedReason });
-        this.exerciseReviewCommentService.adaptationRequests.pipe(takeUntilDestroyed()).subscribe((request) => this.adaptFromThread(request));
     }
 
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
@@ -563,17 +562,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /** Operations with no indicator of their own; a generation run already shows as the progress link's status dot. */
     protected readonly aiActionsBusy = computed(() => this.isAiApplying() || this.isCheckingConsistency() || this.repositorySetupBusy());
 
-    /** Adaptation can be requested from the toolbar and from any review thread; both go through here. */
+    /** Adapt the exercise using the selected review feedback. */
     protected readonly canAdaptNow = computed(() => this.adaptOffered() && this.adaptBlockedReason() === undefined);
 
-    /** A review thread's "Adapt with feedback": the thread joins the selection, and leaves it again if the dialog is dismissed. */
-    private adaptFromThread({ threadId, wasAlreadySelected }: ReviewAdaptationRequest): void {
-        this.openAdaptDialog(wasAlreadySelected ? undefined : () => this.exerciseReviewCommentService.toggleThreadFeedbackSelection(threadId));
-    }
-
-    protected openAdaptDialog(onCancel?: () => void): void {
+    protected openAdaptDialog(): void {
         if (!this.canAdaptNow()) {
-            onCancel?.();
             return;
         }
         const exerciseId = this.exercise()?.id;
@@ -581,7 +574,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
-            onCancel?.();
             this.alertService.warning('artemisApp.hyperion.generationActivity.saveChangesFirst');
             return;
         }
@@ -595,7 +587,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             ),
         );
         this.adaptDialogSelectedIds.set(this.selectedAdaptFeedbackThreadIds());
-        this.pendingAdaptDialog = { exerciseId, onCancel };
+        this.pendingAdaptDialog = { exerciseId };
         this.adaptDialogVisible.set(true);
     }
 
@@ -612,11 +604,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     /** Runs for every dismissal — the cancel button, Escape, the backdrop, and the close icon alike. */
     protected onAdaptDialogHidden(): void {
-        const pending = this.pendingAdaptDialog;
         this.pendingAdaptDialog = undefined;
-        if (pending && this.exercise()?.id === pending.exerciseId) {
-            pending.onCancel?.();
-        }
     }
 
     private startAdaptation(instructions?: string): void {

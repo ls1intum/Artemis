@@ -61,6 +61,8 @@ export class HyperionRunHeaderComponent {
     private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly translateService = inject(TranslateService);
 
+    readonly fullPageLink = input<(string | number)[]>();
+    readonly fullPageRunId = input<string>();
     readonly variant = input(false);
     readonly adapting = input(false);
     readonly exerciseTitle = input<string | undefined>();

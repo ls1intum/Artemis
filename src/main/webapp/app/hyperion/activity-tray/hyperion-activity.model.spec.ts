@@ -15,12 +15,11 @@ const entry: HyperionJobEntry = {
 };
 
 describe('Unified AI activity presentation', () => {
-    it('namespaces job identities and keeps the canonical programming route', () => {
+    it('namespaces job identities across generation types', () => {
         const authoring = authoringActivity(entry);
         const variant = variantActivity({ jobId: entry.jobId, phase: 'ANALYZING' });
         expect(authoring.key).not.toBe(variant.key);
         expect(authoring.dismissalKey).not.toBe(variant.dismissalKey);
-        expect(authoring.routerLink).toEqual(['/course-management', 1, 'programming-exercises', 2, 'generation', 'runs', 'same-id']);
     });
 
     it('distinguishes a programming variant by source and destination without inventing another pipeline', () => {
@@ -70,7 +69,8 @@ describe('Unified AI activity presentation', () => {
         expect(row.source).toEqual({ kind: 'variant', job });
         expect(row.kindKey).toBe('artemisApp.hyperion.activity.kind.quizVariant');
         expect(row.targetTitle).toBe('Quiz II');
-        expect(row.steps.findIndex((step) => step.current)).toBe(5);
+        expect(row.steps.findIndex((step) => step.current)).toBe(3);
+        expect(row.steps.filter((step) => step.complete)).toHaveLength(3);
         expect(variantActivity({ ...job, phase: 'DRAFT_WITH_WARNINGS' }).attention).toBe(true);
     });
 });

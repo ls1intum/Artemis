@@ -1,3 +1,4 @@
+import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
 import {
     TumUiButtonComponent,
     TumUiConfirmDialogComponent,
@@ -13,7 +14,7 @@ import { Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, i
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccountService } from 'app/core/auth/account.service';
 import { HyperionProgrammingVariantApi } from 'app/openapi/api/hyperion-programming-variant-api';
-import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
+import { HyperionJobRegistryService, isTerminalHyperionJobStatus } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { NgTemplateOutlet } from '@angular/common';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Router } from '@angular/router';
@@ -95,6 +96,7 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
     styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
     providers: [TumUiConfirmationService],
     imports: [
+        HyperionRunPageComponent,
         TumUiDialogComponent,
         TumUiButtonComponent,
         TumUiRadioButtonComponent,
@@ -141,6 +143,17 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly isMonitorMode = computed(() => !!this.monitorJobId());
     readonly headerKey = computed(() => (this.isMonitorMode() ? 'artemisApp.exerciseVariantGeneration.wizard.monitorTitle' : 'artemisApp.exerciseVariantGeneration.wizard.title'));
 
+    private programmingRequest = 0;
+    readonly programmingRun = signal<{ exerciseId: number; jobId: string } | undefined>(undefined);
+    readonly programmingRunActive = computed(() => {
+        const run = this.programmingRun();
+        if (!run) return false;
+        const entry = this.injector
+            .get(HyperionJobRegistryService)
+            .entries()
+            .find((candidate) => candidate.jobId === run.jobId);
+        return !entry || !isTerminalHyperionJobStatus(entry.status);
+    });
     readonly wizardStep = signal<WizardStep>(1);
     readonly placementChoice = signal<PlacementChoice>('existing-group');
 
@@ -490,10 +503,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     /** Programming variants share the authoring registry, verification and persistence lifecycle. */
     private startProgrammingVariant(source: Exercise, request: VariantGenerationRequest): void {
+        const requestId = this.programmingRequest;
         const accountService = this.injector.get(AccountService);
         const login = accountService.userIdentity()?.login;
         const courseId = source.course?.id ?? source.exerciseGroup?.exam?.course?.id ?? this.courseId();
         const failed = () => {
+            if (this.programmingRequest !== requestId) return;
             this.failureDetail.set(this.translateService.instant('artemisApp.exerciseVariantGeneration.wizard.startFailed'));
             this.jobPhase.set('FAILED');
             this.wizardStep.set(5);
@@ -522,8 +537,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                         exerciseTitle: source.title ?? '',
                         mode: 'ADAPT',
                     });
-                    this.close();
-                    void this.router.navigate(['/course-management', courseId, 'programming-exercises', job.exerciseId, 'generation']);
+                    if (this.visible() && this.programmingRequest === requestId) this.programmingRun.set({ exerciseId: job.exerciseId, jobId: job.jobId });
                 },
                 error: () => {
                     if (accountService.userIdentity()?.login === login) failed();
@@ -820,6 +834,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     }
 
     private resetJobState(): void {
+        this.programmingRequest++;
+        this.programmingRun.set(undefined);
         this.jobId.set(undefined);
         this.jobPhase.set('ANALYZING');
         this.attempt.set(undefined);

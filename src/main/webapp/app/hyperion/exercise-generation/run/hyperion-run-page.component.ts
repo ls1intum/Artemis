@@ -6,7 +6,7 @@ import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -91,7 +91,6 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
     providers: [HyperionGenerationActivityFacade, HyperionRunAnnouncerService],
     imports: [
         FormsModule,
-        RouterLink,
         TumUiDialogComponent,
         TumUiInputDirective,
         ArtemisTranslatePipe,
@@ -111,13 +110,13 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
 export class HyperionRunPageComponent {
     readonly inspectedExerciseId = input<number>();
     readonly inspectedRunId = input<string>();
-    protected readonly runId = computed(() => this.inspectedRunId() ?? this.routeParams()['runId']);
+    protected readonly runId = computed(() => this.inspectedRunId() ?? this.routeParams()['runId'] ?? this.routeQuery()['run']);
     protected readonly variant = computed(() => this.facade.run()?.kind === 'VARIANT');
     protected readonly canonicalLink = computed(() => {
         const courseId = this.courseId();
         const exerciseId = this.exerciseId();
         const runId = this.runId();
-        return courseId && exerciseId && runId ? ['/course-management', courseId, 'programming-exercises', exerciseId, 'generation', 'runs', runId] : undefined;
+        return courseId && exerciseId && runId ? ['/course-management', courseId, 'programming-exercises', exerciseId, 'generation'] : undefined;
     });
     private readonly route = inject(ActivatedRoute);
     private readonly profileService = inject(ProfileService);
@@ -136,6 +135,7 @@ export class HyperionRunPageComponent {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly destroyRef = inject(DestroyRef);
 
+    private readonly routeQuery = toSignal(this.route.queryParams, { initialValue: this.route.snapshot.queryParams });
     private readonly routeParams = toSignal(this.route.params, { initialValue: this.route.snapshot.params });
     private readonly resolvedExercise = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
 

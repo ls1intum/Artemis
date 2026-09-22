@@ -1,5 +1,8 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isIconMenuCompact(), 'in-menu': iconsMovedToMenu() }">
+        @if (currAccount() && !isExamActive() && !isExamStarted() && (hyperionExerciseGenerationEnabled() || hyperionEnabled())) {
+            <jhi-hyperion-activity-tray [authoringEnabled]="hyperionExerciseGenerationEnabled()" />
+        }
         @if (perspectiveSwitchLinks(); as perspectiveSwitchLinks) {
             <div id="perspective-switch" class="perspective-switch">
                 <a
@@ -21,9 +24,6 @@
         }
         @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
             <jhi-global-search-navbar />
-        }
-        @if (currAccount() && !isExamActive() && !isExamStarted() && (hyperionExerciseGenerationEnabled() || hyperionEnabled())) {
-            <jhi-hyperion-activity-tray [authoringEnabled]="hyperionExerciseGenerationEnabled()" />
         }
         @if (!currAccount() && languages && languages.length > 1) {
             <div ngbDropdown class="dropdown pointer" display="dynamic">

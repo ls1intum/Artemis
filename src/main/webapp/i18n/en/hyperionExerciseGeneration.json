@@ -381,9 +381,9 @@
             "workers": {
                 "unknownCapacity": "Capacity is unknown until a current worker heartbeat is available.",
                 "toolchain": "Toolchain",
-                "title": "Generations",
+                "title": "AI Generation",
                 "refresh": "Refresh",
-                "description": "Inspect active Hyperion authoring and cancel an exact run. Worker health and capacity are listed under AI Workers.",
+                "description": "Monitor active exercise generation, available capacity, and worker health in one place.",
                 "loadFailed": "Worker status could not be refreshed. Previously loaded entries may be stale. Generation may also be disabled on this node.",
                 "summary": "{{available}} of {{total}} configured workers available",
                 "worker": "Worker",
@@ -457,6 +457,13 @@
                     "revise": "Adapt",
                     "build": "Verify",
                     "review": "Review",
+                    "save": "Save"
+                },
+                "variantStage": {
+                    "analyze": "Analyze",
+                    "plan": "Plan",
+                    "write": "Write",
+                    "verify": "Verify",
                     "save": "Save"
                 }
             }

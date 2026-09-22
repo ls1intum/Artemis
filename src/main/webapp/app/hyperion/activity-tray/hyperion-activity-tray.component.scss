@@ -1,8 +1,68 @@
 /* Navbar chrome stays dark in both themes; the portalled tray retains the page theme. */
 :host {
     --tumaet-ui-text-color: white;
-
     --tumaet-ui-muted-color: color-mix(in srgb, white 72%, transparent);
     --tumaet-ui-hover-background: color-mix(in srgb, white 12%, transparent);
     --tumaet-ui-border-color: color-mix(in srgb, white 24%, transparent);
+}
+
+.activity-card {
+    background: var(--tumaet-ui-overlay-background);
+}
+
+.activity-card-title {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 0.25rem;
+    background: transparent;
+    color: var(--tumaet-ui-text-color);
+    padding: 0.25rem 0;
+    text-align: start;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--tumaet-ui-primary-color);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-primary-color);
+        outline-offset: 3px;
+    }
+}
+
+.activity-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 0.875rem;
+    left: calc(50% + 1rem);
+    width: calc(100% - 2rem);
+    height: 2px;
+    background: var(--tumaet-ui-border-color);
+}
+
+.activity-step--complete:not(:last-child)::after {
+    background: var(--tumaet-ui-primary-color);
+}
+
+.activity-step-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    border: 2px solid var(--tumaet-ui-border-color);
+    border-radius: 50%;
+    color: var(--tumaet-ui-muted-color);
+
+    &--current,
+    &--complete {
+        border-color: var(--tumaet-ui-primary-color);
+        color: var(--tumaet-ui-primary-color);
+    }
+
+    &--current {
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--tumaet-ui-primary-color) 12%, transparent);
+    }
 }

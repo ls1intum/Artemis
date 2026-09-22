@@ -188,14 +188,10 @@ const childRoutes: Routes = [
             pageTitle: 'artemisApp.adminPasskeyManagement.title',
         },
     },
+    { path: 'ai-workers', redirectTo: 'ai-generation', pathMatch: 'full' },
+    { path: 'hyperion-generations', redirectTo: 'ai-generation', pathMatch: 'full' },
     {
-        path: 'ai-workers',
-        canActivate: [UserRouteAccessService],
-        loadComponent: () => import('app/aiworker/admin/ai-workers.component').then((m) => m.AiWorkersComponent),
-        data: { pageTitle: 'artemisApp.aiworker.title', authorities: IS_AT_LEAST_ADMIN },
-    },
-    {
-        path: 'hyperion-generations',
+        path: 'ai-generation',
         canActivate: [UserRouteAccessService],
         loadComponent: () => import('app/hyperion/admin/hyperion-generations.component').then((m) => m.HyperionGenerationsComponent),
         data: {

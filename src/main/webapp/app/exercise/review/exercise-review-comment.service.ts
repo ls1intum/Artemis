@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, Signal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, Subscription, map } from 'rxjs';
+import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
@@ -26,13 +26,6 @@ export interface ReviewAdaptationAvailability {
     offered: Signal<boolean>;
     /** Translation key for why adaptation cannot start right now; `undefined` when it can. */
     blockedReason: Signal<string | undefined>;
-}
-
-/** A review thread asked to adapt the exercise with itself as feedback. */
-export interface ReviewAdaptationRequest {
-    threadId: number;
-    /** Whether the thread was already part of the feedback selection, so a dismissed request knows whether to remove it again. */
-    wasAlreadySelected: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -62,13 +55,10 @@ export class ExerciseReviewCommentService implements OnDestroy {
     readonly selectedFeedbackThreadIds = signal<number[]>([]);
 
     private readonly adaptation = signal<ReviewAdaptationAvailability | undefined>(undefined);
-    /** Whether review threads should offer feedback selection and the adaptation shortcut at all. */
+    /** Whether review threads should offer feedback selection at all. */
     readonly adaptationOffered = computed(() => this.adaptation()?.offered() ?? false);
-    /** Why the adaptation shortcut on a thread is disabled right now, or `undefined` when it is available. */
+    /** Why the feedback selection is disabled right now, or `undefined` when it is available. */
     readonly adaptationBlockedReason = computed(() => this.adaptation()?.blockedReason());
-    private readonly adaptationRequestSubject = new Subject<ReviewAdaptationRequest>();
-    /** Adaptation requests raised from review threads, for the editor that owns the adapt dialog. */
-    readonly adaptationRequests = this.adaptationRequestSubject.asObservable();
 
     /**
      * Lets the editor container that knows the Hyperion feature and run state drive what the thread widgets offer. The
@@ -77,20 +67,6 @@ export class ExerciseReviewCommentService implements OnDestroy {
      */
     connectAdaptation(availability: ReviewAdaptationAvailability): void {
         this.adaptation.set(availability);
-    }
-
-    /**
-     * Turns a thread into the feedback of the next adaptation and asks the owning editor to open the adapt dialog.
-     *
-     * @param threadId The thread to adapt with.
-     */
-    requestAdaptation(threadId: number): void {
-        if (!this.adaptationOffered() || this.adaptationBlockedReason()) {
-            return;
-        }
-        const wasAlreadySelected = this.isThreadSelectedAsFeedback(threadId);
-        this.selectThreadAsFeedback(threadId);
-        this.adaptationRequestSubject.next({ threadId, wasAlreadySelected });
     }
 
     /**
@@ -179,16 +155,6 @@ export class ExerciseReviewCommentService implements OnDestroy {
             }
             return [...threadIds, threadId];
         });
-    }
-
-    /**
-     * Ensures a thread is part of the feedback selection, adding it if absent (idempotent). Used by the per-thread "Adapt with feedback" action so the thread always flows through the
-     * shared selection store instead of a one-off finding object.
-     *
-     * @param threadId The thread id to select as feedback.
-     */
-    selectThreadAsFeedback(threadId: number): void {
-        this.selectedFeedbackThreadIds.update((threadIds) => (threadIds.includes(threadId) ? threadIds : [...threadIds, threadId]));
     }
 
     /**
