@@ -339,6 +339,41 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             });
         }
 
+        /**
+         * Regression test for the archive/privacy case {@code deleteStalePostEntries} alone cannot reach: the
+         * channel (and its posts) are never deleted from the database, only emptied from the index, so an
+         * existence check finds nothing wrong. {@code WeaviateOutboxDispatcher#pruneLedgerAfterBulkDelete} must
+         * scope a second cleanup to the channel id itself to prune these still-live rows.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testDeleteAllPostsForChannel_prunesLedgerRowsForPostsThatStillExist() throws Exception {
+            Channel channel = createPublicChannel("prune-channel-ledger-test");
+            Post post = createAndSavePost(channel);
+            AnswerPost answer = createAndSaveAnswerPost(post);
+
+            searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel));
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.POST, post.getId())).isPresent();
+                assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.ANSWER_POST, answer.getId())).isPresent();
+            });
+
+            // Stands in for an archive or privacy toggle: the bulk delete fires without the channel or its posts
+            // ever being deleted from the database (unlike deleteChannel, which removes the conversation itself).
+            searchableEntityWeaviateService.deleteAllPostsForChannelAsync(channel.getId());
+
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.POST, post.getId()))
+                        .as("the post still exists, but its ledger row must be pruned once the bulk delete confirms").isEmpty();
+                assertThat(syncStateRepository.findByEntityTypeAndEntityId(SearchableEntitySchema.TypeValues.ANSWER_POST, answer.getId()))
+                        .as("same for its answer post's ledger row").isEmpty();
+            });
+            // Both rows still exist in Postgres: this bulk delete never touches the database, only the index.
+            assertThat(postRepository.findById(post.getId())).isPresent();
+            assertThat(answerPostRepository.findById(answer.getId())).isPresent();
+        }
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testDeleteMessage_removesAnswerPostsFromWeaviate() throws Exception {
