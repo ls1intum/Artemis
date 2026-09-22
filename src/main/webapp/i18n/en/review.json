@@ -58,7 +58,49 @@
                 "MEDIUM": "Medium",
                 "HIGH": "High"
             },
-            "submitBeforeComment": "Submit the exercise before starting a thread."
+            "submitBeforeComment": "Submit the exercise before starting a thread.",
+            "adaptExercise": {
+                "title": "Adapt exercise",
+                "threadAction": "Adapt with feedback",
+                "summary": "Choose the comments to address and add any further instructions.",
+                "freeSummary": "Choose review comments below or describe the change you want.",
+                "findingsListLabel": "Review comments · {{ count }} of {{ total }} selected",
+                "freeHelp": "No review comments are selected. Describe the change you want Artemis Intelligence to make.",
+                "instructionsLabel": "Additional instructions",
+                "instructionsPlaceholder": "Optional: add extra guidance for the adaptation…",
+                "freeInstructionsPlaceholder": "Describe the change you want to make…",
+                "suggestedFixLabel": "Suggested fix",
+                "suggestedFixRemoveLabel": "Remove",
+                "cancel": "Cancel",
+                "confirm": "Adapt exercise",
+                "persistenceNotice": "Verified changes are saved automatically to the statement and all repositories. Review them before release. Undo is temporary and may become unavailable after later edits.",
+                "charactersRemaining": "{{ count }} characters remaining",
+                "starting": "Starting adaptation… Your feedback is being submitted.",
+                "runInProgress": "An AI run is already changing this exercise. Adaptation is available when it finishes. Open AI progress to inspect or cancel the run.",
+                "checkingStatus": "Checking whether this exercise has an active AI run…",
+                "statusUnavailable": "Run status is unavailable. Open AI progress to reconnect before adapting.",
+                "reloadRequired": "Reload the saved exercise before adapting it again.",
+                "startFailed": "Adaptation could not start. Your comments and instructions are kept here. Check AI progress for an active run, or try again.",
+                "reloadDraftRequired": "An AI run saved changes while this dialog was open. Your draft is still here. Copy any instructions you want to keep, then close this dialog and reload the saved exercise before adapting.",
+                "opensInNewTab": "(opens in a new tab)",
+                "selectAll": "Select all",
+                "selectShown": "Select shown",
+                "clearSelection": "Clear",
+                "filter": {
+                    "label": "Show",
+                    "all": "All",
+                    "findings": "AI findings",
+                    "comments": "Instructor comments",
+                    "selected": "Selected"
+                },
+                "searchPlaceholder": "Search comments…",
+                "showMore": "Show more",
+                "showLess": "Show less",
+                "noMatch": "No comment matches the current filter.",
+                "selectionLimit": "Choose up to {{max}} comments per run. Bulk selection stops at this limit.",
+                "selectionLimitReached": "{{max}} comments selected. Deselect a comment to choose another; the remaining comments can be addressed in a later run.",
+                "selectionOverLimit": "More than {{max}} comments are selected. Deselect comments before starting. Your selection and instructions have been preserved."
+            }
         }
     }
 }

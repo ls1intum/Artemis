@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { Confirmation, ConfirmationService } from 'primeng/api';
 import { signal } from '@angular/core';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
@@ -24,6 +25,9 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             toggleThreadFeedbackSelection: vi.fn(),
             isThreadSelectedAsFeedback: vi.fn().mockReturnValue(false),
             toggleGroupResolvedInContext: vi.fn(),
+            requestAdaptation: vi.fn(),
+            adaptationOffered: signal(false),
+            adaptationBlockedReason: signal<string | undefined>(undefined),
             threads: signal([]),
         };
 
@@ -178,16 +182,22 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
-    it('should toggle feedback selection when enabled', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+    it('should toggle feedback selection when adaptation is offered', () => {
+        reviewCommentService.adaptationOffered.set(true);
 
         comp.toggleFeedbackSelection();
 
         expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
     });
 
+    it('should not toggle feedback selection when adaptation is not offered', () => {
+        comp.toggleFeedbackSelection();
+
+        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
+    });
+
     it('should show feedback action before resolve and reply actions', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
 
         fixture.detectChanges();
 
@@ -198,7 +208,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should show selected feedback badge and deselection action when selected for feedback', () => {
         reviewCommentService.isThreadSelectedAsFeedback.mockReturnValue(true);
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
 
         fixture.detectChanges();
 
@@ -206,8 +216,135 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.review.removeThreadFromFeedback');
     });
 
+    it('should offer the adapt action for open consistency threads and request adaptation through the service', () => {
+        const consistencyThread = {
+            id: 1,
+            resolved: false,
+            outdated: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
+                        text: 'issue',
+                    },
+                },
+            ],
+        } as any;
+        fixture.componentRef.setInput('thread', consistencyThread);
+        reviewCommentService.adaptationOffered.set(true);
+        fixture.detectChanges();
+        expect(comp.canAdaptExercise()).toBe(true);
+
+        const adaptButton: HTMLButtonElement | null = fixture.nativeElement.querySelector('.monaco-review-comment-adapt-button');
+        expect(adaptButton).not.toBeNull();
+        expect(adaptButton!.getAttribute('aria-disabled')).toBeNull();
+        expect(adaptButton!.textContent).toContain('artemisApp.review.adaptExercise.threadAction');
+
+        adaptButton!.click();
+        expect(reviewCommentService.requestAdaptation).toHaveBeenCalledExactlyOnceWith(1);
+    });
+
+    it('should not offer the adapt action for resolved consistency threads', () => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: true,
+            outdated: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: 'HIGH',
+                        category: 'METHOD_PARAMETER_MISMATCH',
+                        text: 'issue',
+                    },
+                },
+            ],
+        } as any);
+        reviewCommentService.adaptationOffered.set(true);
+
+        fixture.detectChanges();
+
+        expect(comp.canAdaptExercise()).toBe(false);
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');
+    });
+
+    it('should offer adaptation for instructor feedback', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        fixture.detectChanges();
+
+        expect(comp.canAdaptExercise()).toBe(true);
+        comp.requestAdapt();
+        expect(reviewCommentService.requestAdaptation).toHaveBeenCalledExactlyOnceWith(comp.thread().id);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.threadAction');
+    });
+
+    it('should soft-disable the adapt action with the reason while adaptation is blocked', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        reviewCommentService.adaptationBlockedReason.set('artemisApp.review.adaptExercise.runInProgress');
+        fixture.detectChanges();
+
+        expect(comp.canAdaptExercise()).toBe(true);
+        expect(comp.adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
+        const adaptButton: HTMLButtonElement = fixture.nativeElement.querySelector('.monaco-review-comment-adapt-button');
+        expect(adaptButton.getAttribute('aria-disabled')).toBe('true');
+        expect(adaptButton.hasAttribute('disabled')).toBe(false);
+
+        adaptButton.click();
+        expect(reviewCommentService.requestAdaptation).not.toHaveBeenCalled();
+    });
+
+    it('should show the blocked reason as a tooltip when the adapt action receives focus', () => {
+        vi.useFakeTimers();
+        try {
+            reviewCommentService.adaptationOffered.set(true);
+            reviewCommentService.adaptationBlockedReason.set('artemisApp.review.adaptExercise.runInProgress');
+            fixture.detectChanges();
+
+            const adaptButton: HTMLButtonElement = fixture.nativeElement.querySelector('.monaco-review-comment-adapt-button');
+            adaptButton.dispatchEvent(new Event('focusin', { bubbles: true }));
+            vi.advanceTimersByTime(200);
+            fixture.detectChanges();
+
+            expect(document.querySelector('.tum-ui-tooltip-bubble')?.textContent).toContain('artemisApp.review.adaptExercise.runInProgress');
+            adaptButton.dispatchEvent(new Event('focusout', { bubbles: true }));
+            vi.advanceTimersByTime(200);
+        } finally {
+            vi.runOnlyPendingTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it('should not offer feedback or adapt actions when adaptation is not offered', () => {
+        fixture.detectChanges();
+
+        expect(comp.showFeedbackAction()).toBe(false);
+        expect(comp.canAdaptExercise()).toBe(false);
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.selectThreadAsFeedback');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');
+    });
+
+    it('should not offer feedback or adapt actions for auxiliary repository threads', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: false, targetType: CommentThreadLocationType.AUXILIARY_REPO, comments: [] } as any);
+
+        fixture.detectChanges();
+
+        expect(comp.showFeedbackAction()).toBe(false);
+        expect(comp.canAdaptExercise()).toBe(false);
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.selectThreadAsFeedback');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');
+    });
+
     it('should hide the feedback action for outdated threads', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: true, comments: [] } as any);
 
         fixture.detectChanges();

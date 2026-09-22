@@ -1,0 +1,30 @@
+/*
+ * The run-detail appendix.
+ *
+ * A rule and lower contrast rather than a fourth card: grouping by proximity and a rule ranks a region below the ones
+ * above it, whereas a fourth container of identical weight would put the spend back on equal footing with the verdict.
+ *
+ * The rule is drawn from the TUM UI border token rather than from a bare Tailwind `border-t`. Tailwind preflight is
+ * not loaded here and the `@layer base` default is overridden by a dependency pointing `border-color` at an undefined
+ * custom property, so a bare border utility falls back to `currentColor` — measured at 17.63:1 in dark where 1.24:1
+ * was intended. Naming the token is deterministic and correct in both themes.
+ */
+.hyperion-run-detail {
+    border-top: 1px solid var(--tumaet-ui-border-color);
+
+    /*
+     * Muted text is not legal on every surface, and this is the one region on the page that sits on the page
+     * background rather than on a card. Measured: the muted foreground (#64748b light, #7e8b9a dark) is 4.76:1 on the
+     * white card but only 4.01:1 on the light page's #e9ecef and 4.33:1 on the dark page's #22272e — both below the
+     * 4.5:1 AA threshold for the 14px labels this region is largely made of.
+     *
+     * Neither the Artemis nor the TUM UI layer ships a muted tier for a page-level surface, so one is derived here from
+     * the two tokens that do exist: halfway between muted and the text colour. That measures 5.76:1 light and 8.73:1
+     * dark against the page, while staying a visible step below body text (8.73:1 / 15.0:1) — so the region keeps the
+     * contrast ranking the design gives it instead of trading legibility for it. A custom property inherits through
+     * view encapsulation, so this one declaration reaches every label inside the spend region.
+     *
+     * Delete it the moment `tailwind.css` gains a semantic muted key whose value is legal on the page surface.
+     */
+    --p-text-muted-color: color-mix(in srgb, var(--tumaet-ui-muted-color) 50%, var(--tumaet-ui-text-color));
+}

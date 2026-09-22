@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -77,6 +77,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     // - monacoEditor is always in the DOM but is read defensively (`?.`) everywhere, so optional keeps
     //   pre-view-init access from throwing.
     readonly fileBrowser = viewChild(CodeEditorFileBrowserComponent);
+    readonly repositoryLoading = computed(() => this.fileBrowser()?.isLoadingFiles() ?? true);
     readonly actions = viewChild(CodeEditorActionsComponent);
     readonly buildOutput = viewChild(CodeEditorBuildOutputComponent);
     readonly monacoEditor = viewChild(CodeEditorMonacoComponent);
@@ -101,11 +102,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
-
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
     onFileLoad = output<string>();
+    onRepositoryFilesLoaded = output<void>();
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
@@ -113,16 +114,29 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     onCommit = output<void>();
 
-    /** Work in Progress: temporary properties needed to get first prototype working */
-
     participation = input.required<Participation>();
-
-    /** END WIP */
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private readonly selectedFileValue = signal<string | undefined>(undefined);
+    private bypassNextUnloadWarning = false;
     unsavedFilesValue!: { [fileName: string]: string }; // {[fileName]: fileContent}; set in constructor via initializeProperties()
-    readonly fileBadges = signal<{ [fileName: string]: FileBadge[] }>({});
+
+    /**
+     * File-browser badges for code files and the Problem Statement entry, covering feedback
+     * suggestions, graded feedbacks, and active review-comment threads.
+     */
+    readonly fileBadges = computed<{ [fileName: string]: FileBadge[] }>(() => {
+        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
+        this.collectFeedbackSuggestionBadges(fileBadgesByType);
+        this.collectReviewThreadBadges(fileBadgesByType);
+
+        const fileBadges: { [fileName: string]: FileBadge[] } = {};
+        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
+            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
+        }
+        return fileBadges;
+    });
+
     get selectedFile(): string | undefined {
         return this.selectedFileValue();
     }
@@ -145,15 +159,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     readonly errorFiles = signal<string[]>([]);
     readonly annotations = signal<Array<Annotation>>([]);
-
     private fileTreeChangeSubscription?: Subscription;
-
     constructor() {
         this.initializeProperties();
-
-        effect(() => {
-            this.updateFileBadges();
-        });
 
         effect(() => {
             const syncService = this.fileSyncService();
@@ -192,23 +200,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
             this.editorState = EditorState.UNSAVED_CHANGES;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
         }
-    }
-
-    /**
-     * Updates file-browser badges for code files and the Problem Statement entry
-     * (includes feedback suggestions, graded feedbacks, and active review-comment threads).
-     */
-    updateFileBadges() {
-        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
-
-        this.collectFeedbackSuggestionBadges(fileBadgesByType);
-        this.collectReviewThreadBadges(fileBadgesByType);
-
-        const fileBadges: { [fileName: string]: FileBadge[] } = {};
-        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
-            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
-        }
-        this.fileBadges.set(fileBadges);
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
@@ -273,7 +264,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
-        this.fileBadges.set({});
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };
@@ -374,11 +364,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         this.onCommit.emit();
     }
 
-    /**
-     * On successful pull during a refresh operation, we remove all unsaved files.
-     */
-    onRefreshFiles() {
+    /** Clears local editor state after a successful repository refresh. */
+    onRefreshFiles(): void {
         this.unsavedFiles = {};
+        this.commitState = CommitState.CLEAN;
+        this.onCommitStateChange.emit(this.commitState);
     }
 
     /**
@@ -455,6 +445,18 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         return _isEmpty(this.unsavedFiles);
     }
 
+    allowNextUnloadWithoutConfirmation(): void {
+        this.bypassNextUnloadWarning = true;
+    }
+
+    hasCleanRepositoryState(): boolean {
+        return this.commitState === CommitState.CLEAN;
+    }
+
+    hasReviewCommentDrafts(): boolean {
+        return this.monacoEditor()?.hasReviewCommentDrafts() ?? false;
+    }
+
     /**
      * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
      */
@@ -481,6 +483,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: BeforeUnloadEvent) {
+        if (this.bypassNextUnloadWarning) {
+            this.bypassNextUnloadWarning = false;
+            return true;
+        }
         if (!this.canDeactivate()) {
             event.preventDefault();
             return this.translateService.instant('pendingChanges');

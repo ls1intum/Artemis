@@ -34,6 +34,7 @@ api/tutorial-group-resources.ts
 api/hyperion-code-generation-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
+api/admin-ai-worker-resources.ts
 api/hyperion-quiz-question-generation-resources.ts
 api/quiz-submission-resources.ts
 api/tutorial-group-session-resources.ts

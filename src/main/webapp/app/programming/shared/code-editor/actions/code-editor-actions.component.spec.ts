@@ -4,7 +4,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { By } from '@angular/platform-browser';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -94,6 +94,7 @@ describe('CodeEditorActionsComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
@@ -175,6 +176,22 @@ describe('CodeEditorActionsComponent', () => {
         expect(onSavedFilesSpy).toHaveBeenCalledWith(savedFilesResult);
 
         fixture.detectChanges();
+    });
+
+    it('should not report a file as saved when its content changed during the request', () => {
+        const saveObservable = new Subject<{ fileName: null }>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+        fixture.componentRef.setInput('unsavedFiles', { fileName: 'content being saved' });
+        fixture.detectChanges();
+        updateFilesStub.mockReturnValue(saveObservable);
+
+        comp.onSave();
+        fixture.componentRef.setInput('unsavedFiles', { fileName: 'newer collaborative edit' });
+        fixture.detectChanges();
+        saveObservable.next({ fileName: null });
+
+        expect(onSavedFilesSpy).not.toHaveBeenCalled();
     });
 
     it('should call repositoryFileService to save unsavedFiles and emit an error on failure', () => {
@@ -392,10 +409,128 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.editorState()).toEqual(EditorState.SAVING);
     });
 
+    describe('when actions are disabled', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('disableActions', true);
+            fixture.componentRef.setInput('unsavedFiles', { fileName: 'dirty content' });
+            comp.editorState.set(EditorState.UNSAVED_CHANGES);
+            comp.commitState.set(CommitState.UNCOMMITTED_CHANGES);
+        });
+
+        it('should not save dirty files directly', () => {
+            const nextSpy = vi.fn();
+            const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+
+            comp.saveChangedFiles(true).subscribe(nextSpy);
+
+            expect(updateFilesStub).not.toHaveBeenCalled();
+            expect(nextSpy).not.toHaveBeenCalled();
+            expect(onSavedFilesSpy).not.toHaveBeenCalled();
+            expect(comp.editorState()).toBe(EditorState.UNSAVED_CHANGES);
+        });
+
+        it('should not save dirty files through onSave', () => {
+            const saveChangedFilesSpy = vi.spyOn(comp, 'saveChangedFiles');
+
+            comp.onSave();
+
+            expect(saveChangedFilesSpy).not.toHaveBeenCalled();
+            expect(updateFilesStub).not.toHaveBeenCalled();
+        });
+
+        it('should not autosave dirty files', () => {
+            vi.useFakeTimers();
+            const saveChangedFilesSpy = vi.spyOn(comp, 'saveChangedFiles');
+            fixture.detectChanges();
+
+            vi.advanceTimersByTime(1000 * 31);
+
+            expect(saveChangedFilesSpy).not.toHaveBeenCalled();
+            expect(updateFilesStub).not.toHaveBeenCalled();
+            expect(comp.editorState()).toBe(EditorState.UNSAVED_CHANGES);
+            vi.useRealTimers();
+        });
+
+        it('should not save dirty files on destroy', () => {
+            const saveChangedFilesSpy = vi.spyOn(comp, 'saveChangedFiles');
+            fixture.detectChanges();
+
+            fixture.destroy();
+
+            expect(saveChangedFilesSpy).not.toHaveBeenCalled();
+            expect(updateFilesStub).not.toHaveBeenCalled();
+            expect(comp.editorState()).toBe(EditorState.UNSAVED_CHANGES);
+        });
+
+        it.each([
+            ['dirty files', { fileName: 'dirty content' }],
+            ['a clean working tree', {}],
+        ])('should not submit with %s', (_description, unsavedFiles) => {
+            const onCommitSpy = vi.spyOn(comp.onCommit, 'emit');
+            fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
+
+            comp.commit();
+
+            expect(updateFilesStub).not.toHaveBeenCalled();
+            expect(commitStub).not.toHaveBeenCalled();
+            expect(onCommitSpy).not.toHaveBeenCalled();
+            expect(comp.commitState()).toBe(CommitState.UNCOMMITTED_CHANGES);
+            expect(comp.isBuilding()).toBe(false);
+        });
+
+        it('should not open the reset dialog or mutate the repository', () => {
+            const openStub = vi.spyOn(dialogService, 'open');
+
+            comp.resetRepository();
+
+            expect(openStub).not.toHaveBeenCalled();
+            expect(resetRepositoryStub).not.toHaveBeenCalled();
+        });
+
+        it('should not refresh dirty files through user actions', () => {
+            const openStub = vi.spyOn(dialogService, 'open');
+            const refreshResult = vi.fn();
+
+            comp.onRefresh();
+            comp.executeRefresh().subscribe(refreshResult);
+
+            expect(openStub).not.toHaveBeenCalled();
+            expect(pullStub).not.toHaveBeenCalled();
+            expect(refreshResult).not.toHaveBeenCalled();
+            expect(comp.editorState()).toBe(EditorState.UNSAVED_CHANGES);
+        });
+    });
+
+    it('should not reset the repository if actions become disabled while the confirmation dialog is open', () => {
+        const onClose = new Subject<boolean | undefined>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
+
+        comp.resetRepository();
+        fixture.componentRef.setInput('disableActions', true);
+        onClose.next(true);
+
+        expect(resetRepositoryStub).not.toHaveBeenCalled();
+    });
+
+    it('should not refresh if actions become disabled while the confirmation dialog is open', () => {
+        const onClose = new Subject<boolean | undefined>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
+        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockReturnValue(of(false));
+        comp.editorState.set(EditorState.UNSAVED_CHANGES);
+
+        comp.onRefresh();
+        fixture.componentRef.setInput('disableActions', true);
+        onClose.next(true);
+
+        expect(executeRefreshStub).not.toHaveBeenCalled();
+        expect(pullStub).not.toHaveBeenCalled();
+        expect(comp.editorState()).toBe(EditorState.UNSAVED_CHANGES);
+    });
+
     it('should open refresh confirmation modal and execute refresh on confirmation', () => {
         const onClose = new Subject<boolean | undefined>();
         const openStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
-        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockImplementation(() => undefined);
+        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockReturnValue(of(true));
         comp.editorState.set(EditorState.UNSAVED_CHANGES);
 
         comp.onRefresh();
@@ -408,7 +543,7 @@ describe('CodeEditorActionsComponent', () => {
     it('should not execute refresh if the refresh confirmation modal is dismissed', () => {
         const onClose = new Subject<boolean | undefined>();
         vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
-        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockImplementation(() => undefined);
+        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockReturnValue(of(false));
         comp.editorState.set(EditorState.UNSAVED_CHANGES);
 
         comp.onRefresh();
@@ -419,7 +554,7 @@ describe('CodeEditorActionsComponent', () => {
 
     it('should execute refresh directly when editor is clean', () => {
         const openStub = vi.spyOn(dialogService, 'open');
-        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockImplementation(() => undefined);
+        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockReturnValue(of(true));
         comp.editorState.set(EditorState.CLEAN);
 
         comp.onRefresh();
@@ -431,15 +566,17 @@ describe('CodeEditorActionsComponent', () => {
     it('should execute refresh and set clean state on successful pull', () => {
         const pullObservable = new Subject<void>();
         const refreshFilesEmitStub = vi.spyOn(comp.onRefreshFiles, 'emit');
+        const refreshResult = vi.fn();
         pullStub.mockReturnValue(pullObservable);
 
-        comp.executeRefresh();
+        comp.executeRefresh().subscribe(refreshResult);
         expect(comp.editorState()).toEqual(EditorState.REFRESHING);
 
         pullObservable.next();
 
         expect(refreshFilesEmitStub).toHaveBeenCalledOnce();
         expect(comp.editorState()).toEqual(EditorState.CLEAN);
+        expect(refreshResult).toHaveBeenCalledExactlyOnceWith(true);
     });
 
     it('should emit internet-disconnected refresh error on pull failure', () => {
@@ -447,7 +584,7 @@ describe('CodeEditorActionsComponent', () => {
         const onErrorStub = vi.spyOn(comp.onError, 'emit');
         pullStub.mockReturnValue(pullObservable);
 
-        comp.executeRefresh();
+        comp.executeRefresh().subscribe();
         pullObservable.error(new ConnectionError());
 
         expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
@@ -457,20 +594,22 @@ describe('CodeEditorActionsComponent', () => {
     it('should emit generic refresh error on pull failure', () => {
         const pullObservable = new Subject<void>();
         const onErrorStub = vi.spyOn(comp.onError, 'emit');
+        const refreshResult = vi.fn();
         pullStub.mockReturnValue(pullObservable);
 
-        comp.executeRefresh();
+        comp.executeRefresh().subscribe(refreshResult);
         pullObservable.error(new Error('something'));
 
         expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
         expect(onErrorStub).toHaveBeenCalledWith('refreshFailed');
+        expect(refreshResult).toHaveBeenCalledExactlyOnceWith(false);
     });
 
     it('should reset repository and refresh after modal confirmation', () => {
         const onClose = new Subject<boolean | undefined>();
         const resetObservable = new Subject<void>();
         const openStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
-        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockImplementation(() => undefined);
+        const executeRefreshStub = vi.spyOn(comp, 'executeRefresh').mockReturnValue(of(true));
         const notifyConflictStateStub = vi.spyOn(conflictStateService, 'notifyConflictState');
         resetRepositoryStub.mockReturnValue(resetObservable);
 

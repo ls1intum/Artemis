@@ -1575,6 +1575,18 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ExerciseGenerationEffortProfile'}
+  /api/aiworker/admin/workers:
+    get:
+      tags: [admin-ai-worker]
+      operationId: getWorkers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/WorkerStatus'}
   /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot:
     get:
       tags: [admin-hyperion-generation]
@@ -3889,3 +3901,34 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    WorkerStatus:
+      type: object
+      properties:
+        workerId: {type: string}
+        state:
+          type: string
+          enum: [OFFLINE, NOT_READY, AVAILABLE, RESERVED, BUSY]
+        lastHeartbeat: {type: string, format: date-time}
+        imageDigest: {type: string}
+        incarnation: {type: string, format: uuid}
+        activeExecution: {type: string, format: uuid}
+        leaseHeld: {type: boolean}
+        capacity: {type: integer, format: int32}
+        availableSlots: {type: integer, format: int32}
+        executions:
+          type: array
+          items: {$ref: '#/components/schemas/WorkerExecution'}
+        capability: {$ref: '#/components/schemas/WorkloadCapability'}
+    WorkerExecution:
+      type: object
+      properties:
+        slot: {type: integer, format: int32}
+        executionId: {type: string, format: uuid}
+        jobId: {type: string}
+        resourceId: {type: string}
+    WorkloadCapability:
+      type: object
+      properties:
+        workload: {type: string}
+        version: {type: integer, format: int32}
+        profile: {type: string}

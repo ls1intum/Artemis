@@ -1,0 +1,19 @@
+<span class="tum-ui-step-marker-track" aria-hidden="true">
+    <span class="tum-ui-step-marker">
+        @if (markerIcon(); as icon) {
+            <fa-icon [icon]="icon" />
+        } @else if (isRunning()) {
+            <span class="tum-ui-step-running-indicator"></span>
+            <span class="tum-ui-step-running-fallback"></span>
+        }
+    </span>
+    <span class="tum-ui-step-connector"></span>
+</span>
+<div class="tum-ui-step-content">
+    <span class="tum-ui-step-label">
+        {{ label() }}<ng-content select="[tumUiStepLabel]" />&ngsp;<span class="tum:sr-only">{{ stateWord() }}</span>
+    </span>
+    <div class="tum-ui-step-detail">
+        <ng-content />
+    </div>
+</div>
