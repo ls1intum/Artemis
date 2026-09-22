@@ -8,8 +8,9 @@ children + one required status check**.
 `ci.yml` is the single CI entry point. It registers every trigger that should run the main
 CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, published Artemis
 releases, merge-queue runs, and a manual `workflow_dispatch`) so that the answer to "what
-runs on event X?" is in exactly one file. TUM UI releases (`tum-ui-v*`) use
-`release-tum-ui.yml`; their GitHub release events do not run Artemis builds or Android tests.
+runs on event X?" is in exactly one file. Scoped package releases (`@tumaet/*`)
+do not run Artemis builds or Android tests. TUM UI uses `release-tum-ui.yml`: a manual run on a
+branch validates; a run on an `@tumaet/ui-angular@<version>` tag validates and stages for npm approval.
 
 ```text
 ci.yml                                                            (single entry workflow)

@@ -18,7 +18,8 @@ it('withholds publishing credentials until build and consumer checks pass', () =
             .map(([name]) => name),
     ).toEqual(['stage']);
     expect(workflow.jobs.stage.needs).toEqual(expect.arrayContaining(['build', 'consumer']));
-    expect(workflow.jobs.stage.if).toBe("github.event_name == 'push'");
+    expect(workflow.on).toEqual({ workflow_dispatch: null });
+    expect(workflow.jobs.stage.if).toBe("github.ref_type == 'tag'");
     expect(workflow.jobs.stage.environment).toBe('npm-tum-ui');
 });
 
@@ -41,20 +42,22 @@ describe('TUM UI release validation', () => {
 
     it.each([
         { name: 'accepts a reviewed release', accepted: true },
-        { name: 'allows rehearsal on an unmerged commit', event: 'workflow_dispatch', unmerged: true, accepted: true },
-        { name: 'rejects a tag for a different version', tag: 'tum-ui-v2.0.0' },
+        { name: 'allows rehearsal on an unmerged commit', refType: 'branch', ref: 'feature/ui', unmerged: true, accepted: true },
+        { name: 'rejects a tag for a different version', ref: '@tumaet/ui-angular@2.0.0' },
+        { name: 'rejects another package tag', ref: '@tumaet/apollon@1.2.3' },
+        { name: 'rejects an Artemis application tag', ref: '1.2.3' },
         { name: 'rejects a noncanonical version', version: 'v1.2.3' },
         { name: 'rejects a prerelease', version: '1.2.3-rc.0' },
         { name: 'rejects build metadata', version: '1.2.3+build' },
         { name: 'rejects an unmerged release commit', unmerged: true },
-    ])('$name', ({ version = '1.2.3', tag = `tum-ui-v${version}`, event = 'push', unmerged = false, accepted = false }) => {
-        writeFileSync(resolve(directory, 'packages/tum-ui/package.json'), JSON.stringify({ version }));
+    ])('$name', ({ version = '1.2.3', ref = `@tumaet/ui-angular@${version}`, refType = 'tag', unmerged = false, accepted = false }) => {
+        writeFileSync(resolve(directory, 'packages/tum-ui/package.json'), JSON.stringify({ name: '@tumaet/ui-angular', version }));
         if (unmerged) {
             git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '--quiet', '--allow-empty', '-m', 'Unreviewed commit');
         }
         const result = spawnSync('bash', ['-eo', 'pipefail', '-c', validator], {
             cwd: directory,
-            env: { ...gitEnvironment, RELEASE_EVENT: event, RELEASE_REF: tag },
+            env: { ...gitEnvironment, RELEASE_REF_TYPE: refType, RELEASE_REF: ref },
             encoding: 'utf8',
         });
         expect(result.status, result.stderr).toBe(accepted ? 0 : 1);

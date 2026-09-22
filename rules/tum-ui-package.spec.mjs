@@ -304,7 +304,9 @@ describe('@tumaet/ui-angular integration contract', () => {
         for (const [name, version] of Object.entries(packageJson.peerDependencies)) {
             expect(semver.validRange(version), `${name} must declare a consumer compatibility range`).not.toBeNull();
             expect(semver.satisfies(catalog[name], version), `${name} must support the version tested in the workspace`).toBe(true);
-            expect(semver.minVersion(version)?.version, `${name} minimum must be tested by the consumer fixture`).toBe(catalog[name]);
+            if (name.startsWith('@angular/')) {
+                expect(semver.minVersion(version)?.version, `${name} consumers must support the Angular version used to build the library`).toBe(catalog[name]);
+            }
             expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
             expect(packageJson.devDependencies[name], `${name} must be installed for isolated package development`).toBe('catalog:');
         }
