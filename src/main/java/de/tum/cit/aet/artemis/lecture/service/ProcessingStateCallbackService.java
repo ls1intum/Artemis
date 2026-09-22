@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegmentConverter;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -804,18 +805,16 @@ public class ProcessingStateCallbackService {
 
     /**
      * Conditional update keyed on the row's own id when it existed. A first checkpoint has no id to
-     * guard on, so it re-verifies ownership with a fresh read right before inserting: the earlier
-     * proof and this insert are still two separate writes, and a requeue can invalidate the token
-     * and find nothing to delete in between, leaving an unconditioned insert to persist stale content.
+     * guard an update on, so it inserts through {@link LectureTranscriptionRepository#insertIfTokenMatches},
+     * which folds the ownership check into the insert itself instead of a separate read before it.
      */
     private void persistTranscription(long lectureUnitId, String expectedToken, Optional<LectureTranscription> existing, LectureTranscription transcription) {
         if (existing.isEmpty()) {
-            Optional<LectureUnitProcessingState> fresh = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
-            if (fresh.isEmpty() || !Objects.equals(fresh.get().getIngestionJobToken(), expectedToken)) {
+            String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(transcription.getSegments());
+            if (transcriptionRepository.insertIfTokenMatches(lectureUnitId, transcription.getLanguage(), segmentsJson, transcription.getTranscriptionStatus().name(),
+                    expectedToken) == 0) {
                 log.debug("Skipping transcription insert for unit {}: ownership token changed since it was proven", lectureUnitId);
-                return;
             }
-            transcriptionRepository.save(transcription);
             return;
         }
         if (transcriptionRepository.updateContentIfExists(transcription.getId(), transcription.getLanguage(), transcription.getSegments(),

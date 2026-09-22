@@ -70,4 +70,38 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
             """)
     int updateContentIfExists(@Param("id") Long id, @Param("language") String language, @Param("segments") List<LectureTranscriptionSegment> segments,
             @Param("transcriptionStatus") TranscriptionStatus transcriptionStatus);
+
+    /**
+     * Insert a unit's first transcription row, atomically conditional on the run that produced it
+     * still owning the unit's processing state at the instant of the insert itself -- not at some
+     * earlier read.
+     * <p>
+     * A first checkpoint has no existing row to guard an {@code UPDATE} on (see
+     * {@link #updateContentIfExists}), so a read-then-insert shape always leaves a gap between
+     * checking the token and writing: a content-triggered requeue can invalidate the token and find
+     * no row to delete in exactly that gap, and an unconditioned insert afterward would persist stale
+     * content the fresh generation could mistake for its own. JPQL has no bulk insert statement, so
+     * this is a native, portable {@code INSERT ... SELECT ... WHERE EXISTS}, which folds the ownership
+     * check into the same statement as the write instead of a separate query before it.
+     *
+     * @param lectureUnitId       the unit this transcription belongs to
+     * @param language            the checkpoint's language
+     * @param segments            the checkpoint's segments, pre-serialized the same way the entity's
+     *                                own converter would (native queries bypass the ORM type layer)
+     * @param transcriptionStatus the status to set, as its enum name
+     * @param expectedToken       the token ownership was proven under
+     * @return 1 when inserted, 0 when the processing state's token had already changed
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query(value = """
+            INSERT INTO lecture_transcription (language, segments, transcription_status, lecture_unit_id)
+            SELECT :language, CAST(:segments AS json), :transcriptionStatus, :lectureUnitId
+            WHERE EXISTS (
+                SELECT 1 FROM lecture_unit_processing_state
+                WHERE lecture_unit_id = :lectureUnitId AND ingestion_job_token = :expectedToken
+            )
+            """, nativeQuery = true)
+    int insertIfTokenMatches(@Param("lectureUnitId") Long lectureUnitId, @Param("language") String language, @Param("segments") String segments,
+            @Param("transcriptionStatus") String transcriptionStatus, @Param("expectedToken") String expectedToken);
 }

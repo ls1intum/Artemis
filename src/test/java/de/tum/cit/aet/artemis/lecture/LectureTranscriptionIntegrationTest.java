@@ -16,10 +16,13 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegmentConverter;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
@@ -30,6 +33,9 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private LectureTranscriptionRepository lectureTranscriptionRepository;
+
+    @Autowired
+    private LectureUnitProcessingStateRepository processingStateRepository;
 
     @Autowired
     private LectureTestRepository lectureRepository;
@@ -142,5 +148,64 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
 
         assertThat(updated).isZero();
         assertThat(lectureTranscriptionRepository.findById(deletedId)).isEmpty();
+    }
+
+    /**
+     * Verifies insertIfTokenMatches against a real database: the first native INSERT in this
+     * codebase, and the only place a bulk write binds a value into the {@code json}-typed
+     * {@code segments} column via an explicit {@code CAST(... AS json)} rather than through
+     * Hibernate's own converter/type layer. Confirms the cast round-trips content correctly and
+     * that the EXISTS-gated insert actually applies when the token matches.
+     */
+    @Test
+    void testInsertIfTokenMatches_insertsWhenTokenMatches() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
+        state.setIngestionJobToken("valid-token");
+        processingStateRepository.save(state);
+
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Inserted text", 1), new LectureTranscriptionSegment(10.0, 20.0, "More text", 2));
+        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
+
+        int inserted = lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "valid-token");
+
+        assertThat(inserted).isEqualTo(1);
+        LectureTranscription created = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).orElseThrow();
+        assertThat(created.getLanguage()).isEqualTo("en");
+        assertThat(created.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
+        assertThat(created.getSegments()).hasSize(2);
+        assertThat(created.getSegments().get(0).text()).isEqualTo("Inserted text");
+        assertThat(created.getSegments().get(1).text()).isEqualTo("More text");
+    }
+
+    /**
+     * The exact interleaving this atomic insert exists to close: ownership was proven at some
+     * earlier instant, but the token has since changed (a content-triggered requeue invalidated it)
+     * by the time this statement actually executes. Folding the check into the insert itself --
+     * rather than a separate read before it -- means there is no gap left for that change to land in.
+     */
+    @Test
+    void testInsertIfTokenMatches_noOpsWhenTokenDoesNotMatch() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(lectureUnit);
+        state.setIngestionJobToken("current-token");
+        processingStateRepository.save(state);
+
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale text", 1));
+        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
+
+        int inserted = lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "stale-token");
+
+        assertThat(inserted).isZero();
+        assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId())).isEmpty();
+    }
+
+    @Test
+    void testInsertIfTokenMatches_noOpsWhenNoProcessingStateExists() {
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Stale text", 1));
+        String segmentsJson = new LectureTranscriptionSegmentConverter().convertToDatabaseColumn(segments);
+
+        int inserted = lectureTranscriptionRepository.insertIfTokenMatches(lectureUnit.getId(), "en", segmentsJson, TranscriptionStatus.COMPLETED.name(), "any-token");
+
+        assertThat(inserted).isZero();
+        assertThat(lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId())).isEmpty();
     }
 }
