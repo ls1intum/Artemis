@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
+import de.tum.cit.aet.artemis.globalsearch.domain.IngestionEventKind;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionEventLogService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
 /**
@@ -36,6 +38,8 @@ public class ReconcileEnqueueService {
 
     private final WeaviateReconcileProperties reconcileProperties;
 
+    private final IngestionEventLogService ingestionEventLogService;
+
     /**
      * Whether the depth limit was already blocking last time it was checked, so the transitions are logged rather
      * than every blocked check. A pass ticks forever, and a backlog can take days to drain.
@@ -43,10 +47,11 @@ public class ReconcileEnqueueService {
     private final AtomicBoolean blocked = new AtomicBoolean(false);
 
     public ReconcileEnqueueService(WeaviateOutboxRepository outboxRepository, SearchableEntityWeaviateService searchableEntityWeaviateService,
-            WeaviateReconcileProperties reconcileProperties) {
+            WeaviateReconcileProperties reconcileProperties, IngestionEventLogService ingestionEventLogService) {
         this.outboxRepository = outboxRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.reconcileProperties = reconcileProperties;
+        this.ingestionEventLogService = ingestionEventLogService;
     }
 
     /**
@@ -82,6 +87,7 @@ public class ReconcileEnqueueService {
             return false;
         }
         searchableEntityWeaviateService.enqueueUpsert(entityType, entityId, origin);
+        recordDetection(entityType, entityId, origin, "queued a rewrite");
         return true;
     }
 
@@ -98,6 +104,7 @@ public class ReconcileEnqueueService {
             return false;
         }
         searchableEntityWeaviateService.enqueueDeleteEntity(entityType, entityId, origin);
+        recordDetection(entityType, entityId, origin, "queued a removal");
         return true;
     }
 
@@ -111,5 +118,32 @@ public class ReconcileEnqueueService {
      */
     private boolean alreadyQueued(String entityType, long entityId) {
         return outboxRepository.existsByEntityTypeAndEntityId(entityType, entityId);
+    }
+
+    /**
+     * Records what a pass just found, for the admin activity feed.
+     * <p>
+     * This is the one place every reconcile repair passes through, so recording here covers the drift,
+     * missing and orphan passes without any of them knowing about the log. The event names a detection
+     * rather than a repair: the write it queued is applied later by the dispatcher, which records its own
+     * {@link IngestionEventKind#INDEX_REPAIRED} once it lands.
+     *
+     * @param entityType the entity type the pass acted on
+     * @param entityId   the entity id
+     * @param origin     which pass asked, which is what identifies the kind of finding
+     * @param action     what was queued, for the feed's detail line
+     */
+    private void recordDetection(String entityType, long entityId, WeaviateOutboxOrigin origin, String action) {
+        IngestionEventKind kind = switch (origin) {
+            case RECONCILE_DRIFT -> IngestionEventKind.DRIFT_DETECTED;
+            case RECONCILE_MISSING -> IngestionEventKind.MISSING_DETECTED;
+            case RECONCILE_ORPHAN -> IngestionEventKind.ORPHAN_DETECTED;
+            // A live edit is ordinary traffic, not a finding, and recording it would mirror every content
+            // change in Artemis into this log.
+            case LIVE -> null;
+        };
+        if (kind != null) {
+            ingestionEventLogService.record(kind, entityType, entityId, null, action);
+        }
     }
 }

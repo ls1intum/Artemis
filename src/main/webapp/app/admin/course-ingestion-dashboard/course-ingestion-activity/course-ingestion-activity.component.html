@@ -1,0 +1,98 @@
+<div class="course-ingestion-activity" data-testid="course-ingestion-activity">
+    <div class="flex justify-between items-center mb-3">
+        <div class="flex flex-col">
+            <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.activity.title"></h4>
+            <span class="text-sm text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.activity.subtitle"></span>
+        </div>
+        <tum-ui-button
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            [icon]="faSync"
+            [loading]="loading()"
+            (clicked)="reload()"
+            [ariaLabel]="'artemisApp.courseIngestionDashboard.activity.refresh' | artemisTranslate"
+            [title]="'artemisApp.courseIngestionDashboard.activity.refresh' | artemisTranslate"
+        />
+    </div>
+
+    @if (error()) {
+        <tum-ui-message severity="error" class="w-full">{{ 'artemisApp.courseIngestionDashboard.activity.error' | artemisTranslate }}</tum-ui-message>
+    }
+
+    @if (activity(); as data) {
+        <!-- Summary tiles double as the filter: the counts tell you where to look, clicking one takes you there. -->
+        @if (summary().length > 0) {
+            <div class="flex flex-wrap gap-2 mb-3" data-testid="activity-summary">
+                @for (tile of summary(); track tile.kind) {
+                    <tum-ui-button
+                        severity="secondary"
+                        size="small"
+                        [variant]="selectedKind() === tile.kind ? 'solid' : 'outlined'"
+                        [ariaPressed]="selectedKind() === tile.kind"
+                        (clicked)="selectKind(tile.kind)"
+                        [attr.data-testid]="'activity-filter-' + tile.kind"
+                    >
+                        <span class="inline-flex items-center gap-2">
+                            <span class="inline-block size-2 shrink-0 rounded-full bg-current {{ kindClass(tile.kind) }}" aria-hidden="true"></span>
+                            <span jhiTranslate="artemisApp.courseIngestionDashboard.activity.kind.{{ tile.kind }}"></span>
+                            <span class="font-mono">{{ tile.count }}</span>
+                        </span>
+                    </tum-ui-button>
+                }
+            </div>
+            <div class="text-xs text-muted-color mb-2">
+                {{ 'artemisApp.courseIngestionDashboard.activity.window' | artemisTranslate: { hours: data.summaryWindowHours } }}
+            </div>
+        }
+
+        @if (isEmpty()) {
+            <tum-ui-message severity="info" class="w-full" data-testid="activity-empty">
+                {{ 'artemisApp.courseIngestionDashboard.activity.empty' | artemisTranslate }}
+            </tum-ui-message>
+        } @else {
+            <tum-ui-card>
+                <table tumUiTable size="small" rowHover data-testid="activity-table">
+                    <thead>
+                        <tr>
+                            <th jhiTranslate="artemisApp.courseIngestionDashboard.activity.column.when"></th>
+                            <th jhiTranslate="artemisApp.courseIngestionDashboard.activity.column.what"></th>
+                            <th jhiTranslate="artemisApp.courseIngestionDashboard.activity.column.entity"></th>
+                            <th jhiTranslate="artemisApp.courseIngestionDashboard.activity.column.detail"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (event of events(); track event.id) {
+                            <tr [attr.data-testid]="'activity-row-' + event.id">
+                                <td class="whitespace-nowrap text-muted-color">{{ event.occurredAt | artemisDate: 'long' }}</td>
+                                <td>
+                                    <span
+                                        class="inline-flex items-center gap-2 {{ kindClass(event.kind) }}"
+                                        [attr.data-severity]="kindSeverity(event.kind)"
+                                        [attr.data-kind]="event.kind"
+                                    >
+                                        <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                                        <span class="font-medium" jhiTranslate="artemisApp.courseIngestionDashboard.activity.kind.{{ event.kind }}"></span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="font-mono text-sm">{{ event.entityType }} {{ event.entityId }}</span>
+                                    @if (event.courseId) {
+                                        <span class="ms-2 text-xs text-muted-color">
+                                            {{ 'artemisApp.courseIngestionDashboard.activity.courseRef' | artemisTranslate: { id: event.courseId } }}
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-sm text-muted-color">{{ event.detail }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </tum-ui-card>
+        }
+    }
+
+    @if (loading() && !activity()) {
+        <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
+    }
+</div>

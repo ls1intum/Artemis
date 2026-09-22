@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -952,4 +953,84 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             """)
     int resetToIdleIfStillLive(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead, @Param("now") ZonedDateTime now);
 
+    /**
+     * Reads the runs a worker currently holds, with the unit, lecture and course fetched for display.
+     * <p>
+     * Oldest start first, so the run most likely to be wedged sits at the top of the admin queue view.
+     * Separate from {@link #findByPhaseIn(List)}, which reads the same phases without the fetch joins and
+     * would lazy-load a lecture and a course per row to render a name.
+     *
+     * @param phases the active phases to read, normally TRANSCRIBING and INGESTING
+     * @return the active runs, oldest start first
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            JOIN FETCH ps.lectureUnit lu
+            JOIN FETCH lu.lecture l
+            JOIN FETCH l.course
+            WHERE ps.phase IN :phases
+            ORDER BY ps.startedAt ASC
+            """)
+    List<LectureUnitProcessingState> findActiveRunsWithUnit(@Param("phases") List<ProcessingPhase> phases);
+
+    /**
+     * Reads the units that would be claimed next, in the order the dispatcher would hand them out, with
+     * the unit, lecture and course fetched for display.
+     * <p>
+     * Mirrors the predicate and ordering of {@link #findIdleForDispatch(ZonedDateTime, int)} so the admin
+     * view shows the real queue head rather than an approximation of it; it exists separately because that
+     * one is a native query with no fetch joins.
+     *
+     * @param now      the current time for the backoff comparison
+     * @param pageable supplies the limit
+     * @return the next claimable units, in dispatch order
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            JOIN FETCH ps.lectureUnit lu
+            JOIN FETCH lu.lecture l
+            JOIN FETCH l.course
+            WHERE ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE
+              AND ps.startedAt IS NULL
+              AND (ps.retryEligibleAt IS NULL OR ps.retryEligibleAt <= :now)
+            ORDER BY COALESCE(ps.dispatchPriority, 0) ASC, ps.id ASC
+            """)
+    List<LectureUnitProcessingState> findQueueHeadWithUnit(@Param("now") ZonedDateTime now, Pageable pageable);
+
+    /**
+     * Counts units per phase, for the queue view's depth tiles.
+     *
+     * @return one row per phase as {@code [phase, count]}
+     */
+    @Query("SELECT ps.phase, COUNT(ps) FROM LectureUnitProcessingState ps GROUP BY ps.phase")
+    List<Object[]> countGroupedByPhase();
+
+    /**
+     * Counts failed units still waiting out their retry backoff, i.e. queued but not yet claimable.
+     *
+     * @param now the current time for the backoff comparison
+     * @return the number of units in backoff
+     */
+    @Query("""
+            SELECT COUNT(ps) FROM LectureUnitProcessingState ps
+            WHERE ps.retryEligibleAt IS NOT NULL AND ps.retryEligibleAt > :now
+            """)
+    long countWaitingForRetry(@Param("now") ZonedDateTime now);
+
+    /**
+     * Summarises the workers currently holding leases, from the claims themselves.
+     * <p>
+     * Artemis keeps no worker registry, so {@code locked_by} on claimed rows is the only record that a
+     * worker exists; a worker holding no run is therefore invisible here, which is correct for a view
+     * whose question is what is being worked on.
+     *
+     * @param phases the active phases to consider
+     * @return one row per worker as {@code [bootId, activeRuns, lastHeartbeatAt]}
+     */
+    @Query("""
+            SELECT ps.lockedBy, COUNT(ps), MAX(ps.lastHeartbeatAt) FROM LectureUnitProcessingState ps
+            WHERE ps.lockedBy IS NOT NULL AND ps.phase IN :phases
+            GROUP BY ps.lockedBy
+            """)
+    List<Object[]> summariseActiveWorkers(@Param("phases") List<ProcessingPhase> phases);
 }

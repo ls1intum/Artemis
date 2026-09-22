@@ -73,4 +73,39 @@ public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateO
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM WeaviateOutboxEntry e WHERE e.entityType = :entityType AND e.entityId = :entityId AND e.id < :appliedId")
     void deleteSupersededByEntity(@Param("entityType") String entityType, @Param("entityId") Long entityId, @Param("appliedId") Long appliedId);
+
+    /**
+     * Counts rows already past their backoff, i.e. what the next drain would pick up.
+     * <p>
+     * Separate from a plain {@code count()}: a queue that is deep but entirely backing off is failing,
+     * while a queue that is deep and all due is merely busy, and the admin queue view distinguishes the two.
+     *
+     * @param now rows with {@code next_attempt_at <= now} are counted
+     * @return the number of due rows
+     */
+    long countByNextAttemptAtLessThanEqual(ZonedDateTime now);
+
+    /**
+     * Counts waiting rows grouped by what enqueued them, separating live edits from repair work.
+     *
+     * @return one row per origin as {@code [origin, count]}
+     */
+    @Query("SELECT o.origin, COUNT(o) FROM WeaviateOutboxEntry o GROUP BY o.origin")
+    List<Object[]> countGroupedByOrigin();
+
+    /**
+     * The highest attempt count among waiting rows; above zero means writes are failing and retrying.
+     *
+     * @return the maximum attempt count, or null when the queue is empty
+     */
+    @Query("SELECT MAX(o.attempts) FROM WeaviateOutboxEntry o")
+    Integer findMaxAttempts();
+
+    /**
+     * When the oldest waiting row was enqueued, as the queue's age watermark.
+     *
+     * @return the earliest enqueue time, or null when the queue is empty
+     */
+    @Query("SELECT MIN(o.createdAt) FROM WeaviateOutboxEntry o")
+    ZonedDateTime findOldestEnqueuedAt();
 }

@@ -134,6 +134,98 @@
                 "COMPLETE": "Vollständig",
                 "INCOMPLETE": "Unvollständig",
                 "EMPTY": "Leer"
+            },
+            "activity": {
+                "title": "Pipeline-Aktivität",
+                "subtitle": "Was die Ingestion- und Searchable-Entity-Pipelines tatsächlich getan haben, neueste zuerst.",
+                "refresh": "Aktivitätsverlauf aktualisieren",
+                "error": "Der Aktivitätsverlauf konnte nicht geladen werden.",
+                "empty": "Bisher ist nichts passiert. Ereignisse erscheinen hier, sobald Einheiten indexiert werden und die Abgleichläufe laufen.",
+                "window": "Die Zählungen umfassen die letzten {{ hours }} Stunden.",
+                "courseRef": "Kurs {{ id }}",
+                "column": {
+                    "when": "Wann",
+                    "what": "Was ist passiert",
+                    "entity": "Entität",
+                    "detail": "Detail"
+                },
+                "kind": {
+                    "INGESTED": "Indexiert",
+                    "FAILED": "Fehlgeschlagen",
+                    "CLAIMED": "Übernommen",
+                    "REQUEUED": "Erneut eingereiht",
+                    "STALLED": "Hängt fest",
+                    "QUALITY_FLAGGED": "Schlechte Qualität",
+                    "DRIFT_DETECTED": "Abweichung gefunden",
+                    "MISSING_DETECTED": "Fehlend gefunden",
+                    "ORPHAN_DETECTED": "Verwaist gefunden",
+                    "INDEX_REPAIRED": "Repariert"
+                }
+            },
+            "queues": {
+                "title": "Warteschlangen",
+                "subtitle": "Woran jede Warteschlange gerade arbeitet und was dahinter wartet.",
+                "refresh": "Momentaufnahme der Warteschlangen aktualisieren",
+                "error": "Die Momentaufnahme der Warteschlangen konnte nicht geladen werden.",
+                "idle": "Alle Warteschlangen sind leer. Derzeit wird nichts indexiert oder geschrieben.",
+                "retryWaiting": "warten auf Wiederholung",
+                "wedged": "kein Fortschritt",
+                "forced": "erzwungen",
+                "phase": {
+                    "IDLE": "eingereiht",
+                    "TRANSCRIBING": "transkribiert",
+                    "INGESTING": "indexiert",
+                    "DONE": "fertig",
+                    "FAILED": "fehlgeschlagen",
+                    "SKIPPED": "übersprungen"
+                },
+                "priority": {
+                    "fresh": "Neu",
+                    "backlog": "Rückstand"
+                },
+                "pass": {
+                    "MISSING": "Fehlend",
+                    "DRIFT": "Abweichung",
+                    "ORPHAN": "Verwaist"
+                },
+                "column": {
+                    "unit": "Lerneinheit",
+                    "stage": "Phase",
+                    "worker": "Worker",
+                    "progressed": "Letzter Fortschritt",
+                    "priority": "Priorität",
+                    "attempts": "Versuche",
+                    "operation": "Operation",
+                    "entity": "Entität",
+                    "origin": "Ursprung",
+                    "pass": "Lauf",
+                    "lastRun": "Letzter Lauf",
+                    "checked": "Geprüft",
+                    "queued": "Eingereiht"
+                },
+                "running": {
+                    "title": "Wird gerade bearbeitet",
+                    "none": "Derzeit wird keine Einheit bearbeitet."
+                },
+                "nextUp": {
+                    "title": "Als Nächstes",
+                    "none": "Nichts wartet auf Übernahme."
+                },
+                "outbox": {
+                    "title": "Weaviate-Schreibwarteschlange",
+                    "waiting": "wartend",
+                    "dueNow": "jetzt fällig",
+                    "maxAttempts": "max. Versuche",
+                    "oldest": "Ältester Eintrag seit"
+                },
+                "reconcile": {
+                    "title": "Abgleichläufe",
+                    "none": "Es wurde noch kein Abgleichlauf ausgeführt."
+                },
+                "workers": {
+                    "title": "Worker mit Leases",
+                    "runs": "{{ count }} aktiv"
+                }
             }
         }
     }

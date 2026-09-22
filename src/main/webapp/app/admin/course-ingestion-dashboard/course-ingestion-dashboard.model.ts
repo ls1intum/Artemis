@@ -190,3 +190,157 @@ export function selectionKey(selection: BrowserSelection): string {
             return `coll:${selection.unitId}:${selection.key}`;
     }
 }
+
+/**
+ * What happened to one indexed thing. Mirrors the server `IngestionEventKind`.
+ *
+ * The three `*_DETECTED` kinds are recorded when a reconcile sweep finds a problem and queues the fix;
+ * `INDEX_REPAIRED` is recorded separately once that fix actually lands, so a repair appears twice by design.
+ */
+export type IngestionEventKind =
+    'INGESTED' | 'FAILED' | 'CLAIMED' | 'REQUEUED' | 'STALLED' | 'QUALITY_FLAGGED' | 'DRIFT_DETECTED' | 'MISSING_DETECTED' | 'ORPHAN_DETECTED' | 'INDEX_REPAIRED';
+
+/** One row of the activity feed: a single thing that happened to one indexed entity. */
+export interface IngestionEvent {
+    /** The event's own id, used as the feed's stable list key. */
+    id: number;
+    /** What happened. */
+    kind: IngestionEventKind;
+    /** When it happened, as an ISO timestamp. */
+    occurredAt: string;
+    /** The kind of thing it happened to, e.g. `LectureUnit`. */
+    entityType: string;
+    /** The id of that thing. */
+    entityId: number;
+    /** The course it belongs to, absent when the event is not course-scoped. */
+    courseId?: number;
+    /** Short human-readable context, rendered verbatim. */
+    detail?: string;
+}
+
+/** The activity feed payload: the events plus the rolling per-kind totals shown above them. */
+export interface IngestionActivity {
+    /** The most recent events, newest first. */
+    events: IngestionEvent[];
+    /** How many events of each kind happened inside `summaryWindowHours`. Absent kinds counted zero. */
+    countsByKind: Partial<Record<IngestionEventKind, number>>;
+    /** The width of the window `countsByKind` was counted over. */
+    summaryWindowHours: number;
+}
+
+/** A lecture unit's position in the ingestion state machine. Mirrors the server `ProcessingPhase`. */
+export type ProcessingPhase = 'IDLE' | 'TRANSCRIBING' | 'INGESTING' | 'DONE' | 'FAILED' | 'SKIPPED';
+
+/** What enqueued an outbox row: a live content edit, or one of the reconcile sweeps. */
+export type WeaviateOutboxOrigin = 'LIVE' | 'RECONCILE_MISSING' | 'RECONCILE_DRIFT' | 'RECONCILE_ORPHAN';
+
+/** Which reconcile sweep a status row describes. */
+export type ReconcilePass = 'MISSING' | 'DRIFT' | 'ORPHAN';
+
+/**
+ * One lecture unit a worker is currently working on.
+ *
+ * `lastProgressAt` and `lastHeartbeatAt` are both present on purpose: a run whose heartbeat is fresh but whose
+ * progress is frozen is wedged rather than slow, and that is the distinction the view exists to show.
+ */
+export interface RunningIngestion {
+    lectureUnitId: number;
+    lectureUnitName?: string;
+    courseId?: number;
+    courseTitle?: string;
+    phase: ProcessingPhase;
+    /** The pipeline stage the worker last reported, e.g. `vision`. */
+    stage?: string;
+    stageProgress?: number;
+    stageTotal?: number;
+    startedAt?: string;
+    /** When the progress counter last advanced. */
+    lastProgressAt?: string;
+    /** When the worker last renewed its lease. */
+    lastHeartbeatAt?: string;
+    /** The boot id of the worker holding the lease. */
+    lockedBy?: string;
+    retryCount?: number;
+}
+
+/** One lecture unit waiting to be claimed, in dispatch order. */
+export interface QueuedIngestion {
+    lectureUnitId: number;
+    lectureUnitName?: string;
+    courseId?: number;
+    courseTitle?: string;
+    /** 0 for fresh work, higher for backfill and reconcile work. */
+    dispatchPriority?: number;
+    retryCount?: number;
+    /** When a failed unit becomes claimable again; absent when it is not a retry. */
+    retryEligibleAt?: string;
+    /** Whether this unit is queued for a forced re-ingestion (quality or drift). */
+    forceReingest?: boolean;
+}
+
+/** The pull-based lecture ingestion queue: how deep it is, what is running, and what is next. */
+export interface LectureIngestionQueue {
+    /** How many units sit in each phase. Absent phases hold none. */
+    countsByPhase: Partial<Record<ProcessingPhase, number>>;
+    running: RunningIngestion[];
+    nextUp: QueuedIngestion[];
+    /** How many failed units are waiting out their retry backoff. */
+    retryWaiting?: number;
+}
+
+/** One row waiting in the Weaviate outbox. */
+export interface OutboxEntry {
+    id: number;
+    operation: string;
+    origin: WeaviateOutboxOrigin;
+    entityType?: string;
+    entityId?: number;
+    /** How many times this write has already failed. */
+    attempts?: number;
+    nextAttemptAt: string;
+    createdAt: string;
+}
+
+/**
+ * The durable Weaviate write queue. Rows are deleted once their write is confirmed, so this is always the
+ * backlog and never a history: a healthy queue is near-empty, and a deep one whose `maxAttempts` is climbing
+ * means writes are failing rather than merely arriving faster than they drain.
+ */
+export interface WeaviateOutboxQueue {
+    total?: number;
+    /** How many are past their backoff and would be picked up on the next drain. */
+    dueNow?: number;
+    countsByOrigin: Partial<Record<WeaviateOutboxOrigin, number>>;
+    oldestEnqueued?: string;
+    maxAttempts?: number;
+    head: OutboxEntry[];
+}
+
+/** Where one reconcile sweep is in its current cycle. Counters are cycle-scoped and reset when it wraps. */
+export interface ReconcilePassStatus {
+    pass: ReconcilePass;
+    lastRunAt?: string;
+    cycleStartedAt?: string;
+    entitiesChecked?: number;
+    repairsEnqueued?: number;
+    /** Only the orphan pass removes rows. */
+    rowsRemoved?: number;
+}
+
+/**
+ * One ingestion worker, seen from the leases it holds. Artemis keeps no worker registry, so a worker holding
+ * no run is invisible here — which is correct for a view whose question is what is being worked on.
+ */
+export interface IngestionWorker {
+    bootId: string;
+    activeRuns?: number;
+    lastHeartbeatAt?: string;
+}
+
+/** Every queue this feature owns, and what each is doing right now. */
+export interface QueueOverview {
+    lectureIngestion: LectureIngestionQueue;
+    weaviateOutbox: WeaviateOutboxQueue;
+    reconcilePasses: ReconcilePassStatus[];
+    workers: IngestionWorker[];
+}

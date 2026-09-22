@@ -1,0 +1,231 @@
+<div class="course-ingestion-queues" data-testid="course-ingestion-queues">
+    <div class="flex justify-between items-center mb-3">
+        <div class="flex flex-col">
+            <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.queues.title"></h4>
+            <span class="text-sm text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.queues.subtitle"></span>
+        </div>
+        <tum-ui-button
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            [icon]="faSync"
+            [loading]="loading()"
+            (clicked)="reload()"
+            [ariaLabel]="'artemisApp.courseIngestionDashboard.queues.refresh' | artemisTranslate"
+            [title]="'artemisApp.courseIngestionDashboard.queues.refresh' | artemisTranslate"
+        />
+    </div>
+
+    @if (error()) {
+        <tum-ui-message severity="error" class="w-full">{{ 'artemisApp.courseIngestionDashboard.queues.error' | artemisTranslate }}</tum-ui-message>
+    }
+
+    @if (queues()) {
+        @if (isIdle()) {
+            <tum-ui-message severity="info" class="w-full" data-testid="queues-idle">
+                {{ 'artemisApp.courseIngestionDashboard.queues.idle' | artemisTranslate }}
+            </tum-ui-message>
+        }
+
+        <!-- Depth of the lecture ingestion queue, by phase. -->
+        @if (phaseTiles().length > 0) {
+            <div class="flex flex-wrap gap-4 mb-3" data-testid="queue-phase-tiles">
+                @for (tile of phaseTiles(); track tile.phase) {
+                    <div class="flex flex-col" [attr.data-testid]="'queue-phase-' + tile.phase">
+                        <span class="text-2xl font-semibold {{ phaseClass(tile.phase) }}">{{ tile.count }}</span>
+                        <span class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.queues.phase.{{ tile.phase }}"></span>
+                    </div>
+                }
+                @if (queues()?.lectureIngestion?.retryWaiting) {
+                    <div class="flex flex-col" data-testid="queue-retry-waiting">
+                        <span class="text-2xl font-semibold text-state-warning">{{ queues()?.lectureIngestion?.retryWaiting }}</span>
+                        <span class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.queues.retryWaiting"></span>
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+            <!-- What workers are holding right now. -->
+            <tum-ui-card [header]="'artemisApp.courseIngestionDashboard.queues.running.title' | artemisTranslate">
+                @if (running().length === 0) {
+                    <div class="text-muted-color text-sm" jhiTranslate="artemisApp.courseIngestionDashboard.queues.running.none"></div>
+                } @else {
+                    <table tumUiTable size="small" rowHover data-testid="queues-running-table">
+                        <thead>
+                            <tr>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.unit"></th>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.stage"></th>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.worker"></th>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.progressed"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (run of running(); track run.lectureUnitId) {
+                                <tr [attr.data-testid]="'queues-running-' + run.lectureUnitId">
+                                    <td>
+                                        <div class="flex flex-col">
+                                            <span>{{ run.lectureUnitName }}</span>
+                                            <span class="text-xs text-muted-color">{{ run.courseTitle }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="inline-flex items-center gap-2 {{ phaseClass(run.phase) }}">
+                                            <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                                            <span class="font-mono text-sm">{{ stageLabel(run) }}</span>
+                                        </span>
+                                    </td>
+                                    <td class="font-mono text-xs text-muted-color">{{ run.lockedBy }}</td>
+                                    <td>
+                                        <!-- A fresh heartbeat with a frozen progress counter is the wedged case; it is the
+                                             one state that looks healthy in every other column, so it is called out here. -->
+                                        @if (isWedged(run)) {
+                                            <span class="inline-flex items-center gap-2 text-state-danger" data-severity="wedged">
+                                                <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                                                <span jhiTranslate="artemisApp.courseIngestionDashboard.queues.wedged"></span>
+                                            </span>
+                                        } @else {
+                                            <span class="text-sm text-muted-color">{{ run.lastProgressAt | artemisDate: 'time' }}</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </tum-ui-card>
+
+            <!-- What is claimed next, in the order the dispatcher hands it out. -->
+            <tum-ui-card [header]="'artemisApp.courseIngestionDashboard.queues.nextUp.title' | artemisTranslate">
+                @if (nextUp().length === 0) {
+                    <div class="text-muted-color text-sm" jhiTranslate="artemisApp.courseIngestionDashboard.queues.nextUp.none"></div>
+                } @else {
+                    <table tumUiTable size="small" rowHover data-testid="queues-nextup-table">
+                        <thead>
+                            <tr>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.unit"></th>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.priority"></th>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.attempts"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (queued of nextUp(); track queued.lectureUnitId) {
+                                <tr [attr.data-testid]="'queues-nextup-' + queued.lectureUnitId">
+                                    <td>
+                                        <div class="flex flex-col">
+                                            <span>{{ queued.lectureUnitName }}</span>
+                                            <span class="text-xs text-muted-color">{{ queued.courseTitle }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (queued.dispatchPriority) {
+                                            <span class="text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.queues.priority.backlog"></span>
+                                        } @else {
+                                            <span jhiTranslate="artemisApp.courseIngestionDashboard.queues.priority.fresh"></span>
+                                        }
+                                        @if (queued.forceReingest) {
+                                            <span class="ms-2 text-xs text-state-warning" jhiTranslate="artemisApp.courseIngestionDashboard.queues.forced"></span>
+                                        }
+                                    </td>
+                                    <td class="font-mono text-sm">{{ queued.retryCount ?? 0 }}</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </tum-ui-card>
+
+            <!-- The durable write queue. Deep and backing off means failing, not merely busy. -->
+            <tum-ui-card [header]="'artemisApp.courseIngestionDashboard.queues.outbox.title' | artemisTranslate">
+                @if (outbox(); as out) {
+                    <div class="flex flex-wrap gap-4 mb-3">
+                        <div class="flex flex-col" data-testid="outbox-total">
+                            <span class="text-2xl font-semibold">{{ out.total ?? 0 }}</span>
+                            <span class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.queues.outbox.waiting"></span>
+                        </div>
+                        <div class="flex flex-col" data-testid="outbox-due">
+                            <span class="text-2xl font-semibold">{{ out.dueNow ?? 0 }}</span>
+                            <span class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.queues.outbox.dueNow"></span>
+                        </div>
+                        <div class="flex flex-col" data-testid="outbox-attempts">
+                            <span class="text-2xl font-semibold {{ out.maxAttempts ? 'text-state-danger' : '' }}">{{ out.maxAttempts ?? 0 }}</span>
+                            <span class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.queues.outbox.maxAttempts"></span>
+                        </div>
+                    </div>
+                    @if (out.oldestEnqueued) {
+                        <div class="text-xs text-muted-color mb-2">
+                            <span jhiTranslate="artemisApp.courseIngestionDashboard.queues.outbox.oldest"></span>: {{ out.oldestEnqueued | artemisDate }}
+                        </div>
+                    }
+                    @if (out.head.length > 0) {
+                        <table tumUiTable size="small" data-testid="queues-outbox-table">
+                            <thead>
+                                <tr>
+                                    <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.operation"></th>
+                                    <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.entity"></th>
+                                    <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.origin"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (entry of out.head; track entry.id) {
+                                    <tr>
+                                        <td class="font-mono text-xs">{{ entry.operation }}</td>
+                                        <td class="font-mono text-xs">{{ entry.entityType }} {{ entry.entityId }}</td>
+                                        <td class="text-xs text-muted-color">{{ entry.origin }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                }
+            </tum-ui-card>
+
+            <!-- The sweeps that feed the outbox, and the workers that drain the ingestion queue. -->
+            <tum-ui-card [header]="'artemisApp.courseIngestionDashboard.queues.reconcile.title' | artemisTranslate">
+                @if (reconcilePasses().length === 0) {
+                    <div class="text-muted-color text-sm" jhiTranslate="artemisApp.courseIngestionDashboard.queues.reconcile.none"></div>
+                } @else {
+                    <table tumUiTable size="small" data-testid="queues-reconcile-table">
+                        <thead>
+                            <tr>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.pass"></th>
+                                <th jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.lastRun"></th>
+                                <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.checked"></th>
+                                <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.queues.column.queued"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (pass of reconcilePasses(); track pass.pass) {
+                                <tr [attr.data-testid]="'queues-pass-' + pass.pass">
+                                    <td jhiTranslate="artemisApp.courseIngestionDashboard.queues.pass.{{ pass.pass }}"></td>
+                                    <td class="text-sm text-muted-color">{{ pass.lastRunAt | artemisDate }}</td>
+                                    <td class="text-end font-mono text-sm">{{ pass.entitiesChecked ?? 0 }}</td>
+                                    <td class="text-end font-mono text-sm">{{ pass.repairsEnqueued ?? 0 }}</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                @if (workers().length > 0) {
+                    <div class="mt-3">
+                        <h5 class="text-sm mb-1" jhiTranslate="artemisApp.courseIngestionDashboard.queues.workers.title"></h5>
+                        @for (worker of workers(); track worker.bootId) {
+                            <div class="flex items-center gap-2 text-sm" [attr.data-testid]="'queues-worker-' + worker.bootId">
+                                <span class="inline-block size-2 shrink-0 rounded-full bg-current text-state-success" aria-hidden="true"></span>
+                                <span class="font-mono text-xs">{{ worker.bootId }}</span>
+                                <span class="text-muted-color">
+                                    {{ 'artemisApp.courseIngestionDashboard.queues.workers.runs' | artemisTranslate: { count: worker.activeRuns ?? 0 } }}
+                                </span>
+                            </div>
+                        }
+                    </div>
+                }
+            </tum-ui-card>
+        </div>
+    }
+
+    @if (loading() && !queues()) {
+        <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
+    }
+</div>

@@ -7,6 +7,12 @@
 
     <jhi-course-ingestion-overview class="block mb-4" />
 
+    <!-- What the pipelines are doing now, then what they just did, then the per-course coverage they produced.
+         Ordered by how urgent each is when an admin opens this page with something wrong. -->
+    <jhi-course-ingestion-queues class="block mb-4" />
+
+    <jhi-course-ingestion-activity class="block mb-4" />
+
     <jhi-course-ingestion-coverage-table class="block" (courseSelected)="openBrowser($event)" />
 
     <!-- Rendered only once a course has been chosen, so the modal never loads for a course nobody opened. -->

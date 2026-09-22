@@ -8,8 +8,11 @@ import {
     IndexOverview,
     IndexedContentObject,
     IndexedEntityRecord,
+    IngestionActivity,
     IngestionCoverage,
     IngestionCoverageStatus,
+    IngestionEventKind,
+    QueueOverview,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /** Zero-based page request against a Spring `Pageable` endpoint. `sort` follows Spring's `property,direction` form. */
@@ -31,6 +34,13 @@ export interface LiveCoverageRequest extends CoveragePageRequest {
 export interface StoredCoverageRequest extends LiveCoverageRequest {
     status?: IngestionCoverageStatus;
     active?: boolean;
+}
+
+/** Request for the activity feed; every field narrows it, and omitting all three asks for the newest events overall. */
+export interface ActivityRequest {
+    kind?: IngestionEventKind;
+    courseId?: number;
+    limit?: number;
 }
 
 /**
@@ -105,6 +115,31 @@ export class CourseIngestionDashboardService {
     getUnitContent(courseId: number, unitId: number, key: string): Observable<IndexedContentObject[]> {
         const params = new HttpParams().set('key', key);
         return this.http.get<IndexedContentObject[]>(`${this.baseUrl}/courses/${courseId}/units/${unitId}/content`, { params });
+    }
+
+    /**
+     * GET the recent pipeline activity feed, newest first, optionally narrowed to one event kind or one course.
+     *
+     * The feed is the only place transient outcomes are visible: a drift repair or an orphan removal leaves no
+     * trace in any of the current-state tables once the sweep that produced it has moved on.
+     */
+    getActivity(request: ActivityRequest = {}): Observable<IngestionActivity> {
+        let params = new HttpParams();
+        if (request.kind !== undefined) {
+            params = params.set('kind', request.kind);
+        }
+        if (request.courseId !== undefined) {
+            params = params.set('courseId', request.courseId);
+        }
+        if (request.limit !== undefined) {
+            params = params.set('limit', request.limit);
+        }
+        return this.http.get<IngestionActivity>(`${this.baseUrl}/activity`, { params });
+    }
+
+    /** GET a point-in-time snapshot of every ingestion queue: what each holds and is currently working on. */
+    getQueues(): Observable<QueueOverview> {
+        return this.http.get<QueueOverview>(`${this.baseUrl}/queues`);
     }
 
     /** POST to force a background recompute of the whole projection (no-op if one is already running). */

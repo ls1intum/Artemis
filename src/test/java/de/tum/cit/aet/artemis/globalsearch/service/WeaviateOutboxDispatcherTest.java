@@ -68,7 +68,8 @@ class WeaviateOutboxDispatcherTest {
         var outboxProperties = new WeaviateOutboxProperties(5, 100, 10, 300);
         var reconcileProperties = new WeaviateReconcileProperties(false, false, false, List.of(COURSE, "lecture", "lecture_unit", "exam", "exercise", "faq", "channel"), 500, 100,
                 200, 1000, 5, 100, 100, 0.25);
-        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, outboxProperties, reconcileProperties);
+        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, outboxProperties, reconcileProperties,
+                mock(IngestionEventLogService.class));
     }
 
     @Test

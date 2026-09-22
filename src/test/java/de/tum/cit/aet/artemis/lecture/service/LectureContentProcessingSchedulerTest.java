@@ -543,7 +543,7 @@ class LectureContentProcessingSchedulerTest {
             ProcessingStateCallbackService realCallbackService = new ProcessingStateCallbackService(raceRepository, transcriptionRepository, mock(AttachmentRepository.class),
                     Optional.empty(), new ProcessingStateNotificationService(mock(WebsocketMessagingService.class), transcriptionRepository),
                     mock(LectureUnitContentFingerprintService.class), mock(DistributedDataProvider.class), mock(FeatureToggleService.class), MAX_CONCURRENT_JOBS, 20,
-                    Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class));
+                    Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class), Optional.empty());
 
             FeatureToggleService raceFeatureToggleService = mock(FeatureToggleService.class);
             when(raceFeatureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);

@@ -87,7 +87,7 @@ class ProcessingStateWorkerDispatchTest {
 
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, irisLectureApi,
                 new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), contentFingerprintService, distributedDataProvider,
-                featureToggleService, 2, 20, Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class));
+                featureToggleService, 2, 20, Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class), Optional.empty());
 
         Lecture lecture = new Lecture();
         lecture.setId(1L);

@@ -134,6 +134,98 @@
                 "COMPLETE": "Complete",
                 "INCOMPLETE": "Incomplete",
                 "EMPTY": "Empty"
+            },
+            "activity": {
+                "title": "Pipeline activity",
+                "subtitle": "What the ingestion and searchable-entity pipelines actually did, newest first.",
+                "refresh": "Refresh the activity feed",
+                "error": "The activity feed could not be loaded.",
+                "empty": "Nothing has happened yet. Events appear here as units are ingested and the reconcile passes run.",
+                "window": "Counts cover the last {{ hours }} hours.",
+                "courseRef": "course {{ id }}",
+                "column": {
+                    "when": "When",
+                    "what": "What happened",
+                    "entity": "Entity",
+                    "detail": "Detail"
+                },
+                "kind": {
+                    "INGESTED": "Ingested",
+                    "FAILED": "Failed",
+                    "CLAIMED": "Claimed",
+                    "REQUEUED": "Requeued",
+                    "STALLED": "Stalled",
+                    "QUALITY_FLAGGED": "Poor quality",
+                    "DRIFT_DETECTED": "Drift found",
+                    "MISSING_DETECTED": "Missing found",
+                    "ORPHAN_DETECTED": "Orphan found",
+                    "INDEX_REPAIRED": "Repaired"
+                }
+            },
+            "queues": {
+                "title": "Queues",
+                "subtitle": "What each queue is working on now, and what is waiting behind it.",
+                "refresh": "Refresh the queue snapshot",
+                "error": "The queue snapshot could not be loaded.",
+                "idle": "Every queue is empty. Nothing is being ingested or written right now.",
+                "retryWaiting": "waiting on retry",
+                "wedged": "no progress",
+                "forced": "forced",
+                "phase": {
+                    "IDLE": "queued",
+                    "TRANSCRIBING": "transcribing",
+                    "INGESTING": "ingesting",
+                    "DONE": "done",
+                    "FAILED": "failed",
+                    "SKIPPED": "skipped"
+                },
+                "priority": {
+                    "fresh": "Fresh",
+                    "backlog": "Backlog"
+                },
+                "pass": {
+                    "MISSING": "Missing",
+                    "DRIFT": "Drift",
+                    "ORPHAN": "Orphan"
+                },
+                "column": {
+                    "unit": "Lecture unit",
+                    "stage": "Stage",
+                    "worker": "Worker",
+                    "progressed": "Last progress",
+                    "priority": "Priority",
+                    "attempts": "Attempts",
+                    "operation": "Operation",
+                    "entity": "Entity",
+                    "origin": "Origin",
+                    "pass": "Pass",
+                    "lastRun": "Last run",
+                    "checked": "Checked",
+                    "queued": "Queued"
+                },
+                "running": {
+                    "title": "Currently being worked on",
+                    "none": "No unit is being worked on right now."
+                },
+                "nextUp": {
+                    "title": "Next up",
+                    "none": "Nothing is waiting to be claimed."
+                },
+                "outbox": {
+                    "title": "Weaviate write queue",
+                    "waiting": "waiting",
+                    "dueNow": "due now",
+                    "maxAttempts": "max attempts",
+                    "oldest": "Oldest waiting since"
+                },
+                "reconcile": {
+                    "title": "Reconcile passes",
+                    "none": "No reconcile pass has run yet."
+                },
+                "workers": {
+                    "title": "Workers holding leases",
+                    "runs": "{{ count }} active"
+                }
             }
         }
     }

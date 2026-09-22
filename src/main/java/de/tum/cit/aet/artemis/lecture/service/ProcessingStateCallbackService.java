@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.globalsearch.api.IngestionEventLogApi;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -103,6 +105,8 @@ public class ProcessingStateCallbackService {
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
+    private final Optional<IngestionEventLogApi> ingestionEventLogApi;
+
     private final ProcessingStateNotificationService notificationService;
 
     private final LectureUnitContentFingerprintService contentFingerprintService;
@@ -138,7 +142,7 @@ public class ProcessingStateCallbackService {
             @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs,
             @Value("${artemis.iris.ingestion.retry-claim-lease-minutes:20}") int retryClaimLeaseMinutes,
             @Value("${artemis.iris.ingestion.worker-mode-grace:PT90S}") Duration workerModeGrace, @Value("${artemis.iris.ingestion.max-jobs-per-claim:8}") int maxJobsPerClaim,
-            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
+            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository, Optional<IngestionEventLogApi> ingestionEventLogApi) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
@@ -152,6 +156,7 @@ public class ProcessingStateCallbackService {
         this.workerModeGrace = workerModeGrace;
         this.maxJobsPerClaim = maxJobsPerClaim;
         this.irisLectureUnitSyncStateRepository = irisLectureUnitSyncStateRepository;
+        this.ingestionEventLogApi = ingestionEventLogApi;
     }
 
     private DistributedMap<String, String> getWorkerMap() {
@@ -679,6 +684,7 @@ public class ProcessingStateCallbackService {
             state.setForceReingest(null);
 
             notificationService.notifyWithTranscriptionStatus(state);
+            recordIngestionEvent(api -> api.recordIngested(lectureUnitId, null, "completed after " + state.getRetryCount() + " retries"));
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
@@ -687,6 +693,7 @@ public class ProcessingStateCallbackService {
                 log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
                 return;
             }
+            recordIngestionEvent(api -> api.recordFailed(lectureUnitId, null, errorCode == null ? "no error code reported" : errorCode));
         }
 
         dispatchPendingJobs();
@@ -990,5 +997,18 @@ public class ProcessingStateCallbackService {
 
     /** Internal DTO for parsed transcription checkpoint data. */
     private record TranscriptionCheckpoint(String language, List<LectureTranscriptionSegment> segments, boolean isEnriched) {
+    }
+
+    /**
+     * Records one ingestion outcome in the global-search activity log, when that module is present.
+     * <p>
+     * Optional because the log lives in the global-search module, which is switched off wherever Weaviate
+     * is not configured; ingestion itself runs regardless. The write is best-effort by contract, so this
+     * never affects the run it describes.
+     *
+     * @param recorder what to record, given the API
+     */
+    private void recordIngestionEvent(Consumer<IngestionEventLogApi> recorder) {
+        ingestionEventLogApi.ifPresent(recorder);
     }
 }

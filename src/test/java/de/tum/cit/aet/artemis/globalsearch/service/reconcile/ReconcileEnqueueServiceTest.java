@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionEventLogService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
 class ReconcileEnqueueServiceTest {
@@ -25,8 +26,10 @@ class ReconcileEnqueueServiceTest {
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService = mock(SearchableEntityWeaviateService.class);
 
+    private final IngestionEventLogService ingestionEventLogService = mock(IngestionEventLogService.class);
+
     private final ReconcileEnqueueService enqueueService = new ReconcileEnqueueService(outboxRepository, searchableEntityWeaviateService,
-            new WeaviateReconcileProperties(true, true, true, List.of(COURSE), MAX_DEPTH, 100, 200, 1000, 5, 100, 100, 0.25));
+            new WeaviateReconcileProperties(true, true, true, List.of(COURSE), MAX_DEPTH, 100, 200, 1000, 5, 100, 100, 0.25), ingestionEventLogService);
 
     @Test
     void testCanEnqueueWhileTheQueueIsBelowItsDepthLimit() {

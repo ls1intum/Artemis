@@ -22,8 +22,10 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
+import de.tum.cit.aet.artemis.globalsearch.domain.IngestionEventKind;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 
@@ -87,18 +89,22 @@ public class WeaviateOutboxDispatcher {
 
     private final WeaviateReconcileProperties reconcileProperties;
 
+    private final IngestionEventLogService ingestionEventLogService;
+
     /**
      * Serializes drains on this node so the scheduled tick and the after-commit nudge never overlap.
      */
     private final ReentrantLock drainLock = new ReentrantLock();
 
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
-            SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties, WeaviateReconcileProperties reconcileProperties) {
+            SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties, WeaviateReconcileProperties reconcileProperties,
+            IngestionEventLogService ingestionEventLogService) {
         this.outboxRepository = outboxRepository;
         this.syncStateRepository = syncStateRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.outboxProperties = outboxProperties;
         this.reconcileProperties = reconcileProperties;
+        this.ingestionEventLogService = ingestionEventLogService;
     }
 
     /**
@@ -228,6 +234,23 @@ public class WeaviateOutboxDispatcher {
         collapseSupersededRows(entry);
         refreshSyncLedger(entry, now, writtenContentHash);
         outboxRepository.delete(entry);
+        recordRepairApplied(entry);
+    }
+
+    /**
+     * Closes the loop on a reconcile repair in the admin activity feed: the sweep recorded what it found,
+     * this records that the fix actually landed.
+     * <p>
+     * Only repair work is recorded. A {@code LIVE} row is an ordinary content edit, and logging those would
+     * make this table mirror every change in Artemis. Bulk deletes carry no entity id and are skipped for
+     * the same reason the sync ledger skips them: there is no single entity the event would be about.
+     */
+    private void recordRepairApplied(WeaviateOutboxEntry entry) {
+        if (entry.getOrigin() == WeaviateOutboxOrigin.LIVE || entry.getEntityId() == null) {
+            return;
+        }
+        ingestionEventLogService.record(IngestionEventKind.INDEX_REPAIRED, entry.getEntityType(), entry.getEntityId(), null,
+                entry.getOperation() + " applied after " + entry.getOrigin());
     }
 
     /**
