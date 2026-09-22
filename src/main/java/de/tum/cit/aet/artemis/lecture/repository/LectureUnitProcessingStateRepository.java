@@ -720,6 +720,42 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             @Param("now") ZonedDateTime now);
 
     /**
+     * Activate a push-dispatched claim exactly once: same claim-shape guard and reasoning as
+     * {@link #activateClaimedJob}, for the legacy push dispatch path instead of the pull-based worker claim.
+     * <p>
+     * The dispatching node calls Iris synchronously and only learns the job token once that call returns; while it
+     * is in flight, a content update has nothing to match against ({@code ingestionJobToken} is still null) and can
+     * requeue this same claimed row for the new content. Without this guard, saving the whole detached entity after
+     * the slow call returns would overwrite that requeue with the stale token, fingerprint and phase, silently
+     * losing the current-content job. There is no worker lease to open here (unlike {@link #activateClaimedJob}):
+     * a push-dispatched run's liveness comes from Iris's own heartbeat and checkpoint callbacks, not from an
+     * external worker renewing a lease.
+     *
+     * @param lectureUnitId      the claimed unit
+     * @param phase              the in-flight phase to enter
+     * @param token              the registered Pyris job token
+     * @param contentFingerprint the fingerprint computed at claim time
+     * @param claimedAt          the claim marker observed at claim time (startedAt for an IDLE claim, retryEligibleAt
+     *                               for a retry claim)
+     * @param now                the activation time, recorded as start and last update
+     * @return 1 when the claim was activated, 0 when the row no longer holds this exact claim
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = :phase, ps.startedAt = :now, ps.lastUpdated = :now, ps.errorKey = NULL, ps.retryEligibleAt = NULL,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
+                ps.ingestionJobToken = :token, ps.contentFingerprint = :contentFingerprint
+            WHERE ps.lectureUnit.id = :lectureUnitId
+            AND ps.ingestionJobToken IS NULL
+            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            """)
+    int activatePushDispatch(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
+            @Param("contentFingerprint") String contentFingerprint, @Param("claimedAt") ZonedDateTime claimedAt, @Param("now") ZonedDateTime now);
+
+    /**
      * Mark a claimed unit SKIPPED, but only while it still holds exactly the claim that decided it was not
      * processable: same claim-shape check as {@link #activateClaimedJob}, plus the specific claim marker
      * ({@code claimedAt}, echoed back from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO})

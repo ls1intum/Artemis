@@ -128,6 +128,9 @@ class LectureContentProcessingServiceTest {
         // The atomic terminal-callback claims succeed by default; duplicate-claim tests override these
         when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(1);
         when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), anyInt(), any(), any(), any())).thenReturn(1);
+        // The atomic push-dispatch activation succeeds by default; interleaving tests override these
+        when(processingStateRepository.activatePushDispatch(anyLong(), any(), any(), any(), any(), any())).thenReturn(1);
+        when(processingStateRepository.markSkippedIfStillClaimed(anyLong(), any(), any())).thenReturn(1);
         irisLectureUnitSyncStateRepository = mock(IrisLectureUnitSyncStateRepository.class);
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
                 websocketMessagingService, contentFingerprintService, distributedDataProviderMock(), featureToggleService, 2, 20, Duration.ofSeconds(90), 8,
@@ -252,14 +255,13 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any(), any(), anyBoolean())).thenReturn(TEST_JOB_TOKEN);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
             callbackService.dispatchPendingJobs();
 
-            // Then: Should dispatch as TRANSCRIBING (has video, no completed transcription)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
-            assertThat(testState.getIngestionJobToken()).isEqualTo(TEST_JOB_TOKEN);
+            // Then: Should dispatch as TRANSCRIBING (has video, no completed transcription), committed through the
+            // atomic claim-bound activation rather than a plain save (see activatePushDispatch's own javadoc).
+            verify(processingStateRepository).activatePushDispatch(eq(testUnit.getId()), eq(ProcessingPhase.TRANSCRIBING), eq(TEST_JOB_TOKEN), any(), any(), any());
             verify(irisLectureApi).addLectureUnitToPyrisDB(eq(testUnit), any(), anyBoolean());
         }
 
@@ -274,13 +276,12 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(completedTranscription));
             when(irisLectureApi.addLectureUnitToPyrisDB(any(), any(), anyBoolean())).thenReturn(TEST_JOB_TOKEN);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
             callbackService.dispatchPendingJobs();
 
             // Then: Should dispatch as INGESTING (transcription already done)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(processingStateRepository).activatePushDispatch(eq(testUnit.getId()), eq(ProcessingPhase.INGESTING), eq(TEST_JOB_TOKEN), any(), any(), any());
         }
 
         @Test
@@ -296,13 +297,12 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any(), any(), anyBoolean())).thenReturn(TEST_JOB_TOKEN);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
             callbackService.dispatchPendingJobs();
 
             // Then: Should dispatch as INGESTING (no video to transcribe)
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(processingStateRepository).activatePushDispatch(eq(testUnit.getId()), eq(ProcessingPhase.INGESTING), eq(TEST_JOB_TOKEN), any(), any(), any());
         }
 
         @Test
@@ -322,11 +322,34 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any(), any(), anyBoolean())).thenReturn(null);
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             callbackService.dispatchPendingJobs();
 
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.SKIPPED);
+            verify(processingStateRepository).markSkippedIfStillClaimed(eq(testUnit.getId()), any(), any());
+        }
+
+        @Test
+        void shouldDropTheStalePushActivationWhenAContentUpdateRequeuesTheSameClaimDuringTheInFlightPyrisCall() {
+            // The claim marker (startedAt) observed at claim time. ingestionJobToken is still null at this point --
+            // exactly the window in which a concurrent content update has nothing to match against and can requeue
+            // this same claimed row while the Pyris call below is in flight.
+            ZonedDateTime claimedAt = ZonedDateTime.now();
+            testState.setStartedAt(claimedAt);
+
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(0L);
+            when(processingStateRepository.findIdleForDispatch(any(), anyInt())).thenReturn(List.of(testState));
+            when(processingStateRepository.claimIdleForDispatch(eq(PROCESSING_STATE_ID), any())).thenReturn(1);
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            // Simulates the interleaving directly: by the time the slow Pyris call returns, a concurrent content
+            // update has already requeued this row under a new claim marker, so the atomic activation below no
+            // longer matches and must report a loss instead of applying the stale result.
+            when(irisLectureApi.addLectureUnitToPyrisDB(any(), any(), anyBoolean())).thenReturn(TEST_JOB_TOKEN);
+            when(processingStateRepository.activatePushDispatch(eq(testUnit.getId()), any(), any(), any(), eq(claimedAt), any())).thenReturn(0);
+
+            callbackService.dispatchPendingJobs();
+
+            // The stale outcome must not be persisted through any other path either.
+            verify(processingStateRepository, never()).save(any());
         }
 
         @Test
