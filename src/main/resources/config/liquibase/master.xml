@@ -70,7 +70,38 @@
     <include file="classpath:config/liquibase/changelog/20260907100622_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20260910120000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20260910212533_changelog.xml" relativeToChangelogFile="false"/>
+    <!--
+        Four sections, in this order. See documentation/docs/developer/guidelines/database-migration-consolidation.mdx.
+
+        history/    Every changelog a baseline has already folded. An upgrade has these recorded already.
+                    A fresh installation normally has them recorded too, without executing them, by the
+                    changelog-sync ArtemisSpringLiquibase runs first.
+        baseline/   The schema as of the last cut, in one file. It creates everything on an empty
+                    database and marks itself as ran on a database that already has that schema.
+        changelog/  Migrations written since the last cut. These run everywhere. New changelogs go here.
+        data/       Seed data. Evaluated on every installation and never folded, because a folded
+                    changeset is recorded rather than executed and its rows would simply be missing.
+
+        The history comes first so that this changelog is correct on its own. Applied by a plain
+        SpringLiquibase to an empty database (which is what test harnesses that build their own do,
+        Zonky's embedded-database provider among them) the history executes, and the baseline then
+        finds the schema already there and marks itself as ran. Same schema, just the slower way round.
+        That makes the changelog-sync an optimisation rather than something correctness depends on.
+    -->
+
+    <include file="classpath:config/liquibase/history/master.xml" relativeToChangelogFile="false"/>
+
+    <include file="classpath:config/liquibase/baseline/v10_initial_schema.xml" relativeToChangelogFile="false"/>
+
     <!-- NOTE: please use the format "YYYYMMDDhhmmss_changelog.xml", i.e. year month day hour minutes seconds and not something else! -->
     <!-- we should also stay in a chronological order! -->
     <!-- you can use the command "date '+%Y%m%d%H%M%S'" to get the current date and time in the correct format -->
+    <include file="classpath:config/liquibase/changelog/20260918135254_changelog.xml" relativeToChangelogFile="false"/>
+
+    <include file="classpath:config/liquibase/changelog/20260918180042_changelog.xml" relativeToChangelogFile="false"/>
+
+    <include file="classpath:config/liquibase/data/20260304120000_e2e_seed_data.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/data/20260811231613_e2e_user_course_role.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20260830210000_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20260921145937_changelog.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

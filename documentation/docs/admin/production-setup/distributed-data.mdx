@@ -26,7 +26,8 @@ artemis:distributed-data-schema:release
 ```
 
 The first Artemis release with this mechanism treats existing unversioned data as schema version `0` and migrates it
-to schema version `1` during startup.
+to schema version `1` during startup. A release declaring a later schema runs every step in between during the same
+startup, so a store that has never been migrated goes from `0` through `1` to the version the release expects.
 
 ## Prepare an upgrade
 
@@ -52,7 +53,8 @@ node first makes failures and migration progress easier to diagnose.
 
 ## What the migration preserves
 
-The initial schema `0` to `1` migration moves data that cannot be reconstructed safely:
+Every migration moves the data that cannot be reconstructed safely. The initial schema `0` to `1` migration carries
+these structures:
 
 | Structure | Why it is preserved |
 |---|---|
@@ -78,6 +80,8 @@ Distributed store predates schema versions, treating its contents as version 0
 Migrating distributed data from schema version 0 to 1
 Distributed data is now at schema version 1
 ```
+
+A store that is already at a numbered version logs only the steps that are still missing.
 
 Read the metadata with `redis-cli` or the equivalent `valkey-cli` commands:
 

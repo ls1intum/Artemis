@@ -2,7 +2,7 @@
     "name": "guidelines",
     "version": "0.0.0",
     "private": true,
-    "packageManager": "pnpm@11.25.0",
+    "packageManager": "pnpm@12.5.1",
     "scripts": {
         "build": "docusaurus build",
         "clear": "docusaurus clear",
@@ -31,8 +31,8 @@
         "@mdx-js/react": "3.1.1",
         "clsx": "2.1.1",
         "prism-react-renderer": "2.4.1",
-        "react": "19.2.8",
-        "react-dom": "19.2.8",
+        "react": "19.3.0",
+        "react-dom": "19.3.0",
         "unified": "11.0.5",
         "unist-util-visit": "5.1.0"
     },
@@ -43,12 +43,12 @@
         "@eslint/js": "10.0.1",
         "@types/mdast": "4.0.4",
         "@types/prop-types": "15.7.15",
-        "@types/react": "19.2.18",
-        "@typescript-eslint/eslint-plugin": "8.69.0",
-        "@typescript-eslint/parser": "8.69.0",
-        "baseline-browser-mapping": "2.11.21",
+        "@types/react": "19.3.0",
+        "@typescript-eslint/eslint-plugin": "8.70.0",
+        "@typescript-eslint/parser": "8.70.0",
+        "baseline-browser-mapping": "2.11.25",
         "eslint": "10.10.0",
-        "prettier": "3.9.6",
+        "prettier": "3.9.8",
         "typescript": "6.0.3"
     },
     "browserslist": {

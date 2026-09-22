@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,9 +24,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -35,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -62,10 +61,12 @@ public class LectureUnitService {
 
     private final Optional<LectureContentProcessingApi> contentProcessingApi;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi,
             Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<LectureContentProcessingApi> contentProcessingApi) {
+            Optional<LectureContentProcessingApi> contentProcessingApi, ApplicationEventPublisher applicationEventPublisher) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -75,6 +76,16 @@ public class LectureUnitService {
         this.competencyRepositoryApi = competencyRepositoryApi;
         this.competencyRelationApi = competencyRelationApi;
         this.contentProcessingApi = contentProcessingApi;
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
+
+    /**
+     * Publishes an event after learning-relevant lecture unit content has changed.
+     *
+     * @param lectureUnit the created or updated lecture unit
+     */
+    public void publishContentChangedEvent(LectureUnit lectureUnit) {
+        applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(lectureUnit));
     }
 
     /**
@@ -167,9 +178,10 @@ public class LectureUnitService {
             // Processing state deletion is handled by DB cascade when lecture unit is deleted
             contentProcessingApi.ifPresent(api -> api.handleUnitDeletion(attachmentVideoUnit));
 
-            if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
-                fileService.schedulePathForDeletion(
-                        FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT), 5);
+            if (attachmentVideoUnit.getAttachment() != null) {
+                // Empty for an attachment that links to a document hosted elsewhere: there is nothing of ours to delete, and the filename such a link ends in may well be one
+                // an unrelated attachment stores.
+                attachmentVideoUnit.getAttachment().fileLocation().ifPresent(location -> fileService.schedulePathForDeletion(location.path(), 5));
             }
         }
 

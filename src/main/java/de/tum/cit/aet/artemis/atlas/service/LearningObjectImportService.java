@@ -248,8 +248,7 @@ public class LearningObjectImportService {
             programmingExercise.setGradingCriteria(gradingCriteria);
 
             ProgrammingExercise newExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
-                            programmingExercise.getId());
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(programmingExercise.getId());
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(newExercise, programmingExerciseRepository);
             newExercise.setCourse(course);
             newExercise.forceNewProjectKey();

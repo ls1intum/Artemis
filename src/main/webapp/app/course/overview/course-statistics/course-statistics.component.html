@@ -283,9 +283,7 @@
                 </div>
             </div>
         } @else {
-            <div class="row">
-                <div class="col mt-3" jhiTranslate="artemisApp.courseOverview.statistics.noStatistics"></div>
-            </div>
+            <tum-ui-empty-state class="mt-5" [icon]="faChartColumn" [title]="'artemisApp.courseOverview.statistics.noStatistics' | artemisTranslate" />
         }
     </div>
 }

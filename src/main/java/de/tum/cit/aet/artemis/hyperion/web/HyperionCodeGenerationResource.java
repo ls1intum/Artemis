@@ -179,10 +179,6 @@ public class HyperionCodeGenerationResource {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             throw new BadRequestAlertException("Code generation is only supported for Java exercises", ENTITY_NAME, "unsupportedProgrammingLanguage");
         }
-
-        if (exercise.getBuildConfig() == null) {
-            throw new BadRequestAlertException("Exercise must have build configuration for code generation", ENTITY_NAME, "missingBuildConfig");
-        }
     }
 
     /**

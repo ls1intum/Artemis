@@ -314,9 +314,10 @@ public class SecurityConfiguration {
             //  1. Every state-changing endpoint uses an unsafe method. Lax withholds the cookie on cross-site POST,
             //     PUT and DELETE, and on cross-site subresource GETs — but it SENDS it on a top-level GET navigation,
             //     which an attacker can cause with nothing more than a link. A state-changing GET is therefore
-            //     forgeable. Some already exist: `pullChanges` is mapped with @GetMapping in TestRepositoryResource
-            //     and AuxiliaryRepositoryResource while calling RepositoryService.pullChanges. Those want to become
-            //     POST; until they do, they are not covered by the reasoning here.
+            //     forgeable, and adding one silently removes this protection for that endpoint. The three that used
+            //     to break this rule — `pullChanges` in TestRepositoryResource, AuxiliaryRepositoryResource and
+            //     RepositoryProgrammingExerciseParticipationResource, all reaching RepositoryService.pullChanges —
+            //     are POST as of #13824. A GET that writes anything is a bug in this design, not a style preference.
             //  2. Every same-SITE origin is trusted. SameSite is evaluated per site — registrable domain plus scheme —
             //     and not per origin, so a page on any other origin of the same site can send this cookie: a sibling
             //     subdomain of the deployment, or anything else served under it. So the requirement is not merely that
@@ -387,7 +388,6 @@ public class SecurityConfiguration {
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
-                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll() // Deprecated, to be removed Oct 2026
                     .requestMatchers("/api/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth

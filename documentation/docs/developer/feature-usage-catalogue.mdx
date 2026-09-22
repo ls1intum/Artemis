@@ -18,7 +18,7 @@ A feature is usually one controller. Where several controllers are one thing to 
 which is why the controllers are listed. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 28 modules, 88 areas and 181 features.
+Currently 28 modules, 88 areas and 184 features.
 
 ## account
 
@@ -26,7 +26,7 @@ Currently 28 modules, 88 areas and 181 features.
 
 * **access-tokens** (`TokenResource`)
 * **passkeys** (`PasskeyResource`)
-* **self-service** (`AccountLegacyResource`, `AccountResource`)
+* **self-service** (`AccountResource`)
 
 ### organizations
 
@@ -142,7 +142,7 @@ Currently 28 modules, 88 areas and 181 features.
 
 ### calendar
 
-* **calendar-events** (`CalendarResource`, `LegacyCalendarResource`)
+* **calendar-events** (`CalendarResource`)
 
 ## communication
 
@@ -207,7 +207,7 @@ Currently 28 modules, 88 areas and 181 features.
 ### management
 
 * **archive** (`CourseArchiveResource`)
-* **course-management** (`CourseManagementResource`, `CourseUpdateResource`)
+* **course-management** (`CourseAthenaConfigResource`, `CourseManagementResource`, `CourseUpdateResource`)
 * **course-requests** (`CourseRequestResource`)
 * **material-import** (`CourseMaterialImportResource`)
 
@@ -292,6 +292,7 @@ Currently 28 modules, 88 areas and 181 features.
 * **faq-rewrite** (`HyperionFaqResource`)
 * **problem-statement** (`HyperionProblemStatementResource`)
 * **quiz-generation** (`HyperionQuizQuestionGenerationResource`)
+* **variant-generation** (`HyperionExerciseVariantResource`)
 
 ## iris
 
@@ -300,6 +301,7 @@ Currently 28 modules, 88 areas and 181 features.
 * **availability** (`IrisResource`)
 * **chat-sessions** (`IrisChatSessionResource`)
 * **messages** (`IrisMessageResource`)
+* **struggle-intervention** (`IrisStruggleInterventionResource`)
 * **tutor-suggestions** (`IrisTutorSuggestionSessionResource`)
 
 ### configuration
@@ -439,6 +441,7 @@ Currently 28 modules, 88 areas and 181 features.
 ### configuration
 
 * **auxiliary-repositories** (`AuxiliaryRepositoryResource`)
+* **build-plan** (`ProgrammingExerciseBuildConfigResource`)
 * **grading** (`ProgrammingExerciseGradingResource`)
 * **re-evaluate-results** (`ProgrammingExerciseGradingResource`)
 * **static-code-analysis** (`StaticCodeAnalysisResource`)

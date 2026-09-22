@@ -142,6 +142,9 @@ describe('IrisBaseChatbotComponent', () => {
                 Object.defineProperty(chatService, 'initialLoadComplete$', { value: of(true), configurable: true });
                 httpService = TestBed.inject(IrisChatHttpService);
                 wsMock = TestBed.inject(IrisWebsocketService);
+                // The chat service subscribes to the per-session command channel alongside the message channel;
+                // give it a default subscribeable stream so session loads do not throw in tests that don't care.
+                vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValue(of());
                 accountService = TestBed.inject(AccountService);
                 mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
@@ -164,6 +167,16 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should hide the context selector when context selection is not available', () => {
+        expect(fixture.nativeElement.querySelector('jhi-context-selection')).toBeTruthy();
+
+        fixture.componentRef.setInput('isContextSelectionAvailable', false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-context-selection')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.textarea-controls--send-only')).toBeTruthy();
     });
 
     it('should set userAccepted to CLOUD_AI if user has accepted the external LLM usage policy', () => {

@@ -238,17 +238,18 @@
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
             "athenaConfig": {
-                "aiFeedbackEnabled": {
-                    "label": "KI-gestütztes Feedback für Aufgaben aktiviert",
-                    "tooltip": "Wenn aktiviert, können KI-Feedbackfunktionen von Athena für diesen Kurs genutzt werden."
+                "title": "Athena KI-Feedback",
+                "formativeFeedbackEnabled": {
+                    "label": "Formative Feedbackanfragen",
+                    "tooltip": "Wenn aktiviert, können Studierende vor dem Abgabedatum vorläufiges KI-Feedback von Athena anfordern.",
+                    "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihren Abgaben anfordern.",
+                    "disabledHint": "Studierende können in diesem Kurs kein vorläufiges KI-Feedback anfordern."
                 },
                 "gradingFeedbackEnabled": {
-                    "label": "Bewertungsfeedback-Vorschläge aktiviert",
-                    "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Einreichungen für Text-, Programmier- und Modellierungsaufgaben vor."
-                },
-                "formativeFeedbackEnabled": {
-                    "label": "Formatives Feedback-Anfragen aktiviert",
-                    "tooltip": "Wenn aktiviert, können Studierende vor der Einreichungsfrist vorläufiges KI-Feedback von Athena anfordern."
+                    "label": "Feedbackvorschläge zur Bewertung",
+                    "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Abgaben von Text-, Programmier- und Modellierungsaufgaben vor.",
+                    "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",
+                    "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge von Athena."
                 }
             },
             "autoOrchestration": {
@@ -359,6 +360,9 @@
                 "endDate": {
                     "invalid": "Muss nach dem Startdatum des Kurses liegen"
                 },
+                "semester": {
+                    "required": "Bitte ein Semester auswählen."
+                },
                 "enrollmentStartDate": {
                     "invalid": "Kann nicht nach dem Startdatum des Kurses liegen und muss vor dem Einschreibungsende liegen"
                 },
@@ -439,6 +443,9 @@
                     "saving": "Speichern..."
                 },
                 "validation": {
+                    "startDateRequired": "Bitte lege ein Startdatum für den Kurs fest.",
+                    "endDateRequired": "Bitte lege ein Enddatum für den Kurs fest.",
+                    "semesterRequired": "Bitte wähle ein Semester für den Kurs aus.",
                     "startDateBeforeEndDate": "Das Startdatum muss vor dem Enddatum liegen.",
                     "enrollmentStartDateBeforeEndDate": "Das Einschreibungsstartdatum muss vor dem Einschreibungsenddatum liegen.",
                     "enrollmentRequiresCourseDates": "Einschreibungsdaten erfordern ein Start- und Enddatum des Kurses. Bitte im Schritt Allgemein festlegen.",

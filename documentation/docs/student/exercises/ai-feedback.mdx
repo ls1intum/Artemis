@@ -1,0 +1,100 @@
+---
+id: ai-feedback
+title: AI Feedback on a Draft
+sidebar_label: AI Feedback
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import requestEditor from './assets/ai-feedback/automatic-feedback-request-editor.png';
+import requestAlert from './assets/ai-feedback/automatic-feedback-request-alert.png';
+import requestScore from './assets/ai-feedback/automatic-feedback-request-score.png';
+import viewDetailed from './assets/ai-feedback/automatic-feedback-view-detailed.png';
+import requestHistory from './assets/ai-feedback/automatic-feedback-history.png';
+
+Where your instructor has switched it on, you can ask Artemis for feedback on a draft before the due date, without
+waiting for a tutor to get to it. You can then act on it and submit again.
+
+**It is not your mark.** The score it shows is provisional, it does not count towards your grade, and a person marks
+your work afterwards regardless. Artemis says so wherever this feedback appears.
+
+## Asking for It
+
+**Request AI feedback** sits beside the exercise, on the exercise page and inside the editor. Submit your work
+first, then press it.
+
+<Image src={requestEditor} alt="The Request AI feedback button beside a modeling exercise in the editor" size={ImageSize.large} caption="Asking for feedback on a submitted draft" />
+
+The button only appears when three things are true: your instructor has turned the feature on for the course, your
+administrator has an AI service configured, and the exercise is not part of an exam. If you cannot see it, one of
+those is missing — there is nothing to switch on at your end.
+
+Which exercises offer it depends on the type:
+
+| Exercise type | Offers AI feedback |
+|---|---|
+| Text | Yes |
+| Modeling | Yes |
+| Programming | Only where the exercise is assessed semi-automatically, meaning a person marks it as well as the tests |
+| Quiz, file upload | No |
+
+## What Comes Back
+
+The request is not instant. Artemis takes a moment, and tells you when the feedback is ready rather than making you
+watch for it.
+
+<Image src={requestAlert} alt="A notification at the top of the page saying the feedback is ready" size={ImageSize.large} caption="Artemis tells you when the feedback has arrived" />
+
+A provisional score appears with your submission.
+
+<Image src={requestScore} alt="A preliminary score shown in the corner of the exercise page" size={ImageSize.large} caption="The provisional score — not your grade" />
+
+Opening it shows the feedback itself, attached to the parts of your work it is about. On a modeling exercise that
+means comments on individual elements of the diagram; on a text exercise, on passages of your answer.
+
+<Image src={viewDetailed} alt="Detailed feedback shown inline against elements of a diagram" size={ImageSize.large} caption="Feedback attached to what it refers to" />
+
+Every request is kept, so you can compare what you were told earlier against what you were told after your latest
+changes.
+
+<Image src={requestHistory} alt="The submission history, listing each feedback request" size={ImageSize.large} caption="Earlier requests stay available" />
+
+## What You Get and What You Do Not
+
+**Ten requests per exercise.** After that, **Request AI feedback** stops working for that exercise and Artemis says
+you have reached the maximum.
+
+**One request per submission**, on text and modeling exercises. Asking twice for the same submission is refused —
+change something and submit again first. On a programming exercise the equivalent is a push: the feedback is about
+the code Artemis has.
+
+**Nothing after the due date.** The point of this feedback is to act on it while you still can, so the button stops
+working once the deadline passes.
+
+**No empty submissions.** There has to be something to give feedback on.
+
+<Callout variant={CalloutVariant.warning}>
+
+  You cannot complain about AI feedback. Complaints are about the mark a person gave you, and this is not that — see
+  [Assessment and Feedback](/student/assessment-grades/assessment#complaints). If the AI feedback looks wrong, treat
+  it as one opinion on a draft and use your own judgement.
+
+</Callout>
+
+## Making It Read the Way You Want
+
+How detailed and how formal this feedback is are yours to set, under **User Settings → Learner Profile**. An
+onboarding wizard shows you examples from each end of both scales so the choice is not abstract, and you can change
+it whenever you like.
+
+See [Adaptive Learning](/student/progress-analytics/adaptive-learning#feedback-learner-profile) for what each
+setting does.
+
+## Related
+
+- [Assessment and Feedback](/student/assessment-grades/assessment) — how the mark that counts is produced
+- [Text Exercises](/student/exercises/text-exercise) and [Modeling Exercises](/student/exercises/modeling-exercise)
+  — the exercise types that offer it most fully
+- [Iris](/student/learning-content/iris) — the AI tutor, which answers questions rather than marking a draft

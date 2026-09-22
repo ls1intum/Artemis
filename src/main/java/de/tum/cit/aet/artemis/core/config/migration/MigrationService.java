@@ -57,6 +57,9 @@ public class MigrationService {
     /**
      * First checks the integrity of the passed changelog, then executes not yet executed entries.
      * After each execution it marks the entry as executed. All entries of one startup run get the same hash assigned.
+     * <p>
+     * An entry that reports itself incomplete with a {@link MigrationIncompleteException} is not marked as executed, so it is offered again on the next start; see that
+     * exception for why that is not the same as failing the start.
      *
      * @param event         Specifies when this method gets called and provides the event with all application data
      * @param entryClassMap The changelog to be executed
@@ -89,7 +92,16 @@ public class MigrationService {
             for (Map.Entry<Integer, MigrationEntry> integerClassEntry : migrationEntryMap.entrySet()) {
                 MigrationEntry entry = integerClassEntry.getValue();
                 log.debug("Executing entry {}", entry.date());
-                entry.execute();
+                try {
+                    entry.execute();
+                }
+                catch (MigrationIncompleteException exception) {
+                    // The entry ran to the end and told us it did not finish. Its changelog row is deliberately not written, so it is offered again on the next start; only an
+                    // idempotent entry is allowed to report this. Startup continues, because this listener runs inside SpringApplication.run and an exception escaping it would
+                    // take the node down on every start for as long as the condition lasts. This line is what an operator has to act on.
+                    log.error("Migration entry {} did not complete and will be attempted again on the next start: {}", entry.date(), exception.getMessage());
+                    continue;
+                }
                 MigrationChangelog newChangelog = new MigrationChangelog();
                 newChangelog.setAuthor(entry.author());
                 newChangelog.setDateExecuted(ZonedDateTime.now());

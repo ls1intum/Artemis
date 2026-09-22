@@ -21,9 +21,8 @@ import org.springframework.data.domain.Sort;
  * <p>
  * The paginated user search must impose a deterministic order so its LIMIT/OFFSET pages form a stable, non-overlapping partition (issue #13069). This cannot be reproduced through
  * the database in a small-table integration test (a freshly populated table happens to return its rows in id order regardless of whether an {@code ORDER BY} is present), so the
- * guarantee is verified here at the boundary: the default method must hand the query a {@link Pageable} sorted by id ascending. Because the fix lives in the shared repository
- * method,
- * it covers every caller (exam and organization registration) at once.
+ * guarantee is verified here at the boundary: the default method must hand the query a {@link Pageable} whose order ends in the id, so that rows the order cannot tell apart
+ * still have a fixed position. Because the fix lives in the shared repository method, it covers every caller (exam and organization registration) at once.
  */
 class UserRepositoryStableSearchSortUnitTest {
 
@@ -40,7 +39,7 @@ class UserRepositoryStableSearchSortUnitTest {
     }
 
     @Test
-    void searchKeepsAnExplicitCallerSort() {
+    void searchAppendsTheIdToAnExplicitCallerSort() {
         UserRepository repository = mock(UserRepository.class, CALLS_REAL_METHODS);
         doReturn(Page.empty()).when(repository).findAllByLoginOrNameOrEmailOrRegistrationNumber(any(), anyString());
         Sort explicitSort = Sort.by(Sort.Direction.DESC, "login");
@@ -49,6 +48,7 @@ class UserRepositoryStableSearchSortUnitTest {
 
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(repository).findAllByLoginOrNameOrEmailOrRegistrationNumber(pageableCaptor.capture(), anyString());
-        assertThat(pageableCaptor.getValue().getSort()).isEqualTo(explicitSort);
+        // The caller's order stays in front, so what it asked to sort by still decides the page; the id only settles rows that order leaves equal.
+        assertThat(pageableCaptor.getValue().getSort()).isEqualTo(explicitSort.and(Sort.by(Sort.Direction.ASC, "id")));
     }
 }

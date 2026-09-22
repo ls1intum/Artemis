@@ -4,9 +4,10 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.MAX_D
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.MAX_TITLE_LENGTH;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.appendAction;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.isBlank;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationErrorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.parseTaxonomyOrThrow;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveWriteSlot;
@@ -29,7 +30,7 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -53,7 +54,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class CreatorToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(CreatorToolsService.class);
@@ -98,29 +99,30 @@ public class CreatorToolsService {
      */
     @Tool(description = "Create a new competency in the current course. Returns the created competency id and title as JSON. "
             + "Taxonomy must be one of REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE. "
-            + "Call listCompetencyIndex again afterwards so subsequent actions can reference the new id.")
+            + "Use the returned competency id for subsequent references in this batch; the main orchestrator refreshes the competency index after the worker finishes.")
     public String createCompetency(@ToolParam(description = "concise competency title") String title,
             @ToolParam(description = "one-to-three sentence description of what a student who masters this competency can do") String description,
             @ToolParam(description = "Bloom taxonomy level: REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, or CREATE") String taxonomy,
             @ToolParam(description = "one-sentence reason this competency needs to exist, referencing the exercise(s) it will cover; shown to the instructor in the audit log") String justification,
             ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextError(objectMapper, toolContext);
         }
         if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper);
+            return writeQuotaError(objectMapper, toolContext);
         }
         if (isBlank(title)) {
-            return errorJson(objectMapper, "title is required.");
+            return mutationErrorJson(objectMapper, "title is required.", toolContext);
         }
         if (title.length() > MAX_TITLE_LENGTH) {
-            return errorJson(objectMapper, "title must be at most " + MAX_TITLE_LENGTH + " characters.");
+            return mutationErrorJson(objectMapper, "title must be at most " + MAX_TITLE_LENGTH + " characters.", toolContext);
         }
         if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) {
-            return errorJson(objectMapper, "description must be at most " + MAX_DESCRIPTION_LENGTH + " characters.");
+            return mutationErrorJson(objectMapper, "description must be at most " + MAX_DESCRIPTION_LENGTH + " characters.", toolContext);
         }
-        String justificationError = validateJustification(objectMapper, justification);
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
         if (justificationError != null) {
             return justificationError;
         }
@@ -129,11 +131,11 @@ public class CreatorToolsService {
             parsedTaxonomy = parseTaxonomyOrThrow(taxonomy);
         }
         catch (IllegalArgumentException ex) {
-            return errorJson(objectMapper, ex.getMessage());
+            return mutationErrorJson(objectMapper, ex.getMessage(), toolContext);
         }
         Optional<Course> courseOpt = courseRepository.findById(courseId);
         if (courseOpt.isEmpty()) {
-            return errorJson(objectMapper, "Course " + courseId + " not found.");
+            return mutationErrorJson(objectMapper, "Course " + courseId + " not found.", toolContext);
         }
         Course course = courseOpt.get();
         Competency competency = new Competency(title.trim(), description == null ? "" : description.trim(), null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, parsedTaxonomy,
@@ -143,7 +145,7 @@ public class CreatorToolsService {
             competencyValidator.checkForCreation(competency);
         }
         catch (BadRequestAlertException ex) {
-            return errorJson(objectMapper, ex.getMessage());
+            return mutationErrorJson(objectMapper, ex.getMessage(), toolContext);
         }
         List<Competency> created;
         try {
@@ -151,7 +153,7 @@ public class CreatorToolsService {
         }
         catch (DataAccessException ex) {
             log.warn("createCompetency failed for course {}: {}", courseId, ex.getMessage());
-            return errorJson(objectMapper, "Failed to create competency.");
+            return mutationErrorJson(objectMapper, "Failed to create competency.", toolContext);
         }
         Competency persisted = created.get(0);
         String detail = "Created competency " + persisted.getTitle() + " (" + parsedTaxonomy.name() + ").";

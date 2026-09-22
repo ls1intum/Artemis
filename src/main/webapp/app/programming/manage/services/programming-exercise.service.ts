@@ -386,10 +386,10 @@ export class ProgrammingExerciseService {
     /**
      * Deletes the programming exercise with the corresponding programming exercise Id
      * @param programmingExerciseId of the programming exercise to delete
-     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
-     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
+     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
+     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans?: boolean, deleteBaseReposBuildPlans?: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
             params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());

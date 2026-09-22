@@ -292,8 +292,11 @@ public class LectureUtilService {
             // we have to set a dummy value here, as null is not allowed. The correct value is set below.
             slide.setSlideImagePath("dummy");
             slide = slideRepository.save(slide);
+            // The slide number, not the slide id: that is the directory SlideSplitterService writes to and the one
+            // FileSystemLocation.Slide resolves. Using the id happens to coincide while ids start at one, which made
+            // this helper order dependent and let a rollback assertion pass without ever finding a file.
             Path slidePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath()
-                    .resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", slide.getId().toString(), testFileName));
+                    .resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()), testFileName));
             try {
                 FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), slidePath.toFile());
             }

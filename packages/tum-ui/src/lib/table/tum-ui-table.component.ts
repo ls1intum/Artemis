@@ -55,6 +55,8 @@ export class TumUiTableComponent<T> {
     readonly loading = input(false, { transform: booleanAttribute });
     /** Optional action template receiving the row as its implicit value. */
     readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
+    /** Marks the rows that f.e. concern the current reader */
+    readonly rowHighlighted = input<((row: T) => boolean) | undefined>(undefined);
 
     /** Identity function forwarded to the CDK table. */
     readonly trackBy = input<TrackByFunction<T> | undefined>(undefined);
@@ -155,6 +157,15 @@ export class TumUiTableComponent<T> {
 
     protected columnVisibilityClasses(col: ColumnDef<T>): string {
         return col.hideBelow ? HIDE_BELOW_CLASSES[col.hideBelow] : '';
+    }
+
+    /**
+     * A header that cannot wrap is a floor the column can never go below, so a long one costs its full width in every
+     * layout however little the cells under it hold. `wrapHeader` trades a two-line heading for that width.
+     */
+    protected headerCellClasses(col: ColumnDef<T>): string {
+        const whitespace = col.wrapHeader ? '' : 'tum:whitespace-nowrap';
+        return `${this.columnVisibilityClasses(col)} ${whitespace}`.trim();
     }
 
     protected ariaSortFor(col: ColumnDef<T>): 'ascending' | 'descending' | 'none' | undefined {

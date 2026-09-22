@@ -4,11 +4,16 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belon
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.lectureUnitBelongsToCourse;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerRead;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -22,7 +27,7 @@ import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -32,6 +37,8 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Read-only orchestrator tools that let the LLM inspect a single competency or an exercise's content.
@@ -44,7 +51,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class OrchestratorReadToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(OrchestratorReadToolsService.class);
@@ -55,7 +62,7 @@ public class OrchestratorReadToolsService {
      * oversized exercise (e.g. a quiz whose assembled questions + answers are large) cannot inflate
      * per-call tokens now that this tool extracts real content for every exercise type.
      */
-    private static final int MAX_EXERCISE_CONTENT_LENGTH = 8_000;
+    private static final int MAX_EXERCISE_CONTENT_LENGTH = 16_000;
 
     /** Cap on the title returned by {@link #getExerciseContent}; matches the batch path's {@code EXERCISE_TITLE_MAX}. */
     private static final int MAX_EXERCISE_TITLE_LENGTH = 200;
@@ -68,20 +75,24 @@ public class OrchestratorReadToolsService {
 
     private final ContentExtractionService contentExtractionService;
 
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
+
     /**
      * Creates the read tools service.
      *
      * @param objectMapper               JSON serialiser for tool responses
      * @param courseCompetencyRepository repository for competency lookups
      * @param exerciseRepository         repository for exercise lookups
-     * @param contentExtractionService   service extracting learning-relevant exercise content
+     * @param contentExtractionService   service extracting learning-relevant content
+     * @param lectureUnitRepositoryApi   optional lecture module API for lecture-unit lookups (absent when lectures are disabled)
      */
     public OrchestratorReadToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository,
-            ContentExtractionService contentExtractionService) {
+            ContentExtractionService contentExtractionService, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.exerciseRepository = exerciseRepository;
         this.contentExtractionService = contentExtractionService;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
     /**
@@ -94,6 +105,7 @@ public class OrchestratorReadToolsService {
     @Tool(description = "Get the full details (description, soft due date, mastery threshold, optional flag, and linked exercises/lecture units with their ids and types; "
             + "each exercise ref also carries its current link weight — 1.0 / 0.5 / 0.3) for a single competency in the current course.")
     public String getCompetencyDetails(@ToolParam(description = "id of the competency to inspect") Long competencyId, ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
@@ -109,7 +121,9 @@ public class OrchestratorReadToolsService {
         if (!belongsToCourse(competency, courseId)) {
             return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
         }
-        return toJson(objectMapper, toDetail(competency));
+        CompetencyDetailDTO detail = toDetail(competency);
+        markWorkerRead(toolContext);
+        return toJson(objectMapper, detail);
     }
 
     /**
@@ -122,8 +136,9 @@ public class OrchestratorReadToolsService {
     @Tool(description = "Extract the learning-relevant content for an exercise that belongs to the current course. Returns a title, the learning text, and metadata. "
             + "For programming, text, modeling and file-upload exercises the learning text is the problem statement (plus example solution where available); for quizzes "
             + "it is the assembled questions with their correct answers/solutions. Metadata always carries the exercise type and, when set, difficulty / maxPoints "
-            + "(plus type-specific keys such as questionCount for quizzes). The content is extracted fresh on every call, so don't call this tool repeatedly for the same exercise id.")
+            + "(plus type-specific keys such as questionCount for quizzes). Autonomous runs reuse content within the current invocation; mapping and competency reads remain fresh. Avoid duplicate reads.")
     public String getExerciseContent(@ToolParam(description = "id of the exercise whose content should be extracted") Long exerciseId, ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
             return missingCourseContextError(objectMapper);
@@ -145,17 +160,63 @@ public class OrchestratorReadToolsService {
             // Skip the LLM flavor-strip on this read path: it costs an extra model round-trip per call, so a repeated
             // lookup would burn tokens on the strip model. The raw problem statement is complete enough for the
             // orchestrator to judge fit; the batch's system prompt already carries the stripped versions.
-            ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise, false);
+            ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "exercise:" + exerciseId, () -> contentExtractionService.extractContent(exercise, false));
             // Neutralize prompt-injection fences and cap length before this instructor-authored content re-enters the
             // model as a tool result — the same hardening the batch path applies via CompetencyOrchestrationService.sanitizeForPrompt.
             String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
             String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
-            return toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, extracted.metadata()));
+            ExtractedContentDTO safeContent = new ExtractedContentDTO(safeTitle, safeText, extracted.metadata());
+            markWorkerRead(toolContext);
+            return toJson(objectMapper, safeContent);
         }
         catch (RuntimeException ex) {
             // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.
             log.warn("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
             return errorJson(objectMapper, "Failed to extract content for exercise " + exerciseId + ".");
+        }
+    }
+
+    /**
+     * LLM tool: extracts learning-relevant content for a lecture unit in the current course as JSON.
+     * Exercise-backed lecture units remain owned by the exercise orchestration path.
+     *
+     * @param lectureUnitId id to extract
+     * @param toolContext   carries the current course id
+     * @return the JSON-serialized content, or a JSON error
+     */
+    @Tool(description = "Extract the learning-relevant content for a lecture unit that belongs to the current course. Returns a title, learning text, and metadata. "
+            + "Text units expose their content; online units expose their description and source metadata; attachment/video units expose their description and file/video metadata. "
+            + "A blank attachment/video description means there is no extractable learning text. Exercise-backed lecture units are not supported here; inspect their exercise instead.")
+    public String getLectureUnitContent(@ToolParam(description = "id of the lecture unit whose content should be extracted") Long lectureUnitId, ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
+        Long courseId = courseIdFromContext(toolContext);
+        if (courseId == null) {
+            return missingCourseContextError(objectMapper);
+        }
+        if (lectureUnitId == null) {
+            return errorJson(objectMapper, "lectureUnitId is required.");
+        }
+        if (lectureUnitRepositoryApi.isEmpty()) {
+            return errorJson(objectMapper, "Lecture unit " + lectureUnitId + " is not available in the current course.");
+        }
+        LectureUnit lectureUnit = lectureUnitRepositoryApi.get().findWithLectureById(lectureUnitId).orElse(null);
+        if (lectureUnit == null || !ContentExtractionService.isLectureUnitEligibleForOrchestration(lectureUnit) || !lectureUnitBelongsToCourse(lectureUnit, courseId)) {
+            return errorJson(objectMapper, "Lecture unit " + lectureUnitId + " is not a readable lecture unit in the current course.");
+        }
+        try {
+            ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "lectureUnit:" + lectureUnitId,
+                    () -> contentExtractionService.extractContent(lectureUnit, false));
+            String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
+            String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
+            markWorkerRead(toolContext);
+            Map<String, String> safeMetadata = new LinkedHashMap<>();
+            extracted.metadata().forEach((key, value) -> safeMetadata.put(CompetencyOrchestrationService.sanitizeForPrompt(key, CompetencyOrchestrationService.TYPE_LABEL_MAX),
+                    CompetencyOrchestrationService.sanitizeForPrompt(value, CompetencyOrchestrationService.LECTURE_UNIT_METADATA_VALUE_MAX)));
+            return toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, safeMetadata));
+        }
+        catch (RuntimeException ex) {
+            log.warn("getLectureUnitContent failed for lecture unit {}: {}", lectureUnitId, ex.getMessage(), ex);
+            return errorJson(objectMapper, "Failed to extract content for lecture unit " + lectureUnitId + ".");
         }
     }
 

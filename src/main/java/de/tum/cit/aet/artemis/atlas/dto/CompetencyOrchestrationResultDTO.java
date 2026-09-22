@@ -36,6 +36,10 @@ public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull 
         NO_CHAT_CLIENT,
         /** The LLM call itself threw — surfaced as 502. */
         LLM_ERROR,
+        /** The shared tool-call budget was exhausted; terminal, not automatically retried. */
+        TOOL_CALL_LIMIT_EXCEEDED,
+        /** Missing or unverified terminal completion; retained for instructor review without automatic replay. */
+        INCOMPLETE_ORCHESTRATION,
         /**
          * A non-LLM step in the orchestrator failed (content extraction, repository lookup,
          * template rendering, tool-index assembly) — surfaced as 500.
@@ -47,7 +51,12 @@ public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull 
          * underlying course's competencies, which is never what the instructor wants —
          * surfaced as 422.
          */
-        UNSUPPORTED_EXERCISE
+        UNSUPPORTED_EXERCISE,
+        /**
+         * The requested learning object cannot be orchestrated, for example an exercise-backed,
+         * missing, or non-course lecture unit — surfaced as 422.
+         */
+        UNSUPPORTED_LEARNING_OBJECT
     }
 
     public static CompetencyOrchestrationResultDTO success(String summary, List<AppliedActionDTO> appliedActions) {
@@ -71,9 +80,8 @@ public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull 
     }
 
     /**
-     * The run completed without anything to do: every claimed exercise resolved to nothing
-     * applicable (deleted, exam, or owned by another course). No competencies were touched, so the
-     * caller must not report the claimed ids as successfully processed.
+     * The run completed without anything to do: every claimed learning object resolved to nothing
+     * applicable or extractable. No competencies were touched.
      */
     public static CompetencyOrchestrationResultDTO noOp(String summary) {
         return new CompetencyOrchestrationResultDTO(Status.NO_OP, summary, List.of(), null);

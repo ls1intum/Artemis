@@ -3,11 +3,14 @@ package de.tum.cit.aet.artemis.atlas.service;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.appendAction;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.formatWeight;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.lectureUnitBelongsToCourse;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.matchAllowedBand;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationErrorJson;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.mutationNoOpJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.tryReserveWriteSlot;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.validateJustification;
@@ -16,6 +19,7 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.write
 import java.util.Map;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -26,15 +30,20 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Write orchestrator tools that link or unlink an exercise and a competency in the current course:
@@ -46,11 +55,16 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * Both tools are course-scoped through the Spring AI {@link ToolContext}, share the per-run write
  * quota with every other write tool via the {@link OrchestratorToolContextKeys.AppliedActionsBuffer},
  * append an ASSIGN / UNASSIGN audit entry on success, and trigger an asynchronous competency-progress
- * recalculation for the affected exercise. Exam exercises are rejected defense-in-depth.
+ * recalculation for the affected learning object. Exam exercises are rejected defense-in-depth.
+ * <p>
+ * The lecture-unit variants ({@code assignLectureUnitToCompetency} / {@code unassignLectureUnitFromCompetency})
+ * mirror the exercise pair for {@link CompetencyLectureUnitLink}s. They hard-reject {@link ExerciseUnit}s
+ * because {@code CourseCompetency.prePersistOrUpdate} silently strips such links, so an ExerciseUnit link
+ * would be a phantom write; the exercise behind such a unit is orchestrated directly instead.
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class AssignerToolsService {
 
     private final JsonMapper objectMapper;
@@ -61,23 +75,32 @@ public class AssignerToolsService {
 
     private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
 
+    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
+
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     /**
      * Creates the assigner tools service.
      *
-     * @param objectMapper                     JSON serialiser for tool responses
-     * @param courseCompetencyRepository       repository for competency lookups
-     * @param exerciseRepository               repository for exercise lookups
-     * @param competencyExerciseLinkRepository repository for competency-exercise links
-     * @param competencyProgressApi            optional API triggering async progress recalculation
+     * @param objectMapper                        JSON serialiser for tool responses
+     * @param courseCompetencyRepository          repository for competency lookups
+     * @param exerciseRepository                  repository for exercise lookups
+     * @param competencyExerciseLinkRepository    repository for competency-exercise links
+     * @param competencyLectureUnitLinkRepository repository for competency-lecture-unit links
+     * @param lectureUnitRepositoryApi            optional lecture module API for lecture-unit lookups (absent when lectures are disabled)
+     * @param competencyProgressApi               optional API triggering async progress recalculation
      */
     public AssignerToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository,
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.exerciseRepository = exerciseRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.competencyProgressApi = competencyProgressApi;
     }
 
@@ -99,25 +122,26 @@ public class AssignerToolsService {
             @ToolParam(description = "evidence-strength weight: 1.0 (stand-alone evidence), 0.5 (partial), 0.3 (incidental). Must be > 0 and <= 1.0") Double weight,
             @ToolParam(description = "one-sentence outcome of the evidence test naming the chosen band (1.0 / 0.5 / 0.3) and why it is honest") String justification,
             ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextError(objectMapper, toolContext);
         }
         if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper);
+            return writeQuotaError(objectMapper, toolContext);
         }
         if (competencyId == null || exerciseId == null) {
-            return errorJson(objectMapper, "competencyId and exerciseId are required.");
+            return mutationErrorJson(objectMapper, "competencyId and exerciseId are required.", toolContext);
         }
         if (weight == null) {
-            return errorJson(objectMapper, "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental).");
+            return mutationErrorJson(objectMapper, "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental).", toolContext);
         }
         Double matchedBand = matchAllowedBand(weight);
         if (matchedBand == null) {
-            return errorJson(objectMapper,
-                    "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool.");
+            return mutationErrorJson(objectMapper,
+                    "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool.", toolContext);
         }
-        String justificationError = validateJustification(objectMapper, justification);
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
         if (justificationError != null) {
             return justificationError;
         }
@@ -126,11 +150,11 @@ public class AssignerToolsService {
         // See editCompetency: scalar-only mutation, no fetch-join needed.
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
         if (competencyOpt.isEmpty()) {
-            return errorJson(objectMapper, "Competency not found: " + competencyId);
+            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
         }
         CourseCompetency competency = competencyOpt.get();
         if (!belongsToCourse(competency, courseId)) {
-            return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
         }
 
         Exercise exercise;
@@ -138,10 +162,10 @@ public class AssignerToolsService {
             exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         }
         catch (EntityNotFoundException ex) {
-            return errorJson(objectMapper, "Exercise not found: " + exerciseId);
+            return mutationErrorJson(objectMapper, "Exercise not found: " + exerciseId, toolContext);
         }
         if (!exerciseBelongsToCourse(exercise, courseId)) {
-            return errorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.", toolContext);
         }
 
         CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(exerciseId, competencyId).orElse(null);
@@ -149,8 +173,8 @@ public class AssignerToolsService {
         String detail;
         if (existingLink != null) {
             if (Double.compare(existingLink.getWeight(), effectiveWeight) == 0) {
-                return toJson(objectMapper, Map.of("status", "noop", "message",
-                        "Exercise " + exerciseId + " is already linked to competency " + competencyId + " with weight " + formatWeight(effectiveWeight) + "."));
+                return mutationNoOpJson(objectMapper,
+                        "Exercise " + exerciseId + " is already linked to competency " + competencyId + " with weight " + formatWeight(effectiveWeight) + ".", toolContext);
             }
             existingLink.setWeight(effectiveWeight);
             competencyExerciseLinkRepository.save(existingLink);
@@ -183,33 +207,34 @@ public class AssignerToolsService {
     public String unassignExerciseFromCompetency(@ToolParam(description = "id of the competency") Long competencyId, @ToolParam(description = "id of the exercise") Long exerciseId,
             @ToolParam(description = "one-sentence reason stating (a) why the current link fails the evidence test and (b) which competency is the better home") String justification,
             ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextError(objectMapper, toolContext);
         }
         if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper);
+            return writeQuotaError(objectMapper, toolContext);
         }
         if (competencyId == null || exerciseId == null) {
-            return errorJson(objectMapper, "competencyId and exerciseId are required.");
+            return mutationErrorJson(objectMapper, "competencyId and exerciseId are required.", toolContext);
         }
-        String justificationError = validateJustification(objectMapper, justification);
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
         if (justificationError != null) {
             return justificationError;
         }
         // See editCompetency: scalar-only mutation, no fetch-join needed.
         Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
         if (competencyOpt.isEmpty()) {
-            return errorJson(objectMapper, "Competency not found: " + competencyId);
+            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
         }
         CourseCompetency competency = competencyOpt.get();
         if (!belongsToCourse(competency, courseId)) {
-            return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
         }
 
         CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(exerciseId, competencyId).orElse(null);
         if (existingLink == null) {
-            return toJson(objectMapper, Map.of("status", "noop", "message", "Exercise " + exerciseId + " is not linked to competency " + competencyId + "."));
+            return mutationNoOpJson(objectMapper, "Exercise " + exerciseId + " is not linked to competency " + competencyId + ".", toolContext);
         }
 
         Exercise exercise = existingLink.getExercise();
@@ -217,7 +242,7 @@ public class AssignerToolsService {
         // out-of-band link could still exist; refuse to delete it here so an LLM cannot cross
         // course boundaries via a forged exerciseId.
         if (exercise == null || !exerciseBelongsToCourse(exercise, courseId)) {
-            return errorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.");
+            return mutationErrorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.", toolContext);
         }
         competencyExerciseLinkRepository.delete(existingLink);
         String exerciseTitle = exercise.getTitle() != null ? exercise.getTitle() : "exercise " + exerciseId;
@@ -225,5 +250,170 @@ public class AssignerToolsService {
         appendAction(toolContext, AppliedActionDTO.unassign(competencyId, competency.getTitle(), exerciseId, detail, justification.trim()));
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         return toJson(objectMapper, Map.of("status", "ok", "competencyId", competencyId, "exerciseId", exerciseId));
+    }
+
+    /**
+     * LLM tool: creates or updates a {@link CompetencyLectureUnitLink} and appends an ASSIGN action.
+     *
+     * @param competencyId  id of the competency to link to
+     * @param lectureUnitId id of the lecture unit to link
+     * @param weight        link weight in (0.0, 1.0]; must be picked from the weight bands (1.0 / 0.5 / 0.3)
+     * @param justification one-sentence evidence-test outcome explaining why the chosen band is honest
+     * @param toolContext   Spring AI tool context
+     * @return JSON status on success, or a JSON error / noop
+     */
+    @Tool(description = "Link a lecture unit to a competency in the current course. Creates a new CompetencyLectureUnitLink, or updates its weight if the link already exists. "
+            + "Weight is the strength of the evidence and must be picked from the bands defined in the system prompt: 1.0 (stand-alone), 0.5 (partial), 0.3 (incidental). "
+            + "If the evidence would be below 0.3, do not call this tool. Exercise-backed lecture units cannot be linked here — orchestrate the exercise itself instead.")
+    public String assignLectureUnitToCompetency(@ToolParam(description = "id of the competency to link to") Long competencyId,
+            @ToolParam(description = "id of the lecture unit to link") Long lectureUnitId,
+            @ToolParam(description = "evidence-strength weight: 1.0 (stand-alone evidence), 0.5 (partial), 0.3 (incidental). Must be > 0 and <= 1.0") Double weight,
+            @ToolParam(description = "one-sentence outcome of the evidence test naming the chosen band (1.0 / 0.5 / 0.3) and why it is honest") String justification,
+            ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
+        Long courseId = courseIdFromContext(toolContext);
+        if (courseId == null) {
+            return missingCourseContextError(objectMapper, toolContext);
+        }
+        if (!tryReserveWriteSlot(toolContext)) {
+            return writeQuotaError(objectMapper, toolContext);
+        }
+        if (competencyId == null || lectureUnitId == null) {
+            return mutationErrorJson(objectMapper, "competencyId and lectureUnitId are required.", toolContext);
+        }
+        if (weight == null) {
+            return mutationErrorJson(objectMapper, "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental).", toolContext);
+        }
+        Double matchedBand = matchAllowedBand(weight);
+        if (matchedBand == null) {
+            return mutationErrorJson(objectMapper,
+                    "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool.", toolContext);
+        }
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
+        if (justificationError != null) {
+            return justificationError;
+        }
+        double effectiveWeight = matchedBand;
+
+        Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
+        if (competencyOpt.isEmpty()) {
+            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
+        }
+        CourseCompetency competency = competencyOpt.get();
+        if (!belongsToCourse(competency, courseId)) {
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
+        }
+
+        LectureUnit lectureUnit = findLectureUnitInCourse(lectureUnitId, courseId);
+        if (lectureUnit == null) {
+            return lectureUnitLookupError(lectureUnitId, toolContext);
+        }
+
+        CompetencyLectureUnitLink existingLink = competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(lectureUnitId, competencyId).orElse(null);
+
+        String detail;
+        if (existingLink != null) {
+            if (Double.compare(existingLink.getWeight(), effectiveWeight) == 0) {
+                return mutationNoOpJson(objectMapper,
+                        "Lecture unit " + lectureUnitId + " is already linked to competency " + competencyId + " with weight " + formatWeight(effectiveWeight) + ".", toolContext);
+            }
+            existingLink.setWeight(effectiveWeight);
+            competencyLectureUnitLinkRepository.save(existingLink);
+            detail = "Updated weight to " + formatWeight(effectiveWeight) + " for lecture unit " + lectureUnit.getName() + " on competency " + competency.getTitle() + ".";
+        }
+        else {
+            CompetencyLectureUnitLink newLink = new CompetencyLectureUnitLink(competency, lectureUnit, effectiveWeight);
+            competencyLectureUnitLinkRepository.save(newLink);
+            detail = "Linked lecture unit " + lectureUnit.getName() + " to competency " + competency.getTitle() + " (weight " + formatWeight(effectiveWeight) + ").";
+        }
+
+        appendAction(toolContext, AppliedActionDTO.assignLectureUnit(competencyId, competency.getTitle(), lectureUnitId, effectiveWeight, detail, justification.trim()));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(lectureUnit));
+        return toJson(objectMapper, Map.of("status", "ok", "competencyId", competencyId, "lectureUnitId", lectureUnitId, "weight", effectiveWeight));
+    }
+
+    /**
+     * LLM tool: removes the link between a lecture unit and a competency and appends an UNASSIGN action.
+     *
+     * @param competencyId  id of the competency
+     * @param lectureUnitId id of the lecture unit
+     * @param justification one-sentence reason stating why the current link fails the evidence test and which competency is the better home
+     * @param toolContext   Spring AI tool context
+     * @return JSON status on success or noop, or a JSON error
+     */
+    @Tool(description = "Remove the link between a lecture unit and a competency in the current course. Only call this when BOTH (a) studying the lecture unit would not credibly "
+            + "demonstrate mastery of this competency (the link fails the evidence test) AND (b) a clearly better-fitting competency exists (or is being created in this run). "
+            + "Idempotent — returns a noop status if no such link exists.")
+    public String unassignLectureUnitFromCompetency(@ToolParam(description = "id of the competency") Long competencyId,
+            @ToolParam(description = "id of the lecture unit") Long lectureUnitId,
+            @ToolParam(description = "one-sentence reason stating (a) why the current link fails the evidence test and (b) which competency is the better home") String justification,
+            ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
+        Long courseId = courseIdFromContext(toolContext);
+        if (courseId == null) {
+            return missingCourseContextError(objectMapper, toolContext);
+        }
+        if (!tryReserveWriteSlot(toolContext)) {
+            return writeQuotaError(objectMapper, toolContext);
+        }
+        if (competencyId == null || lectureUnitId == null) {
+            return mutationErrorJson(objectMapper, "competencyId and lectureUnitId are required.", toolContext);
+        }
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
+        if (justificationError != null) {
+            return justificationError;
+        }
+        Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
+        if (competencyOpt.isEmpty()) {
+            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
+        }
+        CourseCompetency competency = competencyOpt.get();
+        if (!belongsToCourse(competency, courseId)) {
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
+        }
+
+        CompetencyLectureUnitLink existingLink = competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(lectureUnitId, competencyId).orElse(null);
+        if (existingLink == null) {
+            return mutationNoOpJson(objectMapper, "Lecture unit " + lectureUnitId + " is not linked to competency " + competencyId + ".", toolContext);
+        }
+
+        // Defense-in-depth: refuse to delete a stale or out-of-band link whose lecture unit no longer
+        // belongs to the run's course, so an LLM cannot cross course boundaries via a forged id.
+        LectureUnit lectureUnit = findLectureUnitInCourse(lectureUnitId, courseId);
+        if (lectureUnit == null) {
+            return lectureUnitLookupError(lectureUnitId, toolContext);
+        }
+        competencyLectureUnitLinkRepository.delete(existingLink);
+        String lectureUnitName = lectureUnit.getName() != null ? lectureUnit.getName() : "lecture unit " + lectureUnitId;
+        String detail = "Removed link between lecture unit " + lectureUnitName + " and competency " + competency.getTitle() + ".";
+        appendAction(toolContext, AppliedActionDTO.unassignLectureUnit(competencyId, competency.getTitle(), lectureUnitId, detail, justification.trim()));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(lectureUnit));
+        return toJson(objectMapper, Map.of("status", "ok", "competencyId", competencyId, "lectureUnitId", lectureUnitId));
+    }
+
+    /**
+     * Loads a lecture unit (with its lecture eagerly fetched) and returns it only when it is eligible
+     * for orchestration and belongs to the current course. Callers turn {@code null} into
+     * {@link #lectureUnitLookupError}.
+     */
+    @Nullable
+    private LectureUnit findLectureUnitInCourse(long lectureUnitId, long courseId) {
+        if (lectureUnitRepositoryApi.isEmpty()) {
+            return null;
+        }
+        LectureUnit lectureUnit = lectureUnitRepositoryApi.get().findWithLectureById(lectureUnitId).orElse(null);
+        if (lectureUnit == null || !ContentExtractionService.isLectureUnitEligibleForOrchestration(lectureUnit) || !lectureUnitBelongsToCourse(lectureUnit, courseId)) {
+            return null;
+        }
+        return lectureUnit;
+    }
+
+    /**
+     * Single error message for every lecture-unit resolution failure (not found, exercise-backed, wrong
+     * course, lecture module disabled). Deliberately uniform so a malicious LLM cannot distinguish "does
+     * not exist" from "exists in another course" and probe for cross-course ids.
+     */
+    private String lectureUnitLookupError(long lectureUnitId, ToolContext toolContext) {
+        return mutationErrorJson(objectMapper, "Lecture unit " + lectureUnitId + " is not a linkable lecture unit in the current course.", toolContext);
     }
 }

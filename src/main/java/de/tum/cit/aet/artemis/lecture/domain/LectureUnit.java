@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "lecture_unit")
@@ -78,6 +79,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "lecture_id", nullable = false)
+    @Parent
     private Lecture lecture;
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
