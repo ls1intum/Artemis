@@ -85,10 +85,10 @@ has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 The provider is configurable, so direct usage does not fail loudly, it silently loses the state.
 
 **No `@Lob`.** A CLOB on PostgreSQL is a large object, so the value lands in `pg_largeobject` and the
-column keeps only its id - while every long text column here is Liquibase `clob`, holding the text
-itself. A `String` or a converted attribute needs no annotation at all; for a structured value use
-`@JdbcTypeCode(SqlTypes.JSON)` over a `json` column. Enforced by `testNoLobAnnotation` in
-`ArchitectureTest.java`.
+column keeps only its id - while the long text columns here are Liquibase `longtext` or `clob`, both
+`text` on PostgreSQL, holding the text itself. A `String` or a converted attribute needs no
+annotation at all; for a structured value use `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column.
+Enforced by `testNoLobAnnotation` in `ArchitectureTest.java`.
 
 **No Hibernate second-level cache.** No `@Cache` on entities or associations. Enforced by
 `testNoHibernateSecondLevelCacheAnnotation` in `ArchitectureTest.java`. For DTO and projection
