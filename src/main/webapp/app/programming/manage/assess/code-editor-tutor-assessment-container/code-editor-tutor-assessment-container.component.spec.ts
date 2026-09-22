@@ -1002,6 +1002,42 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 
+    it('should discard a stale feedback-suggestions response once a newer submission has been loaded', async () => {
+        const subject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(subject.asObservable());
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+        const loadPromise = comp['loadFeedbackSuggestions']();
+        // The container is reused for a newer assessment before the stale request resolves.
+        comp.submission.set({ id: 84 } as ProgrammingSubmission);
+        comp.loadingFeedbackSuggestions.set(true);
+
+        subject.next([{ type: FeedbackType.AUTOMATIC, credits: 1 }]);
+        subject.complete();
+        await loadPromise;
+
+        expect(comp.feedbackSuggestions()).toHaveLength(0);
+        expect(comp.loadingFeedbackSuggestions()).toBe(true);
+    });
+
+    it('should not alert for a stale feedback-suggestions failure once a newer submission has been loaded', async () => {
+        const subject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(subject.asObservable());
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+        const loadPromise = comp['loadFeedbackSuggestions']();
+        comp.submission.set({ id: 84 } as ProgrammingSubmission);
+        comp.loadingFeedbackSuggestions.set(true);
+
+        subject.error(new Error('network error'));
+        await loadPromise;
+
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(comp.loadingFeedbackSuggestions()).toBe(true);
+    });
+
     it('should render the feedback suggestions banner when submission is set', async () => {
         vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
         vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));
