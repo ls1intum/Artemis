@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
@@ -66,6 +67,8 @@ public class EditorToolsService {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CompetencyRelationRepository competencyRelationRepository;
+
     private final CourseCompetencyService courseCompetencyService;
 
     private final CompetencyValidationService competencyValidator;
@@ -75,16 +78,19 @@ public class EditorToolsService {
     /**
      * Creates the editor tools service.
      *
-     * @param objectMapper               JSON serialiser for tool responses
-     * @param courseCompetencyRepository repository for competency lookups and scalar updates
-     * @param courseCompetencyService    service performing the cascading delete
-     * @param competencyValidator        validator enforcing competency update invariants
-     * @param atlasMLNotificationService notifies the AtlasML service of competency changes
+     * @param objectMapper                 JSON serialiser for tool responses
+     * @param courseCompetencyRepository   repository for competency lookups and scalar updates
+     * @param courseCompetencyService      service performing the cascading delete
+     * @param competencyValidator          validator enforcing competency update invariants
+     * @param competencyRelationRepository checks whether relations still reference a deletion target
+     * @param atlasMLNotificationService   notifies the AtlasML service of competency changes
      */
     public EditorToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService,
-            CompetencyValidationService competencyValidator, CompetencyAtlasMLNotificationService atlasMLNotificationService) {
+            CompetencyValidationService competencyValidator, CompetencyAtlasMLNotificationService atlasMLNotificationService,
+            CompetencyRelationRepository competencyRelationRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.competencyRelationRepository = competencyRelationRepository;
         this.courseCompetencyService = courseCompetencyService;
         this.competencyValidator = competencyValidator;
         this.atlasMLNotificationService = atlasMLNotificationService;
@@ -206,7 +212,7 @@ public class EditorToolsService {
      * @param toolContext   Spring AI tool context
      * @return JSON status on success, or a JSON error
      */
-    @Tool(description = "Delete a competency from the current course. Cascades to competency relations, progress records, and exercise/lecture-unit links. "
+    @Tool(description = "Delete an unlinked competency from the current course. Refuses deletion while exercise links, lecture-unit links, or competency relations remain. "
             + "Use only when the competency is no longer needed after the current exercise change.")
     public String deleteCompetency(@ToolParam(description = "id of the competency to delete") Long competencyId,
             @ToolParam(description = "one-sentence reason this competency is obsolete — typically that its only linked exercise was deleted or moved") String justification,
@@ -235,6 +241,12 @@ public class EditorToolsService {
             return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
         }
 
+        if (!competency.getExerciseLinks().isEmpty() || !competency.getLectureUnitLinks().isEmpty()) {
+            return errorJson(objectMapper, "Competency " + competencyId + " still has linked learning objects. Reassign or remove every link before deletion.");
+        }
+        if (competencyRelationRepository.existsByHeadCompetencyIdOrTailCompetencyId(competencyId, competencyId)) {
+            return errorJson(objectMapper, "Competency " + competencyId + " still has competency relations. Remove them before deletion.");
+        }
         String title = competency.getTitle();
         Course course = competency.getCourse();
         // Snapshot the entity for Atlas ML before the cascade wipes it; notification is sent only after the delete commits.

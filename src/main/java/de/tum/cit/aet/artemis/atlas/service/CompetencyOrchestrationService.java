@@ -462,7 +462,7 @@ public class CompetencyOrchestrationService {
         }
         log.info("Atlas orchestrator completed for exercise {} (course {}) with {} applied action(s)", exerciseId, courseId, appliedActions.size());
         String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
-        return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
+        return appliedActions.isEmpty() ? CompetencyOrchestrationResultDTO.noOp(summary) : CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
     }
 
     /**
@@ -538,7 +538,7 @@ public class CompetencyOrchestrationService {
         // SUCCESS: the caller keeps the drained bucket, so requeue the ids skipped mid-run or their orchestration is lost.
         requeueSkippedExercises(courseId, skipped);
         String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
-        return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
+        return appliedActions.isEmpty() ? CompetencyOrchestrationResultDTO.noOp(summary) : CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
     }
 
     /**
