@@ -30,6 +30,25 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
 
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT lecture.id
+            FROM Lecture lecture
+            WHERE lecture.id IN :entityIds
+            """)
+    Set<Long> findExistingLectureIds(@Param("entityIds") Collection<Long> entityIds);
+
+    @Query("""
+            SELECT lecture.id
+            FROM Lecture lecture
+            WHERE lecture.id > :afterId
+            ORDER BY lecture.id ASC
+            """)
+    List<Long> findLectureIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(l.course.id, l.id)
             FROM Lecture l

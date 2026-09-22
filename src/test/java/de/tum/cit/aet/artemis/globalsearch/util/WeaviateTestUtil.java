@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateUuidUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -53,6 +54,30 @@ public final class WeaviateTestUtil {
         }
         throw new AssertionError("WeaviateService is null even though Docker is available — the Weaviate Testcontainer should be running. "
                 + "Check that the Weaviate container started successfully and that artemis.weaviate.enabled is set to true.");
+    }
+
+    /**
+     * Directly inserts (or replaces) a row in the {@code SearchableEntities} collection, bypassing the outbox and its
+     * dispatch-time re-derivation. Use this to set up Weaviate rows for tests of the bulk-delete filters, which operate
+     * purely on Weaviate state and must not depend on a backing database entity existing for a synthetic id.
+     *
+     * @param weaviateService the Weaviate service
+     * @param type            the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId        the entity id (used to derive the deterministic object UUID)
+     * @param properties      the property map to store
+     */
+    public static void seedRow(WeaviateService weaviateService, String type, long entityId, Map<String, Object> properties) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        String uuid = WeaviateUuidUtil.deterministicUuid(type, entityId);
+        if (collection.data.exists(uuid)) {
+            collection.data.replace(uuid, r -> r.properties(properties));
+        }
+        else {
+            collection.data.insert(properties, obj -> obj.uuid(uuid));
+        }
     }
 
     /**
