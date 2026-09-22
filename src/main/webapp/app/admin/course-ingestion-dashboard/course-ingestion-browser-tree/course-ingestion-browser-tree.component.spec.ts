@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
-import { IndexedContentPresence, IndexedEntity, IngestionTypeCount } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IndexedContentPresence, IndexedEntity, IngestionTypeCount, MissingEntity } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 describe('CourseIngestionBrowserTreeComponent', () => {
     let component: CourseIngestionBrowserTreeComponent;
@@ -36,6 +36,9 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         { type: 'lecture', expected: 1, indexed: 1, missing: 0, orphaned: 0 },
     ];
 
+    // Lecture 21 (unit 12's parent) is not indexed, but the database still knows its title.
+    const missingEntities: MissingEntity[] = [{ type: 'lecture', entityId: 21, title: 'Week 2 (draft)' }];
+
     const query = (testId: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
     const click = (testId: string): void => {
         const element = query(testId);
@@ -56,6 +59,7 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         fixture.componentRef.setInput('typeCounts', typeCounts);
         // Unit 12 never had its transcript ingested, so its branch should read incomplete.
         fixture.componentRef.setInput('contentGaps', [{ lectureUnitId: 12, title: 'Orphaned unit', kind: 'transcript' }]);
+        fixture.componentRef.setInput('missingEntities', missingEntities);
         fixture.detectChanges();
     });
 
@@ -99,6 +103,23 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         click('tree-toggle-lecture:21');
 
         expect(query('tree-node-unit:12')).toBeTruthy();
+    });
+
+    it('should name a not-indexed lecture from the database title rather than reading untitled', () => {
+        // Lecture 21 has no row in `entities` (it is not indexed), only in `missingEntities`. Losing that title would
+        // read as "Untitled lecture" and hide which lecture the red badge next to it is even about.
+        expect(query('tree-node-lecture:21')?.textContent).toContain('Week 2 (draft)');
+        // The fallback must not flip the lecture's own indexed status, only supply its name.
+        expect(query('lecture-not-indexed')).toBeTruthy();
+    });
+
+    it('should prefer the indexed title over the missing-entities fallback when a lecture has both', () => {
+        fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture', entityId: 20, title: 'Stale draft title' }]);
+        fixture.detectChanges();
+
+        // Lecture 20 is indexed as "Week 1"; a stale missing-entities row for the same id must not override it.
+        expect(query('tree-node-lecture:20')?.textContent).toContain('Week 1');
+        expect(query('tree-node-lecture:20')?.textContent).not.toContain('Stale draft title');
     });
 
     it('should give a unit a node only for the collections that actually hold content for it', () => {

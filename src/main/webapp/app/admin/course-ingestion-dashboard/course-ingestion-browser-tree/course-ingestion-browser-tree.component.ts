@@ -24,6 +24,7 @@ import {
     IndexedEntity,
     IngestionTypeCount,
     MissingContent,
+    MissingEntity,
     selectionKey,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
@@ -111,6 +112,9 @@ export class CourseIngestionBrowserTreeComponent {
     readonly contentPresence = input.required<IndexedContentPresence[]>();
     readonly typeCounts = input.required<IngestionTypeCount[]>();
     readonly contentGaps = input.required<MissingContent[]>();
+    /** Entities the database expects but the index does not hold, so a not-indexed lecture node can still carry its
+     *  real name instead of reading "Untitled lecture". */
+    readonly missingEntities = input.required<MissingEntity[]>();
 
     /** The current selection, shared with the detail pane through the modal. */
     readonly selection = model<BrowserSelection | undefined>(undefined);
@@ -155,6 +159,15 @@ export class CourseIngestionBrowserTreeComponent {
                 lectureTitles.set(entity.entityId, entity.title ?? '');
             }
         }
+        // A lecture that is not indexed still needs a name for the node its indexed units are nested under. The
+        // server already resolved this title from the database; indexed status is read from lectureTitles alone, so
+        // filling a title in here from the missing side can never make a not-indexed lecture read as indexed.
+        const missingLectureTitles = new Map<number, string>();
+        for (const missing of this.missingEntities()) {
+            if (missing.type === 'lecture') {
+                missingLectureTitles.set(missing.entityId, missing.title ?? '');
+            }
+        }
 
         const unitsByLecture = new Map<number, UnitNode[]>();
         for (const entity of entities) {
@@ -193,7 +206,7 @@ export class CourseIngestionBrowserTreeComponent {
                     key: selectionKey(selection),
                     selection,
                     lectureId,
-                    title: lectureTitles.get(lectureId) ?? '',
+                    title: lectureTitles.get(lectureId) ?? missingLectureTitles.get(lectureId) ?? '',
                     indexed: lectureTitles.has(lectureId),
                     units,
                     // A lecture is only as complete as what sits under it, so an unindexed lecture or any unit missing

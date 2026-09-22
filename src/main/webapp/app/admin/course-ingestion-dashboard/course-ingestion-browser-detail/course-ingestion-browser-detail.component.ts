@@ -199,9 +199,21 @@ export class CourseIngestionBrowserDetailComponent {
         return this.entityOf('lecture_unit', unitId)?.lectureId;
     }
 
-    /** The stored row the tree placed a node from, so a heading or a crumb can be drawn before its records are fetched. */
+    /**
+     * The stored row the tree placed a node from, so a heading or a crumb can be drawn before its records are fetched.
+     *
+     * Falls back to the missing-entities list when the index has no row: a not-indexed lecture still gets a node (its
+     * indexed units point to it), and the database title the server already resolved for it is what that node should
+     * show, rather than a generic "untitled" placeholder that would otherwise hide exactly the lecture this pane is
+     * about.
+     */
     private entityOf(type: string, entityId: number): IndexedEntity | undefined {
-        return this.data().entities.find((entity) => entity.type === type && entity.entityId === entityId);
+        const indexed = this.data().entities.find((entity) => entity.type === type && entity.entityId === entityId);
+        if (indexed) {
+            return indexed;
+        }
+        const missing = this.data().missingEntities.find((entity) => entity.type === type && entity.entityId === entityId);
+        return missing ? { type: missing.type, entityId: missing.entityId, title: missing.title } : undefined;
     }
 
     /**

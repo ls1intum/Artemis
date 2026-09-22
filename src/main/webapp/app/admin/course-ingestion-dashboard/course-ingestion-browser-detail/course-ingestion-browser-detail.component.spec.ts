@@ -160,6 +160,18 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         expect(component.heading()).toEqual({ key: 'artemisApp.courseIngestionDashboard.browser.content_slides' });
     });
 
+    it('should name a not-indexed lecture from missingEntities rather than reading untitled', async () => {
+        // Lecture 99 has no row in `entities` (it is not indexed), only a `missingEntities` row carrying the title the
+        // server already resolved from the database. The heading must use it instead of falling back to the generic
+        // "untitled" key, which would hide which lecture the pane is even showing.
+        fixture.componentRef.setInput('data', { ...data, missingEntities: [...data.missingEntities, { type: 'lecture', entityId: 99, title: 'Week 2 (draft)' }] });
+        component.selection.set({ kind: 'lecture', lectureId: 99 });
+        await settle();
+
+        expect(query('detail-heading')?.textContent?.trim()).toBe('Week 2 (draft)');
+        expect(component.heading()).toEqual({ text: 'Week 2 (draft)', key: 'artemisApp.courseIngestionDashboard.browser.untitledLecture' });
+    });
+
     it('should keep the heading and the open link on one row, so neither owns an empty band', async () => {
         component.selection.set({ kind: 'unit', unitId: 11 });
         await settle();
