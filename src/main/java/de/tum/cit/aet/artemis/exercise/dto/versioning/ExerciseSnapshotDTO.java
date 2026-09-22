@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record ExerciseSnapshotDTO(
         // fields of BaseExercise class
         long id, String title, String shortName,
@@ -77,6 +79,7 @@ public record ExerciseSnapshotDTO(
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record CompetencyExerciseLinkSnapshotDTO(CompetencyExerciseLink.CompetencyExerciseId competencyId, double weight) implements Serializable {
 
         private static CompetencyExerciseLinkSnapshotDTO of(@Nullable CompetencyExerciseLink link) {
@@ -88,6 +91,7 @@ public record ExerciseSnapshotDTO(
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record TeamAssignmentConfigSnapshotDTO(long id, int minTeamSize, int maxTeamSize) implements Serializable {
 
         private static TeamAssignmentConfigSnapshotDTO of(@Nullable TeamAssignmentConfig config) {
@@ -99,6 +103,7 @@ public record ExerciseSnapshotDTO(
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record PlagiarismDetectionConfigSnapshotDTO(boolean continuousPlagiarismControlEnabled, boolean continuousPlagiarismControlPostDueDateChecksEnabled,
             int continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, int similarityThreshold, int minimumScore, int minimumSize) implements Serializable {
 
