@@ -1773,13 +1773,16 @@ public class LocalVCServletService {
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
-            // The exercise is what the solution and test repositories are looked up by. It used to be passed as null,
-            // which threw a NullPointerException before any of that was reached.
-            ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(localVCRepositoryUri.getProjectKey(), false);
-            var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
-                    localVCRepositoryUri.toString(), exercise);
+            // One row, joining nothing. The log records that this repository was touched, so the participation is
+            // needed only as a reference: the previous call fetched it with its submissions, and reached them through
+            // an exercise that was passed as null, which is what threw the NullPointerException.
+            var participation = programmingExerciseParticipationService.findParticipationForRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
+                    localVCRepositoryUri.toString(), localVCRepositoryUri.getProjectKey());
+            if (participation.isEmpty()) {
+                return;
+            }
             var ipAddress = servletRequest.getRemoteAddr();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.get(), RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }
         catch (LocalVCAuthException | EntityNotFoundException ignored) {
             // Caught when: 1) no user, or 2) no exercise or participation was found. In none of these cases does it make sense to write a log

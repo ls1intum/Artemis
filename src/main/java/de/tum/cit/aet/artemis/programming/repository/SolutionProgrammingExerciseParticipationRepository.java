@@ -47,6 +47,24 @@ public interface SolutionProgrammingExerciseParticipationRepository
     Optional<SolutionProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results" })
+    /**
+     * The solution participation of the exercise a project key identifies, without its results or submissions.
+     *
+     * <p>
+     * Used where only the participation itself is needed, such as attributing an access log entry. The solution
+     * repository and the test repository of an exercise share this participation, and the test repository has none of
+     * its own, which is why this resolves by project key rather than by repository uri.
+     *
+     * @param projectKey the project key of the programming exercise
+     * @return the solution participation, or empty if the project key matches no exercise
+     */
+    @Query("""
+            SELECT participation
+            FROM SolutionProgrammingExerciseParticipation participation
+            WHERE participation.programmingExercise.projectKey = :projectKey
+            """)
+    Optional<SolutionProgrammingExerciseParticipation> findByProjectKey(@Param("projectKey") String projectKey);
+
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
     default SolutionProgrammingExerciseParticipation findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(long exerciseId) {

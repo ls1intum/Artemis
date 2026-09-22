@@ -276,6 +276,32 @@ public class ProgrammingExerciseParticipationService {
 
     }
 
+    /**
+     * The participation a repository belongs to, loaded as a single row for callers that only need to refer to it.
+     *
+     * <p>
+     * Unlike {@link #fetchParticipationWithSubmissionsByRepository}, this joins nothing: no submissions, no results and
+     * no exercise. It exists for the access log, which records who touched which repository and therefore needs the
+     * participation only as a reference. Fetching the submissions of a participation, or the exercise behind it, to
+     * write one log row is work that never pays for itself.
+     *
+     * @param repositoryTypeOrUserName the repository type, or the login of the student the repository belongs to
+     * @param repositoryUri            the uri of the repository
+     * @param projectKey               the project key of the exercise, which is how the shared solution and test
+     *                                     participation is found
+     * @return the participation behind the repository, or empty if there is none
+     */
+    public Optional<ProgrammingExerciseParticipation> findParticipationForRepository(String repositoryTypeOrUserName, String repositoryUri, String projectKey) {
+        String repositoryUriWithoutService = repositoryUri.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return solutionParticipationRepository.findByProjectKey(projectKey).map(ProgrammingExerciseParticipation.class::cast);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return templateParticipationRepository.findByRepositoryUri(repositoryUriWithoutService).map(ProgrammingExerciseParticipation.class::cast);
+        }
+        return studentParticipationRepository.findByRepositoryUri(repositoryUriWithoutService).map(ProgrammingExerciseParticipation.class::cast);
+    }
+
     public ProgrammingExerciseParticipation retrieveSolutionParticipation(Exercise exercise) {
         return solutionParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
     }

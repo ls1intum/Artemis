@@ -182,20 +182,23 @@ class LocalVCServletServiceTest {
     void writesTheAccessLogWhenAFetchAuthenticationFails() {
         HttpServletRequest request = failedFetchRequest();
         when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
-        when(programmingExerciseRepository.findOneByProjectKeyOrThrow(testExercise.getProjectKey(), false)).thenReturn(testExercise);
-        when(programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(anyString(), anyString(), eq(testExercise))).thenReturn(testParticipation);
+        when(programmingExerciseParticipationService.findParticipationForRepository(anyString(), anyString(), eq(testExercise.getProjectKey())))
+                .thenReturn(Optional.of(testParticipation));
 
         localVCServletService.createVCSAccessLogForFailedAuthenticationAttempt(request);
 
         verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(testParticipation), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.PASSWORD), anyString(),
                 eq("10.0.0.1"));
+        // Neither the exercise nor the participation's submissions are needed to record that a repository was touched.
+        verifyNoInteractions(programmingExerciseRepository);
     }
 
     @Test
     void doesNotLetAFailedAccessLogReplaceTheAuthenticationFailure() {
         HttpServletRequest request = failedFetchRequest();
         when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
-        when(programmingExerciseRepository.findOneByProjectKeyOrThrow(testExercise.getProjectKey(), false)).thenThrow(new IllegalStateException("the database is away"));
+        when(programmingExerciseParticipationService.findParticipationForRepository(anyString(), anyString(), anyString()))
+                .thenThrow(new IllegalStateException("the database is away"));
 
         // The caller is in the middle of answering a rejected authentication with 401. An exception escaping here
         // reaches the servlet container instead, and the client is told the server is broken rather than being asked
