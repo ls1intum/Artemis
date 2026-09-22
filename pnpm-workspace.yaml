@@ -223,7 +223,6 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-  '@shadcn/lint@0.1.5': patches/@shadcn__lint@0.1.5.patch
   'eslint@10.10.0': 'patches/eslint+10.10.0.patch'
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 

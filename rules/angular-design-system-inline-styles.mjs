@@ -1,5 +1,5 @@
 import scss from 'postcss-scss';
-import { plugin as upstream } from '@shadcn/lint';
+import { plugin as engine } from './design-system/plugin.mjs';
 import { createAngularMetadataReader } from './angular-design-system-host.mjs';
 import { evaluateStylesheet } from './angular-design-system-stylelint.mjs';
 import { checkPrivateClasses } from './design-system-private-classes-stylelint.mjs';
@@ -13,7 +13,7 @@ export function createInlineStylesRule(getIndex) {
             schema: [
                 {
                     type: 'object',
-                    properties: { propertyOptions: upstream.rules['no-inline-styles'].meta.schema[0], privateClassPrefix: { type: 'string', minLength: 1 } },
+                    properties: { propertyOptions: engine.rules['no-inline-styles'].meta.schema[0], privateClassPrefix: { type: 'string', minLength: 1 } },
                     additionalProperties: false,
                 },
             ],

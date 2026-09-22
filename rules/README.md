@@ -1,70 +1,77 @@
 # Angular design-system linting
 
-The Angular integration uses the six rule implementations in pinned `@shadcn/lint@0.1.5`.
-It does not copy the upstream Tailwind classifier, theme resolver, contracts, or diagnostics.
+The linter is an Angular-native source port of the six design-system policies in
+[shadcn lint](https://github.com/shadcn-ui/lint). It does **not** depend on `@shadcn/lint`,
+patch its package, load its bundle, or translate Angular templates into JSX.
 
-- `angular-design-system.mjs` adapts Angular template sites to upstream rule callbacks.
-- `angular-design-system-expressions.mjs` translates supported Angular expressions to the expression
-  shapes those callbacks consume. Unknown expressions remain unknown; no JSX source is generated.
+## Structure
+
+- `design-system/rules/` owns the six policies, contracts, diagnostics, and suggestions.
+- `design-system/grammar/` classifies utilities against the pinned `cn/config` grammar. Tailwind's
+  palette and default scales come from the installed framework, not copied theme data.
+- `design-system/project/` reads the explicitly configured theme and its imports. There is no
+  `components.json`, React import discovery, or guessed stylesheet fallback.
+- `design-system/tailwind/` asks the actual Tailwind compiler which utilities and variants generate
+  CSS. A worker bridges its asynchronous API to synchronous ESLint rule callbacks. A broken
+  configured theme fails verification instead of silently falling back to grammar-only checks.
 - `angular-design-system-project.mjs` discovers selectors, inherited signal/decorator inputs, and
-  directive composition using TypeScript symbols and Angular's selector matcher. Components and
-  directives that supply host classes/styles own appearance.
-- `angular-design-system-host.mjs` adapts protected TypeScript host metadata and `@HostBinding`.
-- `angular-design-system-inline-styles.mjs` checks `@Component.styles` through the same CSS/SCSS
-  evaluator used by external Stylelint, including ordinary application components.
-- `angular-design-system-lintable-templates.mjs` rejects inline templates the standard Angular ESLint
-  processor cannot extract, rather than silently skipping them.
-- `angular-design-system-owner.mjs` resolves conservative same-file readonly template values.
-- `angular-design-system-stylelint.mjs` parses stylesheet subjects and nested selectors, discovers
-  their component owners, and delegates declaration policy to upstream `no-inline-styles`.
-- `tum-ui-design-system.mjs` supplies Artemis's source roots, actual Tailwind theme, and layout policy.
+  directive composition using TypeScript symbols and Angular's selector matcher.
+- `angular-design-system.mjs` supplies template sites to the native policies. Its expression and
+  owner helpers conservatively resolve same-file readonly values and preserve source locations.
+- `angular-design-system-host.mjs` reads Angular host metadata and `@HostBinding`, sharing records
+  between appearance checks and the private-class guard.
+- `angular-design-system-stylelint.mjs` checks stylesheet subjects and nested selectors against
+  discovered components. Inline `@Component.styles` uses the same evaluator.
+- `angular-design-system-lintable-templates.mjs` rejects inline templates Angular ESLint cannot
+  extract, rather than silently skipping them.
+- `tum-ui-design-system.mjs` supplies Artemis's roots, theme, and layout policy.
 
-The template plugin factory accepts `root`, `components`, `sources`, `theme`, and `scope`.
-`components` and `sources` are source directories relative to `root`; `sources` defaults to
-`components`. `scope` defaults to `all`. Artemis opts into `components` while legacy application
-classes remain outside design-system hosts. Implementation files are excluded through ESLint and
-Stylelint configuration, not rule exemptions.
+The plugin factory accepts `root`, `components`, `sources`, `theme`, and `scope`. Source directories
+are relative to `root`; `sources` defaults to `components`. `scope` defaults to `all`; Artemis uses
+`components` while legacy application classes remain outside design-system hosts. CSS/SCSS checks
+cover all application styles, including global styles outside `app/`. Package implementation files
+are excluded by ESLint/Stylelint configuration, not component-specific rule exemptions.
 
-## Upstream patch
+## Source and maintenance
 
-`patches/@shadcn__lint@0.1.5.patch` exposes three syntax-adapter callbacks, component size/variant
-metadata, the upstream class-attribute predicate, and explicit project-theme registration. Without these seams the public package only
-collects JSX sites and assumes shadcn project configuration. Original JSX behavior remains the default.
-This is a local integration, not official upstream Angular support.
+The adapted policy, grammar, theme, and compiler-bridge source originates from
+[`shadcn-ui/lint` commit 093ae9d](https://github.com/shadcn-ui/lint/tree/093ae9db214772afe0de40299d224c7b5e24bdeb/packages/lint/src),
+corresponding to `@shadcn/lint@0.1.5`. Its MIT notice is retained in `design-system/LICENSE`.
+The grammar validators retain upstream's attribution to `shadcn-ui/cn`, also MIT-licensed.
 
-Use [pnpm's patch workflow](https://pnpm.io/cli/patch) when upgrading the dependency. Review changes
-against the [upstream collector](https://github.com/shadcn-ui/lint/blob/main/packages/lint/src/sites/collect.ts)
-and [rule documentation](https://github.com/shadcn-ui/lint/tree/main/docs/rules), then regenerate the
-patch with `pnpm patch-commit`. Do not edit installed `node_modules` without updating the committed
-patch and lockfile. An upstream adapter API would remove this patch, not the Angular syntax adapter.
+This is maintained source, not generated output. JSX collection, React forwarding, component-import
+recognition, wrapper discovery, project-specific `cn` loading, and unused recognition options were
+removed. Angular metadata supplies component identity and size/variant inputs. Rules require the
+Angular callbacks in `parserServices.designSystem`; they have no React fallback. Optional diagnostic
+notes use `settings.designSystem.note`.
 
-Run `pnpm run test:rules`, `pnpm run lint`, and `pnpm run stylelint`. The integration suite compares
-Angular verdicts with the real JSX plugin for all six rules, checks original diagnostic locations,
-and compiles custom Tailwind utilities/variants to detect accidental fallback to grammar-only checks.
-Stylelint covers all application CSS/SCSS, including global styles outside `app/`.
-The Stylelint suite covers selector subjects, nesting, negative selectors, decoded CSS escapes,
-private namespaces, and component discovery. SCSS cases are compared with actual Sass compiler
-output for [nested properties](https://sass-lang.com/documentation/style-rules/declarations/#nesting)
-and [`@at-root`](https://sass-lang.com/documentation/at-rules/at-root/). Known protected mixins,
-`@extend`, `@apply`, and interpolation fail explicitly when their declarations cannot be verified.
-Consumer layout migrations still need visual checks; rule parity does not establish visual parity.
+When adopting a policy fix, compare the corresponding upstream source and tests, adapt it here,
+and add a regression. Do not replace the port with an npm dependency or a copied bundle.
+`design-system/fixtures/upstream-verdicts.json` contains independently captured reference diagnostics
+from the original package, with version and commit provenance. Tests compare the port against those
+saved results, not against itself. New Angular-specific behavior needs its own fixtures.
+
+Run `pnpm run test:rules`, `pnpm run lint`, and `pnpm run stylelint`. Tests cover the six policies,
+source locations, actual Tailwind utilities/variants, Angular metadata, and CSS/SCSS selectors.
+Sass cases are compared with compiler output for
+[nested properties](https://sass-lang.com/documentation/style-rules/declarations/#nesting) and
+[`@at-root`](https://sass-lang.com/documentation/at-rules/at-root/).
 
 ## Analysis boundaries
 
 This is static linting, not an Angular runtime or a complete CSS cascade simulator. Source roots
 define the protected component set; Angular import scopes and transitive class forwarding through
-application wrappers are not reconstructed. Host bindings are checked when their selector identifies
-a protected control, not for an arbitrary behavioral directive whose eventual host is unknown. Same-file readonly field resolution is deliberately
-conservative about mutation and escape. Imported values, calls, and computed class names cannot be
-verified and are reported on protected template hosts rather than evaluated. Bare names matching a
-template-local declaration are conservatively unresolved; `this.field` explicitly addresses the
-component. Owner metadata comes from saved TypeScript files, so save initializer changes before
-rechecking an external or extracted template. Inline extraction uses Angular ESLint's processor. The extraction guard rejects unsupported inline
-forms, including aliased decorators and indirect template metadata. Use a normal `@Component` import
-and literal metadata or an external template. Typed symbol resolution also recognizes Angular
-decorators re-exported through local barrels without treating unrelated decorators as Angular.
+application wrappers are not reconstructed. Appearance checks apply to host bindings when their
+selector identifies a protected control. Static private class names are also rejected on ordinary
+Angular hosts, but unknown dynamic classes there are not globally banned.
 
-Selector matching is not CSS cascade analysis. Generic selectors, inheritance, runtime DOM changes,
-and selectors manufactured entirely by Sass outside a statically protected context are not completely
-modeled. Inside known protected contexts, unreadable composition is an error rather than a pass. Keep visual/browser
-coverage. Do not solve findings with blanket allowlists, selector rewrites, or inline-style migration.
+Readonly resolution is conservative about mutation and escape. Imported values, calls, and computed
+class names are reported on protected hosts rather than evaluated. Template-local names remain
+unresolved; `this.field` explicitly addresses the component. Owner metadata comes from saved
+TypeScript files. Use literal `@Component` metadata or an external template when the extraction
+guard rejects an unsupported inline form, including aliased decorators or indirect metadata.
+
+Generic selectors, inheritance, runtime DOM changes, and selectors manufactured entirely by Sass
+outside a statically protected context are not completely modeled. Within known protected contexts,
+unreadable mixins, extension, and interpolation are errors rather than passes. Keep browser coverage;
+do not solve findings with blanket allowlists, selector rewrites, or inline-style migration.

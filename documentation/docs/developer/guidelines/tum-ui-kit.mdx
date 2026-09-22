@@ -126,17 +126,18 @@ semantic input or theme token only when the customization is a supported compone
 
 ### Consumer style checks
 
-Application HTML and inline templates use all six rules from
-[`@shadcn/lint`](https://github.com/shadcn-ui/lint), through an Angular syntax adapter.
+Application HTML and inline templates use an Angular-native source port of all six policies from
+[shadcn lint](https://github.com/shadcn-ui/lint). The linter lives in `rules/design-system`;
+there is no `@shadcn/lint` dependency or package patch.
 `design-system/no-restyle`, `no-raw-colors`, `no-arbitrary-values`, `no-inline-styles`,
-`require-static-classes`, and `no-unknown-classes` share upstream's policy and Tailwind analysis.
+`require-static-classes`, and `no-unknown-classes` share the local policy engine and Tailwind analysis.
 Selectors and inherited input values are discovered from the package's Angular metadata, not a
 manually maintained list of components. Package implementations are outside the consumer scope.
 
-- Use public inputs for appearance. Upstream classifies spacing, typography, colours, motion,
+- Use public inputs for appearance. The policy engine classifies spacing, typography, colours, motion,
   and other appearance utilities using the application's theme. Unknown and custom classes on
   component hosts are rejected rather than assumed harmless.
-- Host layout remains allowed through upstream's `layout` category and explicit CSS-property
+- Host layout remains allowed through the policy's `layout` category and explicit CSS-property
   policy in `rules/tum-ui-design-system.mjs`. Put application-specific composition on ordinary
   wrappers; do not move appearance overrides there just to bypass checks.
 - Use complete class alternatives in conditions, arrays, maps, interpolation, or `[class.name]`.
@@ -146,7 +147,7 @@ manually maintained list of components. Package implementations are outside the 
   ordinary ancestors. Do not target package internals or use unsupported `styleClass` attributes.
 - Stylelint checks all application CSS/SCSS, including global styles outside `app/`. It parses
   nested selectors and matches their subject against
-  the same component metadata. Declaration checks reuse upstream's inline-style policy; they do not
+  the same component metadata. Declaration checks reuse the shared inline-style policy; they do not
   maintain another appearance-property regex. Nested Sass properties and `@at-root` are supported.
   Unreadable composition such as mixins or interpolation on protected controls is an error. Private
   CSS selectors are parsed and decoded, so CSS escapes do not bypass the namespace guard.

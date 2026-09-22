@@ -1,13 +1,15 @@
 import process from 'node:process';
-import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { URL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ESLint, Linter } from 'eslint';
 import angular from 'angular-eslint';
 import tsParser from '@typescript-eslint/parser';
-import { plugin as upstream } from '@shadcn/lint';
 import { createAngularDesignSystemPlugin } from './angular-design-system.mjs';
+
+const referenceVerdicts = JSON.parse(readFileSync(new URL('./design-system/fixtures/upstream-verdicts.json', import.meta.url), 'utf8'));
 
 let root;
 let plugin;
@@ -243,29 +245,8 @@ export class ConsumerComponent {}`;
         expect(result.messages).toEqual([expect.objectContaining({ ruleId: 'design/no-restyle', line: 3, column: 33, endLine: 3, endColumn: 44 })]);
     });
 
-    it.each([
-        ['no-restyle', 'class="italic"', 'className="italic"', { allow: ['layout'], message: 'Rejected {{className}}' }],
-        ['no-raw-colors', 'class="bg-red-500"', 'className="bg-red-500"', {}],
-        ['no-arbitrary-values', 'class="p-[13px]"', 'className="p-[13px]"', {}],
-        ['no-unknown-classes', 'class="flex-cols"', 'className="flex-cols"', {}],
-        ['require-static-classes', '[class]="getClasses()"', 'className={getClasses()}', {}],
-        ['no-inline-styles', 'style="padding: 1rem"', 'style={{ padding: "1rem" }}', {}],
-    ])('matches the actual JSX rule verdict for %s', (rule, htmlAttribute, jsxAttribute, options) => {
-        const angularMessages = messages(`<ds-button ${htmlAttribute} />`, rule, options);
-        const jsxOptions = rule === 'no-inline-styles' ? options : { ...options, componentImports: ['^@fixture/ui$'] };
-        const jsxMessages = new Linter({ cwd: root }).verify(
-            `import { DsButton } from '@fixture/ui'; const element = <DsButton ${jsxAttribute} />;`,
-            [
-                {
-                    files: ['**/*.tsx'],
-                    languageOptions: { parser: tsParser, parserOptions: { ecmaFeatures: { jsx: true } } },
-                    plugins: { design: upstream },
-                    rules: { [`design/${rule}`]: ['error', jsxOptions] },
-                },
-            ],
-            { filename: path.join(root, 'consumer.tsx') },
-        );
-        expect(angularMessages.map(({ message, severity }) => ({ message, severity }))).toEqual(jsxMessages.map(({ message, severity }) => ({ message, severity })));
-        expect(angularMessages).toHaveLength(1);
+    it.each(referenceVerdicts.cases)('matches the captured upstream $rule verdict', ({ rule, htmlAttribute, options, messages: expected }) => {
+        const actual = messages(`<ds-button ${htmlAttribute} />`, rule, options);
+        expect(actual.map(({ message, severity }) => ({ message, severity }))).toEqual(expected);
     });
 });

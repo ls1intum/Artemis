@@ -47,7 +47,7 @@ export const inlineStyleOptions = {
     ],
 };
 
-// Explicit policy, not a second class grammar. Upstream owns utility classification.
+// Explicit policy, not a second class grammar. The native policy engine owns utility classification.
 export const tumUiDesignSystemRules = {
     'design-system/no-restyle': ['error', { allow: ['layout'] }],
     'design-system/require-static-classes': 'error',

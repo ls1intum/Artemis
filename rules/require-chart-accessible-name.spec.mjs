@@ -62,7 +62,7 @@ describe('require-chart-accessible-name', () => {
                 { code: '@Component({ template: `<tum-ui-bar-chart aria-hidden="false" />` }) class C {}', errors: [{ messageId: 'missingAccessibleName' }] },
                 // A name-like string nested inside another attribute's value is not an accessible name.
                 {
-                    code: `@Component({ template: \`<tum-ui-bar-chart pTooltip='[ariaLabel]=\"Scores\"' />\` }) class C {}`,
+                    code: `@Component({ template: \`<tum-ui-bar-chart pTooltip='[ariaLabel]="Scores"' />\` }) class C {}`,
                     errors: [{ messageId: 'missingAccessibleName' }],
                 },
                 // `>` inside a binding must not hide the missing label either.

@@ -2,7 +2,9 @@ import path from 'node:path';
 import process from 'node:process';
 import postcss from 'postcss';
 import { HtmlParser, splitNsName } from '@angular/compiler';
-import { plugin as upstream, registerProject, isClassAttribute } from '@shadcn/lint';
+import { plugin as engine } from './design-system/plugin.mjs';
+import { registerProject } from './design-system/project/configuration.mjs';
+import { isClassAttribute } from './design-system/expressions.mjs';
 import { createComponentIndex, resolveRoots } from './angular-design-system-project.mjs';
 import { requireLintableTemplates } from './angular-design-system-lintable-templates.mjs';
 import { createInlineStylesRule } from './angular-design-system-inline-styles.mjs';
@@ -44,7 +46,7 @@ function templateLocals(sourceCode) {
     return locals;
 }
 
-/** A syntax adapter: all six rule verdicts and class contracts remain upstream's. */
+/** A syntax adapter: the six adapted policies consume Angular source sites. */
 export function createAngularDesignSystemPlugin({ root = process.cwd(), components, sources = components, theme, scope = 'all' }) {
     root = path.resolve(root);
     registerProject(root, path.resolve(root, theme));
@@ -187,7 +189,7 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
         };
     };
     const rules = Object.fromEntries(
-        Object.entries(upstream.rules).map(([name, rule]) => [
+        Object.entries(engine.rules).map(([name, rule]) => [
             name,
             {
                 ...rule,
@@ -198,7 +200,7 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
                         {
                             get(_, key) {
                                 const target = context.sourceCode;
-                                if (key === 'parserServices') return { ...target.parserServices, shadcn: adapter };
+                                if (key === 'parserServices') return { ...target.parserServices, designSystem: adapter };
                                 const value = Reflect.get(target, key);
                                 return typeof value === 'function' ? value.bind(target) : value;
                             },

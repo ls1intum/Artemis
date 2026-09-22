@@ -2,7 +2,7 @@ import stylelint from 'stylelint';
 import postcss from 'postcss';
 import selectorParser from 'postcss-selector-parser';
 import resolveNestedSelector from 'postcss-resolve-nested-selector';
-import { plugin as upstream } from '@shadcn/lint';
+import { plugin as engine } from './design-system/plugin.mjs';
 import { createComponentIndex } from './angular-design-system-project.mjs';
 
 const ruleName = 'design-system/no-restyle';
@@ -114,12 +114,12 @@ export function evaluateStylesheet(root, index, propertyOptions, report) {
     if (!declarations.size) return;
     let check;
     let declaration;
-    const upstreamRule = upstream.rules['no-inline-styles'];
-    upstreamRule.create({
+    const policyRule = engine.rules['no-inline-styles'];
+    policyRule.create({
         options: [propertyOptions],
         sourceCode: {
             parserServices: {
-                shadcn: {
+                designSystem: {
                     styleVisitors(evaluate) {
                         check = evaluate;
                         return {};
@@ -128,12 +128,12 @@ export function evaluateStylesheet(root, index, propertyOptions, report) {
             },
         },
         report(descriptor) {
-            let message = descriptor.message ?? upstreamRule.meta.messages[descriptor.messageId];
+            let message = descriptor.message ?? policyRule.meta.messages[descriptor.messageId];
             for (const [key, value] of Object.entries(descriptor.data ?? {})) message = message.replaceAll(`{{${key}}}`, value);
             report({ message, node: declaration, word: declaration.prop });
         },
     });
-    if (!check) throw new Error('The @shadcn/lint framework adapter patch is missing.');
+    if (!check) throw new Error('The design-system stylesheet adapter did not register its evaluator.');
     for (const [node, { owner, property }] of declarations) {
         declaration = node;
         check(

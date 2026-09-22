@@ -87,7 +87,7 @@ stable Angular CDK primitives, and keep Artemis-specific composition in the appl
 
 ### TUM UI consumer contracts
 
-The six upstream `@shadcn/lint` rules run through an Angular adapter on application TUM UI hosts,
+The six design-system policies are ported from shadcn lint into `rules/design-system` and run on application TUM UI hosts,
 including inline templates. Selectors and inputs are discovered from package metadata. Use public
 inputs for appearance and complete Tailwind classes for host layout; custom host classes and opaque
 class-producing expressions are rejected. Signal conditions such as `[class.w-full]="wide()"` work.
@@ -96,7 +96,7 @@ cannot extract is rejected; use literal `@Component` metadata or an external tem
 
 Stylelint checks all application CSS/SCSS, including global styles, resolves nested selectors,
 and matches their subject against the same component metadata,
-then applies upstream's CSS-property policy. Protected TypeScript host bindings and inline component
+then applies the shared CSS-property policy. Protected TypeScript host bindings and inline component
 CSS/SCSS are checked too. Unknown Sass composition on a protected host must be made explicit, not
 silenced. Private package classes remain forbidden in templates
 and stylesheets. Do not move overrides to wrappers or inline styles merely to pass lint. Extend the

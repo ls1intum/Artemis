@@ -2,7 +2,7 @@ import { dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { CssSelector, Lexer, Parser, ParseLocation, ParseSourceFile, ParseSourceSpan } from '@angular/compiler';
-import { isClassAttribute } from '@shadcn/lint';
+import { isClassAttribute } from './design-system/expressions.mjs';
 import postcss from 'postcss';
 import { createClassResolver } from './angular-design-system-owner.mjs';
 import { classExpressionValues, expressionOf } from './angular-design-system-expressions.mjs';
