@@ -243,10 +243,11 @@ public class EditorToolsService {
         }
 
         if (!competency.getExerciseLinks().isEmpty() || !competency.getLectureUnitLinks().isEmpty()) {
-            return errorJson(objectMapper, "Competency " + competencyId + " still has linked learning objects. Reassign or remove every link before deletion.");
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " still has linked learning objects. Reassign or remove every link before deletion.",
+                    toolContext);
         }
         if (competencyRelationRepository.existsByHeadCompetencyIdOrTailCompetencyId(competencyId, competencyId)) {
-            return errorJson(objectMapper, "Competency " + competencyId + " still has competency relations. Remove them before deletion.");
+            return mutationErrorJson(objectMapper, "Competency " + competencyId + " still has competency relations. Remove them before deletion.", toolContext);
         }
         String title = competency.getTitle();
         Course course = competency.getCourse();
