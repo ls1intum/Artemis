@@ -301,6 +301,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage();
     }
 
+    hasChosenNoAi(): boolean {
+        return this.aiExperienceOptInService.hasChosenNoAi();
+    }
+
     onOptInToAiFeedbackSuggestions(): void {
         this.aiExperienceOptInService.promptForAiUsage(() => this.loadFeedbackSuggestions());
     }

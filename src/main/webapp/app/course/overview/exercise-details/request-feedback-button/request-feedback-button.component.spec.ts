@@ -392,6 +392,16 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(component.hasUserAcceptedLLMUsage()).toBe(false);
     });
 
+    it.each([
+        { selection: undefined, hintKey: 'aiFeedbackAvailableHint', actionKey: 'chooseAiExperience' },
+        { selection: LLMSelectionDecision.NO_AI, hintKey: 'aiFeedbackAvailableHintNoAi', actionKey: 'changeAiExperience' },
+    ])('should offer to $actionKey when the AI Experience selection is $selection', ({ selection, hintKey, actionKey }) => {
+        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: selection } as any);
+
+        expect(component.aiFeedbackHintKey()).toBe(`artemisApp.exerciseActions.${hintKey}`);
+        expect(component.aiExperienceActionKey()).toBe(`artemisApp.exerciseActions.${actionKey}`);
+    });
+
     it('should open LLM modal when hasUserAcceptedLLMUsage is false', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);
@@ -828,7 +838,7 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(requestSpy).toHaveBeenCalledWith(exercise.id, participation.id);
         });
 
-        it('should provide an accessible name for the hint button independent of the tooltip', async () => {
+        it('should provide an accessible name for the hint button', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation = createParticipation();

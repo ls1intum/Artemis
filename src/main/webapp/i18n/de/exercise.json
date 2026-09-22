@@ -237,7 +237,8 @@
             "aiFeedbackPopover": {
                 "title": "KI-Feedback",
                 "description": "Erhalte KI-generiertes Feedback zu deiner Abgabe. Es ist vorläufig und kann Fehler enthalten. Bitte überprüfe wichtige Informationen.",
-                "descriptionDisabled": "Diese Aufgabe unterstützt KI-generiertes Feedback zu deiner Abgabe. Aktiviere die KI-Erfahrung für diese und zukünftige Aufgaben.",
+                "descriptionDisabled": "Diese Aufgabe unterstützt KI-generiertes Feedback zu deiner Abgabe. Wähle deine KI-Erfahrung, um es für diese und zukünftige Aufgaben zu nutzen.",
+                "descriptionNoAi": "KI-Feedback ist deaktiviert, weil du „Keine KI“ ausgewählt hast. Ändere deine KI-Erfahrung, um es für diese und zukünftige Aufgaben zu nutzen.",
                 "selectedAiType": "Verwendet: {{ type }}",
                 "dontShowAgain": "Nicht mehr anzeigen",
                 "aiType": {

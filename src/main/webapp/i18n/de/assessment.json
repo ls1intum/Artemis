@@ -139,8 +139,10 @@
                 "generativeAIAssessmentAvailable": "Feedback-Vorschläge wurden von KI generiert und können Fehler enthalten. Überprüfe wichtige Informationen.",
                 "generativeAIAssessmentInfo": "Vorschläge prüfen und bei Bedarf anpassen — die Verantwortung für die Bewertung liegt weiterhin bei dir.",
                 "loading": "KI-Feedback-Vorschläge werden generiert…",
-                "aiExperienceOptInHint": "Diese Aufgabe unterstützt KI-generierte Feedback-Vorschläge. Aktiviere die KI-Erfahrung für diese und zukünftige Bewertungen.",
-                "enableAiExperience": "KI-Erfahrung aktivieren",
+                "aiExperienceOptInHint": "Diese Aufgabe unterstützt KI-generierte Feedback-Vorschläge. Wähle deine KI-Erfahrung, um sie für diese und zukünftige Bewertungen zu nutzen.",
+                "aiExperienceOptInHintNoAi": "KI-Feedback-Vorschläge sind deaktiviert, weil du „Keine KI“ ausgewählt hast. Ändere deine KI-Erfahrung, um sie für diese und zukünftige Bewertungen zu nutzen.",
+                "chooseAiExperience": "KI-Erfahrung wählen",
+                "changeAiExperience": "KI-Erfahrung ändern",
                 "chrome": {
                     "automaticAssessment": "Automatische Bewertung",
                     "suggestions": "KI-Feedback-Vorschläge",

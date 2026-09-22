@@ -57,6 +57,23 @@ describe('AiExperienceOptInService', () => {
         });
     });
 
+    describe('hasChosenNoAi', () => {
+        it('returns true for NO_AI', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as any);
+            expect(service.hasChosenNoAi()).toBe(true);
+        });
+
+        it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI])('returns false for %s', (selection) => {
+            accountService.userIdentity.set({ selectedLLMUsage: selection } as any);
+            expect(service.hasChosenNoAi()).toBe(false);
+        });
+
+        it('returns false when the user has no decision yet', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as any);
+            expect(service.hasChosenNoAi()).toBe(false);
+        });
+    });
+
     describe('promptForAiUsage', () => {
         it('does not persist a decision or call onAccepted when the modal is dismissed', async () => {
             vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);

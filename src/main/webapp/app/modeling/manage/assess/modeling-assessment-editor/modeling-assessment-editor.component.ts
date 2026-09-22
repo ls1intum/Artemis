@@ -183,6 +183,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     );
 
     readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
+    readonly hasChosenNoAi = computed(() => this.aiExperienceOptInService.hasChosenNoAi());
 
     onOptInToAiFeedbackSuggestions(): void {
         this.aiExperienceOptInService.promptForAiUsage(() => void this.fetchAndApplyFeedbackSuggestions());

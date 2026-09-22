@@ -52,7 +52,7 @@
     } @else {
         @if (showHint()) {
             <div class="ai-feedback-hint flex items-center gap-2" [id]="'ai-feedback-hint-' + exercise().id">
-                <span class="text-muted" jhiTranslate="artemisApp.exerciseActions.aiFeedbackAvailableHint"></span>
+                <span class="text-muted" [jhiTranslate]="aiFeedbackHintKey()"></span>
                 <ng-container [ngTemplateOutlet]="enableAiFeedbackButton" />
             </div>
         } @else {
@@ -60,19 +60,15 @@
         }
         <ng-template #enableAiFeedbackButton>
             @if (asTumUiButton()) {
-                <!-- The tooltip is suppressed when showHint() is false: that caller (the AI feedback submit popover)
-                     already renders the same explanation as static text, and a CDK-overlay tooltip would otherwise
-                     paint behind the popover, whose Bootstrap z-index sits above the CDK overlay container's. -->
                 <tum-ui-button
                     [size]="smallButtons() ? 'small' : 'default'"
                     [icon]="faPenSquare"
                     [disabled]="isFeedbackRequestBlocked()"
                     [id]="'enable-ai-feedback-' + exercise().id"
-                    [ariaLabel]="'artemisApp.exerciseActions.enableAiFeedback' | artemisTranslate"
-                    [tumUiTooltip]="showHint() ? ('artemisApp.exerciseActions.enableAiFeedbackTooltip' | artemisTranslate) : ''"
+                    [ariaLabel]="aiExperienceActionKey() | artemisTranslate"
                     (clicked)="showLLMSelectionModal()"
                 >
-                    <span [class]="alwaysShowLabel() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exerciseActions.enableAiFeedback"></span>
+                    <span [class]="alwaysShowLabel() ? '' : 'hidden md:inline'" [jhiTranslate]="aiExperienceActionKey()"></span>
                 </tum-ui-button>
             } @else {
                 <button
@@ -81,11 +77,10 @@
                     [class.btn-sm]="smallButtons()"
                     [disabled]="isFeedbackRequestBlocked()"
                     [id]="'enable-ai-feedback-' + exercise().id"
-                    [attr.aria-label]="'artemisApp.exerciseActions.enableAiFeedback' | artemisTranslate"
-                    [ngbTooltip]="'artemisApp.exerciseActions.enableAiFeedbackTooltip' | artemisTranslate"
+                    [attr.aria-label]="aiExperienceActionKey() | artemisTranslate"
                 >
                     <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                    <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" jhiTranslate="artemisApp.exerciseActions.enableAiFeedback"></span>
+                    <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" [jhiTranslate]="aiExperienceActionKey()"></span>
                 </button>
             }
         </ng-template>

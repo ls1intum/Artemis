@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/account/user/shared/user.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLM_MODAL_DISMISSED, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 /**
  * Shared entry point for prompting the current user to opt into AI usage (their "AI Experience" setting)
@@ -17,6 +17,11 @@ export class AiExperienceOptInService {
     /** Whether the current user has already opted into AI usage (cloud or local). */
     hasAcceptedAiUsage(): boolean {
         return isAcceptedLLMSelection(this.accountService.userIdentity()?.selectedLLMUsage);
+    }
+
+    /** Whether the current user deliberately chose No AI, as opposed to not having made a choice yet. */
+    hasChosenNoAi(): boolean {
+        return this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI;
     }
 
     /**

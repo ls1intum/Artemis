@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Subscription, filter, skip } from 'rxjs';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumUiButtonComponent } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -46,7 +45,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [NgbTooltipModule, TumUiButtonComponent, TumUiTooltipDirective, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, NgTemplateOutlet],
+    imports: [TumUiButtonComponent, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, NgTemplateOutlet],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -70,6 +69,12 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly isExamExercise = signal<boolean>(undefined!);
     participation?: StudentParticipation;
     readonly hasUserAcceptedLLMUsage = signal(false);
+    /** A deliberate No AI choice, as opposed to no choice yet: the prompt then offers to change the selection instead of making one. */
+    readonly hasChosenNoAi = computed(() => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI);
+    readonly aiFeedbackHintKey = computed(() =>
+        this.hasChosenNoAi() ? 'artemisApp.exerciseActions.aiFeedbackAvailableHintNoAi' : 'artemisApp.exerciseActions.aiFeedbackAvailableHint',
+    );
+    readonly aiExperienceActionKey = computed(() => (this.hasChosenNoAi() ? 'artemisApp.exerciseActions.changeAiExperience' : 'artemisApp.exerciseActions.chooseAiExperience'));
     currentFeedbackRequestCount = signal(0);
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);

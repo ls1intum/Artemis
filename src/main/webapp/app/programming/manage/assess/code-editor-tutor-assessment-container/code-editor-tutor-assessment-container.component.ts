@@ -197,6 +197,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     );
 
     readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
+    readonly hasChosenNoAi = computed(() => this.aiExperienceOptInService.hasChosenNoAi());
 
     constructor() {
         this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));

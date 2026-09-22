@@ -45,10 +45,10 @@
                         type="button"
                         class="feedback-suggestions-chrome__info apollon-chrome-iconbtn"
                         data-testid="feedback-suggestions-chrome-info"
-                        [pTooltip]="'artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint' | artemisTranslate"
+                        [pTooltip]="optInHintKey() | artemisTranslate"
                         tooltipPosition="bottom"
                         tooltipStyleClass="feedback-suggestions-ai-tooltip"
-                        [attr.aria-label]="'artemisApp.assessment.feedbackSuggestions.enableAiExperience' | artemisTranslate"
+                        [attr.aria-label]="optInActionKey() | artemisTranslate"
                         (click)="optIn.emit()"
                     >
                         <fa-icon [icon]="faInfoCircle" />
@@ -76,9 +76,9 @@
         <tum-ui-message severity="secondary">
             <div class="flex items-center gap-2">
                 <fa-icon [icon]="faInfoCircle" size="lg" />
-                <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint"></span>
+                <span [jhiTranslate]="optInHintKey()"></span>
                 <tum-ui-button id="enable-ai-feedback-suggestions" size="small" [icon]="faPenSquare" (clicked)="optIn.emit()">
-                    <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.enableAiExperience"></span>
+                    <span [jhiTranslate]="optInActionKey()"></span>
                 </tum-ui-button>
             </div>
         </tum-ui-message>

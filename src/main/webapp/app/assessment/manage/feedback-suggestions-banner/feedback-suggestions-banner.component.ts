@@ -50,6 +50,8 @@ export class FeedbackSuggestionsBannerComponent {
     readonly resultCompletionDate = input<dayjs.Dayjs | undefined>(undefined);
     readonly isFeedbackSuggestionsEnabled = input.required<boolean>();
     readonly requiresAiExperienceOptIn = input<boolean>(false);
+    /** Distinguishes a deliberate No AI choice from no choice yet, so the opt-in prompt can say "change" instead of "choose". */
+    readonly hasChosenNoAi = input<boolean>(false);
     readonly appearance = input<FeedbackSuggestionsBannerAppearance>('banner');
     readonly optIn = output<void>();
 
@@ -75,6 +77,12 @@ export class FeedbackSuggestionsBannerComponent {
         }
     });
     protected readonly chromeLabelKey = computed(() => `artemisApp.assessment.feedbackSuggestions.chrome.${this.notice()}`);
+    protected readonly optInHintKey = computed(() =>
+        this.hasChosenNoAi() ? 'artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHintNoAi' : 'artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint',
+    );
+    protected readonly optInActionKey = computed(() =>
+        this.hasChosenNoAi() ? 'artemisApp.assessment.feedbackSuggestions.changeAiExperience' : 'artemisApp.assessment.feedbackSuggestions.chooseAiExperience',
+    );
 
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faInfoCircle = faInfoCircle;

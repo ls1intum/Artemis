@@ -12,6 +12,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 describe('FeedbackSuggestionsBannerComponent', () => {
     let fixture: ComponentFixture<FeedbackSuggestionsBannerComponent>;
 
+    const translationKeys = () => fixture.debugElement.queryAll(By.directive(TranslateDirective)).map((element) => element.injector.get(TranslateDirective).jhiTranslate());
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
@@ -75,9 +77,21 @@ describe('FeedbackSuggestionsBannerComponent', () => {
 
         const messages = fixture.debugElement.queryAll(By.directive(TumUiMessageComponent));
         expect(messages).toHaveLength(1);
-        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint"]'))).toBeTruthy();
+        expect(translationKeys()).toEqual(['artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint', 'artemisApp.assessment.feedbackSuggestions.chooseAiExperience']);
         expect(fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions'))).toBeTruthy();
         expect(fixture.debugElement.query(By.directive(FaIconComponent))).toBeTruthy();
+    });
+
+    it('should ask the assessor to change rather than choose their AI Experience when they deliberately chose No AI', () => {
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
+        fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
+        fixture.componentRef.setInput('hasChosenNoAi', true);
+        fixture.detectChanges();
+
+        const messages = fixture.debugElement.queryAll(By.directive(TumUiMessageComponent));
+        expect(messages).toHaveLength(1);
+        expect(translationKeys()).toEqual(['artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHintNoAi', 'artemisApp.assessment.feedbackSuggestions.changeAiExperience']);
     });
 
     it('should hide the opt-in hint when the assessor is not the current user or the result is already completed', () => {
@@ -183,6 +197,21 @@ describe('FeedbackSuggestionsBannerComponent', () => {
 
             expect(island()).toBeNull();
             expect(fixture.debugElement.queryAll(By.directive(TumUiMessageComponent))).toHaveLength(0);
+        });
+
+        it.each([
+            { hasChosenNoAi: false, hintKey: 'aiExperienceOptInHint', actionKey: 'chooseAiExperience' },
+            { hasChosenNoAi: true, hintKey: 'aiExperienceOptInHintNoAi', actionKey: 'changeAiExperience' },
+        ])('should label the opt-in island button with $actionKey when hasChosenNoAi is $hasChosenNoAi', ({ hasChosenNoAi, hintKey, actionKey }) => {
+            fixture.componentRef.setInput('isAssessor', true);
+            fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
+            fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
+            fixture.componentRef.setInput('hasChosenNoAi', hasChosenNoAi);
+            fixture.detectChanges();
+
+            const infoButton = fixture.debugElement.query(By.css('[data-testid="feedback-suggestions-chrome-info"]'));
+            expect(infoButton.nativeElement.getAttribute('aria-label')).toBe(`artemisApp.assessment.feedbackSuggestions.${actionKey}`);
+            expect(fixture.componentInstance['optInHintKey']()).toBe(`artemisApp.assessment.feedbackSuggestions.${hintKey}`);
         });
 
         it('should emit optIn when the opt-in island button is clicked', () => {

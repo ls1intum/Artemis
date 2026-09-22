@@ -57,6 +57,7 @@
             [resultCompletionDate]="manualResult()?.completionDate"
             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
             [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
+            [hasChosenNoAi]="hasChosenNoAi()"
             (optIn)="onOptInToAiFeedbackSuggestions()"
         />
         @if (submission()) {

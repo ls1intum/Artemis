@@ -209,6 +209,11 @@ export class ExerciseHeaderActionsComponent {
     });
 
     readonly userLLMSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
+    readonly aiFeedbackPopoverDisabledDescriptionKey = computed(() =>
+        this.userLLMSelection() === LLMSelectionDecision.NO_AI
+            ? 'artemisApp.exercise.aiFeedbackPopover.descriptionNoAi'
+            : 'artemisApp.exercise.aiFeedbackPopover.descriptionDisabled',
+    );
     readonly hasUserAcceptedLLM = computed(() => {
         const selection = this.userLLMSelection();
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;

@@ -49,11 +49,13 @@ describe('ExerciseHeaderActionsComponent', () => {
         return exercise;
     }
 
-    function createComponent(exercise: Exercise, options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean } = {}) {
-        const { athenaEnabled = true, examMode = false, llmAccepted = true } = options;
+    function createComponent(exercise: Exercise, options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; llmSelection?: LLMSelectionDecision } = {}) {
+        const { athenaEnabled = true, examMode = false, llmAccepted = true, llmSelection } = options;
 
         const accountService = new MockAccountService();
-        if (llmAccepted) {
+        if (llmSelection) {
+            accountService.userIdentity.set({ selectedLLMUsage: llmSelection } as User);
+        } else if (llmAccepted) {
             accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
         }
 
@@ -187,6 +189,15 @@ describe('ExerciseHeaderActionsComponent', () => {
             fixture.componentInstance.submitAndShowPopover();
 
             expect(submitPopoverRef().isOpen()).toBe(true);
+        });
+
+        it.each([
+            { llmSelection: undefined, descriptionKey: 'descriptionDisabled' },
+            { llmSelection: LLMSelectionDecision.NO_AI, descriptionKey: 'descriptionNoAi' },
+        ])('explains the AI-disabled popover with $descriptionKey when the AI Experience selection is $llmSelection', ({ llmSelection, descriptionKey }) => {
+            createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false, llmSelection });
+
+            expect(fixture.componentInstance.aiFeedbackPopoverDisabledDescriptionKey()).toBe(`artemisApp.exercise.aiFeedbackPopover.${descriptionKey}`);
         });
 
         it('does not reopen the dismissed AI-disabled recommendation popover', () => {
