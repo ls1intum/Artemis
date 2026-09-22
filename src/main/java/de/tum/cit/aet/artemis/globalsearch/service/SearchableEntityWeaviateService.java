@@ -570,11 +570,7 @@ public class SearchableEntityWeaviateService {
         }
     }
 
-    /**
-     * Package-private rather than private: {@link WeaviateOutboxDispatcher} also reads a bulk delete's params to
-     * scope its own ledger cleanup to the same target this entry's Weaviate-side filter used.
-     */
-    long longParam(WeaviateOutboxEntry entry, String key) {
+    private long longParam(WeaviateOutboxEntry entry, String key) {
         Object value = deserializeMap(entry.getParams()).get(key);
         if (value instanceof Number number) {
             return number.longValue();

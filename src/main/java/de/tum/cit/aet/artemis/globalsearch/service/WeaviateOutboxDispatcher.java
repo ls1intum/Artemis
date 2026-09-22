@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 
@@ -267,7 +268,7 @@ public class WeaviateOutboxDispatcher {
             syncStateRepository.deleteByEntityTypeAndEntityId(entry.getEntityType(), entry.getEntityId());
         }
         else {
-            pruneLedgerAfterBulkDelete(entry);
+            pruneLedgerAfterBulkDelete(entry.getOperation());
         }
     }
 
@@ -282,26 +283,16 @@ public class WeaviateOutboxDispatcher {
      * their ledger rows are never revisited that way; left alone, a bulk delete that removes their Weaviate rows
      * leaks the matching ledger rows permanently.
      * <p>
-     * By the time a bulk delete confirms, the entities its filter targeted are usually already gone from the
-     * database too (the enqueue happens before the caller's own delete, e.g. {@code CourseDeletionService}, and
-     * the two are not the same transaction), so an existence check alone catches most leaks; it also sweeps up
-     * any earlier leak the same way, not only the one from this confirm. {@code DELETE_POSTS_FOR_CHANNEL} is the
-     * exception: archiving a channel or toggling its privacy ({@code ChannelService#archiveChannel},
-     * {@code #toggleChannelPrivacy}) empties it from the index without deleting it or its posts, so those rows
-     * still exist and an existence check alone finds nothing wrong with their ledger rows. Scoping the cleanup to
-     * the channel id this entry's own filter used reaches exactly those; the existence check still runs alongside
-     * it to also catch the channel-genuinely-deleted case, where the scoped query above finds nothing to prune.
+     * By the time a bulk delete confirms, the entities its filter targeted are essentially always already gone
+     * from the database too: the enqueue happens before the caller's own delete (see, for example,
+     * {@code CourseDeletionService}), and the two are not the same transaction. That rules out re-deriving which
+     * rows this specific bulk delete affected, but not a plain existence check: a row for a post or answer post
+     * that no longer exists is stale regardless of which deletion caused it, so the check below also sweeps up
+     * any earlier leak the same way, not only the one from this confirm.
      */
-    private void pruneLedgerAfterBulkDelete(WeaviateOutboxEntry entry) {
-        switch (entry.getOperation()) {
-            case DELETE_POSTS_FOR_CHANNEL -> {
-                long channelId = searchableEntityWeaviateService.longParam(entry, "channelId");
-                syncStateRepository.deletePostEntriesForChannel(SearchableEntitySchema.TypeValues.POST, channelId);
-                syncStateRepository.deleteAnswerPostEntriesForChannel(SearchableEntitySchema.TypeValues.ANSWER_POST, channelId);
-                syncStateRepository.deleteStalePostEntries(SearchableEntitySchema.TypeValues.POST);
-                syncStateRepository.deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
-            }
-            case DELETE_POSTS_FOR_COURSE, DELETE_ALL_FOR_COURSE -> {
+    private void pruneLedgerAfterBulkDelete(WeaviateOutboxOperation operation) {
+        switch (operation) {
+            case DELETE_POSTS_FOR_CHANNEL, DELETE_POSTS_FOR_COURSE, DELETE_ALL_FOR_COURSE -> {
                 syncStateRepository.deleteStalePostEntries(SearchableEntitySchema.TypeValues.POST);
                 syncStateRepository.deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
             }
@@ -309,7 +300,7 @@ public class WeaviateOutboxDispatcher {
             case DELETE_LECTURE_UNITS_FOR_LECTURE -> {
                 // lecture_unit is managed by the reconcile passes; the drift sweep already prunes its stale rows.
             }
-            case UPSERT, DELETE_ENTITY -> throw new IllegalStateException("Not a bulk delete: " + entry.getOperation());
+            case UPSERT, DELETE_ENTITY -> throw new IllegalStateException("Not a bulk delete: " + operation);
         }
     }
 

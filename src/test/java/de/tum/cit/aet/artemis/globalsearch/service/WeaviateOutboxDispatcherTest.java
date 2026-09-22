@@ -169,33 +169,23 @@ class WeaviateOutboxDispatcherTest {
     /**
      * Regression test for a bulk delete leaking post/answer post ledger rows forever: post and answer post are
      * excluded from every reconcile pass, so nothing else ever revisits a ledger row a bulk delete could not name.
-     * {@code DELETE_POSTS_FOR_CHANNEL} additionally needs the channel-scoped prune: archiving a channel or
-     * toggling its privacy empties it from the index without deleting it or its posts, so the existence check
-     * alone finds nothing wrong with their still-live ledger rows.
+     * A confirmed {@code DELETE_POSTS_FOR_CHANNEL} or {@code DELETE_POSTS_FOR_COURSE} removes both types from
+     * Weaviate, so both ledger partitions must be pruned.
      */
     @Test
-    void testDrainDeletePostsForChannel_prunesScopedAndStaleLedgerEntries() {
+    void testDrainDeletePostsForChannelOrCourse_prunesBothPostAndAnswerPostLedgerEntries() {
         WeaviateOutboxEntry channelEntry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_POSTS_FOR_CHANNEL, "{\"channelId\":5}", WeaviateOutboxOrigin.LIVE);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(channelEntry));
-        when(searchableEntityWeaviateService.longParam(channelEntry, "channelId")).thenReturn(5L);
 
         dispatcher.drain();
 
-        verify(syncStateRepository).deletePostEntriesForChannel(SearchableEntitySchema.TypeValues.POST, 5L);
-        verify(syncStateRepository).deleteAnswerPostEntriesForChannel(SearchableEntitySchema.TypeValues.ANSWER_POST, 5L);
         verify(syncStateRepository).deleteStalePostEntries(SearchableEntitySchema.TypeValues.POST);
         verify(syncStateRepository).deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
         verify(outboxRepository).delete(channelEntry);
     }
 
-    /**
-     * Unlike a channel, a course is always genuinely gone from the database by the time a
-     * {@code DELETE_POSTS_FOR_COURSE}/{@code DELETE_ALL_FOR_COURSE} confirms (both call sites delete their posts,
-     * or the whole course, before enqueueing), so the existence check alone suffices; no channel-style archive or
-     * privacy toggle exists for a course that would need the scoped prune too.
-     */
     @Test
-    void testDrainDeleteAllForCourse_prunesOnlyStaleLedgerEntries() {
+    void testDrainDeleteAllForCourse_prunesBothPostAndAnswerPostLedgerEntries() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}", WeaviateOutboxOrigin.LIVE);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
 
@@ -203,8 +193,6 @@ class WeaviateOutboxDispatcherTest {
 
         verify(syncStateRepository).deleteStalePostEntries(SearchableEntitySchema.TypeValues.POST);
         verify(syncStateRepository).deleteStaleAnswerPostEntries(SearchableEntitySchema.TypeValues.ANSWER_POST);
-        verify(syncStateRepository, never()).deletePostEntriesForChannel(anyString(), anyLong());
-        verify(syncStateRepository, never()).deleteAnswerPostEntriesForChannel(anyString(), anyLong());
     }
 
     @Test

@@ -155,39 +155,4 @@ public interface SearchableEntitySyncStateRepository extends ArtemisJpaRepositor
                 AND state.entityId NOT IN (SELECT answerPost.id FROM AnswerPost answerPost)
             """)
     void deleteStaleAnswerPostEntries(@Param("entityType") String entityType);
-
-    /**
-     * Deletes ledger rows for posts currently in the given channel, whether or not the post still exists.
-     * <p>
-     * {@link #deleteStalePostEntries} alone misses the case where a channel is archived or made private: its
-     * posts are bulk-removed from the index, but nothing deletes them from the database, so they still exist and
-     * the existence check finds nothing wrong. The dispatcher calls this one too on the same confirm, scoped to
-     * the channel id the Weaviate-side delete itself used, to reach exactly the rows that check cannot.
-     *
-     * @param entityType {@code SearchableEntitySchema.TypeValues.POST}
-     * @param channelId  the channel the confirmed bulk delete emptied
-     */
-    @Transactional // ok because of the modifying delete
-    @Modifying(flushAutomatically = true)
-    @Query("""
-            DELETE FROM SearchableEntitySyncState state
-            WHERE state.entityType = :entityType
-                AND state.entityId IN (SELECT post.id FROM Post post WHERE post.conversation.id = :channelId)
-            """)
-    void deletePostEntriesForChannel(@Param("entityType") String entityType, @Param("channelId") long channelId);
-
-    /**
-     * Same as {@link #deletePostEntriesForChannel}, for answer posts under the channel's posts.
-     *
-     * @param entityType {@code SearchableEntitySchema.TypeValues.ANSWER_POST}
-     * @param channelId  the channel the confirmed bulk delete emptied
-     */
-    @Transactional // ok because of the modifying delete
-    @Modifying(flushAutomatically = true)
-    @Query("""
-            DELETE FROM SearchableEntitySyncState state
-            WHERE state.entityType = :entityType
-                AND state.entityId IN (SELECT answerPost.id FROM AnswerPost answerPost WHERE answerPost.post.conversation.id = :channelId)
-            """)
-    void deleteAnswerPostEntriesForChannel(@Param("entityType") String entityType, @Param("channelId") long channelId);
 }
