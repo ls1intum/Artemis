@@ -45,7 +45,7 @@
             "status": "Status",
             "assessment": "Bewertung",
             "remark": "Anmerkung",
-            "remarkTooLong": "Die Anmerkung darf höchstens {{ max }} Zeichen enthalten. Kürze sie, um speichern zu können.",
+            "remarkTooLong": "Die Anmerkung darf höchstens {{ max }} Zeichen enthalten.",
             "note": "Anmerkung",
             "assessed": "Bewertet",
             "pending": "Ausstehend",
@@ -74,7 +74,9 @@
             "showDetails": "Details anzeigen",
             "hideDetails": "Details ausblenden",
             "location": "Ort",
+            "locationTooLong": "Der Ort darf höchstens {{ max }} Zeichen enthalten.",
             "meetingLink": "Meeting-Link",
+            "meetingLinkTooLong": "Der Meeting-Link darf höchstens {{ max }} Zeichen enthalten.",
             "mode": {
                 "label": "Modus",
                 "online": "Online",

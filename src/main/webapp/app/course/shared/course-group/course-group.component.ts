@@ -70,6 +70,7 @@ export class CourseGroupComponent {
     readonly profilePictureHeaderKey = input('artemisApp.course.courseGroup.profilePicture');
     readonly paginated = input(true);
     readonly isDisabled = input(false);
+    readonly allowAddingUsers = input(true);
 
     readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));
     readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));

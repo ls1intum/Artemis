@@ -29,40 +29,42 @@
 
     <!-- Combined search/add autocomplete: filters the loaded member list and adds new members -->
     <ng-template #tableActionsRef>
-        <p-autocomplete
-            [pt]="{ option: { 'data-testid': 'user-autocomplete-option' } }"
-            size="small"
-            [suggestions]="userSuggestions()"
-            [placeholder]="'artemisApp.course.courseGroup.searchForUsers' | artemisTranslate"
-            [minQueryLength]="1"
-            [showClear]="true"
-            optionLabel="login"
-            (completeMethod)="onUserSearchComplete($event)"
-            (onSelect)="onUserSelect($event.value)"
-            (onClear)="onSearchClear()"
-            (onKeyUp)="onSearchKeyUp($event)"
-            [disabled]="isDisabled()"
-        >
-            <ng-template #item let-user>
-                <div class="d-flex justify-content-between" [class.already-member]="isAlreadyMember(user)">
-                    <span>{{ user.name }} ({{ user.login }})</span>
-                    @if (isAlreadyMember(user)) {
-                        <fa-icon [icon]="faUsers" class="ms-3" />
+        @if (allowAddingUsers()) {
+            <p-autocomplete
+                [pt]="{ option: { 'data-testid': 'user-autocomplete-option' } }"
+                size="small"
+                [suggestions]="userSuggestions()"
+                [placeholder]="'artemisApp.course.courseGroup.searchForUsers' | artemisTranslate"
+                [minQueryLength]="1"
+                [showClear]="true"
+                optionLabel="login"
+                (completeMethod)="onUserSearchComplete($event)"
+                (onSelect)="onUserSelect($event.value)"
+                (onClear)="onSearchClear()"
+                (onKeyUp)="onSearchKeyUp($event)"
+                [disabled]="isDisabled()"
+            >
+                <ng-template #item let-user>
+                    <div class="d-flex justify-content-between" [class.already-member]="isAlreadyMember(user)">
+                        <span>{{ user.name }} ({{ user.login }})</span>
+                        @if (isAlreadyMember(user)) {
+                            <fa-icon [icon]="faUsers" class="ms-3" />
+                        } @else {
+                            <fa-icon [icon]="faUserPlus" class="ms-3" />
+                        }
+                    </div>
+                </ng-template>
+                <ng-template #empty>
+                    @if (searchQueryTooShort()) {
+                        <span class="badge bg-info" jhiTranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: 3 }"></span>
+                    } @else if (searchFailed()) {
+                        <span class="badge bg-danger" jhiTranslate="artemisApp.dataTable.search.failed"></span>
                     } @else {
-                        <fa-icon [icon]="faUserPlus" class="ms-3" />
+                        <span jhiTranslate="artemisApp.course.courseGroup.searchNoResults"></span>
                     }
-                </div>
-            </ng-template>
-            <ng-template #empty>
-                @if (searchQueryTooShort()) {
-                    <span class="badge bg-info" jhiTranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: 3 }"></span>
-                } @else if (searchFailed()) {
-                    <span class="badge bg-danger" jhiTranslate="artemisApp.dataTable.search.failed"></span>
-                } @else {
-                    <span jhiTranslate="artemisApp.course.courseGroup.searchNoResults"></span>
-                }
-            </ng-template>
-        </p-autocomplete>
+                </ng-template>
+            </p-autocomplete>
+        }
     </ng-template>
 
     <!-- Row action: remove user from group -->

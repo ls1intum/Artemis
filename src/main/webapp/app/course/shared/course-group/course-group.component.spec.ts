@@ -65,6 +65,14 @@ describe('CourseGroupComponent', () => {
         expect(comp).not.toBeNull();
     });
 
+    it('should hide the user autocomplete when adding users is disabled', () => {
+        fixture.componentRef.setInput('allowAddingUsers', false);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('p-autocomplete')).toBeNull();
+    });
+
     describe('onUserSearchComplete', () => {
         let searchStub: ReturnType<typeof vi.spyOn>;
 

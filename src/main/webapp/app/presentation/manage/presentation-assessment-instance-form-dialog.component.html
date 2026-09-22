@@ -72,12 +72,43 @@
         @if (editForm.controls.mode.value === PresentationAssessmentMode.IN_PERSON) {
             <div class="flex flex-col gap-2">
                 <label for="presentation-instance-location" jhiTranslate="artemisApp.presentationAssessment.location"></label>
-                <input id="presentation-instance-location" tumUiInput class="w-full" formControlName="location" />
+                <input
+                    id="presentation-instance-location"
+                    tumUiInput
+                    class="w-full"
+                    formControlName="location"
+                    [attr.aria-invalid]="editForm.controls.location.hasError('maxlength')"
+                    [attr.aria-describedby]="editForm.controls.location.hasError('maxlength') ? 'presentation-instance-location-error' : undefined"
+                />
+                @if (editForm.controls.location.hasError('maxlength')) {
+                    <tum-ui-message severity="error" id="presentation-instance-location-error" role="alert">
+                        <span
+                            jhiTranslate="artemisApp.presentationAssessment.locationTooLong"
+                            [translateValues]="{ max: editForm.controls.location.getError('maxlength').requiredLength }"
+                        ></span>
+                    </tum-ui-message>
+                }
             </div>
         } @else {
             <div class="flex flex-col gap-2">
                 <label for="presentation-instance-link" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></label>
-                <input id="presentation-instance-link" tumUiInput class="w-full" type="url" formControlName="meetingLink" />
+                <input
+                    id="presentation-instance-link"
+                    tumUiInput
+                    class="w-full"
+                    type="url"
+                    formControlName="meetingLink"
+                    [attr.aria-invalid]="editForm.controls.meetingLink.hasError('maxlength')"
+                    [attr.aria-describedby]="editForm.controls.meetingLink.hasError('maxlength') ? 'presentation-instance-link-error' : undefined"
+                />
+                @if (editForm.controls.meetingLink.hasError('maxlength')) {
+                    <tum-ui-message severity="error" id="presentation-instance-link-error" role="alert">
+                        <span
+                            jhiTranslate="artemisApp.presentationAssessment.meetingLinkTooLong"
+                            [translateValues]="{ max: editForm.controls.meetingLink.getError('maxlength').requiredLength }"
+                        ></span>
+                    </tum-ui-message>
+                }
             </div>
         }
     </div>
@@ -116,6 +147,7 @@
         [userSearch]="studentSearch"
         [hiddenColumnFields]="hiddenStudentColumnFields"
         [paginated]="false"
+        [allowAddingUsers]="!instance()"
         profilePictureHeaderKey="artemisApp.presentationAssessment.picture"
     >
         <span><span jhiTranslate="artemisApp.presentationAssessment.presenters"></span> <span aria-hidden="true">*</span> ({{ assignedStudents().length }})</span>
