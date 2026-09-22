@@ -76,15 +76,9 @@ class UserDeletionReferencePolicyTest {
     }
 
     @Test
-    void authoredVersionsPreserveRecoveryWithoutChangingSubmissionDeletion() {
-        assertThat(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR.action()).isEqualTo(UserDeletionAction.PRESERVE_RECOVERY);
+    void authoredExerciseAndSubmissionVersionsAreDeletedWithTheirAuthor() {
+        assertThat(UserDeletionReferencePolicy.EXERCISE_VERSION_AUTHOR.action()).isEqualTo(UserDeletionAction.DELETE);
         assertThat(UserDeletionReferencePolicy.SUBMISSION_VERSION_AUTHOR.action()).isEqualTo(UserDeletionAction.DELETE);
-    }
-
-    @Test
-    void authoringHistoryDetachesItsOwnerWithoutDeletingRecoveryObligations() {
-        assertThat(UserDeletionReferencePolicy.HYPERION_AUTHORING_OWNER.action()).isEqualTo(UserDeletionAction.DETACH_ACTOR);
-        assertThat(UserDeletionReferencePolicy.HYPERION_AUTHORING_OWNER.automaticBlocker()).isTrue();
     }
 
     private String attribute(Pattern pattern, String attributes) {

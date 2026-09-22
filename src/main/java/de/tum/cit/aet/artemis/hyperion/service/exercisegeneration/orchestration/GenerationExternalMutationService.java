@@ -48,7 +48,6 @@ public class GenerationExternalMutationService {
     }
 
     private String requireWriterNode() {
-        GenerationRecoveryBootstrapService.requireInitialized(distributedDataProvider);
         String owner = distributedDataProvider.getLocalNodeId();
         if (!distributedDataProvider.getCoordinationSnapshot().map(snapshot -> snapshot.permitsAdmission(expectedDataMemberCount) && snapshot.ownerNodeIds().contains(owner))
                 .orElse(false)) {

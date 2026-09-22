@@ -21,12 +21,11 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 class GenerationVersionRecoveryServiceTest {
 
-    private final AuthoringRunTestRepository runs = mock(AuthoringRunTestRepository.class);
+    private final GenerationRunStoreService runs = mock(GenerationRunStoreService.class);
 
     private final ExerciseVersionTestRepository versions = mock(ExerciseVersionTestRepository.class);
 
@@ -36,7 +35,7 @@ class GenerationVersionRecoveryServiceTest {
 
     @BeforeEach
     void setup() throws Exception {
-        when(runs.findLatestMutation(eq(12L), any())).thenReturn(List.of(run));
+        when(runs.findLatestMutation(12L)).thenReturn(List.of(run));
         when(run.getJobId()).thenReturn("job");
         when(run.getExerciseId()).thenReturn(12L);
         when(run.getBeforeVersionId()).thenReturn(81L);

@@ -37,10 +37,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.repository.AuthoringRunRepository;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationRecoveryBootstrapService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
@@ -88,8 +86,6 @@ class RepositoryResourceMutationGuardTest {
                 new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), event -> {
                 }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
         jobService.init();
-        new GenerationRecoveryBootstrapService(mock(AuthoringRunRepository.class),
-                new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance)).initialize();
         ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(
                 Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(
                         new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1))));

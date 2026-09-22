@@ -152,8 +152,7 @@
                 "actions": {
                     "DELETE": "Löschen",
                     "REMOVE_MEMBERSHIP": "Mitgliedschaft entfernen",
-                    "DETACH_ACTOR": "Datensatz ohne Nutzerreferenz behalten",
-                    "PRESERVE_RECOVERY": "Wiederherstellungsversionen ohne Nutzerreferenz behalten; andere Versionen löschen"
+                    "DETACH_ACTOR": "Datensatz ohne Nutzerreferenz behalten"
                 },
                 "partialFailure": "Mindestens ein Konto konnte nicht gelöscht werden. Die Nutzerliste wurde aktualisiert; prüfe die verbleibenden Konten vor einem erneuten Versuch."
             }

@@ -50,7 +50,7 @@ public interface ExerciseVersionRepository extends ArtemisJpaRepository<Exercise
                 ev.createdDate
             )
             FROM ExerciseVersion ev
-                LEFT JOIN User u ON u.id = ev.authorId
+                JOIN User u ON u.id = ev.authorId
             WHERE ev.exerciseId = :exerciseId
             ORDER BY ev.createdDate DESC
             """)

@@ -81,7 +81,7 @@ public class HyperionAuthoringRunResource {
      *
      * @param exerciseId authorized destination
      * @param runId      canonical run identifier
-     * @return retained replay or the durable outcome when progress has expired
+     * @return retained replay or the retained outcome when progress has expired
      */
     @GetMapping("programming-exercises/{exerciseId}/generation/runs/{runId}")
     @EnforceAtLeastEditorInExercise

@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
@@ -18,22 +17,21 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.repository.AuthoringRunRepository;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationBaseline;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationGrading;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
-/** Resolves recovery from canonical versions, never from a replay cache or an older successful run behind a partial mutation. */
+/** Resolves bounded undo from canonical versions, never from streamed progress or an older successful run behind a partial mutation. */
 @Lazy
 @Service
 @Conditional(HyperionExerciseGenerationEnabled.class)
 public class GenerationVersionRecoveryService {
 
-    private final AuthoringRunRepository runs;
+    private final GenerationRunStoreService runs;
 
     private final ExerciseVersionRepository versions;
 
-    public GenerationVersionRecoveryService(AuthoringRunRepository runs, ExerciseVersionRepository versions) {
+    public GenerationVersionRecoveryService(GenerationRunStoreService runs, ExerciseVersionRepository versions) {
         this.runs = runs;
         this.versions = versions;
     }
@@ -45,7 +43,7 @@ public class GenerationVersionRecoveryService {
      * @return the complete version pair, when safe to offer restoration
      */
     public Optional<Recovery> find(long exerciseId) {
-        return runs.findLatestMutation(exerciseId, PageRequest.of(0, 1)).stream().findFirst().flatMap(this::resolve);
+        return runs.findLatestMutation(exerciseId).stream().findFirst().flatMap(this::resolve);
     }
 
     private Optional<Recovery> resolve(AuthoringRun run) {

@@ -25,7 +25,6 @@ class GenerationExternalMutationServiceTest {
 
     private static LocalDataProviderService initializedProvider() {
         var provider = new LocalDataProviderService();
-        new GenerationRecoveryBootstrapService(org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository.class), provider).initialize();
         return provider;
     }
 

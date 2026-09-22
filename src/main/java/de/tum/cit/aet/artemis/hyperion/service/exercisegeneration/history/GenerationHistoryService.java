@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.repository.AuthoringRunRepository;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -36,7 +35,7 @@ public class GenerationHistoryService {
 
     private static final int PAGE_SIZE = 50;
 
-    private final AuthoringRunRepository runs;
+    private final GenerationRunStoreService runs;
 
     private final ProgrammingExerciseRepository exercises;
 
@@ -46,7 +45,7 @@ public class GenerationHistoryService {
 
     private final ExerciseGenerationRevertService recovery;
 
-    public GenerationHistoryService(AuthoringRunRepository runs, ProgrammingExerciseRepository exercises, AuthorizationCheckService authorization, GenerationJobService jobs,
+    public GenerationHistoryService(GenerationRunStoreService runs, ProgrammingExerciseRepository exercises, AuthorizationCheckService authorization, GenerationJobService jobs,
             ExerciseGenerationRevertService recovery) {
         this.runs = runs;
         this.exercises = exercises;
@@ -101,7 +100,7 @@ public class GenerationHistoryService {
      * @param exerciseId authorized destination
      * @param jobId      canonical run identifier
      * @param user       current owner
-     * @return replay when retained, otherwise the durable outcome with explicitly unavailable accounting
+     * @return replay when retained, otherwise the retained outcome with explicitly unavailable accounting
      */
     public ExerciseGenerationStatusDTO status(long exerciseId, String jobId, User user) {
         AuthoringRun run = runs.findByJobId(jobId).filter(candidate -> Objects.equals(candidate.getOwnerId(), user.getId()) && candidate.getExerciseId() == exerciseId)
@@ -164,7 +163,7 @@ public class GenerationHistoryService {
             case PARTIAL -> ExerciseGenerationEventDTO.CompletionStatus.PARTIAL;
             default -> null;
         };
-        return List.of(new ExerciseGenerationEventDTO(type, "The durable outcome is available. Detailed progress and usage are no longer retained.", null, completion, null,
+        return List.of(new ExerciseGenerationEventDTO(type, "The retained outcome is available. Detailed progress and usage are no longer retained.", null, completion, null,
                 run.getLiveExerciseChanged(), null, run.getAfterVersionId(), null, null, null, null, run.getFinishedAt()));
     }
 }

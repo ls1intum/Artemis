@@ -31,13 +31,12 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
-import de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class GenerationHistoryServiceTest {
 
-    private final AuthoringRunTestRepository runs = mock(AuthoringRunTestRepository.class);
+    private final GenerationRunStoreService runs = mock(GenerationRunStoreService.class);
 
     private final ProgrammingExerciseTestRepository exercises = mock(ProgrammingExerciseTestRepository.class);
 

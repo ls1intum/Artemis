@@ -331,7 +331,6 @@
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
         "generationBriefRequired": "Gib eine Aufgabenbeschreibung ein, bevor du eine Aufgabe ohne Problemstellung generierst.",
-        "generationRecoveryInitializing": "Die Wiederherstellung der Aufgaben wird initialisiert. Warte einen Moment und versuche es erneut.",
         "generationCapacityUnavailable": "Artemis hat gerade keine freie Kapazität für die KI-Generierung. Es wurde nichts generiert — versuche es in ein paar Minuten erneut.",
         "exerciseGenerationRunning": "Die Aufgabe ist durch einen anderen Vorgang oder eine unvollständige Wiederherstellung gesperrt. Versuche es später erneut; wende dich bei einer erforderlichen Wiederherstellung an die Administration."
     }

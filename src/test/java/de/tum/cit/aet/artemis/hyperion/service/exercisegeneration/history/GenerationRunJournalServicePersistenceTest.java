@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
-import de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -32,7 +30,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    private AuthoringRunTestRepository runs;
+    private GenerationRunStoreService runs;
 
     @Autowired
     private ExerciseVersionTestRepository versions;
@@ -65,7 +63,6 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
     @org.junit.jupiter.params.provider.CsvSource({ "false,true", "true,true", "false,false", "true,false" })
     void dispatchFailureRetainsItsKnownOutcomeInHistory(boolean prepared, boolean executorRejected) {
         var data = new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService();
-        new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationRecoveryBootstrapService(runs, data).initialize();
         var rejectedJob = new java.util.concurrent.atomic.AtomicReference<String>();
         org.springframework.context.ApplicationEventPublisher publisher = event -> {
             if (event instanceof GenerationStartedEvent started) {
@@ -132,29 +129,6 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
     }
 
     @Test
-    void interruptedRestoreSurvivesLossOfEveryDistributedEntry() throws Exception {
-        long before = version();
-        long after = version();
-        runs.linkBeforeVersion(jobId, before, "main", Instant.now());
-        runs.linkAfterVersion(jobId, after);
-        runs.complete(jobId, AuthoringRun.Status.SAVED, Instant.now(), true);
-        assertThat(runs.markRestoreStarted(jobId, after + 1, Instant.now())).isZero();
-        assertThat(runs.markRestoreStarted(jobId, after, Instant.now())).isOne();
-        assertThat(runs.existsByExerciseIdAndRestoreStartedAtIsNotNullAndRevertedAtIsNull(exercise.getId())).isTrue();
-        var data = new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService();
-        new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationRecoveryBootstrapService(runs, data).initialize();
-        var writer = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService(data, 1);
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> writer.claimExternalMutationSlot(exercise.getId()))
-                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
-        assertThat(runs.markReverted(jobId, after, Instant.now())).isOne();
-        var restarted = new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService();
-        new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationRecoveryBootstrapService(runs, restarted).initialize();
-        var recoveredWriter = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService(restarted, 1);
-        String token = recoveredWriter.claimExternalMutationSlot(exercise.getId());
-        recoveredWriter.clearExternalMutationSlot(exercise.getId(), token);
-    }
-
-    @Test
     void concurrentCallersCannotReplaceTheFirstBeforeVersion() throws Exception {
         long before = version();
         long competing = version();
@@ -179,10 +153,10 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
         runs.linkBeforeVersion(jobId, before, "teaching", Instant.now());
         versions.deleteById(before);
         versions.flush();
-        var latest = runs.findLatestMutation(exercise.getId(), PageRequest.of(0, 1));
+        var latest = runs.findLatestMutation(exercise.getId());
         assertThat(latest).singleElement().satisfies(run -> {
             assertThat(run.getJobId()).isEqualTo(jobId);
-            assertThat(run.getBeforeVersionId()).isNull();
+            assertThat(run.getBeforeVersionId()).isEqualTo(before);
             assertThat(run.getMutationStartedAt()).isNotNull();
             assertThat(runs.linkBeforeVersion(jobId, version(), "other", Instant.now())).isZero();
         });
@@ -197,9 +171,9 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
         versions.flush();
         userTestRepository.deleteById(user.getId());
         userTestRepository.flush();
-        assertThat(runs.findLatestMutation(exercise.getId(), PageRequest.of(0, 1))).singleElement().satisfies(run -> {
+        assertThat(runs.findLatestMutation(exercise.getId())).singleElement().satisfies(run -> {
             assertThat(run.getJobId()).isEqualTo(jobId);
-            assertThat(run.getOwnerId()).isNull();
+            assertThat(run.getOwnerId()).isEqualTo(user.getId());
             assertThat(run.getMutationStartedAt()).isNotNull();
         });
     }

@@ -26,13 +26,12 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
-import de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 class GenerationRunJournalServiceTest {
 
-    private final AuthoringRunTestRepository runs = mock(AuthoringRunTestRepository.class);
+    private final GenerationRunStoreService runs = mock(GenerationRunStoreService.class);
 
     private final ExerciseVersionService versions = mock(ExerciseVersionService.class);
 
@@ -60,7 +59,7 @@ class GenerationRunJournalServiceTest {
     void recordsAdmittedIdentityBeforeAsynchronousExecution() {
         journal.started(new GenerationStartedEvent("job", user, exercise, "brief", GenerationMode.ADAPT));
         var captured = ArgumentCaptor.forClass(AuthoringRun.class);
-        verify(runs).saveAndFlush(captured.capture());
+        verify(runs).save(captured.capture());
         assertThat(captured.getValue().getJobId()).isEqualTo("job");
         assertThat(captured.getValue().getExerciseId()).isEqualTo(12L);
         assertThat(captured.getValue().getSourceExerciseId()).isEqualTo(12L);
@@ -146,9 +145,14 @@ class GenerationRunJournalServiceTest {
         when(run.getRepositoryBranch()).thenReturn("teaching");
         when(runs.findByJobId("job")).thenReturn(Optional.of(run));
 
+        when(run.getJobId()).thenReturn("job");
+        when(runs.findLatestMutation(12L)).thenReturn(java.util.List.of(run));
         journal.beforeMutation("job", exercise, user, heads, "teaching");
 
         verify(versions, never()).createExerciseVersionOrThrow(any(), any(), any());
+        when(runs.findLatestMutation(12L)).thenReturn(java.util.List.of());
+        assertThatThrownBy(() -> journal.beforeMutation("job", exercise, user, heads, "teaching")).isInstanceOf(IllegalStateException.class);
+        when(runs.findLatestMutation(12L)).thenReturn(java.util.List.of(run));
         when(run.getBeforeVersionId()).thenReturn(null);
         assertThatThrownBy(() -> journal.beforeMutation("job", exercise, user, heads, "teaching")).isInstanceOf(IllegalStateException.class);
     }

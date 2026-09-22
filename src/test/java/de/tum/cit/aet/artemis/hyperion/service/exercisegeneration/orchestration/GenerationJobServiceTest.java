@@ -198,12 +198,6 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void generationCannotStartBeforeClusterRecoveryIsInitialized() {
-        hazelcastInstance.getMap(GenerationRecoveryBootstrapService.READINESS_MAP).destroy();
-        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(42L), "generate", GenerationMode.GENERATE));
-    }
-
-    @Test
     void startJob_secondConcurrentStartForSameExercise_throwsConflict() {
         ProgrammingExercise exercise = exercise(42L);
         User owner = user("owner");

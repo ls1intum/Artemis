@@ -30,25 +30,6 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 public interface ExerciseDataCleanupRepository extends ArtemisJpaRepository<SubmissionVersion, Long> {
 
     @Query("""
-            SELECT run.ownerId AS userId, COUNT(run) AS count
-            FROM AuthoringRun run
-            WHERE run.ownerId IN :userIds
-            GROUP BY run.ownerId
-            """)
-    List<UserReferenceCount> countAuthoringRuns(@Param("userIds") Collection<Long> userIds);
-
-    /**
-     * Removes the actor identity without discarding exercise history or unresolved restore obligations.
-     *
-     * @param userId account being deleted
-     * @return number of detached runs
-     */
-    @Modifying
-    @Transactional // ok because of update
-    @Query("UPDATE AuthoringRun run SET run.ownerId = NULL WHERE run.ownerId = :userId")
-    int detachAuthoringRuns(@Param("userId") long userId);
-
-    @Query("""
             SELECT version.author.id AS userId, COUNT(version) AS count
             FROM SubmissionVersion version
             WHERE version.author.id IN :userIds
@@ -77,38 +58,8 @@ public interface ExerciseDataCleanupRepository extends ArtemisJpaRepository<Subm
     @Query("""
             DELETE FROM ExerciseVersion version
             WHERE version.authorId = :userId
-                AND NOT EXISTS (SELECT run.id FROM AuthoringRun run WHERE run.beforeVersionId = version.id)
-                AND NOT EXISTS (SELECT run.id FROM AuthoringRun run WHERE run.afterVersionId = version.id)
             """)
     int deleteExerciseVersions(@Param("userId") long userId);
-
-    /**
-     * Keeps canonical recovery versions while removing the deleted account's authorship.
-     *
-     * @param userId account being deleted
-     * @return number of retained versions whose author was detached
-     */
-    @Modifying
-    @Transactional // ok because of update
-    @Query("""
-            UPDATE ExerciseVersion version SET version.authorId = NULL
-            WHERE version.authorId = :userId
-                AND (version.id IN (SELECT run.beforeVersionId FROM AuthoringRun run)
-                    OR version.id IN (SELECT run.afterVersionId FROM AuthoringRun run))
-            """)
-    int detachRecoveryVersionAuthors(@Param("userId") long userId);
-
-    /**
-     * Resolves version authorship atomically without deleting versions still referenced by the authoring journal.
-     *
-     * @param userId account being deleted
-     * @return number of detached or deleted version references
-     */
-    @Transactional // ok because of delete and update
-    default int resolveExerciseVersionAuthors(long userId) {
-        int retained = detachRecoveryVersionAuthors(userId);
-        return retained + deleteExerciseVersions(userId);
-    }
 
     @Query("""
             SELECT comment.author.id AS userId, COUNT(comment) AS count

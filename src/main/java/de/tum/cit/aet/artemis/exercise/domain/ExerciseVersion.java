@@ -20,8 +20,8 @@ public class ExerciseVersion extends AbstractAuditingEntity {
     @Parent
     private Long exerciseId;
 
-    // Recovery versions outlive their author; permanent account deletion removes this identity.
-    @Column(name = "author_id", updatable = false)
+    // Direct ID access (for saving), not nullable, since users can only be soft deleted
+    @Column(name = "author_id", updatable = false, nullable = false)
     private Long authorId;
 
     @JdbcTypeCode(SqlTypes.JSON)

@@ -106,10 +106,12 @@ class DistributedDataSurfaceTest {
      * nodes, the entries the Hyperion, OIDC and Atlas agent caches hold, and the concrete envelopes published through
      * distributed topics and map/queue notification topics.
      */
+    // Activity entries are new expiring wire types; no released cache value changes.
     // Whole-exercise replay (including variant source identity) is new in this release; no previously released wire type changes.
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, GenerationJobService.JobInfo.class,
             GenerationJobService.JobTranscript.class, GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class,
+            de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun.class, de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.Mutation.class,
             OIDCExchangeCodeService.ExchangeCodeEntry.class, AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class,
             PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class, MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 

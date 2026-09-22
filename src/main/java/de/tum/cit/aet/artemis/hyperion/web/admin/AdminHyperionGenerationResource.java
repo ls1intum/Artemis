@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationWedgedSlotDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationRecoveryBootstrapService;
 
 /** Audited recovery of fail-closed slots; it never runs commands on generation workers. */
 @Lazy
@@ -43,14 +42,10 @@ public class AdminHyperionGenerationResource {
 
     private final AuditEventRepository audit;
 
-    private final GenerationRecoveryBootstrapService recovery;
-
-    public AdminHyperionGenerationResource(Optional<GenerationJobService> jobs, GenerationExternalMutationService mutations, AuditEventRepository audit,
-            GenerationRecoveryBootstrapService recovery) {
+    public AdminHyperionGenerationResource(Optional<GenerationJobService> jobs, GenerationExternalMutationService mutations, AuditEventRepository audit) {
         this.jobs = jobs;
         this.mutations = mutations;
         this.audit = audit;
-        this.recovery = recovery;
     }
 
     /**
@@ -88,8 +83,7 @@ public class AdminHyperionGenerationResource {
         var info = wedged.get();
         audit.add(new AuditEvent(SecurityUtils.getCurrentUserLogin().orElse("unknown"), "HYPERION_SLOT_RECOVERY_ATTEMPT", Map.of("exerciseId", exerciseId, "token", token, "kind",
                 info.kind().name(), "ownerNodeId", info.ownerNodeId() == null ? "unknown" : info.ownerNodeId(), "reason", boundedReason)));
-        boolean recovered = recovery.reconcile(exerciseId, token,
-                () -> jobs.isPresent() ? jobs.get().recoverWedgedSlot(exerciseId, token) : mutations.recoverWedgedSlot(exerciseId, token));
+        boolean recovered = jobs.isPresent() ? jobs.get().recoverWedgedSlot(exerciseId, token) : mutations.recoverWedgedSlot(exerciseId, token);
         return recovered ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 

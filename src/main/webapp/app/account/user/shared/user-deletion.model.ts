@@ -1,4 +1,4 @@
-export type UserDeletionAction = 'DELETE' | 'REMOVE_MEMBERSHIP' | 'DETACH_ACTOR' | 'PRESERVE_RECOVERY';
+export type UserDeletionAction = 'DELETE' | 'REMOVE_MEMBERSHIP' | 'DETACH_ACTOR';
 
 export type UserDeletionDataCategory =
     | 'ACCOUNT'

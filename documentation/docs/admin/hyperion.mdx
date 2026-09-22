@@ -318,32 +318,30 @@ quiz generation remains separate. Programming exam authoring is available only
 before student exams or test runs exist. Assignment and authoring use the same
 exercise guards and exam-row coordination.
 
-The `hyperion_authoring_run` table records owner/source/destination identity,
-terminal outcome, and links to existing before/after exercise versions. It does
-not store prompts, model content, or duplicate version snapshots. Back up these
-rows together with exercise versions and repositories. Deleting a source or
-owner does not erase a destination's mutation fence; deleting the destination
-removes its journal. Missing referenced versions make automatic undo unavailable.
+Hyperion introduces no database schema changes. Saved exercise content and
+before/after snapshots use the existing exercise version history. Existing
+account-deletion rules remain unchanged; missing versions disable automatic undo.
 
-Owner-scoped history is paged at `GET /api/hyperion/authoring-runs`. Exact run
-inspection and restoration use
+Owner-scoped activity and version references live in the configured distributed
+provider for `artemis.hyperion.generation.terminal-replay-ttl` (default four hours
+from admission). The paged `GET /api/hyperion/authoring-runs` endpoint lists only
+retained runs and rechecks current course authorization. Exact run inspection and
+restoration use
 `/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}`
-and its `/revert` POST operation. Current course authorization is rechecked.
-Detailed replay still expires; durable outcomes survive without fabricated usage.
-An interrupted restoration also has a durable `restore_started_at` marker. After
-all distributed data members restart, a core node reloads pending restoration
-guards in bounded pages before exercise writers are admitted. Until this finishes,
-mutation requests return `503 generationRecoveryInitializing`. This recovery
-initialization runs even when AI generation is disabled; LocalVC-only writers
-wait for a core node to initialize the cluster. Deploy compatible code on every
-exercise-writer node before accepting traffic.
+and its `/revert` POST operation. Expired references are not reconstructed from
+unrelated exercise versions, and an older successful run is never substituted
+for an expired or incomplete latest mutation. Saved exercise versions remain
+available through normal version history after activity expires.
 
-Only a complete restore consumes the obligation automatically. The audited
-operator recovery operation clears it after exact-token reconciliation. A database
-failure during that operation restores the slot before another writer can claim it.
-The additional nullable-column migration preserves existing records; it cannot
-infer unrecorded partial restores from older binaries, so reconcile those before
-upgrading.
+Non-expiring exercise mutation slots continue to protect interrupted saves and
+restores while distributed state is retained. Expiring activity does not release
+those slots. If undo references expire, use the audited operator reconciliation
+path rather than offering an unsafe automatic restore. There is no SQL recovery
+journal or database startup reconstruction. Complete loss of distributed state
+requires stopping writers and manually reconciling potentially interrupted
+operations against repository state and exercise versions before reopening
+writes. Preserve the configured provider's state across restarts and follow the
+Redis durability and coordinated shutdown requirements above.
 
 Restoration uses captured test metadata and rebuilds task bindings from the saved
 statement. It does not require the previous draft to compile or pass a build.

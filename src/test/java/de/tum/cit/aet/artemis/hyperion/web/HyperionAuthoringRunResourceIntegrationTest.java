@@ -18,7 +18,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
-import de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -27,7 +27,7 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
     private static final String PREFIX = "hypauthoringhistory";
 
     @Autowired
-    private AuthoringRunTestRepository runs;
+    private GenerationRunStoreService runs;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExercises;
@@ -53,13 +53,13 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
         run.setOwnerId(userTestRepository.findOneByLogin(PREFIX + "editor1").orElseThrow().getId());
         run.setKind(AuthoringRun.Kind.ADAPT);
         run.setStartedAt(Instant.now());
-        runs.saveAndFlush(run);
+        runs.save(run);
         runs.complete(jobId, AuthoringRun.Status.CANCELLED, Instant.now(), false);
     }
 
     @Test
     @WithMockUser(username = PREFIX + "editor1", roles = "EDITOR")
-    void ownerDiscoversDurableHistoryWithoutBrowserStorageOrReplay() throws Exception {
+    void ownerDiscoversRetainedHistoryWithoutBrowserStorageOrReplay() throws Exception {
         request.performMvcRequest(get("/api/hyperion/authoring-runs")).andExpect(status().isOk()).andExpect(jsonPath("$.runs[0].jobId").value(jobId))
                 .andExpect(jsonPath("$.runs[0].exerciseId").value(exerciseId)).andExpect(jsonPath("$.runs[0].status").value("CANCELLED"))
                 .andExpect(jsonPath("$.runs[0].running").value(false)).andExpect(jsonPath("$.runs[0].prompt").doesNotExist());

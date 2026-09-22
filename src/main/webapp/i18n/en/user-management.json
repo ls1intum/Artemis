@@ -152,8 +152,7 @@
                 "actions": {
                     "DELETE": "Delete",
                     "REMOVE_MEMBERSHIP": "Remove membership",
-                    "DETACH_ACTOR": "Keep record without user reference",
-                    "PRESERVE_RECOVERY": "Keep recovery versions without user reference; delete other versions"
+                    "DETACH_ACTOR": "Keep record without user reference"
                 },
                 "partialFailure": "At least one account could not be deleted. The user list has been refreshed; review the remaining accounts before trying again."
             }

@@ -429,7 +429,6 @@ public class GenerationJobService {
     }
 
     private void claimSlot(String key, JobInfo newJob, String conflictMessage, String errorKey) {
-        GenerationRecoveryBootstrapService.requireInitialized(distributedDataProvider);
         lockJobSlot(key);
         try {
             topology.verifyAllMembers();
@@ -682,7 +681,6 @@ public class GenerationJobService {
      * @return an opaque slot token that must be passed to {@link #clearRevertSlot(long, String)}
      */
     public String claimRevertSlot(User user, long exerciseId) {
-        GenerationRecoveryBootstrapService.requireInitialized(distributedDataProvider);
         return GenerationRevertSlots.claim(jobMap, user, exerciseId, localNodeId, topology::verifyAllMembers,
                 job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"));
     }
@@ -707,7 +705,6 @@ public class GenerationJobService {
      * @return an opaque token that must be released with {@link #clearExternalMutationSlot(long, String)}
      */
     public String claimExternalMutationSlot(long exerciseId) {
-        GenerationRecoveryBootstrapService.requireInitialized(distributedDataProvider);
         topology.verifyAllMembers();
         return GenerationExternalMutationService.claim(jobMap, localNodeId, exerciseId);
     }

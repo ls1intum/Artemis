@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.repository.AuthoringRunRepository;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationCancellationEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationDispatchFailedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
@@ -30,7 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.Ge
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
-/** Mandatory version provenance before writes; bounded replay and durable run history have separate lifetimes. */
+/** Mandatory version provenance before writes; bounded replay and bounded activity metadata have separate lifetimes. */
 @Lazy
 @Service
 @Conditional(HyperionExerciseGenerationEnabled.class)
@@ -38,20 +37,20 @@ public class GenerationRunJournalService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationRunJournalService.class);
 
-    private final AuthoringRunRepository runs;
+    private final GenerationRunStoreService runs;
 
     private final ExerciseVersionService versions;
 
     private final ExerciseVersionRepository versionRepository;
 
-    public GenerationRunJournalService(AuthoringRunRepository runs, ExerciseVersionService versions, ExerciseVersionRepository versionRepository) {
+    public GenerationRunJournalService(GenerationRunStoreService runs, ExerciseVersionService versions, ExerciseVersionRepository versionRepository) {
         this.runs = runs;
         this.versions = versions;
         this.versionRepository = versionRepository;
     }
 
     /**
-     * Creates the durable identity before the asynchronous listener can start work. Failure aborts dispatch.
+     * Creates the retained identity before the asynchronous listener can start work. Failure aborts dispatch.
      *
      * @param event the admitted run
      */
@@ -65,7 +64,7 @@ public class GenerationRunJournalService {
         run.setSourceExerciseId(event.variantPreparation() == null ? event.exercise().getId() : event.variantPreparation().sourceExerciseId());
         run.setKind(event.variantPreparation() != null ? AuthoringRun.Kind.VARIANT : event.mode() == GenerationMode.ADAPT ? AuthoringRun.Kind.ADAPT : AuthoringRun.Kind.CREATE);
         run.setStartedAt(Instant.now());
-        runs.saveAndFlush(run);
+        runs.save(run);
     }
 
     /**
@@ -83,7 +82,8 @@ public class GenerationRunJournalService {
             throw new IllegalStateException("Authoring version provenance does not match the admitted destination and author");
         }
         if (run.getMutationStartedAt() != null) {
-            if (run.getBeforeVersionId() == null || run.getFinishedAt() != null || !Objects.equals(branch, run.getRepositoryBranch())) {
+            if (run.getBeforeVersionId() == null || run.getFinishedAt() != null || !Objects.equals(branch, run.getRepositoryBranch())
+                    || runs.findLatestMutation(exercise.getId()).stream().noneMatch(latest -> jobId.equals(latest.getJobId()))) {
                 throw new IllegalStateException("The authoring recovery baseline is no longer usable");
             }
             return;
@@ -123,7 +123,7 @@ public class GenerationRunJournalService {
         }
         catch (RuntimeException exception) {
             throw new GenerationIncompleteException(
-                    "The exercise was saved, but its durable recovery record could not be completed. Inspect the exercise versions before using it.", exception, true,
+                    "The exercise was saved, but its retained recovery reference could not be completed. Inspect the exercise versions before using it.", exception, true,
                     result.postPersistHeads());
         }
     }

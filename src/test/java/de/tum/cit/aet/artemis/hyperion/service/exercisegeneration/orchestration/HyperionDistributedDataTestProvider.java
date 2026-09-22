@@ -11,9 +11,6 @@ final class HyperionDistributedDataTestProvider {
     }
 
     static DistributedDataProvider provider(HazelcastInstance hazelcastInstance) {
-        var provider = new HazelcastDistributedDataProviderService(hazelcastInstance);
-        // These fixtures represent an initialized cluster without pending database recovery.
-        new GenerationRecoveryBootstrapService(org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.test_repository.AuthoringRunTestRepository.class), provider).initialize();
-        return provider;
+        return new HazelcastDistributedDataProviderService(hazelcastInstance);
     }
 }

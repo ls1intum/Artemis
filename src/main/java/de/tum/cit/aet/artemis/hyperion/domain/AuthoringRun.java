@@ -1,20 +1,24 @@
 package de.tum.cit.aet.artemis.hyperion.domain;
 
+import java.io.Serializable;
 import java.time.Instant;
+import java.util.Objects;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+/** Bounded activity metadata and references to existing exercise versions; never persisted as a database entity. */
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.Parent;
+public final class AuthoringRun implements Serializable {
 
-/** Durable run identity and links to canonical exercise versions; transient progress stays in replay storage. */
-@Entity
-@Table(name = "hyperion_authoring_run")
-public class AuthoringRun extends DomainObject {
+    private static final long serialVersionUID = 1L;
+
+    private Long id;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public enum Kind {
         CREATE, ADAPT, VARIANT
@@ -24,52 +28,34 @@ public class AuthoringRun extends DomainObject {
         QUEUED, SAVED, NEEDS_REVIEW, PARTIAL, ERROR, CANCELLED, UNKNOWN
     }
 
-    @Column(name = "job_id", nullable = false, updatable = false, unique = true, length = 36)
     private String jobId;
 
-    @Parent
-    @Column(name = "exercise_id", nullable = false, updatable = false)
     private Long exerciseId;
 
-    @Column(name = "source_exercise_id", updatable = false)
     private Long sourceExerciseId;
 
-    @Column(name = "owner_id", updatable = false)
     private Long ownerId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "kind", nullable = false, updatable = false, length = 16)
     private Kind kind;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 24)
     private Status status = Status.QUEUED;
 
-    @Column(name = "started_at", nullable = false, updatable = false)
     private Instant startedAt;
 
-    @Column(name = "finished_at")
     private Instant finishedAt;
 
-    @Column(name = "mutation_started_at")
     private Instant mutationStartedAt;
 
-    @Column(name = "before_version_id")
     private Long beforeVersionId;
 
-    @Column(name = "after_version_id")
     private Long afterVersionId;
 
-    @Column(name = "repository_branch")
     private String repositoryBranch;
 
-    @Column(name = "live_exercise_changed")
     private Boolean liveExerciseChanged;
 
-    @Column(name = "restore_started_at")
     private Instant restoreStartedAt;
 
-    @Column(name = "reverted_at")
     private Instant revertedAt;
 
     public Instant getRestoreStartedAt() {
@@ -158,5 +144,76 @@ public class AuthoringRun extends DomainObject {
 
     public Instant getRevertedAt() {
         return revertedAt;
+    }
+
+    public AuthoringRun() {
+    }
+
+    public AuthoringRun(AuthoringRun source) {
+        this.id = source.id;
+        this.jobId = source.jobId;
+        this.exerciseId = source.exerciseId;
+        this.sourceExerciseId = source.sourceExerciseId;
+        this.ownerId = source.ownerId;
+        this.kind = source.kind;
+        this.status = source.status;
+        this.startedAt = source.startedAt;
+        this.finishedAt = source.finishedAt;
+        this.mutationStartedAt = source.mutationStartedAt;
+        this.beforeVersionId = source.beforeVersionId;
+        this.afterVersionId = source.afterVersionId;
+        this.repositoryBranch = source.repositoryBranch;
+        this.liveExerciseChanged = source.liveExerciseChanged;
+        this.restoreStartedAt = source.restoreStartedAt;
+        this.revertedAt = source.revertedAt;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public void setFinishedAt(Instant finishedAt) {
+        this.finishedAt = finishedAt;
+    }
+
+    public void setMutationStartedAt(Instant mutationStartedAt) {
+        this.mutationStartedAt = mutationStartedAt;
+    }
+
+    public void setBeforeVersionId(Long beforeVersionId) {
+        this.beforeVersionId = beforeVersionId;
+    }
+
+    public void setAfterVersionId(Long afterVersionId) {
+        this.afterVersionId = afterVersionId;
+    }
+
+    public void setRepositoryBranch(String repositoryBranch) {
+        this.repositoryBranch = repositoryBranch;
+    }
+
+    public void setLiveExerciseChanged(Boolean liveExerciseChanged) {
+        this.liveExerciseChanged = liveExerciseChanged;
+    }
+
+    public void setRevertedAt(Instant revertedAt) {
+        this.revertedAt = revertedAt;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof AuthoringRun run && Objects.equals(id, run.id) && Objects.equals(jobId, run.jobId) && Objects.equals(exerciseId, run.exerciseId)
+                && Objects.equals(sourceExerciseId, run.sourceExerciseId) && Objects.equals(ownerId, run.ownerId) && Objects.equals(kind, run.kind)
+                && Objects.equals(status, run.status) && Objects.equals(startedAt, run.startedAt) && Objects.equals(finishedAt, run.finishedAt)
+                && Objects.equals(mutationStartedAt, run.mutationStartedAt) && Objects.equals(beforeVersionId, run.beforeVersionId)
+                && Objects.equals(afterVersionId, run.afterVersionId) && Objects.equals(repositoryBranch, run.repositoryBranch)
+                && Objects.equals(liveExerciseChanged, run.liveExerciseChanged) && Objects.equals(restoreStartedAt, run.restoreStartedAt)
+                && Objects.equals(revertedAt, run.revertedAt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, jobId, exerciseId, sourceExerciseId, ownerId, kind, status, startedAt, finishedAt, mutationStartedAt, beforeVersionId, afterVersionId,
+                repositoryBranch, liveExerciseChanged, restoreStartedAt, revertedAt);
     }
 }
