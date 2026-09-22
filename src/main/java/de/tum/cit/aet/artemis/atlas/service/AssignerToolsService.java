@@ -323,6 +323,7 @@ public class AssignerToolsService {
         }
         else {
             CompetencyLectureUnitLink newLink = new CompetencyLectureUnitLink(competency, lectureUnit, effectiveWeight);
+            newLink.setGeneratedByAi(true);
             competencyLectureUnitLinkRepository.save(newLink);
             detail = "Linked lecture unit " + lectureUnit.getName() + " to competency " + competency.getTitle() + " (weight " + formatWeight(effectiveWeight) + ").";
         }
