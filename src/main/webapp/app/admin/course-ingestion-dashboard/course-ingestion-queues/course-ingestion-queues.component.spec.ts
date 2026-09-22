@@ -90,6 +90,20 @@ describe('CourseIngestionQueuesComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="queues-idle"]')).toBeTruthy();
     });
 
+    it('should render a drained queue whose empty collections the server omitted entirely', () => {
+        // The server DTOs are annotated NON_EMPTY, so an empty head/running/nextUp/workers array is left out
+        // of the JSON rather than sent as []. Reaching into them directly used to throw on a drained queue.
+        vi.spyOn(service, 'getQueues').mockReturnValue(of({ lectureIngestion: { countsByPhase: { DONE: 1 } }, weaviateOutbox: { total: 0 } }));
+
+        fixture.detectChanges();
+
+        expect(component.outboxHead()).toEqual([]);
+        expect(component.running()).toEqual([]);
+        expect(component.nextUp()).toEqual([]);
+        expect(component.workers()).toEqual([]);
+        expect(fixture.nativeElement.querySelector('[data-testid="queues-outbox-table"]')).toBeNull();
+    });
+
     it('should surface an error when the snapshot cannot be read', () => {
         vi.spyOn(service, 'getQueues').mockReturnValue(throwError(() => new Error('boom')));
 

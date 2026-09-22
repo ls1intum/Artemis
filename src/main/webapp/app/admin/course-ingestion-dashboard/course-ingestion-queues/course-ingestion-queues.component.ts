@@ -60,6 +60,12 @@ export class CourseIngestionQueuesComponent implements OnInit {
     readonly reconcilePasses = computed(() => this.queues()?.reconcilePasses ?? []);
     readonly outbox = computed(() => this.queues()?.weaviateOutbox);
 
+    /**
+     * The outbox rows to list. Guarded because the server annotates its DTOs with NON_EMPTY, so a drained
+     * queue omits the array entirely rather than sending an empty one.
+     */
+    readonly outboxHead = computed(() => this.queues()?.weaviateOutbox?.head ?? []);
+
     /** The phase depth tiles, skipping phases that hold nothing so the row stays readable. */
     readonly phaseTiles = computed(() => {
         const counts = this.queues()?.lectureIngestion?.countsByPhase ?? {};

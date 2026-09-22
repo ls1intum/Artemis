@@ -157,7 +157,7 @@
                             <span jhiTranslate="artemisApp.courseIngestionDashboard.queues.outbox.oldest"></span>: {{ out.oldestEnqueued | artemisDate }}
                         </div>
                     }
-                    @if (out.head.length > 0) {
+                    @if (outboxHead().length > 0) {
                         <table tumUiTable size="small" data-testid="queues-outbox-table">
                             <thead>
                                 <tr>
@@ -167,7 +167,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (entry of out.head; track entry.id) {
+                                @for (entry of outboxHead(); track entry.id) {
                                     <tr>
                                         <td class="font-mono text-xs">{{ entry.operation }}</td>
                                         <td class="font-mono text-xs">{{ entry.entityType }} {{ entry.entityId }}</td>

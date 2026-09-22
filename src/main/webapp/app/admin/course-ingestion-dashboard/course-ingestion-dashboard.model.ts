@@ -281,9 +281,11 @@ export interface QueuedIngestion {
 /** The pull-based lecture ingestion queue: how deep it is, what is running, and what is next. */
 export interface LectureIngestionQueue {
     /** How many units sit in each phase. Absent phases hold none. */
-    countsByPhase: Partial<Record<ProcessingPhase, number>>;
-    running: RunningIngestion[];
-    nextUp: QueuedIngestion[];
+    countsByPhase?: Partial<Record<ProcessingPhase, number>>;
+    /** Absent rather than empty when nothing is running: the server omits empty collections. */
+    running?: RunningIngestion[];
+    /** Absent rather than empty when nothing is queued. */
+    nextUp?: QueuedIngestion[];
     /** How many failed units are waiting out their retry backoff. */
     retryWaiting?: number;
 }
@@ -310,10 +312,11 @@ export interface WeaviateOutboxQueue {
     total?: number;
     /** How many are past their backoff and would be picked up on the next drain. */
     dueNow?: number;
-    countsByOrigin: Partial<Record<WeaviateOutboxOrigin, number>>;
+    countsByOrigin?: Partial<Record<WeaviateOutboxOrigin, number>>;
     oldestEnqueued?: string;
     maxAttempts?: number;
-    head: OutboxEntry[];
+    /** Absent rather than empty when the queue is drained. */
+    head?: OutboxEntry[];
 }
 
 /** Where one reconcile sweep is in its current cycle. Counters are cycle-scoped and reset when it wraps. */
@@ -339,8 +342,8 @@ export interface IngestionWorker {
 
 /** Every queue this feature owns, and what each is doing right now. */
 export interface QueueOverview {
-    lectureIngestion: LectureIngestionQueue;
-    weaviateOutbox: WeaviateOutboxQueue;
-    reconcilePasses: ReconcilePassStatus[];
-    workers: IngestionWorker[];
+    lectureIngestion?: LectureIngestionQueue;
+    weaviateOutbox?: WeaviateOutboxQueue;
+    reconcilePasses?: ReconcilePassStatus[];
+    workers?: IngestionWorker[];
 }
