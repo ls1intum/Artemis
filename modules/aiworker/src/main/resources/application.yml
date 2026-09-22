@@ -1,0 +1,40 @@
+spring:
+    application:
+        name: artemis-aiworker
+    ai:
+        model:
+            chat: none
+            embedding: none
+            image: none
+            moderation: none
+            audio:
+                speech: none
+                transcription: none
+    main:
+        web-application-type: none
+    artemis:
+        mode: native
+        broker-url: ${AI_WORKER_BROKER_URL}
+        user: ${AI_WORKER_BROKER_USER}
+        password: ${AI_WORKER_BROKER_PASSWORD}
+artemis:
+    aiworker:
+        id: ${AI_WORKER_ID}
+        image: ${AI_WORKER_SANDBOX_IMAGE}
+        workload: ${AI_WORKER_WORKLOAD}
+        profile: ${AI_WORKER_PROFILE}
+management:
+    tracing:
+        sampling:
+            probability: 1.0
+        export:
+            otlp:
+                enabled: false
+    logging:
+        export:
+            otlp:
+                enabled: false
+    otlp:
+        metrics:
+            export:
+                enabled: false

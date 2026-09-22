@@ -38,6 +38,34 @@ env:
   java: 25
 
 jobs:
+  build-aiworker:
+    name: Build AI Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+      - uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+      - name: Build worker executable and SBOM
+        run: ./gradlew :aiworker:bootJar :aiworker:cyclonedxDirectBom -x webapp
+      - name: Build worker container
+        run: docker build -f docker/aiworker/worker.Dockerfile -t aiworker:ci .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: aiworker
+          path: |
+            modules/aiworker/build/libs/aiworker.jar
+            modules/aiworker/build/reports/cyclonedx-direct/bom.json
+          if-no-files-found: error
+          retention-days: 7
+
   build-war:
     name: Build .war artifact
     runs-on: ubuntu-latest

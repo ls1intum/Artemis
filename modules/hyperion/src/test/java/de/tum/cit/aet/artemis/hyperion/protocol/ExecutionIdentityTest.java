@@ -17,6 +17,12 @@ class ExecutionIdentityTest {
         assertThatIllegalArgumentException().isThrownBy(() -> new ExecutionIdentity("job", 1, UUID.randomUUID(), worker, UUID.randomUUID()));
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = { -1, 16, 100 })
+    void invalidSlotHasASlotSpecificDiagnostic(int slot) {
+        assertThatIllegalArgumentException().isThrownBy(() -> new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker", UUID.randomUUID(), slot)).withMessageContaining("slot");
+    }
+
     @Test
     void restartOrReassignmentChangesIdentity() {
         var identity = new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker-1", UUID.randomUUID());
