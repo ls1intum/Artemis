@@ -12,7 +12,7 @@ import { LectureSearchResult } from 'app/core/navbar/global-search/models/lectur
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
-import { parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
+import { isInsideProtectedSegment, parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS, SHORT_QUERY_MAX_LENGTH } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
@@ -255,110 +255,13 @@ export class GlobalSearchIrisAnswerComponent {
         const bound = this.sources().length + this.entitySources().length || (this.isSettled() ? 0 : PARTIAL_CITATION_MARKER_BOUND);
         const start = this.revealStart();
         const tail = text.slice(start);
-        const animated =
-            this.isStreaming() && start > 0 && tail.length > 0 && !tail.includes('\n') && !this.startsInsideInlineCode(text, start) && !this.isInsideOpenFence(text, start);
+        // isInsideProtectedSegment is the SAME code/math boundary logic renderCitationMarkers uses for
+        // citation markers, reused here so the fade-tail span can never land somewhere that logic did
+        // not already have to account for — a hand-rolled second implementation of that boundary here
+        // would drift from it exactly the way this one did before being replaced with the shared check.
+        const animated = this.isStreaming() && start > 0 && tail.length > 0 && !tail.includes('\n') && !isInsideProtectedSegment(text, start);
         return renderCitationMarkers(animated ? `${text.slice(0, start)}<span class="iris-answer-tail">${tail}</span>` : text, bound);
     });
-
-    /**
-     * Whether `start` falls strictly inside a complete inline code span in `text`. A CommonMark code
-     * span is delimited by a RUN of backticks (one or more) on each side, and the closer must be a run
-     * of the SAME length as the opener — `` `` `` (a run of two) is one delimiter, not two single
-     * backticks that cancel each other out, precisely so a span's own content can safely contain a
-     * shorter run (`` `foo` `` inside it). Pairing individual backtick characters instead of matching
-     * runs by length would treat a double-backtick-delimited span as two empty, self-canceling spans and
-     * miss a boundary that falls inside its real content. Splicing the fade-tail `<span>` at such a
-     * position corrupts the markdown: markdown-it treats an HTML tag placed inside a code span as
-     * literal text rather than a real element, so the raw `<span>` markup stays visible until a later
-     * reveal step moves the boundary past the span. Skipping the animation for that one reveal step is a
-     * small cosmetic cost, not worth risking a corrupted render for.
-     */
-    private startsInsideInlineCode(text: string, start: number): boolean {
-        const runs: [number, number][] = [];
-        for (let i = 0; i < text.length;) {
-            if (text[i] !== '`') {
-                i++;
-                continue;
-            }
-            const runStart = i;
-            while (i < text.length && text[i] === '`') {
-                i++;
-            }
-            runs.push([runStart, i]);
-        }
-
-        let openIdx = 0;
-        while (openIdx < runs.length) {
-            const [, openEnd] = runs[openIdx];
-            const openLength = runs[openIdx][1] - runs[openIdx][0];
-            let closeIdx = openIdx + 1;
-            while (closeIdx < runs.length && runs[closeIdx][1] - runs[closeIdx][0] !== openLength) {
-                closeIdx++;
-            }
-            if (closeIdx >= runs.length) {
-                openIdx++;
-                continue;
-            }
-            const [closeStart] = runs[closeIdx];
-            if (openEnd < start && start <= closeStart) {
-                return true;
-            }
-            openIdx = closeIdx + 1;
-        }
-        return false;
-    }
-
-    /**
-     * Whether `start` falls inside a fenced code block (a line starting with a run of 3+ backticks
-     * or 3+ tildes, CommonMark's other code-block form) that opened somewhere earlier in `text` and
-     * has no matching closing fence within `text` yet. Unlike an inline span, a fence does not need
-     * its closer to have arrived to already be "inside code" as far as Markdown is concerned — while
-     * the block is still streaming, splicing the fade-tail `<span>` into a line of its content (even
-     * one with no backticks of its own, like a line of code) corrupts it the same way an inline span
-     * does, just for the duration of the whole block instead of one word. {@link startsInsideInlineCode}
-     * only pairs backtick runs that both already arrived, so it cannot see this case, and never looks
-     * at tildes at all.
-     */
-    private isInsideOpenFence(text: string, start: number): boolean {
-        // An opener may carry a trailing info string ("```js"); a closer may not — CommonMark requires
-        // a closing fence line to contain nothing but the delimiter run and optional trailing spaces or
-        // tabs. Reusing the looser opener pattern for closers too would let an ordinary content line
-        // that merely STARTS with a same-length run (e.g. an example fence written inside the block,
-        // "```not-a-closer") prematurely "close" this scanner's state while CommonMark still treats
-        // everything after it as fenced content.
-        const openerLineRe = /^ {0,3}(`{3,}|~{3,})/;
-        const closerLineRe = /^ {0,3}(`{3,}|~{3,})[ \t]*$/;
-        let openChar: string | undefined;
-        let openLength = 0;
-        let contentStart = -1;
-        let pos = 0;
-        const lines = text.split('\n');
-        for (let li = 0; li < lines.length; li++) {
-            const line = lines[li];
-            const lineStart = pos;
-            const nextPos = lineStart + line.length + (li < lines.length - 1 ? 1 : 0);
-            if (openChar === undefined) {
-                const match = openerLineRe.exec(line);
-                if (match) {
-                    openChar = match[1][0];
-                    openLength = match[1].length;
-                    contentStart = nextPos;
-                }
-            } else {
-                const match = closerLineRe.exec(line);
-                if (match && match[1][0] === openChar && match[1].length >= openLength) {
-                    if (contentStart <= start && start <= lineStart) {
-                        return true;
-                    }
-                    openChar = undefined;
-                    openLength = 0;
-                    contentStart = -1;
-                }
-            }
-            pos = nextPos;
-        }
-        return openChar !== undefined && start >= contentStart;
-    }
     /** Whether the answer carries inline citations; gates the chip numbering. */
     protected readonly hasCitations = computed(() => this.citationView().citedNumbers.size > 0);
     /** Only a settled answer can be clamped: a toggle means nothing while the text is still arriving. */

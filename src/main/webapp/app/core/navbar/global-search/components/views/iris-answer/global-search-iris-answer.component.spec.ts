@@ -1262,6 +1262,53 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(html).not.toContain('iris-answer-tail');
         });
 
+        it('does not inject the fade-tail span inside a streamed inline math expression', () => {
+            // A reveal boundary landing inside $x + y$ would put the tag inside the formula
+            // markdown-it/KaTeX parses, corrupting it the same way a code span would.
+            startQuery();
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing private signal for testing
+            component.progressiveReveal.set(true);
+            const answer = 'The result is $x + y$ as shown.';
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer, sources: [] });
+            // @ts-expect-error — accessing private signal for testing
+            component.revealStart.set(answer.indexOf('y'));
+            // @ts-expect-error — accessing private signal for testing
+            component.revealedLength.set(answer.length);
+            fixture.detectChanges();
+
+            // @ts-expect-error — accessing protected computed for testing
+            const html = component.citationView().html;
+            expect(html).not.toContain('iris-answer-tail');
+        });
+
+        it('does not inject the fade-tail span inside a streamed display math block with no closer yet', () => {
+            // Mirrors the still-streaming fence case: the closing $$ has not arrived, but the reveal
+            // boundary already sits inside the formula as far as KaTeX will eventually parse it. Kept
+            // on one line (no closer) so the tail itself carries no newline of its own to test against —
+            // otherwise the pre-existing newline guard alone would already block the animation, and the
+            // math check would never actually run.
+            startQuery();
+            // @ts-expect-error — accessing protected signal for testing
+            component.phase.set('answering');
+            // @ts-expect-error — accessing private signal for testing
+            component.progressiveReveal.set(true);
+            const answer = 'Consider $$x + y = z';
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer, sources: [] });
+            // @ts-expect-error — accessing private signal for testing
+            component.revealStart.set(answer.indexOf('z'));
+            // @ts-expect-error — accessing private signal for testing
+            component.revealedLength.set(answer.length);
+            fixture.detectChanges();
+
+            // @ts-expect-error — accessing protected computed for testing
+            const html = component.citationView().html;
+            expect(html).not.toContain('iris-answer-tail');
+        });
+
         it('shows an answer delivered in one piece immediately', () => {
             startQuery();
             askSubject.next({ runId: 'run-1', isThinking: false, answer: 'Signals are reactive.', sources: [] });

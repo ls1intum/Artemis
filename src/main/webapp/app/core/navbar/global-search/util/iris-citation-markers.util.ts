@@ -178,6 +178,27 @@ export function renderCitationMarkers(answer: string | undefined, sourceCount: n
     return { html, citedNumbers: cited };
 }
 
+/**
+ * Whether `position` falls strictly inside a protected (code or math) segment of `text` — the same
+ * boundary `renderCitationMarkers` uses to decide a `[n]` marker there is exempt from citation
+ * replacement. Reused by the answer card's word-by-word reveal to keep the fade-tail `<span>` it
+ * splices into the raw markdown source from landing inside one of those same segments, which would
+ * corrupt it exactly the way an un-excluded citation marker would — a code span, fence, or KaTeX
+ * formula treats an injected HTML tag as literal content rather than a real element. `position` is
+ * safe at either edge of the segment (the tag then wraps the whole intact segment, or lands entirely
+ * after it) and unsafe anywhere strictly between its opening and closing delimiters.
+ */
+export function isInsideProtectedSegment(text: string, position: number): boolean {
+    for (const match of text.matchAll(PROTECTED_SEGMENT_REGEX)) {
+        const start = match.index ?? 0;
+        const end = start + match[0].length;
+        if (start < position && position < end) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /** Parses the `data-n` attribute of a citation chip element back into numbers. */
 export function parseCitationNumbers(dataN: string | undefined): number[] {
     if (!dataN) {
