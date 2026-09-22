@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -251,20 +250,6 @@ public class LectureIngestionReconcileService {
     }
 
     /**
-     * Reset a state so its next dispatch is a full re-ingest rather than a skip: clear the confirmed
-     * fingerprint and set the force-reingest flag. Every reconcile re-queue that heals a divergence uses
-     * this, because without forcing the re-run the pipeline's skip-check would treat the unit as complete
-     * and skip — so the re-queue would loop forever without ever rewriting the unit. Forcing guarantees the
-     * unit is deleted and rewritten to a single clean generation, which converges and stops the re-queue.
-     *
-     * @param fresh the freshly-loaded state to mutate inside the requeue's optimistic update
-     */
-    private static void forceRebuild(LectureUnitProcessingState fresh) {
-        fresh.setConfirmedFingerprint(null);
-        fresh.setForceReingest(true);
-    }
-
-    /**
      * Reconcile a DONE unit against its current content and the index reality.
      */
     private int reconcileDoneUnit(AttachmentVideoUnit unit, LectureUnitProcessingState state, @Nullable IngestionCensusDTO census, @Nullable IngestionCensusUnitDTO censusEntry) {
@@ -285,15 +270,14 @@ public class LectureIngestionReconcileService {
         String observedFingerprint = state.getConfirmedFingerprint();
         if (observedFingerprint == null || !observedFingerprint.equals(currentFingerprint)) {
             // Legacy row that predates verification, or the content changed without the update path firing.
-            return requeueForReconcile(state, observedFingerprint, "no confirmed fingerprint for the current content", fresh -> {
-            }) ? 1 : 0;
+            return requeueForReconcile(state, observedFingerprint, "no confirmed fingerprint for the current content", ReconcileIntent.plain()) ? 1 : 0;
         }
         if (census != null) {
             if (censusEntry == null || censusEntry.unitRowCount() == 0 || !currentFingerprint.equals(censusEntry.contentFingerprint())) {
                 // The run was confirmed, but the index no longer holds a matching stamp: the data was lost
                 // or replaced after the fact (backup restore, collection recreate, raced delete). Force a
                 // full re-ingest so the run rewrites the unit instead of the skip-check treating it as done.
-                return requeueForReconcile(state, observedFingerprint, "index stamp missing or different from the confirmed fingerprint", fresh -> forceRebuild(fresh)) ? 1 : 0;
+                return requeueForReconcile(state, observedFingerprint, "index stamp missing or different from the confirmed fingerprint", ReconcileIntent.forcingRebuild()) ? 1 : 0;
             }
             // Re-queue on any structural divergence between what the index holds and what a complete unit
             // must hold. Every signal below is healed by a forced full re-ingest and then reported clean, so
@@ -305,17 +289,15 @@ public class LectureIngestionReconcileService {
             boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
             String divergence = divergenceReason(censusEntry, hasPdf);
             if (divergence != null) {
-                return requeueForReconcile(state, observedFingerprint, divergence, fresh -> forceRebuild(fresh)) ? 1 : 0;
+                return requeueForReconcile(state, observedFingerprint, divergence, ReconcileIntent.forcingRebuild()) ? 1 : 0;
             }
             if (isQualityRequeueDue(state, census, censusEntry)) {
                 // A newer pipeline version can improve this low-quality unit. The versioned edge
                 // (at most one quality requeue per pipeline version) is what makes this terminate;
                 // the forced re-run keeps the stored generation when it does not score better.
                 return requeueForReconcile(state, observedFingerprint,
-                        "quality " + censusEntry.qualityScore() + " below threshold and pipeline version " + census.currentPipelineVersion() + " is available", fresh -> {
-                            fresh.setLastQualityPipelineVersion(census.currentPipelineVersion());
-                            fresh.setForceReingest(true);
-                        }) ? 1 : 0;
+                        "quality " + censusEntry.qualityScore() + " below threshold and pipeline version " + census.currentPipelineVersion() + " is available",
+                        ReconcileIntent.forQuality(census.currentPipelineVersion())) ? 1 : 0;
             }
         }
         return 0;
@@ -382,8 +364,7 @@ public class LectureIngestionReconcileService {
         if (!irisLectureApi.get().isLectureUnitProcessable(unit)) {
             return 0;
         }
-        return requeueForReconcile(state, state.getConfirmedFingerprint(), "unit became processable after being skipped", fresh -> {
-        }) ? 1 : 0;
+        return requeueForReconcile(state, state.getConfirmedFingerprint(), "unit became processable after being skipped", ReconcileIntent.plain()) ? 1 : 0;
     }
 
     /**
@@ -446,8 +427,7 @@ public class LectureIngestionReconcileService {
         if (state.getLastUpdated() == null || state.getLastUpdated().isAfter(ZonedDateTime.now().minus(failedRevivalCooldown))) {
             return 0;
         }
-        return requeueForReconcile(state, state.getConfirmedFingerprint(), "transient failure cooled down, reviving for another attempt",
-                LectureUnitProcessingState::incrementRevivalCount) ? 1 : 0;
+        return requeueForReconcile(state, state.getConfirmedFingerprint(), "transient failure cooled down, reviving for another attempt", ReconcileIntent.revival()) ? 1 : 0;
     }
 
     /**
@@ -455,22 +435,70 @@ public class LectureIngestionReconcileService {
      *         since the batch read, in which case nothing was written and the caller's budget must not be
      *         charged for this unit
      */
-    private boolean requeueForReconcile(LectureUnitProcessingState state, String observedFingerprint, String reason, Consumer<LectureUnitProcessingState> applyIntent) {
+    private boolean requeueForReconcile(LectureUnitProcessingState state, String observedFingerprint, String reason, ReconcileIntent intent) {
         long unitId = state.getLectureUnit().getId();
-        ProcessingPhase decidedPhase = state.getPhase();
-        Optional<LectureUnitProcessingState> currentState = processingStateRepository.findById(state.getId());
-        if (currentState.isEmpty() || currentState.get().getPhase() != decidedPhase || !Objects.equals(currentState.get().getConfirmedFingerprint(), observedFingerprint)) {
+        int updated = processingStateRepository.requeueForReconcileIfUnchanged(state.getId(), state.getPhase(), observedFingerprint,
+                intent.clearsConfirmedFingerprint() ? null : observedFingerprint, intent.forceReingest(), intent.qualityPipelineVersion(), intent.revivalDelta(),
+                RECONCILE_DISPATCH_PRIORITY, ZonedDateTime.now());
+        if (updated == 0) {
             log.debug("Reconcile: skipping requeue of unit {} — its state changed since the batch read", unitId);
             return false;
         }
-        LectureUnitProcessingState fresh = currentState.get();
-        log.info("Reconcile: requeueing unit {} ({})", unitId, reason);
-        applyIntent.accept(fresh);
-        fresh.resetRetryCount();
-        fresh.requeue();
-        fresh.setDispatchPriority(RECONCILE_DISPATCH_PRIORITY);
-        processingStateRepository.save(fresh);
+        // Mirror the committed outcome onto the batch-read snapshot, field for field with the statement above, so the
+        // caller is never left holding a state that describes a row no longer shaped that way.
+        if (intent.clearsConfirmedFingerprint()) {
+            state.setConfirmedFingerprint(null);
+        }
+        if (Boolean.TRUE.equals(intent.forceReingest())) {
+            state.setForceReingest(true);
+        }
+        if (intent.qualityPipelineVersion() != null) {
+            state.setLastQualityPipelineVersion(intent.qualityPipelineVersion());
+        }
+        state.setRevivalCount(state.getRevivalCount() + intent.revivalDelta());
+        state.resetRetryCount();
+        state.requeue();
+        state.setDispatchPriority(RECONCILE_DISPATCH_PRIORITY);
+        log.info("Reconcile: requeued unit {} ({})", unitId, reason);
         return true;
+    }
+
+    /**
+     * The branch-specific part of a reconcile requeue, applied by the same statement that commits the requeue.
+     * Everything a requeue always does (phase, claim, run markers, retry budget, dispatch order) is fixed; this
+     * carries only what differs between the reasons a unit is requeued.
+     *
+     * @param clearsConfirmedFingerprint whether the confirmed fingerprint is dropped, which is what makes the next
+     *                                       run rewrite the unit instead of the skip-check treating it as complete;
+     *                                       otherwise it is left exactly as observed
+     * @param forceReingest              {@code TRUE} to force a full rewrite, {@code null} to keep the current flag
+     * @param qualityPipelineVersion     the pipeline version to stamp for a quality requeue, {@code null} to keep
+     * @param revivalDelta               1 when the requeue spends a revival from the bounded budget, 0 otherwise
+     */
+    private record ReconcileIntent(boolean clearsConfirmedFingerprint, Boolean forceReingest, Integer qualityPipelineVersion, int revivalDelta) {
+
+        /** Requeue exactly as the unit stands: no fingerprint change, no forced rewrite, no revival spent. */
+        private static ReconcileIntent plain() {
+            return new ReconcileIntent(false, null, null, 0);
+        }
+
+        /**
+         * Drop the confirmed fingerprint and force the rewrite. Without forcing, the pipeline's skip-check would
+         * treat the unit as complete and skip it, so the requeue would repeat forever without ever rewriting it.
+         */
+        private static ReconcileIntent forcingRebuild() {
+            return new ReconcileIntent(true, true, null, 0);
+        }
+
+        /** Force a rewrite on the newer pipeline, stamping the version so the unit is requeued at most once for it. */
+        private static ReconcileIntent forQuality(int pipelineVersion) {
+            return new ReconcileIntent(false, true, pipelineVersion, 0);
+        }
+
+        /** Revive a cooled-down transient failure, spending one unit of the bounded revival budget. */
+        private static ReconcileIntent revival() {
+            return new ReconcileIntent(false, null, null, 1);
+        }
     }
 
     /**

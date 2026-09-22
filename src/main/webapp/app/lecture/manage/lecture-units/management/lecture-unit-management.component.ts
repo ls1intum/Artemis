@@ -117,6 +117,14 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private processingStateSubscription?: Subscription;
     private hasCompletedInitialStatusLoad = false;
 
+    /**
+     * Identifies the most recent load. loadData() is triggered by several independent events (init, a delete, a
+     * creation), so two chains can be in flight at once and their responses can resolve in either order. Only the
+     * latest chain is allowed to write: without this an older response, which describes the lecture as it was
+     * before the newer one's change, would land second and replace the fresher maps with its stale snapshot.
+     */
+    private loadSequence = 0;
+
     ngOnInit(): void {
         this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
         if (this.resolvedLectureId) {
@@ -137,6 +145,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     loadData() {
+        const sequence = ++this.loadSequence;
         this.isLoading.set(true);
         this.isStatusLoading.set(true);
         // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
@@ -146,11 +155,16 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             .pipe(
                 map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
-                    this.isLoading.set(false);
+                    if (sequence === this.loadSequence) {
+                        this.isLoading.set(false);
+                    }
                 }),
             )
             .subscribe({
                 next: (lecture) => {
+                    if (sequence !== this.loadSequence) {
+                        return; // superseded by a newer load
+                    }
                     this.lecture.set(lecture);
                     if (lecture?.lectureUnits) {
                         this.lectureUnits.set(lecture.lectureUnits);
@@ -160,13 +174,16 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         });
                         this.viewButtonAvailable.set(viewAvailable);
                         // Load all statuses in a single bulk request
-                        this.loadAllStatuses();
+                        this.loadAllStatuses(sequence);
                     } else {
                         this.lectureUnits.set([]);
                         this.isStatusLoading.set(false);
                     }
                 },
                 error: (errorResponse: HttpErrorResponse) => {
+                    if (sequence !== this.loadSequence) {
+                        return; // superseded by a newer load
+                    }
                     onError(this.alertService, errorResponse);
                     this.isStatusLoading.set(false);
                 },
@@ -299,7 +316,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Load all processing and transcription statuses for attachment video units in a single bulk request.
      * This reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
      */
-    private loadAllStatuses(): void {
+    private loadAllStatuses(sequence: number): void {
         if (!this.resolvedLectureId) {
             this.isStatusLoading.set(false);
             return;
@@ -307,6 +324,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
         this.lectureUnitService.getUnitStatuses(this.resolvedLectureId).subscribe({
             next: (statuses: LectureUnitCombinedStatus[]) => {
+                if (sequence !== this.loadSequence) {
+                    return; // superseded by a newer load, whose snapshot is the fresher one
+                }
                 const processingMap: Record<number, LectureUnitProcessingStatus> = {};
                 const transcriptionMap: Record<number, TranscriptionStatus> = {};
 
@@ -337,6 +357,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 this.isStatusLoading.set(false);
             },
             error: () => {
+                if (sequence !== this.loadSequence) {
+                    return; // superseded by a newer load
+                }
                 // The first load attempt is over even if it failed, so a later refresh must not keep
                 // merging (which would never heal a stale live entry or prune a removed unit).
                 this.hasCompletedInitialStatusLoad = true;

@@ -501,13 +501,6 @@ public class LectureUnitProcessingState extends DomainObject {
     }
 
     /**
-     * Count another long-loop revival of a FAILED unit.
-     */
-    public void incrementRevivalCount() {
-        this.revivalCount++;
-    }
-
-    /**
      * Mark as failed with an error translation key.
      * Clears retry eligibility since we're in a terminal state.
      *

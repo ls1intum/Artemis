@@ -286,6 +286,99 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
     }
 
     /**
+     * Claudia-Anthropica review finding on PR #13798. The reconcile walk decides on a batch read, then hashes PDFs
+     * and asks Iris for a census before writing, so the decision is always older than the write. Committing it
+     * through a whole-entity save merged that stale snapshot back over every column. These pin the guard that now
+     * carries the decision's own conditions into the statement, so deciding and writing cannot drift apart.
+     */
+    @Test
+    void testReconcileRequeueIsRejectedWhenTheRowMovedOnSinceTheBatchRead() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState done = new LectureUnitProcessingState(unit);
+        done.setPhase(ProcessingPhase.DONE);
+        done.setConfirmedFingerprint("v1:confirmed");
+        done.setVideoSourceHash("hash-new");
+        processingStateRepository.save(done);
+
+        // A concurrent completion re-confirmed the unit against different content since the batch read.
+        done.setConfirmedFingerprint("v1:reconfirmed");
+        processingStateRepository.save(done);
+
+        assertThat(processingStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, null, 0, 2, now))
+                .as("the fingerprint observed at batch-read time no longer matches, so nothing may be written").isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        assertThat(after.getConfirmedFingerprint()).as("the fresher confirmation must survive").isEqualTo("v1:reconfirmed");
+    }
+
+    /** A content requeue moves the row to IDLE, which the phase guard must reject — that was the reported case. */
+    @Test
+    void testReconcileRequeueIsRejectedAfterAContentRequeueAndLeavesItsMarkersIntact() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState done = new LectureUnitProcessingState(unit);
+        done.setPhase(ProcessingPhase.DONE);
+        done.setConfirmedFingerprint("v1:confirmed");
+        processingStateRepository.save(done);
+
+        // The content changed and the unit was requeued with the new content's markers.
+        assertThat(processingStateRepository.requeueForContentChange(done.getId(), "new-video-hash", 11, 0, ZonedDateTime.now())).isEqualTo(1);
+
+        assertThat(processingStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, null, 0, 2, now))
+                .as("the row is no longer the DONE unit the walk decided on").isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
+        assertThat(after.getVideoSourceHash()).as("the new content's markers must survive").isEqualTo("new-video-hash");
+        assertThat(after.getAttachmentVersion()).isEqualTo(11);
+    }
+
+    /** A retry claim leaves the phase FAILED, so only the claim guard stops a requeue wiping it. */
+    @Test
+    void testReconcileRequeueIsRejectedWhileTheUnitIsClaimed() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setRetryEligibleAt(now.minusMinutes(5));
+        processingStateRepository.save(failed);
+
+        assertThat(processingStateRepository.claimRetryEligible(failed.getId(), "claim-R", now, now.plusMinutes(20))).isEqualTo(1);
+
+        assertThat(processingStateRepository.requeueForReconcileIfUnchanged(failed.getId(), ProcessingPhase.FAILED, null, null, null, null, 1, 2, now))
+                .as("a claim the dispatcher is about to activate must not be wiped by a reconcile requeue").isZero();
+        assertThat(processingStateRepository.findById(failed.getId()).orElseThrow().getClaimToken()).isEqualTo("claim-R");
+    }
+
+    /** The happy path: the row is untouched since the batch read, so the requeue applies with its intent. */
+    @Test
+    void testReconcileRequeueAppliesItsIntentWhenTheRowIsUnchanged() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState done = new LectureUnitProcessingState(unit);
+        done.setPhase(ProcessingPhase.DONE);
+        done.setConfirmedFingerprint("v1:confirmed");
+        done.setContentFingerprint("v1:content");
+        done.setVideoSourceHash("hash");
+        done.setAttachmentVersion(3);
+        done.setRetryCount(4);
+        done.setRevivalCount(1);
+        processingStateRepository.save(done);
+
+        assertThat(processingStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, 7, 1, 2, now)).isEqualTo(1);
+
+        LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(after.getConfirmedFingerprint()).as("a forced rebuild drops the confirmation").isNull();
+        assertThat(after.isForceReingest()).isTrue();
+        assertThat(after.getLastQualityPipelineVersion()).isEqualTo(7);
+        assertThat(after.getRevivalCount()).as("the revival budget is spent atomically").isEqualTo(2);
+        assertThat(after.getRetryCount()).isZero();
+        assertThat(after.getDispatchPriority()).isEqualTo(2);
+        // The content markers belong to the content-change path and must never be touched by a reconcile requeue.
+        assertThat(after.getVideoSourceHash()).isEqualTo("hash");
+        assertThat(after.getAttachmentVersion()).isEqualTo(3);
+        assertThat(after.getContentFingerprint()).isEqualTo("v1:content");
+    }
+
+    /**
      * A generous limit, because the candidate list is shared with the rest of the suite and these tests only care
      * whether their own row is in it.
      */

@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -103,9 +105,11 @@ class LectureIngestionReconcileServiceTest {
             Collection<Long> ids = invocation.getArgument(0);
             return ids == null ? Set.of() : new HashSet<>(ids);
         });
-        // The requeue re-fetches by id and re-confirms the phase before writing; return the same
-        // instance so the guard passes and the requeue mutates the state the assertions inspect.
+        // The stuck-recovery path re-reads the row by id to tell an interrupted completion callback apart
+        // from a run that simply moved on; return the same instance so that check sees the seeded state.
         when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(state));
+        // The requeue is committed through a guarded update; 1 = the row is still as the batch read saw it.
+        when(processingStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(1);
     }
 
     private static final int CURRENT_PIPELINE_VERSION = 3;
@@ -166,7 +170,8 @@ class LectureIngestionReconcileServiceTest {
             assertThat(spent).isEqualTo(1);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.getErrorKey()).isNull();
-            verify(processingStateRepository).save(state);
+            // Committed as one guarded statement, spending exactly one revival: the budget is what bounds this loop.
+            verify(processingStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.FAILED), any(), any(), any(), any(), eq(1), anyInt(), any());
         }
 
         @Test
@@ -252,7 +257,8 @@ class LectureIngestionReconcileServiceTest {
             assertThat(spent).isEqualTo(1);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.getRetryCount()).isZero();
-            verify(processingStateRepository).save(state);
+            // A legacy row carries no confirmed fingerprint, so that null is what the guard pins and what it keeps.
+            verify(processingStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), isNull(), isNull(), any(), any(), eq(0), anyInt(), any());
         }
 
         @Test
@@ -519,10 +525,8 @@ class LectureIngestionReconcileServiceTest {
             // row into TRANSCRIBING before the requeue write. The requeue must not clobber it.
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(null);
-            LectureUnitProcessingState liveState = new LectureUnitProcessingState(unit);
-            liveState.setId(state.getId());
-            liveState.setPhase(ProcessingPhase.TRANSCRIBING);
-            when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(liveState));
+            // A concurrent upload moved the live row into TRANSCRIBING, so the guarded update matches no row.
+            when(processingStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(0);
             givenCensus();
 
             // Finding 3: a guard-rejected requeue must not count as spent, or it silently steals budget
@@ -530,8 +534,9 @@ class LectureIngestionReconcileServiceTest {
             int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
 
             assertThat(spent).isZero();
-            verify(processingStateRepository, never()).save(any());
-            assertThat(liveState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+            // The guard is re-asserted by the statement itself, so the decision's phase is what it must match on.
+            verify(processingStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), any(), any(), any(), any(), anyInt(), anyInt(), any());
+            assertThat(state.getPhase()).as("a rejected requeue must leave the snapshot untouched").isEqualTo(ProcessingPhase.DONE);
         }
 
         @Test
@@ -541,19 +546,16 @@ class LectureIngestionReconcileServiceTest {
             // before the write. The requeue must not revert that fresh confirmation.
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(null);
-            LectureUnitProcessingState reconfirmed = new LectureUnitProcessingState(unit);
-            reconfirmed.setId(state.getId());
-            reconfirmed.setPhase(ProcessingPhase.DONE);
-            reconfirmed.setConfirmedFingerprint(FINGERPRINT);
-            when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(reconfirmed));
+            // A concurrent completion re-confirmed the unit, so the fingerprint the guard pins no longer matches.
+            when(processingStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(0);
             givenCensus();
 
             int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
 
             assertThat(spent).isZero();
-            verify(processingStateRepository, never()).save(any());
-            assertThat(reconfirmed.getPhase()).isEqualTo(ProcessingPhase.DONE);
-            assertThat(reconfirmed.getConfirmedFingerprint()).isEqualTo(FINGERPRINT);
+            // The fingerprint observed at batch-read time is what the statement pins, so a re-confirmation misses it.
+            verify(processingStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), isNull(), any(), any(), any(), anyInt(), anyInt(), any());
+            assertThat(state.getConfirmedFingerprint()).as("a rejected requeue must leave the snapshot untouched").isNull();
         }
     }
 

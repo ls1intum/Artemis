@@ -346,6 +346,28 @@ describe('LectureUnitManagementComponent', () => {
             expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.INGESTING);
         });
 
+        it('ignores a superseded status response that resolves after a newer one', () => {
+            // Two loads in flight at once: loadData() is triggered by a delete and by a creation as well as by
+            // init, so this happens whenever a user acts twice in quick succession.
+            const first$ = new Subject<LectureUnitCombinedStatus[]>();
+            const second$ = new Subject<LectureUnitCombinedStatus[]>();
+            vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValueOnce(first$.asObservable()).mockReturnValueOnce(second$.asObservable());
+
+            const fixture = TestBed.createComponent(LectureUnitManagementComponent);
+            const component = fixture.componentInstance;
+            fixture.detectChanges(); // load #1 -> its status request is pending
+            component.loadData(); // load #2 -> supersedes #1
+
+            // The newer request answers first with the current truth.
+            second$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.DONE, retryCount: 0 }]);
+            expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+
+            // The older request answers second, describing the lecture as it was before. Arrival order must not
+            // decide the winner: its stale snapshot has to be dropped rather than replacing the fresher map.
+            first$.next([{ lectureUnitId: attachmentVideoUnit.id!, processingPhase: ProcessingPhase.IDLE, retryCount: 0 }]);
+            expect(component.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
+        });
+
         it('lets a later refresh replace a stale live entry after the initial load', () => {
             // The initial load already ran during setup, so a later refresh is authoritative: it must heal
             // a live entry that went stale during a WebSocket outage rather than preserve it forever.
