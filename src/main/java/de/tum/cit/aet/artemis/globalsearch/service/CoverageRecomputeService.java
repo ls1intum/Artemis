@@ -287,8 +287,8 @@ public class CoverageRecomputeService {
         // Content: slides and transcript are diffed; summaries are present-only.
         counts.add(diff(TYPE_SLIDES, expected.pdfUnits().get(courseId), present.slides().get(courseId)));
         counts.add(diff(TYPE_TRANSCRIPT, expected.videoUnits().get(courseId), present.transcript().get(courseId)));
-        counts.add(presentOnly(TYPE_SEGMENT_SUMMARY, present.segmentSummaries().get(courseId)));
-        counts.add(presentOnly(TYPE_UNIT_SUMMARY, present.unitSummaries().get(courseId)));
+        counts.add(presentOnly(TYPE_SEGMENT_SUMMARY, present.segmentSummaries().get(courseId), expected.lectureUnits().get(courseId)));
+        counts.add(presentOnly(TYPE_UNIT_SUMMARY, present.unitSummaries().get(courseId), expected.lectureUnits().get(courseId)));
         return counts;
     }
 
@@ -301,8 +301,8 @@ public class CoverageRecomputeService {
         long totalExpected = counts.stream().mapToLong(IngestionTypeCountDTO::expected).sum();
         // Orphaned counts towards the severity as well as the status: a course whose index still holds objects for
         // content that no longer exists answers searches with stale hits, so worst-first has to surface it rather than
-        // rank it alongside a course with nothing wrong. Present-only types never report orphans, so summaries cannot
-        // push a course off COMPLETE.
+        // rank it alongside a course with nothing wrong. A present-only type reports an orphan only for a unit the
+        // database has lost, so an ordinary summary still cannot push a course off COMPLETE.
         long totalGap = totalMissing + totalOrphaned;
         return new CoverageComputation(counts, deriveStatus(totalExpected, totalMissing, totalOrphaned), (int) Math.min(Integer.MAX_VALUE, totalGap),
                 toZonedDateTime(present.lastIngestedAt().get(courseId)));
@@ -338,10 +338,20 @@ public class CoverageRecomputeService {
         return new IngestionTypeCountDTO(type, expectedIds.size(), presentIds.size(), missing, orphaned);
     }
 
-    /** Present-only type (e.g. summaries): the present count is reported, but nothing is ever flagged missing or orphaned. */
-    private static IngestionTypeCountDTO presentOnly(String type, Set<Long> present) {
-        long count = present == null ? 0 : present.size();
-        return new IngestionTypeCountDTO(type, count, count, 0, 0);
+    /**
+     * Present-only type (e.g. summaries): never reported missing, because a summary can legitimately exist without the
+     * content it summarises and nothing requires one to be there.
+     * <p>
+     * A summary for a lecture unit the database no longer has is a different thing. Nothing will ever summarise that
+     * unit again, so the object is stale rather than optional, and it is reported orphaned like any other leftover.
+     * Without that, a course whose units were all deleted showed its slides and transcript red for exactly these
+     * objects while its summaries read green, describing one pile of stale data two contradictory ways.
+     */
+    private static IngestionTypeCountDTO presentOnly(String type, Set<Long> present, Set<Long> unitsInDatabase) {
+        Set<Long> presentIds = present == null ? Set.of() : present;
+        Set<Long> knownUnitIds = unitsInDatabase == null ? Set.of() : unitsInDatabase;
+        long orphaned = presentIds.stream().filter(unitId -> !knownUnitIds.contains(unitId)).count();
+        return new IngestionTypeCountDTO(type, presentIds.size() - orphaned, presentIds.size(), 0, orphaned);
     }
 
     /**

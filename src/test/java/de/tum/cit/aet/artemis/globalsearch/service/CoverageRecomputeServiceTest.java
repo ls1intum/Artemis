@@ -240,6 +240,7 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId);
         insertContent(LECTURES_COLLECTION, courseId, 777_001L);
         insertContent(LECTURE_TRANSCRIPTIONS_COLLECTION, courseId, 777_002L);
+        insertContent(LECTURE_UNITS_COLLECTION, courseId, 777_003L);
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             coverageRecomputeService.recomputeAllCourses();
@@ -247,8 +248,11 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
             assertThat(typeCount(entry, CoverageRecomputeService.TYPE_SLIDES)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_SLIDES, 0, 1, 0, 1));
             assertThat(typeCount(entry, CoverageRecomputeService.TYPE_TRANSCRIPT)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_TRANSCRIPT, 0, 1, 0, 1));
+            // A summary for a unit the database has lost is stale in the same way. Reported present-and-complete, it
+            // would read green beside the two red rows describing the very same deleted units.
+            assertThat(typeCount(entry, CoverageRecomputeService.TYPE_UNIT_SUMMARY)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_UNIT_SUMMARY, 0, 1, 0, 1));
             assertThat(entry.getStatus()).isEqualTo(IngestionCoverageStatus.INCOMPLETE);
-            assertThat(entry.getCoverageGapScore()).isEqualTo(2);
+            assertThat(entry.getCoverageGapScore()).isEqualTo(3);
         });
     }
 
