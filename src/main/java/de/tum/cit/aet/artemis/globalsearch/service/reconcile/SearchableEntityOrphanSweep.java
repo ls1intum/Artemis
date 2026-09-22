@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileS
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService.IndexedRow;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
@@ -48,12 +49,22 @@ import tools.jackson.databind.json.JsonMapper;
  * whatever tick they happen to land on: a page the collection is too small to page past gets re-read unchanged
  * on every tick, and a deterministic bug in the eligibility check would reproduce identically on every row it
  * touches regardless of which rows those are, so neither is distinguishable from a real problem by repetition
- * alone. A different set of flagged rows is what repetition alone cannot fake — the deterministic UUID scheme
- * scatters one type's rows across the whole keyspace (see {@code WeaviateUuidUtil}), so a large collection's
- * consecutive ticks naturally sample different slices of it, and once two different samples of the same type
- * both look orphaned, the pass trusts that enough to act. Once trusted, a type stays trusted on every later
- * tick, however many it takes to fully drain a genuinely large batch, until a tick finds it healthy again. It
- * also cannot remove more than a set number of rows in one tick, which bounds the damage of being wrong about
+ * alone. Once trusted, a type stays trusted on every later tick, however many it takes to fully drain a
+ * genuinely large batch, until a tick finds it healthy again.
+ * <p>
+ * A different set of flagged rows is not proof either, though: {@link SearchableEntityIdEnumerator#indexableIdsAmong}
+ * being systematically wrong for a type produces a different wrong answer on every different set of rows it is
+ * asked about, purely because the rows are different, not because the answer stopped being wrong. So the actual
+ * deletion is gated a second, independent way: {@link #remove} re-derives each row directly through
+ * {@link SearchableEntityResolver#resolve}, the same lookup the write path itself trusts to decide what belongs
+ * in the index, before removing it. A row the bulk eligibility check calls gone but the direct, per-row
+ * re-derivation still finds live is left alone; only rows both agree on are removed. The two disagreeing at all
+ * is itself the signal that something is wrong with the bulk check specifically, and is logged as such. This is
+ * also why {@code indexableIdsAmong} is still worth trusting for repair and for what candidates even get looked
+ * at: it costs one query per type per tick rather than one per row, and its only failure mode this pass cannot
+ * already absorb is exactly the one just closed.
+ * <p>
+ * It also cannot remove more than a set number of rows in one tick, which bounds the damage of being wrong about
  * all of the above even once trusted. One type failing every guard never withholds a tick's progress from the
  * others: each type in a scanned page is judged and acted on independently, and the cursor always advances
  * regardless of the outcome, so no type can block the rest of the collection from ever being looked at again.
@@ -74,6 +85,8 @@ public class SearchableEntityOrphanSweep {
 
     private final SearchableEntityIdEnumerator idEnumerator;
 
+    private final SearchableEntityResolver resolver;
+
     private final SearchableEntitySyncStateRepository syncStateRepository;
 
     private final SearchableEntityReconcileStateRepository reconcileStateRepository;
@@ -84,11 +97,12 @@ public class SearchableEntityOrphanSweep {
 
     private final JsonMapper objectMapper;
 
-    public SearchableEntityOrphanSweep(SearchableEntityIndexScanService indexScanService, SearchableEntityIdEnumerator idEnumerator,
+    public SearchableEntityOrphanSweep(SearchableEntityIndexScanService indexScanService, SearchableEntityIdEnumerator idEnumerator, SearchableEntityResolver resolver,
             SearchableEntitySyncStateRepository syncStateRepository, SearchableEntityReconcileStateRepository reconcileStateRepository, ReconcileEnqueueService enqueueService,
             WeaviateReconcileProperties reconcileProperties, JsonMapper objectMapper) {
         this.indexScanService = indexScanService;
         this.idEnumerator = idEnumerator;
+        this.resolver = resolver;
         this.syncStateRepository = syncStateRepository;
         this.reconcileStateRepository = reconcileStateRepository;
         this.enqueueService = enqueueService;
@@ -244,12 +258,23 @@ public class SearchableEntityOrphanSweep {
         }
     }
 
+    /**
+     * Removes rows the bulk eligibility check flagged as orphaned, but only the ones a direct, independent
+     * re-derivation of that specific row also finds gone. A delete is unconditional at dispatch time (unlike an
+     * upsert, which re-derives its own content), so this is the one place nothing downstream would catch a wrong
+     * one; the cross-check has to happen here, before enqueueing, or not at all.
+     */
     private long remove(String runId, String entityType, List<IndexedRow> orphans, long alreadyRemoved) {
         long removed = 0;
         for (IndexedRow orphan : orphans) {
             if (alreadyRemoved + removed >= reconcileProperties.orphanDeleteCapPerTick()) {
                 log.warn("[index {}] stopped at its per-tick removal limit of {}; the rest is left for the next tick", runId, reconcileProperties.orphanDeleteCapPerTick());
                 break;
+            }
+            if (resolver.resolve(entityType, orphan.entityId()).isPresent()) {
+                log.error("[index {}] refusing to remove {} {}: the eligibility check called it gone, but re-deriving it directly still finds it live", runId, entityType,
+                        orphan.entityId());
+                continue;
             }
             if (enqueueService.enqueueDelete(entityType, orphan.entityId(), WeaviateOutboxOrigin.RECONCILE_ORPHAN)) {
                 removed++;

@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateR
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService.IndexScanSlice;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService.IndexedRow;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
 import tools.jackson.databind.json.JsonMapper;
 
 class SearchableEntityOrphanSweepTest {
@@ -52,6 +54,8 @@ class SearchableEntityOrphanSweepTest {
     private final SearchableEntityIndexScanService indexScanService = mock(SearchableEntityIndexScanService.class);
 
     private final SearchableEntityIdEnumerator idEnumerator = mock(SearchableEntityIdEnumerator.class);
+
+    private final SearchableEntityResolver resolver = mock(SearchableEntityResolver.class);
 
     private final SearchableEntitySyncStateRepository syncStateRepository = mock(SearchableEntitySyncStateRepository.class);
 
@@ -73,7 +77,7 @@ class SearchableEntityOrphanSweepTest {
 
     private void configure(double abortRatio, String... types) {
         var properties = new WeaviateReconcileProperties(true, true, true, List.of(types), 500, 100, 200, 10, 1, DELETE_CAP, REPAIR_CAP, abortRatio);
-        sweep = new SearchableEntityOrphanSweep(indexScanService, idEnumerator, syncStateRepository, reconcileStateRepository, enqueueService, properties, objectMapper);
+        sweep = new SearchableEntityOrphanSweep(indexScanService, idEnumerator, resolver, syncStateRepository, reconcileStateRepository, enqueueService, properties, objectMapper);
     }
 
     private void scanReturns(IndexedRow... rows) {
@@ -100,6 +104,9 @@ class SearchableEntityOrphanSweepTest {
         when(enqueueService.enqueueUpsert(anyString(), anyLong(), any())).thenReturn(true);
         when(reconcileStateRepository.findByPass(ReconcilePass.ORPHAN)).thenReturn(Optional.empty());
         when(syncStateRepository.findAllByEntityTypeAndEntityIdIn(anyString(), any())).thenReturn(List.of());
+        // Agrees with the eligibility check by default: the entity really is gone. Individual tests override this
+        // to simulate the two mechanisms disagreeing.
+        when(resolver.resolve(anyString(), anyLong())).thenReturn(Optional.empty());
         configure(0.9, COURSE, LECTURE);
     }
 
@@ -112,6 +119,33 @@ class SearchableEntityOrphanSweepTest {
 
         verify(enqueueService).enqueueDelete(COURSE, 2L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
         verify(enqueueService, never()).enqueueDelete(COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_ORPHAN);
+    }
+
+    /**
+     * Regression test for a real bug found in review: a different set of flagged rows on a later tick is not
+     * proof either, since a systematically wrong eligibility check produces a different wrong answer on every
+     * different set of rows it is asked about, purely because the rows differ, not because it stopped being
+     * wrong. Simulates exactly that: two disjoint slices both come back with every row supposedly orphaned (the
+     * fingerprint genuinely differs between them, so the streak alone would trust it), but re-deriving those
+     * specific rows directly still finds them live, so nothing is removed.
+     */
+    @Test
+    void testASystematicallyWrongEligibilityCheckNeverDeletesRowsTheDirectLookupStillFindsLive() {
+        configure(0.25, COURSE);
+        scanReturns(row(COURSE, 1L, "v1:a"), row(COURSE, 2L, "v1:b"), row(COURSE, 3L, "v1:c"), row(COURSE, 4L, "v1:d"));
+        // The eligibility check is broken for this whole type: every row looks orphaned, whichever rows they are.
+        when(idEnumerator.indexableIdsAmong(eq(COURSE), any())).thenReturn(Optional.of(Set.of()));
+        // But every one of them still resolves directly: they are all still genuinely live.
+        when(resolver.resolve(eq(COURSE), anyLong())).thenReturn(Optional.of(Map.of("title", "still here")));
+
+        sweep.sweep(); // First slice {1,2,3,4}: refused, remembered.
+        carryStateForward();
+
+        // A disjoint second slice: a different fingerprint, which the streak alone would treat as confirmation.
+        scanReturns(row(COURSE, 5L, "v1:e"), row(COURSE, 6L, "v1:f"), row(COURSE, 7L, "v1:g"), row(COURSE, 8L, "v1:h"));
+        sweep.sweep();
+
+        verify(enqueueService, never()).enqueueDelete(anyString(), anyLong(), any());
     }
 
     @Test
