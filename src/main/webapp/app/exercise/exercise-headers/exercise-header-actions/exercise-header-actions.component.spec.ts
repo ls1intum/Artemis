@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -128,6 +129,23 @@ describe('ExerciseHeaderActionsComponent', () => {
             fixture.detectChanges();
 
             expect(fixture.componentInstance.activeParticipationForCode()?.id).toBe(20);
+        });
+
+        it('should opt the exercise header feedback button into the AI Experience prompt', () => {
+            const graded = { id: 10, testRun: false, submissions: [{ submitted: true }] } as StudentParticipation;
+            const fixture = createComponent(new TextExercise(undefined, undefined), { llmAccepted: false });
+            vi.spyOn(TestBed.inject(ParticipationService), 'getSpecificStudentParticipation').mockReturnValue(graded);
+
+            const exercise = withCourse(manualAssessmentProgrammingExercise(), true);
+            exercise.id = 1;
+            exercise.allowOnlineEditor = false;
+            exercise.studentParticipations = [graded];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+
+            const feedbackButton = fixture.debugElement.query(By.directive(RequestFeedbackButtonComponent));
+            expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.showAiExperiencePrompt()).toBe(true);
         });
     });
 

@@ -118,6 +118,8 @@ describe('RequestFeedbackButtonComponent', () => {
 
     function setupComponentInputs(exercise: Exercise, isSubmitted?: boolean) {
         fixture.componentRef.setInput('exercise', exercise);
+        // Most tests cover the AI Experience prompt, which callers opt into; the plain default is tested separately.
+        fixture.componentRef.setInput('showAiExperiencePrompt', true);
         if (isSubmitted !== undefined) {
             fixture.componentRef.setInput('isSubmitted', isSubmitted);
         }
@@ -811,6 +813,30 @@ describe('RequestFeedbackButtonComponent', () => {
             await initAndTick();
 
             const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
+            expect(button).not.toBeNull();
+            button.nativeElement.click();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(modalSpy).toHaveBeenCalled();
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
+
+        it('should keep the plain request button instead of the AI Experience prompt when not opted in', async () => {
+            expect(component.showAiExperiencePrompt()).toBe(false);
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+            fixture.componentRef.setInput('showAiExperiencePrompt', false);
+            const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            await initAndTick();
+
+            expect(debugElement.query(By.css('#ai-feedback-hint-' + exercise.id))).toBeNull();
+            expect(debugElement.query(By.css('#enable-ai-feedback-' + exercise.id))).toBeNull();
+            const button = debugElement.query(By.css('#request-feedback-' + exercise.id));
             expect(button).not.toBeNull();
             button.nativeElement.click();
             await vi.advanceTimersByTimeAsync(0);

@@ -1,5 +1,5 @@
 @if (!isExamExercise() && requestFeedbackEnabled() && athenaEnabled()) {
-    @if (hasUserAcceptedLLMUsage()) {
+    @if (hasUserAcceptedLLMUsage() || !showAiExperiencePrompt()) {
         @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
             @if (asTumUiButton()) {
                 <tum-ui-button

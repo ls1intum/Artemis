@@ -139,6 +139,7 @@
                         [smallButtons]="smallButtons()"
                         [isSubmitted]="hasProgrammingSubmission()"
                         [participationId]="activeParticipationForCode()?.id"
+                        [showAiExperiencePrompt]="true"
                     />
                 }
                 @if (shouldDisplayIDEButtons()) {
@@ -298,6 +299,7 @@
                     [asTumUiButton]="true"
                     [alwaysShowLabel]="true"
                     [smallButtons]="true"
+                    [showAiExperiencePrompt]="true"
                 />
             </span>
         </div>

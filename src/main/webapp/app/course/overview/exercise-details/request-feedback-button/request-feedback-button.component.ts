@@ -93,6 +93,12 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly participationId = input<number>();
     /** Whether the "enable AI feedback" hint text is rendered next to the button, or just the bare button. */
     readonly showHint = input<boolean>(true);
+    /**
+     * Whether a user without an AI-enabled AI Experience gets the dedicated prompt (hint and Choose/Change AI Experience button).
+     * Off by default, so every user sees the plain "Request AI feedback" button, whose click still opens the AI Experience
+     * selection first if needed; the exercise header and its post-submission popover opt in.
+     */
+    readonly showAiExperiencePrompt = input<boolean>(false);
     /** Renders the action as a TUM UI button instead of a Bootstrap `.btn`. */
     readonly asTumUiButton = input<boolean>(false);
     /** Keeps the button's text label visible on narrow viewports instead of collapsing to icon-only. */
