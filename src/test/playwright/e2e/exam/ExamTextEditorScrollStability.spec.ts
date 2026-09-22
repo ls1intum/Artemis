@@ -63,11 +63,15 @@ test.describe('Exam text editor scroll stability', { tag: '@slow' }, () => {
                 return samples;
             });
 
-        // The regression proper. The feedback loop alternated between "fits" and "overflows" on successive
-        // change-detection passes, which the exam timer alone triggers once a second, so a stable layout
-        // reports one value here and the old one reported several.
+        // The regression proper, in both of its shapes. The feedback loop alternated between "fits" and
+        // "overflows" on successive change-detection passes, which the exam timer alone triggers once a
+        // second, so a stable layout reports one value here and the old one reported several. Where the old
+        // layout did settle it often settled on the wrong one: `h-100` left a permanent ~10px overflow, a
+        // scroll bar with nothing to scroll, so the stable value has to be zero rather than merely stable.
+        // This viewport is not a marginal case: the column first overflows below roughly 850px of height.
         const tallViewportSamples = await sampleOverflow();
         expect(new Set(tallViewportSamples).size, `the scroll bar flickered: overflow went through ${JSON.stringify([...new Set(tallViewportSamples)])}`).toBe(1);
+        expect(tallViewportSamples[0], 'an exercise that fits its column must not leave a scroll bar behind').toBe(0);
 
         // `min-h-100` makes the column fill its scroll container's content box, which is what keeps the
         // connection-status footer at the bottom while an exercise is short. The measurement subtracts the
