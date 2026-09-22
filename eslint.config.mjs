@@ -140,6 +140,8 @@ export default tseslint.config(
                     './packages/tum-ui/tsconfig.lib.json',
                     './packages/tum-ui/tsconfig.spec.json',
                     './packages/tum-ui/.storybook/tsconfig.json',
+                    './packages/tum-ui/consumer/tsconfig.json',
+                    './packages/tum-ui/consumer/app/tsconfig.json',
                 ],
             },
             globals: {

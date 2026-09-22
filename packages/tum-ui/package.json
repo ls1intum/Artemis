@@ -1,7 +1,6 @@
 {
     "name": "@tumaet/ui-angular",
     "version": "0.1.0",
-    "private": true,
     "description": "Signal-first Angular UI components for TUM applications",
     "license": "MIT",
     "repository": {
@@ -14,7 +13,8 @@
         "types",
         "styles.css",
         "README.md",
-        "LICENSE"
+        "LICENSE",
+        "CHANGELOG.md"
     ],
     "scripts": {
         "build": "pnpm run build:styles && pnpm run build:package && pnpm run check:styles",
@@ -27,7 +27,7 @@
         "check:styles": "node check-styles.mjs",
         "lint": "eslint .",
         "lint:fix": "eslint --fix .",
-        "pack:check": "pnpm run build:styles && ng-packagr -p ng-package.pack.json -c tsconfig.lib.prod.json && node check-styles.mjs --package-dir dist-pack && publint --strict dist-pack && attw --pack dist-pack --entrypoints . --profile esm-only",
+        "pack:check": "pnpm run build:styles && ng-packagr -p ng-package.pack.json -c tsconfig.lib.prod.json && node check-styles.mjs --package-dir dist-pack && node pack.mjs",
         "stylelint": "stylelint \"{src,.storybook}/**/*.{css,scss}\" \"{tailwind,tailwind-theme,themes}.css\"",
         "test": "ng test tum-ui --no-watch --no-progress",
         "test:coverage": "ng test tum-ui --no-watch --no-progress --coverage",
@@ -43,22 +43,24 @@
         "storybook:test:prepared": "vitest run --config vitest.storybook.config.ts",
         "storybook:typecheck": "pnpm run storybook:docs && pnpm run storybook:typecheck:prepared",
         "storybook:typecheck:prepared": "tsc --noEmit --project .storybook/tsconfig.json",
-        "storybook:validate": "pnpm run storybook:prepare && pnpm run storybook:typecheck:prepared && pnpm run storybook:test:prepared && pnpm run storybook:build:prepared && pnpm run storybook:docs:test:built"
+        "storybook:validate": "pnpm run storybook:prepare && pnpm run storybook:typecheck:prepared && pnpm run storybook:test:prepared && pnpm run storybook:build:prepared && pnpm run storybook:docs:test:built",
+        "prepublishOnly": "node --eval \"throw new Error('Publish only the validated tarball in build/tum-ui-package.')\"",
+        "test:consumer": "tsc --noEmit --project consumer/tsconfig.json && node consumer/run.mjs"
     },
     "exports": {
         "./styles.css": "./styles.css"
     },
     "peerDependencies": {
-        "@angular/cdk": "22.1.7",
-        "@angular/common": "22.1.7",
-        "@angular/core": "22.1.7",
-        "@angular/forms": "22.1.7",
-        "@fortawesome/angular-fontawesome": "5.1.0",
-        "@fortawesome/fontawesome-svg-core": "7.3.1",
-        "@fortawesome/free-solid-svg-icons": "7.3.1",
-        "rxjs": "7.8.2"
+        "@angular/cdk": "^22.1.7",
+        "@angular/common": "^22.1.7",
+        "@angular/core": "^22.1.7",
+        "@angular/forms": "^22.1.7",
+        "@fortawesome/angular-fontawesome": "^5.1.0",
+        "@fortawesome/fontawesome-svg-core": "^7.3.1",
+        "rxjs": "^7.8.2"
     },
     "dependencies": {
+        "@fortawesome/free-solid-svg-icons": "7.3.1",
         "dayjs": "1.11.23",
         "lodash-es": "4.18.1",
         "tslib": "2.8.1"
@@ -80,7 +82,6 @@
         "@compodoc/compodoc": "catalog:",
         "@fortawesome/angular-fontawesome": "catalog:",
         "@fortawesome/fontawesome-svg-core": "catalog:",
-        "@fortawesome/free-solid-svg-icons": "catalog:",
         "@playwright/test": "catalog:",
         "@storybook/addon-a11y": "catalog:",
         "@storybook/addon-docs": "catalog:",
@@ -103,15 +104,25 @@
         "react": "catalog:",
         "rxjs": "catalog:",
         "sass": "catalog:",
+        "semver": "catalog:",
         "storybook": "catalog:",
         "stylelint": "catalog:",
         "tailwindcss": "catalog:",
         "typescript": "catalog:",
         "vite": "catalog:",
         "vitest": "catalog:",
+        "yaml": "catalog:",
         "zone.js": "catalog:"
     },
     "sideEffects": [
         "./styles.css"
-    ]
+    ],
+    "homepage": "https://docs.artemis.tum.de/developer/tum-ui-reference",
+    "bugs": {
+        "url": "https://github.com/ls1intum/Artemis/issues"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    }
 }
