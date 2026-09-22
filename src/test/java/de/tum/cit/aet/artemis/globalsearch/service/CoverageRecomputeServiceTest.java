@@ -171,6 +171,28 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
     }
 
     @Test
+    void anOrphanOnlyCourseIsIncompleteAndScoredRatherThanReportedComplete() throws Exception {
+        // A second course with nothing missing: its only expected object, the course itself, is indexed. Then one
+        // stale exercise object is planted for an id the database does not have, which is exactly the orphan shape.
+        Course orphanOnly = courseUtilService.createCourse();
+        long orphanCourseId = orphanOnly.getId();
+        insertMetadata(orphanCourseId, SearchableEntitySchema.TypeValues.COURSE, orphanCourseId);
+        insertMetadata(orphanCourseId, SearchableEntitySchema.TypeValues.EXERCISE, 999_999_999L);
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            coverageRecomputeService.recomputeAllCourses();
+            IngestionCoverageEntry entry = coverageRepository.findByCourseId(orphanCourseId).orElseThrow();
+
+            assertThat(typeCount(entry, SearchableEntitySchema.TypeValues.EXERCISE)).isEqualTo(new IngestionTypeCountDTO(SearchableEntitySchema.TypeValues.EXERCISE, 0, 1, 0, 1));
+
+            // Nothing is missing, so before orphans were counted this row read COMPLETE with score 0 while its matrix
+            // cell was red. Status, severity and the cell have to agree.
+            assertThat(entry.getStatus()).isEqualTo(IngestionCoverageStatus.INCOMPLETE);
+            assertThat(entry.getCoverageGapScore()).isEqualTo(1);
+        });
+    }
+
+    @Test
     void removesRowsForCoursesNoLongerInTheDatabase() {
         IngestionCoverageEntry stale = new IngestionCoverageEntry();
         stale.setCourseId(99_999_999L);

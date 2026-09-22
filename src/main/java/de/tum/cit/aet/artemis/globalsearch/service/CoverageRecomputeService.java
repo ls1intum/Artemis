@@ -284,8 +284,14 @@ public class CoverageRecomputeService {
         counts.add(presentOnly(TYPE_UNIT_SUMMARY, present.unitSummaries().get(courseId)));
 
         long totalMissing = counts.stream().mapToLong(IngestionTypeCountDTO::missing).sum();
+        long totalOrphaned = counts.stream().mapToLong(IngestionTypeCountDTO::orphaned).sum();
         long totalExpected = counts.stream().mapToLong(IngestionTypeCountDTO::expected).sum();
-        return new CoverageComputation(counts, deriveStatus(totalExpected, totalMissing), (int) Math.min(Integer.MAX_VALUE, totalMissing),
+        // Orphaned counts towards the severity as well as the status: a course whose index still holds objects for
+        // content that no longer exists answers searches with stale hits, so worst-first has to surface it rather than
+        // rank it alongside a course with nothing wrong. Present-only types never report orphans, so summaries cannot
+        // push a course off COMPLETE.
+        long totalGap = totalMissing + totalOrphaned;
+        return new CoverageComputation(counts, deriveStatus(totalExpected, totalMissing, totalOrphaned), (int) Math.min(Integer.MAX_VALUE, totalGap),
                 toZonedDateTime(present.lastIngestedAt().get(courseId)));
     }
 
@@ -325,11 +331,16 @@ public class CoverageRecomputeService {
         return new IngestionTypeCountDTO(type, count, count, 0, 0);
     }
 
-    private static IngestionCoverageStatus deriveStatus(long totalExpected, long totalMissing) {
-        if (totalExpected == 0) {
+    /**
+     * EMPTY means there is genuinely nothing to say about this course: nothing expected and nothing stale left behind.
+     * A course that expects nothing but still holds orphaned objects is not empty, it needs cleaning, so it reports
+     * INCOMPLETE rather than being filtered away as uninteresting.
+     */
+    private static IngestionCoverageStatus deriveStatus(long totalExpected, long totalMissing, long totalOrphaned) {
+        if (totalExpected == 0 && totalOrphaned == 0) {
             return IngestionCoverageStatus.EMPTY;
         }
-        return totalMissing == 0 ? IngestionCoverageStatus.COMPLETE : IngestionCoverageStatus.INCOMPLETE;
+        return totalMissing == 0 && totalOrphaned == 0 ? IngestionCoverageStatus.COMPLETE : IngestionCoverageStatus.INCOMPLETE;
     }
 
     private static boolean isActive(Course course) {
