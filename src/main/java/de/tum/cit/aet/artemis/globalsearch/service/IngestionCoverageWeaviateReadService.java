@@ -12,15 +12,15 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
-import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;

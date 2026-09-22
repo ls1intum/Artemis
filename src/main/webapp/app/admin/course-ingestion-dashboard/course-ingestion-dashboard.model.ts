@@ -24,6 +24,14 @@ export interface IndexedCollectionCount {
  * is enabled, and the live object count of each tracked collection.
  */
 export interface IndexOverview {
+    /**
+     * The prefix this installation resolves its own collection names with. Installations sharing one Weaviate
+     * cluster are kept apart only by this differing between them, so two servers showing the same value are
+     * reading and overwriting each other's entities.
+     */
+    collectionPrefix?: string;
+    /** This installation's own address, which separates its rows inside the shared Iris content collections. */
+    baseUrl?: string;
     /** Whether the Weaviate instance is currently reachable. */
     weaviateReachable: boolean;
     /** The configured Weaviate address (shown whether or not it is reachable). */

@@ -17,6 +17,8 @@ describe('CourseIngestionOverviewComponent', () => {
     const reachableOverview: IndexOverview = {
         weaviateReachable: true,
         weaviateAddress: 'http://weaviate:8080',
+        collectionPrefix: 'ArtemisTest3_',
+        baseUrl: 'https://artemis-test3.example',
         irisEnabled: true,
         irisReachable: true,
         collections: [
@@ -117,5 +119,24 @@ describe('CourseIngestionOverviewComponent', () => {
         fixture.detectChanges();
 
         expect(document.querySelector('[data-testid="iris-status"]')?.getAttribute('data-severity')).toBe('disabled');
+    });
+
+    it('should show the installation identity that keeps instances apart on a shared Weaviate', () => {
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="collection-prefix"]').textContent).toContain('ArtemisTest3_');
+        expect(fixture.nativeElement.querySelector('[data-testid="instance-base-url"]').textContent).toContain('https://artemis-test3.example');
+    });
+
+    it('should warn rather than render nothing when no collection prefix is configured', () => {
+        // The dangerous state: unset means this installation shares its collections with every other one
+        // pointing at the same Weaviate, and nothing else in the UI reveals that.
+        vi.spyOn(service, 'getIndexOverview').mockReturnValue(of({ ...reachableOverview, collectionPrefix: undefined, baseUrl: undefined }));
+
+        fixture.detectChanges();
+
+        const prefix = fixture.nativeElement.querySelector('[data-testid="collection-prefix"]');
+        expect(prefix).toBeTruthy();
+        expect(prefix.classList).toContain('text-state-warning');
     });
 });

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Conditional;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.IndexedCollectionCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.CoverageRecomputeService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 
 /**
@@ -85,13 +87,20 @@ public class IngestionCoverageResource {
 
     private final Optional<IrisHealthApi> irisHealthApi;
 
+    private final WeaviateService weaviateService;
+
+    private final String artemisBaseUrl;
+
     public IngestionCoverageResource(WeaviateHealthIndicator weaviateHealthIndicator, IngestionCoverageWeaviateReadService weaviateReadService,
-            CoverageRecomputeService coverageRecomputeService, Environment environment, Optional<IrisHealthApi> irisHealthApi) {
+            CoverageRecomputeService coverageRecomputeService, Environment environment, Optional<IrisHealthApi> irisHealthApi, WeaviateService weaviateService,
+            @Value("${server.url:}") String artemisBaseUrl) {
         this.weaviateHealthIndicator = weaviateHealthIndicator;
         this.weaviateReadService = weaviateReadService;
         this.coverageRecomputeService = coverageRecomputeService;
         this.environment = environment;
         this.irisHealthApi = irisHealthApi;
+        this.weaviateService = weaviateService;
+        this.artemisBaseUrl = artemisBaseUrl;
     }
 
     /**
@@ -115,7 +124,7 @@ public class IngestionCoverageResource {
         for (String collection : IRIS_CONTENT_COLLECTIONS) {
             collections.add(toCountDto(collection, weaviateReadService.countExternalCollection(collection)));
         }
-        return ResponseEntity.ok(new IndexOverviewDTO(reachable, address, irisEnabled, irisReachable, collections));
+        return ResponseEntity.ok(new IndexOverviewDTO(reachable, address, irisEnabled, irisReachable, collections, weaviateService.getCollectionPrefix(), artemisBaseUrl));
     }
 
     /**

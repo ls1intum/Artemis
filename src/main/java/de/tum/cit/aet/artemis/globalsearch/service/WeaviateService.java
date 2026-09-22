@@ -83,6 +83,18 @@ public class WeaviateService {
     }
 
     /**
+     * The prefix this instance resolves its own collection names with.
+     * <p>
+     * Surfaced for the admin index overview: installations sharing one Weaviate cluster are kept apart only by this
+     * differing between them, and nothing else in the UI reveals whether it actually does.
+     *
+     * @return the configured collection prefix, possibly empty
+     */
+    public String getCollectionPrefix() {
+        return properties.collectionPrefix();
+    }
+
+    /**
      * Resolves the actual collection name by prepending the configured prefix.
      *
      * @param baseName the base collection name (e.g. "Exercises")

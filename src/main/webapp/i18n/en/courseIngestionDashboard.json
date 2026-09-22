@@ -16,7 +16,11 @@
                 "address": "Address",
                 "irisReachable": "Iris reachable",
                 "irisUnreachable": "Iris unreachable",
-                "irisDisabled": "Iris disabled"
+                "irisDisabled": "Iris disabled",
+                "collectionPrefix": "Collection prefix",
+                "noCollectionPrefix": "not set — shared with every other installation on this Weaviate",
+                "baseUrl": "This installation",
+                "noBaseUrl": "not set — content rows cannot be told apart from other installations'"
             },
             "collections": {
                 "title": "Indexed collections",
