@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.aiworker.config;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -19,8 +20,8 @@ public record AiWorkerProperties(String brokerUrl, String user, String password,
     private static final Pattern WORKER_ID = Pattern.compile("[a-zA-Z0-9_-]{1,64}");
 
     public AiWorkerProperties {
-        if (brokerUrl == null || !brokerUrl.startsWith("tcp://") || !SSL_ENABLED.matcher(brokerUrl).matches() || brokerUrl.contains("trustAll=true")
-                || brokerUrl.contains("verifyHost=false")) {
+        if (brokerUrl == null || !brokerUrl.startsWith("tcp://") || !SSL_ENABLED.matcher(brokerUrl).matches() || brokerUrl.toLowerCase(Locale.ROOT).contains("trustall=true")
+                || brokerUrl.toLowerCase(Locale.ROOT).contains("verifyhost=false")) {
             throw new IllegalArgumentException("Configure a TLS AI worker broker URL with certificate verification");
         }
         if (user == null || user.isBlank() || password == null || password.isBlank() || ids == null || ids.isEmpty() || ids.size() > 64
