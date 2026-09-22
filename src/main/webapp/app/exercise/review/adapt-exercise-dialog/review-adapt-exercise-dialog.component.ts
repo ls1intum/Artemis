@@ -9,10 +9,9 @@ import {
 } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { RouterLink, UrlTree } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -108,7 +107,7 @@ export class ReviewAdaptExerciseDialogComponent {
 
     readonly findings = input<AdaptFinding[]>([]);
     readonly selectedFeedbackThreadIds = input<number[]>();
-    readonly progressLink = input<(string | number)[]>();
+    readonly progressLink = input<(string | number)[] | UrlTree>();
     readonly blockedReason = input<string>();
     readonly submitting = input(false);
     readonly submissionError = input<string>();
@@ -123,7 +122,6 @@ export class ReviewAdaptExerciseDialogComponent {
     private readonly expandedKeys = signal<ReadonlySet<string>>(new Set());
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
-    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly maxInstructionsLength = MAX_INSTRUCTIONS_LENGTH;
     protected readonly maxSelectedFeedbackThreads = MAX_SELECTED_FEEDBACK_THREADS;
     protected readonly selectionLimitReached = computed(() => this.selectedIds().length >= MAX_SELECTED_FEEDBACK_THREADS);

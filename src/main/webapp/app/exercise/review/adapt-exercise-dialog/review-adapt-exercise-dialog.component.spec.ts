@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
@@ -197,16 +197,16 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(confirmed).not.toHaveBeenCalled();
         expect(actionButtons(fixture)[1].disabled).toBe(true);
     });
-    it('offers progress in a new tab without discarding the adaptation draft', async () => {
+    it('opens progress in the current tab without discarding the adaptation draft', async () => {
         const { component, fixture } = await setup();
         component.instructions.set('Keep my instructions');
-        fixture.componentRef.setInput('progressLink', ['/course-management', 1, 'programming-exercises', 42, 'generation']);
+        fixture.componentRef.setInput('progressLink', TestBed.inject(Router).createUrlTree(['/editor'], { queryParams: { aiRun: 'authoring:42:latest' } }));
         fixture.componentRef.setInput('submissionError', 'artemisApp.review.adaptExercise.startFailed');
         fixture.detectChanges();
         const link = fixture.nativeElement.querySelector('[data-testid="adapt-open-progress"]') as HTMLAnchorElement;
-        expect(link.getAttribute('href')).toBe('/course-management/1/programming-exercises/42/generation');
-        expect(link.target).toBe('_blank');
-        expect(link.rel).toBe('noopener');
+        expect(link.getAttribute('href')).toBe('/editor?aiRun=authoring:42:latest');
+        expect(link.target).toBe('');
+        expect(link.rel).toBe('');
         expect(component.instructions()).toBe('Keep my instructions');
     });
 
