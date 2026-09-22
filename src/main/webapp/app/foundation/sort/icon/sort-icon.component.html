@@ -1,4 +1,4 @@
 <div class="d-flex flex-column sort-icon">
-    <fa-icon [icon]="faSortUp" [style.color]="isAscending() ? 'black' : 'grey'" class="icon" />
-    <fa-icon [icon]="faSortDown" [style.color]="isDescending() ? 'black' : 'grey'" />
+    <fa-icon [icon]="faSortUp" [class.text-color]="isAscending()" [class.text-muted-color]="!isAscending()" class="icon" />
+    <fa-icon [icon]="faSortDown" [class.text-color]="isDescending()" [class.text-muted-color]="!isDescending()" />
 </div>

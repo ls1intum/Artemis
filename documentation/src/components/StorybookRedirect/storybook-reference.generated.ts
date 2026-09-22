@@ -74,6 +74,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'forms-select-button--docs';
         case 'forms-toggle-switch':
             return 'forms-toggle-switch--docs';
+        case 'layout-control-density':
+            return 'layout-control-density--docs';
         case 'navigation-menu':
             return 'navigation-menu--docs';
         case 'navigation-tabs':

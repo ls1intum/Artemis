@@ -130,7 +130,7 @@ class PanelHostComponent {}
 
 @Component({
     template: `<tum-ui-panel [toggleable]="true" toggleAriaLabel="Quiz exercises">
-        <span tumUiPanelHeader class="projected-header">Quiz exercises (2)</span>
+        <div tumUiPanelHeader data-testid="projected-header"><h3>Quiz exercises (2)</h3></div>
         <pre>body</pre>
     </tum-ui-panel>`,
     imports: [TumUiPanelComponent],
@@ -158,9 +158,10 @@ describe('TumUiPanelComponent (projection)', () => {
         }).compileComponents();
         const fixture = TestBed.createComponent(PanelHeaderSlotHostComponent);
         fixture.detectChanges();
-        const projected = fixture.debugElement.query(By.css('.tum-ui-panel-title .projected-header'));
+        const projected = fixture.debugElement.query(By.css('[data-testid="projected-header"]'));
         expect(projected).not.toBeNull();
         expect(projected.nativeElement.textContent.trim()).toBe('Quiz exercises (2)');
+        expect(projected.nativeElement.closest('span')).toBeNull();
         expect(fixture.debugElement.query(By.css('.tum-ui-panel-toggler')).nativeElement.getAttribute('aria-label')).toBe('Quiz exercises');
     });
 });

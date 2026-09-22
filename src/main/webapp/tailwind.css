@@ -108,6 +108,9 @@
 /* Holidays page: TUM UI + Tailwind throughout, but it renders the shared Bootstrap course title bar like the list above. */
 @source './app/tutorialgroup/manage/holidays';
 
+/* Semantic text colors also serve legacy templates excluded from scanning to avoid Bootstrap collisions. */
+@source inline("text-state-danger text-state-success text-state-warning text-muted-color text-color");
+
 /* Exercise-table layout remains explicit while its Bootstrap markup is outside scanning. */
 @source inline("min-w-64 w-[10rem]");
 

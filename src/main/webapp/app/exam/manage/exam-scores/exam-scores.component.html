@@ -651,12 +651,12 @@
                                 }
                                 @if (gradingScaleExists() && !isBonus() && studentResult.overallGrade && studentResult.hasPassed) {
                                     <td style="text-align: center">
-                                        <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em" />
+                                        <fa-icon class="text-state-success" [icon]="faCheckCircle" style="font-size: 1.5em" />
                                     </td>
                                 }
                                 @if (gradingScaleExists() && !isBonus() && studentResult.overallGrade && !studentResult.hasPassed) {
                                     <td style="text-align: center">
-                                        <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em" />
+                                        <fa-icon class="text-state-danger" [icon]="faTimes" style="font-size: 1.5em" />
                                     </td>
                                 }
                                 @if (hasPlagiarismVerdicts()) {

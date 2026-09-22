@@ -157,8 +157,11 @@ manually maintained list of components. Package implementations are outside the 
   metadata forms the standard Angular ESLint processor cannot extract. Use literal `@Component`
   metadata or an external template rather than leaving those templates unchecked.
 
-Artemis deliberately scopes the six template rules to design-system hosts while legacy application
-classes remain elsewhere. The generic adapter also supports all-element checking. This is not
+Artemis scopes the six upstream template rules to design-system hosts while legacy application
+classes remain elsewhere. The additional `no-literal-inline-colors` rule checks ordinary elements too,
+including Angular style bindings and host metadata. Use semantic status classes or theme tokens
+instead of literal UI colors. Runtime domain colors, such as user-selected category colors, remain
+valid bindings. The generic adapter also supports all-element checking. This is not
 whole-program CSS or Angular analysis: arbitrary behavioral directives, transitive wrapper forwarding,
 Angular import-scope disambiguation, and imported/computed class values are not fully resolved.
 Generic ancestor selectors can still affect controls. Passing lint is not proof of visual consistency;
@@ -167,16 +170,20 @@ parity-test instructions.
 
 Use `size`, `variant`, and `severity` on buttons; the native button directive also supports
 `rounded`. Panels support `density="compact"` for reduced spacing and `[contentPadding]="false"`
-when projected content, such as a table, owns its spacing. These options can be combined. Set `[showHeader]="false"` for an unused panel header;
+when projected content, such as a table, owns its spacing. These options can be combined. Projected
+headers support flow content, including layout containers and native actions. Set `[showHeader]="false"` for an unused panel header;
 toggleable panels retain their disclosure control regardless of that input. Native sortable headers
 accept `contentAlign` values `start` (default), `center`, and `end` to align the label and sort indicator together.
 Use `contentAlign="end"` for numeric headers; alignment respects writing direction without
 requiring flexbox classes or private selectors.
 
 Use `TumUiDensityDirective` with `tumUiDensity="compact"` on a toolbar region for compact single-line
-controls, including projected controls. The package owns their 1.75rem height and responsive segmented
-control padding; textareas and controls outside the region retain their normal sizing. The application
-owns the enclosing inline-size container. This replaces private title-bar control overrides.
+controls, including projected controls, or apply it directly to a control. Compact density owns
+the 1.75rem height and vertical padding; size inputs still control typography and horizontal spacing.
+A nested `tumUiDensity="default"` region restores each control’s normal size, and a further compact
+region can opt in again. Textareas retain their normal sizing. Segmented controls reduce horizontal
+padding in compact regions when their nearest inline-size container is at most 40rem wide. The
+application owns that container; the package owns the responsive control styling.
 
 Run `pnpm run test:rules` for the rule fixtures and configuration integration tests, and
 `pnpm run lint` plus `pnpm run stylelint` before submitting changes. Run the package's

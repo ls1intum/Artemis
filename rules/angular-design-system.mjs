@@ -9,6 +9,7 @@ import { createComponentIndex, resolveRoots } from './angular-design-system-proj
 import { requireLintableTemplates } from './angular-design-system-lintable-templates.mjs';
 import { createClassStylesRule } from './angular-design-system-class-styles.mjs';
 import { createInlineStylesRule } from './angular-design-system-inline-styles.mjs';
+import { createLiteralInlineColorsRule } from './angular-design-system-inline-colors.mjs';
 import { createAngularHostAdapter } from './angular-design-system-host.mjs';
 import { createTemplateResolver } from './angular-design-system-owner.mjs';
 import { classValues, expressionOf } from './angular-design-system-expressions.mjs';
@@ -130,7 +131,7 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
                     },
                 };
             },
-            styleVisitors(check, reportStyleElement) {
+            styleVisitors(check, reportStyleElement, { includeUnprotected = false } = {}) {
                 return {
                     Program() {
                         // Angular's template AST omits styles because the compiler extracts them.
@@ -143,7 +144,7 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
                         visit(new HtmlParser().parse(context.sourceCode.text, context.filename).rootNodes);
                     },
                     Element(element) {
-                        if (scope === 'components' && !componentOf(element)) return;
+                        if (scope === 'components' && !componentOf(element) && !includeUnprotected) return;
                         for (const attribute of [...element.attributes, ...element.inputs]) {
                             if (!['style', 'ngStyle'].includes(attributeName(attribute)) && !attribute.keySpan?.details?.startsWith('style.')) continue;
                             check(styleExpression(attribute), reportNode(attribute), new Set(), componentOf(element)?.name ?? '');
@@ -208,5 +209,6 @@ export function createAngularDesignSystemPlugin({ root = process.cwd(), componen
     rules['no-restyle-class-selectors'] = createClassStylesRule(adapterFor, getIndex, path.resolve(root, theme));
     rules['no-restyle-stylesheets'] = createInlineStylesRule(getIndex, path.resolve(root, theme));
     rules['require-lintable-templates'] = requireLintableTemplates;
+    rules['no-literal-inline-colors'] = createLiteralInlineColorsRule(adapterFor);
     return { meta: { name: 'angular-design-system' }, rules };
 }

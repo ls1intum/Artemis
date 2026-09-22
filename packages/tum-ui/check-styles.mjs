@@ -39,7 +39,8 @@ if (runtimeSources.some((source) => source.includes('--artemis-')) || artifactRu
 }
 
 const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);
-const allowedLayers = new Set(['properties', 'tum-ui-cdk', 'tum-ui-theme']);
+// The shared utilities layer lets consumer host layout override the zero-specificity density recipe.
+const allowedLayers = new Set(['properties', 'tum-ui-cdk', 'tum-ui-theme', 'utilities']);
 stylesheet.walkAtRules((atRule) => {
     if (forbiddenAtRules.has(atRule.name)) {
         errors.push(`the compiled stylesheet contains @${atRule.name}`);

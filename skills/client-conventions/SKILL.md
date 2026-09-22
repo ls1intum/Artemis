@@ -74,6 +74,10 @@ in `eslint.config.mjs`.
 The convention applies throughout the client even where lint does not enforce it. Add newly
 migrated directories to that list.
 
+`design-system/no-literal-inline-colors` also checks literal inline UI colors on ordinary application
+elements, including Angular style bindings and host metadata. Use semantic classes or theme tokens;
+runtime domain colors such as user-selected category colors remain valid bindings.
+
 Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
 the real PrimeNG component so its styles load deterministically. Enforced by
 `localRules/no-primeng-component-classes`.

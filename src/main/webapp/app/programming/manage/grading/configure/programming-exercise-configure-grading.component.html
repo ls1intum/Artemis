@@ -155,7 +155,7 @@
 
 <!-- Code analysis category cell templates -->
 <ng-template #categoryTemplate let-cell>
-    <fa-icon [icon]="faSquare" [style.color]="categoryColors[cell.data.name] || 'white'" class="me-2" />
+    <fa-icon [icon]="faSquare" [style.color]="categoryColors[cell.data.name] || 'var(--module-bg)'" class="me-2" />
     {{ cell.data.name }}
 </ng-template>
 

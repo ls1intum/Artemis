@@ -36,7 +36,7 @@
                         <div class="ms-2">
                             <strong>{{ 'artemisApp.exam.examUsers.numberOfImagesSaved' | artemisTranslate }}:</strong>
                             <span
-                                ><b style="color: green">{{ imagesSaved }}</b></span
+                                ><b class="text-state-success">{{ imagesSaved }}</b></span
                             >
                         </div>
                     </div>
@@ -48,7 +48,7 @@
                 @if (hasParsed()) {
                     <div>
                         <div class="ms-2">
-                            <strong style="color: green" jhiTranslate="artemisApp.exam.examUsers.allImagesSaved"></strong>
+                            <strong class="text-state-success" jhiTranslate="artemisApp.exam.examUsers.allImagesSaved"></strong>
                         </div>
                     </div>
                 }

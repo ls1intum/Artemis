@@ -1,25 +1,3 @@
-/* Search input section */
-.search-input-container {
-    gap: 0.75rem;
-    border-bottom: 1px solid var(--global-search-border-color);
-}
-
-.search-icon {
-    margin-left: 0.75rem;
-}
-
-.search-input {
-    flex: 1;
-    padding: 0.75rem 0.75rem 0.75rem 0;
-    font-size: 1rem;
-    outline: none;
-
-    &::placeholder {
-        color: var(--p-text-muted-color);
-        opacity: 0.6;
-    }
-}
-
 /* Results section */
 .results-container {
     flex: 1;

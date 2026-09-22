@@ -403,7 +403,7 @@
                             @if (reEvaluationInProgress()) {
                                 <div class="dimensions">
                                     @if (dragItem.invalid) {
-                                        <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
+                                        <span class="text-state-danger" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                                     }
                                 </div>
                             }
@@ -422,7 +422,7 @@
                             </div>
                             <div *cdkDragPlaceholder></div>
                             <ng-template #preview>
-                                <div style="border: 1px solid; background: #fafafa; padding: 4px 2px 2px 2px">
+                                <div style="border: 1px solid; background: var(--module-bg); padding: 4px 2px 2px 2px">
                                     <div title="Move">
                                         <fa-icon [icon]="faBars" size="lg" />
                                     </div>

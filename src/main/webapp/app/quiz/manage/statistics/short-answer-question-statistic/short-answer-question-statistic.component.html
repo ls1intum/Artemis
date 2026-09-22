@@ -32,7 +32,7 @@
                                                     <input
                                                         class="short-answer-question-container__input"
                                                         disabled
-                                                        [style.background]="'lightgreen'"
+                                                        style="background: var(--artemis-alert-success-background)"
                                                         value="{{ getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text : '' }}"
                                                         size="{{ getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text!.length + 4 : 5 }}"
                                                     />

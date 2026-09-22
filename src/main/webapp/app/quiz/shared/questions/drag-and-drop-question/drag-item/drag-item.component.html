@@ -14,7 +14,12 @@
                     <span>{{ dragItem().text }}</span>
                     <div *cdkDragPlaceholder></div>
                     <div *cdkDragPreview matchSize>
-                        <div style="border: 1px solid #000; background: white; color: black; padding: 4px; overflow: hidden; text-overflow: ellipsis">{{ dragItem().text }}</div>
+                        <div
+                            class="text-color"
+                            style="border: 1px solid var(--artemis-control-border); background: var(--module-bg); padding: 4px; overflow: hidden; text-overflow: ellipsis"
+                        >
+                            {{ dragItem().text }}
+                        </div>
                     </div>
                 </div>
             </div>

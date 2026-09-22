@@ -30,9 +30,10 @@ import { TUM_UI_FORM_FIELD } from '../form-field/tum-ui-form-field.token';
 
 export type TumUiSelectSize = 'small' | 'large';
 const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
-    small: 'tum:min-h-8 tum:py-1.5 tum:ps-2.5 tum:text-sm',
-    default: 'tum:min-h-10 tum:py-2 tum:ps-3 tum:text-base',
-    large: 'tum:min-h-12 tum:py-2.5 tum:ps-3.5 tum:text-lg',
+    small: 'tum:min-h-[var(--tum-ui-density-height,calc(var(--tumaet-ui-spacing)*8))] tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*1.5))] tum:ps-2.5 tum:text-sm',
+    default:
+        'tum:min-h-[var(--tum-ui-density-height,calc(var(--tumaet-ui-spacing)*10))] tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*2))] tum:ps-3 tum:text-base',
+    large: 'tum:min-h-[var(--tum-ui-density-height,calc(var(--tumaet-ui-spacing)*12))] tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*2.5))] tum:ps-3.5 tum:text-lg',
 };
 
 let nextSelectId = 0;

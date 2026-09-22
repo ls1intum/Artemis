@@ -275,11 +275,11 @@
     @let dto = cell.data;
     @if (attendanceCheckFailed(dto)) {
         <div [title]="'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate">
-            <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
+            <fa-icon [icon]="faTimes" class="fa-2x text-state-danger" />
         </div>
     } @else if (attendanceCheckPassed(dto)) {
         <div [title]="'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate">
-            <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
+            <fa-icon [icon]="faCheck" class="fa-2x text-state-success" />
         </div>
     } @else if (didNotAttendExam(dto)) {
         <div [title]="'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate">

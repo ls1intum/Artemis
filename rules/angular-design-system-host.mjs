@@ -214,14 +214,14 @@ export function createAngularHostAdapter(context, index) {
                 },
             };
         },
-        styleVisitors(check) {
+        styleVisitors(check, _reportStyleElement, { includeUnprotected = false } = {}) {
             return {
                 ClassDeclaration(declaration) {
-                    for (const { matches, records } of hosts(declaration))
+                    for (const { matches, records } of hosts(declaration, includeUnprotected))
                         for (const record of records) {
                             const name = normalized(record.name);
                             if (name !== 'style' && !name.startsWith('style.')) continue;
-                            for (const component of matches) check(style(record), record.at, new Set(), component.name);
+                            for (const component of matches.size ? matches : [undefined]) check(style(record), record.at, new Set(), component?.name ?? '');
                         }
                 },
             };

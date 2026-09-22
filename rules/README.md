@@ -27,13 +27,18 @@ patch its package, load its bundle, or translate Angular templates into JSX.
   as well as protected controls. It reuses the compiler's generated CSS and the stylesheet/private
   namespace checks, including custom variants and escaped selectors; it does not parse variant
   selector strings with a separate grammar.
+- `angular-design-system-inline-colors.mjs` rejects literal UI colors on ordinary elements and
+  Angular hosts, reusing the style adapter, color grammar and variable resolver. Conditional values
+  and local CSS-variable indirection are checked; runtime domain colors remain allowed.
 - `angular-design-system-lintable-templates.mjs` rejects inline templates Angular ESLint cannot
   extract, rather than silently skipping them.
 - `tum-ui-design-system.mjs` supplies Artemis's roots, theme, and layout policy.
 
 The plugin factory accepts `root`, `components`, `sources`, `theme`, and `scope`. Source directories
 are relative to `root`; `sources` defaults to `components`. `scope` defaults to `all`; Artemis uses
-`components` while legacy application classes remain outside design-system hosts. CSS/SCSS checks
+`components` while legacy application classes remain outside design-system hosts. The additional
+`no-literal-inline-colors` rule also checks ordinary elements without banning their layout styles.
+CSS/SCSS checks
 cover all application styles, including global styles outside `app/`. Package implementation files
 are excluded by ESLint/Stylelint configuration, not component-specific rule exemptions.
 

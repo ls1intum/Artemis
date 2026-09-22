@@ -23,7 +23,7 @@ function colorValueText(value) {
     return parsed.toString();
 }
 // The value, or any leaf of it outside var(), read as a color.
-function hasRawColor(value) {
+export function hasRawColor(value) {
     const text = colorValueText(value);
     if (COLOR_FUNCTION.test(text) || parseColor(text) !== null) return true;
     const leaves = text.replace(/var\([^)]*\)/gi, ' ').split(/[\s,()/]+/);

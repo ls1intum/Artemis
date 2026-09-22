@@ -74,6 +74,21 @@ describe('StudentsUploadImagesDialogComponent', () => {
         expect(component.exam()).toBe(exam);
     });
 
+    it('renders saved-image counts and completion with semantic success styling', () => {
+        component.notFoundUsers.set({ numberOfUsersNotFound: 1, numberOfImagesSaved: 10 });
+        component.hasParsed.set(true);
+        fixture.detectChanges();
+        const count = Array.from(fixture.nativeElement.querySelectorAll('b') as NodeListOf<HTMLElement>).find((element) => element.textContent?.trim() === '10');
+        expect(count).toBeDefined();
+        expect(count?.classList.contains('text-state-success')).toBe(true);
+        expect(count?.style.color).toBe('');
+        component.notFoundUsers.set({ numberOfUsersNotFound: 0, numberOfImagesSaved: 10 });
+        fixture.detectChanges();
+        const completion = fixture.nativeElement.querySelector('strong') as HTMLElement;
+        expect(completion).not.toBeNull();
+        expect(completion.classList.contains('text-state-success')).toBe(true);
+    });
+
     it('should reset dialog when selecting pdf file', async () => {
         component.notFoundUsers.set({ numberOfUsersNotFound: 1, numberOfImagesSaved: 10 });
         component.hasParsed.set(true);

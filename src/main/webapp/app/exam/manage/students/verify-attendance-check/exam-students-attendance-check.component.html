@@ -25,7 +25,7 @@
                 @if (!allExamUsersAttendanceCheck() || allExamUsersAttendanceCheck().length === 0) {
                     <div>
                         <span class="fs-3" [jhiTranslate]="'artemisApp.examManagement.examStudents.allStudentsCheckedPassed'">All students passed</span>
-                        <fa-icon [icon]="faCheck" style="color: green" class="fa-2x ms-1" />
+                        <fa-icon [icon]="faCheck" class="fa-2x ms-1 text-state-success" />
                     </div>
                 }
             }

@@ -73,6 +73,15 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component.hasExamStarted()).toBe(true);
     });
 
+    it('renders the all-passed status with semantic success styling', () => {
+        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [] })));
+        fixture.detectChanges();
+        const status = fixture.nativeElement.querySelector('fa-icon') as HTMLElement;
+        expect(status).not.toBeNull();
+        expect(status.classList.contains('text-state-success')).toBe(true);
+        expect(status.style.color).toBe('');
+    });
+
     it('should test on error', () => {
         component.onError('ErrorString');
         expect(component.isTransitioning()).toBe(false);

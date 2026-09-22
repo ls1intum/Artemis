@@ -126,17 +126,20 @@ export const ProjectedHeader: Story = {
         props: { collapsed: false },
         template: `
             <tum-ui-panel density="compact" [toggleable]="true" [(collapsed)]="collapsed" toggleAriaLabel="Toggle exam" style="width: 16rem;" data-testid="panel">
-                <button tumUiPanelHeader tumUiButton type="button" size="small" variant="text" severity="secondary"
-                    class="tum:min-w-0 tum:mr-2 tum:flex-1 tum:justify-start" data-testid="title-button"
-                    [attr.aria-expanded]="!collapsed" aria-controls="exam-navigation-story" (click)="collapsed = !collapsed">
-                    <span class="tum:truncate">An unusually long examination title that must fit the sidebar</span>
-                </button>
+                <div tumUiPanelHeader class="tum:flex tum:min-w-0 tum:flex-1" data-testid="header-layout">
+                    <button tumUiButton type="button" size="small" variant="text" severity="secondary"
+                        class="tum:min-w-0 tum:mr-2 tum:flex-1 tum:justify-start" data-testid="title-button"
+                        [attr.aria-expanded]="!collapsed" aria-controls="exam-navigation-story" (click)="collapsed = !collapsed">
+                        <span class="tum:truncate">An unusually long examination title that must fit the sidebar</span>
+                    </button>
+                </div>
                 <div id="exam-navigation-story">Exam navigation</div>
             </tum-ui-panel>
         `,
     }),
     play: async ({ canvas, userEvent }) => {
         const title = canvas.getByTestId('title-button');
+        await expect(canvas.getByTestId('header-layout').closest('span')).toBeNull();
         const toggle = canvas.getByRole('button', { name: 'Toggle exam' });
         await expect(title.getBoundingClientRect().right).toBeLessThanOrEqual(toggle.getBoundingClientRect().left);
         const panel = canvas.getByTestId('panel');

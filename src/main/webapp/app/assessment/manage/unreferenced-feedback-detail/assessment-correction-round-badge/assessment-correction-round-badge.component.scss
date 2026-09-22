@@ -10,15 +10,14 @@
     font-size: 0.75em;
     font-weight: 700;
     line-height: 1;
-    color: var(--white);
+    color: var(--assessment-correction-foreground);
     white-space: nowrap;
 
     &--first {
-        background-color: var(--primary);
+        background-color: var(--assessment-first-correction-background);
     }
 
     &--second {
-        // No Artemis semantic token matches this hue yet; scoped to this one legacy correction-round indicator.
-        background-color: #ffa561;
+        background-color: var(--assessment-second-correction-background);
     }
 }

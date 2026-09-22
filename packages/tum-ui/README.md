@@ -109,6 +109,6 @@ MIT
 
 ### Compact control regions
 
-Import `TumUiDensityDirective` and put `tumUiDensity="compact"` on a toolbar region to give its buttons, selects, segmented controls, and single-line inputs a 28px height (at the default root font size). This includes projected controls and keeps each control's typography and horizontal size variant. Textareas and controls outside the region are unchanged; `compact` is the only supported density value.
+Import `TumUiDensityDirective` and put `tumUiDensity="compact"` on a toolbar region to give its buttons, selects, segmented controls, and single-line inputs a 28px height (at the default root font size). This includes projected controls and keeps each control's typography and horizontal size variant. Compact density takes precedence over the size input's height and vertical padding; size still controls typography and horizontal spacing. Apply `tumUiDensity="default"` to restore the normal size geometry within a compact region, and nest another compact region when needed. The directive also works directly on a control. Textareas and controls outside the region are unchanged.
 
 Within an enclosing CSS inline-size container narrower than 40rem, compact segmented controls reduce horizontal option padding to 8px. The application owns that layout container; TUM UI owns the control measurements. No private component classes or `::ng-deep` overrides are needed.
