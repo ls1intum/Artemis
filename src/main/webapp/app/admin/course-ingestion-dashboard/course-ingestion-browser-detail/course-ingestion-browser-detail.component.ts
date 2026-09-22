@@ -213,7 +213,9 @@ export class CourseIngestionBrowserDetailComponent {
             return indexed;
         }
         const missing = this.data().missingEntities.find((entity) => entity.type === type && entity.entityId === entityId);
-        return missing ? { type: missing.type, entityId: missing.entityId, title: missing.title } : undefined;
+        // The parent lecture comes across for lecture units and is what the open link and the breadcrumb are built
+        // from, so dropping it here would leave a unit that the tree draws under its lecture navigating to the course.
+        return missing ? { type: missing.type, entityId: missing.entityId, title: missing.title, lectureId: missing.lectureId } : undefined;
     }
 
     /**

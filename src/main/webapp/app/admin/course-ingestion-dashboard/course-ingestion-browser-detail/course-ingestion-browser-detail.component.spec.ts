@@ -420,6 +420,28 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20, 'unit-management']);
     });
 
+    it('should navigate a unit the database still has by its parent lecture', async () => {
+        // Unit 40 is in the database but its metadata never reached the index, so it is known only through
+        // missingEntities. The tree draws it under lecture 20, and losing the lecture from the fallback sent both the
+        // open link and the breadcrumb somewhere less useful than the unit the pane is actually showing.
+        fixture.componentRef.setInput('data', {
+            ...data,
+            missingEntities: [...data.missingEntities, { type: 'lecture_unit', entityId: 40, title: 'Late slides', lectureId: 20 }],
+            contentPresence: [...data.contentPresence, { key: 'slides', unitIds: [40] }],
+        });
+
+        component.selection.set({ kind: 'unit', unitId: 40 });
+        await settle();
+        expect(query('detail-heading')?.textContent?.trim()).toBe('Late slides');
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20, 'unit-management']);
+
+        component.selection.set({ kind: 'collection', unitId: 40, key: 'slides' });
+        await settle();
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20, 'unit-management']);
+        // The lecture is still the unit's parent, so the trail back up keeps it.
+        expect(component.breadcrumbs().map((crumb) => crumb.label)).toEqual(['Week 1', 'Late slides']);
+    });
+
     it('should fall back to the course page for a metadata type', async () => {
         component.selection.set({ kind: 'type', type: 'exercise' });
         await settle();
