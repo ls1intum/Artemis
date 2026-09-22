@@ -157,7 +157,7 @@ public class WorkerSupervisorService implements AutoCloseable {
         if (deliveryScheduled.compareAndSet(false, true)) {
             deliveryExecutor.submit(() -> {
                 try {
-                    flushTerminal();
+                    flushPending(pendingRejections);
                 }
                 finally {
                     deliveryScheduled.set(false);
