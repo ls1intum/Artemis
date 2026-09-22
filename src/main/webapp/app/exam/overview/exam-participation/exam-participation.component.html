@@ -67,7 +67,15 @@
                         [ngClass]="{ 'content-exam-height-testRun': testRunId(), 'me-3': !testRunId() }"
                         cdkScrollable
                     >
-                        <div [ngClass]="{ 'd-flex h-100 justify-content-between flex-column': !checkVerticalOverflow() }">
+                        <!--
+                            `min-h-100` rather than `h-100`: the column is at least as tall as the scroll container, so
+                            the connection-status footer stays at its bottom while an exercise is short, and it grows
+                            with an exercise that is taller, so the container scrolls exactly once. Deciding this by
+                            measuring `scrollHeight > clientHeight` and dropping the classes made the two states each
+                            other's cause — stretched, the column fit, so the classes came back, so it stretched again —
+                            and the scrollbar flickered in and out on every change-detection pass (#13916).
+                        -->
+                        <div class="d-flex flex-column justify-content-between min-h-100">
                             <div [hidden]="activePageIndex !== -1">
                                 <jhi-exam-exercise-overview-page [studentExam]="studentExam()" (onPageChanged)="onPageChange($event)" />
                             </div>

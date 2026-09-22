@@ -12,6 +12,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -20,6 +21,7 @@ public class CommentThreadGroup extends DomainObject {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "exercise_id", nullable = false)
+    @Parent
     private Exercise exercise;
 
     @OneToMany(mappedBy = "group", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)

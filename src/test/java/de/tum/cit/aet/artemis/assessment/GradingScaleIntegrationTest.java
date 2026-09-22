@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
@@ -702,7 +702,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     void testDeleteCourseDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByCourseId(course.getId());
         assertThat(foundGradingScale).isEmpty();

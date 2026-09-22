@@ -10,13 +10,37 @@ check instead of the problem.
 controllers. Transaction boundaries may only be defined inside repositories, typically for
 modifying queries.
 
-**Enforced by.** `testTransactional` in
-`src/test/java/de/tum/cit/aet/artemis/shared/architecture/module/AbstractModuleRepositoryArchitectureTest.java`,
-which each module's `*RepositoryArchitectureTest` subclass runs.
+**Enforced by.** Three rules in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`, all checked over
+the whole code base rather than per module:
+
+- `testTransactionBoundariesOnlyInRepositories` — a `@Transactional` method must be declared in a
+  repository interface, and no class outside one may carry the annotation.
+- `testNoProgrammaticTransactionManagement` — production code may not touch anything in
+  `org.springframework.transaction` except the annotation package, which is what covers
+  `TransactionTemplate` and `PlatformTransactionManager`. Tests are exempt: one may legitimately
+  open a transaction to seed data, or hold a row lock while asserting the code under test waits.
+- `testNoTransactionSynchronization` — nothing anywhere may use `TransactionSynchronizationManager`
+  or a `TransactionSynchronization`. Without a boundary the callbacks never fire and nothing is
+  logged, so the code silently does not run.
+
+`AbstractModuleRepositoryArchitectureTest` carries the first rule per module as well, but only
+modules with a `*RepositoryArchitectureTest` subclass get it, which is why the global rules exist.
 
 **Consequence for you.** A REST call is not one transaction. Do not write code that assumes reads
 later in the call see writes from earlier in the call rolled into one atomic unit, and do not
 attempt to coordinate cache eviction across a request boundary that does not exist.
+
+**What to write instead.** Two patterns cover nearly every boundary that looked necessary:
+
+- To make a check and a write atomic, move the check into the `WHERE` clause of a `@Modifying`
+  query and act on the row count — `AnswerPostRepository.verifyIfUnverified`,
+  `LectureUnitProcessingStateRepository.claimIdleForDispatch`. This also replaces
+  `SELECT ... FOR UPDATE SKIP LOCKED`.
+- To undo work when a later step fails, compensate in a `catch` block —
+  `SlideSplitterService.SlideOperation`.
+
+Full reasoning: `documentation/docs/developer/guidelines/performance.mdx` (Avoid Transactions).
 
 ## Persistence access
 
@@ -29,13 +53,38 @@ name, write a `@Query` with `nativeQuery = true`.
 permits `core.config` only.
 
 **The exception list is grandfathering, not permission.** `shouldNotUseEntityManagerDirectly`
-excludes three classes and carries a TODO to refactor them away: `RepositoryImpl`,
-`CustomPostRepositoryImpl`, and `TitleCacheEvictionService`. The last is the one you are most
-likely to read, because it is also the canonical cache-eviction pattern below; it holds an
-`EntityManagerFactory` only to reach the Hibernate `EventListenerRegistry` and register itself as a
-`PostUpdateEventListener` / `PostDeleteEventListener`. Copy its eviction logic, not its
-constructor. A new class taking an `EntityManagerFactory` fails the rule, and adding yourself to
-the list is the wrong fix.
+excludes two classes and carries a TODO to refactor them away: `RepositoryImpl` and
+`CustomPostRepositoryImpl`. A new class taking an `EntityManager` or `EntityManagerFactory` fails
+the rule, and adding yourself to the list is the wrong fix.
+
+## Fetching
+
+**Rule.** No `@OneToOne`, `@OneToMany` or `@ManyToMany` fetches eagerly. The rule reads the fetch
+type that applies, not the one written down, so an omitted `fetch` on a `@OneToOne` counts as eager
+and has to be spelled out as `FetchType.LAZY`; `@OneToMany` and `@ManyToMany` are lazy by default.
+
+**Enforced by.** `testNoEagerFetching` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
+
+**`@ManyToOne` is out of scope.** Hibernate cannot make a to-one association lazy without bytecode
+enhancement or a proxy, and a proxied `@ManyToOne` does not work with entity hierarchies. Do not add
+`fetch = FetchType.LAZY` there expecting it to take effect.
+
+**Read a configuration through its own repository.** Do not put a lazy association into an
+`@EntityGraph` or a `JOIN FETCH` so that code further down can read it off the entity. Besides
+coupling unrelated queries to that decision, it does not work where the owner is reached through an
+eager `@ManyToOne` chain (`Exercise` to `ExerciseGroup` to `Exam` to `Course`): Hibernate resolves
+that chain by secondary select and the fetch plan no longer applies, so the association stays
+uninitialized however the query is written. `CourseAthenaConfigRepository` and
+`CourseConfigurationRepository` are the pattern.
+
+**`FIELDS_ALLOWED_TO_FETCH_EAGERLY` is grandfathering, not permission.** 38 associations, and the
+list may only shrink.
+
+**Turning an existing one lazy is not free.** `open-in-view` is disabled, so an association a query
+did not fetch reads as absent once the session closes - a `LazyInitializationException`, or a
+silently wrong value where the getter guards with `Hibernate.isInitialized`. Convert every reader,
+then pin the result with a wire-contract test; `AthenaConfigWireContractTest` is the pattern.
 
 ## Distributed data
 
@@ -80,8 +129,7 @@ each cache to one of two managers:
 
 - **Per-node Caffeine**, for the blob caches named in `BLOB_CACHE_NAMES`
   (`src/main/java/de/tum/cit/aet/artemis/core/config/cache/BlobCacheConfiguration.java`: `files`,
-  `plantUmlPng`, `plantUmlSvg`) and the title caches named in `TITLE_CACHE_NAMES`
-  (`src/main/java/de/tum/cit/aet/artemis/core/config/cache/TitleCacheConfiguration.java`).
+  `plantUmlPng`, `plantUmlSvg`).
 - **The distributed data provider**, for everything else.
 
 Every per-node cache also expires entries after a time-to-live. That TTL is the price of moving a
@@ -92,16 +140,11 @@ visible for long, the cache belongs in the distributed manager instead.
 graph with it. Cache a DTO or a projection.
 
 **Always pair it with explicit eviction.** Either `@CacheEvict` on the writing service, or a
-Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. The canonical patterns are
-`src/main/java/de/tum/cit/aet/artemis/core/service/TitleCacheEvictionService.java` and, for
-propagating the eviction of a per-node entry to every node,
-`src/main/java/de/tum/cit/aet/artemis/core/service/cache/PerNodeCacheEvictionService.java`. The
-latter broadcasts over a plain topic on purpose: a dropped broadcast self-corrects within the TTL,
-so the retention cost of a reliable topic buys nothing.
-
-Read `TitleCacheEvictionService` for the eviction logic, not for how it obtains its listener
-registration: its `EntityManagerFactory` is a grandfathered exception, as described under
-persistence access above.
+Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. For propagating the eviction of a
+per-node entry to every node, the pattern is
+`src/main/java/de/tum/cit/aet/artemis/core/service/cache/PerNodeCacheEvictionService.java`. It
+broadcasts over a plain topic on purpose: a dropped broadcast self-corrects within the TTL, so the
+retention cost of a reliable topic buys nothing.
 
 **The bar.** A measured performance gain that justifies the eviction-correctness work. The default
 answer is: do not cache. Full rationale and history:
@@ -169,9 +212,61 @@ or a bean can trip it, and the failure surfaces in a step whose name does not me
 Query Quality Check job in `.github/workflows/ci-quality.yml`. Reuse an existing counted method
 where you can. Local check: `supporting_scripts/find_slow_queries.py`.
 
+## Column mapping
+
+**Rule.** No field or method is annotated `@Lob`.
+
+**Enforced by.** `testNoLobAnnotation` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/ArchitectureTest.java`.
+
+**Why.** A CLOB on PostgreSQL is a large object: Hibernate writes the value into `pg_largeobject` and
+stores the object's id in the column, then reads the column back as that id. The long text columns
+here are Liquibase `longtext`, and `tool_activity` is `clob`; both become `text` on PostgreSQL, so
+the column holds the text itself, and a row written by anything but that same mapping fails the read
+with `Bad value for type long`, taking the whole query with it rather than just the one column. The large objects are never
+reclaimed either, because nothing unlinks them when the row is deleted.
+
+**What to write instead.** Nothing: a `String`, or an attribute converted to one, round-trips as text
+on both databases whatever its length, since a length in the mapping only shapes generated DDL and
+Artemis generates none (`Exercise.problemStatement`). For a structured value,
+`@JdbcTypeCode(SqlTypes.JSON)` over a `json` column (`IrisMessage.accessedMemories`) - at the cost of
+the column's equality operator on PostgreSQL, so a query fetching the entity cannot use `DISTINCT`.
+
 ## Database
 
 **No triggers and no stored routines.** The entity design is the place to express this instead.
 
 **Adding a NOT NULL column to an existing table** needs the guarded migration pattern. See
 `skills/liquibase-migration/SKILL.md`.
+
+## Jackson version
+
+**Rule:** `ArchitectureTest.testNoJackson2InProductionCode`
+
+Production code may not depend on `com.fasterxml.jackson.databind..`, `..core..`, `..dataformat..`,
+`..datatype..`, `..module..`, `..jr..` or `..jaxrs..`. Artemis migrated to Jackson 3 (`tools.jackson`)
+ahead of Spring Boot 4.3 removing Jackson 2 support.
+
+`com.fasterxml.jackson.annotation` is deliberately allowed and is not a mistake: `jackson-annotations`
+never moved to the `tools.jackson` group, so every `@JsonInclude`, `@JsonProperty`, `@JsonIgnore` and
+`@JsonTypeInfo` in the codebase is still imported from there.
+
+**Why the rule exists rather than the compiler:** Jackson 2 is still resolvable, because a dozen
+third-party libraries ship their own mapper and the `jackson-bom` import keeps that transitive line on a
+patched release. Nothing stops a new Jackson 2 import from compiling.
+
+**Three things that compile but change behaviour:**
+
+- Jackson 3 exceptions are unchecked and do not extend `IOException`. A `catch (IOException)` around a
+  parse used to handle malformed input and silently no longer does, wherever the block still performs
+  real IO. Name `JacksonException` explicitly.
+- Mappers are immutable. There is no `configure(...)` or `registerModule(...)` on a built mapper — use
+  `JsonMapper.builder()`, or `rebuild()` to derive from an existing configuration.
+- `asString()` is not a rename of `asText()`. Jackson 2 returned `""` for a non-string node; Jackson 3
+  throws. Use `asString(null)` or an `isString()` guard wherever the input is not ours.
+
+**Configuration:** `ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper,
+applied to the auto-configured `JsonMapper`, the `XmlMapper` and the shared static `JsonObjectMapper`. It
+pins the Jackson 3 defaults that would otherwise change the JSON on the wire, each with a TODO naming what
+has to happen before it can go. `JacksonSerializationContractTest` records the payloads those pins protect:
+remove a pin, run it, and the failing fixture is the payload that would change.

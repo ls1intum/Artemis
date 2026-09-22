@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -38,8 +41,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -57,12 +60,15 @@ import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguratio
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -157,9 +163,12 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
 
+    @Autowired
+    private TeamRepository teamRepository;
+
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+        userUtilService.addUsers(TEST_PREFIX, 4, 2, 1, 2);
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
@@ -639,6 +648,194 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
     }
 
+    @ParameterizedTest
+    @CsvSource({ "student-participation-with-latest-result-and-feedbacks,false", "student-participation-with-all-results,false",
+            "student-participation-with-latest-result-and-feedbacks,true", "student-participation-with-all-results,true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testParticipationPrivacyForTutor(String endpoint, boolean teamMode) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        assertThat(participation.getRepositoryUri()).isNotBlank();
+        assertThat(participation.getBuildPlanId()).isNotBlank();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/" + endpoint);
+
+        assertThat(body.path("id").asLong()).isEqualTo(participation.getId());
+        for (String field : List.of("student", "team", "participantName", "participantIdentifier", "repositoryUri", "buildPlanId", "branch")) {
+            assertThat(body.has(field)).as("identity field %s", field).isFalse();
+        }
+        assertThat(body.toString()).doesNotContain(TEST_PREFIX + "student1", TEST_PREFIX + "team");
+        assertThat(body.path("submissions").get(0).path("id").asLong()).isEqualTo(result.getSubmission().getId());
+        assertThat(body.path("submissions").get(0).path("results").get(0).path("id").asLong()).isEqualTo(result.getId());
+        assertThat(body.path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "student-participation-with-latest-result-and-feedbacks,false", "student-participation-with-all-results,false",
+            "student-participation-with-latest-result-and-feedbacks,true", "student-participation-with-all-results,true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testParticipationPrivacyPreservesInstructorIdentity(String endpoint, boolean teamMode) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/" + endpoint);
+
+        assertThat(body.path("repositoryUri").asString()).isEqualTo(participation.getRepositoryUri());
+        assertThat(body.path("participantIdentifier").asString()).isEqualTo(participation.getParticipantIdentifier());
+        assertThat(body.path(teamMode ? "team" : "student").path("id").asLong()).isEqualTo(participation.getParticipant().getId());
+        assertThat(body.path("submissions").get(0).path("results").get(0).path("id").asLong()).isEqualTo(result.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student-participation-with-latest-result-and-feedbacks", "student-participation-with-all-results" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testParticipationPrivacyPreservesTeamOwnerIdentity(String endpoint) throws Exception {
+        var result = createResultForParticipationPrivacyTest(true);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+
+        JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/" + endpoint);
+
+        assertThat(body.path("repositoryUri").asString()).isEqualTo(participation.getRepositoryUri());
+        assertThat(body.path("team").path("students").get(0).path("login").asString()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(body.path("submissions").get(0).path("results").get(0).path("id").asLong()).isEqualTo(result.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testParticipationPrivacyRejectsTutorRepoNameLookup(boolean teamMode) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        String response = request
+                .performMvcRequest(get("/api/programming/programming-exercise-participations").param("repoName", extractRepoName(participation.getRepositoryUri())))
+                .andExpect(status().isForbidden()).andReturn().getResponse().getContentAsString();
+        assertThat(objectMapper.readTree(response).path("detail").asString()).isEqualTo("You are not allowed to access this resource");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testParticipationPrivacyPreservesInstructorRepoNameLookup() throws Exception {
+        var result = createResultForParticipationPrivacyTest(false);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        var dto = request.get("/api/programming/programming-exercise-participations?repoName=" + extractRepoName(participation.getRepositoryUri()), HttpStatus.OK,
+                RepoNameProgrammingStudentParticipationDTO.class);
+        assertThat(dto.id()).isEqualTo(participation.getId());
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNestedParticipationPrivacyForTutor(boolean teamMode, boolean submissionsList) throws Exception {
+        assertNestedParticipationPrivacy(teamMode, false, submissionsList);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testNestedParticipationPrivacyForEditor(boolean teamMode, boolean submissionsList) throws Exception {
+        assertNestedParticipationPrivacy(teamMode, false, submissionsList);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNestedParticipationPrivacyPreservesInstructorIdentity(boolean teamMode, boolean submissionsList) throws Exception {
+        assertNestedParticipationPrivacy(teamMode, true, submissionsList);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testNestedParticipationPrivacyPreservesOwnerIdentity(boolean teamMode) throws Exception {
+        assertNestedParticipationPrivacy(teamMode, true, false);
+    }
+
+    private void assertNestedParticipationPrivacy(boolean teamMode, boolean seesIdentity, boolean submissionsList) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var submission = result.getSubmission();
+        var participation = (ProgrammingExerciseStudentParticipation) submission.getParticipation();
+        assertThat(participation.getRepositoryUri()).isNotBlank();
+        assertThat(participation.getBuildPlanId()).isNotBlank();
+        if (!submissionsList) {
+            for (boolean withSubmission : List.of(false, true)) {
+                JsonNode response = getJson(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks?withSubmission=" + withSubmission);
+                assertThat(response.path("id").asLong()).isEqualTo(result.getId());
+                assertThat(response.path("submission").path("id").asLong()).isEqualTo(submission.getId());
+                assertThat(response.path("submission").path("participation").path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
+                assertNestedParticipantIdentity(response.path("submission").path("participation"), participation, teamMode, seesIdentity);
+                if (!seesIdentity) {
+                    assertThat(response.toString()).doesNotContain(TEST_PREFIX + "student1", TEST_PREFIX + "team");
+                }
+            }
+        }
+        else {
+            JsonNode response = getJson("/api/programming/exercises/" + programmingExercise.getId() + "/programming-submissions");
+            assertThat(response).hasSize(1);
+            JsonNode listedSubmission = response.get(0);
+            assertThat(listedSubmission.path("id").asLong()).isEqualTo(submission.getId());
+            assertThat(listedSubmission.path("results").get(0).path("id").asLong()).isEqualTo(result.getId());
+            assertNestedParticipantIdentity(listedSubmission.path("participation"), participation, teamMode, seesIdentity);
+            assertThat(listedSubmission.path("participation").path("submissionCount").asInt()).isEqualTo(1);
+            if (!seesIdentity) {
+                assertThat(response.toString()).doesNotContain(TEST_PREFIX + "student1", TEST_PREFIX + "team");
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "lock", "without-assessment", "without-assessment?lock=true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNestedParticipationPrivacyForAssessmentResponses(String endpoint) throws Exception {
+        var result = createResultForParticipationPrivacyTest(false);
+        var submission = result.getSubmission();
+        var participation = (ProgrammingExerciseStudentParticipation) submission.getParticipation();
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        String url = endpoint.equals("lock") ? "/api/programming/programming-submissions/" + submission.getId() + "/lock"
+                : "/api/programming/exercises/" + programmingExercise.getId() + "/programming-submission-" + endpoint;
+
+        JsonNode response = getJson(url);
+
+        assertThat(response.path("id").asLong()).isPositive();
+        assertNestedParticipantIdentity(response.path("participation"), participation, false, false);
+        assertThat(response.path("participation").path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
+        assertThat(response.toString()).doesNotContain(TEST_PREFIX + "student1");
+    }
+
+    private void assertNestedParticipantIdentity(JsonNode response, ProgrammingExerciseStudentParticipation participation, boolean teamMode, boolean seesIdentity) {
+        assertThat(response.path("id").asLong()).isEqualTo(participation.getId());
+        if (seesIdentity) {
+            assertThat(response.path("repositoryUri").asString()).isEqualTo(participation.getRepositoryUri());
+            assertThat(response.path("participantIdentifier").asString()).isEqualTo(participation.getParticipantIdentifier());
+            assertThat(response.path(teamMode ? "team" : "student").path("id").asLong()).isEqualTo(participation.getParticipant().getId());
+        }
+        else {
+            for (String field : List.of("student", "team", "participantName", "participantIdentifier", "repositoryUri", "userIndependentRepositoryUri", "buildPlanId", "branch")) {
+                assertThat(response.has(field)).as("anonymous participation omits %s", field).isFalse();
+            }
+        }
+    }
+
+    private Result createResultForParticipationPrivacyTest(boolean teamMode) {
+        startExercise();
+        if (!teamMode) {
+            return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1));
+        }
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var team = new Team();
+        team.setName("Student team");
+        team.setShortName(TEST_PREFIX + "team");
+        team.setExercise(programmingExercise);
+        team.addStudents(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        team = teamRepository.save(team);
+        var participation = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, team);
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+        return participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), submission);
+    }
+
     // --- wire shape of the migrated participation and build-log responses ------------------------------------------
 
     /**
@@ -655,16 +852,16 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
 
-        assertThat(body.path("type").asText()).isEqualTo("programming");
-        assertThat(body.path("student").path("login").asText()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(body.path("type").asString()).isEqualTo("programming");
+        assertThat(body.path("student").path("login").asString()).isEqualTo(TEST_PREFIX + "student1");
         assertThat(body.path("repositoryUri").isMissingNode()).isFalse();
         // the nested exercise keeps its nested course, which the client renders display links off
         assertThat(body.path("exercise").path("id").asLong()).isEqualTo(programmingExercise.getId());
         assertThat(body.path("exercise").path("course").path("id").asLong()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertThat(body.path("exercise").path("course").path("title").asText()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
+        assertThat(body.path("exercise").path("course").path("title").asString()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getTitle());
         // the results stay nested under their submission, where the client reads them
         assertThat(body.path("submissions")).hasSize(1);
-        assertThat(body.path("submissions").get(0).path("submissionExerciseType").asText()).isEqualTo("programming");
+        assertThat(body.path("submissions").get(0).path("submissionExerciseType").asString()).isEqualTo("programming");
         assertThat(body.path("submissions").get(0).path("results")).isNotEmpty();
     }
 
@@ -700,12 +897,12 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         JsonNode body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results");
 
-        assertThat(body.path("type").asText()).isEqualTo("programming");
-        assertThat(body.path("student").path("login").asText()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(body.path("type").asString()).isEqualTo("programming");
+        assertThat(body.path("student").path("login").asString()).isEqualTo(TEST_PREFIX + "student1");
         assertThat(body.path("exercise").path("course").path("id").asLong()).isEqualTo(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertThat(body.path("submissions")).isNotEmpty();
         // the commit history matches the submissions against git hashes, so every submission needs its commit hash
-        assertThat(body.path("submissions").get(0).path("commitHash").asText()).isEqualTo("1234567890abcdef");
+        assertThat(body.path("submissions").get(0).path("commitHash").asString()).isEqualTo("1234567890abcdef");
         assertThat(body.path("submissions").get(0).path("results")).isNotEmpty();
     }
 
@@ -1499,7 +1696,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
      * TODO move the following test into a different test file, as they do not use the programming-exercise-participations/.. endpoint, but programming-exercise/..
      * move the endpoint itself too
      * <p>
-     * Test for GET - programming-exercise/{exerciseID}/commit-history/{repositoryType}
+     * Test for GET - programming-exercises/{exerciseId}/commit-history/{repositoryType}
      */
     @Nested
     class GetCommitHistoryForTemplateSolutionTestOrAuxRepo {
@@ -1572,7 +1769,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetListForAuxiliaryRepository() throws Exception {
-            var repositoryId = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().getFirst().getId();
+            var repositoryId = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().iterator().next().getId();
             var commits = request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + repositoryId, HttpStatus.OK, CommitInfoDTO.class);
             assertThat(commits).isNotEmpty();
             assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(auxiliaryCommitMessage));
@@ -1586,7 +1783,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         private AuxiliaryRepository ensureAuxiliaryRepositoryConfigured() throws Exception {
-            AuxiliaryRepository auxiliaryRepository = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().getFirst();
+            AuxiliaryRepository auxiliaryRepository = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().iterator().next();
             if (auxiliaryRepository.getRepositoryUri() == null) {
                 String projectKey = programmingExerciseWithAuxRepo.getProjectKey();
                 String repositorySlug = programmingExerciseWithAuxRepo.generateRepositoryName(auxiliaryRepository.getName());
@@ -1599,7 +1796,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     /**
-     * Tests for programming-exercise-participations/{participationId}/files-content/{commitId}
+     * Tests for programming-exercise-participations/{participationId}/files-content
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -1617,7 +1814,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     /**
      * TODO refactor endpoint to contain participation -> programming-exercise-participations
-     * tests GET - programming-exercise/{exerciseId}/files-content-commit-details/{commitId}
+     * tests GET - programming-exercises/{exerciseId}/files-content-commit-details
      */
     @Nested
     class GetParticipationRepositoryFilesForCommitsDetailsView {
@@ -1762,7 +1959,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void retrieveCommitHistoryGitExceptionEmptyList() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doThrow(new NoHeadException("error")).when(gitServiceSpy).getCommitInfos(participation.getVcsRepositoryUri());
+        doThrow(new NoHeadException("error")).when(bareGitRepositoryServiceSpy).getCommitInfos(participation.getVcsRepositoryUri());
         assertThat(request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class))
                 .isEmpty();
     }

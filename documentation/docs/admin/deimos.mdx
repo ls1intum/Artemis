@@ -63,7 +63,7 @@ appear collapsed into a single snapshot.
 
 Deimos is disabled by default and requires **two** independent steps.
 
-### 1. Startup property
+### Startup property
 
 Set `artemis.deimos.enabled` and the LLM configuration in the configuration the server reads on startup (for example
 `application-prod.yml`):
@@ -102,7 +102,7 @@ If the module is enabled with a missing or invalid `base-url`, `model`, `complet
 `max-retries`, Artemis refuses to start and reports which property is wrong. This is deliberate: a misconfigured
 endpoint would mean student code being sent somewhere you did not intend.
 
-### 2. Runtime feature toggle
+### Runtime feature toggle
 
 Enable the `Deimos` toggle under **Admin → Feature Toggles**. It is off by default even when the startup property is
 set. While it is off, the trigger buttons are hidden and the REST endpoints return `403`.

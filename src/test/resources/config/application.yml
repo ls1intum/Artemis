@@ -159,9 +159,9 @@ spring:
         jpa:
             repositories:
                 bootstrap-mode: deferred
-    jackson:
-        serialization:
-            indent-output: true
+    # Note: no indent-output here. Under Jackson 2 the spring.jackson prefix configured a mapper the application did
+    # not use, so this setting was inert and the suite has always asserted against compact responses. Jackson 3 honours
+    # it, so enabling it is a deliberate change that needs the affected assertions updated first.
     jmx:
         enabled: false
     jpa:
@@ -356,14 +356,6 @@ jhipster:
         exposed-headers: "Authorization,Link,X-Total-Count"
         allow-credentials: true
         max-age: 1800
-    logging:
-        # To test json console appender
-        use-json-format: false
-        logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
-            enabled: false
-            host: localhost
-            port: 5000
-            ring-buffer-size: 512
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: test@localhost
         base-url: http://127.0.0.1:8080

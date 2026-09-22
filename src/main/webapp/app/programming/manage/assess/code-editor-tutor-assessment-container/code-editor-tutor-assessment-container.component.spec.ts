@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DebugElement } from '@angular/core';
+import { Location } from '@angular/common';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
@@ -32,7 +33,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -177,6 +178,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         ({
             params: of({ submissionId: 123 }),
             queryParamMap: of(convertToParamMap({ testRun: false })),
+            snapshot: { queryParams: { 'correction-round': '0', testRun: 'false' } },
         }) as any as ActivatedRoute;
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
@@ -311,6 +313,26 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         await flushMicrotasks();
 
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id, false, true);
+    });
+
+    it('should load an anonymous submission for tutor assessment', async () => {
+        const anonymousSubmission = structuredClone(submission);
+        const anonymousParticipation = anonymousSubmission.participation as ProgrammingExerciseStudentParticipation;
+        delete anonymousParticipation.student;
+        delete anonymousParticipation.repositoryUri;
+        lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(scheduled([anonymousSubmission], asapScheduler));
+
+        comp.ngOnInit();
+        await flushMicrotasks();
+
+        expect(comp.loadingInitialSubmission()).toBe(false);
+        expect(comp.participationCouldNotBeFetched()).toBe(false);
+        expect(comp.participation()?.id).toBe(participation.id);
+        expect(comp.participation()?.student).toBeUndefined();
+        expect(comp.participation()?.repositoryUri).toBeUndefined();
+        expect(comp.exercise()?.id).toBe(exercise.id);
+        expect(comp.manualResult()?.id).toBe(result.id);
+        expect(comp.isAssessor()).toBe(true);
     });
 
     it('should update assessor correctly if the manual assessment is overridden', async () => {
@@ -739,6 +761,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         await internals(comp).onSubmissionReceived('123', submission);
         expect(comp.assessmentsAreValid()).toBe(true);
+    });
+
+    it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
+        comp.courseId = 2;
+        comp.examId = 3;
+        comp.exerciseGroupId = 4;
+        comp.exerciseId = 14;
+        const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree').mockReturnValue({ toString: () => '/rewritten' } as unknown as UrlTree);
+        const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+        await internals(comp).onSubmissionReceived('new', submission);
+
+        expect(createUrlTreeSpy).toHaveBeenCalledExactlyOnceWith(
+            ['/course-management', '2', 'exams', '3', 'exercise-groups', '4', 'programming-exercises', '14', 'submissions', '1234', 'assessment'],
+            { queryParams: { 'correction-round': '0', testRun: 'false' } },
+        );
+        expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
     });
 
     it('should not invalidate assessment after saving', async () => {

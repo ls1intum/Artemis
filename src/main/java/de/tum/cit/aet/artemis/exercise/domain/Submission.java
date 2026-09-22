@@ -28,6 +28,7 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -55,7 +57,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "submissionExerciseType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "submissionExerciseType", visible = true)
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
@@ -80,6 +82,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     private Boolean exampleSubmission;
 
     @ManyToOne
+    @Parent
     private Participation participation;
 
     @JsonIgnore
@@ -225,6 +228,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
+    @NonNull
     public Set<Result> getResults() {
         return results;
     }

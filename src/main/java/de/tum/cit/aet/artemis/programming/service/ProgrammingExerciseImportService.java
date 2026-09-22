@@ -11,12 +11,13 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -24,8 +25,10 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
@@ -33,6 +36,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 @Lazy
 @Service
 public class ProgrammingExerciseImportService {
+
+    /** Everything that is not alphanumeric, which a short name may not contain. */
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-zA-Z0-9]");
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -52,6 +58,8 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
@@ -59,8 +67,9 @@ public class ProgrammingExerciseImportService {
             ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
@@ -149,25 +158,45 @@ public class ProgrammingExerciseImportService {
     }
 
     /**
+     * Imports a programming exercise that is copied from one this instance already stores, so both the source
+     * configuration and the new one come from that stored row.
+     *
+     * @param sourceExercise                      the exercise to copy
+     * @param newExercise                         the exercise the copy is written into
+     * @param recreateBuildPlans                  if the build plans should be recreated
+     * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
+     * @return the imported programming exercise
+     */
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, @NonNull ProgrammingExercise newExercise, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate) {
+        var sourceBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExercise.getId());
+        return importProgrammingExercise(sourceExercise, sourceBuildConfig, newExercise, null, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+    }
+
+    /**
      * Method to import a programming exercise, including all base build plans (template, solution) and repositories (template, solution, test).
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
      * @param sourceExercise                      the Programming Exercise which should be used as a blueprint
      * @param newExercise                         The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param sourceBuildConfig                   the stored build configuration of the source exercise
+     * @param newBuildConfig                      the build configuration the request carries, or {@code null} to copy the source's
      * @param recreateBuildPlans                  if the build plans should be recreated
      * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
      * @return the imported programming exercise
      */
-    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise, boolean recreateBuildPlans,
-            boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig,
+            @NonNull ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans,
+            boolean setTestCaseVisibilityToAfterDueDate) {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
-        newExercise.setShortName(newExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
+        newExercise.setShortName(NON_ALPHANUMERIC.matcher(newExercise.getShortName()).replaceAll(""));
         newExercise.generateAndSetProjectKey();
         programmingExerciseValidationService.checkIfProjectExists(newExercise);
 
-        newExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(sourceExercise, newExercise);
+        newExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise);
+            var storedBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(newExercise.getId());
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise, storedBuildConfig);
             final boolean buildAndTestDateChanged = !Objects.equals(newExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
             newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
             if (buildAndTestDateChanged) {

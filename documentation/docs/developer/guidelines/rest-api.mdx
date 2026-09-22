@@ -19,31 +19,31 @@ This document covers best practices for designing and implementing REST APIs in 
 
 Using JPA entities directly in REST controllers creates severe problems that compromise security, performance, and maintainability:
 
-#### 1. Security Vulnerabilities
+#### Security Vulnerabilities
 
 - **Mass Assignment Attacks:** When entities are deserialized from JSON, attackers can inject values for fields they should not control (e.g., `isAdmin`, `password`, internal IDs)
 - **Data Leakage:** Entities may contain sensitive fields (passwords, internal flags, audit data) that get accidentally exposed in API responses
 - **Circular Reference Exploitation:** Bidirectional relationships can be manipulated to cause infinite loops or expose related data
 
-#### 2. API Instability
+#### API Instability
 
 - **Breaking Changes:** Any change to the database schema (renaming a column, adding a field) automatically changes the API contract, breaking clients
 - **No Versioning Control:** Without DTOs, you cannot maintain multiple API versions or deprecate fields gracefully
 - **Tight Coupling:** Client and server become tightly coupled to the database schema
 
-#### 3. Performance Problems
+#### Performance Problems
 
 - **N+1 Query Issues:** Lazy-loaded relationships get triggered during JSON serialization, causing unexpected database queries
 - **Over-fetching:** Entire entity graphs are loaded when only a few fields are needed
 - **Serialization Overhead:** Large entity hierarchies with bidirectional relationships are expensive to serialize
 
-#### 4. Hibernate Session Issues
+#### Hibernate Session Issues
 
 - **LazyInitializationException:** Accessing lazy relationships outside the Hibernate session causes runtime exceptions
 - **Detached Entity Problems:** Merging detached entities can overwrite data unexpectedly
 - **Proxy Object Serialization:** Hibernate proxies don't serialize correctly, causing `ClassCastException` or incomplete data
 
-#### 5. Circular References and JsonIgnore Problems
+#### Circular References and JsonIgnore Problems
 
 Entities often have bidirectional relationships that create circular references during JSON serialization. While annotations like `@JsonIgnore` and `@JsonIgnoreProperties` can help, they introduce significant problems:
 
@@ -60,7 +60,7 @@ Entities often have bidirectional relationships that create circular references 
   <strong>Note:</strong> Entity classes still require <code>@JsonIgnoreProperties</code> annotations on bidirectional relationships to prevent infinite loops during internal operations (e.g., logging, caching). However, this is not a reason to expose entities via REST APIs. The annotations are a necessary safeguard for entities, but DTOs remain the correct approach for API responses.
 </Callout>
 
-#### 6. OpenAPI and API-Driven Development
+#### OpenAPI and API-Driven Development
 
 API-driven development using OpenAPI (Swagger) is only possible when using DTOs:
 
@@ -69,7 +69,7 @@ API-driven development using OpenAPI (Swagger) is only possible when using DTOs:
 - **Code Generation:** Client code generation from OpenAPI specs works reliably only with DTOs; entities produce broken or unusable generated code
 - **API-First Design:** DTOs enable true API-first development where the API contract is designed before implementation
 
-#### 7. Validation Complexity
+#### Validation Complexity
 
 - **Mixed Concerns:** Entity validation rules (for persistence) differ from API validation rules (for input)
 - **Conditional Validation:** Different endpoints may require different validation rules for the same data
@@ -263,7 +263,7 @@ without duplicating code, use **composition** combined with the `@JsonUnwrapped`
 
 This technique keeps your Java code modular while ensuring the exposed REST API remains "flat" and easy for clients to consume.
 
-#### How it works
+#### How composition works
 1.  **Define the Shared Component:** Create a Record containing the common fields.
 2.  **Compose the DTO:** Add the shared record as a field in your specific DTO.
 3.  **Annotate:** Add `@JsonUnwrapped` to the field. Jackson will flatten the properties of that field into the parent JSON object.
@@ -272,7 +272,7 @@ This technique keeps your Java code modular while ensuring the exposed REST API 
   <strong>Server-to-Client Only:</strong> This technique is exclusively for <strong>Output DTOs</strong> (responses sent from the server). Do not use <code>@JsonUnwrapped</code> on Input DTOs (request bodies). Jackson cannot reliably deserialize flat JSON back into a nested Record structure, leading to deserialization failures.
 </Callout>
 
-#### Example
+#### Composition example
 **1. Define the Common Base**
 Create a reusable DTO for shared attributes.
 
@@ -315,14 +315,14 @@ Since Java Records do not support class inheritance, you cannot use traditional 
 
 To solve this, we combine **sealed interfaces** with Jackson's type handling annotations. This allows the REST controller to receive a single interface, while Jackson automatically instantiates the correct underlying Record based on a "type discriminator" field in the JSON payload.
 
-#### How it works
+#### How polymorphism works
 
 1. **Define a Sealed Interface:** Create an interface that represents the base DTO and restrict implementations using the `sealed` and `permits` keywords.
 2. **Add `@JsonTypeInfo`:** Tell Jackson how to find the type discriminator (usually a property named `type`).
 3. **Add `@JsonSubTypes`:** Map the possible string values of the discriminator to their respective Record implementations.
 4. **Implement the Interface:** Have your specific Record DTOs implement this interface.
 
-#### Example
+#### Polymorphism example
 
 **1. Define the Polymorphic Interface**
 This interface handles the routing. Notice how Jackson maps the string names (e.g., `"multiple-choice"`) to the specific DTO classes.
@@ -512,7 +512,7 @@ Mobile apps (iOS, Android) and the VS Code extension consume these paths and can
 
 ```java
 // Class-level: the canonical prefix carries the collection; the legacy prefix stays unchanged.
-@RequestMapping({ "api/notification/courses/", "api/communication/notification/" })
+@RequestMapping({ "api/localci/public/", LocalCILegacyRestPaths.PROGRAMMING_PUBLIC_PREFIX })
 
 // Method-level (single class prefix): list the canonical path first, the legacy path second.
 @GetMapping({ "exercises/{exerciseId}/versions", "{exerciseId}/versions" })
@@ -530,6 +530,58 @@ These conventions follow widely adopted industry REST guidelines:
 - [Zalando RESTful API Guidelines — *Pluralize resource names* &amp; *Identify resources and sub-resources via path segments*](https://opensource.zalando.com/restful-api-guidelines/#resources)
 - [Microsoft Azure REST API Guidelines — *Resource paths*](https://github.com/microsoft/api-guidelines/blob/vNext/azure/Guidelines.md)
 - [Google API Improvement Proposals — AIP-122 *Resource names*](https://google.aip.dev/122)
+
+### File Storage, Stored Values and REST Paths Are Independent
+
+A file in Artemis has three separate identities, and **none of them may be derived from another**:
+
+| identity | who owns it | example |
+|---|---|---|
+| where the bytes sit on disk | the storage layer | `uploads/images/course/icons/CourseIcon_2026-09-07_a3f2.png` |
+| what the database column holds | the entity | `CourseIcon_2026-09-07_a3f2.png` |
+| the path a client requests | the REST layer | `api/core/files/courses/42/icons/CourseIcon_2026-09-07_a3f2.png` |
+
+**A column stores the filename and nothing else.** Everything needed to build the other two comes from the owning entity, which already knows its own id, its course, or its lecture unit. Storing a path fragment instead couples all three together, and the coupling is not theoretical:
+
+- **Renaming a REST path becomes a schema change.** If the column holds the URL, a longer canonical spelling no longer fits, so the column and its `@Size` have to be widened to accommodate a naming decision.
+- **The storage layer starts parsing URLs.** Code that needs the owning id recovers it from the stored string by segment position, for example `path.getName(2)`. Any change to the path shape then silently resolves to the wrong directory, and a plain rename becomes a data migration.
+- **Business logic branches on path spellings.** A service deciding whether an attachment belongs to a lecture or to a unit by testing whether the stored value contains `/attachment-unit/` breaks the moment either spelling changes, and it fails by writing to the wrong place rather than by throwing.
+- **The stored value leaks into user content.** Markdown written by users can embed a fragment of the stored value, and that content is prose no migration can rewrite. Once a spelling reaches a post, it must be served forever.
+
+#### How to do it
+
+Two owners, one per direction, both taking the metadata explicitly:
+
+```java
+// URL direction: a hardcoded template per file type, filled from the entity.
+new PublicFileUrl.CourseIcon(course.getId(), filename).clientPath();
+
+// Storage direction: a fixed directory per file type, plus the id subdirectory the layout has.
+new FileSystemLocation.CourseIcon(filename).path();
+```
+
+Model the metadata so the type system requires it. A caller must not be able to ask for a lecture attachment URL without supplying a lecture id, and a file type that is never served (a temporary upload) must have no URL representation at all, so asking for one does not compile.
+
+The on-disk directory names are **not** required to match the REST path segments, and in Artemis they do not: course icons live under `images/course/icons/` while they are served from `files/courses/{courseId}/icons/`. That is correct. Keeping them in sync by hand is what recreates the coupling.
+
+<Callout type="warning">
+  If you find yourself writing a database migration in order to rename a REST path, stop. That migration is
+  evidence of this coupling rather than a consequence of the rename, and the fix is to remove the coupling.
+  The same applies to widening a column so a new path spelling fits.
+</Callout>
+
+#### Reading values written before this rule
+
+Existing rows may still hold a path-shaped value. Reduce every stored value to its last path segment on read, so a legacy value, a canonical value and a bare filename all resolve alike. The reduction is idempotent, so it costs nothing on a value that is already a filename.
+
+A migration that strips the prefixes does not make the tolerance redundant. An upgrade that carries database migrations is offline in this project: every node is stopped, the changesets run to completion, and the new version starts serving afterwards, so the tolerance is not there to cover a window in which two releases read the same row. It is there because a migration is a claim about the rows it reaches, and some values it does not reach:
+
+* A value inside user-authored prose. Post markdown embeds a fragment of the served path, and no changeset rewrites what an instructor wrote years ago.
+* A value handed out before the upgrade and sent back after it, out of an open browser tab or a cached response of a mobile client.
+
+A value that is not a column of its own is still reachable and should be migrated rather than tolerated. `DragItem.pictureFilePath` lives inside the `quiz_question.content` JSON document, so reducing it means rebuilding the `dragItems` array of every drag-and-drop question with engine-specific JSON surgery: `jsonb_agg` over `jsonb_array_elements` on PostgreSQL, an ordered window `JSON_ARRAYAGG` over `JSON_TABLE` on MySQL. Both formulations have to preserve the array order, because the authored order of the drag items is what a student sees. See the last changeset of `20260906221008_changelog.xml`.
+
+Keep the tolerance permanently for those, and say so where it is defined, so that a later reader does not delete it as a leftover of the migration.
 
 ### Controller Method Guidelines
 
@@ -753,9 +805,9 @@ To enforce minimal access for external tools, Artemis provides `@AllowedTools`. 
 **Example:**
 ```java
 @AllowedTools(ToolTokenType.SCORPIO)
-public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
+public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
     [...]
-    return ResponseEntity.ok(courseForDashboardDTO);
+    return ResponseEntity.ok(vcsAccessToken);
 }
 ```
 
@@ -771,4 +823,23 @@ public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable
 
 ## JSON Serialization
 
-Always use ObjectMapper (Jackson) for JSON serialization and deserialization. Do not use other libraries.
+Always use Jackson for JSON serialization and deserialization. Do not use other libraries.
+
+Artemis is on **Jackson 3**, whose packages live under `tools.jackson`. In a Spring bean, inject the
+auto-configured `tools.jackson.databind.json.JsonMapper`. Outside one — in a domain class, a JPA converter, a
+static context — use `JsonObjectMapper.get()`, which applies the same configuration so a value serialized there
+matches one serialized by a controller.
+
+Two things are easy to get wrong:
+
+- **The annotations stayed on Jackson 2.** `jackson-annotations` never moved to the `tools.jackson` group, so
+  `@JsonInclude`, `@JsonProperty`, `@JsonIgnore`, `@JsonTypeInfo` and the rest are still imported from
+  `com.fasterxml.jackson.annotation`. That is correct and must not be "fixed". Everything else under
+  `com.fasterxml.jackson` is Jackson 2 and is rejected by `ArchitectureTest.testNoJackson2InProductionCode`.
+- **Mappers are immutable.** There is no `configure(...)` or `registerModule(...)` on a built mapper. Derive one
+  with `JsonMapper.builder()`, or `existingMapper.rebuild()` to start from an existing configuration.
+
+`ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper. It pins the Jackson 3
+defaults that would otherwise change the JSON on the wire, each with a TODO describing what has to happen before
+it can be dropped. `JacksonSerializationContractTest` records the payloads those pins protect: remove a pin, run
+that test, and the fixture that fails is the payload the change would alter.

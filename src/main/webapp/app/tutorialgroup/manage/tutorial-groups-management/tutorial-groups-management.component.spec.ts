@@ -255,6 +255,46 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows().map((row) => row[0])).toEqual(['Unmeasured', 'Measured']);
     });
 
+    it('should order equal registration counts by the capacity beside them, in both directions', async () => {
+        // What the column shows is a pair, and early in a semester the left half is 0 for every group. Ordering on it
+        // alone leaves every row tied, and a tie keeps the incoming order however the header is clicked - so the
+        // column looked like it did nothing at all.
+        const small = generateExampleTutorialGroup({ id: 6, title: 'Small', capacity: 6, numberOfRegisteredUsers: 0 });
+        const large = generateExampleTutorialGroup({ id: 7, title: 'Large', capacity: 100, numberOfRegisteredUsers: 0 });
+        await setUp([large, small]);
+
+        sortBy('artemisApp.entities.tutorialGroup.registrationsWithCapacity');
+        expect(renderedRows().map((row) => row[0])).toEqual(['Small', 'Large']);
+
+        sortBy('artemisApp.entities.tutorialGroup.registrationsWithCapacity');
+        expect(renderedRows().map((row) => row[0])).toEqual(['Large', 'Small']);
+    });
+
+    it('should sort a group with no capacity behind the ones that have it, like the other columns do', async () => {
+        // Its cell reads "0 / -", so there is no capacity to order it by; the same sentinel the utilization and
+        // schedule columns use puts it at the end rather than at an arbitrary place among them.
+        const capped = generateExampleTutorialGroup({ id: 10, title: 'Capped', capacity: 6, numberOfRegisteredUsers: 0 });
+        // Cleared after construction: the helper defaults an omitted capacity to 10, so passing undefined would still
+        // produce a capped group and the test would prove nothing.
+        const uncapped = generateExampleTutorialGroup({ id: 11, title: 'Uncapped', numberOfRegisteredUsers: 0 });
+        uncapped.capacity = undefined;
+        await setUp([uncapped, capped]);
+
+        sortBy('artemisApp.entities.tutorialGroup.registrationsWithCapacity');
+
+        expect(renderedRows().map((row) => row[0])).toEqual(['Capped', 'Uncapped']);
+    });
+
+    it('should still order by the registration count first, whatever the capacities are', async () => {
+        const fewer = generateExampleTutorialGroup({ id: 8, title: 'Fewer', capacity: 100, numberOfRegisteredUsers: 1 });
+        const more = generateExampleTutorialGroup({ id: 9, title: 'More', capacity: 6, numberOfRegisteredUsers: 4 });
+        await setUp([more, fewer]);
+
+        sortBy('artemisApp.entities.tutorialGroup.registrationsWithCapacity');
+
+        expect(renderedRows().map((row) => row[0])).toEqual(['Fewer', 'More']);
+    });
+
     it('should match the search term against the campus stand-in the reader actually sees', async () => {
         translateOnlineAs('Zoom');
         await setUp([groupWithoutCampus(true), generateExampleTutorialGroup({ id: 4, title: 'Named', campus: 'Straubing' })]);
@@ -264,9 +304,22 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows().map((row) => row[0])).toEqual(['Group']);
     });
 
-    it('should label the tutor column with "you" for the groups the current user tutors', async () => {
-        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true })]);
-        expect(renderedRows()[0][1]).toBe('global.generic.you');
+    it('should display the full tutor name for the groups the current user tutors', async () => {
+        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' })]);
+        expect(renderedRows()[0][1]).toBe('Ada Lovelace');
+    });
+
+    it('should highlight the row of a group the current user tutors, and leave the others alone', async () => {
+        const own = generateExampleTutorialGroup({ id: 12, title: 'Own', isUserTutor: true, teachingAssistantName: 'Ada Lovelace' });
+        const other = generateExampleTutorialGroup({ id: 13, title: 'Other', teachingAssistantName: 'Grace Hopper' });
+        await setUp([own, other]);
+
+        const highlighted = fixture.debugElement
+            .queryAll(By.css('tr[cdk-row]'))
+            .map((row) => (row.nativeElement as HTMLElement).classList.contains('tum-ui-table-row-highlighted'));
+
+        expect(renderedRows().map((row) => row[0])).toEqual(['Other', 'Own']);
+        expect(highlighted).toEqual([false, true]);
     });
 
     it('should filter the rows by the search term', () => {

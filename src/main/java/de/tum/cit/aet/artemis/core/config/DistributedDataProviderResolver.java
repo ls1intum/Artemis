@@ -56,10 +56,9 @@ public final class DistributedDataProviderResolver {
         }
         // Every provider bean is gated on an exact match, so an unsupported value would leave the application with no
         // provider at all and fail much later with an unrelated error. Reject it where the misconfiguration actually is.
-        String resolved = SUPPORTED_PROVIDERS.stream().filter(supported -> supported.equalsIgnoreCase(provider)).findFirst()
+        return SUPPORTED_PROVIDERS.stream().filter(supported -> supported.equalsIgnoreCase(provider)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Unsupported distributed data provider '" + provider + "' configured via " + PROVIDER_PROPERTY + " (or the superseded "
                         + LEGACY_PROVIDER_PROPERTY + "). Supported values are " + SUPPORTED_PROVIDERS + "."));
-        return resolved;
     }
 
     /**

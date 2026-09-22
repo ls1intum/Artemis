@@ -6,14 +6,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +24,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -80,7 +83,7 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+    private final ProgrammingExerciseProjectNameService programmingExerciseProjectNameService;
 
     private final UriService uriService;
 
@@ -96,7 +99,7 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseProjectNameService programmingExerciseProjectNameService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
@@ -110,7 +113,7 @@ public class ProgrammingExerciseImportBasicService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
+        this.programmingExerciseProjectNameService = programmingExerciseProjectNameService;
         this.uriService = uriService;
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
@@ -137,36 +140,36 @@ public class ProgrammingExerciseImportBasicService {
      * in an order that respects the foreign keys the exercise owns (build config and submission policy first, then the
      * exercise, then its participations, test cases and tasks).
      *
-     * @param sourceExercise the source exercise providing the data to copy into the new exercise
-     * @param newExercise    the new exercise (potentially already carrying caller-provided overrides) to be persisted
+     * @param sourceExercise    the source exercise providing the data to copy into the new exercise
+     * @param sourceBuildConfig the stored build configuration of the source exercise
+     * @param newExercise       the new exercise (potentially already carrying caller-provided overrides) to be persisted
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null} to copy the source's
      * @return the newly created exercise, re-fetched with its import-relevant associations initialized
      */
-    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise sourceExercise, ProgrammingExercise newExercise) {
+    public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise sourceExercise, final ProgrammingExerciseBuildConfig sourceBuildConfig,
+            ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig) {
         // The channel name is a transient, client-supplied field, so it does not survive the re-fetch at the end of this
         // method. Capture it here to create the channel with the name the user chose during the import.
         final String channelName = newExercise.getChannelName();
 
-        prepareBasicExerciseInformation(sourceExercise, newExercise);
+        final ProgrammingExerciseBuildConfig buildConfig = prepareBasicExerciseInformation(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
 
-        // The exercise owns the foreign keys to its build config and submission policy, so both must be persisted before
-        // the exercise is first saved (otherwise the flush references transient entities). Set the branch and reuse the
-        // source build plan configuration if the caller did not provide one, then persist the build config.
-        newExercise.getBuildConfig().setBranch(defaultBranch);
-        if (newExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
-            newExercise.getBuildConfig().setBuildPlanConfiguration(sourceExercise.getBuildConfig().getBuildPlanConfiguration());
+        // Set the branch and reuse the source build plan configuration if the caller did not provide one.
+        buildConfig.setBranch(defaultBranch);
+        if (buildConfig.getBuildPlanConfiguration() == null) {
+            buildConfig.setBuildPlanConfiguration(sourceBuildConfig.getBuildPlanConfiguration());
         }
         // Validate the resolved build config, including values inherited from the source exercise, before it is persisted
-        programmingExerciseValidationService.validateBuildConfigSize(newExercise);
+        programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
         if (automaticAfterDueDateService.isPresent() && newExercise.isCourseExercise()) {
             try {
-                newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise));
+                newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newExercise, buildConfig));
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
             }
         }
         newExercise.validateDates();
-        newExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newExercise.getBuildConfig()));
 
         // Persist the submission policy (as a fresh entity) up front for the same reason.
         importSubmissionPolicy(newExercise);
@@ -180,6 +183,8 @@ public class ProgrammingExerciseImportBasicService {
         // must point at the persisted exercise.
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
         newExercise = programmingExerciseRepository.save(newExercise);
+        // The configuration names the exercise, so it is written once that exercise exists.
+        programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, newExercise);
         if (!competencyLinks.isEmpty()) {
             competencyExerciseLinkService.addCompetencyLinksForCreation(newExercise, competencyLinks);
             newExercise = programmingExerciseRepository.save(newExercise);
@@ -218,8 +223,9 @@ public class ProgrammingExerciseImportBasicService {
         // Copy the auxiliary repositories.
         for (AuxiliaryRepository auxiliaryRepository : sourceExercise.getAuxiliaryRepositories()) {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
-            newAuxiliaryRepository = auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
+            // Attach it first: a repository names the exercise it belongs to, and cannot be written without one.
             newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
+            auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
         }
 
         // Final save persisting the participation references, the remapped problem statement, the test repository uri
@@ -275,17 +281,22 @@ public class ProgrammingExerciseImportBasicService {
      * config identity, participations, etc.) so it can be persisted as a brand-new exercise, and copies the build plan
      * access secret setting from the source.
      *
-     * @param sourceExercise the exercise being imported from
-     * @param newExercise    the exercise being prepared for persistence
+     * @param sourceExercise    the exercise being imported from
+     * @param sourceBuildConfig the stored build configuration of that exercise
+     * @param newExercise       the exercise being prepared for persistence
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null} to copy the source's
+     * @return the build configuration the new exercise is written with
      */
-    private void prepareBasicExerciseInformation(final ProgrammingExercise sourceExercise, final ProgrammingExercise newExercise) {
+    private ProgrammingExerciseBuildConfig prepareBasicExerciseInformation(final ProgrammingExercise sourceExercise, final ProgrammingExerciseBuildConfig sourceBuildConfig,
+            final ProgrammingExercise newExercise, @Nullable final ProgrammingExerciseBuildConfig newBuildConfig) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        setupBuildConfig(sourceExercise, newExercise);
+        ProgrammingExerciseBuildConfig buildConfig = setupBuildConfig(sourceBuildConfig, newBuildConfig);
 
-        if (sourceExercise.getBuildConfig().hasBuildPlanAccessSecretSet()) {
-            newExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
+        if (sourceBuildConfig.hasBuildPlanAccessSecretSet()) {
+            buildConfig.generateAndSetBuildPlanAccessSecret();
         }
+        return buildConfig;
     }
 
     /**
@@ -304,23 +315,16 @@ public class ProgrammingExerciseImportBasicService {
      * already supplied a build config (e.g. the user overrode it during import) its id and back-reference are cleared;
      * otherwise the config is copied from the source exercise, or a default config is created if the source has none.
      *
-     * @param sourceExercise the source exercise providing the fallback build config
-     * @param newExercise    the exercise being imported
+     * @param sourceBuildConfig the source exercise's build configuration, used when the caller supplied none
+     * @param newBuildConfig    the build configuration the caller supplied, or {@code null}
+     * @return the build configuration to persist for the new exercise
      */
-    private void setupBuildConfig(ProgrammingExercise sourceExercise, ProgrammingExercise newExercise) {
-        if (newExercise.getBuildConfig() != null) {
-            var buildConfig = newExercise.getBuildConfig();
-            buildConfig.setId(null);
-            buildConfig.setProgrammingExercise(null);
-            newExercise.setBuildConfig(buildConfig);
+    private ProgrammingExerciseBuildConfig setupBuildConfig(ProgrammingExerciseBuildConfig sourceBuildConfig, @Nullable ProgrammingExerciseBuildConfig newBuildConfig) {
+        if (newBuildConfig != null) {
+            newBuildConfig.setId(null);
+            return newBuildConfig;
         }
-        else if (sourceExercise.getBuildConfig() != null) {
-            var buildConfig = new ProgrammingExerciseBuildConfig(sourceExercise.getBuildConfig());
-            newExercise.setBuildConfig(buildConfig);
-        }
-        else {
-            newExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        }
+        return new ProgrammingExerciseBuildConfig(sourceBuildConfig);
     }
 
     /**
@@ -479,7 +483,7 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());
         }
         // We have to rebuild the auxiliary repositories
-        newExercise.setAuxiliaryRepositories(new ArrayList<>());
+        newExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
 
         if (newExercise.isTeamMode()) {
             newExercise.getTeamAssignmentConfig().setId(null);
@@ -526,19 +530,21 @@ public class ProgrammingExerciseImportBasicService {
         versionControl.copyRepositoryWithHistory(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
         versionControl.copyRepositoryWithHistory(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
 
-        List<AuxiliaryRepository> auxRepos = sourceExercise.getAuxiliaryRepositories();
-        for (int i = 0; i < auxRepos.size(); i++) {
-            AuxiliaryRepository auxRepo = auxRepos.get(i);
+        // Paired by name, which is what identifies an auxiliary repository within its exercise and is what the copy
+        // carries over from the source.
+        Map<String, AuxiliaryRepository> newAuxiliaryRepositoriesByName = newExercise.getAuxiliaryRepositories().stream()
+                .collect(Collectors.toMap(AuxiliaryRepository::getName, Function.identity()));
+        for (AuxiliaryRepository auxRepo : sourceExercise.getAuxiliaryRepositories()) {
             var repoUri = versionControl.copyRepositoryWithHistory(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null)
                     .toString();
-            AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
+            AuxiliaryRepository newAuxRepo = newAuxiliaryRepositoriesByName.get(auxRepo.getName());
             newAuxRepo.setRepositoryUri(repoUri);
             auxiliaryRepositoryRepository.save(newAuxRepo);
         }
 
         try {
             // Adjust placeholders that were replaced during creation of source exercise
-            programmingExerciseRepositoryService.adjustProjectNames(sourceExercise.getTitle(), newExercise);
+            programmingExerciseProjectNameService.adjustProjectNames(sourceExercise.getTitle(), newExercise);
         }
         catch (GitAPIException | IOException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);

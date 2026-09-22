@@ -17,7 +17,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.WebAuthnConfigurer;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
@@ -26,7 +26,7 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
@@ -113,14 +113,14 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final String relyingPartyName = "Artemis";
 
-    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, ObjectMapper objectMapper, JWTCookieService jwtCookieService, UserRepository userRepository,
+    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, JsonMapper jsonMapper, JWTCookieService jwtCookieService, UserRepository userRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
             MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
             GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService, PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.auditEventRepository = auditEventRepository;
-        this.converter = new MappingJackson2HttpMessageConverter(objectMapper);
+        this.converter = new JacksonJsonHttpMessageConverter(jsonMapper);
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;

@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
@@ -82,20 +81,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final FeedbackRepository feedbackRepository;
 
-    private final GradingInstructionRepository gradingInstructionRepository;
-
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ModelingExerciseRepository modelingExerciseRepository,
             AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
-            GradingInstructionRepository gradingInstructionRepository, LongFeedbackTextRepository longFeedbackTextRepository) {
+            LongFeedbackTextRepository longFeedbackTextRepository) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
-        this.gradingInstructionRepository = gradingInstructionRepository;
         this.longFeedbackTextRepository = longFeedbackTextRepository;
     }
 
@@ -143,7 +139,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
-    @GetMapping({ "exercises/{exerciseId}/modeling-submissions/{submissionId}/example-assessment", "exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment" })
+    @GetMapping("exercises/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ResultDTO> getModelingExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
@@ -152,7 +148,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT modeling-submissions/:submissionId/result/resultId/assessment : save manual modeling assessment. See {@link AssessmentResource#saveAssessment}.
+     * PUT modeling-submissions/:submissionId/results/:resultId/assessment : save manual modeling assessment. See {@link AssessmentResource#saveAssessment}.
      *
      * @param submissionId       id of the submission
      * @param resultId           id of the result
@@ -161,7 +157,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping({ "modeling-submissions/{submissionId}/results/{resultId}/assessment", "modeling-submissions/{submissionId}/result/{resultId}/assessment" })
+    @PutMapping("modeling-submissions/{submissionId}/results/{resultId}/assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ResultDTO> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ModelingAssessmentDTO modelingAssessment) {
@@ -254,8 +250,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     /**
      * Maps a list of {@link FeedbackDTO} to transient {@link Feedback} entities, setting only the allowed scalar fields.
-     * All distinct grading instruction IDs referenced by the incoming DTOs are loaded in a single batch query before
-     * the per-item mapping loop, so the conversion stays constant-query for large assessments.
+     * Grading instruction IDs are preserved for validation after exercise authorization.
      *
      * @param feedbackDTOs the DTOs received from the client (may be {@code null})
      * @return the mapped list, never {@code null}
@@ -281,18 +276,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
                     .collect(Collectors.toMap(longFeedback -> longFeedback.getFeedback().getId(), LongFeedbackText::getText, (first, second) -> first));
         }
 
-        List<Long> gradingInstructionIds = feedbackDTOs.stream().filter(dto -> dto.gradingInstruction() != null && dto.gradingInstruction().id() != null)
-                .map(dto -> dto.gradingInstruction().id()).distinct().toList();
-        Map<Long, GradingInstruction> gradingInstructionsById = gradingInstructionIds.isEmpty() ? Map.of()
-                : gradingInstructionRepository.findAllById(gradingInstructionIds).stream()
-                        .collect(Collectors.toMap(GradingInstruction::getId, instruction -> instruction, (first, second) -> first));
-
-        return feedbackDTOs.stream().map(dto -> feedbackFromDto(dto, storedFeedbacksById, storedLongTextsById, gradingInstructionsById))
-                .collect(Collectors.toCollection(ArrayList::new));
+        return feedbackDTOs.stream().map(dto -> feedbackFromDto(dto, storedFeedbacksById, storedLongTextsById)).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private Feedback feedbackFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById,
-            Map<Long, GradingInstruction> gradingInstructionsById) {
+    private Feedback feedbackFromDto(final FeedbackDTO dto, Map<Long, Feedback> storedFeedbacksById, Map<Long, String> storedLongTextsById) {
         final Feedback feedback = new Feedback();
         // Preserve the id so an existing feedback is matched (not recreated) on re-save; the long-feedback persistence
         // and cleanup paths (ResultService) key on feedback id.
@@ -305,12 +292,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         feedback.setPositive(dto.positive());
         feedback.setVisibility(dto.visibility());
         if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
-            final Long instructionId = dto.gradingInstruction().id();
-            // Preserves the not-found semantics of the previous findByIdElseThrow call; any ID not in the batch is absent.
-            final GradingInstruction gradingInstruction = gradingInstructionsById.get(instructionId);
-            if (gradingInstruction == null) {
-                throw new EntityNotFoundException("GradingInstruction", instructionId);
-            }
+            final GradingInstruction gradingInstruction = new GradingInstruction();
+            gradingInstruction.setId(dto.gradingInstruction().id());
             feedback.setGradingInstruction(gradingInstruction);
         }
         return feedback;

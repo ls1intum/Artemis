@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.net.URI;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -33,10 +32,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -396,6 +395,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         LectureDetailsDTO.ExerciseUnitDTO exerciseUnitDTO = (LectureDetailsDTO.ExerciseUnitDTO) receivedLectureWithDetails.lectureUnits().stream()
                 .filter(unit -> unit instanceof LectureDetailsDTO.ExerciseUnitDTO).toList().getFirst();
         assertThat(exerciseUnitDTO.competencyLinks()).hasSize(1);
+        // the exercise is projected as on the course overview; the lecture page renders it with the same exercise row
+        assertThat(exerciseUnitDTO.exercise().id()).isEqualTo(textExercise.getId());
+        assertThat(exerciseUnitDTO.exercise().type()).isEqualTo(textExercise.getExerciseType());
+        assertThat(exerciseUnitDTO.lecture().id()).isEqualTo(lecture1.getId());
         LectureDetailsDTO.AttachmentUnitDTO attachmentUnitDTO = receivedLectureWithDetails.lectureUnits().stream()
                 .filter(unit -> unit instanceof LectureDetailsDTO.AttachmentUnitDTO).map(unit -> (LectureDetailsDTO.AttachmentUnitDTO) unit)
                 .filter(unit -> unit.id().equals(attachmentVideoUnit.getId())).findFirst().orElseThrow();
@@ -403,6 +406,22 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(attachmentUnitDTO.attachment().displayPageNumbers()).containsExactly(75, 76, 77);
 
         testGetLecture(lecture1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLectureWithDetails_athenaFormativeFeedbackEnabled_shouldReportItEnabled() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(lecture1.getCourse().getId());
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setFormativeFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
+
+        LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
+
+        // the discussion section reads this switch; the configuration is lazy, so an unfetched one would report false here
+        assertThat(receivedLectureWithDetails.course().athenaFormativeFeedbackEnabled()).isTrue();
     }
 
     @Test
@@ -418,7 +437,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         attachmentRepository.save(unit.getAttachment());
 
         // Hide slide 2 (display page 5) → it is removed from the student PDF and must disappear from the mapping.
-        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(unit.getId(), 2);
+        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumberAndSupersededIsFalse(unit.getId(), 2);
         hiddenSlide.setHidden(ZonedDateTime.now().plusDays(1));
         slideRepository.save(hiddenSlide);
 
@@ -587,6 +606,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     private void testGetLectureTitle() throws Exception {
         Lecture lecture = new Lecture();
         lecture.setTitle("Test Lecture");
+        // A lecture belongs to a course, which the database now requires.
+        lecture.setCourse(course1);
         lectureRepository.save(lecture);
 
         final var title = request.get("/api/lecture/lectures/" + lecture.getId() + "/title", HttpStatus.OK, String.class);
@@ -652,11 +673,12 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportPutsEveryAttachmentUnderTheDirectoryOfItsUnit() throws Exception {
-        // An attachment video unit created for an attachment that used to hang off a lecture directly keeps that
-        // attachment's URI, so its file still lies under the lecture attachment directory. Importing must copy it into
-        // the directory of the new unit all the same: writing it under the lecture directory would name the new unit's
-        // id where a lecture id belongs, and the route that serves those files reads it as a lecture id, so the student
-        // download would look for the attachment under a lecture that does not have it.
+        // An attachment video unit created for an attachment that used to hang off a lecture directly still has its file
+        // under the lecture attachment directory. Nothing on the row says so any more, so Attachment.fileLocation finds
+        // it by looking. Importing must copy that file into the directory of the new unit all the same: writing it under
+        // the lecture directory would name the new unit's id where a lecture id belongs, and the route that serves those
+        // files reads it as a lecture id, so the student download would look for the attachment under a lecture that
+        // does not have it.
         AttachmentVideoUnit migratedUnit = new AttachmentVideoUnit();
         migratedUnit.setDescription("Lorem Ipsum");
         migratedUnit.setLecture(lecture1);
@@ -669,7 +691,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         migratedUnit.setName(migratedAttachment.getName());
         migratedUnit.setReleaseDate(migratedAttachment.getReleaseDate());
         migratedUnit = attachmentVideoUnitRepository.save(migratedUnit);
-        assertThat(migratedAttachment.getLink()).startsWith("attachments/lecture/" + lecture1.getId() + "/");
+        assertThat(migratedAttachment.fileLocation()).containsInstanceOf(FileSystemLocation.LectureAttachment.class);
+        assertThat(migratedAttachment.fileLocation().orElseThrow().path())
+                .isEqualTo(new FileSystemLocation.LectureAttachment(lecture1.getId(), migratedAttachment.getLink()).path()).exists();
         lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(migratedUnit));
 
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
@@ -684,12 +708,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThatAttachmentLiesUnderItsOwnUnitDirectory(findImportedUnit(importedLecture, attachmentVideoUnit.getName()));
         AttachmentVideoUnit importedMigratedUnit = findImportedUnit(importedLecture, "Migrated lecture attachment");
         Attachment importedMigratedAttachment = assertThatAttachmentLiesUnderItsOwnUnitDirectory(importedMigratedUnit);
-        // The import is what finishes the move, so the copy no longer names the lecture attachment directory.
-        assertThat(importedMigratedAttachment.getLink()).doesNotStartWith("attachments/lecture/");
 
-        // The instructor download resolves either shape, so only the student download shows the difference.
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        String filename = importedMigratedAttachment.getLink().substring(importedMigratedAttachment.getLink().lastIndexOf('/') + 1);
+        String filename = FileSystemLocation.filenameOf(importedMigratedAttachment.getLink());
         request.get("/api/core/files/attachments/attachment-video-units/" + importedMigratedUnit.getId() + "/student/" + filename, HttpStatus.OK, byte[].class);
     }
 
@@ -700,8 +721,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     private Attachment assertThatAttachmentLiesUnderItsOwnUnitDirectory(AttachmentVideoUnit importedUnit) {
         Attachment importedAttachment = attachmentVideoUnitRepository.findByIdElseThrow(importedUnit.getId()).getAttachment();
-        assertThat(importedAttachment.getLink()).startsWith("attachments/attachment-unit/" + importedUnit.getId() + "/");
-        assertThat(FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT)).exists();
+        assertThat(importedAttachment.getLink()).startsWith("attachments/attachment-video-units/" + importedUnit.getId() + "/");
+        assertThat(importedAttachment.fileLocation()).containsInstanceOf(FileSystemLocation.AttachmentVideoUnitFile.class);
+        assertThat(importedAttachment.fileLocation().orElseThrow().path())
+                .isEqualTo(new FileSystemLocation.AttachmentVideoUnitFile(importedUnit.getId(), importedAttachment.getLink()).path()).exists();
         return importedAttachment;
     }
 

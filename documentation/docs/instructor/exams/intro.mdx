@@ -4,4 +4,29 @@ title: Exams
 sidebar_label: Exams
 ---
 
-Artemis includes an online exam mode that allows you to create, conduct, and assess exams directly in the platform.
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import timeline from './assets/timeline.png';
+
+Artemis runs online exams end to end: you build one, students sit it in the browser, your team assesses it, and
+results and grades are published on dates you set. Everything an exam needs is in Artemis, so nothing has to be
+carried between systems.
+
+<Image src={timeline} alt="The stages of an Artemis online exam, from creation to complaints" size={ImageSize.large} caption="The lifecycle of an Artemis online exam" />
+
+An exam moves through the stages above, and the pages below follow them in order. The exam checklist on the exam's
+detail page tracks the same sequence with the current state of each step, so it is the quickest way to see what is
+still outstanding.
+
+| Page | Description |
+|------|-------------|
+| [Create an Exam](/instructor/exams/create-an-exam) | Exam and test exam mode, the creation form section by section, and importing an existing exam |
+| [Add Exercises](/instructor/exams/add-exercises) | Exercise groups and variants, importing groups, and the settings a programming exercise needs in an exam |
+| [Prepare and Test](/instructor/exams/prepare-and-test) | Registering students, generating the individual exams, preparing the exercises, test runs, and the checklist |
+| [Conduct an Exam](/instructor/exams/conduct-an-exam) | What happens during the exam, and how to correct an exercise while students are working |
+| [Assess an Exam](/instructor/exams/assess-an-exam) | The assessment dashboard, second correction, suspicious behaviour, plagiarism, and the exam timeline |
+| [Grade and Publish](/instructor/exams/grade-and-publish) | Grading keys, exam scores and their export, and publishing example solutions |
+| [Review and Complaints](/instructor/exams/review-and-complaints) | The student review window and how complaints are answered |
+| [Exam Participation Checker](/instructor/exams/participation-checker) | The iPad app for verifying attendance at an on-site exam |
+
+Students have their own guide to sitting an exam, which is worth reading before you write the start text: see
+[Exams](/student/exams) in the student documentation.

@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
@@ -35,6 +36,9 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -60,8 +64,8 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         resultStudent1 = participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
-        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = programmingExerciseParticipationService
-                .findStudentParticipationByExerciseAndStudentId(exercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = programmingExerciseParticipationUtilService
+                .findStudentParticipationByExerciseAndStudentLogin(exercise, TEST_PREFIX + "student1");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(resultStudent1, programmingExerciseStudentParticipation, "test");
     }
 

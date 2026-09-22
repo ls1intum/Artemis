@@ -12,7 +12,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -193,7 +193,7 @@ class ProgrammingExerciseImportRepositoryServiceTest {
         auxiliaryRepository.setName("helpers");
         auxiliaryRepository.setRepositoryUri("https://artemis.example.com/git/ABC/abc-helpers.git");
         auxiliaryRepository.setExercise(exercise);
-        exercise.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+        exercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), anyBoolean(), anyBoolean())).thenReturn(templateRepo, solutionRepo, testRepo, auxRepo);
         withZipContent();
         FileUtils.write(zipDirectoryFor("helpers").resolve("Helper.java").toFile(), "the helpers", StandardCharsets.UTF_8);

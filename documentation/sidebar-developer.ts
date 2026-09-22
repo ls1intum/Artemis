@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
                         'guidelines/rest-api',
                         'guidelines/server-tests',
                         'guidelines/database',
+                        'guidelines/entity-ownership',
                         'guidelines/database-migration-consolidation',
                         'guidelines/caching',
                         'guidelines/distributed-data',
@@ -48,7 +49,7 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'General Guidelines',
-                    items: ['guidelines/documentation', 'guidelines/language', 'guidelines/terminology'],
+                    items: ['guidelines/dead-code', 'guidelines/documentation', 'guidelines/language', 'guidelines/terminology'],
                 },
             ],
         },

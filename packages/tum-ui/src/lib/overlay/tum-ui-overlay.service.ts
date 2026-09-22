@@ -11,6 +11,13 @@ interface TumUiConnectedOverlayOptions {
 
 const OFFSET = 8;
 
+/**
+ * How close an overlay may come to the edge of the viewport. `withPush` shoves a bubble that would not fit back inside,
+ * and without a margin it lands flush: against the window edge on one side and against the scrollbar on the other,
+ * which reads as the bubble sitting on top of them. The same 8px the bubble keeps from its host.
+ */
+const VIEWPORT_MARGIN = OFFSET;
+
 const VERTICAL_POSITIONS: Record<'top' | 'bottom', ConnectedPosition[]> = {
     top: [
         { originX: 'center', originY: 'top', overlayX: 'center', overlayY: 'bottom', offsetY: -OFFSET },
@@ -29,7 +36,7 @@ export class TumUiOverlayService {
 
     positionStrategy(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumUiOverlayPlacement): FlexibleConnectedPositionStrategy {
         const positions = placement === 'top' || placement === 'bottom' ? VERTICAL_POSITIONS[placement] : this.horizontalPositions(placement);
-        return this.overlay.position().flexibleConnectedTo(origin).withPositions(positions).withFlexibleDimensions(false).withPush(true);
+        return this.overlay.position().flexibleConnectedTo(origin).withPositions(positions).withFlexibleDimensions(false).withPush(true).withViewportMargin(VIEWPORT_MARGIN);
     }
 
     placementFromPosition(pos: ConnectedPosition): TumUiOverlayPlacement {

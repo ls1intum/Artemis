@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,7 +24,6 @@ import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
@@ -48,6 +49,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public class JenkinsBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanService.class);
+
+    /** Everything a build plan name may not contain. */
+    private static final Pattern NON_PLAN_NAME_CHARACTER = Pattern.compile("[^A-Z0-9]");
 
     @Value("${artemis.continuous-integration.url}")
     private URI jenkinsServerUri;
@@ -92,12 +96,11 @@ public class JenkinsBuildPlanService {
      */
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, boolean forceCreateStoredBuildPlan) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
 
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
-        final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
+        final boolean checkoutSolution = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getCheckoutSolutionRepository();
         final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, internalRepositoryUris, checkoutSolution, buildPlanUrl);
 
         final String jobFolder = exercise.getProjectKey();
@@ -167,7 +170,7 @@ public class JenkinsBuildPlanService {
      * @param newRepoUri      the repository uri that will replace the old url
      * @param existingRepoUri the old repository uri that will be replaced
      */
-    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUri, String existingRepoUri) {
+    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, @NonNull String newRepoUri, String existingRepoUri) {
         newRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUri);
         existingRepoUri = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUri);
 
@@ -202,9 +205,10 @@ public class JenkinsBuildPlanService {
      */
     private void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
         final Long previousExerciseId = templateExercise.getId();
-        final String previousBuildPlanAccessSecret = templateExercise.getBuildConfig().getBuildPlanAccessSecret();
+        final String previousBuildPlanAccessSecret = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(previousExerciseId)
+                .getBuildPlanAccessSecret();
         final Long newExerciseId = newExercise.getId();
-        final String newBuildPlanAccessSecret = newExercise.getBuildConfig().getBuildPlanAccessSecret();
+        final String newBuildPlanAccessSecret = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(newExerciseId).getBuildPlanAccessSecret();
 
         String toBeReplaced = "/%d/build-plan?secret=%s".formatted(previousExerciseId, previousBuildPlanAccessSecret);
         String replacement = "/%d/build-plan?secret=%s".formatted(newExerciseId, newBuildPlanAccessSecret);
@@ -223,7 +227,7 @@ public class JenkinsBuildPlanService {
      * @param testResultsDTO the test results from Jenkins
      * @return the build plan key
      */
-    public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) throws JsonProcessingException {
+    public String getBuildPlanKeyFromTestResults(TestResultsDTO testResultsDTO) {
         final var nameParams = testResultsDTO.fullName().split(" ");
         /*
          * Jenkins gives the full name of a job as <FOLDER NAME> » <JOB NAME> <Build Number> E.g. the third build of an exercise (projectKey = TESTEXC) for its solution build
@@ -266,7 +270,7 @@ public class JenkinsBuildPlanService {
     }
 
     private String getCleanPlanName(String name) {
-        return name.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        return NON_PLAN_NAME_CHARACTER.matcher(name.toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
     /**

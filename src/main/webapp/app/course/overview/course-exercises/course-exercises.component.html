@@ -45,7 +45,11 @@
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
                     </div>
                 }
-                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.exerciseDetails.selectExercise"></div>
+                @if (course()?.exercises?.length === 0) {
+                    <tum-ui-empty-state class="my-auto" [icon]="faCode" [title]="'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate" />
+                } @else {
+                    <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.exerciseDetails.selectExercise"></div>
+                }
             </div>
         }
     }

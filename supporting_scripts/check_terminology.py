@@ -82,14 +82,18 @@ SELF_EXCLUDED = frozenset(
     }
 )
 
-# Liquibase changelogs are immutable once merged. Liquibase stores a checksum per changeset and the
-# application refuses to start when a recorded changeset no longer matches, so editing a released
-# changelog breaks startup on every database that already ran it, production included. That outranks
-# a wording preference in a comment, and the rule has to be structural rather than a marker somebody
-# has to remember: a checker that asks for an unsafe edit will eventually get one. Say "provider",
-# "server" or "database" in new changelogs; leave merged ones alone.
+# Liquibase changelogs used to be excluded wholesale, on the grounds that a merged changeset is immutable. Only half
+# of that is true, and it is the half that does not matter here: Liquibase computes a changeset checksum from the
+# forward change elements and any modifySql, so an XML comment, a <comment> element and a <rollback> body can all be
+# edited on a released changelog without moving a recorded checksum. Prose is therefore in scope like everywhere else.
+#
+# What stays out of reach is the wording inside a change element - a column name, a table name, a string literal in a
+# <sql> body. Editing one of those on a merged changeset breaks startup on every database that already ran it, and the
+# inline opt-out is no escape either, because the marker would have to sit inside the element and would change the
+# same checksum. So such an occurrence has to be caught while the changelog is still unmerged and still editable,
+# which is exactly when this check runs on a pull request. There is none in the tree today.
 # See skills/liquibase-migration/SKILL.md.
-EXCLUDED_PREFIXES = ("src/main/resources/config/liquibase/",)
+EXCLUDED_PREFIXES: tuple[str, ...] = ()
 
 GUIDANCE = """\
 Name the component instead:
@@ -190,11 +194,11 @@ SELF_TEST_CASES = (
 )
 
 
-# Which paths the scan covers. The changelog entries matter most: the checker must never be the
-# reason somebody edits a merged changeset and breaks startup on a database that already ran it.
+# Which paths the scan covers. The changelog entries matter most: they are in scope because their prose is editable
+# after merge, and they are the case somebody is most likely to assume is exempt.
 SELF_TEST_PATHS = (
-    (True, "src/main/resources/config/liquibase/changelog/20260410144433_changelog.xml"),
-    (True, "src/main/resources/config/liquibase/master.xml"),
+    (False, "src/main/resources/config/liquibase/history/v10/20260410144433_changelog.xml"),
+    (False, "src/main/resources/config/liquibase/master.xml"),
     (True, "supporting_scripts/check_terminology.py"),
     (True, "documentation/docs/developer/guidelines/terminology.mdx"),
     (False, "src/main/resources/config/application.yml"),

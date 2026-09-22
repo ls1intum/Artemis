@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -562,5 +563,30 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         Set<Long> testUserIds = userRepository.findAllTestUserIds();
 
         assertThat(testUserIds).contains(deletedTestUser.getId());
+    }
+
+    /**
+     * A name is stored the way it was entered, so a search has to find "Mustermann" whichever case the client sends. MySQL ignored case through its collation, PostgreSQL does
+     * not, so both sides of the comparison have to be lower cased. The member search dialog lower cases the term before sending it, which is the combination that stopped
+     * matching anything.
+     */
+    @Test
+    void testSearchByLoginOrNameIgnoresCase() {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "casesearch");
+        user.setFirstName("Max");
+        user.setLastName("Mustermann");
+        user = userRepository.save(user);
+        Course course = courseUtilService.createCourse();
+        userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT);
+
+        for (String searchTerm : List.of("max mustermann", "MAX MUSTERMANN", "Max Mustermann", "mustermann", "MUSTERMANN")) {
+            assertThat(userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(PageRequest.of(0, 10), searchTerm, course.getId()))
+                    .as("the course member search has to find the user for '%s'", searchTerm).extracting(User::getLogin).contains(user.getLogin());
+            assertThat(userRepository.searchAllByLoginOrName(PageRequest.of(0, 10), searchTerm)).as("the user search has to find the user for '%s'", searchTerm)
+                    .extracting(User::getLogin).contains(user.getLogin());
+        }
+
+        assertThat(userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(PageRequest.of(0, 10), TEST_PREFIX.toUpperCase(Locale.ROOT) + "CASESEARCH",
+                course.getId())).as("a login typed in upper case has to find the user as well").extracting(User::getLogin).contains(user.getLogin());
     }
 }

@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -590,8 +591,10 @@ public class SubmissionService {
                 feedback.setDetailText(feedbackText);
                 feedback.setPositive(false);
                 feedback.setType(FeedbackType.AUTOMATIC);
-                feedback = feedbackRepository.save(feedback);
+                // The feedback names its result before it is written: result_id is not nullable, so saving it detached and
+                // attaching it afterwards fails the insert instead of updating the row.
                 feedback.setResult(result);
+                feedback = feedbackRepository.save(feedback);
                 result.setFeedbacks(List.of(feedback));
                 resultRepository.save(result);
             }
@@ -932,7 +935,7 @@ public class SubmissionService {
                 submission.setResults(submission.getNonAthenaResults());
                 Complaint complaintOfSubmission = complaintMap.get(complainedResult.getId());
                 prepareComplaintAndSubmission(complaintOfSubmission, submission);
-                submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
+                submissionWithComplaintDTOs.add(SubmissionWithComplaintDTO.of(submission, complaintOfSubmission));
             });
         }
 
@@ -964,13 +967,14 @@ public class SubmissionService {
      * @param exerciseId Id of the exercise the submissions belongs to
      * @return A wrapper object containing a list of all found submissions and the total number of pages
      */
-    public SearchResultPageDTO<Submission> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
+    public SearchResultPageDTO<SubmissionResponseDTO> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.STUDENT_PARTICIPATION);
         String searchTerm = search.getSearchTerm();
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndResultsByExerciseId(exerciseId, searchTerm, pageable);
 
-        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
-        final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, pageable, latestSubmissions.size());
+        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .map(SubmissionResponseDTO::ofWithParticipationSubmissions).toList();
+        final Page<SubmissionResponseDTO> submissionPage = new PageImpl<>(latestSubmissions, pageable, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
 }

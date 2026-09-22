@@ -35,19 +35,21 @@
             @if (exercise()!.isAtLeastInstructor && !exercise()!.teamMode) {
                 <jhi-external-submission class="d-inline-block" [exercise]="exercise()!" />
             }
-            <button
-                jhi-exercise-action-button
-                [buttonIcon]="faDownload"
-                class="btn btn-info btn-sm"
-                [buttonLabel]="'entity.action.export' | artemisTranslate"
-                [hideLabelMobile]="true"
-                [hideLabelBreakpoint]="'md'"
-                [ngbPopover]="popContent"
-                [autoClose]="'outside'"
-                placement="bottom-right auto"
-                container="body"
-                #exportPopover="ngbPopover"
-            ></button>
+            @if (exercise()!.isAtLeastInstructor) {
+                <button
+                    jhi-exercise-action-button
+                    [buttonIcon]="faDownload"
+                    class="btn btn-info btn-sm"
+                    [buttonLabel]="'entity.action.export' | artemisTranslate"
+                    [hideLabelMobile]="true"
+                    [hideLabelBreakpoint]="'md'"
+                    [ngbPopover]="popContent"
+                    [autoClose]="'outside'"
+                    placement="bottom-right auto"
+                    container="body"
+                    #exportPopover="ngbPopover"
+                ></button>
+            }
             <ng-template #popContent>
                 <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
                 @if (exercise()!.isAtLeastInstructor) {
@@ -59,7 +61,7 @@
                 @if (exercise()!.isAtLeastInstructor) {
                     <jhi-exercise-scores-export-button [exercise]="exercise()!" />
                 }
-                @if (exercise()!.type === ExerciseType.PROGRAMMING) {
+                @if (exercise()!.isAtLeastInstructor && exercise()!.type === ExerciseType.PROGRAMMING) {
                     <jhi-programming-assessment-repo-export [programmingExercises]="[exercise()!]" class="me-1" (buttonPressed)="closeExportPopover()" />
                 }
                 @if (
@@ -128,7 +130,7 @@
 
 <ng-template #lastResultTemplate let-cell>
     @if (toResult(cell.data); as result) {
-        <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" />
+        <jhi-result [exercise]="exercise()!" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
     }
 </ng-template>
 

@@ -36,6 +36,9 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizer
 @Profile(PROFILE_CORE)
 public class ResultWebsocketService {
 
+    /** The non-personal result destination of an exercise, with its id as the one group. Derived from the destination itself, so the two cannot drift apart. */
+    private static final Pattern NON_PERSONAL_EXERCISE_RESULT_DESTINATION = Pattern.compile("^" + getNonPersonalExerciseResultDestination("(\\d*)"));
+
     private final WebsocketMessagingService websocketMessagingService;
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
@@ -131,8 +134,7 @@ public class ResultWebsocketService {
      * @return optional containing the exercise id was found, empty otherwise
      */
     public static Optional<Long> getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
-        Pattern pattern = Pattern.compile("^" + getNonPersonalExerciseResultDestination("(\\d*)"));
-        Matcher matcher = pattern.matcher(destination);
+        Matcher matcher = NON_PERSONAL_EXERCISE_RESULT_DESTINATION.matcher(destination);
         return matcher.find() ? Optional.of(Long.parseLong(matcher.group(1))) : Optional.empty();
     }
 

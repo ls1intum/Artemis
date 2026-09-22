@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSession extends DomainObject {
 
+    @Parent
     private long userId;
 
     @OrderColumn(name = "iris_message_order")

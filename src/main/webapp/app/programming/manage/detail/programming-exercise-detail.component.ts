@@ -53,6 +53,7 @@ import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/featur
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/create-variant-modal/create-variant-with-ai-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -96,6 +97,7 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         DeimosDateRangeModalComponent,
         AtlasOrchestrationTriggerComponent,
         ConsistencyCheckComponent,
+        CreateVariantWithAiButtonComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -218,7 +220,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private readonly UPDATE_DEBOUNCE_MS = 1000;
 
     ngOnInit() {
-        this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS));
+        this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS) || this.profileService.isProfileActive(PROFILE_LOCALCI));
         this.isExportToSharingEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING));
         // Get route data directly from snapshot - no subscription needed
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;

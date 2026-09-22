@@ -14,11 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -26,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -65,13 +66,21 @@ public class ProcessingStateCallbackService {
     static final int MAX_CONCURRENT_PROCESSING = 2;
 
     /**
+     * How long a retry claim keeps a row out of the candidate list. It has to outlast the dispatch the claim belongs
+     * to, and it doubles as the recovery window: a node killed mid-dispatch leaves the claim in place until it lapses,
+     * after which the row is eligible again. Matches the scheduler's no-callback timeout, which is the point at which
+     * a dispatch is no longer considered in flight.
+     */
+    private static final int RETRY_CLAIM_LEASE_MINUTES = 20;
+
+    /**
      * Lock to serialize dispatch so the count check + dispatch are atomic.
      * Without this, concurrent calls to dispatchPendingJobs() can each see the
      * same activeCount and over-dispatch beyond MAX_CONCURRENT_PROCESSING.
      */
     private final ReentrantLock dispatchLock = new ReentrantLock();
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     private static final String PROCESSING_STATE_TOPIC = "/topic/lectures/%d/unit-processing-state";
 
@@ -85,13 +94,43 @@ public class ProcessingStateCallbackService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
+
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
+            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
+        this.irisLectureUnitSyncStateRepository = irisLectureUnitSyncStateRepository;
+    }
+
+    /**
+     * Returns a synchronization state to the retry pass now that Pyris holds the lecture unit.
+     *
+     * <p>
+     * A row settled as {@link IrisLectureUnitSyncState#STATUS_NOT_INGESTED} or {@link IrisLectureUnitSyncState#STATUS_FAILED} is skipped by the retry query, and the backfill
+     * does not recreate it because a row already exists. Ingestion completing is the event that makes it worth trying again, so that is what reopens it.
+     *
+     * <p>
+     * A row that is {@link IrisLectureUnitSyncState#STATUS_IN_PROGRESS} is reopened as well, because the claim commits before the Pyris request leaves. Such a request was
+     * issued while the unit was not ingested and can still answer "not ingested" after this transition; reopening here is what tells the listener that its answer describes a
+     * state of the world that no longer holds.
+     *
+     * @param state the current synchronization state of the lecture unit
+     */
+    private static void reopenSynchronization(IrisLectureUnitSyncState state) {
+        boolean reopenable = IrisLectureUnitSyncState.STATUS_NOT_INGESTED.equals(state.getStatus()) || IrisLectureUnitSyncState.STATUS_FAILED.equals(state.getStatus())
+                || IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus());
+        if (!reopenable) {
+            return;
+        }
+        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+        state.setRetryCount(0);
+        state.setLastErrorKey(null);
+        state.setNextRetryAt(ZonedDateTime.now());
     }
 
     // -------------------- Capacity-Aware Dispatch --------------------
@@ -106,8 +145,12 @@ public class ProcessingStateCallbackService {
      * <li>{@link #handleIngestionComplete} — when a job finishes, filling the freed slot</li>
      * <li>{@link LectureContentProcessingScheduler#processScheduledRetries} — periodic backup every 5 minutes</li>
      * </ol>
+     * <p>
+     * Cluster safety comes from the conditional claim on each candidate rather than from a transaction spanning the
+     * read and the write: see {@link LectureUnitProcessingStateRepository#claimIdleForDispatch}. The local
+     * {@code dispatchLock} still serializes dispatch within this node so the capacity check cannot be raced by two of
+     * its own threads.
      */
-    @Transactional
     public void dispatchPendingJobs() {
         if (irisLectureApi.isEmpty()) {
             log.debug("Iris API not available, skipping dispatch");
@@ -136,8 +179,16 @@ public class ProcessingStateCallbackService {
                 if (availableSlots <= 0) {
                     break;
                 }
+                ZonedDateTime leaseExpiry = now.plusMinutes(RETRY_CLAIM_LEASE_MINUTES);
+                if (processingStateRepository.claimRetryEligible(state.getId(), now, leaseExpiry) == 0) {
+                    log.debug("Another node claimed the retry of unit {}", state.getLectureUnit().getId());
+                    continue;
+                }
                 log.info("Re-dispatching retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-                state.clearRetryEligibility();
+                // Mirror the claim onto the loaded entity: it is saved again further down, and writing back the stale
+                // value would put the row back into the candidate list. A successful dispatch clears the lease when it
+                // transitions out of FAILED; a failed one leaves it, which is what makes the claim lapse on its own.
+                state.setRetryEligibleAt(leaseExpiry);
                 dispatchSingleJob(state);
                 availableSlots--;
             }
@@ -155,6 +206,12 @@ public class ProcessingStateCallbackService {
             }
 
             for (LectureUnitProcessingState state : idleJobs) {
+                if (processingStateRepository.claimIdleForDispatch(state.getId(), now) == 0) {
+                    log.debug("Another node claimed the dispatch of unit {}", state.getLectureUnit().getId());
+                    continue;
+                }
+                // Mirror the claim onto the loaded entity, for the reason given on the retry loop above.
+                state.setStartedAt(now);
                 dispatchSingleJob(state);
             }
         }
@@ -253,6 +310,20 @@ public class ProcessingStateCallbackService {
 
         if (success) {
             log.info("Processing completed successfully for unit {}", lectureUnitId);
+
+            // Pyris now holds the unit, so a synchronization settled or in flight because it did not is worth trying
+            // again. The transaction and the lock come from the repository method, which is why the transition is
+            // passed into it.
+            //
+            // First, and deliberately not guarded. It takes a row lock, so it is the step most likely to fail, and a
+            // settled row is unreachable afterwards: it carries no retry time and the backfill skips a lecture unit
+            // that already has a row. Swallowing the failure would therefore strand the unit for good. Letting it
+            // propagate before anything is persisted leaves the phase and the job token untouched, so the callback
+            // stays replayable and the recovery pass can pick the unit up, which is a visible stall rather than a
+            // silent one. The completion bookkeeping below cannot be replayed once the token is cleared, so nothing
+            // that can fail belongs after it.
+            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
+
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
@@ -321,7 +392,7 @@ public class ProcessingStateCallbackService {
 
             saveTranscription(lectureUnitId, state, checkpoint);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.warn("Failed to parse checkpoint data for unit {}: {}", lectureUnitId, e.getMessage());
         }
     }
@@ -361,7 +432,7 @@ public class ProcessingStateCallbackService {
      * Parse transcription checkpoint data from JSON.
      * Expected format: {@code {"language": "en", "segments": [...]}}
      */
-    private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) throws JsonProcessingException {
+    private TranscriptionCheckpoint parseTranscriptionCheckpoint(String resultJson) {
         var tree = objectMapper.readTree(resultJson);
 
         var segmentsNode = tree.get("segments");
@@ -370,7 +441,7 @@ public class ProcessingStateCallbackService {
             return null;
         }
 
-        String language = tree.has("language") ? tree.get("language").asText("en") : "en";
+        String language = tree.has("language") ? tree.get("language").asString("en") : "en";
         List<LectureTranscriptionSegment> segments = objectMapper.convertValue(segmentsNode, new TypeReference<>() {
         });
 
@@ -452,6 +523,9 @@ public class ProcessingStateCallbackService {
     void handleProcessingFailure(LectureUnitProcessingState state, @Nullable String errorCode) {
         state.incrementRetryCount();
         state.setIngestionJobToken(null);
+        // Undo the dispatch attempt, including the claim that started it: startedAt is what marks a job as taken, so
+        // leaving it set would keep this unit out of the idle queue for good.
+        state.setStartedAt(null);
 
         // Preserve existing transcription status in the WebSocket notification so the UI
         // does not lose it when a failure occurs after transcription already completed.

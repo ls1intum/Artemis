@@ -18,12 +18,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
@@ -51,7 +52,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class ExerciseMappingToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseMappingToolsService.class);
@@ -170,7 +171,7 @@ public class ExerciseMappingToolsService {
 
     private final ContentExtractionService contentExtractionService;
 
-    private final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private final JsonMapper objectMapper = JsonObjectMapper.get();
 
     public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
@@ -480,7 +481,7 @@ public class ExerciseMappingToolsService {
         try {
             return objectMapper.writeValueAsString(Map.of("success", true, "message", message));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"success\": true, \"message\": \"Operation completed\"}";
         }
     }
@@ -495,19 +496,19 @@ public class ExerciseMappingToolsService {
         try {
             return objectMapper.writeValueAsString(Map.of("success", false, "error", message));
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"success\": false, \"error\": \"Operation failed\"}";
         }
     }
 
     /**
-     * Convert object to JSON using Jackson ObjectMapper.
+     * Convert object to JSON using Jackson JsonMapper.
      */
     private String toJson(Object object) {
         try {
             return objectMapper.writeValueAsString(object);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
     }

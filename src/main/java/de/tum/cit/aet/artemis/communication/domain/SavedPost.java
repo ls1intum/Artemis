@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "saved_post")
@@ -19,6 +20,7 @@ public class SavedPost extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @Parent
     private User user;
 
     @Column(name = "post_id", nullable = false)

@@ -24,13 +24,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -54,6 +56,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @BeforeEach
     void setUp() {
@@ -86,7 +91,8 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         assertThat(newlyImported.getProjectKey()).isNotEqualTo(programmingExercise.getProjectKey());
         assertThat(newlyImported.getSolutionBuildPlanId()).isNotEqualTo(programmingExercise.getSolutionBuildPlanId());
         assertThat(newlyImported.getTemplateBuildPlanId()).isNotEqualTo(programmingExercise.getTemplateBuildPlanId());
-        assertThat(newlyImported.getBuildConfig().hasSequentialTestRuns()).isEqualTo(programmingExercise.getBuildConfig().hasSequentialTestRuns());
+        assertThat(programmingExerciseUtilService.buildConfigOf(newlyImported).hasSequentialTestRuns())
+                .isEqualTo(programmingExerciseUtilService.buildConfigOf(programmingExercise).hasSequentialTestRuns());
         assertThat(newlyImported.isAllowOnlineEditor()).isEqualTo(programmingExercise.isAllowOnlineEditor());
         assertThat(newlyImported.getTotalNumberOfAssessments()).isNull();
         assertThat(newlyImported.getNumberOfComplaints()).isNull();
@@ -189,7 +195,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         final var now = ZonedDateTime.now();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
         var exerciseId = exercise.getId();
 
@@ -305,16 +310,18 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNoBuildPlanAccessSecretForImportedExercise() {
-        var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
-        assertThat(programmingExercise.getBuildConfig().getBuildPlanAccessSecret()).isEqualTo(importedExercise.getBuildConfig().getBuildPlanAccessSecret()).isNull();
+        var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
+        assertThat(programmingExerciseUtilService.buildConfigOf(programmingExercise).getBuildPlanAccessSecret())
+                .isEqualTo(programmingExerciseUtilService.buildConfigOf(importedExercise).getBuildPlanAccessSecret()).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDifferentBuildPlanAccessSecretForImportedExercise() {
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
-        var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
-        assertThat(programmingExercise.getBuildConfig().getBuildPlanAccessSecret()).isNotNull().isNotEqualTo(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
+        var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
+        assertThat(programmingExerciseUtilService.buildConfigOf(programmingExercise).getBuildPlanAccessSecret()).isNotNull()
+                .isNotEqualTo(programmingExerciseUtilService.buildConfigOf(importedExercise).getBuildPlanAccessSecret());
     }
 
     @Test
@@ -327,10 +334,11 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         toBeImported.setAssessmentDueDate(dueDate.plusMinutes(10));
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        toBeImported.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        var newBuildConfig = ProgrammingExerciseFactory.generateDefaultBuildConfig();
+        newBuildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported));
+                .isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), toBeImported, newBuildConfig));
 
         assertThat(toBeImported.getId()).isNull();
         assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCountBeforeImport);
@@ -356,7 +364,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         // The Atlas competency import adds to this collection after the import returns, so it must be readable.
         assertThat(loaded.getCompetencyLinks()).isNotNull();
         // The main graph is still part of the same result.
-        assertThat(loaded.getBuildConfig()).isNotNull();
         assertThat(loaded.getTemplateParticipation()).isNotNull();
         assertThat(loaded.getSolutionParticipation()).isNotNull();
         assertThat(loaded.getCategories()).isNotNull();
@@ -374,7 +381,8 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
                 .setupInitialSolutionParticipation(any());
 
         final var toBeImported = createToBeImported();
-        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported))
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), toBeImported, null))
                 .withMessageContaining("simulated failure");
 
         // The exercise is persisted before the participations are set up, so it survives the failure.
@@ -386,16 +394,25 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
-        return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
+        return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), toBeImported, null);
     }
 
     private ProgrammingExercise importExerciseBaseWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         final var toBeImported = createToBeImportedWithSubmissionPolicy(submissionPolicy);
-        return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
+        return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), toBeImported, null);
     }
 
     private ProgrammingExercise createToBeImported() {
         return ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
+    }
+
+    /**
+     * Reads the stored configuration of the exercise the imports in this test copy from.
+     *
+     * @return the source exercise's build configuration
+     */
+    private ProgrammingExerciseBuildConfig sourceBuildConfig() {
+        return programmingExerciseUtilService.buildConfigOf(programmingExercise);
     }
 
     private ProgrammingExercise createToBeImportedWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {

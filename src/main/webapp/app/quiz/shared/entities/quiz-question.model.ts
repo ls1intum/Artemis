@@ -1,6 +1,5 @@
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SafeHtml } from '@angular/platform-browser';
-import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { CanBecomeInvalid, DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -48,7 +47,6 @@ export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, Exer
     public scoringType?: ScoringType;
     public randomizeOrder = true; // default value
     public invalid = false; // default value
-    public quizQuestionStatistic?: QuizQuestionStatistic;
     public exercise?: QuizExercise;
     public exportQuiz = false; // default value
     public type?: QuizQuestionType;

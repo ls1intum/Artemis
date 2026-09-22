@@ -35,6 +35,27 @@ import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedba
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
+
+/**
+ * Where "continue to latest" goes for an exercise, or undefined for one with no participation route to return to.
+ * Exported because the page offers the same action from the title bar, where the dropdown may not be rendered at all.
+ *
+ * A quiz routes by mode rather than by participation id, so it is answered here. Everything else goes through
+ * {@link participationChildRouteSegments}, the one place that knows where a participation lives: spelling the mapping
+ * out a second time is what sent programming and file upload to the modeling route, and it cannot express that a
+ * programming exercise without the online editor has nowhere to go at all.
+ */
+export function latestSubmissionRoute(exercise: Exercise, participation: StudentParticipation): unknown[] | undefined {
+    const courseId = getCourseFromExercise(exercise)?.id;
+    if (exercise.type === ExerciseType.QUIZ) {
+        return isPracticeMode(participation)
+            ? ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]
+            : ['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live'];
+    }
+    const segments = participationChildRouteSegments(exercise, participation);
+    return segments ? ['/courses', courseId, 'exercises', ...segments] : undefined;
+}
 
 @Component({
     selector: 'jhi-result-history-dropdown',
@@ -83,6 +104,7 @@ export class ResultHistoryDropdownComponent {
     });
 
     viewingSubmissionChange = output<boolean>();
+    displayedResultChange = output<Result | undefined>();
 
     constructor() {
         effect(() => {
@@ -107,6 +129,7 @@ export class ResultHistoryDropdownComponent {
             if (matchingResult?.id) {
                 this.selectedResultId.set(matchingResult.id);
                 this.viewingSubmissionChange.emit(true);
+                this.displayedResultChange.emit(matchingResult);
                 return;
             }
         }
@@ -117,34 +140,13 @@ export class ResultHistoryDropdownComponent {
             if (matchingResult?.id) {
                 this.selectedResultId.set(matchingResult.id);
                 this.viewingSubmissionChange.emit(true);
+                this.displayedResultChange.emit(matchingResult);
                 return;
             }
         }
         this.selectedResultId.set(undefined);
         this.viewingSubmissionChange.emit(false);
-    }
-
-    continueToLatest() {
-        this.selectedResultId.set(undefined);
-        this.viewingSubmissionChange.emit(false);
-        const participation = this.studentParticipation();
-        if (!participation) {
-            return;
-        }
-        const exercise = this.exercise();
-        const courseId = getCourseFromExercise(exercise)?.id;
-
-        if (exercise.type === ExerciseType.QUIZ) {
-            if (isPracticeMode(participation)) {
-                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]);
-            } else {
-                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
-            }
-            return;
-        }
-
-        const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-        void this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id]);
+        this.displayedResultChange.emit(undefined);
     }
 
     resultsPopover = viewChild<Popover>('resultsPopover');
@@ -175,7 +177,7 @@ export class ResultHistoryDropdownComponent {
         if (!templateStatus || !participation) {
             return faQuestionCircle;
         }
-        return getResultIconClass(result, participation, templateStatus);
+        return getResultIconClass(result, participation, templateStatus, this.exercise());
     }
 
     getResultIconAnimation(result: Result): AnimationProp | undefined {
@@ -188,7 +190,7 @@ export class ResultHistoryDropdownComponent {
         if (!templateStatus || !participation) {
             return 'text-muted-color';
         }
-        return getTextColorClass(result, participation, templateStatus);
+        return getTextColorClass(result, participation, templateStatus, this.exercise());
     }
 
     private isUnfinishedAthenaFeedback(result: Result): boolean {
@@ -293,6 +295,7 @@ export class ResultHistoryDropdownComponent {
         }
         this.selectedResultId.set(result.id);
         this.viewingSubmissionChange.emit(true);
+        this.displayedResultChange.emit(result);
         this.resultsPopover()?.hide();
         const exercise = this.exercise();
         const courseId = getCourseFromExercise(exercise)?.id;

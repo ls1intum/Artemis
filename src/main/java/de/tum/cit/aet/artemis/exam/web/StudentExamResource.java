@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
@@ -135,11 +136,15 @@ public class StudentExamResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
             StudentExamAthenaFeedbackService studentExamAthenaFeedbackService, StudentExamAccessService studentExamAccessService, UserRepository userRepository,
             AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -303,7 +308,7 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback : Request Athena AI
-     * feedback for all text and modeling exercises in the given submitted test exam.
+     * feedback for all text and modeling exercises in the given submitted test exam or instructor test run.
      *
      * @param courseId      the course to which the exam belongs
      * @param examId        the exam to which the student exam belongs
@@ -312,7 +317,7 @@ public class StudentExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> requestAthenaFeedbackForTestExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<Void> requestAthenaFeedback(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to trigger Athena feedback for student exam {}", studentExamId);
         User currentUser = userRepository.getUser();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
@@ -320,13 +325,15 @@ public class StudentExamResource {
         if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(studentExam, currentUser);
+        checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, currentUser);
         return ResponseEntity.ok().build();
     }
 
     /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage : Return how many
-     * Athena AI feedback requests the current user has already used for this test exam and the configured cap.
+     * Athena AI feedback requests the current user has already used for this test exam (or test run) and the
+     * configured cap.
      *
      * @param courseId      the course to which the exam belongs
      * @param examId        the exam to which the student exam belongs
@@ -336,14 +343,31 @@ public class StudentExamResource {
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage")
     @EnforceAtLeastStudent
     public ResponseEntity<AthenaFeedbackUsageDTO> getAthenaFeedbackUsage(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        // Only the id is compared and passed on, so the id-only lookup is enough.
-        long currentUserId = userRepository.getUserIdElseThrow();
+        // The user is needed for the test-run course access check below, which resolves the course roles of this very user.
+        User currentUser = userRepository.getUser();
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         validateExamRequestParametersElseThrow(studentExam, examId, courseId);
-        if (!Objects.equals(currentUserId, studentExam.getUser().getId())) {
+        if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
-        return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUserId, examId));
+        checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUser.getId(), examId, studentExam.isTestRun()));
+    }
+
+    /**
+     * Ensures that the owner of a test run still has instructor access to the course. Test run ownership survives a
+     * role revocation, so ownership alone must not keep an endpoint open for a former instructor. Non test run student
+     * exams are unaffected: their parameters were already validated by the caller and the check is an extra query.
+     *
+     * @param studentExam the student exam the request targets
+     * @param examId      the exam id from the path
+     * @param courseId    the course id from the path
+     * @param currentUser the current user
+     */
+    private void checkCourseAccessForTestRunElseThrow(StudentExam studentExam, Long examId, Long courseId, User currentUser) {
+        if (studentExam.isTestRun()) {
+            studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        }
     }
 
     /**
@@ -424,7 +448,7 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction : Find a specific test run for conduction.
+     * GET /courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction : Find a specific test run for conduction.
      * This will be used for the actual conduction of the test run. The test run will be returned with the exercises
      * and with the student participation and with the submissions.
      * NOTE: when this is called it will also mark the test run as started
@@ -436,7 +460,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
     // TODO: use the same REST call as for real exams and test exams
-    @GetMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction", "courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction" })
+    @GetMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamForConductionDTO> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId,
             HttpServletRequest request) {
@@ -447,6 +471,9 @@ public class StudentExamResource {
 
         // 1st: load the testRun with all associated exercises
         StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
+        // the conduction response reports whether the student may request AI feedback, and the query above no longer
+        // drags the configuration along with every course it touches
+        courseAthenaConfigRepository.attachTo(testRun.getExam().getCourse());
 
         if (!currentUser.equals(testRun.getUser())) {
             throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
@@ -533,6 +560,12 @@ public class StudentExamResource {
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
+        // Only a test exam or test run summary offers the AI feedback request - the client hides the button for anything else and
+        // StudentExamAthenaFeedbackService rejects it - so a real exam attempt does not read the (lazy) Athena configuration.
+        // A test run is an attempt on a real exam, so it has to be named here separately rather than covered by isTestExam().
+        if (studentExam.getExam().isTestExam() || studentExam.isTestRun()) {
+            courseAthenaConfigRepository.attachTo(studentExam.getExam().getCourse());
+        }
         return ResponseEntity.ok(StudentExamForSummaryDTO.of(studentExam));
     }
 
@@ -686,14 +719,14 @@ public class StudentExamResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/test-run/{testRunId} : Delete a test run
+     * DELETE /courses/{courseId}/exams/{examId}/test-runs/{testRunId} : Delete a test run
      *
      * @param courseId  the id of the course
      * @param examId    the id of the exam
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
-    @DeleteMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}", "courses/{courseId}/exams/{examId}/test-run/{testRunId}" })
+    @DeleteMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteTestRun(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId) {
         log.info("REST request to delete the test run with id {}", testRunId);

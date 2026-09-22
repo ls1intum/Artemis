@@ -4,10 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.hibernate7.Hibernate7Module;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.datatype.hibernate7.Hibernate7Module;
 
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 
@@ -17,7 +16,7 @@ class LegacyBuildPlanConverterServiceTest {
 
     @Test
     void deserializeBuildConfig_shouldKeepLegacyBuildScriptWithHibernateModule() throws Exception {
-        final ObjectMapper objectMapper = new ObjectMapper().registerModule(new Hibernate7Module());
+        final JsonMapper objectMapper = JsonMapper.builder().addModule(new Hibernate7Module()).build();
 
         final ProgrammingExerciseBuildConfig buildConfig = objectMapper.readValue("""
                 {
@@ -31,7 +30,7 @@ class LegacyBuildPlanConverterServiceTest {
 
     @Test
     void adaptLegacyBuildPlanConfiguration_shouldConvertLegacyConfiguration() {
-        final ProgrammingExercise programmingExercise = createExercise("""
+        final ProgrammingExerciseBuildConfig buildConfig = createBuildConfig("""
                 {
                     "metadata": {
                         "docker": {
@@ -59,7 +58,7 @@ class LegacyBuildPlanConverterServiceTest {
                 }
                 """, "echo hi");
 
-        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
+        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(buildConfig);
 
         assertThat(buildPlanPhases).isPresent();
         assertThat(buildPlanPhases.orElseThrow().dockerImage()).isEqualTo("my/legacy-image:1.0");
@@ -84,9 +83,9 @@ class LegacyBuildPlanConverterServiceTest {
 
     @Test
     void convertLegacyBuildPlanConfiguration_shouldConvertBuildScriptWithInvalidJson() {
-        final ProgrammingExercise programmingExercise = createExercise("non legacy", "echo hi");
+        final ProgrammingExerciseBuildConfig buildConfig = createBuildConfig("non legacy", "echo hi");
 
-        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
+        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(buildConfig);
 
         assertThat(buildPlanPhases).isPresent();
         assertThat(buildPlanPhases.orElseThrow().dockerImage()).isNull();
@@ -99,14 +98,14 @@ class LegacyBuildPlanConverterServiceTest {
 
     @Test
     void convertLegacyBuildPlanConfiguration_shouldReturnEmptyForInvalidJsonWithoutBuildScript() {
-        final ProgrammingExercise programmingExercise = createExercise("non legacy", null);
+        final ProgrammingExerciseBuildConfig buildConfig = createBuildConfig("non legacy", null);
 
-        assertThat(legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise)).isEmpty();
+        assertThat(legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(buildConfig)).isEmpty();
     }
 
     @Test
     void convertLegacyBuildPlanConfiguration_shouldIgnoreNonTextualResultPath() {
-        final ProgrammingExercise programmingExercise = createExercise("""
+        final ProgrammingExerciseBuildConfig buildConfig = createBuildConfig("""
                 {
                     "actions": [
                         {
@@ -120,7 +119,7 @@ class LegacyBuildPlanConverterServiceTest {
                 }
                 """, "echo hi");
 
-        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
+        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(buildConfig);
 
         assertThat(buildPlanPhases).isPresent();
         assertThat(buildPlanPhases.orElseThrow().phases().getFirst().resultPaths()).isEmpty();
@@ -128,7 +127,7 @@ class LegacyBuildPlanConverterServiceTest {
 
     @Test
     void convertLegacyBuildPlanConfiguration_shouldConvertLegacyActionsWhenBuildScriptIsMissing() {
-        final ProgrammingExercise programmingExercise = createExercise("""
+        final ProgrammingExerciseBuildConfig buildConfig = createBuildConfig("""
                 {
                     "metadata": {
                         "docker": {
@@ -163,7 +162,7 @@ class LegacyBuildPlanConverterServiceTest {
                 }
                 """, null);
 
-        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
+        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(buildConfig);
 
         assertThat(buildPlanPhases).isPresent();
         assertThat(buildPlanPhases.orElseThrow().dockerImage()).isEqualTo("my/legacy-image:1.0");
@@ -194,9 +193,9 @@ class LegacyBuildPlanConverterServiceTest {
 
     @Test
     void convertLegacyBuildPlanConfiguration_shouldRejectExcessivelyWideConfiguration() {
-        final ProgrammingExercise programmingExercise = createExercise(buildWideLegacyConfiguration(6_000), "echo hi");
+        final ProgrammingExerciseBuildConfig buildConfig = createBuildConfig(buildWideLegacyConfiguration(6_000), "echo hi");
 
-        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise);
+        var buildPlanPhases = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(buildConfig);
 
         // Parsing the oversized configuration is rejected during parsing, so the converter falls back to the build script
         // and never reads the planted actions (which would otherwise contribute a result path and a docker image).
@@ -218,11 +217,10 @@ class LegacyBuildPlanConverterServiceTest {
         return builder.toString();
     }
 
-    private static ProgrammingExercise createExercise(String buildPlanConfiguration, String buildScript) {
-        final ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(buildPlanConfiguration);
-        programmingExercise.getBuildConfig().setBuildScript(buildScript);
-        return programmingExercise;
+    private static ProgrammingExerciseBuildConfig createBuildConfig(String buildPlanConfiguration, String buildScript) {
+        final ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBuildPlanConfiguration(buildPlanConfiguration);
+        buildConfig.setBuildScript(buildScript);
+        return buildConfig;
     }
 }

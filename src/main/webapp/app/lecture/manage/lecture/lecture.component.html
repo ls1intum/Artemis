@@ -85,7 +85,7 @@
         <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
     }
 
-    @if (filteredLectures()) {
+    @if (loaded() && filteredLectures().length > 0) {
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -164,5 +164,35 @@
                 </tbody>
             </table>
         </div>
+    } @else if (loaded()) {
+        <tum-ui-empty-state
+            class="mt-5"
+            [icon]="faChalkboardTeacher"
+            [title]="(lectures().length === 0 ? 'artemisApp.lecture.home.empty.title' : 'artemisApp.lecture.home.empty.noMatchingTitle') | artemisTranslate"
+            [description]="(lectures().length === 0 ? 'artemisApp.lecture.home.empty.description' : 'artemisApp.lecture.home.empty.noMatchingDescription') | artemisTranslate"
+        >
+            <ng-container tumUiEmptyStateActions>
+                @if (lectures().length === 0) {
+                    <button type="button" class="btn btn-primary btn-sm" (click)="navigateToLectureCreationPage()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" (click)="openImportModal()">
+                        <fa-icon [icon]="faFileImport" />
+                        <span jhiTranslate="artemisApp.lecture.import.label"></span>
+                    </button>
+                }
+            </ng-container>
+            <ng-container tumUiEmptyStateDocumentation>
+                @if (lectures().length === 0) {
+                    <a
+                        href="https://docs.artemis.tum.de/instructor/lectures/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        jhiTranslate="artemisApp.lecture.home.empty.documentation"
+                    ></a>
+                }
+            </ng-container>
+        </tum-ui-empty-state>
     }
 </div>

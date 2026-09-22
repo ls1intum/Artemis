@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmResponse;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -48,7 +48,7 @@ class DeimosAnalysisServiceTest {
 
     private RepositoryService repositoryService;
 
-    private GitService gitService;
+    private BareGitRepositoryService bareGitRepositoryService;
 
     private DeimosPromptTemplateService deimosPromptTemplateService;
 
@@ -62,7 +62,7 @@ class DeimosAnalysisServiceTest {
         studentParticipationRepository = Mockito.mock(StudentParticipationRepository.class);
         deimosLlmClient = Mockito.mock(DeimosLlmClient.class);
         repositoryService = Mockito.mock(RepositoryService.class);
-        gitService = Mockito.mock(GitService.class);
+        bareGitRepositoryService = Mockito.mock(BareGitRepositoryService.class);
         deimosPromptTemplateService = new DeimosPromptTemplateService();
         bareRepository = Mockito.mock(Repository.class);
         // Every commit resolves by default. Deimos now verifies resolution explicitly, because the shared reader
@@ -70,7 +70,7 @@ class DeimosAnalysisServiceTest {
         lenient().when(bareRepository.resolve(anyString())).thenReturn(ObjectId.zeroId());
 
         deimosAnalysisService = new DeimosAnalysisService(programmingSubmissionRepository, studentParticipationRepository, deimosLlmClient, deimosPromptTemplateService,
-                repositoryService, gitService);
+                repositoryService, bareGitRepositoryService);
     }
 
     @Test
@@ -89,8 +89,8 @@ class DeimosAnalysisServiceTest {
         var sub2 = createSubmission(2L, "commit2", ZonedDateTime.now().minusHours(1));
 
         when(programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateAsc(participationId)).thenReturn(List.of(sub1, sub2));
-        when(gitService.getBareRepository(repoUri, false)).thenReturn(bareRepository);
-        when(gitService.getFirstCommitWithMessage(bareRepository, "Set up template for exercise")).thenReturn("setup000");
+        when(bareGitRepositoryService.getBareRepository(repoUri, false)).thenReturn(bareRepository);
+        when(bareGitRepositoryService.getFirstCommitWithMessage(bareRepository, "Set up template for exercise")).thenReturn("setup000");
 
         Map<String, String> templateFiles = Map.of("src/Main.java", "class Main {}");
         Map<String, String> commit1Files = Map.of("src/Main.java", "class Main { void probe() {} }");
@@ -150,8 +150,8 @@ class DeimosAnalysisServiceTest {
         var sub = createSubmission(99L, "def456", ZonedDateTime.now().minusHours(1));
         when(programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateAsc(participationId)).thenReturn(List.of(sub));
 
-        when(gitService.getBareRepository(repoUri, false)).thenReturn(bareRepository);
-        when(gitService.getFirstCommitWithMessage(eq(bareRepository), any())).thenReturn("setup000");
+        when(bareGitRepositoryService.getBareRepository(repoUri, false)).thenReturn(bareRepository);
+        when(bareGitRepositoryService.getFirstCommitWithMessage(eq(bareRepository), any())).thenReturn("setup000");
         when(repositoryService.getFilesContentFromBareRepository(bareRepository, "setup000")).thenReturn(Map.of());
         when(repositoryService.getFilesContentFromBareRepository(bareRepository, "def456")).thenReturn(Map.of("src/App.java", "class App {}"));
         when(deimosLlmClient.analyze(any())).thenThrow(new IllegalStateException("ChatClient not configured"));
@@ -182,8 +182,8 @@ class DeimosAnalysisServiceTest {
         var sub = createSubmission(50L, "del789", ZonedDateTime.now().minusHours(1));
         when(programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateAsc(participationId)).thenReturn(List.of(sub));
 
-        when(gitService.getBareRepository(repoUri, false)).thenReturn(bareRepository);
-        when(gitService.getFirstCommitWithMessage(eq(bareRepository), any())).thenReturn("setup000");
+        when(bareGitRepositoryService.getBareRepository(repoUri, false)).thenReturn(bareRepository);
+        when(bareGitRepositoryService.getFirstCommitWithMessage(eq(bareRepository), any())).thenReturn("setup000");
         when(repositoryService.getFilesContentFromBareRepository(bareRepository, "setup000")).thenReturn(Map.of("src/Helper.java", "class Helper {}"));
         when(repositoryService.getFilesContentFromBareRepository(bareRepository, "del789")).thenReturn(Map.of());
         when(deimosLlmClient.analyze(any())).thenReturn(new DeimosLlmResponse(false, "File deletion only"));

@@ -3,10 +3,11 @@ package de.tum.cit.aet.artemis.notification.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisJacksonDefaults;
 import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
 
 /**
@@ -20,11 +21,13 @@ import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayload
 public final class CourseNotificationPayloads {
 
     /**
-     * Deliberately private and unconfigured beyond these two settings, so that a payload conversion cannot be changed
-     * by a global Jackson customization somewhere else in the application.
+     * Deliberately private, so that a payload conversion cannot be changed by a global Jackson customization
+     * somewhere else in the application. It does take {@link ArtemisJacksonDefaults}, because the flattened shape is
+     * read by released mobile clients and those defaults are what keep enum values and dates rendering the way they
+     * always have.
      */
-    private static final ObjectMapper MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+    private static final JsonMapper MAPPER = ArtemisJacksonDefaults.apply(JsonMapper.builder()).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT).build();
 
     private CourseNotificationPayloads() {
     }

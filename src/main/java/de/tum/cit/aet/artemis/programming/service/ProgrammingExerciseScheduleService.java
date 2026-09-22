@@ -294,18 +294,21 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
         final var participations = programmingExerciseParticipationRepository.findWithSubmissionsAndTeamStudentsByExerciseId(exercise.getId());
         for (final var participation : participations) {
-            if (exercise.getDueDate() == null || participation.getIndividualDueDate() == null) {
+            final ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+            if (exercise.getDueDate() == null || individualDueDate == null) {
                 scheduleService.cancelAllScheduledParticipationTasks(exercise.getId(), participation.getId());
             }
             else {
-                scheduleParticipationWithIndividualDueDate(now, exercise, participation, isScoreUpdateNeeded);
+                scheduleParticipationWithIndividualDueDate(now, exercise, participation, individualDueDate, isScoreUpdateNeeded);
             }
         }
     }
 
+    // The individual due date arrives as a parameter rather than being read back off the participation: the caller's branch is what establishes it is non-null, and passing
+    // it makes that part of this method's signature instead of a comment a later edit can fall out of step with.
     private void scheduleParticipationWithIndividualDueDate(ZonedDateTime now, ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
-            boolean isScoreUpdateNeeded) {
-        final boolean isBeforeDueDate = now.isBefore(participation.getIndividualDueDate());
+            @NonNull ZonedDateTime individualDueDate, boolean isScoreUpdateNeeded) {
+        final boolean isBeforeDueDate = now.isBefore(individualDueDate);
         // Update scores on due date
         if (isBeforeDueDate) {
             scheduleAfterDueDateForParticipation(participation, isScoreUpdateNeeded);
@@ -317,7 +320,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // Build and test after individual due date:
         // only special scheduling if the individual due date is after the build and test date
         if (isBeforeDueDate && exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                && participation.getIndividualDueDate().isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
+                && individualDueDate.isAfter(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
             scheduleBuildAndTestAfterDueDateForParticipation(participation);
         }
         else {

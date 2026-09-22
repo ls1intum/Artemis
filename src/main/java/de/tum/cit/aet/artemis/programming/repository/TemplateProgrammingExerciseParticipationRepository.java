@@ -57,6 +57,23 @@ public interface TemplateProgrammingExerciseParticipationRepository
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
 
+    /**
+     * The id of the template participation a repository uri belongs to.
+     *
+     * <p>
+     * Reads one column and loads no entity, for callers that only have to point at the participation, such as an access
+     * log entry being attributed to a repository.
+     *
+     * @param repositoryUri the uri of the repository, without the git service suffix
+     * @return the id of the participation, or empty if no repository has that uri
+     */
+    @Query("""
+            SELECT participation.id
+            FROM TemplateProgrammingExerciseParticipation participation
+            WHERE participation.repositoryUri = :repositoryUri
+            """)
+    Optional<Long> findIdByRepositoryUri(@Param("repositoryUri") String repositoryUri);
+
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(long exerciseId);
 

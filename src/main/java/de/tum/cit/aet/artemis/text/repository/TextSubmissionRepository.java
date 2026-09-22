@@ -29,19 +29,25 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Repository
 public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmission, Long> {
 
+    boolean existsByIdAndParticipationId(long submissionId, long participationId);
+
     /**
-     * Writes the client-editable fields of an existing text submission by id.
+     * Writes the client-editable fields of an existing text submission by id, provided it belongs to the given participation and has no result.
+     * The id comes from the client, so the participation predicate keeps the update scoped to the caller's own participation. The result predicate prevents an assessment
+     * created concurrently with an autosave from being overwritten.
      * <p>
      * Prefer this over {@code save} on the autosave path: the submission is detached there (no transaction spans the load
      * and the save), so Spring Data routes it through {@code merge}, which reads the row back - along with its
      * participation, exercise, exercise group, exam and course through eager associations - before writing it.
      *
-     * @param submissionId   the id of the submission to update
-     * @param text           the submitted text
-     * @param language       the language of the submitted text
-     * @param submitted      whether the submission counts as submitted
-     * @param submissionDate when the submission was saved
-     * @param type           how the submission was created
+     * @param submissionId    the id of the submission to update
+     * @param participationId the participation the submission must belong to
+     * @param text            the submitted text
+     * @param language        the language of the submitted text
+     * @param submitted       whether the submission counts as submitted
+     * @param submissionDate  when the submission was saved
+     * @param type            how the submission was created
+     * @return the number of updated submissions
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -53,9 +59,15 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
                 submission.submissionDate = :submissionDate,
                 submission.type = :type
             WHERE submission.id = :submissionId
+                AND submission.participation.id = :participationId
+                AND NOT EXISTS (
+                    SELECT result.id
+                    FROM Result result
+                    WHERE result.submission.id = submission.id
+                )
             """)
-    void updateExistingSubmission(@Param("submissionId") long submissionId, @Param("text") String text, @Param("language") Language language, @Param("submitted") boolean submitted,
-            @Param("submissionDate") ZonedDateTime submissionDate, @Param("type") SubmissionType type);
+    int updateExistingSubmission(@Param("submissionId") long submissionId, @Param("participationId") long participationId, @Param("text") String text,
+            @Param("language") Language language, @Param("submitted") boolean submitted, @Param("submissionDate") ZonedDateTime submissionDate, @Param("type") SubmissionType type);
 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "participation.exercise" })
     Optional<TextSubmission> findWithEagerParticipationExerciseResultAssessorById(long submissionId);

@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 @FeatureUsage("build-system/build-queue-administration")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
@@ -63,6 +63,9 @@ public class AdminBuildJobQueueResource {
     private final BuildJobRepository buildJobRepository;
 
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
+
+    /** The Hazelcast address format, {@code [host]:port}. */
+    private static final Pattern HAZELCAST_ADDRESS = Pattern.compile("^\\[(.+)]:\\d+$");
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
@@ -81,7 +84,7 @@ public class AdminBuildJobQueueResource {
      * @param buildJobId the id of the build job
      * @return the build job, or 404 if not found
      */
-    @GetMapping({ "build-jobs/{buildJobId}", "build-job/{buildJobId}" })
+    @GetMapping("build-jobs/{buildJobId}")
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable String buildJobId) {
         if (buildJobId == null || buildJobId.isBlank()) {
             return ResponseEntity.badRequest().build();
@@ -229,7 +232,7 @@ public class AdminBuildJobQueueResource {
             return "";
         }
         // Match Hazelcast address format: [host]:port
-        var matcher = java.util.regex.Pattern.compile("^\\[(.+)]:\\d+$").matcher(address);
+        var matcher = HAZELCAST_ADDRESS.matcher(address);
         if (matcher.matches()) {
             return matcher.group(1);
         }
@@ -242,7 +245,7 @@ public class AdminBuildJobQueueResource {
      * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping({ "build-jobs/{buildJobId}/cancel", "cancel-job/{buildJobId}" })
+    @DeleteMapping("build-jobs/{buildJobId}/cancel")
     public ResponseEntity<Void> cancelBuildJob(@PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job with id {}", buildJobId);
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService

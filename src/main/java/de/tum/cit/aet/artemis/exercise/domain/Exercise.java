@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -81,7 +82,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
 @ConcreteProxy
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
@@ -134,9 +135,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private Boolean secondCorrectionEnabled = false;
 
     @ManyToOne
+    @Parent(enforcedBy = "CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP")
     private Course course;
 
     @ManyToOne
+    @Parent(enforcedBy = "CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP")
     private ExerciseGroup exerciseGroup;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -364,8 +367,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Utility method to get the course. Get the course over the exerciseGroup, if one was set, otherwise return
      * the course class member
      *
-     * @return Course of the exercise
+     * @return Course of the exercise, or null when it cannot be resolved from a masked exam graph
      */
+    @Nullable
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {

@@ -16,13 +16,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
@@ -46,6 +48,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 public class ProgrammingExerciseValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseValidationService.class);
+
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     // The minimum memory that a Docker container can be assigned is 6MB. This is a Docker limitation.
     private static final int MIN_DOCKER_MEMORY_MB = 6;
@@ -89,6 +94,8 @@ public class ProgrammingExerciseValidationService {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final SubmissionPolicyService submissionPolicyService;
 
     private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
@@ -105,10 +112,12 @@ public class ProgrammingExerciseValidationService {
 
     private final ProfileService profileService;
 
-    public ProgrammingExerciseValidationService(AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
-            Optional<VersionControlService> versionControlService1, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService) {
+    public ProgrammingExerciseValidationService(ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyService submissionPolicyService,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, Optional<VersionControlService> versionControlService1,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProfileService profileService) {
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyService = submissionPolicyService;
@@ -124,20 +133,24 @@ public class ProgrammingExerciseValidationService {
      * validates the settings of a new programming exercise
      *
      * @param programmingExercise The programming exercise that should be validated
+     * @param buildConfig         The build configuration of that exercise, which is stored separately
      * @param course              The course the programming exercise should be created in or imported to
      */
-    public void validateNewProgrammingExerciseSettings(ProgrammingExercise programmingExercise, Course course) {
+    public void validateNewProgrammingExerciseSettings(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig, Course course) {
         if (programmingExercise.getId() != null) {
             throw new BadRequestAlertException("A new programmingExercise cannot already have an ID", "Exercise", "idexists");
         }
+        if (buildConfig == null) {
+            throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
+        }
 
         programmingExercise.validateGeneralSettings();
-        programmingExercise.validateProgrammingSettings();
-        validateCustomCheckoutPaths(programmingExercise);
+        programmingExercise.validateProgrammingSettings(buildConfig);
+        validateCustomCheckoutPaths(buildConfig);
         // Check the build config field lengths before the configuration is parsed
-        validateBuildConfigSize(programmingExercise);
-        validateBuildPhaseNames(programmingExercise);
-        validateDockerFlags(programmingExercise);
+        validateBuildConfigSize(buildConfig);
+        validateBuildPhaseNames(buildConfig);
+        validateDockerFlags(buildConfig);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -147,15 +160,13 @@ public class ProgrammingExerciseValidationService {
         validatePackageName(programmingExercise, programmingLanguageFeature);
         validateProjectType(programmingExercise, programmingLanguageFeature);
 
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-
         // Check if checkout solution repository is enabled
         if (buildConfig.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
         }
 
         programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
-        validateStaticCodeAnalysisSettings(programmingExercise);
+        validateStaticCodeAnalysisSettings(programmingExercise, buildConfig);
 
         programmingExercise.generateAndSetProjectKey();
         checkIfProjectExists(programmingExercise);
@@ -208,12 +219,7 @@ public class ProgrammingExerciseValidationService {
         }
     }
 
-    private void validateCustomCheckoutPaths(ProgrammingExercise programmingExercise) {
-        var buildConfig = programmingExercise.getBuildConfig();
-        if (buildConfig == null) {
-            throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
-        }
-
+    private void validateCustomCheckoutPaths(ProgrammingExerciseBuildConfig buildConfig) {
         boolean assignmentCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getAssignmentCheckoutPath());
         boolean solutionCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getSolutionCheckoutPath());
         boolean testCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getTestCheckoutPath());
@@ -236,22 +242,21 @@ public class ProgrammingExerciseValidationService {
      * Validates static code analysis settings
      *
      * @param programmingExercise exercise to validate
+     * @param buildConfig         its build configuration, which is stored separately and read by the caller
      */
-    public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
+    public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
+        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
     }
 
     /**
      * Validates the settings of an updated programming exercise. Checks if the custom checkout paths have changed.
      *
-     * @param originalProgrammingExercise The original programming exercise
-     * @param updatedProgrammingExercise  The updated programming exercise
+     * @param originalBuildConfig The build configuration the exercise is stored with
+     * @param updatedBuildConfig  The build configuration the request carries
      */
-    public void validateCheckoutDirectoriesUnchanged(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise updatedProgrammingExercise) {
-        var originalBuildConfig = originalProgrammingExercise.getBuildConfig();
-        var updatedBuildConfig = updatedProgrammingExercise.getBuildConfig();
+    public void validateCheckoutDirectoriesUnchanged(ProgrammingExerciseBuildConfig originalBuildConfig, ProgrammingExerciseBuildConfig updatedBuildConfig) {
         if (!Objects.equals(originalBuildConfig.getAssignmentCheckoutPath(), updatedBuildConfig.getAssignmentCheckoutPath())
                 || !Objects.equals(originalBuildConfig.getSolutionCheckoutPath(), updatedBuildConfig.getSolutionCheckoutPath())
                 || !Objects.equals(originalBuildConfig.getTestCheckoutPath(), updatedBuildConfig.getTestCheckoutPath())) {
@@ -263,10 +268,9 @@ public class ProgrammingExerciseValidationService {
      * Validates the network access feature for the given programming language.
      * Currently, SWIFT and HASKELL do not support disabling the network access feature.
      *
-     * @param programmingExercise the programming exercise to validate
+     * @param buildConfig the build configuration to validate
      */
-    public void validateDockerFlags(ProgrammingExercise programmingExercise) {
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+    public void validateDockerFlags(ProgrammingExerciseBuildConfig buildConfig) {
         DockerFlagsDTO dockerFlagsDTO;
         try {
             dockerFlagsDTO = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
@@ -305,10 +309,9 @@ public class ProgrammingExerciseValidationService {
      * Validates that the build config text fields do not exceed their maximum allowed length.
      * The limits are character limits (see {@link String#length()}), not byte limits.
      *
-     * @param programmingExercise the programming exercise whose build config should be validated
+     * @param buildConfig the build configuration to validate, or {@code null} when the request carries none
      */
-    public void validateBuildConfigSize(ProgrammingExercise programmingExercise) {
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+    public void validateBuildConfigSize(@Nullable ProgrammingExerciseBuildConfig buildConfig) {
         if (buildConfig == null) {
             return;
         }
@@ -329,22 +332,22 @@ public class ProgrammingExerciseValidationService {
      * Validates custom build phase names in phases-based build plan configurations.
      * Phase names must match the configured pattern and be unique case-insensitively.
      *
-     * @param programmingExercise the programming exercise to validate
+     * @param buildConfig the build configuration to validate
      */
-    public void validateBuildPhaseNames(ProgrammingExercise programmingExercise) {
+    public void validateBuildPhaseNames(ProgrammingExerciseBuildConfig buildConfig) {
         if (!profileService.isLocalCIActive()) {
             return;
         }
 
-        if (programmingExercise.getBuildConfig().getBuildScript() != null) {
+        if (buildConfig.getBuildScript() != null) {
             throw new BadRequestAlertException("The build config is invalid", "programmingExercise", "invalidBuildConfig");
         }
 
         List<BuildPhaseDTO> phases;
         try {
-            phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration()).phases();
+            phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).phases();
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new BadRequestAlertException("The build plan configuration is invalid", "programmingExercise", "invalidBuildPlanConfiguration");
         }
 
@@ -352,7 +355,19 @@ public class ProgrammingExerciseValidationService {
             return; // default will be used when saving
         }
 
-        if (phases.isEmpty()) {
+        validateBuildPhases(phases);
+    }
+
+    /**
+     * Validates a list of build phases: it must contain at least one phase, and every phase name must match the configured
+     * pattern, avoid the reserved names, and be unique case-insensitively. The script is deliberately not validated, see
+     * the note at the end of this method. Shared by the full exercise update and the dedicated build plan editor so the
+     * same misconfiguration is rejected with the same error and key on both pages.
+     *
+     * @param phases the build phases to validate
+     */
+    public void validateBuildPhases(List<BuildPhaseDTO> phases) {
+        if (phases == null || phases.isEmpty()) {
             throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPhases");
         }
 
@@ -370,6 +385,11 @@ public class ProgrammingExerciseValidationService {
                 throw new BadRequestAlertException("Build phase names must be unique", "programmingExercise", "duplicateBuildPhaseNames");
             }
         }
+        // A blank script is intentionally accepted here: rejecting it would also apply to the full exercise update, which
+        // re-validates the exercise's already-stored build phases on every save, and to importing a file whose build phases
+        // predate this check, both of which have no in-place way to fix the offending phase. A blank script is dropped on
+        // write by @JsonInclude(NON_EMPTY) on BuildPhaseDTO and defaulted back to '' on read by the client parser
+        // (isBuildPhase in build-plan-phases.model.ts), so it is harmless: a no-op phase, not a corrupted plan.
     }
 
     /**
@@ -405,7 +425,7 @@ public class ProgrammingExerciseValidationService {
      * @return true if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
-        String projectKey = (courseShortName + programmingExercise.getShortName().replaceAll("\\s+", "")).toUpperCase(Locale.ROOT);
+        String projectKey = (courseShortName + WHITESPACE_RUN.matcher(programmingExercise.getShortName()).replaceAll("")).toUpperCase(Locale.ROOT);
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: {}", projectKey);
         log.debug("Project Name: {}", projectName);
@@ -422,11 +442,12 @@ public class ProgrammingExerciseValidationService {
     /**
      * Checks whether the exercise to be updated has valid references to its template and solution repositories and build plans.
      *
-     * @param exercise the programming exercise to be checked
+     * @param exercise    the programming exercise to be checked
+     * @param buildConfig its build configuration, which is stored separately and read by the caller
      * @throws BadRequestAlertException if one of the references is invalid
      */
-    public void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        validateBuildPhaseNames(exercise);
+    public void checkProgrammingExerciseForError(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
+        validateBuildPhaseNames(buildConfig);
 
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         VersionControlService versionControl = versionControlService.orElseThrow();

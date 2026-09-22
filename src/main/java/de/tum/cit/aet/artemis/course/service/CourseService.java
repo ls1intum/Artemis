@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,8 +24,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
-import de.tum.cit.aet.artemis.communication.domain.FaqState;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -45,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
 /**
@@ -62,45 +58,24 @@ public class CourseService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<LectureApi> lectureApi;
-
     private final Optional<ExerciseGroupApi> exerciseGroupApi;
 
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
-
     private final CourseRepository courseRepository;
-
-    private final Optional<CompetencyApi> competencyApi;
-
-    private final Optional<PrerequisitesApi> prerequisitesApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    private final Optional<TutorialGroupApi> tutorialGroupApi;
-
-    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
-
-    private final FaqRepository faqRepository;
-
-    public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<CompetencyApi> competencyApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
-            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository) {
-        this.lectureApi = lectureApi;
+    public CourseService(Optional<LectureApi> ignoredLectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            Optional<CompetencyApi> ignoredCompetencyApi, Optional<ExamRepositoryApi> ignoredExamRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> ignoredTutorialGroupApi,
+            Optional<PlagiarismCaseApi> ignoredPlagiarismCaseApi, Optional<PrerequisitesApi> ignoredPrerequisitesApi) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.exerciseGroupApi = exerciseGroupApi;
-        this.competencyApi = competencyApi;
-        this.examRepositoryApi = examRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
-        this.tutorialGroupApi = tutorialGroupApi;
-        this.plagiarismCaseApi = plagiarismCaseApi;
-        this.prerequisitesApi = prerequisitesApi;
-        this.faqRepository = faqRepository;
     }
 
     /**
@@ -148,82 +123,6 @@ public class CourseService {
                 }
             }
         }
-    }
-
-    /**
-     * Add plagiarism cases to each exercise.
-     *
-     * @param exercises the course exercises for which the plagiarism cases should be fetched.
-     * @param userId    the user for which the plagiarism cases should be fetched.
-     */
-    public void fetchPlagiarismCasesForCourseExercises(Set<Exercise> exercises, Long userId) {
-        if (plagiarismCaseApi.isEmpty()) {
-            return;
-        }
-
-        PlagiarismCaseApi api = plagiarismCaseApi.get();
-        Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = api.findByStudentIdAndExerciseIds(userId, exerciseIds);
-        for (Exercise exercise : exercises) {
-            // Add plagiarism cases to each exercise.
-            Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()
-                    .filter(plagiarismCase -> plagiarismCase.getExercise().getId().equals(exercise.getId())).collect(Collectors.toSet());
-            exercise.setPlagiarismCases(plagiarismCasesForExercise);
-        }
-    }
-
-    /**
-     * Get one course with only its exercises (filtered for the given user), without lectures, exams, competency counts,
-     * tutorial group counts or FAQ counts.
-     * <p>
-     * This backs the exercises tab of the course overview, which is the only consumer of the exercise data. Everything the
-     * other tabs need is either loaded by those tabs themselves or comes from the lightweight available-tabs endpoint, so
-     * entering a course on any other tab must not pay for this.
-     *
-     * @param courseId the course to fetch
-     * @param user     the user entity
-     * @return the course including only its exercises (filtered for the given user)
-     */
-    public Course findOneWithExercisesForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
-        course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
-        exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
-        return course;
-    }
-
-    /**
-     * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
-     *
-     * @param courseId the course to fetch
-     * @param user     the user entity
-     * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
-     */
-    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
-        // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
-        course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
-        course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
-        exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
-        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now())));
-        // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
-        // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
-        competencyApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
-        // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourseId(courseId)));
-        // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
-        if (tutorialGroupApi.isPresent()) {
-            course.setNumberOfTutorialGroups(tutorialGroupApi.get().countByCourseId(courseId));
-        }
-        else {
-            course.setNumberOfTutorialGroups(0L);
-        }
-        course.setNumberOfAcceptedFaqs(faqRepository.countByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
-        if (authCheckService.isOnlyStudentInCourse(course, user) && examRepositoryApi.isPresent()) {
-            var examRepoApi = examRepositoryApi.get();
-            course.setExams(examRepoApi.filterVisibleExams(course.getExams()));
-        }
-        return course;
     }
 
     /**

@@ -1,4 +1,4 @@
-/* Bootstrap Reboot remains the reset while legacy Bootstrap and PrimeNG coexist with TUM UI. */
+/* Bootstrap Reboot remains the reset while legacy Bootstrap coexists with TUM UI. */
 @layer theme, base, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
@@ -36,12 +36,6 @@
     --footer-height: 32px;
 
     /*
-     * Title row of a detail page's header card (exercise, lecture). Held constant so both pages' headers are exactly
-     * as tall: the exercise page fills this row with its action buttons, the lecture page only with its title.
-     */
-    --detail-header-title-row-height: 36px;
-
-    /*
      * Navigation sidebar of the student overview, course management and administration shells. One token because the
      * three must match, and they previously repeated the value in two stylesheets.
      *
@@ -75,9 +69,6 @@
 /* The exam-scores page still carries legacy Bootstrap markup, but its layout and chart spacing are Tailwind. */
 @source './app/exam/manage/exam-scores';
 
-/* Only the second-correction button: its host alignment utilities must not depend on an unrelated module
-   happening to use the same classes. Bootstrap's .float-end in this folder keeps winning through !important. */
-@source './app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button';
 @source './app/localci/build-queue';
 @source './app/course/request';
 @source './app/shared-ui/user-import';
@@ -94,9 +85,14 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
+/* AI exercise variant generation: the navbar progress tray and the wizard modal. */
+@source './app/core/navbar/variant-generation-tray';
+@source './app/course/manage/exercises/create-variant-modal';
 @source './app/account';
 @source './app/course/manage/update/course-update.component.html';
 @source './app/exam/manage/exercise-groups';
+@source './app/assessment/shared/assessment-dashboard';
+@source './app/exercise/dashboards/tutor-leaderboard';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/unreferenced-feedback';
@@ -106,6 +102,18 @@
    chrome (course title bar) and the not-yet-migrated import dialog, so it is scanned without being lockable yet. */
 @source './app/tutorialgroup/manage/tutorial-groups-management';
 @source './app/tutorialgroup/manage/tutorial-group-utilization-indicator';
+/* Holidays page: TUM UI + Tailwind throughout, but it renders the shared Bootstrap course title bar like the list above. */
+@source './app/tutorialgroup/manage/holidays';
+
+/* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are
+   still Bootstrap-heavy, so scanning them would also emit .col-11/.col-12/.bg-primary as Tailwind utilities on top of
+   Bootstrap's own. Emit just the ones they use instead. A blocked button is aria-disabled rather than disabled, so it
+   stays focusable and keeps the pointer events its tooltip needs; that also means :disabled cannot style it. */
+@source inline("sr-only");
+@source inline("hidden");
+@source inline("sm:inline");
+@source inline("aria-disabled:opacity-60");
+@source inline("aria-disabled:cursor-not-allowed");
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';

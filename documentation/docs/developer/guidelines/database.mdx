@@ -26,7 +26,7 @@ We offer two Gradle commands with Liquibase:
 - `liquibaseClearChecksums`: Use this whenever Liquibase detects inconsistencies between the database changelog and the XML changelog
 - `liquibaseDiffChangeLog`: Generates a new changelog from the current database state. The command appears to not work for all operating systems, and you might have to add a changelog manually.
 
-### Changelog
+### Liquibase Changelog
 
 The changelog manifest lies in `src/main/resources/config/liquibase/master.xml`, which imports all single changelog files. To create a new change, you have to do the following:
 
@@ -91,7 +91,7 @@ The recommended default data type for storing values that involve date and time,
   This type of migration should only be used if the logic cannot be implemented in SQL as part of a Liquibase changelog. Java migrations are <strong>significantly slower</strong> since they need to load and convert data from the DBMS into Java objects, apply the changes, and then write the new data back to the database.
 </Callout>
 
-### Changelog
+### Java Migration Changelog
 
 The changelog can be found in `src/main/java/config/migration/MigrationRegistry.java`. To create a new change, follow these steps:
 
@@ -119,6 +119,12 @@ Please prepare for the meeting and enter your PR and a short description of the 
 - **Mandatory Review:** Every change affecting the database or configuration must be explicitly discussed and approved during the weekly meeting. Final approval is granted by [Stephan Krusche](https://github.com/krusche) or [Patrick Bassner](https://github.com/bassner).
 - **Deployment Restrictions:** Database-affecting deployments cannot proceed without prior approval from designated reviewers to ensure accountability and prevent unauthorized changes. For test server deployments, approval is required from [Benjamin Schmitz](https://github.com/bensofficial).
 
+### Values That Reference a Stored File
+
+A column that points at an uploaded file stores **the filename only**, never a path fragment and never a REST path. The request path and the location on disk are both derived from the owning entity instead, so that renaming an endpoint never becomes a schema change and the storage layer never parses a URL. See [File Storage, Stored Values and REST Paths Are Independent](rest-api.mdx#file-storage-stored-values-and-rest-paths-are-independent).
+
+A migration written in order to rename a REST path is a sign that this rule has been broken somewhere; fix the coupling rather than migrating the data.
+
 ### Database Review Guidelines
 
 - **Third Normal Form (3NF):** Database schema changes should adhere strictly to the third normal form to avoid redundancy and ensure data integrity.
@@ -143,17 +149,101 @@ The cost of retrieving and building an object's relationships far exceeds the co
 
 In JPA lazy fetching can be set on any relationship using the fetch attribute. The fetch can be set to either `LAZY` or `EAGER` as defined in the `FetchType` enum. The default fetch type is `LAZY` for all relationships except for **OneToOne** and **ManyToOne**, but in general it is a good idea to make every relationship `LAZY`. The `EAGER` default for **OneToOne** and **ManyToOne** is for implementation reasons (more easier to implement), not because it is a good idea.
 
-We **always** use `FetchType.LAZY`, unless there is a very strong case to be made for `FetchType.EAGER`.
+### Eager fetching is not allowed
+
+No `@OneToOne`, `@OneToMany` or `@ManyToMany` may fetch eagerly. The ArchUnit rule `ArchitectureTest.testNoEagerFetching` fails the build for any that does; the associations that are still eager are listed in `FIELDS_ALLOWED_TO_FETCH_EAGERLY`, which may only shrink.
+
+The rule judges the fetch type that actually applies, not what is written down. `@OneToOne` defaults to `EAGER`, so it has to spell out `fetch = FetchType.LAZY`; `@OneToMany` and `@ManyToMany` are lazy already and need not repeat it, though writing it out does no harm.
+
+`@ManyToOne` is out of scope. Hibernate cannot make a to-one association lazy without bytecode enhancement or a proxy, and a proxied `@ManyToOne` does not work with entity hierarchies - which most of ours are. Its eager default is a fact to design around, not something to declare.
 
 <Callout variant={CalloutVariant.info}>
   Additional effort to use <code>FetchType.LAZY</code> does not count as a strong argument.
 </Callout>
+
+An eager association is loaded for every caller, including the overwhelming majority that never read it, and the cost never appears where it was written. `Course.athenaConfig` was two booleans behind an eager one-to-one: the server issued **155,848** queries for it during a single 2000-student exam, and an exam does not care whether Athena is switched on.
+
+### Read a configuration through its own repository
+
+Do not add a lazy association to an `@EntityGraph` or a `JOIN FETCH` just so that some code further down can read it off the entity. That couples every query that happens to be on the path to a decision made somewhere else, and it does not even work reliably: where the owning entity is reached through an eager `@ManyToOne` chain - `Exercise` to `ExerciseGroup` to `Exam` to `Course`, for instance - Hibernate resolves that chain by secondary select and the fetch plan no longer applies, so the association stays uninitialized however you spell the query.
+
+Give the configuration its own repository and read it where the decision is made. `CourseConfigurationRepository` and `CourseAthenaConfigRepository` are the pattern: a `findByCourseId`, plus a projection of the fields a hot path actually reads.
+
+#### Which side holds the key
+
+A configuration that must not outlive what it configures holds the **parent's** key, not the other way round. A foreign
+key constrains the row that holds it: with the key on the parent, the database can require that parent's configuration
+to exist, but nothing can require the configuration's parent to exist. Deleting the parent by any route other than the
+application's own cascade then leaves the configuration behind, and the schema has no way to refuse it.
+
+Moving the key has a consequence that decides how the parent maps it. JPA makes whichever side holds the column the
+owner, so the parent becomes the inverse side of the `@OneToOne` - and **an inverse one-to-one cannot be proxied**:
+Hibernate issues a select on every parent read to find out whether the row exists, whether or not the caller looks at
+it. `optional = false` does not change this, and no fetch removes it from a query that reaches the parent
+polymorphically, because the subclass attribute is not on the polymorphic type. Mapping `ProgrammingExercise.buildConfig`
+that way cost one select per exercise on the course dashboard and on git authorization, neither of which reads it.
+
+So the parent does not carry the configuration at all - there is no field, mapped or otherwise. Only the configuration
+knows the relation:
+
+```java
+// ProgrammingExerciseBuildConfig - owns the key, so a deleted exercise takes it along
+@OneToOne(fetch = FetchType.LAZY, optional = false)
+@JoinColumn(name = "exercise_id", nullable = false, unique = true)
+@JsonIgnore
+@Parent
+private ProgrammingExercise programmingExercise;
+```
+
+The database refuses a configuration that belongs to no exercise, and a read that does not want the configuration does
+not pay for it. Everything that needs it reads it at that point -
+`ProgrammingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)` - or takes it as a
+parameter next to the exercise. A shared primary key (`@MapsId`) would keep the association mapped without the select,
+but it cannot be combined with the generated id that `DomainObject` provides.
+
+The API is unaffected, because responses and request bodies are records rather than entities: the configuration is a
+component of `CreateProgrammingExerciseDTO`, `UpdateProgrammingExerciseDTO`, `ImportProgrammingExerciseRequestDTO` and
+`ProgrammingExerciseResponseDTO`, and the endpoints that carry it pass it to the mapper explicitly. An endpoint whose
+client does not read the configuration leaves it out instead of spending a query on it.
+
+Writing follows the key as well: the parent is saved first, then the configuration that names it.
+
+#### Turning an existing association lazy
+
+`open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.
+
+Making `Course.athenaConfig` lazy was the second kind: its getters answer `false` when it was not loaded, so every response whose query did not resolve it would have reported Athena as switched off and quietly removed the feature from the client. Find every place that reads it, give each an explicit read, and pin the result - `AthenaConfigWireContractTest` does that for the endpoints the webapp reads those two flags from.
+
+### A long text column is text, not a LOB
+
+Never annotate a field `@Lob`. `ArchitectureTest.testNoLobAnnotation` fails the build for any that is.
+
+A CLOB on PostgreSQL is a **large object**: Hibernate writes the value into `pg_largeobject` and stores the object's id in the column, then reads the column back as that id. The long text columns in Artemis are declared `longtext` in Liquibase, and `tool_activity` is declared `clob`; both become `text` on PostgreSQL, so the column holds text and the mapping expects an object id. The two agree only as long as the same mapping wrote the row: a row holding the text itself - as MySQL writes it, and as every row written before the move to PostgreSQL is stored - fails the read with `Bad value for type long` and takes the whole query with it, not just the one column. On `IrisMessage.toolActivity` that meant one unreadable message made every Iris session load for that user fail.
+
+The large objects are also never reclaimed. Nothing unlinks them when the message is deleted, so they accumulate outside the table and are invisible to a table-size check.
+
+A `String`, or an attribute converted to one, needs no annotation at all: bound and extracted as text it round-trips on both databases whatever its length, since a length in the mapping only ever shapes generated DDL and Artemis generates none. `Exercise.problemStatement` is the pattern - a plain `@Column` over a `longtext`.
+
+```java
+// IrisMessage - a converted list in a clob column, mapped as the text it is
+@Nullable
+@Convert(converter = IrisMessageToolActivityConverter.class)
+@Column(name = "tool_activity")
+private List<PyrisActivityDTO> toolActivity;
+```
+
+Where the value is structured rather than free text, `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column is the other option - `IrisMessage.accessedMemories` uses it. It costs the column its equality operator on PostgreSQL, which is why a query fetching such an entity cannot use `DISTINCT`; `IrisChatSessionRepository.findAllWithMessagesByCourseId` returns a `Set` and deduplicates in Java for exactly that reason.
 
 ## Relationships
 
 A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. If there is a relationship to a collection of other objects, a `Collection` or `array` type is used to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (containing both objects' primary keys).
 
 In this section, we depict common entity relationships we use in Artemis and show some code snippets.
+
+Which relationship an entity *belongs to*, and whether the database guarantees it, is recorded per
+entity in [Entity Ownership](/developer/guidelines/entity-ownership). Read it before adding an
+entity: a nullable owning foreign key is how a row ends up unreachable but undeleted, which also
+puts it outside every data privacy cleanup.
 
 ### OneToOne
 
@@ -335,7 +425,7 @@ This pattern is used in several places in Artemis:
 In Artemis, we use dynamic fetching to load the relationships of an entity on demand. As we do not want to load all relationships of an entity every time we fetch it from the database, we use as described above `FetchType.LAZY`.
 In order to load the relationships of an entity on demand, we then use one of 4 methods:
 
-### 1. EntityGraph
+### EntityGraph
 
 The `@EntityGraph` annotation is the simplest way to specify a graph of relationships to fetch. It should be used when a query is auto-constructed by Spring Data JPA and does not have a custom `@Query` annotation. Example:
 
@@ -345,7 +435,7 @@ The `@EntityGraph` annotation is the simplest way to specify a graph of relation
 Course findWithEagerExercisesById(long courseId);
 ```
 
-### 2. JOIN FETCH
+### JOIN FETCH
 
 The `JOIN FETCH` keyword is used in a custom query to specify a graph of relationships to fetch. It should be used when a query is custom and has a custom `@Query` annotation. You can see the example below. Also, explicitly or implicitly limiting queries in Hibernate can lead to in-memory paging. For more details, see the 'In-memory paging' section.
 
@@ -361,7 +451,7 @@ The `JOIN FETCH` keyword is used in a custom query to specify a graph of relatio
 List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 ```
 
-### 3. DynamicSpecificationRepository
+### DynamicSpecificationRepository
 
 For repositories that use a lot of different queries with different relationships to fetch, we use the `DynamicSpecificationRepository`. You can let a repository additionally implement this interface and then use the `findAllWithEagerRelationships` and then use the `getDynamicSpecification(Collection<? extends FetchOptions> fetchOptions)` method in combination with a custom enum implementing the `FetchOptions` interface to dynamically specify which relationships to fetch inside of service methods.
 
@@ -403,7 +493,7 @@ var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetch
 
 </details>
 
-### 4. In-Memory Paging
+### In-Memory Paging
 
 Since the flag `hibernate.query.fail_on_pagination_over_collection_fetch: true` is now active, it is crucial to carefully craft database queries that involve FETCH statements with collections and thoroughly test the changes. In-memory paging would cause performance decrements and is, therefore, disabled. Any use of it will lead to runtime errors.
 
@@ -652,6 +742,100 @@ public int hashCode() {
 <Callout variant={CalloutVariant.info}>
     Apply the constant <code>hashCode()</code> override <em>only</em> on entities that are the child side of a <code>Set</code>-mapped <code>@OneToMany</code> and may be constructed transient by application code (importers, DTO mappers, factories). Entities used as keys in large <code>HashMap</code>s or caches should keep the id-based default, since the linear-scan degradation matters at scale.
 </Callout>
+
+## Queries That Behave Differently on MySQL and PostgreSQL
+
+Artemis runs on both MySQL and PostgreSQL. A query can work on one and fail on the other, or, worse, return
+different rows without any error. Integration tests run against PostgreSQL only, so a MySQL-only difference
+never shows up locally, and a difference that changes the result rather than raising an error shows up in
+neither.
+
+### Compare Case Explicitly
+
+MySQL compares with the `utf8mb4_unicode_ci` collation, which ignores case, so `LIKE '%max%'` matches
+`Max Mustermann`. PostgreSQL compares case sensitively and the same pattern matches nothing. A search written
+without this in mind therefore returns an empty list rather than an error, and nothing in the log says so.
+
+Lower case both sides rather than relying on a collation. In JPQL, keep it inside the query so that no caller
+can defeat it:
+
+```java
+@Query("""
+        SELECT user
+        FROM User user
+        WHERE LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+            OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+        """)
+Page<User> searchAllByLoginOrName(Pageable pageable, @Param("loginOrName") String loginOrName);
+```
+
+The `CAST` is what makes the parameter a string for the database rather than only for Java. Without it, a
+parameter that arrives as `null`, which an optional filter does on every request that leaves it out, is sent
+untyped, PostgreSQL reads it as `bytea`, and the query fails with
+`function lower(bytea) does not exist` rather than returning nothing. A parameter that is never null works
+without the cast, so the failure appears the first time somebody makes the filter optional.
+
+With the Criteria API, wrap the path in `lower` and lower case the pattern in Java with an explicit locale:
+
+```java
+String pattern = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
+Predicate titleMatches = criteriaBuilder.like(criteriaBuilder.lower(root.get(Exercise_.TITLE)), pattern);
+```
+
+<Callout variant={CalloutVariant.warning}>
+  Lower casing one side only is the worst of the three, because it hides itself: <code>LOWER(column) LIKE '%Max%'</code> still matches on MySQL, whose collation ignores case anyway, and matches nothing on PostgreSQL. Whenever the column is wrapped, the parameter has to be wrapped with it.
+</Callout>
+
+A comparison wrapped in `LOWER` cannot use a plain index on the column. Where a search runs against a large
+table, add a functional index for it. The two databases spell it differently, so a changelog needs one
+changeset per database type:
+
+```sql
+-- PostgreSQL
+CREATE INDEX user_login_lower ON jhi_user (LOWER(login));
+-- MySQL, which needs the expression in its own parentheses
+CREATE INDEX user_login_lower ON jhi_user ((LOWER(login)));
+```
+
+A pattern with a leading wildcard cannot use an index on either database, so a full-text search is the answer
+where that becomes the bottleneck.
+
+### ORDER BY With SELECT DISTINCT
+
+PostgreSQL requires every `ORDER BY` expression of a `SELECT DISTINCT` to appear in the select list, and
+rejects the query with `for SELECT DISTINCT, ORDER BY expressions must appear in select list`. The
+combination is easy to miss, because a repository method that selects an id can receive the order from a
+`Pageable` the caller builds, so neither the query nor the call site shows it.
+
+Duplicates usually come from a join that only filters. Replace it with `EXISTS`: the `DISTINCT` is then
+unnecessary, and the caller's order stays legal.
+
+```java
+@Query("""
+        SELECT user.id
+        FROM User user
+        WHERE EXISTS (
+                SELECT 1
+                FROM UserCourseRole ucr
+                WHERE ucr.user.id = user.id AND ucr.course.id = :courseId
+            )
+        """)
+List<Long> findUserIdsInCourse(@Param("courseId") long courseId, Pageable pageable);
+```
+
+### Order Pages Totally
+
+A page window only means something if the order is total. Rows an order cannot tell apart are free to change
+places between two queries, so one of them can appear on two pages and another on none. Append the id to
+whatever order the caller asked for rather than replacing it, so that the requested order still decides the
+page.
+
+### Name Every Grouped Column
+
+Both databases reject a selected column that is neither aggregated nor grouped, but they draw the line in
+different places: MySQL applies `ONLY_FULL_GROUP_BY`, which is on by default and recognises some functional
+dependencies, and PostgreSQL accepts columns that are functionally dependent on a grouped primary key. Name
+every non-aggregated column of the select list in the `GROUP BY` and the query means the same thing on both.
 
 ## Solutions for Known Issues
 

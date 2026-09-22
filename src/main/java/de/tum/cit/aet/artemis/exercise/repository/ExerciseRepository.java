@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -237,7 +236,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             	AND e.dueDate >= :now
             ORDER BY e.dueDate ASC
             """)
-    Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
+    List<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
 
     /**
      * Return the number of active exercises, grouped by exercise type
@@ -580,13 +579,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "course.athenaConfig" })
-    Optional<Exercise> findWithCourseAthenaConfigById(Long exerciseId);
-
-    default Exercise findWithCourseAthenaConfigByIdElseThrow(Long exerciseId) {
-        return getValueElseThrow(findWithCourseAthenaConfigById(exerciseId), exerciseId);
-    }
-
     /**
      * Returns the title of the exercise with the given id.
      *
@@ -602,7 +594,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
             WHERE exercise.id = :exerciseId
             """)
-    @Cacheable(cacheNames = "exerciseTitle", key = "#exerciseId", unless = "#result == null")
     String getExerciseTitle(@Param("exerciseId") Long exerciseId);
 
     /**
@@ -656,9 +647,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * Finds all exercises where the due date is today or in the future
      * (does not return exercises belonging to test courses).
      *
-     * @return set of exercises
+     * @return the exercises, ordered by due date
      */
-    default Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate() {
+    default List<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate() {
         return findAllExercisesWithCurrentOrUpcomingDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS));
     }
 
