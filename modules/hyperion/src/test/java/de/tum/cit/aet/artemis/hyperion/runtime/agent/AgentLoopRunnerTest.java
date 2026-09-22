@@ -31,6 +31,13 @@ import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 
 class AgentLoopRunnerTest {
 
+    @Test
+    void toolEnabledEntryPointsRequireSafetyHooks() {
+        assertThat(java.util.Arrays.stream(AgentLoopRunner.class.getMethods()).filter(method -> method.getName().equals("run") || method.getName().equals("runSession")))
+                .allSatisfy(method -> assertThat(method.getParameterTypes()).contains(SubmitVetoAware.class).doesNotContain(Object.class));
+        org.assertj.core.api.Assertions.assertThatNullPointerException().isThrownBy(() -> runner(mock(ChatModel.class)).run("system", "brief", null, 1, () -> false, null, null));
+    }
+
     @ParameterizedTest
     @CsvSource({ "41, 1", "40, 4" })
     void validToolsRemainAvailableThroughoutTheConfiguredTurnBudget(int toolTurns, int callsPerTurn) {

@@ -226,7 +226,7 @@ public class AgentLoopRunner {
         return builder.build();
     }
 
-    public AgentLoopResult run(String systemPrompt, String userPrompt, Object tools, int maxTurns, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
+    public AgentLoopResult run(String systemPrompt, String userPrompt, SubmitVetoAware tools, int maxTurns, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> stepListener) {
         return runSession(systemPrompt, null, userPrompt, tools, maxTurns, cancelled, usageSink, stepListener).result();
     }
@@ -253,8 +253,9 @@ public class AgentLoopRunner {
      * @param stepListener      invoked after every step with a short human-readable progress line
      * @return the loop outcome and the resulting conversation, ready to be passed as {@code priorConversation} to a subsequent call
      */
-    public AgentLoopSession runSession(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, Object tools, int maxTurns, BooleanSupplier cancelled,
-            @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
+    public AgentLoopSession runSession(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, SubmitVetoAware tools, int maxTurns,
+            BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
+        java.util.Objects.requireNonNull(tools, "Tool-enabled sessions require sandbox and submission safety hooks");
         ToolCallbackProvider provider = MethodToolCallbackProvider.builder().toolObjects(tools).build();
         return runSessionWithCallbacks(systemPrompt, priorConversation, userPrompt, tools, provider.getToolCallbacks(), maxTurns, cancelled, usageSink, stepListener);
     }
@@ -264,7 +265,7 @@ public class AgentLoopRunner {
         return runSessionWithCallbacks(systemPrompt, priorConversation, userPrompt, null, new ToolCallback[0], maxTurns, cancelled, usageSink, stepListener);
     }
 
-    private AgentLoopSession runSessionWithCallbacks(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, @Nullable Object tools,
+    private AgentLoopSession runSessionWithCallbacks(String systemPrompt, @Nullable List<Message> priorConversation, String userPrompt, @Nullable SubmitVetoAware tools,
             ToolCallback[] toolCallbacks, int maxTurns, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
         if (chatModel == null) {
             throw new IllegalStateException("No ChatModel is configured. Agentic generation is unavailable.");
@@ -519,12 +520,12 @@ public class AgentLoopRunner {
         return false;
     }
 
-    private static boolean isSandboxSessionTerminated(Object tools) {
-        return tools instanceof SubmitVetoAware sandboxAware && sandboxAware.isSandboxSessionTerminated();
+    private static boolean isSandboxSessionTerminated(SubmitVetoAware tools) {
+        return tools != null && tools.isSandboxSessionTerminated();
     }
 
-    private static boolean isSubmitVetoed(Object tools) {
-        return tools instanceof SubmitVetoAware vetoAware && vetoAware.consumeSubmitVeto();
+    private static boolean isSubmitVetoed(SubmitVetoAware tools) {
+        return tools != null && tools.consumeSubmitVeto();
     }
 
     /**

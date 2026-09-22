@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.dto;
 
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -28,9 +30,19 @@ public record SandboxPolicyDTO(String id, String image, String runtime, long mem
         if (ownerLabel == null || !OWNER_LABEL.matcher(ownerLabel).matches() || containerPrefix == null || !CONTAINER_PREFIX.matcher(containerPrefix).matches()) {
             throw new IllegalArgumentException("Sandbox ownership requires a bounded label and container prefix");
         }
-        writableFilesystems = Map.copyOf(writableFilesystems);
-        if (writableFilesystems.size() > 16 || writableFilesystems.keySet().stream().anyMatch(path -> !path.startsWith("/") || path.equals("/") || path.contains(".."))) {
-            throw new IllegalArgumentException("Sandbox writable mounts must be bounded absolute non-root paths");
+        if (writableFilesystems.size() > 16) {
+            throw new IllegalArgumentException("Sandbox writable mounts must be bounded");
         }
+        Map<String, String> normalized = new HashMap<>();
+        writableFilesystems.forEach((path, options) -> {
+            String mount = Path.of(path).normalize().toString();
+            if (!mount.startsWith("/") || mount.equals("/") || path.contains("..")) {
+                throw new IllegalArgumentException("Sandbox writable mounts must be absolute non-root paths");
+            }
+            if (normalized.putIfAbsent(mount, options) != null) {
+                throw new IllegalArgumentException("Sandbox writable mounts must be distinct after normalization");
+            }
+        });
+        writableFilesystems = Map.copyOf(normalized);
     }
 }

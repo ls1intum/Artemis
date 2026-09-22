@@ -40,9 +40,15 @@ class SandboxPolicyDTOTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "/", "relative", "/workspace/../etc" })
+    @ValueSource(strings = { "/", "/.", "//", "///", "/././", "relative", "/workspace/../etc" })
     void rejectsUnsafeWritableRoots(String path) {
         assertThatIllegalArgumentException().isThrownBy(() -> policy("documents", IMAGE, Map.of(path, "rw")));
+    }
+
+    @Test
+    void normalizesWritableMountsAndRejectsAliasesOfTheSameMount() {
+        assertThat(policy("documents", IMAGE, Map.of("//workspace/./", "rw")).writableFilesystems()).containsExactlyEntriesOf(Map.of("/workspace", "rw"));
+        assertThatIllegalArgumentException().isThrownBy(() -> policy("documents", IMAGE, Map.of("/workspace", "rw", "/workspace/.", "ro")));
     }
 
     @Test

@@ -145,7 +145,17 @@ class AgentLoopToolFailureTest {
         return new ChatResponse(List.of(new Generation(new AssistantMessage("done"))));
     }
 
-    static class CancellingTools {
+    static class CancellingTools implements SubmitVetoAware {
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return false;
+        }
 
         private final AtomicBoolean cancelled;
 
@@ -160,7 +170,17 @@ class AgentLoopToolFailureTest {
         }
     }
 
-    static class RejectedTools {
+    static class RejectedTools implements SubmitVetoAware {
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return false;
+        }
 
         @Tool(name = "edit_file", description = "Edit a file")
         public String edit() {
