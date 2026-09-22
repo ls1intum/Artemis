@@ -62,7 +62,7 @@ describe('CourseIngestionDashboardComponent', () => {
             lastIngestedAt: null,
             typeCounts: [{ type: 'exercise', expected: 2, indexed: 1, missing: 1, orphaned: 0 }],
         };
-        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of({ entities: [], contentPresence: [], missingEntities: [], contentGaps: [] }));
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of({ entities: [], contentPresence: [], missingEntities: [], contentGaps: [], typeCounts: [] }));
 
         fixture.detectChanges();
         await fixture.whenStable();

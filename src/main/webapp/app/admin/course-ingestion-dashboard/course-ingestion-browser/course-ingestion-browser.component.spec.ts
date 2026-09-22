@@ -36,6 +36,12 @@ describe('CourseIngestionBrowserComponent', () => {
         contentPresence: [{ key: 'slides', unitIds: [10, 11] }],
         missingEntities: [{ type: 'exercise', entityId: 5, title: 'Sorting' }],
         contentGaps: [{ lectureUnitId: 11, title: 'Video unit', kind: 'transcript' }],
+        // Deliberately disagrees with the matrix row above: the row calls lecture complete, the live read does not.
+        typeCounts: [
+            { type: 'exercise', expected: 4, indexed: 2, missing: 2, orphaned: 0 },
+            { type: 'lecture', expected: 3, indexed: 2, missing: 1, orphaned: 0 },
+            { type: 'faq', expected: 2, indexed: 1, missing: 0, orphaned: 1 },
+        ],
     };
 
     beforeEach(() => {
@@ -138,7 +144,7 @@ describe('CourseIngestionBrowserComponent', () => {
     });
 
     it('should report an empty course when the index holds nothing for it', async () => {
-        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of({ entities: [], contentPresence: [], missingEntities: [], contentGaps: [] }));
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of({ entities: [], contentPresence: [], missingEntities: [], contentGaps: [], typeCounts: [] }));
 
         fixture.componentRef.setInput('visible', true);
         fixture.detectChanges();
@@ -155,7 +161,7 @@ describe('CourseIngestionBrowserComponent', () => {
         // Nothing indexed at all, so every gap is a missing entity. This is the most broken a course can be and the
         // one an admin most needs to look inside, which reporting it as empty would prevent entirely.
         vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(
-            of({ entities: [], contentPresence: [], missingEntities: [{ type: 'course', entityId: 7, title: 'Dash Test A' }], contentGaps: [] }),
+            of({ entities: [], contentPresence: [], missingEntities: [{ type: 'course', entityId: 7, title: 'Dash Test A' }], contentGaps: [], typeCounts: [] }),
         );
 
         fixture.componentRef.setInput('visible', true);
@@ -166,6 +172,26 @@ describe('CourseIngestionBrowserComponent', () => {
         expect(component.isEmpty()).toBe(false);
         expect(document.querySelector('[data-testid="browser-master-detail"]')).toBeTruthy();
         expect(document.querySelector('[data-testid="browser-empty"]')).toBeFalsy();
+    });
+
+    it('should take its counts from the loaded payload rather than the matrix row', async () => {
+        // A filtered or worst-first matrix row comes from the stored projection, so it can be as old as the last
+        // recompute. Pairing it with the live gap lists let the scoreboard call a type complete while the pane beside
+        // it named what was missing.
+        vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of(browserData));
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.typeCounts()).toEqual(browserData.typeCounts);
+        expect(component.typeCounts().find((count) => count.type === 'lecture')?.missing).toBe(1);
+        // The chip counts the live incompletes (exercise, lecture, faq), not the row's two.
+        expect(component.incompleteTypeCount()).toBe(3);
+    });
+
+    it('should fall back to the matrix row until the live counts arrive', () => {
+        expect(component.typeCounts()).toEqual(course.typeCounts);
     });
 
     it('should drop the loaded data on close so reopening shows current state', async () => {

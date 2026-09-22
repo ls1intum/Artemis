@@ -23,6 +23,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         contentPresence: [{ key: 'slides', unitIds: [11] }],
         missingEntities: [{ type: 'exercise', entityId: 5, title: 'Sorting' }],
         contentGaps: [{ lectureUnitId: 11, title: 'Intro slides', kind: 'transcript' as const }],
+        typeCounts: [{ type: 'exercise', expected: 3, indexed: 2, missing: 1, orphaned: 0 }],
     };
 
     const typeCounts: IngestionTypeCount[] = [{ type: 'exercise', expected: 3, indexed: 2, missing: 1, orphaned: 0 }];
@@ -298,6 +299,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
             contentPresence: [{ key: 'slides', unitIds: [12] }],
             missingEntities: [],
             contentGaps: [],
+            typeCounts: [],
         };
         fixture.componentRef.setInput('data', untitledData);
         component.selection.set({ kind: 'collection', unitId: 12, key: 'slides' });

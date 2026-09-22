@@ -15,7 +15,7 @@ import { BrowserSelection, CourseBrowserData, IngestionCoverage } from 'app/admi
  * The coverage matrix stops at a number. This is where an admin goes to see what is behind it, so everything the modal
  * shows is read live for the one course rather than served from the stored projection the matrix reads.
  *
- * The four datasets load together when the modal opens, because the navigation tree is assembled from all of them and
+ * The datasets load together when the modal opens, because the navigation tree is assembled from all of them and
  * cannot be drawn from a subset. The stored objects behind a tree node are deliberately not part of that load; they are
  * fetched when a node is selected.
  */
@@ -42,8 +42,15 @@ export class CourseIngestionBrowserComponent {
     readonly loading = signal(false);
     readonly error = signal(false);
 
+    /**
+     * The counts every part of this modal reads. The loaded payload diffs them from the same sets as its gap lists, so
+     * once it lands the scoreboard, the chip and the detail pane all agree with the gaps beside them. The matrix row
+     * stands in only until then, because in a stored-projection view it can be as old as the last recompute.
+     */
+    readonly typeCounts = computed(() => this.data()?.typeCounts ?? this.course().typeCounts);
+
     /** How many measured types are not fully indexed, shown as the header chip. */
-    readonly incompleteTypeCount = computed(() => this.course().typeCounts.filter((count) => count.missing > 0 || count.orphaned > 0).length);
+    readonly incompleteTypeCount = computed(() => this.typeCounts().filter((count) => count.missing > 0 || count.orphaned > 0).length);
 
     /** The chip's label key, so one incomplete type does not read as "1 types incomplete" in either language. */
     readonly incompleteTypesLabelKey = computed(() =>

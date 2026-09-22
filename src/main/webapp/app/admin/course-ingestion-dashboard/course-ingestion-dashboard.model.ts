@@ -154,12 +154,18 @@ export interface MissingContent {
     kind: 'slides' | 'transcript';
 }
 
-/** The four datasets the content browser loads when it opens a course. */
+/** Everything the content browser loads when it opens a course, all diffed from one pair of id-sets. */
 export interface CourseBrowserData {
     entities: IndexedEntity[];
     contentPresence: IndexedContentPresence[];
     missingEntities: MissingEntity[];
     contentGaps: MissingContent[];
+    /**
+     * The per-type counts for this course, diffed from the same sets as the gap lists above. The matrix row carries
+     * counts too, but in a stored-projection view those are as old as the last recompute, so pairing them with these
+     * live gaps would let the scoreboard call a type complete while the pane beside it names what is missing.
+     */
+    typeCounts: IngestionTypeCount[];
 }
 
 /**

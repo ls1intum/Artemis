@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageSetLoader.Pr
 /**
  * Assembles everything the content browser needs to open a course.
  * <p>
- * The point of this class is that the two id-sets are loaded exactly once. All four parts of the response derive from
+ * The point of this class is that the two id-sets are loaded exactly once. Every part of the response derives from
  * them, so serving the parts from separate endpoints meant each one reloaded the same sets: opening a single course
  * previously cost around nineteen Weaviate round trips and twenty database queries, roughly half of them repeats of
  * work another part of the same page load had already done.
@@ -56,7 +56,8 @@ public class IngestionBrowserService {
         PresentSets present = setLoader.loadPresent(courseIds);
 
         return new CourseBrowserDataDTO(browserReadService.listIndexedEntitiesForCourse(courseId), contentPresence(courseId, present),
-                gapService.missingEntities(courseId, expected, present), gapService.contentGaps(courseId, expected, present));
+                gapService.missingEntities(courseId, expected, present), gapService.contentGaps(courseId, expected, present),
+                CoverageRecomputeService.typeCountsForCourse(courseId, expected, present));
     }
 
     /**

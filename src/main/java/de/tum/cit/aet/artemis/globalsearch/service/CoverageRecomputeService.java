@@ -259,8 +259,19 @@ public class CoverageRecomputeService {
     private record CoverageComputation(List<IngestionTypeCountDTO> counts, IngestionCoverageStatus status, int gapScore, ZonedDateTime lastIngestedAt) {
     }
 
-    private CoverageComputation computeTypeCounts(Course course, ExpectedSets expected, PresentSets present) {
-        long courseId = course.getId();
+    /**
+     * The per-type expected-vs-present counts for one course.
+     *
+     * Shared with the content browser, which names the same gaps: a number in the matrix and the list behind it are two
+     * views of one computation rather than two computations that ought to agree. Static because the browser needs the
+     * counts alone, without the recompute's status, severity and persistence around them.
+     *
+     * @param courseId the course to diff
+     * @param expected what the database expects indexed, already loaded
+     * @param present  what the index holds, already loaded
+     * @return one count per measured type, in a fixed order
+     */
+    public static List<IngestionTypeCountDTO> typeCountsForCourse(long courseId, ExpectedSets expected, PresentSets present) {
         Map<String, Set<Long>> presentMetadata = present.metadataByCourse().getOrDefault(courseId, Map.of());
 
         List<IngestionTypeCountDTO> counts = new ArrayList<>();
@@ -278,6 +289,12 @@ public class CoverageRecomputeService {
         counts.add(diff(TYPE_TRANSCRIPT, expected.videoUnits().get(courseId), present.transcript().get(courseId)));
         counts.add(presentOnly(TYPE_SEGMENT_SUMMARY, present.segmentSummaries().get(courseId)));
         counts.add(presentOnly(TYPE_UNIT_SUMMARY, present.unitSummaries().get(courseId)));
+        return counts;
+    }
+
+    private CoverageComputation computeTypeCounts(Course course, ExpectedSets expected, PresentSets present) {
+        long courseId = course.getId();
+        List<IngestionTypeCountDTO> counts = typeCountsForCourse(courseId, expected, present);
 
         long totalMissing = counts.stream().mapToLong(IngestionTypeCountDTO::missing).sum();
         long totalOrphaned = counts.stream().mapToLong(IngestionTypeCountDTO::orphaned).sum();
