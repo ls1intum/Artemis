@@ -231,7 +231,6 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: Should not attempt recovery
             verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -250,7 +249,6 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: Should skip (already scheduled)
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
             verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
@@ -271,7 +269,6 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: The failure path (which burns a retry) must not run
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
             verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
@@ -330,7 +327,6 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             // Then: Should NOT attempt recovery because phase changed
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
             verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
     }
@@ -489,7 +485,6 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -578,7 +573,6 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -598,7 +592,6 @@ class LectureContentProcessingSchedulerTest {
             scheduler.processScheduledRetries();
 
             verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 
         @Test
@@ -612,7 +605,6 @@ class LectureContentProcessingSchedulerTest {
 
             scheduler.processScheduledRetries();
 
-            verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
             verify(callbackService, never()).handleProcessingFailureIfStillLive(any(), any(), any(), any());
         }
 

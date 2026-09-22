@@ -298,10 +298,8 @@ public class ProcessingStateCallbackService {
      * Dispatch a single claimed job to Iris, starting as TRANSCRIBING or INGESTING based on existing transcription data.
      *
      * @param state     the claimed processing state
-     * @param claimedAt the marker written by the claim that produced this dispatch, passed down from the claim itself rather than re-read from the entity: the Pyris call
-     *                      below can run long enough for a content update to requeue this same row while it is in flight (ingestionJobToken is still null, so nothing
-     *                      protects it yet), and every outcome here -- success, skip and failure -- is committed through an atomic update matching this exact marker instead
-     *                      of saving the whole detached entity, so a stale write cannot overwrite that requeue.
+     * @param claimedAt the marker written by the claim that produced this dispatch; every outcome here is committed through an atomic update matching it, so a content
+     *                      update requeueing this row while the Pyris call is in flight cannot be lost to a stale write.
      */
     private void dispatchSingleJob(LectureUnitProcessingState state, ZonedDateTime claimedAt) {
         PreparedDispatch prepared = prepareClaimedState(state, claimedAt);
@@ -339,14 +337,10 @@ public class ProcessingStateCallbackService {
             return;
         }
 
-        // Deliberately outside the try above: the run is activated and live from here on, so a failure of the
-        // notification -- or of either read feeding it -- must not be routed into dispatch-failure handling, which
-        // would fail a unit Pyris is actively working on. The badge recovers on the next state change either way.
+        // Outside the try above: the run is live from here on, so a notification failure must not reach
+        // dispatch-failure handling and fail a unit Pyris is working on.
         try {
-            processingStateRepository.findByLectureUnit_Id(unit.getId()).ifPresent(fresh -> {
-                TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(unit.getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-                notifyProcessingStateChange(fresh, txStatus);
-            });
+            processingStateRepository.findByLectureUnit_Id(unit.getId()).ifPresent(this::notifyWithTranscriptionStatus);
         }
         catch (Exception e) {
             log.warn("Dispatched unit {} but could not push the state change to clients: {}", unit.getId(), e.getMessage());
@@ -354,23 +348,9 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * The instant a claim is stamped with, on both transports.
-     * <p>
-     * Truncated to whole seconds because the value written here is later compared for exact equality by the
-     * activation guards ({@link LectureUnitProcessingStateRepository#activatePushDispatch},
-     * {@link LectureUnitProcessingStateRepository#activateClaimedJob}, {@code markSkippedIfStillClaimed} and the
-     * failure guards), while {@code started_at} and {@code retry_eligible_at} are legacy DATETIME columns keeping
-     * only whole seconds on MySQL. An untruncated value is rounded on write and then matches nothing on the way
-     * back out, which orphans every job it dispatches and leaves the row claimed until the abandoned-claim sweep.
-     * <p>
-     * The price of second granularity is that two claims of the same row within one second are indistinguishable.
-     * The cluster-wide dispatch lock serializes push claims, so that is only reachable across a push/pull
-     * crossover, and it is the granularity the pull path has always relied on.
-     * <p>
-     * Deliberately one shared method rather than a truncation at each call site, so both transports cannot drift
-     * apart again and the invariant has a single place to be asserted -- see
-     * {@code ProcessingStateWorkerDispatchTest#claimTimestampCarriesNoSubSecondComponent}, which is what guards it.
-     * A database round-trip test cannot: the server suite runs on PostgreSQL, whose timestamp keeps microseconds.
+     * The instant a claim is stamped with, on both transports. Truncated to whole seconds because {@code started_at}
+     * and {@code retry_eligible_at} are legacy DATETIME columns keeping only whole seconds on MySQL: an untruncated
+     * value is rounded on write and then matches nothing in the guards that compare it for exact equality.
      *
      * @return the claim marker to write and later match on
      */
@@ -378,15 +358,8 @@ public class ProcessingStateCallbackService {
         return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    /**
-     * Fail a dispatch that never reached Pyris, bound to the claim that produced it. The detached entity this is
-     * called with is the pre-dispatch snapshot, so committing it wholesale would overwrite a content requeue or a
-     * newer claim that landed while the dispatch was in flight -- and, after a successful activation, would fail a
-     * run Pyris is actively working on. Matching the claim marker makes all of those no-ops instead.
-     *
-     * @param state     the state as it was claimed
-     * @param claimedAt the marker written by that claim
-     */
+    // Fail a dispatch that never reached Pyris, bound to the claim that produced it: the caller holds the
+    // pre-dispatch snapshot, so committing it wholesale would overwrite a requeue or newer claim landed since.
     private void failDispatchIfStillClaimed(LectureUnitProcessingState state, ZonedDateTime claimedAt) {
         LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, null);
         int updated = processingStateRepository.failDispatchIfStillClaimed(state.getId(), claimedAt, computation.retryCount(), computation.errorKey(),
@@ -395,25 +368,11 @@ public class ProcessingStateCallbackService {
             log.info("Not failing processing state {}: its dispatch claim is no longer current (requeued, re-claimed, or already activated)", state.getId());
             return;
         }
-        long lectureUnitId = state.getLectureUnit().getId();
-        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-        notifyProcessingStateChange(state, txStatus);
-        if (computation.backoffMinutes() != null) {
-            log.info("Unit {} failed to dispatch, scheduled for retry in {} minutes (attempt {}/{})", lectureUnitId, computation.backoffMinutes(), computation.retryCount(),
-                    MAX_PROCESSING_RETRIES);
-        }
+        notifyWithTranscriptionStatus(state);
     }
 
-    /**
-     * Terminally fail a claimed state during preparation, bound to its claim like {@link #failDispatchIfStillClaimed}.
-     * Preparation failures are local problems Pyris cannot fix, so no retry is scheduled -- matching what the plain
-     * {@code markFailed} it replaces did.
-     *
-     * @param state     the state as it was claimed
-     * @param claimedAt the marker written by that claim
-     * @param errorKey  the i18n key describing why the unit cannot be dispatched
-     * @return whether the failure was applied; false when the claim had already moved on
-     */
+    // Terminally fail a claimed state during preparation, bound to its claim like failDispatchIfStillClaimed.
+    // These are local problems Pyris cannot fix, so no retry is scheduled. Returns false if the claim moved on.
     private boolean failPreparationIfStillClaimed(LectureUnitProcessingState state, ZonedDateTime claimedAt, String errorKey) {
         if (processingStateRepository.failPreparationIfStillClaimed(state.getId(), claimedAt, errorKey, ZonedDateTime.now()) == 0) {
             log.info("Not failing processing state {} during preparation: its dispatch claim is no longer current", state.getId());
@@ -571,10 +530,7 @@ public class ProcessingStateCallbackService {
         }
         log.info("Worker {} activated unit {} as {} with token {}", workerBootId, lectureUnitId, targetPhase, maskToken(jobToken));
 
-        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> {
-            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-            notifyProcessingStateChange(state, txStatus);
-        });
+        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(this::notifyWithTranscriptionStatus);
         return true;
     }
 
@@ -623,9 +579,7 @@ public class ProcessingStateCallbackService {
             }
             // Reflects the just-persisted renewal for the notification only; never saved itself.
             state.renewLease(workerBootId);
-            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus)
-                    .orElse(null);
-            notifyProcessingStateChange(state, txStatus);
+            notifyWithTranscriptionStatus(state);
         }
         if (!revoked.isEmpty()) {
             log.warn("Worker {} heartbeat listed {} run(s) Artemis no longer tracks, reporting them revoked", workerBootId, revoked.size());
@@ -711,13 +665,12 @@ public class ProcessingStateCallbackService {
             state.setConfirmedFingerprint(state.getContentFingerprint());
             state.setForceReingest(null);
 
-            TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-            notifyProcessingStateChange(state, txStatus);
+            notifyWithTranscriptionStatus(state);
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
             // Same atomic-claim reasoning as the success branch, via failIfStillLive.
-            if (!handleProcessingFailureIfStillLive(state, errorCode)) {
+            if (!handleProcessingFailureIfStillLive(state, errorCode, null, null)) {
                 log.info("Ignoring completion callback for unit {}: the run is no longer in flight under this token", lectureUnitId);
                 return;
             }
@@ -906,16 +859,6 @@ public class ProcessingStateCallbackService {
 
     // -------------------- Failure Handling --------------------
 
-    /** @see #handleProcessingFailureIfStillLive(LectureUnitProcessingState, String) */
-    boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state) {
-        return handleProcessingFailureIfStillLive(state, null);
-    }
-
-    /** @see #handleProcessingFailureIfStillLive(LectureUnitProcessingState, String, ZonedDateTime, ZonedDateTime) */
-    boolean handleProcessingFailureIfStillLive(LectureUnitProcessingState state, @Nullable String errorCode) {
-        return handleProcessingFailureIfStillLive(state, errorCode, null, null);
-    }
-
     /**
      * Fail a stalled/stuck run atomically, matching id/phase/token observed at read time, plus (optionally) the liveness signal that justified failing it: a heartbeat can
      * advance lastProgressAt/lastUpdated without touching phase or token, so pinning one of them (see {@link LectureUnitProcessingStateRepository#failIfStillLive}) stops a
@@ -954,8 +897,7 @@ public class ProcessingStateCallbackService {
             return false;
         }
 
-        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-        notifyProcessingStateChange(state, txStatus);
+        notifyWithTranscriptionStatus(state);
         if (computation.backoffMinutes() != null) {
             log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), computation.backoffMinutes(), computation.retryCount(),
                     MAX_PROCESSING_RETRIES);
@@ -971,6 +913,12 @@ public class ProcessingStateCallbackService {
      * @param state               the updated processing state
      * @param transcriptionStatus the current transcription status (may be null)
      */
+    /** Push a state change to clients, carrying the unit's current transcription status so the badge never loses it. */
+    private void notifyWithTranscriptionStatus(LectureUnitProcessingState state) {
+        notifyProcessingStateChange(state,
+                transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null));
+    }
+
     private void notifyProcessingStateChange(LectureUnitProcessingState state, TranscriptionStatus transcriptionStatus) {
         LectureUnit unit = state.getLectureUnit();
         if (unit == null || unit.getLecture() == null) {
