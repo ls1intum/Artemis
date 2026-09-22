@@ -624,7 +624,15 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * heartbeat can advance it without touching phase or token, so pinning it stops a heartbeat landing
      * between the caller's re-fetch and this write from still failing a run that just became live again.
      *
+     * @param id                     the processing state to fail
+     * @param phase                  the phase observed when the run was judged stalled/stuck
+     * @param token                  the job token observed at the same time
      * @param expectedLastProgressAt the stall detector's observed {@code lastProgressAt}
+     * @param retryCount             the new retry count to persist
+     * @param errorKey               the i18n error key to persist
+     * @param retryEligibleAt        when the retry becomes eligible, or {@code null} for a permanent failure
+     * @param now                    recorded as the new {@code lastUpdated}
+     * @return 1 when the failure was applied, 0 when the run is no longer the one that was judged stalled/stuck
      * @see #failIfStillLive
      */
     @Modifying
@@ -648,7 +656,15 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * checkpoint or heartbeat can advance it without touching phase or token, so pinning it stops one landing
      * between the caller's re-fetch and this write from still failing a run that just proved it was alive.
      *
+     * @param id                  the processing state to fail
+     * @param phase               the phase observed when the run was judged stalled/stuck
+     * @param token               the job token observed at the same time
      * @param expectedLastUpdated the stuck detector's observed {@code lastUpdated}
+     * @param retryCount          the new retry count to persist
+     * @param errorKey            the i18n error key to persist
+     * @param retryEligibleAt     when the retry becomes eligible, or {@code null} for a permanent failure
+     * @param now                 recorded as the new {@code lastUpdated}
+     * @return 1 when the failure was applied, 0 when the run is no longer the one that was judged stalled/stuck
      * @see #failIfStillLive
      */
     @Modifying
