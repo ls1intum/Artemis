@@ -1773,13 +1773,22 @@ public class LocalVCServletService {
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
+            // The exercise is what the solution and test repositories are looked up by. It used to be passed as null,
+            // which threw a NullPointerException before any of that was reached.
+            ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(localVCRepositoryUri.getProjectKey(), false);
             var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
-                    localVCRepositoryUri.toString(), null);
+                    localVCRepositoryUri.toString(), exercise);
             var ipAddress = servletRequest.getRemoteAddr();
             vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }
         catch (LocalVCAuthException | EntityNotFoundException ignored) {
-            // Caught when: 1) no user, or 2) no participation was found. In both cases it does not make sense to write a log
+            // Caught when: 1) no user, or 2) no exercise or participation was found. In none of these cases does it make sense to write a log
+        }
+        catch (RuntimeException e) {
+            // This runs while a failed authentication is being answered, so nothing that happens here may replace the
+            // 401 the caller is about to send. Writing the access log is best effort by nature: it describes an attempt
+            // that was already rejected.
+            log.warn("Could not write the VCS access log for a failed authentication on {}: {}", servletRequest.getRequestURI(), e.getMessage());
         }
     }
 
