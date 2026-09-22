@@ -21,15 +21,11 @@ await rm(destination, { recursive: true, force: true });
 await mkdir(destination, { recursive: true });
 const [packed] = JSON.parse(execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', destination], { cwd: resolve(root, 'dist-pack'), encoding: 'utf8' }));
 const files = packed.files.map(({ path }) => path);
-for (const required of ['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'styles.css', manifest.exports['.'].types.slice(2), manifest.exports['.'].default.slice(2)]) {
+for (const required of ['package.json', 'README.md', 'LICENSE', 'styles.css', manifest.exports['.'].types.slice(2), manifest.exports['.'].default.slice(2)]) {
     assert.ok(files.includes(required), `Missing published file: ${required}`);
 }
 for (const path of files) {
-    assert.match(
-        path,
-        /^(?:package\.json|README\.md|CHANGELOG\.md|LICENSE|styles\.css|fesm2022\/[^/]+\.mjs(?:\.map)?|types\/[^/]+\.d\.ts)$/u,
-        `Unexpected published file: ${path}`,
-    );
+    assert.match(path, /^(?:package\.json|README\.md|LICENSE|styles\.css|fesm2022\/[^/]+\.mjs(?:\.map)?|types\/[^/]+\.d\.ts)$/u, `Unexpected published file: ${path}`);
 }
 const tarball = resolve(destination, packed.filename);
 const options = { cwd: root, stdio: 'inherit' };

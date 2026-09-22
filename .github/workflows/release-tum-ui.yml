@@ -26,14 +26,14 @@ jobs:
       filename: ${{ steps.artifact.outputs.filename }}
       node: ${{ steps.artifact.outputs.node }}
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
           run_install: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
@@ -51,7 +51,6 @@ jobs:
           assert.equal(semver.valid(version), version, 'Version must be canonical SemVer');
           assert.equal(semver.prerelease(version), null, 'Use a regular release version');
           assert.equal(semver.parse(version).build.length, 0, 'Build metadata is not a release identity');
-          assert.ok(readFileSync('packages/tum-ui/CHANGELOG.md', 'utf8').includes(`\n## ${version}\n`), 'Changelog must include the release version');
           if (process.env.RELEASE_EVENT === 'push') assert.equal(process.env.RELEASE_REF, `tum-ui-v${version}`);
           NODE
           if [ "$RELEASE_EVENT" = push ]; then
@@ -72,7 +71,7 @@ jobs:
           const node = readFileSync('.nvmrc', 'utf8').trim();
           appendFileSync(process.env.GITHUB_OUTPUT, `filename=${filename}\nintegrity=${integrity}\nnode=${node}\n`);
           NODE
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@v7
         with:
           name: tum-ui-package
           path: build/tum-ui-package/
@@ -90,24 +89,24 @@ jobs:
       matrix:
         peers: [minimum, latest]
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
           run_install: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      - uses: actions/download-artifact@v8
         with:
           name: tum-ui-package
           path: build/tum-ui-package
       - run: pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
       - run: pnpm run tum-ui:test:consumer ${{ matrix.peers }}
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: tum-ui-consumer-${{ matrix.peers }}
@@ -126,12 +125,12 @@ jobs:
       id-token: write
     steps:
       # Keep package code out of the credentialed job.
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ needs.build.outputs.node }}
           registry-url: https://registry.npmjs.org/
           package-manager-cache: false
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      - uses: actions/download-artifact@v8
         with:
           name: tum-ui-package
           path: artifact

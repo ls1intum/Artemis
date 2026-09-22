@@ -167,40 +167,19 @@ jobs:
         run: pnpm --dir packages/tum-ui run storybook:docs:test:built
         if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Validate TUM UI Package Artifact
+        id: tum-ui-package
         run: pnpm run tum-ui:pack:check
         if: ${{ !cancelled() && inputs.has_tum_ui }}
-
-  tum-ui-consumer:
-    name: TUM UI npm consumer (${{ matrix.peers }})
-    if: inputs.has_tum_ui
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        peers: [minimum, latest]
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-          persist-credentials: false
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
-        with:
-          run_install: false
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '${{ env.node }}'
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run tum-ui:pack:check
-      - run: pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
-      - run: pnpm run tum-ui:test:consumer ${{ matrix.peers }}
+      - name: Test TUM UI With Minimum Peer Versions
+        run: pnpm run tum-ui:test:consumer minimum
+        if: ${{ !cancelled() && inputs.has_tum_ui && steps.tum-ui-package.outcome == 'success' }}
+      - name: Test TUM UI With Latest Compatible Peer Versions
+        run: pnpm run tum-ui:test:consumer latest
+        if: ${{ !cancelled() && inputs.has_tum_ui && steps.tum-ui-package.outcome == 'success' }}
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: failure() && inputs.has_tum_ui
         with:
-          name: tum-ui-consumer-${{ matrix.peers }}
+          name: tum-ui-consumer
           path: build/test-results/tum-ui-consumer/
           if-no-files-found: ignore
           retention-days: 7
