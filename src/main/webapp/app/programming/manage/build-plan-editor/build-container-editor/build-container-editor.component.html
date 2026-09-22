@@ -59,7 +59,8 @@
                 severity="danger"
                 variant="outlined"
                 [icon]="faTrash"
-                (clicked)="remove.set()"
+                data-testid="remove-container-button"
+                (clicked)="remove.emit()"
                 [tumUiTooltip]="'artemisApp.programmingExercise.buildContainersEditor.removeContainer' | artemisTranslate"
             />
         }

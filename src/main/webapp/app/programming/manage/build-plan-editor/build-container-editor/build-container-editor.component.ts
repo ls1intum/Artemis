@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -41,7 +41,8 @@ export class BuildContainerEditorComponent {
     readonly timeoutMinValue = input<number | undefined>(undefined);
     readonly timeoutMaxValue = input<number | undefined>(undefined);
 
-    readonly remove = model<void>();
+    /** emitted when the instructor asks to remove this container from the build plan */
+    readonly remove = output<void>();
 
     /** the repository types an instructor can check out into a container, in the order they are offered */
     protected readonly repositoryTypes = Object.keys(BUILD_CONTAINER_REPOSITORY_TYPE) as BuildContainerRepositoryType[];
