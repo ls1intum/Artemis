@@ -1,5 +1,5 @@
 {
-    "plugins": ["stylelint-scss"],
+    "plugins": ["stylelint-scss", "./rules/tum-ui-stylelint.mjs", "./rules/design-system-private-classes-stylelint.mjs"],
     "extends": ["stylelint-config-standard-scss", "stylelint-config-html"],
     "overrides": [
         {
@@ -71,24 +71,10 @@
             }
         },
         {
-            "files": ["src/main/webapp/app/**/*.scss", "src/main/webapp/app/**/*.css"],
+            "files": ["src/main/webapp/**/*.scss", "src/main/webapp/**/*.css"],
             "rules": {
-                "selector-disallowed-list": [
-                    ["/\\.tum-ui-[\\w-]+/", "/\\[class[^\\]]*tum-ui-/"],
-                    {
-                        "message": "Do not target private TUM UI classes. Use a public component input, a --tumaet-ui-* theme property, or fix the package."
-                    }
-                ],
-                "rule-selector-property-disallowed-list": [
-                    {
-                        "/(?![^()]*\\))(?:(?:^|[\\s>+~,])tum-ui-[\\w-]+|\\[(?:tumUiButton|tumUiInput|tumUiTextarea)\\])(?:[.#][\\w-]+|\\[[^\\]]*\\]|:[\\w-]+(?:\\([^()]*\\))?)*\\s*(?=,|$)/": [
-                            "/^(?:all|appearance|padding|background|color|border|font|line-height|letter-spacing|word-spacing|box-shadow|text-shadow|text-transform|text-decoration|text-indent|text-underline-offset|opacity|filter|backdrop-filter|mix-blend-mode|hyphens|list-style|outline|fill|stroke)(?:-|$)/"
-                        ]
-                    },
-                    {
-                        "message": "TUM UI owns appearance. Use public inputs or extend the package; host layout remains allowed."
-                    }
-                ]
+                "design-system/no-restyle": true,
+                "design-system/no-private-classes": "tum-ui-"
             }
         }
     ],

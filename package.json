@@ -78,6 +78,7 @@
         "@arethetypeswrong/cli": "catalog:",
         "@eslint/js": "10.0.1",
         "@playwright/test": "catalog:",
+        "@shadcn/lint": "0.1.5",
         "@tailwindcss/postcss": "catalog:",
         "@types/d3-shape": "3.2.0",
         "@types/lodash-es": "4.17.12",
@@ -105,7 +106,9 @@
         "ng-packagr": "catalog:",
         "postcss": "catalog:",
         "postcss-html": "2.0.0",
+        "postcss-resolve-nested-selector": "0.1.6",
         "postcss-scss": "4.0.9",
+        "postcss-selector-parser": "7.1.6",
         "prettier": "3.9.8",
         "publint": "catalog:",
         "rimraf": "6.1.3",
@@ -198,6 +201,6 @@
         "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped",
         "migrate:status": "node supporting_scripts/migration/migrate.mjs status",
         "migrate:check": "node supporting_scripts/migration/migrate.mjs check",
-        "stylelint": "stylelint \"src/main/webapp/app/**/*.{css,scss}\" && pnpm run tum-ui:stylelint"
+        "stylelint": "stylelint \"src/main/webapp/**/*.{css,scss}\" && pnpm run tum-ui:stylelint"
     }
 }

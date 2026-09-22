@@ -1,22 +1,24 @@
-<tum-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
-    <input
-        #searchInput
-        tumUiInput
-        tumUiInputSize="small"
-        class="search-input"
-        type="text"
-        [placeholder]="searchBarPlaceholder()"
-        [attr.aria-label]="searchBarPlaceholder()"
-        [(ngModel)]="searchString"
-        (keydown)="onKeyDown($event)"
-        (focusout)="onInputFocusOut()"
-        (focusin)="onInputFocusIn()"
-    />
-    @if (firstSuggestedStudentsPageLoading()) {
-        <!-- The field owns one icon slot, so the busy indicator sits on the trailing edge on its own. -->
-        <fa-icon class="search-busy" [icon]="faSpinner" animation="spin" aria-hidden="true" />
-    }
-</tum-ui-icon-field>
+<div class="search-field">
+    <tum-ui-icon-field [icon]="faMagnifyingGlass">
+        <input
+            #searchInput
+            tumUiInput
+            tumUiInputSize="small"
+            data-testid="registration-search-input"
+            type="text"
+            [placeholder]="searchBarPlaceholder()"
+            [attr.aria-label]="searchBarPlaceholder()"
+            [(ngModel)]="searchString"
+            (keydown)="onKeyDown($event)"
+            (focusout)="onInputFocusOut()"
+            (focusin)="onInputFocusIn()"
+        />
+        @if (firstSuggestedStudentsPageLoading()) {
+            <!-- The field owns one icon slot, so the busy indicator sits on the trailing edge on its own. -->
+            <fa-icon class="search-busy" [icon]="faSpinner" animation="spin" aria-hidden="true" />
+        }
+    </tum-ui-icon-field>
+</div>
 
 <ng-template #panelTemplate>
     <div class="search-panel">

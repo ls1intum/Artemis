@@ -16,7 +16,7 @@ export class ExamExerciseGroupsPage {
     }
 
     async clickEditGroup(groupID: number) {
-        await this.page.click(`#group-${groupID} .edit-group`);
+        await this.page.locator(`#group-${groupID}`).getByTestId('edit-group').click();
     }
 
     /**
@@ -28,12 +28,12 @@ export class ExamExerciseGroupsPage {
     private async clickRowAction(groupID: number, exerciseID: number, actionId: string) {
         const row = this.page.locator(`#group-${groupID} #exercise-${exerciseID}`);
         const inlineAction = row.locator(`[data-testid="exercise-action-${actionId}"]`);
-        const overflowTrigger = row.locator('.action-more');
+        const overflowTrigger = row.getByTestId('action-more');
         // The bar only decides what collapses once its ResizeObserver has measured the row, so right after the row
         // attaches neither the inline action nor the (hidden until needed) ellipsis trigger is visible yet. The
         // `:visible` filter is what makes this wait correct: the inline action always precedes the trigger in the DOM,
         // so an unfiltered `.first()` would latch onto it even once it has collapsed and then time out.
-        await row.locator(`[data-testid="exercise-action-${actionId}"]:visible, .action-more:visible`).first().waitFor({ state: 'visible', timeout: 30000 });
+        await row.locator(`[data-testid="exercise-action-${actionId}"]:visible, [data-testid="action-more"]:visible`).first().waitFor({ state: 'visible', timeout: 30000 });
         if (await inlineAction.isVisible()) {
             await inlineAction.click();
             return;
@@ -55,7 +55,7 @@ export class ExamExerciseGroupsPage {
     }
 
     async clickDeleteGroup(groupID: number, groupName: string) {
-        await this.page.click(`#group-${groupID} .delete-group`);
+        await this.page.locator(`#group-${groupID}`).getByTestId('delete-group').click();
         const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', groupName);

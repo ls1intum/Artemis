@@ -5,24 +5,24 @@
                 <th class="finish-jobs-column-tiny">
                     <span></span>
                 </th>
-                <th [tumUiSortableColumn]="'name'" class="finish-jobs-column-strings">
-                    <span jhiTranslate="artemisApp.buildQueue.buildJob.name"></span>
+                <th [tumUiSortableColumn]="'name'" class="min-w-[180px] max-w-[300px] overflow-hidden">
+                    <span class="truncate" jhiTranslate="artemisApp.buildQueue.buildJob.name"></span>
                 </th>
-                <th [tumUiSortableColumn]="'buildStatus'" class="finish-jobs-column-status">
+                <th [tumUiSortableColumn]="'buildStatus'" class="min-w-[180px] max-w-[240px]">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.status"></span>
                 </th>
-                <th [tumUiSortableColumn]="'buildAgentAddress'" class="finish-jobs-column-strings">
-                    <span jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
+                <th [tumUiSortableColumn]="'buildAgentAddress'" class="min-w-[180px] max-w-[300px] overflow-hidden">
+                    <span class="truncate" jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
                 </th>
                 @if (showCourseId()) {
-                    <th [tumUiSortableColumn]="'courseId'" class="finish-jobs-column">
+                    <th [tumUiSortableColumn]="'courseId'" class="whitespace-nowrap">
                         <span jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
                     </th>
                 }
                 <th class="finish-jobs-column">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.duration"></span>
                 </th>
-                <th [tumUiSortableColumn]="'buildCompletionDate'" class="finish-jobs-column">
+                <th [tumUiSortableColumn]="'buildCompletionDate'" class="whitespace-nowrap">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.completion"></span>
                 </th>
                 <th class="finish-jobs-column">
@@ -100,7 +100,7 @@
                         <span class="text-muted-color">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short' : true }}</span>
                     </td>
                     <td class="finish-jobs-column-strings">
-                        <tum-ui-button variant="text" size="small" class="detail-link" (clicked)="onViewLogs($event, finishedBuildJob.id)">
+                        <tum-ui-button variant="text" size="small" (clicked)="onViewLogs($event, finishedBuildJob.id)">
                             <span jhiTranslate="artemisApp.result.buildLogs.viewLogs"></span>
                         </tum-ui-button>
                     </td>

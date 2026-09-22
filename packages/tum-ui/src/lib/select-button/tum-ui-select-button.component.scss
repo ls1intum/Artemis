@@ -13,7 +13,7 @@
     align-items: center;
     justify-content: center;
     gap: calc(var(--tumaet-ui-spacing) * 2);
-    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 4);
+    padding: var(--tum-ui-density-padding-block, calc(var(--tumaet-ui-spacing) * 2)) var(--tum-ui-density-option-padding-inline, calc(var(--tumaet-ui-spacing) * 4));
     font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
@@ -75,9 +75,9 @@
 }
 
 :host([data-size='small']) .tum-ui-select-button-option {
-    padding: calc(var(--tumaet-ui-spacing) * 1.5) calc(var(--tumaet-ui-spacing) * 2.5);
+    padding: var(--tum-ui-density-padding-block, calc(var(--tumaet-ui-spacing) * 1.5)) var(--tum-ui-density-option-padding-inline, calc(var(--tumaet-ui-spacing) * 2.5));
 }
 
 :host([data-size='large']) .tum-ui-select-button-option {
-    padding: calc(var(--tumaet-ui-spacing) * 2.5) calc(var(--tumaet-ui-spacing) * 4);
+    padding: var(--tum-ui-density-padding-block, calc(var(--tumaet-ui-spacing) * 2.5)) var(--tum-ui-density-option-padding-inline, calc(var(--tumaet-ui-spacing) * 4));
 }

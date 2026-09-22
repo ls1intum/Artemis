@@ -1,3 +1,4 @@
+import { tumUiDesignSystem, tumUiDesignSystemRules } from './rules/tum-ui-design-system.mjs';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
@@ -615,12 +616,14 @@ export default tseslint.config(
         files: ['src/main/webapp/app/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         processor: angular.processInlineTemplates,
+        plugins: { 'design-system': tumUiDesignSystem },
+        rules: { ...tumUiDesignSystemRules, 'localRules/tum-ui-private-classes': 'error' },
     },
     {
         files: ['src/main/webapp/app/**/*.html'],
         languageOptions: { parser: angularTemplateParser },
-        plugins: { localRules: localRulesPlugin },
-        rules: { 'localRules/tum-ui-no-restyle': 'error' },
+        plugins: { localRules: localRulesPlugin, 'design-system': tumUiDesignSystem },
+        rules: { ...tumUiDesignSystemRules, 'localRules/tum-ui-private-classes': 'error' },
     },
     {
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root

@@ -5,7 +5,7 @@
     </header>
     <textarea
         tumUiTextarea
-        class="assessment-note__textarea"
+        class="w-full min-w-0 resize-y"
         rows="3"
         (input)="onAssessmentNoteInput($event)"
         [value]="assessmentNote()?.note ?? ''"

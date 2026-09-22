@@ -14,5 +14,7 @@ export default defineConfig({
     test: {
         include: ['rules/**/*.spec.mjs', 'supporting_scripts/**/*.spec.mjs'],
         environment: 'node',
+        // These suites compile Sass and construct TypeScript programs; bound concurrent compiler work.
+        maxWorkers: 2,
     },
 });

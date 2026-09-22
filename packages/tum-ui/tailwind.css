@@ -201,3 +201,22 @@
         transition: none;
     }
 }
+
+/* Density is inherited across projected views; the component retains its size and typography API. */
+[data-tum-ui-density='compact'] {
+    --tum-ui-density-padding-block: 0;
+}
+
+[data-tum-ui-density='compact'] :is(.tum-ui-btn, .tum-ui-select-trigger, .tum-ui-select-button, .tum-ui-select-button-option, input.tum-ui-input) {
+    box-sizing: border-box;
+    height: 1.75rem;
+    min-height: 1.75rem;
+    padding-block: 0;
+}
+
+/* An enclosing layout container, not the viewport, determines when segmented controls need less space. */
+@container (max-width: 40rem) {
+    [data-tum-ui-density='compact'] .tum-ui-select-button {
+        --tum-ui-density-option-padding-inline: calc(var(--tumaet-ui-spacing) * 2);
+    }
+}

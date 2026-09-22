@@ -68,3 +68,4 @@ export { TumUiTagComponent, type TumUiTagSeverity } from './lib/tag/tum-ui-tag.c
 export { TumUiToggleSwitchComponent } from './lib/toggle-switch/tum-ui-toggle-switch.component';
 export { TumUiTooltipDirective } from './lib/tooltip/tum-ui-tooltip.directive';
 export type { TumUiOverlayPlacement } from './lib/overlay/tum-ui-overlay.service';
+export { TumUiDensityDirective } from './lib/density/tum-ui-density.directive';

@@ -147,7 +147,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
         tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(of([nextPageStudent]));
 
-        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        const input = fixture.nativeElement.querySelector('[data-testid="registration-search-input"]') as HTMLInputElement;
         input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('ada');
         fixture.detectChanges();
@@ -174,7 +174,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
         tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(throwError(() => new Error('next page failed')));
 
-        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        const input = fixture.nativeElement.querySelector('[data-testid="registration-search-input"]') as HTMLInputElement;
         input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('ada');
         fixture.detectChanges();
@@ -200,7 +200,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     it('should reset suggestion state when the search string is empty', async () => {
         tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
 
-        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        const input = fixture.nativeElement.querySelector('[data-testid="registration-search-input"]') as HTMLInputElement;
         input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('  ada');
         fixture.detectChanges();
@@ -219,7 +219,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     it('should close the panel on focus out and reopen it on focus in when suggestions exist', async () => {
         tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
 
-        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        const input = fixture.nativeElement.querySelector('[data-testid="registration-search-input"]') as HTMLInputElement;
 
         input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('ada');
@@ -256,7 +256,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     it('should update the highlight with arrow keys and emit the selected student on enter after loading suggestions', async () => {
         tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
         const emitSpy = vi.spyOn(component.onStudentSelected, 'emit');
-        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        const input = fixture.nativeElement.querySelector('[data-testid="registration-search-input"]') as HTMLInputElement;
 
         input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('ada');
@@ -296,7 +296,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
     it('should select the first suggestion when arrow down is pressed without an active selection', async () => {
         tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
-        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        const input = fixture.nativeElement.querySelector('[data-testid="registration-search-input"]') as HTMLInputElement;
 
         input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('ada');
@@ -315,7 +315,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
     it('should keep the selection undefined when arrow up is pressed without an active selection', async () => {
         tutorialGroupApiServiceMock.searchUnregisteredStudents.mockReturnValue(of([firstStudent, secondStudent]));
-        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        const input = fixture.nativeElement.querySelector('[data-testid="registration-search-input"]') as HTMLInputElement;
 
         input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('ada');

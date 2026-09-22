@@ -108,7 +108,7 @@
         border-color: color-mix(in srgb, var(--warning) 50%, transparent);
     }
 
-    // Activation target: everything except the cancel button, which is its sibling (see __cancel) rather than a
+    // Activation target: everything except the cancel button, which is its sibling rather than a
     // descendant — a role="button" element must not contain another interactive control.
     &__target {
         display: flex;
@@ -120,13 +120,6 @@
         &--with-cancel {
             padding-right: 5.5rem;
         }
-    }
-
-    // Pinned to the card's own top-right corner, where it sat when it was still part of the title row.
-    &__cancel {
-        position: absolute;
-        top: 0.65rem;
-        right: 0.8rem;
     }
 
     // Secondary accent like the modal's flow card (variant-flow-card__arrow / __title--target).

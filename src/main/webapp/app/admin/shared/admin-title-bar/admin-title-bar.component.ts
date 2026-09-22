@@ -1,3 +1,4 @@
+import { TumUiDensityDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, Signal, TemplateRef, computed, inject } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { AdminTitleBarService } from 'app/admin/shared/admin-title-bar.service';
@@ -7,7 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-admin-title-bar',
     templateUrl: './admin-title-bar.component.html',
     styleUrl: './admin-title-bar.component.scss',
-    imports: [NgTemplateOutlet, TranslateDirective],
+    imports: [TumUiDensityDirective, NgTemplateOutlet, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminTitleBarComponent {

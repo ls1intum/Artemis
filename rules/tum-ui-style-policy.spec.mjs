@@ -1,3 +1,4 @@
+import { URL } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { parse as parseYaml } from 'yaml';
 import { describe, expect, it } from 'vitest';
@@ -5,7 +6,7 @@ import stylelint from 'stylelint';
 import { ESLint } from 'eslint';
 import angular from 'angular-eslint';
 import tsParser from '@typescript-eslint/parser';
-import rule from './tum-ui-no-restyle.mjs';
+import { tumUiDesignSystem, tumUiDesignSystemRules } from './tum-ui-design-system.mjs';
 
 const consumer = 'src/main/webapp/app/example/example.component.scss';
 const packageFile = 'packages/tum-ui/src/lib/button/tum-ui-button.directive.scss';
@@ -14,15 +15,15 @@ async function lintCss(code, filename = consumer) {
     const config = await stylelint.resolveConfig(filename);
     // Exercise the real scoped policy, without unrelated formatting rules.
     const rules = Object.fromEntries(
-        ['selector-disallowed-list', 'rule-selector-property-disallowed-list'].filter((name) => config.rules[name]).map((name) => [name, config.rules[name]]),
+        ['design-system/no-private-classes', 'design-system/no-restyle'].filter((name) => config.rules[name]).map((name) => [name, config.rules[name]]),
     );
-    return stylelint.lint({ code, codeFilename: filename, config: { customSyntax: 'postcss-scss', rules } });
+    return stylelint.lint({ code, codeFilename: filename, config: { customSyntax: 'postcss-scss', plugins: config.plugins, rules } });
 }
 
 describe('TUM UI consumer policy wiring', () => {
     it('runs consumer and package CSS checks in CI even for application-only changes', () => {
         const { scripts } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-        expect(scripts.stylelint).toContain('src/main/webapp/app/**/*.{css,scss}');
+        expect(scripts.stylelint).toContain('src/main/webapp/**/*.{css,scss}');
         expect(scripts.stylelint).toContain('pnpm run tum-ui:stylelint');
         const workflow = parseYaml(readFileSync(new URL('../.github/workflows/ci-quality.yml', import.meta.url), 'utf8'));
         const step = workflow.jobs['client-style'].steps.find((candidate) => candidate.run === 'pnpm run stylelint');
@@ -70,11 +71,16 @@ describe('TUM UI consumer policy wiring', () => {
         expect((await lintCss(code)).errored).toBe(false);
     });
 
+    it.each(['src/main/webapp/content/scss/global.scss', 'src/main/webapp/themes.css'])('protects global consumer styles outside app/: %s', async (filename) => {
+        expect((await lintCss('tum-ui-button { padding: 10px; }', filename)).errored).toBe(true);
+        expect((await lintCss('.tum-ui-btn { display: none; }', filename)).errored).toBe(true);
+    });
+
     it('lets the package implement its own appearance', async () => {
         // No consumer-only rules must leak into the package config.
         const config = await stylelint.resolveConfig(packageFile);
-        expect(config.rules['selector-disallowed-list']).toBeUndefined();
-        expect(config.rules['rule-selector-property-disallowed-list']).toBeUndefined();
+        expect(config.rules['design-system/no-private-classes']).toBeUndefined();
+        expect(config.rules['design-system/no-restyle']).toBeUndefined();
     });
 
     it('enables the Angular processor and template rule for consumers, not package implementations', async () => {
@@ -82,9 +88,9 @@ describe('TUM UI consumer policy wiring', () => {
         const ts = await eslint.calculateConfigForFile('src/main/webapp/app/example/example.component.ts');
         expect(ts.processor).toBe(angular.processInlineTemplates);
         const html = await eslint.calculateConfigForFile('src/main/webapp/app/example/example.component.html');
-        expect(html.rules['localRules/tum-ui-no-restyle'][0]).toBe(2);
+        expect(html.rules['design-system/no-restyle'][0]).toBe(2);
         const kit = await eslint.calculateConfigForFile('packages/tum-ui/src/lib/button/tum-ui-button.component.html');
-        expect(kit.rules['localRules/tum-ui-no-restyle']).toBeUndefined();
+        expect(kit.rules['design-system/no-restyle']).toBeUndefined();
     });
 
     it('reports inline templates at the original TypeScript location using the framework processor', async () => {
@@ -95,8 +101,8 @@ describe('TUM UI consumer policy wiring', () => {
                 {
                     files: ['**/*.html'],
                     languageOptions: { parser: angular.templateParser },
-                    plugins: { localRules: { rules: { 'tum-ui-no-restyle': rule } } },
-                    rules: { 'localRules/tum-ui-no-restyle': 'error' },
+                    plugins: { 'design-system': tumUiDesignSystem },
+                    rules: tumUiDesignSystemRules,
                 },
             ],
         });
@@ -107,6 +113,6 @@ describe('TUM UI consumer policy wiring', () => {
 export class ExampleComponent {}`;
         const [result] = await eslint.lintText(code, { filePath: 'example.component.ts' });
         expect(result.messages).toHaveLength(1);
-        expect(result.messages[0]).toMatchObject({ ruleId: 'localRules/tum-ui-no-restyle', messageId: 'appearance', line: 3 });
+        expect(result.messages[0]).toMatchObject({ ruleId: 'design-system/no-restyle', messageId: 'spacingClassWithSizes', line: 3 });
     });
 });

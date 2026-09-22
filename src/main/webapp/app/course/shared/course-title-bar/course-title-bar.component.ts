@@ -1,3 +1,4 @@
+import { TumUiDensityDirective } from '@tumaet/ui-angular';
 import { Component, Signal, TemplateRef, computed, inject, input } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
@@ -10,7 +11,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
     selector: 'jhi-course-title-bar',
     templateUrl: './course-title-bar.component.html',
     styleUrls: ['./course-title-bar.component.scss'],
-    imports: [NgTemplateOutlet, CourseTitleBarTitleComponent],
+    imports: [TumUiDensityDirective, NgTemplateOutlet, CourseTitleBarTitleComponent],
 })
 export class CourseTitleBarComponent {
     readonly displayStyle = computed(() => (this.isExamStarted() ? 'none' : 'flex'));

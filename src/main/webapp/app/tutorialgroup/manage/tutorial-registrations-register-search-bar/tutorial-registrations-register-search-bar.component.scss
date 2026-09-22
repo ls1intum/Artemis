@@ -1,13 +1,6 @@
 .search-field {
     width: 100%;
 
-    .search-input {
-        width: 100%;
-
-        // Leave room for the leading search icon the field renders over the input.
-        padding-inline-start: 2.25rem;
-    }
-
     .search-busy {
         position: absolute;
         top: 50%;

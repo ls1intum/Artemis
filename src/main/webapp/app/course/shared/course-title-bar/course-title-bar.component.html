@@ -1,9 +1,6 @@
-<!-- Height, vertical padding, action-control sizing and the surrounding dividers come from
-     `title-bar-frame` / `title-bar-compact-controls` in the component stylesheet, so this bar stays identical
-     to the admin title bar. The frame applies to the row below, not to this element: a page may also project a
-     toolbar, which renders as a second row and makes the bar taller than `--title-bar-height` by design. -->
+<!-- Shared frame sizing and legacy controls live in the stylesheet; tumUiDensity owns TUM UI control sizing. -->
 <div id="course-title-bar" class="module-bg px-3 rounded rounded-3 sticky-top" [style.display]="displayStyle()">
-    <div class="course-title-bar-row">
+    <div class="course-title-bar-row" tumUiDensity="compact">
         <div class="title-bar-title align-self-center d-flex">
             <div class="align-self-center">
                 @if (customTitleTemplate()) {
@@ -23,7 +20,7 @@
     </div>
 
     @if (customToolbarTemplate()) {
-        <div class="mt-2 pt-2 border-top">
+        <div class="mt-2 pt-2 border-top" tumUiDensity="compact">
             <ng-container *ngTemplateOutlet="customToolbarTemplate()!" />
         </div>
     }

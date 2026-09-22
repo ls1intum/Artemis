@@ -29,14 +29,16 @@
         <!-- These all route to editor-only workflows, so they stay hidden from tutors. -->
         @if (course()?.isAtLeastEditor) {
             <!-- Both of these are tabs of the "+" dialog as well, so a narrow bar can drop them. -->
-            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
-                <fa-icon [icon]="faFileImport" />
-                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
-            </tum-ui-button>
-            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
-                <fa-icon [icon]="faFileExport" />
-                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
-            </tum-ui-button>
+            <span class="title-bar-optional-control"
+                ><tum-ui-button size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
+                    <fa-icon [icon]="faFileImport" />
+                    <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.import"></span> </tum-ui-button
+            ></span>
+            <span class="title-bar-optional-control"
+                ><tum-ui-button size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
+                    <fa-icon [icon]="faFileExport" />
+                    <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.export"></span> </tum-ui-button
+            ></span>
             <tum-ui-button size="small" [attr.data-testid]="'create-exercise-button'" (clicked)="openCreateModal()">
                 <fa-icon [icon]="faPlus" />
                 <span class="ms-1 title-bar-collapsible-label" jhiTranslate="global.generic.create"></span>
