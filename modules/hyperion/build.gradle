@@ -6,6 +6,8 @@ dependencies {
     api 'org.apache.commons:commons-compress:1.28.0'
     implementation 'org.slf4j:slf4j-api'
     implementation 'tools.jackson.core:jackson-databind'
+    implementation 'tools.jackson.dataformat:jackson-dataformat-xml'
+    implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
 }
 
 dependencies {

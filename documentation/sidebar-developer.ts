@@ -79,7 +79,7 @@ const sidebars: SidebarsConfig = {
         {
             type: 'category',
             label: 'Hyperion',
-            items: ['hyperion/consistency-check', 'hyperion/quiz-generation'],
+            items: ['hyperion/consistency-check', 'hyperion/quiz-generation', 'hyperion/worker-modules'],
         },
     ],
 };

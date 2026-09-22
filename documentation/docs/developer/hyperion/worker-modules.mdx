@@ -1,0 +1,116 @@
+---
+id: worker-modules
+title: AI Worker and Hyperion Module Boundaries
+sidebar_label: Worker Modules
+---
+
+The worker follows Artemis's package-by-feature conventions. `aiworker` owns execution
+infrastructure; `hyperion` owns exercise authoring. Feature boundaries are enforced by
+architecture tests rather than a separate Gradle project for each layer.
+
+## Ownership
+
+| Package                                                          | Responsibility                                                                                          |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `aiworker.api`                                                   | Public execution/sandbox contracts and the core-side `AiWorkerApi` facade                               |
+| `aiworker.dto` and transport enums                               | Versioned envelopes, opaque identities, capabilities, capacity and sandbox policy                       |
+| Core `aiworker.config`, `aiworker.service`, `aiworker.web.admin` | Broker connection, provider-neutral presence/reservations and administrative status                     |
+| Standalone `aiworker.config`, `aiworker.service`                 | Process composition, admission, heartbeats, cancellation, reliable event delivery and sandbox lifecycle |
+| `hyperion.config.worker`                                         | Explicit installation of the Hyperion workload                                                          |
+| `hyperion.service.worker`                                        | Typed workload translation and qualified toolchain selection                                            |
+| `hyperion.service.worker.toolchain.javagradle`                   | Java/Gradle authoring, build commands, source inspection and verification                               |
+| Core `hyperion`                                                  | Exercise authorization, acceptance, persistence, retention, review and recovery                         |
+
+There are two top-level module directories: `hyperion` and `aiworker`.
+The small `aiworker/api` subproject packages only neutral execution and sandbox contracts;
+it has no dependency on Hyperion, Spring services, model providers or Docker.
+`hyperion` depends on this API, never the reverse. The `aiworker` executable assembles
+the generic supervisor and explicitly installed workload implementations.
+The core application depends on the contracts and Hyperion runtime, never the executable. Its `AiWorkerApi` follows the existing `AbstractApi`
+facade convention; standalone SPIs do not import core's marker or services.
+
+The standalone application scans only `aiworker`. Hyperion is an explicitly registered
+Boot auto-configuration conditional on `artemis.aiworker.workload=hyperion-generation`.
+No database, application-grid or incoming web-server dependency is permitted in either
+standalone runtime artifact. Model chat auto-configuration is disabled by default.
+
+## Execution contract
+
+Protocol 4 separates execution authority from workload data:
+
+- `ExecutionIdentityDTO` carries an opaque job/resource reference, execution UUID,
+  worker ID, worker incarnation and slot. Infrastructure never parses an exercise ID.
+- `WorkloadCapabilityDTO` identifies workload name, payload schema version and qualified
+  profile. Core routes only matching capacity; worker admission checks the same capability
+  and immutable image digest.
+- `ExecutionAssignmentDTO` carries the deadline and bounded payload. Payloads are JSON
+  strings decoded **once at the workload boundary**, not maps passed through authoring code.
+- `WorkloadApi` executes one assignment, receives a cooperative stop signal, reports progress
+  and checkpoints, and owns cancellation-aware cleanup when necessary.
+- `FINISH` requests a cooperative result without classifying the execution as cancelled;
+  `CANCEL` terminates execution. Neither command exposes a shell, filesystem operation or
+  caller-selected container.
+
+The wire codec rejects incompatible versions, duplicate keys, unknown properties,
+invalid identities and excessive nesting/message sizes. Each workload independently
+validates its typed payload. Hyperion checks that its embedded identity, deadline, image
+and toolchain agree with the outer envelope before invoking its generation engine.
+It interprets its progress, accounting and result schemas; AI Worker does not.
+
+The observer distinguishes best-effort progress from reliable evidence. Accounting,
+checkpoints and completion retain their order; undelivered completion occupies the slot.
+Per-incarnation duplicate admission is bounded and expires only with assignment deadlines.
+No in-memory delivery queue is described as durable across process loss.
+
+## Add a workload
+
+1. Define bounded typed input/output records in the owning feature. Specify schema version,
+   cancellation, checkpoint meaning, error handling and resource requirements.
+2. Implement `WorkloadApi` in that feature's service package. Decode and validate once;
+   retain typed objects internally. Never trust envelope metadata copied into a payload.
+3. Register the implementation through an explicit conditional configuration listed in
+   `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
+   One worker process selects one capability. Do not enable arbitrary class loading or
+   discover implementations from untrusted messages.
+4. Supply a qualified immutable image and operator-owned limits. Sandbox creation uses
+   `SandboxApi`; features cannot depend on `aiworker.service` or `aiworker.config` classes.
+5. Use core's `AiWorkerApi` for claims and message delivery. Feature authorization and any
+   durable save remain outside the worker. Define recovery before enabling persistence.
+6. Add codec, cancellation, duplicate-delivery, lost-renewal and stale-result tests. Boot
+   with unrelated features unavailable, and validate an exact-image deployment canary.
+
+`WorkerIsolationTest` boots the real application with Hyperion hidden and executes a
+second, test-only document workload without model credentials. It verifies reliable
+progress, checkpoint and completion through the actual supervisor. It is not a claim
+that document processing is a shipped product feature.
+
+## Add a Hyperion toolchain
+
+Implement `ToolchainGenerationAdapter` under Hyperion, not AI Worker. Supply the canonical
+harness seed, domain prompts, build/report interpretation, immutable image and differential
+verification tests. Qualify core's exercise-format admission and returned-artifact acceptance
+before enabling the profile. Only `java-gradle` is currently qualified. A fake Python adapter
+tests dispatch isolation; it does not establish production Python support.
+
+## Architecture and lifecycle checks
+
+The module gates enforce repository service/configuration naming, annotated record DTOs,
+public-boundary consumption, no workload imports in AI Worker, no language implementation
+imports in generic supervision, and no database/grid/web dependencies in the standalone
+process. Core uses the same module architecture base classes as other Artemis features.
+All cross-node state goes through `DistributedDataProvider`, with explicit expiring-map
+lifetimes and value-guarded replacement/removal.
+
+```bash
+./gradlew aiWorkerCheck -x webapp
+./gradlew test --tests '*ArchitectureTest' --tests '*WorkerRegistry*Test' -x webapp
+./gradlew :aiworker:verifyRuntimeBoundary :aiworker:verifySourceSize :aiworker:verifyJacksonBoundary
+```
+
+Provider tests use separate Hazelcast members and independent Redis connections with the
+production serialization configuration. They exercise concurrent admission, replacement
+ownership, stale completion and incarnation fences. Docker isolation and real Gradle tests
+require explicitly configured immutable images; skipped tests do not qualify an image.
+
+See [AI Worker operations](/admin/aiworker) for configuration, deployment, administrator
+columns, failure handling and the protocol upgrade procedure.
