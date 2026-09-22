@@ -134,8 +134,10 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 | `KnowledgeArea` | KnowledgeArea `parent_id` | Optional | **Yes** | Self-referencing tree; a null parent is a legitimate root. |
 | `LearnerProfile` | User `user_id` | Required | No | Unique per account, cascades on account deletion. |
 | `LearningPath` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
-| `ScienceEvent` | — | Root | No | Analytics event; `resource_id` is an untyped pointer with no foreign key. |
-| `ScienceSetting` | — | Root | No | Keyed by user login rather than by foreign key. |
+| `ScienceCourseConsent` | User `user_id` and Course `course_id` | Required (both) | No | One decision per account and course; cascades on both. |
+| `ScienceEnabledCourse` | Course `course_id` | Required | No | Whether a course collects science data; cascades on the course. |
+| `ScienceEvent` | — | Root | No | Analytics event; `resource_id` is an untyped pointer with no foreign key, and `course_id` is optional because events predating course-level collection have no course to name. |
+| `ScienceResearchExportAudit` | — | Root | No | Immutable record of a research export, which outlives every course and event it describes. |
 | `Source` | — | Root | No | Reference data. |
 | `StandardizedCompetency` | KnowledgeArea `knowledge_area_id` | Required | No |  |
 

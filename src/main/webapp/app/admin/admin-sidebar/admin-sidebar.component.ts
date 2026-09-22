@@ -10,6 +10,7 @@ import {
     faDownload,
     faEye,
     faFlag,
+    faFlask,
     faGears,
     faHeart,
     faKey,
@@ -66,6 +67,7 @@ export class AdminSidebarComponent {
     localCIActive = input<boolean>(false);
     ltiEnabled = input<boolean>(false);
     standardizedCompetenciesEnabled = input<boolean>(false);
+    scienceEnabled = input<boolean>(false);
     atlasEnabled = input<boolean>(false);
     examEnabled = input<boolean>(false);
     passkeyEnabled = input<boolean>(false);
@@ -158,6 +160,15 @@ export class AdminSidebarComponent {
             translation: 'global.menu.admin.sidebar.upcoming',
             testId: 'admin-upcoming-exams-and-exercises',
         });
+        if (this.atlasEnabled() && this.scienceEnabled()) {
+            contentItems.push({
+                routerLink: '/admin/science',
+                icon: faFlask,
+                title: 'Science',
+                translation: 'global.menu.admin.sidebar.science',
+                testId: 'admin-science',
+            });
+        }
 
         // Sort alphabetically by title
         contentItems.sort((a, b) => a.title.localeCompare(b.title));
