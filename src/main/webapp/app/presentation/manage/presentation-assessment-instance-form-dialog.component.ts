@@ -118,6 +118,9 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             if (previousMode === PresentationAssessmentMode.ONLINE && mode === PresentationAssessmentMode.IN_PERSON && this.editForm.controls.meetingLink.invalid) {
                 this.editForm.controls.meetingLink.setValue('');
             }
+            if (previousMode === PresentationAssessmentMode.IN_PERSON && mode === PresentationAssessmentMode.ONLINE && this.editForm.controls.location.invalid) {
+                this.editForm.controls.location.setValue('');
+            }
         });
         effect(() => {
             const instance = this.instance();

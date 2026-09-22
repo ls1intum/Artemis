@@ -102,7 +102,7 @@
             },
             "students": {
                 "newPresentation": "New presentation",
-                "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation?"
+                "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation instance?"
             }
         }
     }

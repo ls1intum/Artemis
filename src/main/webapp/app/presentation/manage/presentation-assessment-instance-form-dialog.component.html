@@ -148,6 +148,8 @@
         [hiddenColumnFields]="hiddenStudentColumnFields"
         [paginated]="false"
         [allowAddingUsers]="!instance()"
+        [allowRemovingUsers]="!instance()"
+        removeUserQuestionKey="artemisApp.presentationAssessment.students.removeQuestion"
         profilePictureHeaderKey="artemisApp.presentationAssessment.picture"
     >
         <span><span jhiTranslate="artemisApp.presentationAssessment.presenters"></span> <span aria-hidden="true">*</span> ({{ assignedStudents().length }})</span>

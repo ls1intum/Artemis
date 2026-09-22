@@ -69,17 +69,19 @@
 
     <!-- Row action: remove user from group -->
     <ng-template #rowActionsRef let-row>
-        <button
-            jhiDeleteButton
-            [actionType]="ActionType.Remove"
-            [entityTitle]="row.login"
-            [deleteQuestion]="removeUserQuestionKey()"
-            (delete)="removeFromGroup(row)"
-            [dialogError]="dialogError$"
-            [disabled]="isDisabled()"
-        >
-            <fa-icon [icon]="faUserSlash" class="me-1" />
-        </button>
+        @if (allowRemovingUsers()) {
+            <button
+                jhiDeleteButton
+                [actionType]="ActionType.Remove"
+                [entityTitle]="row.login"
+                [deleteQuestion]="removeUserQuestionKey()"
+                (delete)="removeFromGroup(row)"
+                [dialogError]="dialogError$"
+                [disabled]="isDisabled()"
+            >
+                <fa-icon [icon]="faUserSlash" class="me-1" />
+            </button>
+        }
     </ng-template>
 
     <!-- Cell template: id column (link for admins, plain text otherwise) -->

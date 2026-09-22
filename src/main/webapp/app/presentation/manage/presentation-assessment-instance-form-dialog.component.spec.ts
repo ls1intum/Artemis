@@ -162,4 +162,21 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         expect(component.editForm.controls.meetingLink.value).toBe('');
     });
+
+    it('should retain a valid location when switching away from in-person mode', () => {
+        const location = 'Room 101';
+        component.editForm.controls.location.setValue(location);
+
+        component.editForm.controls.mode.setValue(PresentationAssessmentMode.ONLINE);
+
+        expect(component.editForm.controls.location.value).toBe(location);
+    });
+
+    it('should clear an invalid location when switching away from in-person mode', () => {
+        component.editForm.controls.location.setValue('a'.repeat(256));
+
+        component.editForm.controls.mode.setValue(PresentationAssessmentMode.ONLINE);
+
+        expect(component.editForm.controls.location.value).toBe('');
+    });
 });
