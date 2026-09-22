@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.dao.CannotAcquireLockException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -457,6 +458,23 @@ class LectureContentProcessingServiceTest {
             reopen.accept(clean);
             assertThat(clean.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
             assertThat(clean.getNextRetryAt()).isNull();
+        }
+
+        @Test
+        void shouldKeepTheCallbackReplayableWhenReopeningTheIrisSynchronizationFails() {
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            doThrow(new CannotAcquireLockException("lock wait timeout")).when(irisLectureUnitSyncStateRepository).updateWithLectureUnitLock(eq(testUnit.getId()), any());
+
+            assertThatThrownBy(() -> callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true, null, null)).isInstanceOf(CannotAcquireLockException.class);
+
+            // Nothing is persisted, so the callback can be replayed and the recovery pass still sees a unit in flight.
+            // Swallowing the failure instead would leave a settled synchronization that nothing can reach: it carries
+            // no retry time, and the backfill skips a lecture unit that already has a row.
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(testState.getIngestionJobToken()).isEqualTo(TEST_JOB_TOKEN);
+            verify(processingStateRepository, never()).save(any());
         }
 
         @Test

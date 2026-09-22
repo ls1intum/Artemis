@@ -310,6 +310,20 @@ public class ProcessingStateCallbackService {
 
         if (success) {
             log.info("Processing completed successfully for unit {}", lectureUnitId);
+
+            // Pyris now holds the unit, so a synchronization settled or in flight because it did not is worth trying
+            // again. The transaction and the lock come from the repository method, which is why the transition is
+            // passed into it.
+            //
+            // First, and deliberately not guarded. It takes a row lock, so it is the step most likely to fail, and a
+            // settled row is unreachable afterwards: it carries no retry time and the backfill skips a lecture unit
+            // that already has a row. Swallowing the failure would therefore strand the unit for good. Letting it
+            // propagate before anything is persisted leaves the phase and the job token untouched, so the callback
+            // stays replayable and the recovery pass can pick the unit up, which is a visible stall rather than a
+            // silent one. The completion bookkeeping below cannot be replayed once the token is cleared, so nothing
+            // that can fail belongs after it.
+            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
+
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
@@ -318,17 +332,6 @@ public class ProcessingStateCallbackService {
             // Notify UI via WebSocket
             TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
             notifyProcessingStateChange(state, txStatus);
-
-            // Pyris now holds the unit, so a synchronization settled or in flight because it did not is worth trying
-            // again. The transaction and the lock come from the repository method, which is why the transition is
-            // passed into it. Last, and guarded: it takes a row lock, and failing to reopen a synchronization must not
-            // cost the completion itself, whose bookkeeping cannot be replayed once the job token has been cleared.
-            try {
-                irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
-            }
-            catch (RuntimeException e) {
-                log.warn("Could not reopen the Iris synchronization of lecture unit {} after ingestion: {}", lectureUnitId, e.getMessage());
-            }
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
