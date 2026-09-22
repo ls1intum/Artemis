@@ -504,6 +504,26 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         });
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void savePresentationAssessmentInstances_shouldUpdateSharedInstanceAsGroup() throws Exception {
+        PresentationAssessmentInstanceDTO sharedInstance = createLegacySharedInstance();
+        PresentationAssessmentInstanceDTO updatedGroup = new PresentationAssessmentInstanceDTO(sharedInstance.id(), sharedInstance.presentationDate(), null,
+                sharedInstance.studentLogins(), sharedInstance.language(), PresentationAssessmentMode.ONLINE, null, "https://example.org/presentation", "Updated group");
+
+        List<PresentationAssessmentInstanceDTO> result = request.postListWithResponseBody(getInstancesUrl(course, presentationAssessment) + "/batch", updatedGroup,
+                PresentationAssessmentInstanceDTO.class, HttpStatus.OK);
+
+        assertThat(result).singleElement().satisfies(instance -> {
+            assertThat(instance.id()).isEqualTo(sharedInstance.id());
+            assertThat(instance.studentLogins()).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+            assertThat(instance.mode()).isEqualTo(PresentationAssessmentMode.ONLINE);
+            assertThat(instance.location()).isNull();
+            assertThat(instance.meetingLink()).isEqualTo("https://example.org/presentation");
+            assertThat(instance.remark()).isEqualTo("Updated group");
+        });
+    }
+
     private PresentationAssessmentInstanceDTO createLegacySharedInstance() {
         PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(presentationAssessment);

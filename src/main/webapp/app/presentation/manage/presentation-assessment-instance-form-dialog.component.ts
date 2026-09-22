@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, merge, of } from 'rxjs';
+import { Observable, merge, of, pairwise } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -114,6 +114,11 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     );
 
     constructor() {
+        this.editForm.controls.mode.valueChanges.pipe(pairwise(), takeUntilDestroyed()).subscribe(([previousMode, mode]) => {
+            if (previousMode === PresentationAssessmentMode.ONLINE && mode === PresentationAssessmentMode.IN_PERSON && this.editForm.controls.meetingLink.invalid) {
+                this.editForm.controls.meetingLink.setValue('');
+            }
+        });
         effect(() => {
             const instance = this.instance();
             this.assignedStudents.set([...this.initialAssignedStudents()]);

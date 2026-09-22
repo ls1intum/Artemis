@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { LangChangeEvent, TranslateService, TranslationChangeEvent } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { User } from 'app/account/user/user.model';
-import { PresentationAssessmentInstance } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessmentInstance, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
 
 describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
@@ -142,5 +142,24 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         component.save();
 
         expect(saved.mock.calls[0][0].remark).toBe('Strong presentation');
+    });
+
+    it('should retain a valid meeting link when switching away from online mode', () => {
+        const meetingLink = 'https://example.org/presentation';
+        component.editForm.controls.mode.setValue(PresentationAssessmentMode.ONLINE);
+        component.editForm.controls.meetingLink.setValue(meetingLink);
+
+        component.editForm.controls.mode.setValue(PresentationAssessmentMode.IN_PERSON);
+
+        expect(component.editForm.controls.meetingLink.value).toBe(meetingLink);
+    });
+
+    it('should clear an invalid meeting link when switching away from online mode', () => {
+        component.editForm.controls.mode.setValue(PresentationAssessmentMode.ONLINE);
+        component.editForm.controls.meetingLink.setValue('a'.repeat(1001));
+
+        component.editForm.controls.mode.setValue(PresentationAssessmentMode.IN_PERSON);
+
+        expect(component.editForm.controls.meetingLink.value).toBe('');
     });
 });

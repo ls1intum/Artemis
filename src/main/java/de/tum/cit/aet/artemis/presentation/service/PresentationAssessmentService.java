@@ -177,11 +177,17 @@ public class PresentationAssessmentService {
                 return presentationAssessmentInstanceRepository.saveAll(List.of(existingInstance));
             }
 
-            if (dto.studentLogins().size() != 1) {
+            Set<User> selectedStudents = resolveAssignedCourseStudents(course, dto.studentLogins());
+            if (selectedStudents.size() > 1) {
+                applyInstanceData(assessment, existingInstance, dto);
+                existingInstance.setStudents(selectedStudents);
+                return presentationAssessmentInstanceRepository.saveAll(List.of(existingInstance));
+            }
+            if (selectedStudents.size() != 1) {
                 throw new BadRequestAlertException("Exactly one student must be selected when splitting a shared instance", PresentationAssessmentInstance.ENTITY_NAME,
                         "invalidStudentCountForSplit");
             }
-            String editedStudentLogin = resolveAssignedCourseStudents(course, dto.studentLogins()).iterator().next().getLogin();
+            String editedStudentLogin = selectedStudents.iterator().next().getLogin();
             User editedStudent = existingInstance.getStudents().stream().filter(student -> editedStudentLogin.equals(student.getLogin())).findFirst()
                     .orElseThrow(() -> new BadRequestAlertException("The selected student does not belong to the shared instance", PresentationAssessmentInstance.ENTITY_NAME,
                             "studentNotInInstance"));
