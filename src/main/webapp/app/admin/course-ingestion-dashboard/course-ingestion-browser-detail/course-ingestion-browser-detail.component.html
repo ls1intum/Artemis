@@ -73,6 +73,19 @@
                                         jhiTranslate="artemisApp.courseIngestionDashboard.browser.statMissing"
                                     ></div>
                                 </div>
+                                <!-- Orphaned makes the matrix cell red too, so the drill-down has to name the number that caused it. -->
+                                <div
+                                    class="min-w-20 flex-1 rounded-lg border border-solid px-3 py-2"
+                                    [class.text-state-danger]="counts.orphaned > 0"
+                                    data-testid="detail-type-orphaned"
+                                >
+                                    <div class="text-lg leading-tight font-semibold">{{ counts.orphaned }}</div>
+                                    <div
+                                        class="text-xs"
+                                        [class.text-muted-color]="counts.orphaned === 0"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.statOrphaned"
+                                    ></div>
+                                </div>
                             </div>
                         }
 

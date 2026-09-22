@@ -117,6 +117,7 @@
                 "statIndexed": "Indexed",
                 "statExpected": "Expected",
                 "statMissing": "Missing",
+                "statOrphaned": "Orphaned",
                 "breadcrumb": "Breadcrumb",
                 "unitCount": "{{count}} lecture units",
                 "storedIn": "Stored in",

@@ -117,6 +117,7 @@
                 "statIndexed": "Indexiert",
                 "statExpected": "Erwartet",
                 "statMissing": "Fehlend",
+                "statOrphaned": "Verwaist",
                 "breadcrumb": "Navigationspfad",
                 "unitCount": "{{count}} Lerneinheiten",
                 "storedIn": "Gespeichert in",

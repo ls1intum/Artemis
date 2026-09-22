@@ -93,6 +93,19 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         expect(stats?.textContent).toContain('1');
     });
 
+    it('should show the orphaned count for a type, since orphans also make the cell red', async () => {
+        // An orphan-only type: nothing missing, so without this tile the pane shows indexed 5, expected 5, missing 0
+        // and the administrator cannot see the stale-object count that turned the matrix cell red.
+        fixture.componentRef.setInput('typeCounts', [{ type: 'exercise', expected: 5, indexed: 5, missing: 0, orphaned: 3 }]);
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        await settle();
+
+        const orphaned = query('detail-type-orphaned');
+        expect(orphaned).toBeTruthy();
+        expect(orphaned?.textContent).toContain('3');
+        expect(orphaned?.querySelector('.text-state-danger') ?? orphaned?.classList.contains('text-state-danger')).toBeTruthy();
+    });
+
     it('should read the stored records for the selected type', async () => {
         const spy = vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(of(records));
         component.selection.set({ kind: 'type', type: 'lecture' });
