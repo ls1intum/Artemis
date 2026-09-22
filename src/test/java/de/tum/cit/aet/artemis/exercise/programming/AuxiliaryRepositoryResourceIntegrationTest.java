@@ -595,7 +595,8 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         Path createdRepository = new LocalVCRepositoryUri(added.getRepositoryUri()).getLocalRepositoryPath(localVCBasePath);
         assertThat(createdRepository).as("the repository is created in the LocalVC folder structure").isDirectory();
         assertThat(createdRepository.resolve("HEAD")).as("it is a bare repository").isRegularFile();
-        assertThat(gitService.isBareRepositoryHealthy(new LocalVCRepositoryUri(added.getRepositoryUri()))).as("it received an initial commit, so it has a branch").isTrue();
+        assertThat(bareGitRepositoryService.isBareRepositoryHealthy(new LocalVCRepositoryUri(added.getRepositoryUri()))).as("it received an initial commit, so it has a branch")
+                .isTrue();
     }
 
     @Test
