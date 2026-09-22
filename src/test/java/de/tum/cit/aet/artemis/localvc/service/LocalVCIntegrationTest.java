@@ -16,7 +16,9 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
@@ -25,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
@@ -446,6 +449,34 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserPushesSeveralRefsAtOnce() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+
+        String sideBranch = "side-branch";
+        assignmentRepository.workingCopy().branchCreate().setName(sideBranch).setStartPoint("refs/heads/" + defaultBranch).call();
+        localVCLocalCITestService.commitFile(assignmentRepository.workingCopyPath(), assignmentRepository.workingCopy(), "second-test.txt");
+        Map<String, String> branchesBeforePush = remoteBranches(repositoryUri);
+
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri)
+                .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch), new RefSpec("refs/heads/" + sideBranch + ":refs/heads/" + sideBranch))
+                .call().iterator().next();
+
+        assertThat(pushResult.getRemoteUpdates()).as("every ref of the push is rejected, not only the one the hook looks at first").hasSize(2).allSatisfy(update -> {
+            assertThat(update.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+            assertThat(update.getMessage()).isEqualTo("You cannot push multiple refs at once.");
+        });
+        // Comparing the whole ref state catches the bug whichever of the two commands the push happens to send first: one of them used to be applied unchecked, which
+        // either created the side branch or moved the default branch.
+        assertThat(remoteBranches(repositoryUri)).as("a rejected push leaves the repository on the server exactly as it was").isEqualTo(branchesBeforePush);
+    }
+
+    private Map<String, String> remoteBranches(String repositoryUri) throws GitAPIException {
+        return Git.lsRemoteRepository().setRemote(repositoryUri).setHeads(true).call().stream().collect(Collectors.toMap(Ref::getName, ref -> ref.getObjectId().name()));
     }
 
     void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
