@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.dto;
 
-import java.time.ZonedDateTime;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -16,10 +14,9 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
  * @param contentFingerprint fingerprint of the unit's source content at claim time
  * @param forceReingest      true when this claim is a quality re-ingestion bypassing Iris's skip checks
  * @param targetPhase        the in-flight phase the run enters on activation (TRANSCRIBING or INGESTING)
- * @param claimedAt          the claim's own lease marker ({@code startedAt} for an IDLE claim,
- *                               {@code retryEligibleAt} for a retry claim), passed back unchanged to bind
- *                               a SKIPPED result to the exact claim that produced it
+ * @param claimToken         identity of this claim, passed back unchanged to bind the activation or a SKIPPED
+ *                               result to the exact claim that produced it
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ClaimedIngestionUnitDTO(long lectureUnitId, String contentFingerprint, boolean forceReingest, ProcessingPhase targetPhase, ZonedDateTime claimedAt) {
+public record ClaimedIngestionUnitDTO(long lectureUnitId, String contentFingerprint, boolean forceReingest, ProcessingPhase targetPhase, String claimToken) {
 }

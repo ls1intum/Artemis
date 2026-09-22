@@ -10,7 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,14 +63,14 @@ class PyrisInternalIngestionWorkerResourceTest {
         when(servletRequest.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(SECRET);
     }
 
-    private static ClaimedIngestionUnitDTO claim(long lectureUnitId, ZonedDateTime claimedAt) {
-        return new ClaimedIngestionUnitDTO(lectureUnitId, "v1:fp", false, ProcessingPhase.INGESTING, claimedAt);
+    private static ClaimedIngestionUnitDTO claim(long lectureUnitId, String claimToken) {
+        return new ClaimedIngestionUnitDTO(lectureUnitId, "v1:fp", false, ProcessingPhase.INGESTING, claimToken);
     }
 
     @Test
     void shouldContinueTheBatchWhenOnePreparationThrows() {
-        ZonedDateTime claimedAtFailing = ZonedDateTime.now();
-        ZonedDateTime claimedAtOk = ZonedDateTime.now();
+        String claimedAtFailing = "claim-failing";
+        String claimedAtOk = "claim-ok";
         ClaimedIngestionUnitDTO failingClaim = claim(1L, claimedAtFailing);
         ClaimedIngestionUnitDTO okClaim = claim(2L, claimedAtOk);
         when(processingStateCallbackApi.claimUnitsForWorker(anyString(), anyInt())).thenReturn(List.of(failingClaim, okClaim));

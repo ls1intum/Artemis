@@ -123,6 +123,14 @@ public class LectureUnitProcessingState extends DomainObject {
     private ZonedDateTime retryEligibleAt;
 
     /**
+     * Identity of the claim currently held on this row, written afresh by each claim and matched by every guard that
+     * commits that claim's outcome. The claim timestamps are only second-resolution, so two claims taken in the same
+     * second are indistinguishable by them; this is what keeps a superseded claim from activating a newer one.
+     */
+    @Column(name = "claim_token")
+    private String claimToken;
+
+    /**
      * Fingerprint of the source content sent with the current or most recent ingestion job.
      * Computed at dispatch time and forwarded to Iris, which stamps it verbatim into the vector store.
      */
@@ -300,6 +308,14 @@ public class LectureUnitProcessingState extends DomainObject {
         this.retryEligibleAt = retryEligibleAt;
     }
 
+    public String getClaimToken() {
+        return claimToken;
+    }
+
+    public void setClaimToken(String claimToken) {
+        this.claimToken = claimToken;
+    }
+
     public String getContentFingerprint() {
         return contentFingerprint;
     }
@@ -458,6 +474,7 @@ public class LectureUnitProcessingState extends DomainObject {
      */
     public void transitionTo(ProcessingPhase newPhase) {
         this.phase = newPhase;
+        this.claimToken = null;
         this.startedAt = ZonedDateTime.now();
         this.lastUpdated = ZonedDateTime.now();
         this.errorKey = null; // Clear error on phase transition
@@ -498,6 +515,7 @@ public class LectureUnitProcessingState extends DomainObject {
      */
     public void markFailed(String key) {
         this.phase = ProcessingPhase.FAILED;
+        this.claimToken = null;
         this.errorKey = key;
         this.lastUpdated = ZonedDateTime.now();
         this.retryEligibleAt = null;
@@ -531,6 +549,7 @@ public class LectureUnitProcessingState extends DomainObject {
     public void requeue() {
         this.phase = ProcessingPhase.IDLE;
         this.startedAt = null;
+        this.claimToken = null;
         this.ingestionJobToken = null;
         this.retryEligibleAt = null;
         this.errorKey = null;

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -24,7 +25,6 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -96,8 +95,6 @@ public class ProcessingStateCallbackService {
 
     private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
-    private static final String PROCESSING_STATE_TOPIC = "/topic/lectures/%d/unit-processing-state";
-
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
     private final LectureTranscriptionRepository transcriptionRepository;
@@ -106,7 +103,7 @@ public class ProcessingStateCallbackService {
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
-    private final WebsocketMessagingService websocketMessagingService;
+    private final ProcessingStateNotificationService notificationService;
 
     private final LectureUnitContentFingerprintService contentFingerprintService;
 
@@ -136,7 +133,7 @@ public class ProcessingStateCallbackService {
     private DistributedMap<String, String> workerMap;
 
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, ProcessingStateNotificationService notificationService,
             LectureUnitContentFingerprintService contentFingerprintService, DistributedDataProvider distributedDataProvider, FeatureToggleService featureToggleService,
             @Value("${artemis.iris.ingestion.max-concurrent-jobs:2}") int maxConcurrentJobs,
             @Value("${artemis.iris.ingestion.retry-claim-lease-minutes:20}") int retryClaimLeaseMinutes,
@@ -146,7 +143,7 @@ public class ProcessingStateCallbackService {
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
-        this.websocketMessagingService = websocketMessagingService;
+        this.notificationService = notificationService;
         this.contentFingerprintService = contentFingerprintService;
         this.distributedDataProvider = distributedDataProvider;
         this.featureToggleService = featureToggleService;
@@ -241,7 +238,8 @@ public class ProcessingStateCallbackService {
                     break;
                 }
                 ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
-                if (processingStateRepository.claimRetryEligible(state.getId(), now, leaseExpiry) == 0) {
+                String claimToken = newClaimToken();
+                if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry) == 0) {
                     log.debug("Another node claimed the retry of unit {}", state.getLectureUnit().getId());
                     continue;
                 }
@@ -251,12 +249,12 @@ public class ProcessingStateCallbackService {
                 state.setRetryEligibleAt(leaseExpiry);
                 // Isolate each dispatch: one claimed unit's failure must not abort the remaining claims.
                 try {
-                    dispatchSingleJob(state, leaseExpiry);
+                    dispatchSingleJob(state, claimToken);
                 }
                 catch (Exception e) {
                     log.error("Unexpected failure dispatching unit {}, marking as failed: {}", state.getLectureUnit() != null ? state.getLectureUnit().getId() : "null",
                             e.getMessage());
-                    failDispatchIfStillClaimed(state, leaseExpiry);
+                    failDispatchIfStillClaimed(state, claimToken);
                 }
                 availableSlots--;
             }
@@ -272,7 +270,8 @@ public class ProcessingStateCallbackService {
             }
 
             for (LectureUnitProcessingState state : idleJobs) {
-                if (processingStateRepository.claimIdleForDispatch(state.getId(), now) == 0) {
+                String claimToken = newClaimToken();
+                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now) == 0) {
                     log.debug("Another node claimed the dispatch of unit {}", state.getLectureUnit().getId());
                     continue;
                 }
@@ -280,12 +279,12 @@ public class ProcessingStateCallbackService {
                 state.setStartedAt(now);
                 // Isolate each dispatch: one bad unit must not strand the rest of this pass's claims.
                 try {
-                    dispatchSingleJob(state, now);
+                    dispatchSingleJob(state, claimToken);
                 }
                 catch (Exception e) {
                     log.error("Unexpected failure dispatching unit {}, marking as failed: {}", state.getLectureUnit() != null ? state.getLectureUnit().getId() : "null",
                             e.getMessage());
-                    failDispatchIfStillClaimed(state, now);
+                    failDispatchIfStillClaimed(state, claimToken);
                 }
             }
         }
@@ -297,12 +296,12 @@ public class ProcessingStateCallbackService {
     /**
      * Dispatch a single claimed job to Iris, starting as TRANSCRIBING or INGESTING based on existing transcription data.
      *
-     * @param state     the claimed processing state
-     * @param claimedAt the marker written by the claim that produced this dispatch; every outcome here is committed through an atomic update matching it, so a content
-     *                      update requeueing this row while the Pyris call is in flight cannot be lost to a stale write.
+     * @param state      the claimed processing state
+     * @param claimToken identity of the claim that produced this dispatch; every outcome here is committed through an atomic update matching it, so a content update
+     *                       requeueing this row while the Pyris call is in flight cannot be lost to a stale write.
      */
-    private void dispatchSingleJob(LectureUnitProcessingState state, ZonedDateTime claimedAt) {
-        PreparedDispatch prepared = prepareClaimedState(state, claimedAt);
+    private void dispatchSingleJob(LectureUnitProcessingState state, String claimToken) {
+        PreparedDispatch prepared = prepareClaimedState(state, claimToken);
         if (prepared == null) {
             return;
         }
@@ -315,13 +314,13 @@ public class ProcessingStateCallbackService {
             String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit, contentFingerprint, state.isForceReingest());
 
             if (jobToken == null) {
-                boolean applied = processingStateRepository.markSkippedIfStillClaimed(unit.getId(), claimedAt, ZonedDateTime.now()) == 1;
+                boolean applied = processingStateRepository.markSkippedIfStillClaimed(unit.getId(), claimToken, ZonedDateTime.now()) == 1;
                 log.info("Unit {} not applicable for Iris (course settings or content type){}", unit.getId(),
                         applied ? ", marked SKIPPED" : "; claim moved on, dropping the outcome");
                 return;
             }
 
-            if (processingStateRepository.activatePushDispatch(unit.getId(), targetPhase, jobToken, contentFingerprint, claimedAt, ZonedDateTime.now()) == 0) {
+            if (processingStateRepository.activatePushDispatch(unit.getId(), targetPhase, jobToken, contentFingerprint, claimToken, ZonedDateTime.now()) == 0) {
                 // The claim moved on while the call above was in flight. Pyris now runs a job for content this row
                 // no longer reflects; its eventual callback fails the current token match and is dropped there,
                 // exactly like any other stale callback, so nothing further is needed beyond not touching the row.
@@ -333,14 +332,14 @@ public class ProcessingStateCallbackService {
         }
         catch (Exception e) {
             log.error("Failed to dispatch unit {} to Iris: {}", unit.getId(), e.getMessage());
-            failDispatchIfStillClaimed(state, claimedAt);
+            failDispatchIfStillClaimed(state, claimToken);
             return;
         }
 
         // Outside the try above: the run is live from here on, so a notification failure must not reach
         // dispatch-failure handling and fail a unit Pyris is working on.
         try {
-            processingStateRepository.findByLectureUnit_Id(unit.getId()).ifPresent(this::notifyWithTranscriptionStatus);
+            processingStateRepository.findByLectureUnit_Id(unit.getId()).ifPresent(notificationService::notifyWithTranscriptionStatus);
         }
         catch (Exception e) {
             log.warn("Dispatched unit {} but could not push the state change to clients: {}", unit.getId(), e.getMessage());
@@ -348,36 +347,43 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * The instant a claim is stamped with, on both transports. Truncated to whole seconds because {@code started_at}
-     * and {@code retry_eligible_at} are legacy DATETIME columns keeping only whole seconds on MySQL: an untruncated
-     * value is rounded on write and then matches nothing in the guards that compare it for exact equality.
-     * Known gap, tracked for a follow-up: two claims of the same row taken in the same second are indistinguishable,
-     * so a requeue between two concurrent pull claims lets the earlier one activate the newer. Closing it needs a
-     * persisted per-claim identity, matched by every guard and cleared by every release path.
+     * The instant a claim is stamped with, on both transports. Truncated to whole seconds so the value held in memory
+     * matches what {@code started_at} and {@code retry_eligible_at} can store: they are legacy DATETIME columns
+     * keeping only whole seconds on MySQL, which rounds anything finer on write.
      *
-     * @return the claim marker to write and later match on
+     * @return the claim's timestamp, used for lease expiry and sweep cutoffs
      */
     static ZonedDateTime claimTimestamp() {
         return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
+    /**
+     * A fresh identity for one claim. Every claim gets its own, so a superseded claim can never be mistaken for the
+     * one that replaced it however close together they were taken -- which whole-second timestamps cannot guarantee.
+     *
+     * @return the claim identity to write and later match on
+     */
+    private static String newClaimToken() {
+        return UUID.randomUUID().toString();
+    }
+
     // Fail a dispatch that never reached Pyris, bound to the claim that produced it: the caller holds the
     // pre-dispatch snapshot, so committing it wholesale would overwrite a requeue or newer claim landed since.
-    private void failDispatchIfStillClaimed(LectureUnitProcessingState state, ZonedDateTime claimedAt) {
+    private void failDispatchIfStillClaimed(LectureUnitProcessingState state, String claimToken) {
         LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, null);
-        int updated = processingStateRepository.failDispatchIfStillClaimed(state.getId(), claimedAt, computation.retryCount(), computation.errorKey(),
+        int updated = processingStateRepository.failDispatchIfStillClaimed(state.getId(), claimToken, computation.retryCount(), computation.errorKey(),
                 computation.retryEligibleAt(), computation.now());
         if (updated == 0) {
             log.info("Not failing processing state {}: its dispatch claim is no longer current (requeued, re-claimed, or already activated)", state.getId());
             return;
         }
-        notifyWithTranscriptionStatus(state);
+        notificationService.notifyWithTranscriptionStatus(state);
     }
 
     // Terminally fail a claimed state during preparation, bound to its claim like failDispatchIfStillClaimed.
     // These are local problems Pyris cannot fix, so no retry is scheduled. Returns false if the claim moved on.
-    private boolean failPreparationIfStillClaimed(LectureUnitProcessingState state, ZonedDateTime claimedAt, String errorKey) {
-        if (processingStateRepository.failPreparationIfStillClaimed(state.getId(), claimedAt, errorKey, ZonedDateTime.now()) == 0) {
+    private boolean failPreparationIfStillClaimed(LectureUnitProcessingState state, String claimToken, String errorKey) {
+        if (processingStateRepository.failPreparationIfStillClaimed(state.getId(), claimToken, errorKey, ZonedDateTime.now()) == 0) {
             log.info("Not failing processing state {} during preparation: its dispatch claim is no longer current", state.getId());
             return false;
         }
@@ -398,17 +404,17 @@ public class ProcessingStateCallbackService {
      * target phase determination, and content fingerprinting. States that cannot be dispatched are
      * terminally handled here (FAILED with a specific key) and reported as {@code null}.
      *
-     * @param state     a state freshly claimed for dispatch
-     * @param claimedAt the marker written by the claim that produced it; every terminal outcome here is committed through an atomic update matching it, so fingerprinting
-     *                      (which reads the attachment from disk and can be slow) cannot end up overwriting a requeue that landed while it ran
+     * @param state      a state freshly claimed for dispatch
+     * @param claimToken identity of the claim that produced it; every terminal outcome here is committed through an atomic update matching it, so fingerprinting (which
+     *                       reads the attachment from disk and can be slow) cannot end up overwriting a requeue that landed while it ran
      * @return the prepared dispatch, or {@code null} when the state was failed here instead
      */
     @Nullable
-    private PreparedDispatch prepareClaimedState(LectureUnitProcessingState state, ZonedDateTime claimedAt) {
+    private PreparedDispatch prepareClaimedState(LectureUnitProcessingState state, String claimToken) {
         LectureUnit unit = state.getLectureUnit();
         if (!(unit instanceof AttachmentVideoUnit attachmentUnit)) {
             log.warn("Cannot dispatch non-AttachmentVideoUnit (id={})", unit != null ? unit.getId() : "null");
-            failPreparationIfStillClaimed(state, claimedAt, "artemisApp.attachmentVideoUnit.processing.error.invalidUnitType");
+            failPreparationIfStillClaimed(state, claimToken, "artemisApp.attachmentVideoUnit.processing.error.invalidUnitType");
             return null;
         }
 
@@ -429,7 +435,7 @@ public class ProcessingStateCallbackService {
                 // Startup raced this claim before FilePathConverter was configured (transient, not unreadable),
                 // so requeue for re-dispatch rather than failing a healthy unit with a key the reconciler never revives.
                 log.warn("File store not initialized yet; requeuing unit {} for re-dispatch instead of failing it", unit.getId());
-                if (processingStateRepository.requeueIfStillClaimed(state.getId(), claimedAt, ZonedDateTime.now()) == 0) {
+                if (processingStateRepository.requeueIfStillClaimed(state.getId(), claimToken, ZonedDateTime.now()) == 0) {
                     log.info("Not requeuing unit {}: its dispatch claim is no longer current", unit.getId());
                 }
                 return null;
@@ -437,8 +443,8 @@ public class ProcessingStateCallbackService {
             // A genuinely unreadable file or malformed link is a local problem Pyris cannot fix, so retrying would
             // burn the retry budget uselessly — fail with a specific key instead of aborting the whole claimed batch.
             log.error("Cannot read attachment for unit {}, marking as FAILED without dispatch: {}", unit.getId(), e.getMessage());
-            if (failPreparationIfStillClaimed(state, claimedAt, "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable")) {
-                notifyProcessingStateChange(state, null);
+            if (failPreparationIfStillClaimed(state, claimToken, "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable")) {
+                notificationService.notifyProcessingStateChange(state, null);
             }
             return null;
         }
@@ -474,11 +480,13 @@ public class ProcessingStateCallbackService {
 
         for (LectureUnitProcessingState state : processingStateRepository.findStatesReadyForRetry(ProcessingPhase.FAILED.name(), now, jobs)) {
             ZonedDateTime leaseExpiry = now.plusMinutes(retryClaimLeaseMinutes);
-            if (processingStateRepository.claimRetryEligible(state.getId(), now, leaseExpiry) == 0) {
+            String claimToken = newClaimToken();
+            if (processingStateRepository.claimRetryEligible(state.getId(), claimToken, now, leaseExpiry) == 0) {
                 continue;
             }
             // Mirror the claim onto the loaded entity so a later save cannot write back the stale value.
             state.setRetryEligibleAt(leaseExpiry);
+            state.setClaimToken(claimToken);
             log.info("Worker re-claiming retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
             claimed.add(state);
         }
@@ -486,10 +494,12 @@ public class ProcessingStateCallbackService {
         int remaining = jobs - claimed.size();
         if (remaining > 0) {
             for (LectureUnitProcessingState state : processingStateRepository.findIdleForDispatch(now, remaining)) {
-                if (processingStateRepository.claimIdleForDispatch(state.getId(), now) == 0) {
+                String claimToken = newClaimToken();
+                if (processingStateRepository.claimIdleForDispatch(state.getId(), claimToken, now) == 0) {
                     continue;
                 }
                 state.setStartedAt(now);
+                state.setClaimToken(claimToken);
                 claimed.add(state);
             }
         }
@@ -499,10 +509,10 @@ public class ProcessingStateCallbackService {
             // Exactly one of these is set at claim time: startedAt for an IDLE claim, retryEligibleAt for a
             // retry claim (mirrors activateClaimedJob's own claim-shape check just above). Read before preparing,
             // since preparation commits its own terminal outcomes against this same marker.
-            ZonedDateTime claimedAt = state.getStartedAt() != null ? state.getStartedAt() : state.getRetryEligibleAt();
-            PreparedDispatch prepared = prepareClaimedState(state, claimedAt);
+            String claimToken = state.getClaimToken();
+            PreparedDispatch prepared = prepareClaimedState(state, claimToken);
             if (prepared != null) {
-                result.add(new ClaimedIngestionUnitDTO(prepared.unit().getId(), prepared.contentFingerprint(), state.isForceReingest(), prepared.targetPhase(), claimedAt));
+                result.add(new ClaimedIngestionUnitDTO(prepared.unit().getId(), prepared.contentFingerprint(), state.isForceReingest(), prepared.targetPhase(), claimToken));
             }
         }
         if (!result.isEmpty()) {
@@ -513,27 +523,27 @@ public class ProcessingStateCallbackService {
 
     /**
      * Activate a claim once the iris side registered the job token and handed the payload to the worker: transition into the target phase, record token/fingerprint, and open
-     * the worker lease — from here the run is alive exactly as long as the worker keeps renewing it. Bound to the exact claim that produced it (matching {@code claimedAt}, not
-     * just claim shape): an activation arriving after the claim was released and re-claimed by a newer, still-unactivated claim matches nothing instead of activating that
-     * newer claim with this stale job token.
+     * the worker lease — from here the run is alive exactly as long as the worker keeps renewing it. Bound to the exact claim that produced it by {@code claimToken}: an
+     * activation arriving after the claim was released and re-claimed by a newer, still-unactivated claim matches nothing instead of activating that newer claim with this
+     * stale job token.
      *
      * @param lectureUnitId      the claimed unit
      * @param jobToken           the registered Pyris job token
      * @param targetPhase        the in-flight phase determined at claim time
      * @param contentFingerprint the fingerprint computed at claim time
      * @param workerBootId       boot id of the worker executing the run
-     * @param claimedAt          the claim marker observed at claim time, from {@link ClaimedIngestionUnitDTO#claimedAt()}
+     * @param claimToken         identity of the claim being activated, from {@link ClaimedIngestionUnitDTO#claimToken()}
      * @return whether the claim was activated; false when the unit no longer holds this exact claim
      */
-    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId, ZonedDateTime claimedAt) {
-        int activated = processingStateRepository.activateClaimedJob(lectureUnitId, targetPhase, jobToken, contentFingerprint, workerBootId, claimedAt, ZonedDateTime.now());
+    public boolean activateClaimedJob(long lectureUnitId, String jobToken, ProcessingPhase targetPhase, String contentFingerprint, String workerBootId, String claimToken) {
+        int activated = processingStateRepository.activateClaimedJob(lectureUnitId, targetPhase, jobToken, contentFingerprint, workerBootId, claimToken, ZonedDateTime.now());
         if (activated == 0) {
             log.warn("Ignoring activation of unit {} by worker {}: the unit no longer holds the claim (released, re-claimed, or already activated)", lectureUnitId, workerBootId);
             return false;
         }
         log.info("Worker {} activated unit {} as {} with token {}", workerBootId, lectureUnitId, targetPhase, maskToken(jobToken));
 
-        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(this::notifyWithTranscriptionStatus);
+        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(notificationService::notifyWithTranscriptionStatus);
         return true;
     }
 
@@ -542,11 +552,11 @@ public class ProcessingStateCallbackService {
      * produced it: a stale result from a lapsed, re-claimed claim matches nothing instead of cancelling the newer run.
      *
      * @param lectureUnitId the claimed unit
-     * @param claimedAt     the claim marker from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimedAt()}
+     * @param claimToken    identity of the claim, from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimToken()}
      * @return true when marked SKIPPED, false when the claim was no longer current
      */
-    public boolean markClaimedUnitSkipped(long lectureUnitId, ZonedDateTime claimedAt) {
-        int updated = processingStateRepository.markSkippedIfStillClaimed(lectureUnitId, claimedAt, ZonedDateTime.now());
+    public boolean markClaimedUnitSkipped(long lectureUnitId, String claimToken) {
+        int updated = processingStateRepository.markSkippedIfStillClaimed(lectureUnitId, claimToken, ZonedDateTime.now());
         if (updated == 0) {
             log.info("Not marking unit {} SKIPPED: its claim is no longer current (released, re-claimed, or already activated)", lectureUnitId);
             return false;
@@ -582,7 +592,7 @@ public class ProcessingStateCallbackService {
             }
             // Reflects the just-persisted renewal for the notification only; never saved itself.
             state.renewLease(workerBootId);
-            notifyWithTranscriptionStatus(state);
+            notificationService.notifyWithTranscriptionStatus(state);
         }
         if (!revoked.isEmpty()) {
             log.warn("Worker {} heartbeat listed {} run(s) Artemis no longer tracks, reporting them revoked", workerBootId, revoked.size());
@@ -668,7 +678,7 @@ public class ProcessingStateCallbackService {
             state.setConfirmedFingerprint(state.getContentFingerprint());
             state.setForceReingest(null);
 
-            notifyWithTranscriptionStatus(state);
+            notificationService.notifyWithTranscriptionStatus(state);
         }
         else {
             log.warn("Processing failed for unit {} (errorCode={})", lectureUnitId, errorCode);
@@ -766,7 +776,7 @@ public class ProcessingStateCallbackService {
         // Only push when the stage/number moved; bare heartbeats refresh liveness without spamming.
         if (stageAdvanced) {
             TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
-            notifyProcessingStateChange(state, transcriptionStatus);
+            notificationService.notifyProcessingStateChange(state, transcriptionStatus);
         }
     }
 
@@ -824,7 +834,7 @@ public class ProcessingStateCallbackService {
             // Notify UI via WebSocket, mirroring the just-persisted transition without a second read.
             state.resetRetryCount();
             state.transitionTo(ProcessingPhase.INGESTING);
-            notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
+            notificationService.notifyProcessingStateChange(state, TranscriptionStatus.COMPLETED);
         }
         else {
             // Same reasoning as the enriched branch above.
@@ -900,7 +910,7 @@ public class ProcessingStateCallbackService {
             return false;
         }
 
-        notifyWithTranscriptionStatus(state);
+        notificationService.notifyWithTranscriptionStatus(state);
         if (computation.backoffMinutes() != null) {
             log.info("Unit {} failed, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), computation.backoffMinutes(), computation.retryCount(),
                     MAX_PROCESSING_RETRIES);
@@ -917,22 +927,6 @@ public class ProcessingStateCallbackService {
      * @param transcriptionStatus the current transcription status (may be null)
      */
     /** Push a state change to clients, carrying the unit's current transcription status so the badge never loses it. */
-    private void notifyWithTranscriptionStatus(LectureUnitProcessingState state) {
-        notifyProcessingStateChange(state,
-                transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null));
-    }
-
-    private void notifyProcessingStateChange(LectureUnitProcessingState state, TranscriptionStatus transcriptionStatus) {
-        LectureUnit unit = state.getLectureUnit();
-        if (unit == null || unit.getLecture() == null) {
-            return;
-        }
-        long lectureId = unit.getLecture().getId();
-        var dto = LectureUnitCombinedStatusDTO.of(unit.getId(), state, transcriptionStatus);
-        String topic = PROCESSING_STATE_TOPIC.formatted(lectureId);
-        websocketMessagingService.sendMessage(topic, dto);
-        log.debug("Sent processing state WebSocket update for unit {} on topic {}", unit.getId(), topic);
-    }
 
     /**
      * Masks a token for safe logging by showing only the first and last 3 characters.

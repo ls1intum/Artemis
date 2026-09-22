@@ -211,12 +211,20 @@ public class LectureContentProcessingService {
             return true;
         }
 
-        // Enqueue: save as IDLE with startedAt=null (not yet dispatched)
+        // Enqueue. A new row has nothing to race with, so it is saved outright; an existing one is committed through
+        // a targeted update instead, because the snapshot in hand predates the content check and a whole-entity save
+        // would revert a run claimed and activated while that check ran.
+        state.setDispatchPriority(dispatchPriority);
         if (state.getId() == null) {
             state.setStartedAt(null); // Ensure new states have no startedAt
+            processingStateRepository.save(state);
         }
-        state.setDispatchPriority(dispatchPriority);
-        processingStateRepository.save(state);
+        else if (shouldReprocess) {
+            processingStateRepository.requeueForContentChange(state.getId(), state.getVideoSourceHash(), state.getAttachmentVersion(), dispatchPriority, ZonedDateTime.now());
+        }
+        else {
+            processingStateRepository.updateContentMarkers(state.getId(), state.getVideoSourceHash(), state.getAttachmentVersion(), dispatchPriority, ZonedDateTime.now());
+        }
         log.info("Enqueued unit {} for processing (IDLE)", unit.getId());
 
         // Only dispatch if the feature toggle is ON — otherwise the IDLE state
@@ -398,20 +406,10 @@ public class LectureContentProcessingService {
             return;
         }
 
-        state.resetRetryCount();
-        state.setPhase(ProcessingPhase.DONE);
-        state.setStartedAt(null);
-        state.setIngestionJobToken(null);
-        state.setRetryEligibleAt(null);
-        state.setErrorKey(null);
-        state.setVideoSourceHash(null);
-        state.setAttachmentVersion(null);
-        // DONE here means "nothing indexed"; a confirmed fingerprint from the previous
-        // content would falsely claim the index still holds verified data for this unit.
-        state.setContentFingerprint(null);
-        state.setConfirmedFingerprint(null);
-        state.setLastUpdated(ZonedDateTime.now());
-        processingStateRepository.save(state);
+        // DONE here means "nothing indexed"; a confirmed fingerprint from the previous content would falsely claim
+        // the index still holds verified data for this unit, so it is dropped with the rest. Committed as a targeted
+        // update rather than a whole-entity save, which would revert a run activated while the cleanup above ran.
+        processingStateRepository.settleAsNothingIndexed(state.getId(), ZonedDateTime.now());
     }
 
     private boolean cleanupForReprocessing(AttachmentVideoUnit unit) {

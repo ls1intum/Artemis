@@ -194,7 +194,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
                 ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.revivalCount = 0,
                 ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL,
-                ps.ingestionJobToken = NULL, ps.confirmedFingerprint = ps.contentFingerprint, ps.forceReingest = NULL
+                ps.ingestionJobToken = NULL, ps.claimToken = NULL, ps.confirmedFingerprint = ps.contentFingerprint, ps.forceReingest = NULL
             WHERE ps.id = :id
             AND ps.ingestionJobToken = :token
             AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
@@ -297,20 +297,21 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * transaction spanned both — a boundary that had to be declared in a service, and which was silently absent
      * whenever the dispatch was reached by a self-invoking call.
      *
-     * @param id  the id of the state to claim
-     * @param now the timestamp to record as the dispatch start
+     * @param id         the id of the state to claim
+     * @param claimToken identity for this claim, matched by whichever guard later commits its outcome
+     * @param now        the timestamp to record as the dispatch start
      * @return 1 if this caller claimed the job, 0 if another caller already had it
      */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.startedAt = :now, ps.lastUpdated = :now
+            SET ps.startedAt = :now, ps.claimToken = :claimToken, ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE
             AND ps.startedAt IS NULL
             """)
-    int claimIdleForDispatch(@Param("id") long id, @Param("now") ZonedDateTime now);
+    int claimIdleForDispatch(@Param("id") long id, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now);
 
     /**
      * Claim one retry-eligible job, so that exactly one node retries it.
@@ -332,6 +333,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * {@code retryEligibleAt} to null.
      *
      * @param id          the id of the state to claim
+     * @param claimToken  identity for this claim, matched by whichever guard later commits its outcome
      * @param now         the current time, which the backoff must already have passed
      * @param leaseExpiry when the claim lapses and the row becomes eligible again
      * @return 1 if this caller claimed the retry, 0 if another caller already had it
@@ -340,12 +342,12 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.retryEligibleAt = :leaseExpiry, ps.lastUpdated = :now
+            SET ps.retryEligibleAt = :leaseExpiry, ps.claimToken = :claimToken, ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.retryEligibleAt IS NOT NULL
             AND ps.retryEligibleAt <= :now
             """)
-    int claimRetryEligible(@Param("id") long id, @Param("now") ZonedDateTime now, @Param("leaseExpiry") ZonedDateTime leaseExpiry);
+    int claimRetryEligible(@Param("id") long id, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now, @Param("leaseExpiry") ZonedDateTime leaseExpiry);
 
     /**
      * Release IDLE claims whose owner never got as far as dispatching them.
@@ -371,7 +373,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.startedAt = NULL, ps.lastUpdated = :now
+            SET ps.startedAt = NULL, ps.claimToken = NULL, ps.lastUpdated = :now
             WHERE ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE
             AND ps.startedAt IS NOT NULL
             AND ps.startedAt < :cutoffTime
@@ -496,7 +498,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Query("""
             UPDATE LectureUnitProcessingState ps
             SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING, ps.startedAt = :now, ps.lastUpdated = :now,
-                ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.retryCount = 0,
+                ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.claimToken = NULL, ps.retryCount = 0,
                 ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
             WHERE ps.id = :id
             AND ps.ingestionJobToken = :token
@@ -523,7 +525,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.startedAt = NULL,
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.claimToken = NULL, ps.startedAt = NULL,
                 ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.lastUpdated = :now,
                 ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL
@@ -559,7 +561,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.startedAt = NULL,
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.claimToken = NULL, ps.startedAt = NULL,
                 ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.lastUpdated = :now,
                 ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL
@@ -610,7 +612,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Query("""
             UPDATE LectureUnitProcessingState ps
             SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
-                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.ingestionJobToken = NULL, ps.claimToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
                 ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.phase = :phase
@@ -640,7 +642,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Query("""
             UPDATE LectureUnitProcessingState ps
             SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
-                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.ingestionJobToken = NULL, ps.claimToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
                 ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.phase = :phase
@@ -672,7 +674,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Query("""
             UPDATE LectureUnitProcessingState ps
             SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
-                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.ingestionJobToken = NULL, ps.claimToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
                 ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.phase = :phase
@@ -684,22 +686,19 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
 
     /**
-     * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds exactly
-     * the claim that produced the activation. A claimed IDLE row carries {@code startedAt}; a claimed FAILED retry
-     * carries its lease in {@code retryEligibleAt}. Neither has a job token yet. Matching {@code claimedAt} against
-     * that exact marker (not just its presence) is what stops a late activation from a lapsed, re-claimed claim from
-     * activating a newer, still-unactivated claim for the same unit with the wrong job token: two different claims
-     * can pass through this same generic shape one after another, so presence alone cannot tell them apart. Same
-     * guard as {@link #markSkippedIfStillClaimed}. Applies {@link LectureUnitProcessingState#transitionTo}, the
-     * token, the fingerprint and {@link LectureUnitProcessingState#renewLease} in one statement.
+     * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds the
+     * claim that produced the activation. Matching {@code claimToken} rather than the claim's timestamp is what
+     * stops a late activation from a superseded claim activating a newer one for the same unit with the wrong job
+     * token: the timestamps are second-resolution, so two claims taken in the same second cannot be told apart by
+     * them. Same guard as {@link #markSkippedIfStillClaimed}. Applies {@link LectureUnitProcessingState#transitionTo},
+     * the token, the fingerprint and {@link LectureUnitProcessingState#renewLease} in one statement.
      *
      * @param lectureUnitId      the claimed unit
      * @param phase              the in-flight phase to enter
      * @param token              the registered Pyris job token
      * @param contentFingerprint the fingerprint computed at claim time
      * @param workerBootId       boot id of the worker that owns the lease
-     * @param claimedAt          the claim marker observed at claim time, from
-     *                               {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimedAt()}
+     * @param claimToken         identity of the claim being activated, from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimToken()}
      * @param now                the activation time, recorded as start, last update and first heartbeat
      * @return 1 when the claim was activated, 0 when the row no longer holds this exact claim
      */
@@ -707,16 +706,16 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.phase = :phase, ps.startedAt = :now, ps.lastUpdated = :now, ps.errorKey = NULL, ps.retryEligibleAt = NULL,
+            SET ps.phase = :phase, ps.startedAt = :now, ps.lastUpdated = :now, ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.claimToken = NULL,
                 ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
                 ps.ingestionJobToken = :token, ps.contentFingerprint = :contentFingerprint, ps.lastHeartbeatAt = :now, ps.lockedBy = :workerBootId
             WHERE ps.lectureUnit.id = :lectureUnitId
             AND ps.ingestionJobToken IS NULL
-            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
-                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            AND ps.claimToken = :claimToken
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)
             """)
     int activateClaimedJob(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
-            @Param("contentFingerprint") String contentFingerprint, @Param("workerBootId") String workerBootId, @Param("claimedAt") ZonedDateTime claimedAt,
+            @Param("contentFingerprint") String contentFingerprint, @Param("workerBootId") String workerBootId, @Param("claimToken") String claimToken,
             @Param("now") ZonedDateTime now);
 
     /**
@@ -735,8 +734,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * @param phase              the in-flight phase to enter
      * @param token              the registered Pyris job token
      * @param contentFingerprint the fingerprint computed at claim time
-     * @param claimedAt          the claim marker observed at claim time (startedAt for an IDLE claim, retryEligibleAt
-     *                               for a retry claim)
+     * @param claimToken         identity of the claim being committed
      * @param now                the activation time, recorded as start and last update
      * @return 1 when the claim was activated, 0 when the row no longer holds this exact claim
      */
@@ -744,28 +742,24 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.phase = :phase, ps.startedAt = :now, ps.lastUpdated = :now, ps.errorKey = NULL, ps.retryEligibleAt = NULL,
+            SET ps.phase = :phase, ps.startedAt = :now, ps.lastUpdated = :now, ps.errorKey = NULL, ps.retryEligibleAt = NULL, ps.claimToken = NULL,
                 ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL,
                 ps.ingestionJobToken = :token, ps.contentFingerprint = :contentFingerprint
             WHERE ps.lectureUnit.id = :lectureUnitId
             AND ps.ingestionJobToken IS NULL
-            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
-                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            AND ps.claimToken = :claimToken
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)
             """)
     int activatePushDispatch(@Param("lectureUnitId") long lectureUnitId, @Param("phase") ProcessingPhase phase, @Param("token") String token,
-            @Param("contentFingerprint") String contentFingerprint, @Param("claimedAt") ZonedDateTime claimedAt, @Param("now") ZonedDateTime now);
+            @Param("contentFingerprint") String contentFingerprint, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now);
 
     /**
-     * Mark a claimed unit SKIPPED, but only while it still holds exactly the claim that decided it was not
-     * processable: same claim-shape check as {@link #activateClaimedJob}, plus the specific claim marker
-     * ({@code claimedAt}, echoed back from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO})
-     * so that two different claims passing through the same generic unactivated shape one after another are
-     * not conflated the way a shape-only check would allow. Without this, a superseded claim's stale result
-     * could cancel a newer claim that has since been legitimately activated.
+     * Mark a claimed unit SKIPPED, but only while it still holds the claim that decided it was not processable:
+     * same guard as {@link #activateClaimedJob}. Without matching the claim identity, a superseded claim's stale
+     * result could cancel a newer claim that has since been legitimately activated.
      *
      * @param lectureUnitId the claimed unit
-     * @param claimedAt     the claim marker observed at claim time (startedAt for an IDLE claim, retryEligibleAt
-     *                          for a retry claim)
+     * @param claimToken    identity of the claim being committed
      * @param now           recorded as the new {@code lastUpdated}
      * @return 1 when marked SKIPPED, 0 when the row no longer holds this exact claim
      */
@@ -773,13 +767,13 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.SKIPPED, ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastUpdated = :now
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.SKIPPED, ps.startedAt = NULL, ps.claimToken = NULL, ps.retryEligibleAt = NULL, ps.lastUpdated = :now
             WHERE ps.lectureUnit.id = :lectureUnitId
             AND ps.ingestionJobToken IS NULL
-            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
-                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            AND ps.claimToken = :claimToken
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)
             """)
-    int markSkippedIfStillClaimed(@Param("lectureUnitId") long lectureUnitId, @Param("claimedAt") ZonedDateTime claimedAt, @Param("now") ZonedDateTime now);
+    int markSkippedIfStillClaimed(@Param("lectureUnitId") long lectureUnitId, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now);
 
     /**
      * Fail a dispatch that never reached Pyris, bound to its claim exactly like {@link #markSkippedIfStillClaimed}.
@@ -787,7 +781,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * failed before activation has no token, so that predicate is never true under SQL NULL semantics.
      *
      * @param id              the claimed row's own id
-     * @param claimedAt       the claim marker observed at claim time
+     * @param claimToken      identity of the claim being committed
      * @param retryCount      the incremented attempt count
      * @param errorKey        the i18n key describing the failure
      * @param retryEligibleAt when the unit becomes eligible again, or {@code null} for a terminal failure
@@ -799,14 +793,14 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Query("""
             UPDATE LectureUnitProcessingState ps
             SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
-                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.ingestionJobToken = NULL, ps.claimToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
                 ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.ingestionJobToken IS NULL
-            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
-                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            AND ps.claimToken = :claimToken
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)
             """)
-    int failDispatchIfStillClaimed(@Param("id") long id, @Param("claimedAt") ZonedDateTime claimedAt, @Param("retryCount") int retryCount, @Param("errorKey") String errorKey,
+    int failDispatchIfStillClaimed(@Param("id") long id, @Param("claimToken") String claimToken, @Param("retryCount") int retryCount, @Param("errorKey") String errorKey,
             @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
 
     /**
@@ -814,10 +808,10 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * attachment), bound to its claim. No retry is scheduled and the attempt count is untouched, matching the
      * {@code markFailed} this replaces: these are local problems a retry cannot fix.
      *
-     * @param id        the claimed row's own id
-     * @param claimedAt the claim marker observed at claim time
-     * @param errorKey  the i18n key describing why it cannot be dispatched
-     * @param now       recorded as the new {@code lastUpdated}
+     * @param id         the claimed row's own id
+     * @param claimToken identity of the claim being committed
+     * @param errorKey   the i18n key describing why it cannot be dispatched
+     * @param now        recorded as the new {@code lastUpdated}
      * @return 1 when the failure was applied, 0 when the row no longer holds this exact claim
      */
     @Modifying
@@ -825,13 +819,13 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     @Query("""
             UPDATE LectureUnitProcessingState ps
             SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
-                ps.retryEligibleAt = NULL, ps.lastUpdated = :now
+                ps.retryEligibleAt = NULL, ps.claimToken = NULL, ps.lastUpdated = :now
             WHERE ps.id = :id
             AND ps.ingestionJobToken IS NULL
-            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
-                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            AND ps.claimToken = :claimToken
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)
             """)
-    int failPreparationIfStillClaimed(@Param("id") long id, @Param("claimedAt") ZonedDateTime claimedAt, @Param("errorKey") String errorKey, @Param("now") ZonedDateTime now);
+    int failPreparationIfStillClaimed(@Param("id") long id, @Param("claimToken") String claimToken, @Param("errorKey") String errorKey, @Param("now") ZonedDateTime now);
 
     /**
      * Release a claim back into the IDLE queue, bound to that claim. Mirrors
@@ -839,24 +833,123 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * the run-scoped ledger it clears, so a requeue committed here and one committed through the entity leave the
      * same row. Used when preparation hits a transient local condition rather than a real fault.
      *
-     * @param id        the claimed row's own id
-     * @param claimedAt the claim marker observed at claim time
-     * @param now       recorded as the new {@code lastUpdated}
+     * @param id         the claimed row's own id
+     * @param claimToken identity of the claim being committed
+     * @param now        recorded as the new {@code lastUpdated}
      * @return 1 when the claim was released, 0 when the row no longer holds this exact claim
      */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.startedAt = NULL, ps.ingestionJobToken = NULL,
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.startedAt = NULL, ps.claimToken = NULL, ps.ingestionJobToken = NULL,
                 ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.lastUpdated = :now,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
                 ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
             WHERE ps.id = :id
             AND ps.ingestionJobToken IS NULL
-            AND ((ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE AND ps.startedAt = :claimedAt)
-                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt = :claimedAt))
+            AND ps.claimToken = :claimToken
+            AND ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED)
             """)
-    int requeueIfStillClaimed(@Param("id") long id, @Param("claimedAt") ZonedDateTime claimedAt, @Param("now") ZonedDateTime now);
+    int requeueIfStillClaimed(@Param("id") long id, @Param("claimToken") String claimToken, @Param("now") ZonedDateTime now);
+
+    /**
+     * Requeue a unit whose content changed, without writing back the rest of a snapshot read before the change was
+     * detected. The whole-entity save this replaces could revert a run that was claimed and activated while the
+     * content check ran, leaving Pyris working on a job the row no longer tracks. A content change always supersedes
+     * an in-flight run, so this deliberately does not guard on the claim: it simply sets what the requeue means to
+     * set and leaves every other column alone.
+     *
+     * @param id                the processing state to requeue
+     * @param videoSourceHash   the new video marker, or {@code null} when the unit has no video
+     * @param attachmentVersion the new attachment marker, or {@code null} when the unit has no PDF
+     * @param dispatchPriority  where the requeued unit sits in the dispatch order
+     * @param now               recorded as the new {@code lastUpdated}
+     * @return 1 when the row was requeued, 0 when it no longer exists
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.startedAt = NULL, ps.claimToken = NULL,
+                ps.ingestionJobToken = NULL, ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.retryCount = 0,
+                ps.contentFingerprint = NULL, ps.confirmedFingerprint = NULL,
+                ps.videoSourceHash = :videoSourceHash, ps.attachmentVersion = :attachmentVersion, ps.dispatchPriority = :dispatchPriority,
+                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
+                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            """)
+    int requeueForContentChange(@Param("id") long id, @Param("videoSourceHash") String videoSourceHash, @Param("attachmentVersion") Integer attachmentVersion,
+            @Param("dispatchPriority") Integer dispatchPriority, @Param("now") ZonedDateTime now);
+
+    /**
+     * Record the content markers and dispatch order of a unit whose content did not change, touching nothing else.
+     * The whole-entity save this replaces also wrote back phase, token and claim from a stale snapshot, which could
+     * revert a run activated while the content check ran.
+     *
+     * @param id                the processing state to update
+     * @param videoSourceHash   the current video marker, or {@code null} when the unit has no video
+     * @param attachmentVersion the current attachment marker, or {@code null} when the unit has no PDF
+     * @param dispatchPriority  where the unit sits in the dispatch order
+     * @param now               recorded as the new {@code lastUpdated}
+     * @return 1 when the row was updated, 0 when it no longer exists
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.videoSourceHash = :videoSourceHash, ps.attachmentVersion = :attachmentVersion,
+                ps.dispatchPriority = :dispatchPriority, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            """)
+    int updateContentMarkers(@Param("id") long id, @Param("videoSourceHash") String videoSourceHash, @Param("attachmentVersion") Integer attachmentVersion,
+            @Param("dispatchPriority") Integer dispatchPriority, @Param("now") ZonedDateTime now);
+
+    /**
+     * Settle a unit as DONE because it no longer has processable content, without writing back a snapshot read
+     * before the cleanup ran. DONE here means "nothing indexed", so the content markers and both fingerprints are
+     * dropped with it: a confirmed fingerprint would otherwise claim the index still holds verified data.
+     *
+     * @param id  the processing state to settle
+     * @param now recorded as the new {@code lastUpdated}
+     * @return 1 when the row was settled, 0 when it no longer exists
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE, ps.startedAt = NULL, ps.claimToken = NULL,
+                ps.ingestionJobToken = NULL, ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.retryCount = 0,
+                ps.videoSourceHash = NULL, ps.attachmentVersion = NULL, ps.contentFingerprint = NULL, ps.confirmedFingerprint = NULL,
+                ps.lastUpdated = :now
+            WHERE ps.id = :id
+            """)
+    int settleAsNothingIndexed(@Param("id") long id, @Param("now") ZonedDateTime now);
+
+    /**
+     * Reset an interrupted in-flight run to IDLE, but only while it still is the run that was read: an Iris restart
+     * recovers from a batch read, and a terminal callback landing between that read and this write would otherwise be
+     * reverted and the completed work re-ingested. Retry budget is deliberately preserved -- the job was lost by
+     * infrastructure, not by the content.
+     *
+     * @param id          the processing state to reset
+     * @param phaseAtRead the in-flight phase observed at batch-read time
+     * @param tokenAtRead the job token observed at batch-read time
+     * @param now         recorded as the new {@code lastUpdated}
+     * @return 1 when the run was reset, 0 when it had already moved on
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.ingestionJobToken = NULL, ps.claimToken = NULL,
+                ps.startedAt = NULL, ps.retryEligibleAt = NULL, ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL,
+                ps.currentStage = NULL, ps.stageStartedAt = NULL, ps.stageProgress = NULL, ps.stageTotal = NULL,
+                ps.lastProgressAt = NULL, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.phase = :phaseAtRead
+            AND ps.ingestionJobToken = :tokenAtRead
+            """)
+    int resetToIdleIfStillLive(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead, @Param("now") ZonedDateTime now);
 
 }

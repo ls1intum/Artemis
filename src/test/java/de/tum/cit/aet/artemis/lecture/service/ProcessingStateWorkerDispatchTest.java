@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,8 +85,9 @@ class ProcessingStateWorkerDispatchTest {
         featureToggleService = mock(FeatureToggleService.class);
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, irisLectureApi, websocketMessagingService,
-                contentFingerprintService, distributedDataProvider, featureToggleService, 2, 20, Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class));
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, irisLectureApi,
+                new ProcessingStateNotificationService(websocketMessagingService, transcriptionRepository), contentFingerprintService, distributedDataProvider,
+                featureToggleService, 2, 20, Duration.ofSeconds(90), 8, mock(IrisLectureUnitSyncStateRepository.class));
 
         Lecture lecture = new Lecture();
         lecture.setId(1L);
@@ -103,7 +103,7 @@ class ProcessingStateWorkerDispatchTest {
     @Test
     void claimReturnsPreparedScalarsAndMarksWorkerSeen() {
         when(processingStateRepository.findIdleForDispatch(any(), eq(2))).thenReturn(List.of(testState));
-        when(processingStateRepository.claimIdleForDispatch(eq(500L), any())).thenReturn(1);
+        when(processingStateRepository.claimIdleForDispatch(eq(500L), anyString(), any())).thenReturn(1);
 
         List<ClaimedIngestionUnitDTO> claims = callbackService.claimUnitsForWorker(WORKER_BOOT_ID, 2);
 
@@ -167,7 +167,7 @@ class ProcessingStateWorkerDispatchTest {
 
     @Test
     void activateClaimedJobActivatesTheClaimAtomically() {
-        ZonedDateTime claimedAt = ZonedDateTime.now();
+        String claimedAt = "claim-current";
         when(processingStateRepository.activateClaimedJob(eq(100L), eq(ProcessingPhase.INGESTING), eq("token-abc"), eq("v1:test-fingerprint"), eq(WORKER_BOOT_ID), eq(claimedAt),
                 any())).thenReturn(1);
         when(processingStateRepository.findByLectureUnit_Id(100L)).thenReturn(Optional.of(testState));
@@ -181,9 +181,9 @@ class ProcessingStateWorkerDispatchTest {
 
     @Test
     void activateClaimedJobIgnoresAnActivationWhoseClaimLapsed() {
-        when(processingStateRepository.activateClaimedJob(anyLong(), any(), anyString(), anyString(), anyString(), any(), any())).thenReturn(0);
+        when(processingStateRepository.activateClaimedJob(anyLong(), any(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(0);
 
-        assertThat(callbackService.activateClaimedJob(100L, "token-late", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID, ZonedDateTime.now())).isFalse();
+        assertThat(callbackService.activateClaimedJob(100L, "token-late", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID, "claim-late")).isFalse();
 
         verify(processingStateRepository, never()).save(any());
         verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
@@ -196,7 +196,7 @@ class ProcessingStateWorkerDispatchTest {
         // stale activation for its OLD claim arrives late. The atomic guard matches on the exact claim
         // marker, so the stale activation cannot be conflated with the newer, still-unactivated claim:
         // it matches nothing instead of activating that newer claim with worker A's stale job token.
-        ZonedDateTime staleClaimedAt = ZonedDateTime.now().minusMinutes(25);
+        String staleClaimedAt = "claim-stale";
         when(processingStateRepository.activateClaimedJob(eq(100L), any(), anyString(), anyString(), anyString(), eq(staleClaimedAt), any())).thenReturn(0);
 
         assertThat(callbackService.activateClaimedJob(100L, "token-from-lapsed-claim", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID, staleClaimedAt)).isFalse();
@@ -254,7 +254,7 @@ class ProcessingStateWorkerDispatchTest {
 
     @Test
     void markClaimedUnitSkippedMarksSkippedWhenTheClaimIsStillCurrent() {
-        ZonedDateTime claimedAt = ZonedDateTime.now();
+        String claimedAt = "claim-current";
         when(processingStateRepository.markSkippedIfStillClaimed(eq(100L), eq(claimedAt), any())).thenReturn(1);
 
         assertThat(callbackService.markClaimedUnitSkipped(100L, claimedAt)).isTrue();
@@ -271,28 +271,10 @@ class ProcessingStateWorkerDispatchTest {
         // another), so the stale result cannot be conflated with the newer claim: it matches nothing
         // instead of cancelling the newer claim's run. This is finding 3: without the claim-marker
         // match, the previous unconditional save would have overwritten an active run with SKIPPED.
-        ZonedDateTime staleClaimedAt = ZonedDateTime.now().minusMinutes(25);
+        String staleClaimedAt = "claim-stale";
         when(processingStateRepository.markSkippedIfStillClaimed(eq(100L), eq(staleClaimedAt), any())).thenReturn(0);
 
         assertThat(callbackService.markClaimedUnitSkipped(100L, staleClaimedAt)).isFalse();
     }
 
-    /**
-     * The claim marker is written to {@code started_at} / {@code retry_eligible_at} and then compared for exact
-     * equality by every activation and failure guard. Those are legacy DATETIME columns keeping only whole seconds on
-     * MySQL, so a marker carrying a sub-second component is rounded on write and matches nothing on the way back out
-     * — orphaning every job the push path dispatches and leaving the row claimed until the abandoned-claim sweep.
-     * <p>
-     * Asserted as a plain invariant rather than through the database, deliberately: the server suite runs on embedded
-     * PostgreSQL, whose {@code timestamp} keeps microseconds, so a round-trip test passes there whether or not the
-     * truncation exists and cannot guard this at all. The invariant holds on every engine and fails the moment the
-     * truncation is dropped, which is what makes it worth asserting.
-     */
-    @Test
-    void claimTimestampCarriesNoSubSecondComponent() {
-        for (int attempt = 0; attempt < 100; attempt++) {
-            assertThat(ProcessingStateCallbackService.claimTimestamp().getNano())
-                    .as("a claim marker must be whole seconds: started_at/retry_eligible_at cannot store more, and the activation guards match it exactly").isZero();
-        }
-    }
 }

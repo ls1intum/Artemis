@@ -123,11 +123,11 @@ public class PyrisInternalIngestionWorkerResource {
                 continue;
             }
             if (prepared == null) {
-                processingStateCallbackApi.get().markClaimedUnitSkipped(claim.lectureUnitId(), claim.claimedAt());
+                processingStateCallbackApi.get().markClaimedUnitSkipped(claim.lectureUnitId(), claim.claimToken());
                 continue;
             }
             if (!processingStateCallbackApi.get().activateClaimedJob(claim.lectureUnitId(), prepared.jobToken(), claim.targetPhase(), claim.contentFingerprint(), request.bootId(),
-                    claim.claimedAt())) {
+                    claim.claimToken())) {
                 // The claim lapsed between claiming and preparing (released, re-claimed by a newer request, or already
                 // activated). A job the ledger does not track must not be handed to the worker. The token registered
                 // moments ago by prepareLectureUnitIngestion is now unusable too: release it rather than leaving it

@@ -129,13 +129,18 @@ public class ProcessingStateRecoveryService {
         }
         TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
         log.info("Recovering interrupted unit {} (was {}) - resetting to IDLE, retry budget preserved", lectureUnit.getId(), state.getPhase());
+        // Bound to the run that was read: a terminal callback landing between the batch read and this write would
+        // otherwise be reverted here and the completed work re-ingested.
+        if (processingStateRepository.resetToIdleIfStillLive(state.getId(), state.getPhase(), state.getIngestionJobToken(), ZonedDateTime.now()) == 0) {
+            log.info("Not recovering unit {}: its run completed or moved on since the batch read", lectureUnit.getId());
+            return false;
+        }
         state.setPhase(ProcessingPhase.IDLE);
         state.setIngestionJobToken(null);
         state.setStartedAt(null);
         state.setRetryEligibleAt(null);
         state.setLastUpdated(ZonedDateTime.now());
         state.clearStageProgress();
-        processingStateRepository.save(state);
 
         notifyProcessingStateChange(state, transcriptionStatus);
         return true;
