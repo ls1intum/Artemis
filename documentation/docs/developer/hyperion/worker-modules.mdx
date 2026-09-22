@@ -8,6 +8,18 @@ The worker follows Artemis's package-by-feature conventions. `aiworker` owns exe
 infrastructure; `hyperion` owns exercise authoring. Feature boundaries are enforced by
 architecture tests rather than a separate Gradle project for each layer.
 
+## Packaged artifacts
+
+Only `aiworker` and `hyperion` are top-level modules. `aiworker/api` is the neutral
+contract library; `aiworker` builds the generic supervisor. `hyperion` supplies the
+feature runtime and `hyperion/worker` composes its workload distribution from that
+runtime and the supervisor library. Hyperion sources, templates and model-provider
+dependencies are not present in the generic worker JAR.
+
+`verifyWorkerDistribution` inspects the built generic archive. Runtime dependency
+gates and feature-package architecture tests enforce the same dependency direction.
+New features compose their own distribution without adding dependencies to AI Worker.
+
 ## Ownership
 
 | Package                                                          | Responsibility                                                                                          |
@@ -79,7 +91,7 @@ No in-memory delivery queue is described as durable across process loss.
 6. Add codec, cancellation, duplicate-delivery, lost-renewal and stale-result tests. Boot
    with unrelated features unavailable, and validate an exact-image deployment canary.
 
-`WorkerIsolationTest` boots the real application with Hyperion hidden and executes a
+`WorkerIsolationTest` boots the real application with Hyperion absent from its dependencies and executes a
 second, test-only document workload without model credentials. It verifies reliable
 progress, checkpoint and completion through the actual supervisor. It is not a claim
 that document processing is a shipped product feature.

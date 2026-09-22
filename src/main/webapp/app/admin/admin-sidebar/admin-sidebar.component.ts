@@ -246,7 +246,7 @@ export class AdminSidebarComponent {
             monitoringItems.push({
                 routerLink: '/admin/hyperion-generations',
                 icon: faRobot,
-                title: 'Hyperion Generations',
+                title: 'Generations',
                 translation: 'artemisApp.hyperion.workers.title',
                 testId: 'admin-hyperion-workers',
             });

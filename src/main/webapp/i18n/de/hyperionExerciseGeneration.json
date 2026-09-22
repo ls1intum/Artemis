@@ -394,7 +394,7 @@
             "workers": {
                 "unknownCapacity": "Die Kapazität ist erst mit einem aktuellen Heartbeat des Workers bekannt.",
                 "toolchain": "Toolchain",
-                "title": "Hyperion-Generierungen",
+                "title": "Generierungen",
                 "refresh": "Aktualisieren",
                 "description": "Aktive Hyperion-Generierungen prüfen und gezielt abbrechen. Worker-Zustand und Kapazität werden unter KI-Worker angezeigt.",
                 "loadFailed": "Der Worker-Status konnte nicht aktualisiert werden. Vorher geladene Einträge können veraltet sein. Die Generierung kann auf diesem Knoten auch deaktiviert sein.",

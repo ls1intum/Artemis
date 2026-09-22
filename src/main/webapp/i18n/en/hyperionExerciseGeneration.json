@@ -394,7 +394,7 @@
             "workers": {
                 "unknownCapacity": "Capacity is unknown until a current worker heartbeat is available.",
                 "toolchain": "Toolchain",
-                "title": "Hyperion Generations",
+                "title": "Generations",
                 "refresh": "Refresh",
                 "description": "Inspect active Hyperion authoring and cancel an exact run. Worker health and capacity are listed under AI Workers.",
                 "loadFailed": "Worker status could not be refreshed. Previously loaded entries may be stale. Generation may also be disabled on this node.",
