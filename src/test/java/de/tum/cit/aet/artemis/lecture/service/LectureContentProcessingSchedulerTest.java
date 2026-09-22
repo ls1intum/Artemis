@@ -531,7 +531,7 @@ class LectureContentProcessingSchedulerTest {
             });
             // Mimics the real UPDATE ... WHERE id AND phase AND token guard against the backing row: applies
             // the failure only while the row still matches what the caller observed at read time.
-            when(raceRepository.failIfStillLive(eq(PROCESSING_STATE_ID), any(), any(), any(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            when(raceRepository.failIfStillLiveWithProgressPin(eq(PROCESSING_STATE_ID), any(), any(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
                 ProcessingPhase phase = invocation.getArgument(1);
                 String token = invocation.getArgument(2);
                 if (backingRow.getPhase() != phase || !Objects.equals(backingRow.getIngestionJobToken(), token)) {

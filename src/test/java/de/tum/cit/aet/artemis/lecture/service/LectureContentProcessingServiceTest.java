@@ -127,7 +127,7 @@ class LectureContentProcessingServiceTest {
         when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
         // The atomic terminal-callback claims succeed by default; duplicate-claim tests override these
         when(processingStateRepository.completeIngestionIfLive(anyLong(), anyString(), any())).thenReturn(1);
-        when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), any(), any(), anyInt(), any(), any(), any())).thenReturn(1);
+        when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), anyInt(), any(), any(), any())).thenReturn(1);
         irisLectureUnitSyncStateRepository = mock(IrisLectureUnitSyncStateRepository.class);
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
                 websocketMessagingService, contentFingerprintService, distributedDataProviderMock(), featureToggleService, 2, 20, Duration.ofSeconds(90), 8,
@@ -791,7 +791,7 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.INGESTING);
             testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), any(), any(), anyInt(), any(), any(), any())).thenReturn(0);
+            when(processingStateRepository.failIfStillLive(anyLong(), any(), any(), anyInt(), any(), any(), any())).thenReturn(0);
 
             callbackService.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false, null, null);
 

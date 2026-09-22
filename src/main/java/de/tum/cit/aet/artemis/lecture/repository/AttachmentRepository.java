@@ -86,6 +86,24 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
 
     /**
+     * Update an attachment's display page numbers unconditionally: for a calling run whose processing
+     * state never recorded an attachment version (no PDF was ever detected for it), so there is nothing
+     * to compare against. {@link #updateDisplayPageNumbersIfVersionMatches} is the guarded counterpart,
+     * for a run that does have a version to protect against a concurrent content change.
+     *
+     * @param attachmentId       the attachment to update
+     * @param displayPageNumbers the new mapping
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE Attachment a
+            SET a.displayPageNumbers = :displayPageNumbers
+            WHERE a.id = :attachmentId
+            """)
+    void updateDisplayPageNumbers(@Param("attachmentId") Long attachmentId, @Param("displayPageNumbers") List<Integer> displayPageNumbers);
+
+    /**
      * Update an attachment's display page numbers, atomically: only while it still carries the
      * expected version.
      * <p>
@@ -95,13 +113,18 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
      * requeue from restoring stale page numbers over content that has already changed, without
      * needing a transaction spanning the processing-state write and this one.
      * <p>
-     * {@code expectedVersion} of {@code null} imposes no constraint, matching every other
-     * conditional-update guard in this module: a unit whose processing state never recorded an
-     * attachment version (no PDF was ever detected for it) has nothing to compare against.
+     * This used to accept a nullable {@code expectedVersion} with a {@code (:expectedVersion IS NULL OR
+     * a.version = :expectedVersion)} guard, imposing no constraint when null. That shape is not portable:
+     * PostgreSQL's extended query protocol determines a prepared statement's parameter types from the
+     * static SQL text alone, before any value is ever bound, and a bare {@code ? IS NULL} cannot be typed
+     * from syntax — so the query fails with {@code 42P18 could not determine data type of parameter} on
+     * every call, independent of whether the actual bound value is null. {@link #updateDisplayPageNumbers}
+     * is the unguarded counterpart for a caller with nothing to pin, so this method's parameter is never
+     * null and needs no such guard.
      *
      * @param attachmentId       the attachment to update
      * @param displayPageNumbers the new mapping
-     * @param expectedVersion    the attachment version the calling run's processing state recorded, or {@code null}
+     * @param expectedVersion    the attachment version the calling run's processing state recorded
      * @return 1 when applied, 0 when the attachment's version has since changed
      */
     @Modifying
@@ -110,7 +133,7 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             UPDATE Attachment a
             SET a.displayPageNumbers = :displayPageNumbers
             WHERE a.id = :attachmentId
-            AND (:expectedVersion IS NULL OR a.version = :expectedVersion)
+            AND a.version = :expectedVersion
             """)
     int updateDisplayPageNumbersIfVersionMatches(@Param("attachmentId") Long attachmentId, @Param("displayPageNumbers") List<Integer> displayPageNumbers,
             @Param("expectedVersion") Integer expectedVersion);

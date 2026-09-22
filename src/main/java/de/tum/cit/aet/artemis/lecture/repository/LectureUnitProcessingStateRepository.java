@@ -580,24 +580,29 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * dropped instead of overwriting whatever the callback wrote. Same guard shape as
      * {@link #requeueStuckIngestionWithoutPenalty}.
      * <p>
-     * {@code expectedLastProgressAt}/{@code expectedLastUpdated} additionally pin the liveness signal
-     * that justified the failure, for callers where phase and token alone are not enough: a heartbeat
-     * advances one of these fields without touching phase or token, so a heartbeat landing between the
-     * caller's re-fetch and this write would otherwise let a run that just became live again still be
-     * failed. Pass {@code null} for whichever (or both) the caller does not need to pin — the plain
-     * {@code IS NULL OR =} guard then imposes no constraint on that field, exactly as before this was
-     * added, which is what the ordinary terminal-callback failure path (no liveness signal to pin) relies
-     * on.
+     * This is the plain variant, for the ordinary terminal-callback failure path, which has no liveness
+     * signal to pin: id/phase/token is the whole guard. {@link #failIfStillLiveWithProgressPin} and
+     * {@link #failIfStillLiveWithUpdatedPin} additionally pin the liveness signal that justified the
+     * failure, for callers where phase and token alone are not enough — a heartbeat advances one of those
+     * fields without touching phase or token, so a heartbeat landing between the caller's re-fetch and
+     * this write would otherwise let a run that just became live again still be failed.
+     * <p>
+     * These used to be one method taking both pins as nullable, with a plain {@code (:param IS NULL OR
+     * field = :param)} guard imposing no constraint when a caller had nothing to pin. That shape is not
+     * portable: PostgreSQL's extended query protocol determines a prepared statement's parameter types
+     * from the static SQL text alone, before any value is ever bound, and a bare {@code ? IS NULL} cannot
+     * be typed from syntax — so the query fails with {@code 42P18 could not determine data type of
+     * parameter} on every single call, independent of whether the actual bound value is null. Three
+     * separate methods, each with only ever-non-null parameters, needs no such guard and has nothing to
+     * infer a type for.
      *
-     * @param id                     the processing state to fail
-     * @param phase                  the phase observed when the run was judged stalled/stuck
-     * @param token                  the job token observed at the same time
-     * @param expectedLastProgressAt the stall detector's observed {@code lastProgressAt}, or {@code null} not to pin it
-     * @param expectedLastUpdated    the stuck detector's observed {@code lastUpdated}, or {@code null} not to pin it
-     * @param retryCount             the new retry count to persist
-     * @param errorKey               the i18n error key to persist
-     * @param retryEligibleAt        when the retry becomes eligible, or {@code null} for a permanent failure
-     * @param now                    recorded as the new {@code lastUpdated}
+     * @param id              the processing state to fail
+     * @param phase           the phase observed when the run was judged stalled/stuck
+     * @param token           the job token observed at the same time
+     * @param retryCount      the new retry count to persist
+     * @param errorKey        the i18n error key to persist
+     * @param retryEligibleAt when the retry becomes eligible, or {@code null} for a permanent failure
+     * @param now             recorded as the new {@code lastUpdated}
      * @return 1 when the failure was applied, 0 when the run is no longer the one that was judged stalled/stuck
      */
     @Modifying
@@ -610,12 +615,57 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE ps.id = :id
             AND ps.phase = :phase
             AND ps.ingestionJobToken = :token
-            AND (:expectedLastProgressAt IS NULL OR ps.lastProgressAt = :expectedLastProgressAt)
-            AND (:expectedLastUpdated IS NULL OR ps.lastUpdated = :expectedLastUpdated)
             """)
-    int failIfStillLive(@Param("id") long id, @Param("phase") ProcessingPhase phase, @Param("token") String token,
-            @Param("expectedLastProgressAt") ZonedDateTime expectedLastProgressAt, @Param("expectedLastUpdated") ZonedDateTime expectedLastUpdated,
-            @Param("retryCount") int retryCount, @Param("errorKey") String errorKey, @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
+    int failIfStillLive(@Param("id") long id, @Param("phase") ProcessingPhase phase, @Param("token") String token, @Param("retryCount") int retryCount,
+            @Param("errorKey") String errorKey, @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
+
+    /**
+     * {@link #failIfStillLive}, additionally pinning the stall detector's observed {@code lastProgressAt}: a
+     * heartbeat can advance it without touching phase or token, so pinning it stops a heartbeat landing
+     * between the caller's re-fetch and this write from still failing a run that just became live again.
+     *
+     * @param expectedLastProgressAt the stall detector's observed {@code lastProgressAt}
+     * @see #failIfStillLive
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
+                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.phase = :phase
+            AND ps.ingestionJobToken = :token
+            AND ps.lastProgressAt = :expectedLastProgressAt
+            """)
+    int failIfStillLiveWithProgressPin(@Param("id") long id, @Param("phase") ProcessingPhase phase, @Param("token") String token,
+            @Param("expectedLastProgressAt") ZonedDateTime expectedLastProgressAt, @Param("retryCount") int retryCount, @Param("errorKey") String errorKey,
+            @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
+
+    /**
+     * {@link #failIfStillLive}, additionally pinning the stuck detector's observed {@code lastUpdated}: a
+     * checkpoint or heartbeat can advance it without touching phase or token, so pinning it stops one landing
+     * between the caller's re-fetch and this write from still failing a run that just proved it was alive.
+     *
+     * @param expectedLastUpdated the stuck detector's observed {@code lastUpdated}
+     * @see #failIfStillLive
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED, ps.errorKey = :errorKey,
+                ps.ingestionJobToken = NULL, ps.startedAt = NULL, ps.retryCount = :retryCount,
+                ps.retryEligibleAt = :retryEligibleAt, ps.lastUpdated = :now
+            WHERE ps.id = :id
+            AND ps.phase = :phase
+            AND ps.ingestionJobToken = :token
+            AND ps.lastUpdated = :expectedLastUpdated
+            """)
+    int failIfStillLiveWithUpdatedPin(@Param("id") long id, @Param("phase") ProcessingPhase phase, @Param("token") String token,
+            @Param("expectedLastUpdated") ZonedDateTime expectedLastUpdated, @Param("retryCount") int retryCount, @Param("errorKey") String errorKey,
+            @Param("retryEligibleAt") ZonedDateTime retryEligibleAt, @Param("now") ZonedDateTime now);
 
     /**
      * Activate a claim exactly once: turn a claimed row into an in-flight run, but only while it still holds exactly
