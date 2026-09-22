@@ -332,6 +332,39 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateConversationAnswerPost_contentTooLong_badRequest() throws Exception {
+        // content exceeding the 5000 character limit must be rejected by the DTO validation before persisting
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
+        answerPostToSave.setContent("a".repeat(5001));
+
+        var countBefore = answerPostRepository.count();
+
+        AnswerPostResponseDTO notCreatedAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(notCreatedAnswerPost).isNull();
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore);
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateConversationAnswerPost_contentAtMaxLength_created() throws Exception {
+        // content of exactly 5000 characters is the boundary and must still be accepted
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
+        answerPostToSave.setContent("a".repeat(5000));
+
+        var countBefore = answerPostRepository.count();
+
+        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
+    }
+
     // UPDATE
 
     @Test
@@ -350,6 +383,39 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(), (Object) argThat(
                 argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(conversationAnswerPostToUpdate.getPost()))));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testEditConversationAnswerPost_contentTooLong_badRequest() throws Exception {
+        // editing an existing answer to exceed the 5000 character limit must be rejected and must not modify the stored content
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(2).getAnswers().iterator().next();
+        Long answerPostId = conversationAnswerPostToUpdate.getId();
+        String tooLongContent = "a".repeat(5001);
+        conversationAnswerPostToUpdate.setContent(tooLongContent);
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + answerPostId, toUpdatePostingDTO(conversationAnswerPostToUpdate),
+                AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(answerPostRepository.findById(answerPostId).orElseThrow().getContent()).isNotEqualTo(tooLongContent);
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testEditConversationAnswerPost_contentAtMaxLength_ok() throws Exception {
+        // content of exactly 5000 characters is the boundary and must still be accepted and persisted
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(2).getAnswers().iterator().next();
+        Long answerPostId = conversationAnswerPostToUpdate.getId();
+        String maxContent = "a".repeat(5000);
+        conversationAnswerPostToUpdate.setContent(maxContent);
+
+        AnswerPostResponseDTO updatedAnswerPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + answerPostId,
+                toUpdatePostingDTO(conversationAnswerPostToUpdate), AnswerPostResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updatedAnswerPost.id()).isEqualTo(answerPostId);
+        assertThat(updatedAnswerPost.content()).isEqualTo(maxContent);
+        assertThat(answerPostRepository.findById(answerPostId).orElseThrow().getContent()).isEqualTo(maxContent);
     }
 
     @ParameterizedTest

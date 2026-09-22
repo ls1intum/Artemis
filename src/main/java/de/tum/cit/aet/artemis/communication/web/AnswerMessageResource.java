@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -71,7 +73,7 @@ public class AnswerMessageResource {
      */
     @PostMapping("courses/{courseId}/answer-messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPostResponseDTO> createAnswerMessage(@PathVariable Long courseId, @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
+    public ResponseEntity<AnswerPostResponseDTO> createAnswerMessage(@PathVariable Long courseId, @Valid @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
         log.debug("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.content());
         long start = System.nanoTime();
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
@@ -92,7 +94,8 @@ public class AnswerMessageResource {
      */
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPostResponseDTO> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody UpdatePostingDTO updatedAnswer) {
+    public ResponseEntity<AnswerPostResponseDTO> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId,
+            @Valid @RequestBody UpdatePostingDTO updatedAnswer) {
         log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, updatedAnswer.content());
         long start = System.nanoTime();
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, updatedAnswer);

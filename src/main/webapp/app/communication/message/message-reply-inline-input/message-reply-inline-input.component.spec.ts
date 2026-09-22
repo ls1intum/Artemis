@@ -10,6 +10,7 @@ import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.
 import { directMessageUser1, metisPostToCreateUser1 } from 'test/helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
+import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 import { throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -222,6 +223,23 @@ describe('MessageReplyInlineInputComponent', () => {
             vi.advanceTimersByTime(0);
 
             expect(saveDraftSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('content length validation', () => {
+        beforeEach(() => {
+            component.posting.set({ ...metisPostToCreateUser1 });
+            fixture.detectChanges();
+        });
+
+        it('should flag a maxlength error when the reply content exceeds MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH + 1));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(true);
+        });
+
+        it('should not flag a maxlength error when the reply content is exactly MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(false);
         });
     });
 });
