@@ -142,13 +142,7 @@
                 "aiExperienceOptInHint": "Diese Aufgabe unterstützt KI-generierte Feedback-Vorschläge. Wähle deine KI-Erfahrung, um sie für diese und zukünftige Bewertungen zu nutzen.",
                 "aiExperienceOptInHintNoAi": "KI-Feedback-Vorschläge sind deaktiviert, weil du „Keine KI“ ausgewählt hast. Ändere deine KI-Erfahrung, um sie für diese und zukünftige Bewertungen zu nutzen.",
                 "chooseAiExperience": "KI-Erfahrung wählen",
-                "changeAiExperience": "KI-Erfahrung ändern",
-                "chrome": {
-                    "automaticAssessment": "Automatische Bewertung",
-                    "suggestions": "KI-Feedback-Vorschläge",
-                    "loading": "Vorschläge werden generiert…",
-                    "optInRequired": "KI-Feedback verfügbar"
-                }
+                "changeAiExperience": "KI-Erfahrung ändern"
             },
             "locks": {
                 "home": {

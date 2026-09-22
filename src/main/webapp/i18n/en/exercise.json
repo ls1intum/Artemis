@@ -243,8 +243,7 @@
                 "dontShowAgain": "Don't show this again",
                 "aiType": {
                     "CLOUD_AI": "Cloud AI",
-                    "LOCAL_AI": "Local AI",
-                    "NO_AI": "No AI"
+                    "LOCAL_AI": "Local AI"
                 }
             },
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",

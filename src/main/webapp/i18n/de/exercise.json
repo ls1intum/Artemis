@@ -243,8 +243,7 @@
                 "dontShowAgain": "Nicht mehr anzeigen",
                 "aiType": {
                     "CLOUD_AI": "Cloud KI",
-                    "LOCAL_AI": "Lokale KI",
-                    "NO_AI": "Keine KI"
+                    "LOCAL_AI": "Lokale KI"
                 }
             },
             "startError": "<strong>Uh oh! Etwas ist schiefgelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",

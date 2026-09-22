@@ -62,8 +62,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     protected readonly faPenSquare = faPenSquare;
 
-    protected readonly ExerciseType = ExerciseType;
-
     readonly athenaEnabled = signal(false);
     readonly requestFeedbackEnabled = signal(false);
     readonly isExamExercise = signal<boolean>(undefined!);
@@ -79,10 +77,10 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
     private readonly isFeedbackRequestPending = signal(false);
-    // Mirrors the disabled condition of the primary feedback-request button, so the AI-experience opt-in flow (which
-    // requests feedback directly from acceptLLMUsage(), bypassing that button) cannot start a request the button itself
-    // would have blocked: an incomplete submission, a request already pending, or the request limit already reached.
     readonly isFeedbackRequestBlocked = computed(() => !this.isSubmitted() || this.isFeedbackGenerationInProgress() || this.isFeedbackLimitReached());
+    readonly showOptInPrompt = computed(() => this.showAiExperiencePrompt() && !this.hasUserAcceptedLLMUsage());
+    readonly buttonIdPrefix = computed(() => (this.showOptInPrompt() ? 'enable-ai-feedback-' : 'request-feedback-'));
+    readonly buttonLabelKey = computed(() => (this.showOptInPrompt() ? this.aiExperienceActionKey() : 'artemisApp.exerciseActions.requestAutomaticFeedback'));
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -220,14 +218,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
             this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);
 
-            // Goes through requestFeedback() rather than assureConditionsSatisfied()/processFeedbackRequest() against
-            // this.participation directly: the click that opens the LLM selection modal also bubbles to the popover
-            // wrapper that closes it, which destroys this component while updateParticipation()'s initial load may
-            // still be in flight, canceling it in ngOnDestroy(). requestFeedback() re-fetches the participation
-            // independently and re-derives the pending/limit checks from it, rather than from
-            // isFeedbackGenerationInProgress()/isFeedbackLimitReached() here, which would otherwise see whatever
-            // defaults that canceled load left them at. isSubmitted() stays safe to read: it's an input the parent
-            // keeps current independently of this component's own participation fetch.
+            // requestFeedback() re-fetches the participation: the click that opened the modal also closes the
+            // surrounding popover, destroying this component and possibly canceling its initial participation load.
             if (hasAccepted && this.isSubmitted()) {
                 this.requestFeedback();
             }

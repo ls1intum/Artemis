@@ -52,7 +52,7 @@ import {
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -214,10 +214,7 @@ export class ExerciseHeaderActionsComponent {
             ? 'artemisApp.exercise.aiFeedbackPopover.descriptionNoAi'
             : 'artemisApp.exercise.aiFeedbackPopover.descriptionDisabled',
     );
-    readonly hasUserAcceptedLLM = computed(() => {
-        const selection = this.userLLMSelection();
-        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
-    });
+    readonly hasUserAcceptedLLM = computed(() => isAcceptedLLMSelection(this.userLLMSelection()));
     readonly showFeedbackPopover = computed(() => {
         const exercise = this.exercise();
         if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {

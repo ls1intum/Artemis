@@ -1,88 +1,37 @@
 @if (!isExamExercise() && requestFeedbackEnabled() && athenaEnabled()) {
-    @if (hasUserAcceptedLLMUsage() || !showAiExperiencePrompt()) {
-        @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
-            @if (asTumUiButton()) {
-                <tum-ui-button
-                    [size]="smallButtons() ? 'small' : 'default'"
-                    [icon]="faPenSquare"
-                    [disabled]="(exercise().type !== ExerciseType.PROGRAMMING && !isSubmitted()) || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
-                    [id]="'request-feedback-' + exercise().id"
-                    [ariaLabel]="'artemisApp.exerciseActions.requestAutomaticFeedback' | artemisTranslate"
-                    (clicked)="requestAIFeedback()"
-                >
-                    <span [class]="alwaysShowLabel() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-                </tum-ui-button>
-            } @else {
-                <button
-                    class="btn btn-primary"
-                    (click)="requestAIFeedback()"
-                    [class.btn-sm]="smallButtons()"
-                    [disabled]="(exercise().type !== ExerciseType.PROGRAMMING && !isSubmitted()) || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
-                    [id]="'request-feedback-' + exercise().id"
-                >
-                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                    <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-                </button>
-            }
-        } @else {
-            @if (asTumUiButton()) {
-                <tum-ui-button
-                    [size]="smallButtons() ? 'small' : 'default'"
-                    [icon]="faPenSquare"
-                    [disabled]="!isSubmitted() || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
-                    [id]="'request-feedback-' + exercise().id"
-                    [ariaLabel]="'artemisApp.exerciseActions.requestAutomaticFeedback' | artemisTranslate"
-                    (clicked)="requestAIFeedback()"
-                >
-                    <span [class]="alwaysShowLabel() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-                </tum-ui-button>
-            } @else {
-                <button
-                    class="btn btn-primary"
-                    (click)="requestAIFeedback()"
-                    [class.btn-sm]="smallButtons()"
-                    [disabled]="!isSubmitted() || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
-                    [id]="'request-feedback-' + exercise().id"
-                >
-                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                    <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-                </button>
-            }
-        }
+    @if (showOptInPrompt() && showHint()) {
+        <div class="ai-feedback-hint flex items-center gap-2" [id]="'ai-feedback-hint-' + exercise().id">
+            <span class="text-muted" [jhiTranslate]="aiFeedbackHintKey()"></span>
+            <ng-container [ngTemplateOutlet]="feedbackButton" />
+        </div>
     } @else {
-        @if (showHint()) {
-            <div class="ai-feedback-hint flex items-center gap-2" [id]="'ai-feedback-hint-' + exercise().id">
-                <span class="text-muted" [jhiTranslate]="aiFeedbackHintKey()"></span>
-                <ng-container [ngTemplateOutlet]="enableAiFeedbackButton" />
-            </div>
-        } @else {
-            <ng-container [ngTemplateOutlet]="enableAiFeedbackButton" />
-        }
-        <ng-template #enableAiFeedbackButton>
-            @if (asTumUiButton()) {
-                <tum-ui-button
-                    [size]="smallButtons() ? 'small' : 'default'"
-                    [icon]="faPenSquare"
-                    [disabled]="isFeedbackRequestBlocked()"
-                    [id]="'enable-ai-feedback-' + exercise().id"
-                    [ariaLabel]="aiExperienceActionKey() | artemisTranslate"
-                    (clicked)="showLLMSelectionModal()"
-                >
-                    <span [class]="alwaysShowLabel() ? '' : 'hidden md:inline'" [jhiTranslate]="aiExperienceActionKey()"></span>
-                </tum-ui-button>
-            } @else {
-                <button
-                    class="btn btn-primary"
-                    (click)="showLLMSelectionModal()"
-                    [class.btn-sm]="smallButtons()"
-                    [disabled]="isFeedbackRequestBlocked()"
-                    [id]="'enable-ai-feedback-' + exercise().id"
-                    [attr.aria-label]="aiExperienceActionKey() | artemisTranslate"
-                >
-                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                    <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" [jhiTranslate]="aiExperienceActionKey()"></span>
-                </button>
-            }
-        </ng-template>
+        <ng-container [ngTemplateOutlet]="feedbackButton" />
     }
 }
+
+<ng-template #feedbackButton>
+    @if (asTumUiButton()) {
+        <tum-ui-button
+            [size]="smallButtons() ? 'small' : 'default'"
+            [icon]="faPenSquare"
+            [disabled]="isFeedbackRequestBlocked()"
+            [id]="buttonIdPrefix() + exercise().id"
+            [ariaLabel]="buttonLabelKey() | artemisTranslate"
+            (clicked)="requestAIFeedback()"
+        >
+            <span [class]="alwaysShowLabel() ? '' : 'hidden md:inline'" [jhiTranslate]="buttonLabelKey()"></span>
+        </tum-ui-button>
+    } @else {
+        <button
+            class="btn btn-primary"
+            (click)="requestAIFeedback()"
+            [class.btn-sm]="smallButtons()"
+            [disabled]="isFeedbackRequestBlocked()"
+            [id]="buttonIdPrefix() + exercise().id"
+            [attr.aria-label]="buttonLabelKey() | artemisTranslate"
+        >
+            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+            <span [class]="alwaysShowLabel() ? '' : 'd-none d-md-inline'" [jhiTranslate]="buttonLabelKey()"></span>
+        </button>
+    }
+</ng-template>
