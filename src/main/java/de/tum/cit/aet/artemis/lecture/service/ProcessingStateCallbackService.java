@@ -195,17 +195,15 @@ public class ProcessingStateCallbackService {
             return;
         }
 
-        // Pull mode: while a Pyris worker is actively claiming and heartbeating, jobs are not pushed —
-        // they wait as IDLE rows for the worker's next claim, which owns its capacity itself. The push
-        // below survives only as the automatic fallback for an Iris without worker support.
+        // Pull mode: a worker claims its own capacity, so jobs wait as IDLE for its next claim instead
+        // of being pushed; the push below survives as the fallback for an Iris without worker support.
         if (isWorkerModeActive()) {
             log.debug("Pyris worker active, leaving pending jobs for pull-based claim");
             return;
         }
 
-        // Serialize dispatch cluster-wide so count + claim + dispatch are atomic. Without this lock, concurrent
-        // callers (async triggers on one node, or two nodes at once) can each see the same activeCount and
-        // together dispatch beyond the configured maximum.
+        // Serialize dispatch cluster-wide: without this lock, concurrent callers (async triggers on one
+        // node, or two nodes at once) can each see the same activeCount and together exceed the max.
         DistributedLock dispatchLock = distributedDataProvider.getLock(DISPATCH_LOCK_NAME);
         dispatchLock.lock();
         try {
@@ -232,12 +230,10 @@ public class ProcessingStateCallbackService {
                     continue;
                 }
                 log.info("Re-dispatching retry-eligible unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-                // Mirror the claim onto the loaded entity: it is saved again further down, and writing back the stale
-                // value would put the row back into the candidate list. A successful dispatch clears the lease when it
-                // transitions out of FAILED; a failed one leaves it, which is what makes the claim lapse on its own.
+                // Mirror the claim onto the loaded entity, saved again further down: writing back the stale
+                // value would re-list this row. A failed dispatch leaves the lease, so the claim lapses on its own.
                 state.setRetryEligibleAt(leaseExpiry);
-                // Isolate each dispatch: an unexpected failure on one claimed unit must not abort the
-                // remaining claims. Mirrors the per-unit guard in the backfill loop.
+                // Isolate each dispatch: one claimed unit's failure must not abort the remaining claims.
                 try {
                     dispatchSingleJob(state);
                 }
@@ -362,22 +358,17 @@ public class ProcessingStateCallbackService {
         }
         catch (RuntimeException e) {
             if (FilePathConverter.getFileUploadPath() == null) {
-                // The file store path is not initialized yet: a claim raced application startup before
-                // FilePathConverter was configured, so resolving the attachment path threw. The attachment is
-                // NOT unreadable — the store simply is not ready — so this is transient. Requeue for immediate
-                // re-dispatch once startup completes, rather than permanently failing a healthy unit with
-                // attachmentUnreadable (a permanent key the reconciler never revives). Startup normally sets the
-                // path before serving; this is the belt-and-braces guard for any request that still races it.
+                // Startup raced this claim before FilePathConverter was configured: transient, not an
+                // unreadable attachment. Requeue for immediate re-dispatch rather than permanently
+                // failing a healthy unit with attachmentUnreadable (a key the reconciler never revives).
                 log.warn("File store not initialized yet; requeuing unit {} for re-dispatch instead of failing it", unit.getId());
                 state.requeue();
                 processingStateRepository.save(state);
                 return null;
             }
-            // The attachment file genuinely cannot be read or its link is malformed (an unreadable file
-            // surfaces as IllegalStateException; a malformed link surfaces as IllegalArgumentException from
-            // URI.create). This is a local problem Pyris cannot fix, so retrying against Iris would burn the
-            // whole retry budget without ever dispatching. Fail with a specific permanent key rather than
-            // letting the exception escape and abort the rest of the claimed batch; re-uploading resets it.
+            // A genuinely unreadable file or malformed link is a local problem Pyris cannot fix, so
+            // retrying would burn the retry budget without ever dispatching. Fail with a specific
+            // permanent key instead of letting the exception abort the rest of the claimed batch.
             log.error("Cannot read attachment for unit {}, marking as FAILED without dispatch: {}", unit.getId(), e.getMessage());
             state.markFailed("artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable");
             processingStateRepository.save(state);
@@ -722,8 +713,8 @@ public class ProcessingStateCallbackService {
         ZonedDateTime now = ZonedDateTime.now();
         state.setLastUpdated(now);
         boolean stageAdvanced = state.recordStageProgress(stageName, stageProgress, stageTotal);
-        // Conditional on the token and in-flight phase: a terminal callback landing first cleared the
-        // token, and matching on it here stops this heartbeat from reviving an already-finished run.
+        // Conditional on token and phase: a terminal callback clearing the token first stops this
+        // heartbeat from reviving an already-finished run.
         int applied = processingStateRepository.applyHeartbeat(state.getId(), jobToken, now, state.getCurrentStage(), state.getStageStartedAt(), state.getStageProgress(),
                 state.getStageTotal(), state.getLastProgressAt());
         if (applied == 0) {
@@ -731,8 +722,7 @@ public class ProcessingStateCallbackService {
             return;
         }
 
-        // Push the live stage counter to the client only when the stage or the number actually moved.
-        // Bare heartbeats still refresh liveness above, but do not spam the WebSocket every few seconds.
+        // Only push when the stage/number moved; bare heartbeats refresh liveness without spamming.
         if (stageAdvanced) {
             TranscriptionStatus transcriptionStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).orElse(null);
             notifyProcessingStateChange(state, transcriptionStatus);
@@ -791,7 +781,7 @@ public class ProcessingStateCallbackService {
 
             transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
             log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
-            persistTranscription(lectureUnitId, existing, transcription);
+            persistTranscription(lectureUnitId, jobToken, existing, transcription);
 
             // Notify UI via WebSocket, mirroring the just-persisted transition without a second read.
             state.resetRetryCount();
@@ -800,20 +790,31 @@ public class ProcessingStateCallbackService {
         }
         else {
             // Same reasoning as the enriched branch above.
-            if (processingStateRepository.touchLastUpdated(state.getId(), state.getIngestionJobToken(), ZonedDateTime.now()) == 0) {
+            String jobToken = state.getIngestionJobToken();
+            if (processingStateRepository.touchLastUpdated(state.getId(), jobToken, ZonedDateTime.now()) == 0) {
                 log.debug("Ignoring raw checkpoint for unit {}: the run is no longer in flight under this token", lectureUnitId);
                 return;
             }
 
             transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
             log.info("Raw transcription checkpoint saved for unit {}, staying in TRANSCRIBING", lectureUnitId);
-            persistTranscription(lectureUnitId, existing, transcription);
+            persistTranscription(lectureUnitId, jobToken, existing, transcription);
         }
     }
 
-    /** Conditional update keyed on the row's own id when it existed, else a plain insert. */
-    private void persistTranscription(long lectureUnitId, Optional<LectureTranscription> existing, LectureTranscription transcription) {
+    /**
+     * Conditional update keyed on the row's own id when it existed. A first checkpoint has no id to
+     * guard on, so it re-verifies ownership with a fresh read right before inserting: the earlier
+     * proof and this insert are still two separate writes, and a requeue can invalidate the token
+     * and find nothing to delete in between, leaving an unconditioned insert to persist stale content.
+     */
+    private void persistTranscription(long lectureUnitId, String expectedToken, Optional<LectureTranscription> existing, LectureTranscription transcription) {
         if (existing.isEmpty()) {
+            Optional<LectureUnitProcessingState> fresh = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
+            if (fresh.isEmpty() || !Objects.equals(fresh.get().getIngestionJobToken(), expectedToken)) {
+                log.debug("Skipping transcription insert for unit {}: ownership token changed since it was proven", lectureUnitId);
+                return;
+            }
             transcriptionRepository.save(transcription);
             return;
         }
@@ -987,8 +988,7 @@ public class ProcessingStateCallbackService {
         if (attachment == null) {
             return;
         }
-        // Conditional on the recorded version: a requeue clears the mapping and bumps it, guarding
-        // against a stale run's page numbers overwriting that.
+        // Conditional on the recorded version: a requeue bumps it, guarding a stale run's overwrite.
         if (attachmentRepository.updateDisplayPageNumbersIfVersionMatches(attachment.getId(), displayPageNumbers, state.getAttachmentVersion()) == 0) {
             log.info("Skipping display page number write for unit {}: attachment version changed since this run started", state.getLectureUnit().getId());
         }

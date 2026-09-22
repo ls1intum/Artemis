@@ -521,6 +521,50 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldSkipEnrichedTranscriptionInsertWhenTokenChangedSinceOwnershipWasProven() {
+            // The ownership-proving update succeeded (the row still held this token at that instant),
+            // but this is the unit's first checkpoint: no existing row to guard an atomic update on. A
+            // content-triggered requeue can invalidate the token in the gap before the insert below, so
+            // a fresh re-check right before it is what stops the stale content from being persisted.
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureUnitProcessingState invalidatedState = new LectureUnitProcessingState(testUnit);
+            invalidatedState.setId(PROCESSING_STATE_ID);
+            invalidatedState.setIngestionJobToken(null);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenReturn(Optional.of(invalidatedState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.transitionToIngestingIfTranscribing(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            verify(transcriptionRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldSkipRawTranscriptionInsertWhenTokenChangedSinceOwnershipWasProven() {
+            testState.setId(PROCESSING_STATE_ID);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            LectureUnitProcessingState invalidatedState = new LectureUnitProcessingState(testUnit);
+            invalidatedState.setId(PROCESSING_STATE_ID);
+            invalidatedState.setIngestionJobToken(null);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenReturn(Optional.of(invalidatedState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.touchLastUpdated(eq(PROCESSING_STATE_ID), eq(TEST_JOB_TOKEN), any())).thenReturn(1);
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+
+            verify(transcriptionRepository, never()).save(any());
+        }
+
+        @Test
         void shouldUpdateExistingTranscriptionContentWhenEnriched() {
             // A row already exists for this unit (an earlier raw checkpoint created it): the update
             // must go through the id-guarded conditional update, not a blind save, so a content-change
