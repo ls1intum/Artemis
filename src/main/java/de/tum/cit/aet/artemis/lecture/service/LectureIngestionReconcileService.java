@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateReconcileRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -64,6 +65,9 @@ public class LectureIngestionReconcileService {
     private static final Logger log = LoggerFactory.getLogger(LectureIngestionReconcileService.class);
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
+
+    /** The guarded writes this walk commits; see the repository's own javadoc for why they live apart. */
+    private final LectureUnitProcessingStateReconcileRepository reconcileStateRepository;
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -117,14 +121,15 @@ public class LectureIngestionReconcileService {
 
     private final AtomicLong courseCursor = new AtomicLong(0);
 
-    public LectureIngestionReconcileService(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            Optional<IrisLectureApi> irisLectureApi, LectureUnitContentFingerprintService contentFingerprintService, LectureContentProcessingService processingService,
-            @Value("${artemis.iris.ingestion.reconcile.courses-per-run:5}") int coursesPerRun,
+    public LectureIngestionReconcileService(LectureUnitProcessingStateRepository processingStateRepository, LectureUnitProcessingStateReconcileRepository reconcileStateRepository,
+            AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<IrisLectureApi> irisLectureApi, LectureUnitContentFingerprintService contentFingerprintService,
+            LectureContentProcessingService processingService, @Value("${artemis.iris.ingestion.reconcile.courses-per-run:5}") int coursesPerRun,
             @Value("${artemis.iris.ingestion.reconcile.requeue-limit-per-run:10}") int requeueLimitPerRun,
             @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold,
             @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT3H}") Duration failedRevivalCooldown,
             @Value("${artemis.iris.ingestion.reconcile.max-revivals:10}") int maxRevivals) {
         this.processingStateRepository = processingStateRepository;
+        this.reconcileStateRepository = reconcileStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.irisLectureApi = irisLectureApi;
         this.contentFingerprintService = contentFingerprintService;
@@ -403,9 +408,10 @@ public class LectureIngestionReconcileService {
      * cooldown indefinitely. The cap does not shorten recovery from a real outage: a store that is down does
      * not answer the census, so those passes neither revive nor count (only revivals dispatched into a
      * healthy store that still fail are counted), and the count resets on a successful DONE, so a transient
-     * failure that later succeeds regains a full budget. The requeue itself reuses {@link #requeueForReconcile},
-     * whose re-fetch guard makes it a no-op if the row changed since the batch read; passing the unit's own
-     * confirmed fingerprint makes that guard neutral.
+     * failure that later succeeds regains a full budget. The revival is committed by {@link #reviveFailedUnit},
+     * whose guard pins the exact {@code errorKey}, {@code lastUpdated} and {@code revivalCount} read here — not
+     * just the phase and claim {@link #requeueForReconcile} pins — so a unit that fails again for a different
+     * reason before the write lands is never wrongly revived.
      *
      * @param state           the FAILED processing state from the batch read
      * @param censusAvailable whether the vector store answered the census for this course
@@ -427,7 +433,7 @@ public class LectureIngestionReconcileService {
         if (state.getLastUpdated() == null || state.getLastUpdated().isAfter(ZonedDateTime.now().minus(failedRevivalCooldown))) {
             return 0;
         }
-        return requeueForReconcile(state, state.getConfirmedFingerprint(), "transient failure cooled down, reviving for another attempt", ReconcileIntent.revival()) ? 1 : 0;
+        return reviveFailedUnit(state, "transient failure cooled down, reviving for another attempt") ? 1 : 0;
     }
 
     /**
@@ -437,9 +443,9 @@ public class LectureIngestionReconcileService {
      */
     private boolean requeueForReconcile(LectureUnitProcessingState state, String observedFingerprint, String reason, ReconcileIntent intent) {
         long unitId = state.getLectureUnit().getId();
-        int updated = processingStateRepository.requeueForReconcileIfUnchanged(state.getId(), state.getPhase(), observedFingerprint,
-                intent.clearsConfirmedFingerprint() ? null : observedFingerprint, intent.forceReingest(), intent.qualityPipelineVersion(), intent.revivalDelta(),
-                RECONCILE_DISPATCH_PRIORITY, ZonedDateTime.now());
+        int updated = reconcileStateRepository.requeueForReconcileIfUnchanged(state.getId(), state.getPhase(), observedFingerprint,
+                intent.clearsConfirmedFingerprint() ? null : observedFingerprint, intent.forceReingest(), intent.qualityPipelineVersion(), RECONCILE_DISPATCH_PRIORITY,
+                ZonedDateTime.now());
         if (updated == 0) {
             log.debug("Reconcile: skipping requeue of unit {} — its state changed since the batch read", unitId);
             return false;
@@ -455,7 +461,6 @@ public class LectureIngestionReconcileService {
         if (intent.qualityPipelineVersion() != null) {
             state.setLastQualityPipelineVersion(intent.qualityPipelineVersion());
         }
-        state.setRevivalCount(state.getRevivalCount() + intent.revivalDelta());
         state.resetRetryCount();
         state.requeue();
         state.setDispatchPriority(RECONCILE_DISPATCH_PRIORITY);
@@ -464,22 +469,50 @@ public class LectureIngestionReconcileService {
     }
 
     /**
+     * Revive a FAILED unit through the dedicated guard that pins the exact facts {@link #reconcileFailedUnit}
+     * decided on, rather than {@link #requeueForReconcile}'s phase-and-fingerprint guard: a revival's decision
+     * rests on {@code errorKey}, {@code lastUpdated} and {@code revivalCount}, none of which that guard checks, so
+     * a unit that is claimed, dispatched, and fails right back to FAILED for a different reason before this write
+     * lands would otherwise still match it and have its newer failure silently erased.
+     *
+     * @return true if the row still matched the FAILED decision and was revived; false if its state changed
+     *         since the batch read, in which case nothing was written and the caller's budget must not be
+     *         charged for this unit
+     */
+    private boolean reviveFailedUnit(LectureUnitProcessingState state, String reason) {
+        long unitId = state.getLectureUnit().getId();
+        int updated = reconcileStateRepository.reviveFailedIfUnchanged(state.getId(), state.getErrorKey(), state.getLastUpdated(), state.getRevivalCount(),
+                RECONCILE_DISPATCH_PRIORITY, ZonedDateTime.now());
+        if (updated == 0) {
+            log.debug("Reconcile: skipping revival of unit {} — its state changed since the batch read", unitId);
+            return false;
+        }
+        // Mirror the committed outcome onto the batch-read snapshot, field for field with the statement above.
+        state.setRevivalCount(state.getRevivalCount() + 1);
+        state.resetRetryCount();
+        state.requeue();
+        state.setDispatchPriority(RECONCILE_DISPATCH_PRIORITY);
+        log.info("Reconcile: revived unit {} ({})", unitId, reason);
+        return true;
+    }
+
+    /**
      * The branch-specific part of a reconcile requeue, applied by the same statement that commits the requeue.
      * Everything a requeue always does (phase, claim, run markers, retry budget, dispatch order) is fixed; this
-     * carries only what differs between the reasons a unit is requeued.
+     * carries only what differs between the reasons a unit is requeued. Revival is not one of these branches: it
+     * is guarded by different fields entirely and goes through {@link #reviveFailedUnit} instead.
      *
      * @param clearsConfirmedFingerprint whether the confirmed fingerprint is dropped, which is what makes the next
      *                                       run rewrite the unit instead of the skip-check treating it as complete;
      *                                       otherwise it is left exactly as observed
      * @param forceReingest              {@code TRUE} to force a full rewrite, {@code null} to keep the current flag
      * @param qualityPipelineVersion     the pipeline version to stamp for a quality requeue, {@code null} to keep
-     * @param revivalDelta               1 when the requeue spends a revival from the bounded budget, 0 otherwise
      */
-    private record ReconcileIntent(boolean clearsConfirmedFingerprint, Boolean forceReingest, Integer qualityPipelineVersion, int revivalDelta) {
+    private record ReconcileIntent(boolean clearsConfirmedFingerprint, Boolean forceReingest, Integer qualityPipelineVersion) {
 
-        /** Requeue exactly as the unit stands: no fingerprint change, no forced rewrite, no revival spent. */
+        /** Requeue exactly as the unit stands: no fingerprint change, no forced rewrite. */
         private static ReconcileIntent plain() {
-            return new ReconcileIntent(false, null, null, 0);
+            return new ReconcileIntent(false, null, null);
         }
 
         /**
@@ -487,17 +520,12 @@ public class LectureIngestionReconcileService {
          * treat the unit as complete and skip it, so the requeue would repeat forever without ever rewriting it.
          */
         private static ReconcileIntent forcingRebuild() {
-            return new ReconcileIntent(true, true, null, 0);
+            return new ReconcileIntent(true, true, null);
         }
 
         /** Force a rewrite on the newer pipeline, stamping the version so the unit is requeued at most once for it. */
         private static ReconcileIntent forQuality(int pipelineVersion) {
-            return new ReconcileIntent(false, true, pipelineVersion, 0);
-        }
-
-        /** Revive a cooled-down transient failure, spending one unit of the bounded revival budget. */
-        private static ReconcileIntent revival() {
-            return new ReconcileIntent(false, null, null, 1);
+            return new ReconcileIntent(false, true, pipelineVersion);
         }
     }
 

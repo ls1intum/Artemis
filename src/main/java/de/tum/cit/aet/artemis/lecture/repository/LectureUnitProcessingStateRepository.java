@@ -951,46 +951,4 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             AND ps.ingestionJobToken = :tokenAtRead
             """)
     int resetToIdleIfStillLive(@Param("id") long id, @Param("phaseAtRead") ProcessingPhase phaseAtRead, @Param("tokenAtRead") String tokenAtRead, @Param("now") ZonedDateTime now);
-
-    /**
-     * Requeue a unit the reconcile walk found divergent, as one atomic statement rather than a re-fetch and save.
-     * The walk hashes PDFs and asks Iris for a census between reading the state batch and writing, so its decision
-     * always rests on an older snapshot; committing it through a whole-entity save merged that snapshot back over
-     * every column, reverting a content requeue that landed in the meantime along with the markers and fingerprints
-     * describing the new content. The guard therefore re-asserts what the caller decided on — same phase, same
-     * confirmed fingerprint, and no claim — so deciding and writing cannot drift apart. The claim clause matters
-     * because a retry claim leaves the phase FAILED, so without it a requeue could wipe a claim the dispatcher is
-     * about to activate. {@code videoSourceHash}, {@code attachmentVersion} and {@code contentFingerprint} are
-     * deliberately not written: the content-change path owns them, and they are what the whole-entity save reverted.
-     *
-     * @param id                      the processing state to requeue
-     * @param expectedPhase           the phase that justified the decision, re-asserted here
-     * @param observedFingerprint     the confirmed fingerprint seen at batch-read time; compared null-safely
-     * @param newConfirmedFingerprint {@code null} to clear the confirmation for a forced rebuild, else {@code observedFingerprint} to keep it
-     * @param forceReingest           {@code TRUE} to force the next run to rewrite the unit, {@code null} to keep the row's value
-     * @param qualityPipelineVersion  the pipeline version to stamp for a quality requeue, {@code null} to keep
-     * @param revivalDelta            1 when this requeue spends a revival, 0 otherwise
-     * @param dispatchPriority        where the requeued unit sits in the dispatch order
-     * @param now                     recorded as the new {@code lastUpdated}
-     * @return 1 when the requeue was applied, 0 when the row changed since the batch read
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE LectureUnitProcessingState ps
-            SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.startedAt = NULL, ps.claimToken = NULL,
-                ps.ingestionJobToken = NULL, ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.retryCount = 0,
-                ps.confirmedFingerprint = :newConfirmedFingerprint, ps.forceReingest = COALESCE(:forceReingest, ps.forceReingest),
-                ps.lastQualityPipelineVersion = COALESCE(:qualityPipelineVersion, ps.lastQualityPipelineVersion),
-                ps.revivalCount = ps.revivalCount + :revivalDelta, ps.dispatchPriority = :dispatchPriority, ps.lastUpdated = :now,
-                ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
-                ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
-            WHERE ps.id = :id AND ps.phase = :expectedPhase AND ps.claimToken IS NULL
-            AND COALESCE(ps.confirmedFingerprint, '') = COALESCE(:observedFingerprint, '')
-            """)
-    int requeueForReconcileIfUnchanged(@Param("id") long id, @Param("expectedPhase") ProcessingPhase expectedPhase, @Param("observedFingerprint") String observedFingerprint,
-            @Param("newConfirmedFingerprint") String newConfirmedFingerprint, @Param("forceReingest") Boolean forceReingest,
-            @Param("qualityPipelineVersion") Integer qualityPipelineVersion, @Param("revivalDelta") int revivalDelta, @Param("dispatchPriority") Integer dispatchPriority,
-            @Param("now") ZonedDateTime now);
-
 }

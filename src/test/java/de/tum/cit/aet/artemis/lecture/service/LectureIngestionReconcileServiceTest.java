@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionJobIdentityDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateReconcileRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 
@@ -55,6 +56,8 @@ class LectureIngestionReconcileServiceTest {
 
     private LectureUnitProcessingStateRepository processingStateRepository;
 
+    private LectureUnitProcessingStateReconcileRepository reconcileStateRepository;
+
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     private IrisLectureApi irisLectureApi;
@@ -74,13 +77,14 @@ class LectureIngestionReconcileServiceTest {
     @BeforeEach
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
+        reconcileStateRepository = mock(LectureUnitProcessingStateReconcileRepository.class);
         attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         irisLectureApi = mock(IrisLectureApi.class);
         contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
         processingService = mock(LectureContentProcessingService.class);
 
-        reconcileService = new LectureIngestionReconcileService(processingStateRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi), contentFingerprintService,
-                processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
+        reconcileService = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository, Optional.of(irisLectureApi),
+                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
 
         course = new Course();
         course.setId(COURSE_ID);
@@ -109,7 +113,9 @@ class LectureIngestionReconcileServiceTest {
         // from a run that simply moved on; return the same instance so that check sees the seeded state.
         when(processingStateRepository.findById(state.getId())).thenReturn(Optional.of(state));
         // The requeue is committed through a guarded update; 1 = the row is still as the batch read saw it.
-        when(processingStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(1);
+        when(reconcileStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), any())).thenReturn(1);
+        // A revival goes through its own guard, which additionally pins the error, timestamp and budget it judged.
+        when(reconcileStateRepository.reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), any())).thenReturn(1);
     }
 
     private static final int CURRENT_PIPELINE_VERSION = 3;
@@ -165,13 +171,19 @@ class LectureIngestionReconcileServiceTest {
 
         @Test
         void shouldReviveTransientFailureAfterCooldownIntoIdle() {
+            // Captured before the act: a successful revival requeues the snapshot, which clears the error key and
+            // rewrites the timestamp, so reading them afterwards would not be what the guard was actually given.
+            String observedErrorKey = state.getErrorKey();
+            ZonedDateTime observedLastUpdated = state.getLastUpdated();
+
             int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
 
             assertThat(spent).isEqualTo(1);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.getErrorKey()).isNull();
-            // Committed as one guarded statement, spending exactly one revival: the budget is what bounds this loop.
-            verify(processingStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.FAILED), any(), any(), any(), any(), eq(1), anyInt(), any());
+            // Committed through the revival guard, which pins the three FAILED facts that authorized it: a unit
+            // that failed again for another reason before this write must not have that newer failure erased.
+            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), eq(observedErrorKey), eq(observedLastUpdated), eq(0), anyInt(), any());
         }
 
         @Test
@@ -258,7 +270,7 @@ class LectureIngestionReconcileServiceTest {
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.getRetryCount()).isZero();
             // A legacy row carries no confirmed fingerprint, so that null is what the guard pins and what it keeps.
-            verify(processingStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), isNull(), isNull(), any(), any(), eq(0), anyInt(), any());
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), isNull(), isNull(), any(), any(), anyInt(), any());
         }
 
         @Test
@@ -526,7 +538,7 @@ class LectureIngestionReconcileServiceTest {
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(null);
             // A concurrent upload moved the live row into TRANSCRIBING, so the guarded update matches no row.
-            when(processingStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(0);
+            when(reconcileStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), any())).thenReturn(0);
             givenCensus();
 
             // Finding 3: a guard-rejected requeue must not count as spent, or it silently steals budget
@@ -535,7 +547,7 @@ class LectureIngestionReconcileServiceTest {
 
             assertThat(spent).isZero();
             // The guard is re-asserted by the statement itself, so the decision's phase is what it must match on.
-            verify(processingStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), any(), any(), any(), any(), anyInt(), anyInt(), any());
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), any(), any(), any(), any(), anyInt(), any());
             assertThat(state.getPhase()).as("a rejected requeue must leave the snapshot untouched").isEqualTo(ProcessingPhase.DONE);
         }
 
@@ -547,14 +559,14 @@ class LectureIngestionReconcileServiceTest {
             state.setPhase(ProcessingPhase.DONE);
             state.setConfirmedFingerprint(null);
             // A concurrent completion re-confirmed the unit, so the fingerprint the guard pins no longer matches.
-            when(processingStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), anyInt(), any())).thenReturn(0);
+            when(reconcileStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), any())).thenReturn(0);
             givenCensus();
 
             int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
 
             assertThat(spent).isZero();
             // The fingerprint observed at batch-read time is what the statement pins, so a re-confirmation misses it.
-            verify(processingStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), isNull(), any(), any(), any(), anyInt(), anyInt(), any());
+            verify(reconcileStateRepository).requeueForReconcileIfUnchanged(eq(state.getId()), eq(ProcessingPhase.DONE), isNull(), any(), any(), any(), anyInt(), any());
             assertThat(state.getConfirmedFingerprint()).as("a rejected requeue must leave the snapshot untouched").isNull();
         }
     }
@@ -836,8 +848,8 @@ class LectureIngestionReconcileServiceTest {
 
     @Test
     void shouldSpendNothingWithoutIrisApi() {
-        LectureIngestionReconcileService withoutIris = new LectureIngestionReconcileService(processingStateRepository, attachmentVideoUnitRepository, Optional.empty(),
-                contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
+        LectureIngestionReconcileService withoutIris = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository, attachmentVideoUnitRepository,
+                Optional.empty(), contentFingerprintService, processingService, 5, 10, 0.8, Duration.ofHours(1), 10);
 
         assertThat(withoutIris.walkNextCourses()).isZero();
         assertThat(withoutIris.resolveStuckIngestionWithoutRetryPenalty(state, CUTOFF, ABSOLUTE_CUTOFF)).isFalse();

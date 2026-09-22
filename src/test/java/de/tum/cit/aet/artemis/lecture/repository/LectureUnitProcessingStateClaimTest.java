@@ -36,6 +36,9 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
     private LectureUnitProcessingStateRepository processingStateRepository;
 
     @Autowired
+    private LectureUnitProcessingStateReconcileRepository reconcileStateRepository;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -304,7 +307,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         done.setConfirmedFingerprint("v1:reconfirmed");
         processingStateRepository.save(done);
 
-        assertThat(processingStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, null, 0, 2, now))
+        assertThat(reconcileStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, null, 2, now))
                 .as("the fingerprint observed at batch-read time no longer matches, so nothing may be written").isZero();
 
         LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
@@ -324,7 +327,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         // The content changed and the unit was requeued with the new content's markers.
         assertThat(processingStateRepository.requeueForContentChange(done.getId(), "new-video-hash", 11, 0, ZonedDateTime.now())).isEqualTo(1);
 
-        assertThat(processingStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, null, 0, 2, now))
+        assertThat(reconcileStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, null, 2, now))
                 .as("the row is no longer the DONE unit the walk decided on").isZero();
 
         LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
@@ -332,20 +335,30 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(after.getAttachmentVersion()).isEqualTo(11);
     }
 
-    /** A retry claim leaves the phase FAILED, so only the claim guard stops a requeue wiping it. */
+    /**
+     * A retry claim leaves the phase FAILED, so the claim clause is what has to stop a revival wiping it. The
+     * observed facts are read back <em>after</em> the claim so that the error, timestamp and count all match and
+     * the claim is the only thing that differs — otherwise the timestamp pin would reject the write on its own
+     * and this would pass with the claim clause deleted.
+     */
     @Test
-    void testReconcileRequeueIsRejectedWhileTheUnitIsClaimed() {
+    void testRevivalIsRejectedWhileTheUnitIsClaimed() {
         ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
         LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
         failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
         failed.setRetryEligibleAt(now.minusMinutes(5));
         processingStateRepository.save(failed);
 
         assertThat(processingStateRepository.claimRetryEligible(failed.getId(), "claim-R", now, now.plusMinutes(20))).isEqualTo(1);
+        LectureUnitProcessingState claimed = processingStateRepository.findById(failed.getId()).orElseThrow();
 
-        assertThat(processingStateRepository.requeueForReconcileIfUnchanged(failed.getId(), ProcessingPhase.FAILED, null, null, null, null, 1, 2, now))
-                .as("a claim the dispatcher is about to activate must not be wiped by a reconcile requeue").isZero();
-        assertThat(processingStateRepository.findById(failed.getId()).orElseThrow().getClaimToken()).isEqualTo("claim-R");
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(claimed.getId(), claimed.getErrorKey(), claimed.getLastUpdated(), claimed.getRevivalCount(), 2,
+                ZonedDateTime.now())).as("a claim the dispatcher is about to activate must not be wiped by a revival").isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();
+        assertThat(after.getClaimToken()).isEqualTo("claim-R");
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.FAILED);
     }
 
     /** The happy path: the row is untouched since the batch read, so the requeue applies with its intent. */
@@ -362,20 +375,102 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         done.setRevivalCount(1);
         processingStateRepository.save(done);
 
-        assertThat(processingStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, 7, 1, 2, now)).isEqualTo(1);
+        assertThat(reconcileStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, 7, 2, now)).isEqualTo(1);
 
         LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
         assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         assertThat(after.getConfirmedFingerprint()).as("a forced rebuild drops the confirmation").isNull();
         assertThat(after.isForceReingest()).isTrue();
         assertThat(after.getLastQualityPipelineVersion()).isEqualTo(7);
-        assertThat(after.getRevivalCount()).as("the revival budget is spent atomically").isEqualTo(2);
+        assertThat(after.getRevivalCount()).as("only a revival spends the budget; a reconcile requeue leaves it").isEqualTo(1);
         assertThat(after.getRetryCount()).isZero();
         assertThat(after.getDispatchPriority()).isEqualTo(2);
         // The content markers belong to the content-change path and must never be touched by a reconcile requeue.
         assertThat(after.getVideoSourceHash()).isEqualTo("hash");
         assertThat(after.getAttachmentVersion()).isEqualTo(3);
         assertThat(after.getContentFingerprint()).isEqualTo("v1:content");
+    }
+
+    /**
+     * Claudia-Anthropica follow-up finding on PR #13798. A revival is authorized by three FAILED-state facts the
+     * general reconcile guard does not pin: {@code errorKey} (never revive a permanent error), {@code lastUpdated}
+     * (the cooldown is measured from it) and {@code revivalCount} (the bounded budget). Between the batch read and
+     * the write, the row can be claimed, dispatched, and fail right back to FAILED — {@code markFailed} clears the
+     * claim and restores the phase, so phase-and-claim alone cannot tell the two failures apart.
+     */
+    @Test
+    void testRevivalIsRejectedWhenTheUnitFailedAgainWithADifferentError() {
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        failed.setLastUpdated(ZonedDateTime.now().minusHours(4));
+        processingStateRepository.save(failed);
+        // What the batch read observed, read back at the database's own precision.
+        LectureUnitProcessingState observed = processingStateRepository.findById(failed.getId()).orElseThrow();
+
+        // Claimed, retried, and failed again — this time with a permanent error that must never be revived.
+        failed.markFailed("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
+        processingStateRepository.save(failed);
+
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+                ZonedDateTime.now())).as("the failure that authorized this revival is not the failure on the row now").isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+        assertThat(after.getErrorKey()).as("the newer, permanent error must survive").isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
+        assertThat(after.getRevivalCount()).as("a rejected write spends no revival").isZero();
+    }
+
+    /**
+     * The budget pin on its own: another node's revival already spent a unit of it while the error and timestamp
+     * stayed exactly as observed, so only {@code revivalCount} can tell this decision is stale.
+     */
+    @Test
+    void testRevivalIsRejectedWhenAnotherRevivalAlreadySpentTheBudget() {
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        failed.setLastUpdated(ZonedDateTime.now().minusHours(4));
+        processingStateRepository.save(failed);
+        LectureUnitProcessingState observed = processingStateRepository.findById(failed.getId()).orElseThrow();
+
+        // The entity sets lastUpdated only explicitly, so this leaves the other two pinned facts untouched.
+        failed.setRevivalCount(1);
+        processingStateRepository.save(failed);
+
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+                ZonedDateTime.now())).as("the budget this decision counted on has already been spent").isZero();
+        assertThat(processingStateRepository.findById(failed.getId()).orElseThrow().getRevivalCount()).isEqualTo(1);
+    }
+
+    /** The happy path: the failure is still the one that was judged, so the revival applies and spends one unit. */
+    @Test
+    void testRevivalAppliesWhenTheFailureIsStillTheOneThatWasJudged() {
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        failed.setLastUpdated(ZonedDateTime.now().minusHours(4));
+        failed.setRetryCount(3);
+        failed.setRevivalCount(1);
+        failed.setConfirmedFingerprint("v1:confirmed");
+        failed.setVideoSourceHash("hash");
+        failed.setAttachmentVersion(3);
+        processingStateRepository.save(failed);
+        LectureUnitProcessingState observed = processingStateRepository.findById(failed.getId()).orElseThrow();
+
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+                ZonedDateTime.now())).isEqualTo(1);
+
+        LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(after.getErrorKey()).isNull();
+        assertThat(after.getRetryCount()).as("the short retry budget starts over").isZero();
+        assertThat(after.getRevivalCount()).as("exactly one revival is spent, atomically").isEqualTo(2);
+        assertThat(after.getDispatchPriority()).isEqualTo(2);
+        // A revival re-runs the unit exactly as it stands: it owns none of these columns.
+        assertThat(after.getConfirmedFingerprint()).isEqualTo("v1:confirmed");
+        assertThat(after.getVideoSourceHash()).isEqualTo("hash");
+        assertThat(after.getAttachmentVersion()).isEqualTo(3);
     }
 
     /**
