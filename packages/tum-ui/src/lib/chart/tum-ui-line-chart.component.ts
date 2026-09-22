@@ -36,6 +36,8 @@ interface LineView {
     points: { key: string; x: number; y: number; context: TumUiChartDatumContext }[];
 }
 
+let nextLineChartId = 0;
+
 /**
  * A line chart rendered as inline SVG, with one line per series.
  *
@@ -43,8 +45,6 @@ interface LineView {
  * comparable at a glance; a series marked as a reference line is drawn dashed and stays out of the
  * legend, the tooltip and select events.
  */
-let nextLineChartId = 0;
-
 @Component({
     selector: 'tum-ui-line-chart',
     templateUrl: './tum-ui-line-chart.component.html',

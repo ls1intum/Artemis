@@ -42,7 +42,7 @@ permissions: {}
 jobs:
 
   detect-changes:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'tum-ui-v')
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Detect Changed Areas
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -630,7 +630,7 @@ jobs:
 
   # Prose changes need terminology checks regardless of which area changed.
   terminology:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'tum-ui-v')
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Terminology
     uses: ./.github/workflows/ci-terminology.yml
     permissions:
@@ -640,7 +640,7 @@ jobs:
 
   # Deleting the last caller can orphan code in any area of the repository.
   dead-code:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'tum-ui-v')
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Dead Code
     uses: ./.github/workflows/ci-dead-code.yml
     permissions:
@@ -650,7 +650,7 @@ jobs:
 
   # Check baseline consistency and misplaced migrations regardless of which area changed.
   liquibase:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, 'tum-ui-v')
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Liquibase Schema
     uses: ./.github/workflows/ci-liquibase.yml
     permissions:

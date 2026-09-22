@@ -32,8 +32,8 @@ const devDependencies = {
     '@angular/build': mode === 'minimum' ? catalog['@angular/build'] : `^${catalog['@angular/build']}`,
     '@angular/cli': mode === 'minimum' ? catalog['@angular/cli'] : `^${catalog['@angular/cli']}`,
     '@angular/compiler-cli': dependencies['@angular/core'],
-    typescript: catalog.typescript,
 };
+if (mode === 'minimum') devDependencies.typescript = catalog.typescript;
 // Keep workspace links and overrides out of consumer dependency resolution.
 const consumer = await mkdtemp(resolve(tmpdir(), 'tum-ui-consumer-'));
 const results = resolve(root, 'build/test-results/tum-ui-consumer', mode);
