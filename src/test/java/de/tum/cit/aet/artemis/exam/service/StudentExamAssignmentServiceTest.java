@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.exam.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -15,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,12 +55,10 @@ class StudentExamAssignmentServiceTest {
         ExerciseGroup group = new ExerciseGroup();
         group.setExercises(Set.of(second, quiz, first));
         exam.setExerciseGroups(List.of(group));
-        when(exams.withExerciseSelectionLock(eq(10L), any())).thenAnswer(invocation -> {
-            calls.add("lock");
-            Function<Exam, ?> assignment = invocation.getArgument(1);
-            Object result = assignment.apply(exam);
-            calls.add("commit");
-            return result;
+        when(exams.findWithExerciseGroupsAndExercisesByIdOrElseThrow(10L)).thenReturn(exam);
+        when(studentExams.createRandomStudentExams(any(), any())).thenAnswer(ignored -> {
+            calls.add("save");
+            return List.of(new StudentExam());
         });
         when(mutations.reserveParticipation(1L)).thenAnswer(ignored -> reserve(1));
         when(mutations.reserveParticipation(2L)).thenAnswer(ignored -> reserve(2));
@@ -75,7 +70,7 @@ class StudentExamAssignmentServiceTest {
     }
 
     @Test
-    void missingUsersAreReadInsideLockAndReservationsOutliveCommit() {
+    void missingUsersAreAssignedWhileProgrammingExercisesAreReserved() {
         when(users.findUserIdsByExamId(10L)).thenAnswer(ignored -> {
             calls.add("users");
             return Set.of(11L, 12L);
@@ -83,25 +78,21 @@ class StudentExamAssignmentServiceTest {
         when(studentExams.findUserIdsWithStudentExamsForExam(10L)).thenReturn(Set.of(11L));
         service.assignRegisteredStudents(10L, true);
         verify(studentExams).createRandomStudentExams(exam, Set.of(12L));
-        assertThat(calls).containsExactly("lock", "reserve1", "reserve2", "users", "commit", "release2", "release1");
+        assertThat(calls).containsExactly("reserve1", "reserve2", "users", "save", "release2", "release1");
     }
 
     @Test
     void reservationConflictPreventsAssignmentAndReleasesAlreadyAcquiredReservations() {
         doThrow(new IllegalStateException("generation active")).when(mutations).reserveParticipation(2L);
         assertThatThrownBy(() -> service.assignRegisteredStudents(10L, false)).hasMessage("generation active");
-        assertThat(calls).containsExactly("lock", "reserve1", "release1");
+        assertThat(calls).containsExactly("reserve1", "release1");
         verifyNoInteractions(studentExams, users);
     }
 
     @Test
-    void commitFailureStillReleasesEveryReservation() {
-        doAnswer(invocation -> {
-            Function<Exam, ?> assignment = invocation.getArgument(1);
-            assignment.apply(exam);
-            throw new IllegalStateException("commit failed");
-        }).when(exams).withExerciseSelectionLock(eq(10L), any());
-        assertThatThrownBy(() -> service.assignRegisteredStudents(10L, false)).hasMessage("commit failed");
+    void saveFailureStillReleasesEveryReservation() {
+        doThrow(new IllegalStateException("save failed")).when(studentExams).createRandomStudentExams(any(), any());
+        assertThatThrownBy(() -> service.assignRegisteredStudents(10L, false)).hasMessage("save failed");
         assertThat(calls).containsExactly("reserve1", "reserve2", "release2", "release1");
     }
 
@@ -117,19 +108,27 @@ class StudentExamAssignmentServiceTest {
         StudentExam testRun = new StudentExam();
         testRun.setExam(exam);
         testRun.setExercises(new ArrayList<>(exam.getExerciseGroups().getFirst().getExercises()));
-        when(studentExams.saveAndFlush(testRun)).thenAnswer(ignored -> {
-            assertThat(calls).containsExactly("reserve1", "reserve2", "lock");
+        when(studentExams.save(testRun)).thenAnswer(ignored -> {
+            assertThat(calls).containsExactly("reserve1", "reserve2");
             return testRun;
         });
         assertThat(service.assignTestRun(testRun)).isSameAs(testRun);
-        assertThat(calls).containsExactly("reserve1", "reserve2", "lock", "commit", "release2", "release1");
+        assertThat(calls).containsExactly("reserve1", "reserve2", "release2", "release1");
     }
 
     @Test
-    void disabledHyperionPreservesAssignment() {
+    void individualAssignmentUsesTheExistingCreationPath() {
+        service.assignStudent(10L, 11L);
+        verify(studentExams).createRandomStudentExams(exam, Set.of(11L));
+        org.mockito.Mockito.verifyNoMoreInteractions(studentExams);
+        assertThat(calls).containsExactly("reserve1", "reserve2", "save", "release2", "release1");
+    }
+
+    @Test
+    void absentHyperionApiPreservesAssignment() {
         var withoutHyperion = new StudentExamAssignmentService(exams, users, studentExams, Optional.empty());
         withoutHyperion.assignRegisteredStudents(10L, false);
         verifyNoInteractions(mutations);
-        assertThat(calls).containsExactly("lock", "commit");
+        assertThat(calls).containsExactly("save");
     }
 }

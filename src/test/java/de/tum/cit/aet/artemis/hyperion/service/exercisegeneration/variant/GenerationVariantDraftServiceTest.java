@@ -23,7 +23,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -48,9 +47,6 @@ class GenerationVariantDraftServiceTest {
     private ProgrammingExerciseImportService imports;
 
     @Mock
-    private ExamApi exams;
-
-    @Mock
     private GenerationCapabilityService capabilities;
 
     private GenerationVariantDraftService service;
@@ -61,7 +57,7 @@ class GenerationVariantDraftServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, Optional.of(exams), capabilities);
+        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities);
         source = new ProgrammingExercise();
         source.setId(1L);
         source.setTitle("Source");
@@ -114,11 +110,10 @@ class GenerationVariantDraftServiceTest {
         assertThat(source.getReleaseDate()).isBefore(ZonedDateTime.now());
         assertThat(draft.getMaxPoints()).isEqualTo(source.getMaxPoints());
         verify(capabilities).requireSupportedConfiguration(source);
-        verifyNoInteractions(exams);
     }
 
     @Test
-    void examEligibilityIsRecheckedAfterAcquiringTheAssignmentRowLock() {
+    void examEligibilityIsRecheckedInsideTheDraftTransaction() {
         var exam = new Exam();
         exam.setId(20L);
         var group = new ExerciseGroup();
@@ -126,16 +121,16 @@ class GenerationVariantDraftServiceTest {
         source.setCourse(null);
         source.setExerciseGroup(group);
         when(exercises.findWithAllParticipationsById(1L)).thenReturn(Optional.of(source));
-        AtomicBoolean locked = new AtomicBoolean();
-        when(exams.withExercisePreparationLock(eq(20L), any())).thenAnswer(invocation -> {
-            locked.set(true);
-            return invocation.<Supplier<Object>>getArgument(1).get();
+        AtomicBoolean inTransaction = new AtomicBoolean();
+        when(exercises.prepareAuthoringDraft(any())).thenAnswer(invocation -> {
+            inTransaction.set(true);
+            return invocation.<Supplier<Object>>getArgument(0).get();
         });
         doThrow(new IllegalStateException("assigned meanwhile")).when(capabilities).requireMutable(source);
 
         assertThatThrownBy(() -> service.prepare(1L, request, Function.identity())).hasMessage("assigned meanwhile");
 
-        assertThat(locked).isTrue();
+        assertThat(inTransaction).isTrue();
         verifyNoInteractions(imports, buildConfigs);
     }
 
@@ -149,6 +144,6 @@ class GenerationVariantDraftServiceTest {
         service.complete(1L, 2L);
 
         verify(imports).completeImport(source, destination, true, false);
-        verifyNoInteractions(buildConfigs, exams, capabilities);
+        verifyNoInteractions(buildConfigs, capabilities);
     }
 }

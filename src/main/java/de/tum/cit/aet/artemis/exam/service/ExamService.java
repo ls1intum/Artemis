@@ -1754,17 +1754,4 @@ public class ExamService {
     public Optional<Exam> findByExerciseId(final Long exerciseId) {
         return examRepository.findByExerciseId(exerciseId);
     }
-
-    /**
-     * Shares the assignment row lock with database-only exercise preparation.
-     *
-     * @param examId      owning exam
-     * @param preparation preparation with eligibility rechecked inside the lock
-     * @param <T>         result type
-     * @return committed preparation result
-     */
-    public <T> T withExercisePreparationLock(long examId, java.util.function.Supplier<T> preparation) {
-        return examRepository.withExerciseSelectionLock(examId, ignored -> preparation.get());
-    }
-
 }

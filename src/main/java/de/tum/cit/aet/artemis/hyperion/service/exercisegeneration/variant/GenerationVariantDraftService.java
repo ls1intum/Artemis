@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -11,7 +10,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
@@ -32,16 +30,13 @@ public class GenerationVariantDraftService {
 
     private final ProgrammingExerciseImportService imports;
 
-    private final Optional<ExamApi> exams;
-
     private final GenerationCapabilityService capabilities;
 
     public GenerationVariantDraftService(ProgrammingExerciseRepository exercises, ProgrammingExerciseBuildConfigRepository buildConfigs, ProgrammingExerciseImportService imports,
-            Optional<ExamApi> exams, GenerationCapabilityService capabilities) {
+            GenerationCapabilityService capabilities) {
         this.exercises = exercises;
         this.buildConfigs = buildConfigs;
         this.imports = imports;
-        this.exams = exams;
         this.capabilities = capabilities;
     }
 
@@ -56,17 +51,13 @@ public class GenerationVariantDraftService {
      * @return result after the destination transaction commits
      */
     public <T> T prepare(long sourceId, VariantGenerationRequestDTO request, Function<ProgrammingExercise, T> reserve) {
-        ProgrammingExercise source = exercises.findWithAllParticipationsById(sourceId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", sourceId));
-        if (source.isExamExercise()) {
-            long examId = source.getExerciseGroup().getExam().getId();
-            return exams.orElseThrow().withExercisePreparationLock(examId, () -> {
-                // The assignment transaction uses this exact row lock. A newly committed destination is already protected when the next assignment reads it.
-                ProgrammingExercise current = exercises.findWithAllParticipationsById(sourceId).orElseThrow();
-                capabilities.requireMutable(current);
-                return prepareAndReserve(sourceId, request, reserve);
-            });
-        }
-        return exercises.prepareAuthoringDraft(() -> prepareAndReserve(sourceId, request, reserve));
+        return exercises.prepareAuthoringDraft(() -> {
+            ProgrammingExercise source = exercises.findWithAllParticipationsById(sourceId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", sourceId));
+            if (source.isExamExercise()) {
+                capabilities.requireMutable(source);
+            }
+            return prepareAndReserve(sourceId, request, reserve);
+        });
     }
 
     private <T> T prepareAndReserve(long sourceId, VariantGenerationRequestDTO request, Function<ProgrammingExercise, T> reserve) {
