@@ -134,6 +134,29 @@ class SearchableEntityIndexScanIntegrationTest extends AbstractProgrammingIntegr
     }
 
     @Test
+    void testExistingEntityIdsReturnsOnlyTheIdsActuallyInTheIndex() {
+        // 0..11 are seeded; 100 and 101 are not, standing in for a row lost from the index after a confirmed write.
+        var present = indexScanService.existingEntityIds(COURSE_TYPE, List.of(0L, 5L, 100L, 101L));
+
+        assertThat(present).containsExactlyInAnyOrder(0L, 5L);
+    }
+
+    @Test
+    void testExistingEntityIdsIsScopedByType() {
+        // The seeded rows are all COURSE_TYPE; asking under a different type must not match them by id alone.
+        var present = indexScanService.existingEntityIds(SearchableEntitySchema.TypeValues.LECTURE, List.of(0L, 5L));
+
+        assertThat(present).isEmpty();
+    }
+
+    @Test
+    void testExistingEntityIdsOnAnEmptyListMakesNoRequest() {
+        var present = indexScanService.existingEntityIds(COURSE_TYPE, List.of());
+
+        assertThat(present).isEmpty();
+    }
+
+    @Test
     void testRowsWrittenBeforeTheOperationalPropertiesExistedReadAsNull() throws Exception {
         // A row with no stored hash is not corrupt, it is simply one nothing has verified yet. The verify pass
         // relies on being able to tell that apart from a mismatch.

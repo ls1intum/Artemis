@@ -19,12 +19,17 @@ import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntityReconcileState
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService;
 
 /**
  * Queues a write for every entity the index has never confirmed holding.
  * <p>
  * An entity with no ledger row was never successfully written: it predates the outbox, or its change was lost
- * before reaching it. Finding those is a comparison of identity alone, so this pass never loads an entity.
+ * before reaching it. A ledger row alone is not enough to call an entity settled, though: it proves a write once
+ * succeeded, not that the row survived afterward, so every candidate the ledger claims is synced is verified
+ * against the index itself before being trusted. Catching that gap is this pass's job specifically, not the drift
+ * sweep's: drift only ever compares the database against the same ledger, never against Weaviate, so a row lost
+ * from the index with its ledger entry left intact looks unchanged to it.
  * <p>
  * The first run against an empty ledger reports the entire corpus as missing, which is correct rather than a
  * problem to design around: nothing written before the ledger existed can be assumed good. It is queued a page at
@@ -47,13 +52,17 @@ public class SearchableEntityMissingSweep {
 
     private final WeaviateReconcileProperties reconcileProperties;
 
+    private final SearchableEntityIndexScanService indexScanService;
+
     public SearchableEntityMissingSweep(SearchableEntityIdEnumerator idEnumerator, SearchableEntitySyncStateRepository syncStateRepository,
-            SearchableEntityReconcileStateRepository reconcileStateRepository, ReconcileEnqueueService enqueueService, WeaviateReconcileProperties reconcileProperties) {
+            SearchableEntityReconcileStateRepository reconcileStateRepository, ReconcileEnqueueService enqueueService, WeaviateReconcileProperties reconcileProperties,
+            SearchableEntityIndexScanService indexScanService) {
         this.idEnumerator = idEnumerator;
         this.syncStateRepository = syncStateRepository;
         this.reconcileStateRepository = reconcileStateRepository;
         this.enqueueService = enqueueService;
         this.reconcileProperties = reconcileProperties;
+        this.indexScanService = indexScanService;
     }
 
     /**
@@ -96,9 +105,17 @@ public class SearchableEntityMissingSweep {
         }
 
         Set<Long> alreadySynced = syncStateRepository.findSyncedEntityIds(currentType, candidateIds);
+        // A ledger row proves a write once succeeded, not that the row survived: verify the ledger's claim against
+        // the index itself, rather than trusting it outright, so an externally lost row (a restore from an older
+        // Weaviate snapshot, for instance) does not stay missing forever. Only the claimed-synced ids are worth the
+        // round trip; anything absent from the ledger is already known to need enqueuing.
+        List<Long> claimedSynced = candidateIds.stream().filter(alreadySynced::contains).toList();
+        Set<Long> actuallyIndexed = claimedSynced.isEmpty() ? Set.of() : indexScanService.existingEntityIds(currentType, claimedSynced);
+
         long enqueued = 0;
         for (Long entityId : candidateIds) {
-            if (!alreadySynced.contains(entityId) && enqueueService.enqueueUpsert(currentType, entityId, WeaviateOutboxOrigin.RECONCILE_MISSING)) {
+            boolean settled = alreadySynced.contains(entityId) && actuallyIndexed.contains(entityId);
+            if (!settled && enqueueService.enqueueUpsert(currentType, entityId, WeaviateOutboxOrigin.RECONCILE_MISSING)) {
                 enqueued++;
             }
         }

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntityReconcileState
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityIndexScanService;
 
 class SearchableEntityMissingSweepTest {
 
@@ -40,11 +41,13 @@ class SearchableEntityMissingSweepTest {
 
     private final ReconcileEnqueueService enqueueService = mock(ReconcileEnqueueService.class);
 
+    private final SearchableEntityIndexScanService indexScanService = mock(SearchableEntityIndexScanService.class);
+
     private SearchableEntityMissingSweep sweep;
 
     private void configureTypes(String... types) {
         var properties = new WeaviateReconcileProperties(true, true, true, List.of(types), 500, 100, 200, 1000, 5, 100, 100, 0.25);
-        sweep = new SearchableEntityMissingSweep(idEnumerator, syncStateRepository, reconcileStateRepository, enqueueService, properties);
+        sweep = new SearchableEntityMissingSweep(idEnumerator, syncStateRepository, reconcileStateRepository, enqueueService, properties, indexScanService);
     }
 
     @BeforeEach
@@ -68,14 +71,45 @@ class SearchableEntityMissingSweepTest {
     }
 
     @Test
-    void testAnEntityAlreadyOnRecordIsNotQueued() {
+    void testAnEntityAlreadyOnRecordAndStillIndexedIsNotQueued() {
         when(idEnumerator.nextIndexableIds(eq(COURSE), eq(0L), anyInt())).thenReturn(Optional.of(List.of(1L, 2L)));
         when(syncStateRepository.findSyncedEntityIds(COURSE, List.of(1L, 2L))).thenReturn(Set.of(2L));
+        when(indexScanService.existingEntityIds(COURSE, List.of(2L))).thenReturn(Set.of(2L));
 
         sweep.sweep();
 
         verify(enqueueService).enqueueUpsert(COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING);
         verify(enqueueService, never()).enqueueUpsert(COURSE, 2L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+    }
+
+    /**
+     * Regression test for a real bug found in review: a ledger row only proves a write once succeeded. If the
+     * corresponding Weaviate row is later lost by some means outside this pipeline (restoring Weaviate from a
+     * snapshot older than the ledger, an external deletion), the old code trusted the ledger and never re-queued
+     * it, leaving the entity permanently missing from search with nothing else able to catch it: the drift sweep
+     * compares the database only against the same ledger, and the orphan sweep can only walk rows that still
+     * exist in the index.
+     */
+    @Test
+    void testAnEntityOnRecordButLostFromTheIndexIsRequeued() {
+        when(idEnumerator.nextIndexableIds(eq(COURSE), eq(0L), anyInt())).thenReturn(Optional.of(List.of(1L, 2L)));
+        when(syncStateRepository.findSyncedEntityIds(COURSE, List.of(1L, 2L))).thenReturn(Set.of(1L, 2L));
+        // Both ids have a ledger row, but only 1L is confirmed still present in Weaviate: 2L was lost externally.
+        when(indexScanService.existingEntityIds(COURSE, List.of(1L, 2L))).thenReturn(Set.of(1L));
+
+        sweep.sweep();
+
+        verify(enqueueService, never()).enqueueUpsert(COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        verify(enqueueService).enqueueUpsert(COURSE, 2L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+    }
+
+    @Test
+    void testTheIndexIsNeverCheckedWhenNothingClaimsToBeSynced() {
+        when(idEnumerator.nextIndexableIds(eq(COURSE), eq(0L), anyInt())).thenReturn(Optional.of(List.of(1L, 2L)));
+
+        sweep.sweep();
+
+        verify(indexScanService, never()).existingEntityIds(anyString(), any());
     }
 
     @Test

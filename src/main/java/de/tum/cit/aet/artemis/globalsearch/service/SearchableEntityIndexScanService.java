@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -11,6 +15,8 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
+import io.weaviate.client6.v1.api.collections.query.Filter;
+import io.weaviate.client6.v1.api.collections.query.FilterOperand;
 
 /**
  * Reads the {@code SearchableEntities} collection itself, a bounded slice at a time and resumably.
@@ -96,6 +102,35 @@ public class SearchableEntityIndexScanService {
         }
         catch (Exception e) {
             throw new WeaviateException("Failed to scan the " + SearchableEntitySchema.COLLECTION_NAME + " collection: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Which of the given ids of one type currently have a row in the index.
+     * <p>
+     * A confirmed sync-ledger entry proves only that a write once succeeded, not that the row still exists: an
+     * external loss, such as restoring Weaviate from a snapshot older than the ledger, leaves the ledger row
+     * behind with nothing backing it. The missing sweep uses this to catch exactly that case for the entities its
+     * ledger check would otherwise treat as settled.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator, shared by every given id
+     * @param entityIds  the database ids to check
+     * @return the subset that has a matching row in the index
+     */
+    public Set<Long> existingEntityIds(String entityType, List<Long> entityIds) {
+        if (entityIds.isEmpty()) {
+            return Set.of();
+        }
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            List<FilterOperand> idOperands = entityIds.stream().<FilterOperand>map(id -> Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(id)).toList();
+            Filter filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(entityType), Filter.or(idOperands));
+            var result = collection.query.fetchObjects(builder -> builder.limit(entityIds.size()).returnProperties(SearchableEntitySchema.Properties.ENTITY_ID).filters(filter));
+            return result.objects().stream().map(object -> asLong(object.properties().get(SearchableEntitySchema.Properties.ENTITY_ID))).filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+        }
+        catch (Exception e) {
+            throw new WeaviateException("Failed to check index presence in the " + SearchableEntitySchema.COLLECTION_NAME + " collection: " + e.getMessage(), e);
         }
     }
 
