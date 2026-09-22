@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -68,10 +69,12 @@ public class UserCreationService {
 
     private final UserActivityService userActivityService;
 
+    private final Optional<ScienceEventApi> scienceEventApi;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
             AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository, UserRecoveryKeyService userRecoveryKeyService,
-            UserActivityService userActivityService) {
+            UserActivityService userActivityService, Optional<ScienceEventApi> scienceEventApi) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -81,6 +84,7 @@ public class UserCreationService {
         this.auditEventRepository = auditEventRepository;
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userActivityService = userActivityService;
+        this.scienceEventApi = scienceEventApi;
     }
 
     /**
@@ -262,6 +266,7 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
+        final String previousLogin = user.getLogin();
         updateEmailIfChanged(user, updatedUserDTO.getEmail());
         user.setLogin(updatedUserDTO.getLogin().toLowerCase(Locale.ENGLISH));
         user.setFirstName(updatedUserDTO.getFirstName());
@@ -316,6 +321,7 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
+        renameScienceEventIdentityIfLoginChanged(previousLogin, savedUser.getLogin());
         if (credentialsChanged) {
             // Stops sessions established before this change from being extended any further. Stamped after the save so it
             // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.
@@ -485,6 +491,23 @@ public class UserCreationService {
                 : userRepository.existsByEmailIgnoreCaseAndIdNot(canonicalEmail, currentUserId);
         if (emailAlreadyUsed) {
             throw new EmailAlreadyUsedException();
+        }
+    }
+
+    /**
+     * Renames the identity of already collected science events when a login changes, so the events stay attached to the
+     * account they were recorded for. {@code science_event} stores the login rather than the user id, so a rename that
+     * skips this leaves the old rows unreachable.
+     * <p>
+     * Deliberately not wrapped in a transaction spanning the user save: transaction boundaries belong in repositories
+     * here, and this mirrors what the soft-delete anonymization in {@code UserService} already does.
+     *
+     * @param previousLogin the login the account had before the update
+     * @param newLogin      the login the account has after the update
+     */
+    public void renameScienceEventIdentityIfLoginChanged(String previousLogin, String newLogin) {
+        if (!Objects.equals(previousLogin, newLogin)) {
+            scienceEventApi.ifPresent(api -> api.renameIdentity(previousLogin, newLogin));
         }
     }
 

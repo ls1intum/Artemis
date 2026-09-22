@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -18,6 +18,10 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonDirective, TumUiDialogComponent } from '@tumaet/ui-angular';
 import { SidebarView, isPageTitleView, isSidebarView } from 'app/course/shared/sidebar-view.interface';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
@@ -29,7 +33,18 @@ import { CourseTabRefreshService } from 'app/course/overview/services/course-tab
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [CdkScrollable, NgClass, RouterOutlet, NgTemplateOutlet, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
+    imports: [
+        CdkScrollable,
+        NgClass,
+        RouterOutlet,
+        NgTemplateOutlet,
+        CourseSidebarComponent,
+        CourseUnenrollmentModalComponent,
+        CourseTitleBarComponent,
+        ArtemisTranslatePipe,
+        TumUiButtonDirective,
+        TumUiDialogComponent,
+    ],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -41,6 +56,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
     private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
     private courseTabRefreshService = inject(CourseTabRefreshService);
+    private scienceSettingsService = inject(ScienceSettingsService);
+    private featureToggleService = inject(FeatureToggleService);
 
     /**
      * Every page that does not bring its own sidebar gets the shell title bar, so the student overview matches course
@@ -52,6 +69,46 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * repeat it. Those pages can still project content, which is what keeps the communication search bar working.
      */
     protected readonly showCourseTitleBar = computed(() => !this.hasSidebar() || !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
+
+    private readonly scienceFeatureActive = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science), { initialValue: false });
+    private readonly scienceConsents = toSignal(this.scienceSettingsService.getScienceSettingsUpdates(), { initialValue: [] as ScienceCourseConsent[] });
+
+    /**
+     * The consent record for the course currently on screen. Derived from {@link course} rather than fetched per entry,
+     * so an in-place course switch can never leave the dialog showing the previous course's decision.
+     */
+    readonly scienceConsentCourse = computed(() => {
+        const courseId = this.course()?.id;
+        if (!courseId || !this.scienceFeatureActive()) {
+            return undefined;
+        }
+        return this.scienceConsents().find((consent) => consent.courseId === courseId);
+    });
+
+    /**
+     * The course the consent prompt was last dismissed for, so that dismissing it does not have to be undone when the
+     * student moves to a different course.
+     */
+    private readonly scienceConsentDismissedFor = signal<number | undefined>(undefined);
+
+    /**
+     * Shown while the course collects science data, the student has not decided, and they have not waved the prompt
+     * away. Consent has to be freely given, so there is always a way out: the prompt returns the next time this page is
+     * built rather than holding the course hostage until an answer is given - and a failed save cannot lock anyone out.
+     * Switching course in place does not rebuild the page, so a course dismissed once stays dismissed until the student
+     * navigates away from the course overview entirely.
+     */
+    readonly showScienceConsentModal = computed(() => {
+        const consent = this.scienceConsentCourse();
+        if (!consent || this.scienceConsentDismissedFor() === consent.courseId) {
+            return false;
+        }
+        return consent.scienceEnabled && (consent.active === undefined || consent.active === null);
+    });
+
+    dismissScienceConsent(): void {
+        this.scienceConsentDismissedFor.set(this.scienceConsentCourse()?.courseId);
+    }
 
     private toggleSidebarEventSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
@@ -110,6 +167,15 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                 });
             }
         });
+        // One request for every course the user may consent to, rather than one per course entry. Everything below
+        // reads the cache it fills, so switching courses in place needs no further round trip.
+        if (this.scienceFeatureActive()) {
+            // Writes the shared consent cache and completes. A failure leaves the cache as it was and the dialog closed
+            // rather than interrupting the course with an error the student cannot act on, and the request is not
+            // retried: the prompt appears on the next course entry instead. Deliberately not logged either - the lint
+            // configuration bans console statements, and there is no client-side log sink to send this to.
+            this.scienceSettingsService.refreshScienceSettings().subscribe({ error: () => undefined });
+        }
         await super.ngOnInit();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
@@ -298,6 +364,28 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         childRouteComponent.toggleSidebar();
         this.isSidebarCollapsed.set(childRouteComponent.isCollapsed());
+    }
+
+    acceptScienceConsent(): void {
+        this.saveScienceConsent(true);
+    }
+
+    declineScienceConsent(): void {
+        this.saveScienceConsent(false);
+    }
+
+    /**
+     * Stores the decision. The dialog closes on its own once the stored consent no longer reads as undecided, so there
+     * is no separate visibility flag that could disagree with the persisted state.
+     */
+    private saveScienceConsent(active: boolean): void {
+        const consentCourse = this.scienceConsentCourse();
+        if (!consentCourse) {
+            return;
+        }
+        this.scienceSettingsService.saveConsentForCourse(consentCourse.courseId, active).subscribe({
+            error: (error) => this.alertService.error('error.unexpectedError', { error: error.message }),
+        });
     }
 
     /**

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
@@ -69,6 +69,8 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -143,6 +145,13 @@ describe('CourseOverviewComponent', () => {
     let tutorialGroupApiService: TutorialGroupApi;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let courseAccessStorageService: CourseAccessStorageService;
+    let scienceConsentUpdates: BehaviorSubject<ScienceCourseConsent[]>;
+    let scienceFeatureActive: BehaviorSubject<boolean>;
+    let scienceSettingsServiceMock: {
+        getScienceSettingsUpdates: () => Observable<ScienceCourseConsent[]>;
+        refreshScienceSettings: ReturnType<typeof vi.fn>;
+        saveConsentForCourse: ReturnType<typeof vi.fn>;
+    };
     let router: MockRouter;
     let findCourseForOverviewStub: ReturnType<typeof vi.spyOn>;
     let route: ActivatedRoute;
@@ -182,6 +191,13 @@ describe('CourseOverviewComponent', () => {
             snapshot: { firstChild: { routeConfig: { path: 'exercises' } } },
         } as ActivatedRoute;
         router = new MockRouter();
+        scienceConsentUpdates = new BehaviorSubject<ScienceCourseConsent[]>([]);
+        scienceFeatureActive = new BehaviorSubject<boolean>(true);
+        scienceSettingsServiceMock = {
+            getScienceSettingsUpdates: () => scienceConsentUpdates.asObservable(),
+            refreshScienceSettings: vi.fn().mockReturnValue(of([])),
+            saveConsentForCourse: vi.fn().mockReturnValue(of({ courseId: course1.id!, scienceEnabled: true, active: true })),
+        };
 
         TestBed.configureTestingModule({
             imports: [
@@ -224,6 +240,8 @@ describe('CourseOverviewComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: ScienceSettingsService, useValue: scienceSettingsServiceMock },
+                { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => scienceFeatureActive.asObservable() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -826,6 +844,112 @@ describe('CourseOverviewComponent', () => {
 
             titleBarService.setActionsTemplate(undefined);
             expect(internals().showCourseTitleBar()).toBe(false);
+        });
+    });
+
+    describe('science consent', () => {
+        const undecidedConsent: ScienceCourseConsent = { courseId: course1.id!, courseTitle: 'Course 1', scienceEnabled: true };
+
+        it('should prompt for a decision the student has not taken yet', () => {
+            component.course.set(course1);
+            scienceConsentUpdates.next([undecidedConsent]);
+
+            expect(component.scienceConsentCourse()).toEqual(undecidedConsent);
+            expect(component.showScienceConsentModal()).toBeTruthy();
+        });
+
+        it.each([
+            ['the student already opted in', { ...undecidedConsent, active: true }],
+            ['the student already opted out', { ...undecidedConsent, active: false }],
+            ['the course no longer collects science data', { ...undecidedConsent, scienceEnabled: false }],
+        ])('should not prompt when %s', (_case, consent) => {
+            component.course.set(course1);
+            scienceConsentUpdates.next([consent as ScienceCourseConsent]);
+
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it('should not prompt while the science feature is disabled', () => {
+            scienceFeatureActive.next(false);
+            component.course.set(course1);
+            scienceConsentUpdates.next([undecidedConsent]);
+
+            expect(component.scienceConsentCourse()).toBeUndefined();
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it('should not carry a decision over to another course', () => {
+            // The dialog is derived from the course on screen, so switching course cannot leave the previous course's
+            // prompt open - which would have written the previous course's consent when the student answered it.
+            component.course.set(course1);
+            scienceConsentUpdates.next([undecidedConsent]);
+            expect(component.showScienceConsentModal()).toBeTruthy();
+
+            component.course.set({ ...course1, id: 99 } as Course);
+
+            expect(component.scienceConsentCourse()).toBeUndefined();
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it.each([
+            ['accept', true],
+            ['decline', false],
+        ])('should store the decision when the student chooses to %s', (choice, expected) => {
+            component.course.set(course1);
+            scienceConsentUpdates.next([undecidedConsent]);
+
+            if (expected) {
+                component.acceptScienceConsent();
+            } else {
+                component.declineScienceConsent();
+            }
+
+            expect(scienceSettingsServiceMock.saveConsentForCourse).toHaveBeenCalledWith(course1.id, expected);
+        });
+
+        it('should stop prompting for this course once the dialog is dismissed', () => {
+            // Consent has to be freely given, so there is always a way out. Without it a failed save left a modal with
+            // no close control over an unusable course.
+            component.course.set(course1);
+            scienceConsentUpdates.next([undecidedConsent]);
+            expect(component.showScienceConsentModal()).toBeTruthy();
+
+            component.dismissScienceConsent();
+
+            expect(component.showScienceConsentModal()).toBeFalsy();
+        });
+
+        it('should prompt again for a different course after a dismissal', () => {
+            component.course.set(course1);
+            scienceConsentUpdates.next([undecidedConsent]);
+            component.dismissScienceConsent();
+
+            const otherCourse = { ...course1, id: 77 } as Course;
+            component.course.set(otherCourse);
+            scienceConsentUpdates.next([undecidedConsent, { ...undecidedConsent, courseId: 77 }]);
+
+            expect(component.showScienceConsentModal()).toBeTruthy();
+        });
+
+        it('should store nothing when there is no consent to answer', () => {
+            component.course.set(course1);
+            scienceConsentUpdates.next([]);
+
+            component.acceptScienceConsent();
+
+            expect(scienceSettingsServiceMock.saveConsentForCourse).not.toHaveBeenCalled();
+        });
+
+        it('should report a failed decision with the error text', () => {
+            const alertService = TestBed.inject(AlertService);
+            const alertSpy = vi.spyOn(alertService, 'error');
+            scienceSettingsServiceMock.saveConsentForCourse.mockReturnValue(throwError(() => new Error('boom')));
+            component.course.set(course1);
+            scienceConsentUpdates.next([undecidedConsent]);
+
+            component.acceptScienceConsent();
+
+            expect(alertSpy).toHaveBeenCalledWith('error.unexpectedError', { error: 'boom' });
         });
     });
 });

@@ -1,0 +1,41 @@
+{
+    "artemisApp": {
+        "admin": {
+            "science": {
+                "title": "Forschungsdaten-Erhebung",
+                "courseActivation": "Kursaktivierung",
+                "courseId": "Kurs auswählen",
+                "enable": "Aktivieren",
+                "disable": "Deaktivieren",
+                "loadingCourses": "Forschungskurse werden geladen",
+                "course": "Kurs",
+                "shortName": "Kurzname",
+                "status": "Status",
+                "lastChanged": "Zuletzt geändert",
+                "active": "Aktiv",
+                "inactive": "Inaktiv",
+                "noCourses": "Es wurden keine Kurse für die Forschungsdaten-Erhebung konfiguriert.",
+                "export": {
+                    "title": "Forschungs-CSV-Export",
+                    "description": "Exporte enthalten personenbezogene Verhaltensdaten. Logins werden durch einen pro Export zufällig gesalzenen Hash ersetzt, der nicht gespeichert wird: Dieselbe Person erhält daher in jedem Export einen anderen Hash, und kein Export lässt sich später auf sie zurückführen oder reproduzieren. Gib einen Zweck an und wähle die engsten Filter, die deine Fragestellung beantworten.",
+                    "courseIds": "Zu exportierende Kurse",
+                    "from": "Von",
+                    "to": "Bis",
+                    "purpose": "Zweck",
+                    "create": "CSV-Export erstellen",
+                    "validation": "Wähle mindestens einen Kurs aus und gib einen Zweck für diesen Export an.",
+                    "validationEventTypes": "Wähle mindestens einen Ereignistyp für diesen Export aus."
+                },
+                "audit": {
+                    "title": "Export-Audit",
+                    "created": "Erstellt",
+                    "admin": "Admin",
+                    "courses": "Kurse",
+                    "purpose": "Zweck",
+                    "checksum": "Prüfsumme",
+                    "empty": "Es wurden noch keine Forschungsexporte erstellt."
+                }
+            }
+        }
+    }
+}

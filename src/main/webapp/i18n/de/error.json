@@ -308,11 +308,9 @@
             "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
             "courseHasNoTimeZone": "Für diesen Kurs ist keine Zeitzone konfiguriert.",
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
-
             "tutorialPeriodMissing": "Das Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
             "tutorialPeriodInvalidFormat": "Das Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
-
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
             "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
         },
@@ -331,6 +329,10 @@
         "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
-        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
+        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
+        "scienceExportInvalidDateRange": "Das Startdatum des Exports muss vor dem Enddatum liegen.",
+        "scienceExportFailed": "Der Export konnte nicht erstellt werden. Es wurde keine Datei behalten.",
+        "scienceCourseNotEnabled": "Für diesen Kurs werden keine Kursinteraktionsdaten erhoben.",
+        "scienceExportMissingEventTypes": "Wähle mindestens einen Ereignistyp für den Export aus."
     }
 }

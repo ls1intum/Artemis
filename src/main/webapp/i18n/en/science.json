@@ -1,0 +1,41 @@
+{
+    "artemisApp": {
+        "admin": {
+            "science": {
+                "title": "Science data collection",
+                "courseActivation": "Course activation",
+                "courseId": "Select a course",
+                "enable": "Enable",
+                "disable": "Disable",
+                "loadingCourses": "Loading science courses",
+                "course": "Course",
+                "shortName": "Short name",
+                "status": "Status",
+                "lastChanged": "Last changed",
+                "active": "Active",
+                "inactive": "Inactive",
+                "noCourses": "No courses have been configured for science collection.",
+                "export": {
+                    "title": "Research CSV export",
+                    "description": "Exports contain personal behavioural data. Logins are replaced by a hash salted per export, which is not stored: the same person therefore hashes differently in every export, and no export can be traced back to them or reproduced later. Give a purpose and choose the narrowest filters that answer your question.",
+                    "courseIds": "Courses to export",
+                    "from": "From",
+                    "to": "To",
+                    "purpose": "Purpose",
+                    "create": "Create CSV export",
+                    "validation": "Select at least one course and state a purpose for this export.",
+                    "validationEventTypes": "Select at least one event type for this export."
+                },
+                "audit": {
+                    "title": "Export audit",
+                    "created": "Created",
+                    "admin": "Admin",
+                    "courses": "Courses",
+                    "purpose": "Purpose",
+                    "checksum": "Checksum",
+                    "empty": "No research exports have been created."
+                }
+            }
+        }
+    }
+}

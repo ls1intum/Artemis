@@ -78,3 +78,29 @@
 </ng-template>
 
 <jhi-course-unenrollment-modal [(visible)]="showUnenrollModal" [course]="course()" />
+
+<tum-ui-dialog
+    size="medium"
+    data-testid="science-consent-dialog"
+    [visible]="showScienceConsentModal()"
+    [header]="'artemisApp.courseOverview.scienceConsent.title' | artemisTranslate"
+    (visibleChange)="dismissScienceConsent()"
+>
+    <p>
+        {{
+            'artemisApp.courseOverview.scienceConsent.description'
+                | artemisTranslate
+                    : {
+                          courseTitle: scienceConsentCourse()?.courseTitle,
+                      }
+        }}
+    </p>
+    <ng-template #footer>
+        <button type="button" tumUiButton severity="secondary" variant="outlined" data-testid="science-consent-decline" (click)="declineScienceConsent()">
+            {{ 'artemisApp.courseOverview.scienceConsent.decline' | artemisTranslate }}
+        </button>
+        <button type="button" tumUiButton data-testid="science-consent-accept" (click)="acceptScienceConsent()">
+            {{ 'artemisApp.courseOverview.scienceConsent.accept' | artemisTranslate }}
+        </button>
+    </ng-template>
+</tum-ui-dialog>
