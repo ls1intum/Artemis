@@ -1,0 +1,60 @@
+apply from: rootProject.file('gradle/isolated-module.gradle')
+apply plugin: 'org.springframework.boot'
+apply plugin: 'org.cyclonedx.bom'
+
+dependencies {
+    implementation project(':aiworker')
+    implementation project(':hyperion')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
+    implementation('org.springframework.ai:spring-ai-starter-model-openai') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-webclient'
+    }
+    implementation 'tools.jackson.core:jackson-databind'
+    implementation 'tools.jackson.dataformat:jackson-dataformat-yaml'
+    implementation 'commons-io:commons-io:2.21.0'
+    implementation 'net.sourceforge.plantuml:plantuml-mit:1.2026.7'
+    implementation 'com.thoughtworks.qdox:qdox:2.2.0'
+    implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework:spring-jms'
+    testImplementation 'com.tngtech.archunit:archunit:1.5.0'
+    testImplementation "com.github.docker-java:docker-java-core:${docker_java_version}"
+    testImplementation "com.github.docker-java:docker-java-transport-zerodep:${docker_java_version}"
+}
+
+springBoot {
+    mainClass = 'de.tum.cit.aet.artemis.aiworker.config.AiWorkerApplication'
+}
+
+bootJar {
+    archiveFileName = 'hyperion-worker.jar'
+}
+
+processResources {
+    from(rootProject.file('src/main/resources')) {
+        include 'templates/phases/java/plain_gradle.yaml'
+        include 'templates/java/exercise/**'
+        include 'templates/java/solution/**'
+        include 'templates/java/gradle_gradle/**'
+        include 'templates/java/test/testFiles/**'
+        include 'templates/java/test/gradle/**'
+        include 'templates/hyperion/**'
+    }
+}
+
+processTestResources {
+    from(rootProject.file('src/main/resources')) {
+        include 'templates/java/maven_maven/test/projectTemplate/pom.xml'
+    }
+}
+
+cyclonedxDirectBom {
+    includeConfigs = ['runtimeClasspath']
+    includeLicenseText = false
+    xmlOutput.unsetConvention()
+}
+
+jacocoTestReport {
+    classDirectories.setFrom(sourceSets.main.output.classesDirs)
+}

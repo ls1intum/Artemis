@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
@@ -191,7 +192,7 @@ public class GenerationOrchestrator {
             baseTools.configureStructuralOracleRefresh(() -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise));
             // The decorator emits path/action metadata for the instructor's live activity view, never file content. It re-exposes the same @Tool surface, so the model sees an
             // identical tool set either way.
-            Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink, AgentActivitySink.trackerOf(progress)) : baseTools;
+            SubmitVetoAware tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink, AgentActivitySink.trackerOf(progress)) : baseTools;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (an empty probe leaves the prompt unchanged) and first-attempt only: retries
             // already operate on a workspace the agent has explored.

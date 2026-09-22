@@ -12,6 +12,12 @@ import com.tngtech.archunit.core.importer.ImportOption;
 class WorkerToolchainArchitectureTest {
 
     @Test
+    void workloadConsumersOnlyAccessPublicWorkerContracts() {
+        var classes = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS).importPackages("de.tum.cit.aet.artemis.hyperion");
+        noClasses().should().dependOnClassesThat().resideInAnyPackage("..aiworker.service..", "..aiworker.config..").check(classes);
+    }
+
+    @Test
     void workerLifecycleCannotDependOnLanguageImplementations() {
         var classes = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS).importPackages("de.tum.cit.aet.artemis.hyperion.service.worker",
                 "de.tum.cit.aet.artemis.hyperion.config.worker");

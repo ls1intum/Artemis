@@ -885,5 +885,5 @@ tasks.named("dependencyUpdates").configure {
 tasks.register('aiWorkerCheck') {
     group = 'verification'
     description = 'Runs tests, architecture and style checks for standalone AI Worker and Hyperion modules.'
-    dependsOn subprojects.findAll { it.path == ':hyperion' || it.path == ':aiworker' || it.path.startsWith(':aiworker:') }.collect { "${it.path}:check" }
+    dependsOn subprojects.findAll { it.path == ':hyperion' || it.path.startsWith(':hyperion:') || it.path == ':aiworker' || it.path.startsWith(':aiworker:') }.collect { "${it.path}:check" }
 }

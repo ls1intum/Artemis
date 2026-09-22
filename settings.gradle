@@ -31,3 +31,6 @@ project(':aiworker').projectDir = file('modules/aiworker')
 
 include 'aiworker:api'
 project(':aiworker:api').projectDir = file('modules/aiworker/api')
+
+include 'hyperion:worker'
+project(':hyperion:worker').projectDir = file('modules/hyperion/worker')

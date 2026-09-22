@@ -47,7 +47,6 @@ class AiWorkerArchitectureTest {
     void importedClassesCoverOnlyInfrastructureAndTheStandaloneImplementation() {
         assertThat(CLASSES.stream().map(type -> type.getName())).noneMatch(name -> name.contains(".hyperion."));
         assertThat(CLASSES.stream().map(type -> type.getName())).contains("de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService",
-                "de.tum.cit.aet.artemis.aiworker.api.SandboxApi", "de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService",
-                "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration.JavaGradleGenerationAdapterService");
+                "de.tum.cit.aet.artemis.aiworker.api.SandboxApi", "de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService");
     }
 }

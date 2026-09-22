@@ -54,13 +54,17 @@ jobs:
           java-version: '${{ env.java }}'
       - uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
       - name: Build worker executable and SBOM
-        run: ./gradlew :aiworker:bootJar :aiworker:cyclonedxDirectBom -x webapp
+        run: ./gradlew :aiworker:bootJar :aiworker:cyclonedxDirectBom :hyperion:worker:bootJar :hyperion:worker:cyclonedxDirectBom -x webapp
       - name: Build worker container
-        run: docker build -f docker/aiworker/worker.Dockerfile -t aiworker:ci .
+        run: |
+          docker build -f docker/aiworker/worker.Dockerfile -t aiworker:ci .
+          docker build -f docker/hyperion/worker.Dockerfile -t hyperion-worker:ci .
       - uses: actions/upload-artifact@v7
         with:
           name: aiworker
           path: |
+            modules/hyperion/worker/build/libs/hyperion-worker.jar
+            modules/hyperion/worker/build/reports/cyclonedx-direct/bom.json
             modules/aiworker/build/libs/aiworker.jar
             modules/aiworker/build/reports/cyclonedx-direct/bom.json
           if-no-files-found: error

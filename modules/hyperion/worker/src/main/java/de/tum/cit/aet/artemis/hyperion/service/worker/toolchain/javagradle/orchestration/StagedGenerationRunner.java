@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
@@ -244,29 +245,30 @@ public class StagedGenerationRunner {
         }
     }
 
-    StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles, InteractiveSandbox sandbox,
-            String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
+    StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, Map<String, String> seedTestsFiles,
+            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<SeededStructuralTests> structuralSeedHook) {
         return run(exercise, baseTools, tools, briefPrompt, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, true, null);
     }
 
-    StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, Map<String, String> seedTestsFiles, InteractiveSandbox sandbox,
-            String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
+    StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, Map<String, String> seedTestsFiles,
+            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
         return run(exercise, baseTools, tools, briefPrompt, briefPrompt, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, specStageApplies,
                 specStageApplies, specSink);
     }
 
-    public StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
-            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
-            Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
+    public StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, String sourceBrief,
+            Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
         return run(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, specStageApplies,
                 specStageApplies, specSink, null);
     }
 
-    public StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
-            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
-            Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies, @Nullable Consumer<String> specSink) {
+    public StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, String sourceBrief,
+            Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies,
+            @Nullable Consumer<String> specSink) {
         return run(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, specStageApplies,
                 conceptSelectionApplies, specSink, null);
     }
@@ -298,10 +300,10 @@ public class StagedGenerationRunner {
      * @return one aggregated {@link AgentLoopResult} — summed turns, the first {@code ERROR}/{@code CANCELLED} status encountered or else the last stage's status, and the last
      *         stage's final message (with the failing gate's report appended, if a gate failed) — together with the carried conversation
      */
-    public StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
-            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
-            Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies, @Nullable Consumer<String> specSink,
-            @Nullable Consumer<GenerationStage> stageBoundarySink) {
+    public StagedRunOutcome run(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, String sourceBrief,
+            Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies,
+            @Nullable Consumer<String> specSink, @Nullable Consumer<GenerationStage> stageBoundarySink) {
         // Owned here rather than threaded through the stage machine below, so that objections raised against a concept the run proceeded with anyway leave through every exit:
         // gate failure, wall clock, cancellation, or a clean finish.
         List<String> conceptFindings = new ArrayList<>();
@@ -310,7 +312,7 @@ public class StagedGenerationRunner {
         return conceptFindings.isEmpty() ? outcome : outcome.withConceptFindings(conceptFindings);
     }
 
-    private StagedRunOutcome runStages(GenerationInput exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief,
+    private StagedRunOutcome runStages(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, String sourceBrief,
             Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies,
             @Nullable Consumer<String> specSink, @Nullable Consumer<GenerationStage> stageBoundarySink, List<String> conceptFindings) {

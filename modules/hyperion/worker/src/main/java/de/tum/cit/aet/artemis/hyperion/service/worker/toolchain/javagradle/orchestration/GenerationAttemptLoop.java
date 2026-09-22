@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageSink;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
@@ -85,7 +86,7 @@ class GenerationAttemptLoop {
     record RunContext(GenerationInput exercise, Mode mode, String jobId, InteractiveSandbox sandbox, String sessionId, GenerationWorkspace.WorkspaceSeed workspaceSeed,
             Map<String, String> testsSeedSnapshot, Map<String, String> placeholderReplacements, Map<RepositoryRole, Map<String, String>> baselineRepositoryFiles,
             @Nullable String baselineProblemStatement, Set<String> baselineGradedTestNames, String sourceBrief, boolean specStageApplies, boolean conceptSelectionApplies,
-            String systemPrompt, String firstPrompt, SandboxAgentTools baseTools, Object tools, BooleanSupplier cancelled, @Nullable GenerationProgressSink progress,
+            String systemPrompt, String firstPrompt, SandboxAgentTools baseTools, SubmitVetoAware tools, BooleanSupplier cancelled, @Nullable GenerationProgressSink progress,
             Consumer<ChatResponse> usageSink, AuthoringStageCapture capture, Consumer<String> specObserver, Consumer<GenerationOutcome> checkpointObserver) {
     }
 
@@ -161,7 +162,7 @@ class GenerationAttemptLoop {
 
     private final SandboxAgentTools baseTools;
 
-    private final Object tools;
+    private final SubmitVetoAware tools;
 
     private final BooleanSupplier cancelled;
 

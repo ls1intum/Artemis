@@ -18,6 +18,22 @@ Pin supervisor and sandbox images by digest and coordinate core, worker and brok
 upgrades after draining active work. Worker process loss is not a durable local-outbox
 guarantee: core must fence the lost incarnation using the evidence it already holds.
 
+## Hyperion worker distribution
+
+The generic `:aiworker:bootJar` contains no Hyperion runtime, model provider or Java
+teaching templates. Install the Hyperion workload through its separate distribution:
+
+```sh
+./gradlew :hyperion:worker:bootJar :hyperion:worker:cyclonedxDirectBom -x webapp
+docker build -f docker/hyperion/worker.Dockerfile -t hyperion-worker:local .
+```
+
+This nested module composes the unchanged AI Worker supervisor with Hyperion's
+adapter and model provider. There are still only two top-level modules, `aiworker`
+and `hyperion`. Other workloads can compose their own distribution without
+packaging Hyperion. Deploy the Hyperion image for `hyperion-generation`, not the
+bare generic image; both use the same protocol-4 transport configuration.
+
 ## Offline Java Gradle build image
 
 Build the sandbox image from the repository root:
@@ -49,7 +65,7 @@ Qualify the image against actual isolated builds:
 
 ```sh
 HYPERION_GRADLE_TEST_IMAGE=$(docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}') \
-  ./gradlew :aiworker:test --tests '*DockerGradleBuildTest' -x webapp
+  ./gradlew :hyperion:worker:test --tests '*DockerGradleBuildTest' -x webapp
 ```
 
 This test builds a solution and incomplete template, parses their real reports,
