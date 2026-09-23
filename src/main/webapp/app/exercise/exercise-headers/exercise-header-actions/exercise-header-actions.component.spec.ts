@@ -37,7 +37,7 @@ import dayjs from 'dayjs/esm';
 describe('ExerciseHeaderActionsComponent', () => {
     let fixture: ComponentFixture<ExerciseHeaderActionsComponent>;
 
-    function withCourse(exercise: Exercise, athenaFormativeFeedbackEnabled: boolean): Exercise {
+    function withCourse<T extends Exercise>(exercise: T, athenaFormativeFeedbackEnabled: boolean): T {
         const course = new Course();
         course.athenaFormativeFeedbackEnabled = athenaFormativeFeedbackEnabled;
         exercise.course = course;
