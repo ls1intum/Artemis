@@ -186,7 +186,7 @@ public class AnswerMessageResource {
     @PatchMapping("courses/{courseId}/answer-messages/{answerMessageId}/verify")
     @EnforceAtLeastStudent
     public ResponseEntity<AnswerMessageDTO> verifyAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId,
-            @RequestBody(required = false) VerifyAnswerMessageDTO verifyDto) {
+            @Valid @RequestBody(required = false) VerifyAnswerMessageDTO verifyDto) {
         log.debug("PATCH verifyAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);
         long start = System.nanoTime();
         AnswerPost verifiedAnswer = answerMessageService.verifyAnswerMessage(courseId, answerMessageId, verifyDto);

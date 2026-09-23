@@ -834,6 +834,33 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testVerifyAnswerMessage_contentTooLong_badRequest() throws Exception {
+        // approving an Iris answer with edited content beyond the 5000 character limit must be rejected and must not verify or change the answer
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+
+        var channel = createChannelWithTwoStudents();
+        // The reviewing tutor must be a member of the (restricted) channel to verify an Iris reply in it.
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1");
+        var post = existingConversationPostsWithAnswers.getFirst();
+        post.setConversation(channel);
+        Post savedMessage = conversationMessageRepository.save(post);
+
+        AnswerPost answerPostToVerify = createAnswerPost(savedMessage);
+        answerPostToVerify.setAuthor(irisBot);
+        answerPostToVerify.setVerified(false);
+        AnswerPost savedAnswerPost = answerPostRepository.save(answerPostToVerify);
+
+        String tooLongContent = "a".repeat(5001);
+        request.patchWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswerPost.getId() + "/verify",
+                new VerifyAnswerMessageDTO(tooLongContent), AnswerMessageDTO.class, HttpStatus.BAD_REQUEST);
+
+        AnswerPost unchanged = answerPostRepository.findById(savedAnswerPost.getId()).orElseThrow();
+        assertThat(unchanged.isVerified()).isFalse();
+        assertThat(unchanged.getContent()).isNotEqualTo(tooLongContent);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotBroadcastUnverifiedIrisReplyToStudents() throws Exception {
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
