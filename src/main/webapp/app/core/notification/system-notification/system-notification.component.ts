@@ -53,6 +53,8 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
 
     /** Counts the notification lists received over the websocket, so that an older REST response does not replace a newer one. */
     private websocketUpdateCount = 0;
+    /** The REST request currently in flight; a newer request cancels it, so that an older response cannot complete last. */
+    private loadSubscription?: Subscription;
 
     ngOnInit() {
         this.closedIds = this.localStorageService.retrieve<number[]>(CLOSED_NOTIFICATION_IDS_STORAGE_KEY) ?? [];
@@ -90,14 +92,16 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         }
         clearTimeout(this.websocketDelayTimeout);
         this.authSubscription?.unsubscribe();
+        this.loadSubscription?.unsubscribe();
         this.websocketStatusSubscription?.unsubscribe();
         this.systemNotificationSubscription?.unsubscribe();
         this.renderer.setStyle(this.document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase);
     }
 
     private loadActiveNotification() {
+        this.loadSubscription?.unsubscribe();
         const websocketUpdateCountAtRequest = this.websocketUpdateCount;
-        this.systemNotificationService.getActiveNotifications().subscribe((notifications: SystemNotification[]) => {
+        this.loadSubscription = this.systemNotificationService.getActiveNotifications().subscribe((notifications: SystemNotification[]) => {
             if (this.websocketUpdateCount !== websocketUpdateCountAtRequest) {
                 // A newer list arrived over the websocket while the request was in flight
                 return;

@@ -172,6 +172,32 @@ describe('System Notification Component', () => {
         vi.useRealTimers();
     });
 
+    it('should ignore the response of a reload that a newer reload superseded', () => {
+        vi.useFakeTimers();
+        const olderResponse = new Subject<SystemNotification[]>();
+        const newerResponse = new Subject<SystemNotification[]>();
+        const getActiveNotificationSpy = vi
+            .spyOn(systemNotificationService, 'getActiveNotifications')
+            .mockReturnValueOnce(of([]))
+            .mockReturnValueOnce(olderResponse)
+            .mockReturnValueOnce(newerResponse);
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(3);
+
+        const newerNotifications = [createActiveNotification(SystemNotificationType.WARNING, 7)];
+        newerResponse.next(newerNotifications);
+        olderResponse.next([]);
+
+        expect(olderResponse.observed).toBe(false);
+        expect(systemNotificationComponent.notifications).toEqual(newerNotifications);
+        vi.useRealTimers();
+    });
+
     it('should reload the notifications after a short interruption that emits no disconnected state', () => {
         vi.useFakeTimers();
         const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
