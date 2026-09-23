@@ -6,8 +6,10 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
@@ -410,16 +412,38 @@ public abstract class AbstractGitService {
 
     /**
      * Deletes a local repository folder.
+     * <p>
+     * The folder is first renamed to a sibling and only then deleted. On a network file system, files that are still open (e.g. by another instance of the same
+     * repository) cannot be removed, so deleting in place can fail half-way and leave a folder without HEAD and config behind that still looks like a repository.
+     * A rename also works with open files and frees the path at once, so a failure to delete the renamed folder no longer affects the repository.
      *
      * @param repository Local Repository Object.
-     * @throws IOException if the deletion of the repository failed.
+     * @throws IOException if the repository folder could neither be renamed nor deleted.
      */
     public void deleteLocalRepository(@NonNull Repository repository) throws IOException {
         Path repoPath = repository.getLocalPath();
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again
         // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
         repository.closeBeforeDelete();
-        FileUtils.deleteDirectory(repoPath.toFile());
+        if (!Files.exists(repoPath)) {
+            return;
+        }
+        Path renamedPath = repoPath.resolveSibling(repoPath.getFileName() + ".deleted-" + UUID.randomUUID());
+        try {
+            Files.move(repoPath, renamedPath);
+        }
+        catch (IOException e) {
+            log.warn("Could not rename the repository folder {} before deleting it, deleting it in place: {}", repoPath, e.getMessage());
+            FileUtils.deleteDirectory(repoPath.toFile());
+            log.debug("Deleted Repository at {}", repoPath);
+            return;
+        }
+        try {
+            FileUtils.deleteDirectory(renamedPath.toFile());
+        }
+        catch (IOException e) {
+            log.warn("Could not delete the renamed repository folder {} of {}: {}", renamedPath, repoPath, e.getMessage());
+        }
         log.debug("Deleted Repository at {}", repoPath);
     }
 
