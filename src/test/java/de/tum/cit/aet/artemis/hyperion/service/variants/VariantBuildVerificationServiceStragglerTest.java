@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -77,7 +77,7 @@ class VariantBuildVerificationServiceStragglerTest {
         when(solutionRepository.findByProgrammingExerciseId(EXERCISE_ID)).thenReturn(Optional.of(solutionParticipation));
         when(templateRepository.findByProgrammingExerciseId(EXERCISE_ID)).thenReturn(Optional.of(templateParticipation));
 
-        service = new VariantBuildVerificationService(templateRepository, solutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository, mock(GitService.class),
+        service = new VariantBuildVerificationService(templateRepository, solutionRepository, mock(BuildLogEntryService.class), resultRepository, mock(GitService.class),
                 mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), mock(ProgrammingFeedbackSynthesizerService.class));
     }
 

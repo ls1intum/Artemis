@@ -9,7 +9,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -542,6 +542,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         const feedbacks = this.result()?.feedbacks || [];
         this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
+
+        // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
+        // AUTOMATIC type check alone misses them here: loadFeedbackSuggestions() only sees a fresh Athena response
+        // and never runs at all once this submission already has assessments.
+        this.hasAutomaticFeedback.set(
+            feedbacks.some(
+                (feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC || Feedback.getFeedbackSuggestionType(feedbackItem) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+        );
 
         const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
