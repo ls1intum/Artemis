@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Component, input, output } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
@@ -53,14 +54,26 @@ describe('CreateVariantWithAiButtonComponent', () => {
     it('renders the button for editors of a supported exercise when Hyperion is enabled', () => {
         createComponent(programmingExercise(true), true);
 
-        expect(fixture.componentInstance.supported()).toBe(true);
         expect(button()).not.toBeNull();
+    });
+
+    it('opens the wizard for the exercise when the button is clicked', () => {
+        createComponent(programmingExercise(true), true);
+        const wizard = () => fixture.debugElement.query(By.directive(ExerciseVariantAiModalWizardStubComponent)).componentInstance as ExerciseVariantAiModalWizardStubComponent;
+        expect(wizard().visible()).toBe(false);
+
+        button().click();
+        fixture.detectChanges();
+
+        expect(wizard().visible()).toBe(true);
+        expect(wizard().sourceExercise()).toEqual(programmingExercise(true));
+        expect(wizard().courseId()).toBe(2);
+        expect(wizard().examExercise()).toBe(false);
     });
 
     it('renders nothing when Hyperion is disabled', () => {
         createComponent(programmingExercise(true), false);
 
-        expect(fixture.componentInstance.supported()).toBe(false);
         expect(button()).toBeNull();
         expect(fixture.nativeElement.querySelector('jhi-exercise-variant-ai-modal-wizard')).toBeNull();
     });
