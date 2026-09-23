@@ -163,10 +163,48 @@ public class DataExportExerciseCreationService {
 
         // NOTE: repositoryExportOptions.filterLateSubmissions must be false here because we do not want to filter any submissions for the data export.
         // The export asks for the history: a data export is the student's own copy of their work, so their commits belong in it.
-        programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, Map.of(), exerciseDir,
-                Collections.synchronizedList(new ArrayList<>()), repositoryExportOptions, RepositoryExportContent.WITH_HISTORY);
+        List<String> repositoryExportErrors = Collections.synchronizedList(new ArrayList<>());
+        programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, Map.of(), exerciseDir, repositoryExportErrors,
+                repositoryExportOptions, RepositoryExportContent.WITH_HISTORY);
+        reportMissingRepositories(programmingExercise, exerciseDir, repositoryExportErrors);
 
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, user.getId());
+    }
+
+    /**
+     * Records the repositories that could not be exported, next to the exercise they belong to.
+     * <p>
+     * {@code exportStudentRepositories} reports a repository it could not export by adding to the list it is handed
+     * and carrying on with the others, which is the right behaviour: one unreachable repository should not cost the
+     * student the rest of their data. What must not happen is what happened before, where the list was a throwaway
+     * that nobody read: the export then looked complete while the student's own code was missing from it, and neither
+     * they nor an administrator had any way of telling. The course archive already writes its failures into the
+     * archive for the same reason, as {@code exportErrors.txt}.
+     *
+     * @param programmingExercise    the exercise being exported
+     * @param exerciseDir            the directory holding that exercise
+     * @param repositoryExportErrors what {@code exportStudentRepositories} could not export, empty when all of it worked
+     * @throws IOException if the note cannot be written
+     */
+    private void reportMissingRepositories(ProgrammingExercise programmingExercise, Path exerciseDir, List<String> repositoryExportErrors) throws IOException {
+        if (repositoryExportErrors.isEmpty()) {
+            return;
+        }
+
+        log.error("Data export for programming exercise {} ('{}') is missing {} repository/repositories: {}", programmingExercise.getId(), programmingExercise.getTitle(),
+                repositoryExportErrors.size(), String.join(" | ", repositoryExportErrors));
+
+        List<String> note = new ArrayList<>();
+        note.add("# Repositories missing from this export");
+        note.add("");
+        note.add("Your submitted code for this exercise could not be added to the export. The rest of your data for it,");
+        note.add("such as your submissions and results, is present.");
+        note.add("");
+        note.add("Please request a new export. If it is missing again, contact your instructor or an administrator and");
+        note.add("include this file, which records what went wrong:");
+        note.add("");
+        note.addAll(repositoryExportErrors.stream().map(error -> "* " + error).toList());
+        FileUtils.writeLines(exerciseDir.resolve("REPOSITORIES_MISSING.md").toFile(), StandardCharsets.UTF_8.name(), note);
     }
 
     /**

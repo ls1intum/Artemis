@@ -22,6 +22,8 @@ import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
+
 /**
  * Persist AuditEvent managed by the Spring Boot actuator.
  *
@@ -30,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @Table(name = "jhi_persistent_audit_event")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Audit trail, deliberately independent.")
 public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
 
     @Serial

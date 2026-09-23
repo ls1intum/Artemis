@@ -2,12 +2,17 @@ package de.tum.cit.aet.artemis.quiz.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.quiz.domain.QuizStatisticCounter;
-
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizStatisticCounterDTO(Long id, Integer ratedCounter, Integer unRatedCounter) {
+public record QuizStatisticCounterDTO(Integer ratedCounter, Integer unRatedCounter) {
 
-    public static QuizStatisticCounterDTO of(QuizStatisticCounter quizStatisticCounter) {
-        return new QuizStatisticCounterDTO(quizStatisticCounter.getId(), quizStatisticCounter.getRatedCounter(), quizStatisticCounter.getUnRatedCounter());
+    /**
+     * Creates a counter DTO from the two normalized rating buckets.
+     *
+     * @param ratedCounter   the rated count
+     * @param unratedCounter the unrated count
+     * @return the counter DTO
+     */
+    public static QuizStatisticCounterDTO of(long ratedCounter, long unratedCounter) {
+        return new QuizStatisticCounterDTO(Math.toIntExact(ratedCounter), Math.toIntExact(unratedCounter));
     }
 }

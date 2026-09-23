@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,9 +23,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -167,13 +164,14 @@ public class LectureUnitService {
             // Processing state deletion is handled by DB cascade when lecture unit is deleted
             contentProcessingApi.ifPresent(api -> api.handleUnitDeletion(attachmentVideoUnit));
 
-            if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
-                fileService.schedulePathForDeletion(
-                        FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT), 5);
+            if (attachmentVideoUnit.getAttachment() != null) {
+                // Empty for an attachment that links to a document hosted elsewhere: there is nothing of ours to delete, and the filename such a link ends in may well be one
+                // an unrelated attachment stores.
+                attachmentVideoUnit.getAttachment().fileLocation().ifPresent(location -> fileService.schedulePathForDeletion(location.path(), 5));
             }
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnitToDelete.getLecture().getId());
         // Creating a new list of lecture units without the one we want to remove
         lecture.removeLectureUnitById(lectureUnit.getId());
         lectureRepository.save(lecture);

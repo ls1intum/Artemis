@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.shared.base;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,6 +51,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
@@ -61,7 +61,6 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.FirebasePushNotificationService;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
@@ -98,6 +97,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Autowired
     protected GitService gitService;
+
+    @Autowired
+    protected BareGitRepositoryService bareGitRepositoryService;
 
     @MockitoSpyBean
     protected FileService fileService;
@@ -240,29 +242,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected void resetSpyBeans() {
         Mockito.reset(groupNotificationService, singleUserNotificationService, websocketMessagingService, examAccessService, mailService, instanceMessageSendService,
                 programmingExerciseScheduleService, programmingExerciseParticipationService, uriService, scheduleService, participantScoreScheduleService, javaMailSender,
-                programmingTriggerService, zipFileService);
-    }
-
-    @Override
-    public void mockGetRepositorySlugFromRepositoryUri(String repositorySlug, VcsRepositoryUri repositoryUri) {
-        // mock both versions to be independent
-        doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUri(repositoryUri);
-        doReturn(repositorySlug).when(uriService).getRepositorySlugFromRepositoryUriString(repositoryUri.toString());
-    }
-
-    @Override
-    public void mockGetProjectKeyFromRepositoryUri(String projectKey, VcsRepositoryUri repositoryUri) {
-        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(repositoryUri);
-    }
-
-    @Override
-    public void mockGetRepositoryPathFromRepositoryUri(String projectPath, VcsRepositoryUri repositoryUri) {
-        doReturn(projectPath).when(uriService).getRepositoryPathFromRepositoryUri(repositoryUri);
-    }
-
-    @Override
-    public void mockGetProjectKeyFromAnyUrl(String projectKey) {
-        doReturn(projectKey).when(uriService).getProjectKeyFromRepositoryUri(any());
+                programmingTriggerService, zipFileService, lti13Service, fileService, mailSendingService, firebasePushNotificationService, applePushNotificationService,
+                modelingSubmissionService, textSubmissionService, programmingExerciseGradingService, exerciseDateService, textBlockService);
     }
 
     /**

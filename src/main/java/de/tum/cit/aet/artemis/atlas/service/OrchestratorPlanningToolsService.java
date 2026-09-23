@@ -16,9 +16,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -42,10 +42,10 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  */
 @Lazy
 @Service
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 public class OrchestratorPlanningToolsService {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -58,7 +58,7 @@ public class OrchestratorPlanningToolsService {
      * @param courseCompetencyRepository repository for competency lookups
      * @param exerciseRepository         repository for exercise lookups
      */
-    public OrchestratorPlanningToolsService(ObjectMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository) {
+    public OrchestratorPlanningToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.exerciseRepository = exerciseRepository;
@@ -72,7 +72,7 @@ public class OrchestratorPlanningToolsService {
      */
     @Tool(description = "List the competency index for the current course. Returns two sections: (1) competencies — id, title, taxonomy, type (competency or prerequisite), "
             + "linked exercises (with title, exercise type, and the current link weight — 1.0 / 0.5 / 0.3) and linked lecture units (with name and lecture-unit type); "
-            + "(2) unassignedExercises — exercises in the course that are currently not linked to any competency (id, title, type), which are prime candidates for closing coverage gaps. "
+            + "(2) unassignedExercises — exercises in the course that are currently not linked to any competency (id, title, type), provided as background only; act on the changed batch, not unrelated coverage gaps. "
             + "The initial index is already provided in the system prompt; call this again after any CREATE / DELETE so subsequent actions reference up-to-date ids.")
     public String listCompetencyIndex(ToolContext toolContext) {
         Long courseId = courseIdFromContext(toolContext);

@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared-ui/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared-ui/image-cropper/services/load-image.service';
@@ -14,7 +13,9 @@ import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, 
 import { toCourseCreateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
+import { DialogService } from 'primeng/dynamicdialog';
 import { of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -30,7 +31,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -42,6 +43,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -63,7 +65,6 @@ describe('Course Management Update Component', () => {
     const validTimeZone = 'Europe/Berlin';
     let loadImageSpy: ReturnType<typeof vi.spyOn>;
     let eventManager: EventManager;
-    let dialogService: DialogService;
     let navigationUtilService: ArtemisNavigationUtilService;
 
     beforeEach(async () => {
@@ -117,7 +118,9 @@ describe('Course Management Update Component', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         comp = fixture.componentInstance;
@@ -129,7 +132,6 @@ describe('Course Management Update Component', () => {
         loadImageSpy = vi.spyOn(loadImageService, 'loadImageFile');
         accountService = TestBed.inject(AccountService);
         eventManager = TestBed.inject(EventManager);
-        dialogService = TestBed.inject(DialogService);
         navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
     });
 
@@ -316,13 +318,16 @@ describe('Course Management Update Component', () => {
             // save() maps the data-privacy and auto-orchestration form controls into the course configuration
             // (defaults: grade-relevant, no hold, pipeline disabled)
             entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false, autoOrchestratorEnabled: false };
+            // The Athena flags are not part of the settings form any more - they are written through
+            // CourseAthenaConfigResource - so the saved course does not carry them either.
+            delete entity.athenaGradingFeedbackEnabled;
+            delete entity.athenaFormativeFeedbackEnabled;
             const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -355,12 +360,16 @@ describe('Course Management Update Component', () => {
             // save() maps the data-privacy and auto-orchestration form controls into the course configuration
             // (defaults: grade-relevant, no hold, pipeline disabled)
             entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false, autoOrchestratorEnabled: false };
-            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+            // The Athena flags are not part of the settings form any more - they are written through
+            // CourseAthenaConfigResource - so the saved course does not carry them either.
+            delete entity.athenaGradingFeedbackEnabled;
+            delete entity.athenaFormativeFeedbackEnabled;
+            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 42 } })));
+            const navigateStub = vi.spyOn(TestBed.inject(Router), 'navigate');
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
-                restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -383,6 +392,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
+            expect(navigateStub).toHaveBeenCalledExactlyOnceWith(['course-management', '42']);
             expect(comp.isSaving()).toBe(false);
         });
 
@@ -552,13 +562,6 @@ describe('Course Management Update Component', () => {
     });
 
     describe('setCourseImage', () => {
-        beforeEach(() => {
-            const mockDialogRef = {
-                onClose: of(undefined),
-            } as unknown as DynamicDialogRef;
-            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-        });
-
         it('should change course image', () => {
             const file = new File([''], 'testFilename');
             const fileList = {
@@ -788,23 +791,6 @@ describe('Course Management Update Component', () => {
         });
     });
 
-    describe('changeRestrictedAthenaModulesEnabled', () => {
-        it('should toggle restricted athena modules access', () => {
-            comp.course = new Course();
-            comp.course.restrictedAthenaModulesAccess = true;
-            comp.courseForm = new FormGroup({ restrictedAthenaModulesAccess: new FormControl(true) });
-
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
-            comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(false);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeFalsy();
-            comp.changeRestrictedAthenaModulesEnabled();
-            expect(comp.course.restrictedAthenaModulesAccess).toBe(true);
-            expect(comp.courseForm.controls['restrictedAthenaModulesAccess'].value).toBeTruthy();
-        });
-    });
-
     describe('isValidDate', () => {
         it('should handle valid dates', () => {
             comp.course = new Course();
@@ -818,6 +804,25 @@ describe('Course Management Update Component', () => {
             comp.course.startDate = dayjs().add(1, 'day');
             comp.course.endDate = dayjs().subtract(1, 'day');
             expect(comp.isValidDate).toBe(false);
+        });
+    });
+
+    describe('isDateOrderInvalid', () => {
+        it('should be false when both dates are empty, even though isValidDate is false', () => {
+            comp.course = new Course();
+            comp.course.startDate = undefined;
+            comp.course.endDate = undefined;
+
+            expect(comp.isDateOrderInvalid).toBe(false);
+            expect(comp.isValidDate).toBe(false);
+        });
+
+        it('should be true when the start date is after the end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+
+            expect(comp.isDateOrderInvalid).toBe(true);
         });
     });
 
@@ -1065,15 +1070,15 @@ describe('Course Management Update Component', () => {
             expect(comp.isValidDate).toBe(true);
         });
 
-        it('should update isValidDate to true when endDate is cleared via form control', () => {
+        it('should update isValidDate to false when endDate is cleared via form control', () => {
             comp.course.startDate = dayjs().subtract(5, 'day');
             comp.course.endDate = dayjs().add(5, 'day');
             expect(comp.isValidDate).toBe(true);
 
-            // Clearing endDate: atLeastOneDateNotExisting() returns true, so isValidDate = true
+            // Clearing endDate: both dates are mandatory, so atLeastOneDateNotExisting() makes isValidDate false
             comp.courseForm.controls['endDate'].setValue(undefined);
             expect(comp.course.endDate).toBeUndefined();
-            expect(comp.isValidDate).toBe(true);
+            expect(comp.isValidDate).toBe(false);
         });
 
         it('should invalidate enrollment period when endDate is moved before enrollmentEndDate via form control', () => {
@@ -1311,15 +1316,21 @@ describe('Course Management Update Component', () => {
     });
 
     describe('openImageCropper', () => {
-        it('should open the image cropper modal and update the croppedImage on result', () => {
+        it('shows the cropper for the selected file and keeps the image it hands back', () => {
             const croppedImageResult = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA';
-            const mockDialogRef = {
-                onClose: of(croppedImageResult),
-            } as unknown as DynamicDialogRef;
-            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             comp.courseImageUploadFile = new File([''], 'filename.png', { type: 'image/png' });
+
             comp.openCropper();
-            expect(dialogService.open).toHaveBeenCalledWith(ImageCropperModalComponent, expect.any(Object));
+            expect(comp.imageToCrop()).toBe(comp.courseImageUploadFile);
+            fixture.detectChanges();
+            const dialog = fixture.debugElement
+                .queryAll(By.directive(TumUiDialogComponent))
+                .map((debugElement) => debugElement.componentInstance as TumUiDialogComponent)
+                .find((dialogComponent) => dialogComponent.header() === 'artemisApp.course.courseIcon')!;
+            expect(dialog.size()).toBe('small');
+
+            comp.onImageCropped(croppedImageResult);
+            expect(comp.imageToCrop()).toBeUndefined();
             expect(comp.croppedImage()).toBe(croppedImageResult);
         });
     });
@@ -1438,6 +1449,80 @@ describe('Course Management Update Component', () => {
             expect(disableMessagingSpy).not.toHaveBeenCalled();
         });
     });
+
+    describe('required start date, end date and semester', () => {
+        // The ActivatedRoute mock configured in the outer beforeEach always delivers the shared `course`
+        // object to ngOnInit (which resets comp.course to a blank Course before applying it), so these
+        // tests clear the relevant fields on that shared object rather than reassigning comp.course.
+        it('marks the form invalid when a date or the semester is missing', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            expect(comp.courseForm.controls['startDate'].valid).toBe(false);
+            expect(comp.courseForm.controls['endDate'].valid).toBe(false);
+            expect(comp.courseForm.controls['semester'].valid).toBe(false);
+            expect(comp.courseForm.invalid).toBe(true);
+        });
+
+        it('fills empty dates from the selected semester', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2025-10-01');
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-03-31');
+        });
+
+        it('replaces dates that are still the previous semester range', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+            comp.courseForm.controls['semester'].setValue('SS26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2026-04-01');
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps dates the user edited by hand', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            comp.courseForm.controls['semester'].setValue('WS25/26');
+            const handPicked = dayjs('2025-11-05');
+            comp.courseForm.controls['startDate'].setValue(handPicked);
+            comp.courseForm.controls['semester'].setValue('SS26');
+
+            expect(comp.courseForm.controls['startDate'].value.format('YYYY-MM-DD')).toBe('2025-11-05');
+            // the untouched end date still follows the semester
+            expect(comp.courseForm.controls['endDate'].value.format('YYYY-MM-DD')).toBe('2026-09-30');
+        });
+
+        it('keeps a legacy semester selectable', () => {
+            course.semester = 'WS16/17';
+            comp.ngOnInit();
+
+            expect(comp.semesters()).toContain('WS16/17');
+        });
+
+        it('treats a missing date as an invalid configuration', () => {
+            course.startDate = undefined;
+            course.endDate = undefined;
+            course.semester = undefined;
+            comp.ngOnInit();
+
+            expect(comp.isValidDate).toBe(false);
+        });
+    });
 });
 
 describe('Course Management Learning Paths Feature Toggle Update', () => {
@@ -1465,7 +1550,9 @@ describe('Course Management Learning Paths Feature Toggle Update', () => {
                 MockProvider(LoadImageService),
                 MockProvider(DialogService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         profileService = TestBed.inject(ProfileService);
@@ -1542,7 +1629,9 @@ describe('Course Management Update Component Create', () => {
                 MockProvider(LoadImageService),
                 MockProvider(DialogService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         component = fixture.componentInstance;
@@ -1585,7 +1674,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         return course;
     }
 
-    async function setupWithCourse(course: Course): Promise<void> {
+    async function setupWithCourse(course: Course, activeModuleFeatures: string[] = [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM]): Promise<void> {
         const route = { data: of({ course }) } as any as ActivatedRoute;
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
@@ -1604,14 +1693,16 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseUpdateComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         comp = fixture.componentInstance;
         profileService = TestBed.inject(ProfileService);
         organizationService = TestBed.inject(OrganizationManagementService);
 
-        const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        const profileInfo = { activeProfiles: [], activeModuleFeatures } as unknown as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
         vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
 
@@ -1660,6 +1751,9 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         course.maxTeamComplaints = 3;
         course.onlineCourse = false;
         course.enrollmentEnabled = false;
+        course.startDate = dayjs().subtract(1, 'day');
+        course.endDate = dayjs().add(30, 'day');
+        course.semester = 'WS25/26';
         await setupWithCourse(course);
 
         expect(comp.courseForm.get(['autoOrchestratorEnabled'])?.value).toBe(true);
@@ -1730,12 +1824,32 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         expect(dto.maxDailyOrchestrationOverride).toBeUndefined();
     });
 
-    it('should load the global orchestration defaults to back the override placeholders when Atlas is active', async () => {
+    it('should load the global orchestration defaults to back the override placeholders when auto orchestration is available', async () => {
         vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults').mockResolvedValue({ debounceWindowSeconds: 1800, maxDailyOrchestrations: 10 });
         await setupWithCourse(buildCourse(false));
         await Promise.resolve();
 
         expect(comp.debounceWindowSecondsDefault()).toBe(1800);
         expect(comp.maxDailyOrchestrationDefault()).toBe(10);
+    });
+
+    it('should not ask for the orchestration defaults when Atlas is active but AtlasLLM is not', async () => {
+        // CompetencyOrchestrationResource is not registered without AtlasLLM, so the request would fail on every
+        // course-edit load and be swallowed by the best-effort catch, leaving no trace of why the page is slow.
+        const getDefaultsSpy = vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults');
+        await setupWithCourse(buildCourse(false), [MODULE_FEATURE_ATLAS]);
+        await Promise.resolve();
+
+        expect(getDefaultsSpy).not.toHaveBeenCalled();
+        expect(comp.debounceWindowSecondsDefault()).toBeUndefined();
+    });
+
+    it('should hide the auto orchestration settings when Atlas is active but AtlasLLM is not', async () => {
+        await setupWithCourse(buildCourse(false), [MODULE_FEATURE_ATLAS]);
+        await Promise.resolve();
+
+        // Administrators must not be offered settings for a pipeline this instance cannot run.
+        expect(comp.atlasLLMEnabled()).toBe(false);
+        expect(fixture.nativeElement.querySelector('#field_autoOrchestratorEnabled')).toBeNull();
     });
 });

@@ -172,7 +172,7 @@ public class DataExportCreationService {
     }
 
     private MailRecipientDTO adminMailRecipient() {
-        return new MailRecipientDTO(adminEmail, "en", "data-export-admin-recipient", "Administrator", null, null, null);
+        return MailRecipientDTO.forAdministrator(adminEmail, "data-export-admin-recipient");
     }
 
     private void handleEmailFailure(DataExport dataExport, EmailFailedException emailFailedException) {

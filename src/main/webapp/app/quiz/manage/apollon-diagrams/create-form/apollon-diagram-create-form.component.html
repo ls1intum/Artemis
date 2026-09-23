@@ -1,35 +1,32 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-    <div class="modal-header">
-        <h4 class="modal-title" id="myApollonDiagramLabel" jhiTranslate="artemisApp.apollonDiagram.home.createLabel"></h4>
+<form name="editForm" role="form" novalidate class="apollon-diagram-create-form flex flex-col" (ngSubmit)="save()" #editForm="ngForm">
+    <div class="flex shrink-0 items-center gap-3 px-4 pt-4 pb-3">
+        <h4 class="apollon-diagram-create-form__title mb-0 grow" id="myApollonDiagramLabel" jhiTranslate="artemisApp.apollonDiagram.home.createLabel"></h4>
     </div>
-    <div class="modal-body">
-        <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_diagram_title"></label>
-            <input #titleInput required type="text" class="form-control" name="title" id="field_diagram_title" [(ngModel)]="apollonDiagram.title" />
+
+    <div class="flex flex-col gap-4 px-4">
+        <div class="flex flex-col gap-1">
+            <label class="apollon-diagram-create-form__label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_diagram_title"></label>
+            <input #titleInput required type="text" tumUiInput class="w-full" name="title" id="field_diagram_title" [(ngModel)]="apollonDiagram.title" />
         </div>
-        <div class="form-group-narrow">
-            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType"></label>
-            <select class="form-select" name="diagramType" [(ngModel)]="apollonDiagram.diagramType" id="field_diagramType">
-                <option value="ClassDiagram" jhiTranslate="artemisApp.DiagramType.ClassDiagram"></option>
-                <option value="ActivityDiagram" jhiTranslate="artemisApp.DiagramType.ActivityDiagram"></option>
-                <option value="ObjectDiagram" jhiTranslate="artemisApp.DiagramType.ObjectDiagram"></option>
-                <option value="UseCaseDiagram" jhiTranslate="artemisApp.DiagramType.UseCaseDiagram"></option>
-                <option value="CommunicationDiagram" jhiTranslate="artemisApp.DiagramType.CommunicationDiagram"></option>
-                <option value="ComponentDiagram" jhiTranslate="artemisApp.DiagramType.ComponentDiagram"></option>
-                <option value="DeploymentDiagram" jhiTranslate="artemisApp.DiagramType.DeploymentDiagram"></option>
-                <option value="PetriNet" jhiTranslate="artemisApp.DiagramType.PetriNet"></option>
-                <option value="SyntaxTree" jhiTranslate="artemisApp.DiagramType.SyntaxTree"></option>
-                <option value="Flowchart" jhiTranslate="artemisApp.DiagramType.Flowchart"></option>
-                <option value="BPMN" jhiTranslate="artemisApp.DiagramType.BPMN"></option>
-            </select>
+        <div class="flex flex-col gap-1">
+            <label class="apollon-diagram-create-form__label" jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType"></label>
+            <tum-ui-select
+                inputId="field_diagramType"
+                optionLabel="label"
+                optionValue="value"
+                name="diagramType"
+                [options]="diagramTypeOptions()"
+                [(ngModel)]="apollonDiagram.diagramType"
+            />
         </div>
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-outline-primary" data-dismiss="modal" (click)="dismiss()">
+
+    <div class="flex shrink-0 items-center justify-end gap-2 px-4 pt-4 pb-4">
+        <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="dismiss()">
             <span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button id="save-dnd-quiz" type="submit" [disabled]="editForm.form.invalid || isSaving()" class="btn btn-primary">
-            <fa-icon [icon]="faSave" />&nbsp;
+        <button data-testid="save-dnd-quiz" type="submit" tumUiButton severity="primary" size="small" [disabled]="editForm.form.invalid || isSaving()">
+            <fa-icon [icon]="faSave" />
             <span jhiTranslate="global.generic.create"></span>
         </button>
     </div>

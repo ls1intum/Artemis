@@ -203,7 +203,7 @@ export class CourseManagementPage {
     private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
         const responsePromise = this.page.waitForResponse(`api/course/courses/*/${groupType}/${credentials.username}`);
         // Open the user-management dropdown and the add-<group> action, which navigates to the group page.
-        await this.page.locator('#user-management-dropdown').click();
+        await this.page.locator('[data-testid="user-management-dropdown"]').click();
         await this.page.locator(selector).click();
         // The group page hosts a PrimeNG autocomplete to search for and add users.
         const searchInput = this.page.locator('p-autocomplete input');
@@ -211,7 +211,10 @@ export class CourseManagementPage {
         await searchInput.fill(credentials.username);
         // Pick the matching suggestion (rendered as "Name (login)"). The closing parenthesis keeps the match
         // unambiguous, e.g. it selects artemis_test_user_1 rather than artemis_test_user_10.
-        await this.page.locator('.p-autocomplete-option', { hasText: `(${credentials.username})` }).click();
+        await this.page
+            .getByTestId('user-autocomplete-option')
+            .filter({ hasText: `(${credentials.username})` })
+            .click();
         await responsePromise;
     }
 

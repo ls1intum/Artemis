@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.exception;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.BadRequestException;
@@ -10,12 +12,14 @@ import jakarta.ws.rs.NotAllowedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -44,11 +48,20 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
 
+    /** The DTO suffix of a rejected object's class name, which the client is not shown. */
+    private static final Pattern DTO_SUFFIX = Pattern.compile("DTO$");
+
     private static final String FIELD_ERRORS_KEY = "fieldErrors";
 
     private static final String MESSAGE_KEY = "message";
 
     private static final String PATH_KEY = "path";
+
+    /**
+     * The unique index on {@code jhi_user(email)}, created by
+     * {@code src/main/resources/config/liquibase/changelog/20260830233350_changelog.xml}.
+     */
+    private static final String UNIQUE_USER_EMAIL_INDEX = "jhi_user_email";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -90,8 +103,8 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMethodArgumentNotValid(@NonNull MethodArgumentNotValidException ex, @NonNull HttpHeaders headers, @NonNull HttpStatusCode status,
             @NonNull WebRequest request) {
         BindingResult result = ex.getBindingResult();
-        List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
-                .toList();
+        List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream()
+                .map(f -> new FieldErrorVM(DTO_SUFFIX.matcher(f.getObjectName()).replaceFirst(""), f.getField(), f.getCode())).toList();
 
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setType(ErrorConstants.CONSTRAINT_VIOLATION_TYPE);
@@ -123,6 +136,62 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     }
 
     /**
+     * Turns a violation of the unique user email index into the same response the availability check produces.
+     * <p>
+     * The check in {@code UserCreationService} reads before it writes, so two requests claiming the same address can
+     * both pass it and only the second one fails, in the database. Without this the generic handler would answer that
+     * loser with a 500 for what is an ordinary, entirely expected conflict the client already knows how to display.
+     * The violation can also surface at commit rather than at the {@code save} call, which is the other reason this
+     * sits here rather than around any single repository call.
+     * <p>
+     * Only this one index is translated. Every other integrity violation keeps falling through to
+     * {@link #handleGenericException}, because mapping them all to a client error would hide genuine bugs behind a
+     * plausible-looking 400.
+     *
+     * @param ex      the integrity violation the database raised
+     * @param request the current web request
+     * @return the duplicate-email response for this index, and the generic response for anything else
+     */
+    @ExceptionHandler
+    public ResponseEntity<ProblemDetail> handleDataIntegrityViolationException(DataIntegrityViolationException ex, NativeWebRequest request) {
+        if (violatesUniqueUserEmailIndex(ex)) {
+            // Deliberately without the cause: both databases put the duplicated value in the message they raise, so logging it would write the address of a real account into
+            // the log of an entirely ordinary conflict. The classification below is the only thing that needs to read it.
+            log.warn("Rejected a user write that would have duplicated an email address");
+            return handleEmailAlreadyUsedException(new EmailAlreadyUsedException(), request);
+        }
+        return handleGenericException(ex, request);
+    }
+
+    /**
+     * Whether an integrity violation comes from the unique index on {@code jhi_user(email)}.
+     * <p>
+     * Read from the constraint name Hibernate extracts, not from the message the driver formats. That message also
+     * carries the value that collided, so searching it for the index name says yes to an unrelated constraint whose
+     * duplicated value happens to contain that text: a second account registering the login {@code jhi_user_email}
+     * makes MySQL report {@code Duplicate entry 'jhi_user_email' for key 'jhi_user.login'}, which is a duplicate login
+     * and must not be answered as a duplicate email.
+     *
+     * @param ex the integrity violation the database raised
+     * @return true if the violated index is the unique user email index
+     */
+    private static boolean violatesUniqueUserEmailIndex(DataIntegrityViolationException ex) {
+        return ExceptionUtils.getThrowableList(ex).stream().filter(ConstraintViolationException.class::isInstance)
+                .map(cause -> ((ConstraintViolationException) cause).getConstraintName()).filter(Objects::nonNull).anyMatch(ExceptionTranslator::isUniqueUserEmailIndex);
+    }
+
+    /**
+     * Whether a constraint name denotes the unique index on {@code jhi_user(email)}. MySQL qualifies the key with the
+     * table it belongs to and PostgreSQL does not, so only the part after the last dot is compared.
+     *
+     * @param constraintName the name Hibernate extracted from the violation
+     * @return true if it names the unique user email index
+     */
+    private static boolean isUniqueUserEmailIndex(String constraintName) {
+        return UNIQUE_USER_EMAIL_INDEX.equalsIgnoreCase(constraintName.substring(constraintName.lastIndexOf('.') + 1));
+    }
+
+    /**
      * Handles {@link UsernameAlreadyUsedException} and returns a 400 response with failure alert headers.
      *
      * @param ex      the exception indicating the username is already in use
@@ -145,11 +214,21 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(detail);
     }
 
+    /**
+     * Handles structured bad-request alerts.
+     *
+     * @param ex      the exception
+     * @param request the request
+     * @return the error response
+     */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
-        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), ex.getBody().getTitle());
         ProblemDetail detail = ex.getBody();
         postProcess(detail, request);
+        if (detail.getProperties() != null && Boolean.TRUE.equals(detail.getProperties().get("skipAlert"))) {
+            return ResponseEntity.status(ex.getStatusCode()).body(detail);
+        }
+        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), detail.getTitle());
         return ResponseEntity.status(ex.getStatusCode()).headers(headers).body(detail);
     }
 
@@ -169,8 +248,16 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(detail);
     }
 
+    /**
+     * Handles concurrent persistence failures.
+     *
+     * @param ex      the exception
+     * @param request the request
+     * @return the error response
+     */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {
+        log.warn("Concurrent modification rejected: {}", ex.getMessage(), ex);
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
         detail.setProperty(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE);
         postProcess(detail, request);

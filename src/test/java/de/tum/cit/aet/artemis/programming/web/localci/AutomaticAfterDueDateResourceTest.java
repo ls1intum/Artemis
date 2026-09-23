@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -212,13 +212,9 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
      * This ensures {@code getAutomaticBuildAndTestDate} returns a non-null value when called with
      * the exercise's ID.
      */
-    private void attachAfterDueDateBuildPhase(ProgrammingExercise exercise) throws JsonProcessingException {
+    private void attachAfterDueDateBuildPhase(ProgrammingExercise exercise) throws JacksonException {
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, java.util.List.of("build/test-results/*.xml"));
-        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        if (buildConfig == null) {
-            buildConfig = new ProgrammingExerciseBuildConfig();
-            buildConfig.setProgrammingExercise(exercise);
-        }
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId());
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(java.util.List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }

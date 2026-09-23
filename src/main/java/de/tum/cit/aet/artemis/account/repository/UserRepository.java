@@ -60,14 +60,44 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
  * Spring Data JPA repository for the User entity.<br>
  * <br>
  * <p>
- * <b>Note</b>: Please keep in mind that the User entities are soft-deleted when adding new queries to this repository.
- * If you don't need deleted user entities, add `WHERE user.deleted = FALSE` to your query.
+ * <b>Legacy compatibility:</b> New lifecycle operations physically delete users and never create new soft-deleted rows.
+ * Existing {@code deleted = false} filters must remain until installations have purged all tombstones created by older
+ * releases. See https://github.com/ls1intum/Artemis/issues/13614.
  * </p>
  */
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+
+    @Query("SELECT DISTINCT user FROM User user LEFT JOIN FETCH user.authorities WHERE user.id = :userId")
+    Optional<User> findByIdForDeletion(@Param("userId") long userId);
+
+    /**
+     * Takes an account out of use before its deletion begins. A deactivated account is refused by every authentication
+     * provider, so nothing new can be signed in with it while its rows are being removed.
+     *
+     * @param userId the account being deleted
+     * @return how many accounts were deactivated
+     */
+    @Transactional // ok because of modifying query
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE User user SET user.activated = FALSE WHERE user.id = :userId")
+    int deactivateForDeletion(@Param("userId") long userId);
+
+    @Transactional // ok because of delete
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
+    int deleteUserRow(@Param("userId") long userId);
+
+    /**
+     * The tombstones left by releases that soft-deleted accounts instead of removing them. They are purged once no
+     * business-domain data points at them any more.
+     *
+     * @return the ids of the tombstones
+     */
+    @Query("SELECT user.id FROM User user WHERE user.deleted = TRUE")
+    List<Long> findLegacyDeletedUserIds();
 
     String FILTER_INTERNAL = "INTERNAL";
 
@@ -82,6 +112,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
 
     Optional<User> findOneByEmailIgnoreCase(String email);
+
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
 
     Optional<User> findOneByLogin(String login);
 
@@ -154,6 +188,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithAuthoritiesByEmail(String email);
 
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByEmailIgnoreCase(String email);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
     Optional<User> findOneWithAuthoritiesByLoginAndInternal(String login, boolean internal);
 
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })
@@ -167,17 +204,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities", "organizations" })
     Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(String login);
-
-    @Query("""
-            SELECT DISTINCT u
-            FROM User u
-            LEFT JOIN FETCH u.authorities
-            LEFT JOIN FETCH u.learnerProfile lp
-            LEFT JOIN FETCH lp.courseLearnerProfiles clp
-            WHERE u.login = :login
-                AND clp.course.id = :courseId
-            """)
-    Optional<User> findOneWithAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
 
     @Query("""
             SELECT u FROM User u
@@ -195,16 +221,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * <p>
      * This query method creates a list of {@link UserRoleDTO} objects containing the user ID,
      * user login, and assigned role (INSTRUCTOR, TUTOR, or USER) for each user in the specified course. The role is determined
-     * based on the user's authorities and group memberships.
+     * based on the user's authorities and course roles.
      * </p>
      *
      * <p>
      * The role assignment follows this precedence:
      * <ul>
-     * <li>If the user has the ADMIN authority, they are assigned the role 'INSTRUCTOR'.</li>
-     * <li>If the user belongs to the course's instructor group, they are assigned the role 'INSTRUCTOR'.</li>
-     * <li>If the user belongs to the course's editor group or teaching assistant group, they are assigned the role 'TUTOR'.</li>
-     * <li>If the user belongs to the course's student group, they are assigned the role 'USER'.</li>
+     * <li>If the user has an administrator authority, they are assigned the role 'INSTRUCTOR'. This classifies arbitrary post authors and does not authorize the current
+     * caller.</li>
+     * <li>If the user has the course role INSTRUCTOR, they are assigned the role 'INSTRUCTOR'.</li>
+     * <li>If the user has the course role EDITOR or TEACHING_ASSISTANT, they are assigned the role 'TUTOR'.</li>
+     * <li>If the user has the course role STUDENT, they are assigned the role 'USER'.</li>
      * </ul>
      * </p>
      *
@@ -250,23 +277,21 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
     /**
-     * Fetches all non-deleted users enrolled in a course with the given role, eagerly loading their
-     * authorities and learner profile (including course learner profiles).
+     * Fetches all non-deleted users enrolled in a course with the given role, eagerly loading their authorities.
      *
      * @param courseId the ID of the course
      * @param role     the course role to filter by
-     * @return set of matching users (authorities and learner profile initialized)
+     * @return set of matching users (authorities initialized)
      */
     @Query("""
             SELECT DISTINCT user
             FROM User user
                 LEFT JOIN FETCH user.authorities
-                LEFT JOIN FETCH user.learnerProfile
             WHERE user.deleted = FALSE
                 AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user
                     AND ucr.course.id = :courseId AND ucr.role = :role)
             """)
-    Set<User> findAllWithAuthoritiesAndLearnerProfileByCourseIdAndRole(@Param("courseId") long courseId, @Param("role") CourseRole role);
+    Set<User> findAllWithAuthoritiesByCourseIdAndRole(@Param("courseId") long courseId, @Param("role") CourseRole role);
 
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
@@ -340,8 +365,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND ucr.role = :role
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<User> searchByLoginOrNameInCourseWithRole(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("loginOrName") String loginOrName);
@@ -358,7 +383,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId)
-                AND CONCAT(user.firstName, ' ', user.lastName) LIKE %:nameOfUser%
+                AND LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:nameOfUser AS string)), '%')
             ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
     List<User> searchByNameInCourse(@Param("courseId") long courseId, @Param("nameOfUser") String nameOfUser);
@@ -372,8 +397,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<User> findUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
@@ -387,8 +412,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUsersByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
@@ -413,17 +438,20 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     @Query("""
-            SELECT DISTINCT user.id
+            SELECT user.id
             FROM User user
                 JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
-                JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
             WHERE user.deleted = FALSE
+                AND EXISTS (
+                    SELECT 1
+                    FROM UserCourseRole ucr
+                    WHERE ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
+                )
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
-            ORDER BY user.id ASC
             """)
     List<Long> findUserIdsByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles, Pageable pageable);
@@ -436,8 +464,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.deleted = FALSE
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUsersByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
@@ -455,10 +483,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, long courseId, Set<CourseRole> roles) {
-        // Use an unsorted pageable for the ID lookup: SELECT DISTINCT user.id cannot ORDER BY firstName/lastName (not in SELECT)
         // The final result ordering is applied by findUsersByIdsWithCourseRolesOrdered.
-        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, unsortedPageable);
+        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, withStableOrder(pageable));
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -476,8 +502,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 ) AND conversationParticipant.isModerator = TRUE
             """)
     List<User> findModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId, Pageable pageable);
@@ -491,8 +517,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    OR LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 ) AND conversationParticipant.isModerator = TRUE
             """)
     long countModeratorsByLoginOrNameInConversation(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId);
@@ -621,8 +647,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
@@ -645,7 +671,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         // fixed order the database may return the results in a different order per page, so a matching user can shuffle
         // between pages and never appear on the page the caller is viewing (see issue #13069). Applied here so every
         // caller (exam and organization registration) is covered; a caller that already requested an order keeps it.
-        Pageable stablePage = stabilizePageable(page);
+        Pageable stablePage = withStableOrder(page);
         return findAllByLoginOrNameOrEmailOrRegistrationNumber(stablePage, escaped);
     }
 
@@ -678,7 +704,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             return Page.empty(page);
         }
         String escaped = escapeSearchTerm(searchTerm);
-        Pageable stablePage = stabilizePageable(page);
+        Pageable stablePage = withStableOrder(page);
         return findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(stablePage, escaped, courseId);
     }
 
@@ -713,8 +739,19 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
-    private static Pageable stabilizePageable(Pageable pageable) {
-        return pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+    /**
+     * Appends the id to whatever order the caller asked for, so that the order is total. Two rows a query cannot tell apart are free to swap places between two executions, and
+     * a page window cut by such an order can show one of them twice and the other never. The caller's own order is kept ahead of the id, which is what lets a search page
+     * alphabetically rather than by id.
+     *
+     * @param pageable the pageable as it arrives from the caller
+     * @return the same page window, ordered by the caller's sort and then by the id
+     */
+    private static Pageable withStableOrder(Pageable pageable) {
+        if (pageable.isUnpaged()) {
+            return pageable;
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort().and(Sort.by(Sort.Direction.ASC, "id")));
     }
 
     /**
@@ -727,13 +764,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> findAllByLoginsWithOrganizations(@Param("logins") Collection<String> logins);
 
     @Query("""
-            SELECT DISTINCT user.id
+            SELECT user.id
             FROM User user
-            JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId
             WHERE user.deleted = FALSE
+                AND EXISTS (
+                    SELECT 1
+                    FROM UserCourseRole ucr
+                    WHERE ucr.user.id = user.id AND ucr.course.id = :courseId
+                )
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<Long> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
@@ -744,8 +785,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                    LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
@@ -760,7 +801,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
-        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
+        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, withStableOrder(pageable));
         if (userIds.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0);
         }
@@ -770,15 +811,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     @Query("""
-            SELECT DISTINCT user.id
+            SELECT user.id
             FROM User user
-            JOIN UserCourseRole ucr ON ucr.user.id = user.id
-                AND ucr.course.id = :courseId
-                AND ucr.role IN :roles
             WHERE user.deleted = FALSE
+                AND EXISTS (
+                    SELECT 1
+                    FROM UserCourseRole ucr
+                    WHERE ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
+                )
                 AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                    LOWER(user.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<Long> findUserIdsByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
@@ -792,8 +835,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND ucr.role IN :roles
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                    LOWER(user.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUsersByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
@@ -808,7 +851,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of matching {@link User} entities, or an empty page if none found
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourse(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles) {
-        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, pageable);
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, withStableOrder(pageable));
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -827,7 +870,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of matching users as {@link UserDTO}, or an empty page if none found
      */
     default Page<UserDTO> searchUsersByLoginOrNameInCourseWithRolesAndConvertToDTO(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles) {
-        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, pageable);
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, withStableOrder(pageable));
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -839,16 +882,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     // --- courseRoles-based search variants ---
 
     @Query("""
-            SELECT DISTINCT user.id
+            SELECT user.id
             FROM User user
-            JOIN UserCourseRole ucr ON ucr.user.id = user.id
-                AND ucr.course.id = :courseId
-                AND ucr.role IN :roles
             WHERE user.deleted = FALSE
                 AND user.id <> :idOfUser
+                AND EXISTS (
+                    SELECT 1
+                    FROM UserCourseRole ucr
+                    WHERE ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
+                )
                 AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                    LOWER(user.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     List<Long> findUserIdsByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
@@ -863,8 +908,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.deleted = FALSE
                 AND user.id <> :idOfUser
                 AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                    LOWER(user.login) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
                 )
             """)
     long countUsersByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
@@ -875,7 +920,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 LEFT JOIN FETCH user.courseRoles
             WHERE user.id IN :ids
-            ORDER BY user.firstName, user.lastName
+            ORDER BY user.firstName, user.lastName, user.id
             """)
     List<User> findUsersByIdsWithCourseRolesOrdered(@Param("ids") List<Long> ids);
 
@@ -891,7 +936,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles, long idOfUser) {
-        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser, pageable);
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser, withStableOrder(pageable));
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -899,14 +944,21 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return new PageImpl<>(users, pageable, countUsersByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser));
     }
 
+    /**
+     * Writes the stored profile picture reference straight to the column, bypassing {@code User.setImageUrl}. The caller therefore has to pass the filename, never the URL the
+     * picture is served under.
+     *
+     * @param userId   the id of the user whose picture changed
+     * @param filename the filename of the stored picture, or null to remove it
+     */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.imageUrl = :imageUrl
+            SET user.imageUrl = :filename
             WHERE user.id = :userId
             """)
-    void updateUserImageUrl(@Param("userId") long userId, @Param("imageUrl") String imageUrl);
+    void updateUserImageUrl(@Param("userId") long userId, @Param("filename") String filename);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -951,9 +1003,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     /**
      * Get all logins of users that are not enrolled in any course,
-     * without administrators which are normally not enrolled in any course.
+     * without administrators or the Iris bot which are normally not enrolled in any course.
      *
-     * @return all logins of not enrolled users as a sorted list (not admins)
+     * @return all logins of not enrolled users as a sorted list (not admins or the Iris bot)
      */
     @Query("""
             SELECT user.login
@@ -962,6 +1014,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user)
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<String> findAllNotEnrolledUsers();
@@ -969,7 +1022,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * Finds all not-enrolled, inactive users who have NOT yet been warned about an upcoming deletion. This is phase 1 of
      * the two-phase not-enrolled-user cleanup: these users are emailed a warning and then stamped with a
-     * {@code deletionWarningSentDate}. Administrators are excluded.
+     * {@code deletionWarningSentDate}. Administrators and the Iris bot are excluded.
      *
      * @param inactiveBefore only users whose last activity (last login, or creation date if never logged in) is strictly
      *                           before this are returned
@@ -984,6 +1037,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND COALESCE(activity.lastLoginDate, user.createdDate) < :inactiveBefore
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<User> findNotEnrolledUsersToWarn(@Param("inactiveBefore") Instant inactiveBefore);
@@ -991,11 +1045,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * Finds the logins of not-enrolled users who are due for deletion: they were warned, their grace period has elapsed,
      * they are still enrolled in no course, and they have NOT logged in since the warning (so they did not "come back").
-     * This is phase 2 of the two-phase not-enrolled-user cleanup. Administrators are excluded.
+     * This is phase 2 of the two-phase not-enrolled-user cleanup. Administrators and the Iris bot are excluded.
      *
      * @param warnedBefore only users whose warning was sent strictly before this (i.e. the grace period has elapsed) are
      *                         returned
-     * @return the logins of the users to soft-delete, sorted
+     * @return the logins of the users to evaluate for permanent deletion, sorted
      */
     @Query("""
             SELECT user.login
@@ -1007,9 +1061,35 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND (activity.lastLoginDate IS NULL OR activity.lastLoginDate < activity.deletionWarningSentDate)
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
             ORDER BY user.login
             """)
     List<String> findNotEnrolledUserLoginsToDelete(@Param("warnedBefore") Instant warnedBefore);
+
+    /**
+     * The same condition as {@link #findNotEnrolledUserLoginsToDelete(Instant)} for a single login, so that the answer
+     * can be taken again immediately before the account is destroyed. A login that arrives after the batch was
+     * resolved updates {@code lastLoginDate} without clearing the warning, and the deletion service itself only checks
+     * authorities and reference counts, so without this a user who has just come back would still be deleted.
+     *
+     * @param login        the account to re-check
+     * @param warnedBefore only a warning sent strictly before this counts as elapsed
+     * @return 1 if the account is still due for deletion, 0 otherwise
+     */
+    @Query("""
+            SELECT COUNT(user)
+            FROM User user
+                LEFT JOIN UserActivity activity ON activity.userId = user.id
+            WHERE user.login = :login
+                AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
+                AND activity.deletionWarningSentDate IS NOT NULL
+                AND activity.deletionWarningSentDate < :warnedBefore
+                AND (activity.lastLoginDate IS NULL OR activity.lastLoginDate < activity.deletionWarningSentDate)
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND user.login <> :#{T(de.tum.cit.aet.artemis.account.domain.User).IRIS_BOT_LOGIN}
+            """)
+    long countNotEnrolledUserStillDueForDeletion(@Param("login") String login, @Param("warnedBefore") Instant warnedBefore);
 
     /**
      * Get all managed users
@@ -1193,18 +1273,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
     }
 
-    /**
-     * Get user with authorities and learner profile of currently logged-in user (no courseRoles loaded).
-     *
-     * @param courseId the id of the course for which to load the course learner profile
-     * @return currently logged-in user with authorities and learner profile
-     */
-    @NonNull
-    default User getUserWithAuthoritiesAndLearnerProfile(long courseId) {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
-    }
-
     default Optional<User> findUserWithAuthoritiesByRegistrationNumber(String registrationNumber) {
         if (!StringUtils.hasText(registrationNumber)) {
             return Optional.empty();
@@ -1272,13 +1340,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
-     * Get students by given course with their learner Profile
+     * Get students by given course
      *
      * @param course object
      * @return students for given course
      */
-    default Set<User> getStudentsWithLearnerProfile(Course course) {
-        return findAllWithAuthoritiesAndLearnerProfileByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
+    default Set<User> getStudentsWithAuthorities(Course course) {
+        return findAllWithAuthoritiesByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
     }
 
     /**
@@ -1465,29 +1533,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
-                    AND (
-                        EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId AND ucr.role IN :roles)
-                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
-                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
-                    )
+                    AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInCourseWithMinRoleOrAdmin(@Param("login") String login, @Param("courseId") long courseId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInCourseWithMinRole(@Param("login") String login, @Param("courseId") long courseId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInCourse(String login, long courseId) {
-        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInCourseWithMinRole(login, courseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1498,26 +1562,24 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     LEFT JOIN exercise.exerciseGroup.exam.course examCourse
                 WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
                     OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
             """)
-    boolean existsByLoginInExerciseWithMinRoleOrAdmin(@Param("login") String login, @Param("exerciseId") long exerciseId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInExerciseWithMinRole(@Param("login") String login, @Param("exerciseId") long exerciseId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInExercise(String login, long exerciseId) {
-        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInExerciseWithMinRole(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1529,27 +1591,24 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     LEFT JOIN exercise.exerciseGroup.exam.course examCourse
                 WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
                     OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
             """)
-    boolean existsByLoginInParticipationWithMinRoleOrAdmin(@Param("login") String login, @Param("participationId") long participationId,
-            @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInParticipationWithMinRole(@Param("login") String login, @Param("participationId") long participationId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInParticipation(String login, long participationId) {
-        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1557,27 +1616,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 FROM User user
                     INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
                     LEFT JOIN lectureUnit.lecture.course course
-                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInLectureUnitWithMinRoleOrAdmin(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInLectureUnitWithMinRole(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInLectureUnit(String login, long lectureUnitId) {
-        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""
@@ -1585,27 +1642,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 FROM User user
                     INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
                     LEFT JOIN lecture.course course
-                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
             )
             """)
-    boolean existsByLoginInLectureWithMinRoleOrAdmin(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
+    boolean existsByLoginInLectureWithMinRole(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
 
     default boolean isAtLeastStudentInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
     }
 
     default boolean isAtLeastTeachingAssistantInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 
     default boolean isAtLeastEditorInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
     }
 
     default boolean isAtLeastInstructorInLecture(String login, long lectureId) {
-        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+        return existsByLoginInLectureWithMinRole(login, lectureId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
     @Query("""

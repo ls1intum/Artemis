@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
+import de.tum.cit.aet.artemis.admin.dto.CleanupConfigurationDTO;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.service.DataCleanupService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for managing old data cleanup operations in Artemis.
@@ -37,9 +38,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("data-privacy/data-cleanup")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/cleanup/", LegacyAdminRestPaths.CORE_ADMIN_CLEANUP_PREFIX })
+@RequestMapping("api/admin/cleanup/")
 @EnforceAdmin
 public class AdminCleanupResource {
 
@@ -327,19 +329,19 @@ public class AdminCleanupResource {
 
     /**
      * DELETE admin/cleanup/not-enrolled-users
-     * Soft-deletes (and anonymizes) warned users whose grace period has elapsed and who are still not-enrolled and inactive.
+     * Permanently deletes warned users whose grace period has elapsed, who are still not-enrolled and inactive, and who have no blocking domain references.
      *
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
     @DeleteMapping("not-enrolled-users")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteNotEnrolledUsers() {
-        log.info("REST request to soft-delete warned not-enrolled, inactive users");
+        log.info("REST request to permanently delete eligible warned not-enrolled, inactive users");
         return ResponseEntity.ok().body(dataCleanupService.deleteNotEnrolledUsers());
     }
 
     /**
      * GET admin/cleanup/not-enrolled-users/count
-     * Counts the warned users that would be soft-deleted by the not-enrolled-user cleanup.
+     * Counts the warned users that would be permanently deleted and those blocked by remaining domain references.
      *
      * @return a {@link ResponseEntity} containing the count of affected users
      */
@@ -371,6 +373,19 @@ public class AdminCleanupResource {
     public ResponseEntity<PlagiarismCasesCleanupCountDTO> countPlagiarismCases() {
         log.info("REST request to count plagiarism cases of old courses");
         return ResponseEntity.ok().body(dataCleanupService.countPlagiarismCasesOfOldCourses());
+    }
+
+    /**
+     * GET admin/cleanup/configuration
+     * Retrieves the configured retention periods together with the cutoffs the age-based operations would apply now, so
+     * the admin UI can state which data an operation without an admin-picked date range affects.
+     *
+     * @return a {@link ResponseEntity} containing the effective cleanup configuration
+     */
+    @GetMapping("configuration")
+    public ResponseEntity<CleanupConfigurationDTO> getCleanupConfiguration() {
+        log.debug("REST request to get the effective data cleanup configuration");
+        return ResponseEntity.ok().body(dataCleanupService.getCleanupConfiguration());
     }
 
     /**

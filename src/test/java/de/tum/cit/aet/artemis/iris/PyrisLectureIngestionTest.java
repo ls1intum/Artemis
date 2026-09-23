@@ -83,7 +83,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
@@ -98,7 +98,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         AttachmentVideoUnit pdfAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, numberOfSlides, true);
         AttachmentVideoUnit imageAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, numberOfSlides, false);
         lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(pdfAttachmentVideoUnitWithSlides, imageAttachmentVideoUnitWithSlides));
-        this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
     }
 
     @Test
@@ -241,7 +241,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String newJobToken = pyrisJobService.addLectureIngestionWebhookJob(123L, lecture1.getId(), lecture1.getLectureUnits().getFirst().getId());
-        String chatJobToken = pyrisJobService.addChatJob(123L, 123L, 123L, 123L);
+        String chatJobToken = pyrisJobService.addChatJob(123L, 123L, 123L, 123L, null);
         PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", PyrisRunState.FAILED, null,
                 lecture1.getLectureUnits().getFirst().getId(), null);
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
@@ -257,7 +257,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String newJobToken = pyrisJobService.addLectureIngestionWebhookJob(123L, lecture1.getId(), lecture1.getLectureUnits().getFirst().getId());
-        String chatJobToken = pyrisJobService.addChatJob(123L, 123L, 123L, 123L);
+        String chatJobToken = pyrisJobService.addChatJob(123L, 123L, 123L, 123L, null);
         PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", PyrisRunState.FAILED, null,
                 lecture1.getLectureUnits().getFirst().getId(), null);
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
@@ -388,7 +388,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
-        Attachment updatedAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
+        Attachment updatedAttachment = attachmentRepository.findByIdElseThrow(attachmentId);
         assertThat(updatedAttachment.getDisplayPageNumbers()).isNotNull().hasSize(3).containsExactly(1, 2, -1);
     }
 }

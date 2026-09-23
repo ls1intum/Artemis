@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.notification.notifications.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,9 +30,12 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentWithVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageModuleSummaryDTO;
 import de.tum.cit.aet.artemis.admin.dto.VulnerabilityDTO;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
 import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -82,10 +87,10 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
-        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
-        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", new URL("http://localhost:9000"));
+        ReflectionTestUtils.setField(testMailService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         recipient = new User();
         recipient.setEmail("user@greenmail.test");
@@ -100,7 +105,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void activationEmail_shouldRenderAndDeliverInEnglish() throws Exception {
 
-        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "abc123-activation-key", null));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("testuser");
@@ -112,7 +117,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void activationEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "de-activation-key-456", null));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-activation-key-456");
@@ -123,11 +128,11 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void passwordResetEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "reset-key-789"));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKeyDTO("id-for-789", "secret-for-789")));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("reset-key-789");
+        assertThat(body).contains("id-for-789");
+        assertThat(body).contains("secret-for-789");
         assertThat(body).contains("account/reset/finish");
     }
 
@@ -135,17 +140,18 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void passwordResetEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "de-reset-key-012"));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKeyDTO("id-for-012", "secret-for-012")));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("de-reset-key-012");
+        assertThat(body).contains("id-for-012");
+        assertThat(body).contains("secret-for-012");
         assertThat(body).contains("account/reset/finish");
     }
 
     @Test
     void passwordResetEmail_shouldUseTheSharedArtemisLayout() throws Exception {
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "styled-reset-key-345"));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, new PasswordResetKeyDTO("", "")));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
@@ -153,15 +159,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void activationEmail_shouldUseTheSharedArtemisLayout() throws Exception {
 
-        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "styled-activation-key-123", null));
-
-        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
-    }
-
-    @Test
-    void saml2SetPasswordEmail_shouldUseTheSharedArtemisLayout() throws Exception {
-
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "styled-saml-key-567"));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "styled-activation-key-123"));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
@@ -169,13 +167,13 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     /**
      * Asserts that a mail carries the shared Artemis chrome.
      * <p>
-     * The three account mails that contain a link are the ones a user is most likely to distrust, because each can
-     * arrive unprompted: anyone can type someone else's address into the reset form. Looking like every other Artemis
-     * mail is what makes them credible rather than suspicious, and all three used to render as unstyled documents in
-     * the mail client's default serif font.
+     * The account mails that contain a link are the ones a user is most likely to distrust, because each can arrive
+     * unprompted: anyone can type someone else's address into the reset form. Looking like every other Artemis mail is
+     * what makes them credible rather than suspicious, and they used to render as unstyled documents in the mail
+     * client's default serif font.
      * <p>
-     * The absence of the footer is asserted too. That footer links to the notification settings, and none of these
-     * three can be switched off there, so the link would point at a setting that does not exist for them.
+     * The absence of the footer is asserted too. That footer links to the notification settings, and none of these can
+     * be switched off there, so the link would point at a setting that does not exist for them.
      *
      * @param body the rendered mail body
      */
@@ -189,27 +187,6 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         // deployment would both ignore a custom logo and make every recipient's mail client fetch an image from there.
         assertThat(body).as("the logo, served by this installation so a custom one is used").contains("src=\"http://localhost:9000/public/images/logo.png\"");
         assertThat(body).as("no request to the TUM deployment").doesNotContain("artemis.tum.de");
-    }
-
-    // -- SAML2 set password email --
-
-    @Test
-    void saml2SetPasswordEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "saml-reset-key-345"));
-
-        String body = getDeliveredEmailBody();
-        assertThat(body).contains("saml-reset-key-345");
-    }
-
-    @Test
-    void saml2SetPasswordEmail_shouldRenderAndDeliverInGerman() throws Exception {
-        recipient.setLangKey("de");
-
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "de-saml-key-678"));
-
-        String body = getDeliveredEmailBody();
-        assertThat(body).contains("de-saml-key-678");
     }
 
     // -- New login notification email --
@@ -268,7 +245,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void emailChangedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "new-address@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("new-address@tum.de");
@@ -281,7 +258,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         recipient.setLangKey("de");
 
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "new-address@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("new-address@tum.de");
@@ -293,7 +270,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         // The address reaches the template from user input, so it has to be escaped. The template uses th:text for
         // exactly this reason; th:utext would turn a crafted address into live markup in the recipient's client.
         testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
-                new HashMap<>(Map.of("newEmail", "<script>alert(1)</script>@tum.de")));
+                new HashMap<>(Map.of("emailRemoved", false, "newEmail", "<script>alert(1)</script>@tum.de")));
 
         String body = getDeliveredEmailBody();
         assertThat(body).doesNotContain("<script>alert(1)</script>");
@@ -531,6 +508,67 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         String body = getDeliveredEmailBody();
         assertThat(body).contains("7.8.0");
         assertThat(body).contains("admin/dependencies");
+    }
+
+    // -- Weekly feature usage digest --
+
+    @Test
+    void featureUsageDigestEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), featureUsageDigest());
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("programming");
+        assertThat(body).contains("1500");
+        // the previous window was smaller, so the change has to read as a rise
+        assertThat(body).contains("+50%");
+        // a module nobody touched is named rather than shown as a row of zeros
+        assertThat(body).contains("lecture");
+        // the whole point of the mail is to get someone onto the page
+        assertThat(body).contains("admin/feature-usage");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), featureUsageDigest());
+
+        String body = getDeliveredEmailBody();
+        // proves the German message keys exist too; a missing key would render as ??key??
+        assertThat(body).doesNotContain("??");
+        assertThat(body).contains("Nutzung pro Modul");
+        assertThat(body).contains("admin/feature-usage");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldSayWhenNothingWasRecorded() throws Exception {
+        var empty = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 0, 0, 0, 0, 0, 0, null, List.of(), List.of());
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), empty);
+
+        String body = getDeliveredEmailBody();
+        // an empty deployment must not receive a table of zeros presented as a finding
+        assertThat(body).contains("No usage at all was recorded");
+        assertThat(body).doesNotContain("Usage per module");
+    }
+
+    @Test
+    void featureUsageDigestEmail_shouldOmitTheChangeWhenThereIsNoPreviousData() throws Exception {
+        var module = new FeatureUsageModuleSummaryDTO("programming", 1500, 0, 3, 40, 60, 20);
+        var digest = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1500, 0, 60, 40, 20, 2, null, List.of(module), List.of());
+
+        testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), digest);
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("n/a");
+        assertThat(body).doesNotContain("%</span>");
+    }
+
+    private static FeatureUsageDigestDTO featureUsageDigest() {
+        var programming = new FeatureUsageModuleSummaryDTO("programming", 1500, 1000, 3, 40, 60, 20);
+        var exam = new FeatureUsageModuleSummaryDTO("exam", 200, 400, 0, 10, 12, 2);
+        return new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1700, 1400, 72, 50, 22, 2, Instant.parse("2026-01-01T00:00:00Z"),
+                List.of(programming, exam), List.of("lecture", "quiz"));
     }
 
     private Map<String, Object> createLoginEmailContext(String authMethod, String loginDate, String loginTime, String requestOrigin, String resetLink) {

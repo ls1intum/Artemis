@@ -1,4 +1,4 @@
-import { Component, HostBinding, input, model, output } from '@angular/core';
+import { Component, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -21,10 +21,9 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
     imports: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
+    host: { class: 'assessment-container' },
 })
 export class AssessmentLayoutComponent {
-    @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
-
     MORE_FEEDBACK = ComplaintType.MORE_FEEDBACK;
     readonly isLoading = input.required<boolean>();
     readonly saveBusy = input<boolean>(false);
@@ -44,6 +43,14 @@ export class AssessmentLayoutComponent {
     readonly complaint = input<Complaint>();
     readonly exercise = input<Exercise>();
     readonly submission = input<Submission>();
+    /** Whether the layout renders the assessment note. A host that renders the note itself passes false. */
+    readonly showAssessmentNote = input(true);
+
+    /**
+     * Whether the layout renders the complaint banner and the complaint form beneath the assessment, both of which are
+     * reached by scrolling the page. A host whose page does not scroll renders the form itself and passes false.
+     */
+    readonly showComplaintSection = input(true);
     readonly hasAssessmentDueDatePassed = input.required<boolean>();
     readonly isProgrammingExercise = input<boolean>(false); // remove once diff view activated for programming exercises
     readonly highlightDifferences = model(false);

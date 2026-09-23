@@ -2,12 +2,7 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -16,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -48,11 +42,11 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -147,8 +141,8 @@ public class ProgrammingExerciseUtilService {
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    public ProgrammingExercise createSampleProgrammingExercise() {
-        return createSampleProgrammingExercise("Title", "Shortname");
+    public ProgrammingExercise createSampleProgrammingExercise(Course course) {
+        return createSampleProgrammingExercise(course, "Title", "Shortname");
     }
 
     /**
@@ -168,12 +162,16 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Create an example programming exercise
+     * Create an example programming exercise in the given course.
      *
+     * @param course    the course the exercise belongs to; an exercise row names a course or an exercise group, never neither
+     * @param title     the title of the exercise
+     * @param shortName the short name of the exercise
      * @return the created programming exercise
      */
-    public ProgrammingExercise createSampleProgrammingExercise(String title, String shortName) {
+    public ProgrammingExercise createSampleProgrammingExercise(Course course, String title, String shortName) {
         var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setCourse(course);
         programmingExercise.setTitle(title);
         programmingExercise.setShortName(shortName);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -182,6 +180,7 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setGradingInstructions("Grading instructions");
         programmingExercise.setProblemStatement("Problem statement");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         return programmingExercise;
     }
 
@@ -229,9 +228,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setExerciseGroup(exerciseGroup);
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
@@ -261,9 +259,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setExerciseGroup(exerciseGroup);
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
@@ -284,9 +281,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setExerciseGroup(exerciseGroup);
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
@@ -309,9 +305,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setExerciseGroup(exerciseGroup);
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, shortName, title, false);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
@@ -356,9 +351,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setExerciseGroup(exam.getExerciseGroups().get(exerciseGroupNumber));
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
@@ -534,7 +528,7 @@ public class ProgrammingExerciseUtilService {
         for (var exercise : course.getExercises()) {
             if (exercise instanceof ProgrammingExercise) {
                 course.getExercises().remove(exercise);
-                course.addExercises(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow((ProgrammingExercise) exercise));
+                course.addExercises(exercise);
             }
         }
         return course;
@@ -618,8 +612,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
 
@@ -641,9 +635,8 @@ public class ProgrammingExerciseUtilService {
         ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle, scaActive);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
-        var savedBuildConfig = programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise.setBuildConfig(savedBuildConfig);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateDefaultBuildConfig(), programmingExercise);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -695,7 +688,7 @@ public class ProgrammingExerciseUtilService {
         Course course = addCourseWithOneProgrammingExercise(true, programmingLanguage);
         ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).orElseThrow();
         addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
         return programmingExercise;
@@ -707,9 +700,6 @@ public class ProgrammingExerciseUtilService {
      * @param programmingExercise The programming exercise to which static code analysis categories should be added.
      */
     public void addStaticCodeAnalysisCategoriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBuildConfig() == null) {
-            programmingExercise = programmingExerciseRepository.findWithBuildConfigById(programmingExercise.getId()).orElseThrow();
-        }
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
         var category1 = ProgrammingExerciseFactory.generateStaticCodeAnalysisCategory(programmingExercise, "Bad Practice", CategoryState.GRADED, 3D, 10D);
@@ -836,13 +826,38 @@ public class ProgrammingExerciseUtilService {
      */
     public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
         buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
-        programmingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var buildConfig = buildConfigOf(programmingExercise);
+        buildConfig.generateAndSetBuildPlanAccessSecret();
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
         assertThat(buildPlanOptional).isPresent();
         assertThat(buildPlanOptional.get().getBuildPlan()).as("build plan is set").isNotNull();
-        assertThat(programmingExercise.getBuildConfig().getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
+        assertThat(buildConfig.getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
+    }
+
+    /**
+     * Writes a build configuration for an exercise a test built in memory, unless it already has one. The exercise
+     * does not carry its configuration: it is a row of its own that names the exercise, so it is written once that
+     * exercise exists.
+     *
+     * @param programmingExercise the exercise the configuration belongs to
+     * @return the stored build configuration
+     */
+    public ProgrammingExerciseBuildConfig saveBuildConfigIfMissing(ProgrammingExercise programmingExercise) {
+        return programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId())
+                .orElseGet(() -> programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateGradleBuildConfig(), programmingExercise));
+    }
+
+    /**
+     * Reads the build configuration of an exercise. It is a row of its own that names the exercise, so it is not
+     * loaded with it; a fixture that stored the exercise without one gets the default written first.
+     *
+     * @param programmingExercise the exercise whose configuration to read
+     * @return the stored build configuration
+     */
+    public ProgrammingExerciseBuildConfig buildConfigOf(ProgrammingExercise programmingExercise) {
+        return saveBuildConfigIfMissing(programmingExercise);
     }
 
     /**
@@ -856,10 +871,9 @@ public class ProgrammingExerciseUtilService {
         repository.setName("auxrepo");
         repository.setDescription("Description");
         repository.setCheckoutDirectory("assignment/src");
-        repository = auxiliaryRepositoryRepository.save(repository);
-        programmingExercise.setAuxiliaryRepositories(List.of(repository));
         repository.setExercise(programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
+        repository = auxiliaryRepositoryRepository.save(repository);
+        programmingExercise.setAuxiliaryRepositories(Set.of(repository));
         return repository;
     }
 
@@ -1068,24 +1082,5 @@ public class ProgrammingExerciseUtilService {
      */
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
-    }
-
-    /**
-     * Creates an example repository and makes the given GitService return it when asked to check it out.
-     *
-     * @throws Exception if creating the repository fails
-     */
-    public void createGitRepository() throws Exception {
-        // Create repository
-        var testRepo = new LocalRepository(defaultBranch);
-        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-        // Add test file to the repository folder
-        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
-        var file = Files.createFile(filePath).toFile();
-        FileUtils.write(file, "Test", Charset.defaultCharset());
-        // Create mock repo that has the file
-        var mockRepository = mock(Repository.class);
-        doReturn(true).when(mockRepository).isValidFile(any());
-        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
     }
 }

@@ -1,9 +1,9 @@
-<p-dialog [header]="header()" [modal]="true" appendTo="body" resizable="false" [visible]="isOpen()" (visibleChange)="isOpen.set($event)">
+<tum-ui-dialog [header]="header()" size="large" [(visible)]="isOpen">
     @let step = flowStep();
     <div class="frame">
         @if (step === ImportFlowStep.RESULTS && allStudentsExist()) {
             <div class="success-content">
-                <span class="pi pi-check-circle" style="font-size: 5rem"></span>
+                <fa-icon class="success-icon" [icon]="faCircleCheck" aria-hidden="true" />
                 <span
                     data-testid="results-description-all-registered"
                     jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.allStudentsRegistered"
@@ -45,8 +45,9 @@
                     <div class="spacer"></div>
                     <input type="file" class="file-upload-input" accept=".csv" (change)="parseStudents($event)" #fileUploadInput />
                     <button
-                        pButton
-                        class="p-button-primary p-button-sm"
+                        type="button"
+                        tumUiButton
+                        size="small"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.chooseFileButtonLabel"
                         data-testid="choose-file-button"
                         (click)="openFilePicker(fileUploadInput)"
@@ -54,16 +55,19 @@
                 }
                 @case (ImportFlowStep.CONFIRMATION) {
                     <button
-                        pButton
-                        class="p-button-secondary p-button-sm"
+                        type="button"
+                        tumUiButton
+                        severity="secondary"
+                        size="small"
                         data-testid="back-to-explanation-button"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.backToExplanationButtonLabel"
                         (click)="goToExplanationStep()"
                     ></button>
                     <div class="spacer"></div>
                     <button
-                        pButton
-                        class="p-button-primary p-button-sm"
+                        type="button"
+                        tumUiButton
+                        size="small"
                         data-testid="import-button"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.importButtonLabel"
                         (click)="importParsedStudents()"
@@ -72,8 +76,10 @@
                 @case (ImportFlowStep.RESULTS) {
                     @if (!allStudentsExist()) {
                         <button
-                            pButton
-                            class="p-button-secondary p-button-sm"
+                            type="button"
+                            tumUiButton
+                            severity="secondary"
+                            size="small"
                             data-testid="restart-button"
                             jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.restartButtonLabel"
                             (click)="goToExplanationStep()"
@@ -81,8 +87,9 @@
                     }
                     <div class="spacer"></div>
                     <button
-                        pButton
-                        class="p-button-primary p-button-sm"
+                        type="button"
+                        tumUiButton
+                        size="small"
                         data-testid="finish-button"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.finishButtonLabel"
                         (click)="close()"
@@ -94,4 +101,4 @@
             <jhi-loading-indicator-overlay />
         }
     </div>
-</p-dialog>
+</tum-ui-dialog>

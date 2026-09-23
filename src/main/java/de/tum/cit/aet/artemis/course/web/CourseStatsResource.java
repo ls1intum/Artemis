@@ -16,14 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -34,15 +33,13 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * REST controller for managing Course.
  */
 @Profile(PROFILE_CORE)
+@FeatureUsage("analytics/course-statistics")
 @RestController
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
+@RequestMapping("api/course/")
 @Lazy
 public class CourseStatsResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseStatsResource.class);
-
-    private final UserRepository userRepository;
 
     private final CourseStatsService courseStatsService;
 
@@ -54,12 +51,11 @@ public class CourseStatsResource {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public CourseStatsResource(UserRepository userRepository, CourseStatsService courseStatsService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
+    public CourseStatsResource(CourseStatsService courseStatsService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             ExerciseRepository exerciseRepository, GradingScaleRepository gradingScaleRepository) {
         this.courseStatsService = courseStatsService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.gradingScaleRepository = gradingScaleRepository;
     }
@@ -116,9 +112,6 @@ public class CourseStatsResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
-        if (course.getStartDate() == null) {
-            throw new IllegalArgumentException("Course does not contain start date");
-        }
         var endDate = courseStatsService.determineEndDateForActiveStudents(course);
         var returnedSpanSize = courseStatsService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
         var activeStudents = courseStatsService.getActiveStudents(exerciseIds, 0, Math.toIntExact(returnedSpanSize), endDate);

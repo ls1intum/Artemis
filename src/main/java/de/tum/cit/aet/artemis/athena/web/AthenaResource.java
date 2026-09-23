@@ -22,17 +22,14 @@ import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
@@ -49,13 +46,12 @@ import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
  */
 @Conditional(AthenaEnabled.class)
 @Lazy
+@FeatureUsage("feedback-suggestions/feedback-suggestions")
 @RestController
 @RequestMapping("api/athena/")
 public class AthenaResource {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaResource.class);
-
-    private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
 
@@ -64,6 +60,8 @@ public class AthenaResource {
     private final Optional<TextSubmissionApi> textSubmissionApi;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -75,27 +73,23 @@ public class AthenaResource {
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
-    private final AthenaModuleService athenaModuleService;
-
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
-    public AthenaResource(CourseRepository courseRepository, UserRepository userRepository, Optional<TextRepositoryApi> textRepositoryApi,
-            Optional<TextSubmissionApi> textSubmissionApi, ProgrammingExerciseRepository programmingExerciseRepository,
+    public AthenaResource(UserRepository userRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
+            ProgrammingExerciseRepository programmingExerciseRepository, CourseAthenaConfigRepository courseAthenaConfigRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
-            AthenaModuleService athenaModuleService) {
-        this.courseRepository = courseRepository;
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService) {
         this.userRepository = userRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.modelingRepositoryApi = modelingRepositoryApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
-        this.athenaModuleService = athenaModuleService;
     }
 
     @FunctionalInterface
@@ -116,9 +110,10 @@ public class AthenaResource {
         final var exercise = exerciseFetcher.apply(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        // Check if feedback suggestions are actually enabled
+        // Athena's own entry point, so this is where its configuration is read; the layers below keep asking the exercise
+        courseAthenaConfigRepository.attachToCourseOf(exercise);
         if (!exercise.areFeedbackSuggestionsEnabled()) {
-            throw new InternalServerErrorException("Feedback suggestions are not enabled for this exercise");
+            throw new BadRequestAlertException("Athena grading feedback is not enabled for this course", "Course", "athenaGradingFeedbackNotEnabled");
         }
 
         final var submission = submissionFetcher.apply(submissionId);
@@ -129,21 +124,6 @@ public class AthenaResource {
         }
         catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-        }
-    }
-
-    private ResponseEntity<List<String>> getAvailableModules(long courseId, ExerciseType exerciseType) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        log.debug("REST request to get available Athena modules for {} exercises in course {}", exerciseType.getExerciseTypeAsReadableString(), course.getTitle());
-
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
-        try {
-            List<String> modules = athenaModuleService.getAthenaModulesForCourse(course, exerciseType);
-            return ResponseEntity.ok(modules);
-        }
-        catch (NetworkingException e) {
-            throw new InternalServerErrorException("Could not fetch available Athena modules for " + exerciseType.getExerciseTypeAsReadableString() + " exercises");
         }
     }
 
@@ -195,39 +175,4 @@ public class AthenaResource {
                 athenaFeedbackSuggestionsService::getModelingFeedbackSuggestions);
     }
 
-    /**
-     * GET courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
-     *
-     * @param courseId the id of the course the text exercise belongs to
-     * @return 200 Ok if successful with the modules as body
-     */
-    @GetMapping("courses/{courseId}/text-exercises/available-modules")
-    @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
-        return this.getAvailableModules(courseId, ExerciseType.TEXT);
-    }
-
-    /**
-     * GET courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
-     *
-     * @param courseId the id of the course the programming exercise belongs to
-     * @return 200 Ok if successful with the modules as body
-     */
-    @GetMapping("courses/{courseId}/programming-exercises/available-modules")
-    @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
-        return this.getAvailableModules(courseId, ExerciseType.PROGRAMMING);
-    }
-
-    /**
-     * GET courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
-     *
-     * @param courseId the id of the course the modeling exercise belongs to
-     * @return 200 Ok if successful with the modules as body
-     */
-    @GetMapping("courses/{courseId}/modeling-exercises/available-modules")
-    @EnforceAtLeastEditor
-    public ResponseEntity<List<String>> getAvailableModulesForModelingExercises(@PathVariable long courseId) {
-        return this.getAvailableModules(courseId, ExerciseType.MODELING);
-    }
 }

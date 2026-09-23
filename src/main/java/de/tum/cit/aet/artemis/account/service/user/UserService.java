@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.service.user;
 
 import static de.tum.cit.aet.artemis.account.domain.Authority.SUPER_ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_BYTES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -14,13 +15,15 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -52,10 +55,10 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -68,7 +71,7 @@ import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
@@ -85,6 +88,8 @@ import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+    private static final Duration MAX_RESET_KEY_LIFETIME = Duration.ofSeconds(86400L);
 
     @Value("${artemis.user-management.internal-admin.username:#{null}}")
     private Optional<String> artemisInternalAdminUsername;
@@ -217,6 +222,7 @@ public class UserService {
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
+            applyConfiguredInternalAdminEmail(internalAdmin);
             // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
             // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
             // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
@@ -236,8 +242,44 @@ public class UserService {
         else {
             log.info("Create internal admin user {}", internalAdminUsername);
             final var managedUserVM = createManagedUserVm(internalAdminUsername, internalAdminPassword);
+            // The configured address is one fixed value - and defaults to a placeholder - so it can already belong to another account: a previous internal admin that was
+            // renamed, or imported data. Since emails have to be unique, creating the account would be refused, and refusing the emergency account over an address it does
+            // not need is the wrong trade-off. It is created without one instead, and the operator is told which setting to point at a free address.
+            if (StringUtils.hasText(managedUserVM.getEmail()) && userRepository.existsByEmailIgnoreCase(managedUserVM.getEmail())) {
+                log.warn("The email address {} configured for the internal admin already belongs to another account, so {} is created without an email address. "
+                        + "Point artemis.user-management.internal-admin.email at an unused address to give it one.", managedUserVM.getEmail(), internalAdminUsername);
+                managedUserVM.setEmail(null);
+            }
             userCreationService.createUser(managedUserVM);
         }
+    }
+
+    /**
+     * Gives the existing internal admin the configured address once that address is free.
+     *
+     * <p>
+     * The creation path below drops a configured address that already belongs to someone else and tells the operator to
+     * point the setting at an unused one. That advice only means something if a later startup acts on it, which is what
+     * this does: the address is applied on every startup the way the password is, and an address that is still taken is
+     * reported again rather than silently ignored. Nothing is cleared when the setting is removed - an admin that lost
+     * its address would lose the password reset with it, and unsetting a property should not do that.
+     *
+     * @param internalAdmin the existing internal admin account
+     */
+    private void applyConfiguredInternalAdminEmail(User internalAdmin) {
+        String configuredEmail = User.canonicalEmail(artemisInternalAdminEmail.orElse(null));
+        if (configuredEmail == null || configuredEmail.equalsIgnoreCase(internalAdmin.getEmail())) {
+            return;
+        }
+        if (userRepository.existsByEmailIgnoreCaseAndIdNot(configuredEmail, internalAdmin.getId())) {
+            log.warn(
+                    "The email address {} configured for the internal admin belongs to another account, so {} keeps {}. Point "
+                            + "artemis.user-management.internal-admin.email at an unused address.",
+                    configuredEmail, internalAdmin.getLogin(), internalAdmin.getEmail() == null ? "no email address" : internalAdmin.getEmail());
+            return;
+        }
+        log.info("Assigning the configured email address {} to the internal admin {}", configuredEmail, internalAdmin.getLogin());
+        internalAdmin.setEmail(configuredEmail);
     }
 
     private ManagedUserVM createManagedUserVm(String login, String password) {
@@ -292,14 +334,18 @@ public class UserService {
      * Reset user password for given reset key
      *
      * @param newPassword      new password string
-     * @param key              reset key
+     * @param keyId            reset key id
+     * @param keySecret        reset key secret (not the hashed version)
      * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
-        log.debug("Reset user password for reset key {}", key);
-        return userRecoveryKeyService.findByResetKey(key).filter(row -> row.getResetDate() != null && row.getResetDate().isAfter(Instant.now().minusSeconds(86400)))
-                .flatMap(row -> userRepository.findById(row.getUserId())).map(user -> {
+    public Optional<User> completePasswordReset(String newPassword, String keyId, String keySecret, CredentialRevocationChoiceDTO revocationChoice) {
+        log.debug("Reset user password for reset key with id {}", keyId);
+        return userRecoveryKeyService.findByResetKeyId(keyId)
+                .filter(userKey -> userKey.getResetDate() != null && userKey.getResetDate().isAfter(Instant.now().minus(MAX_RESET_KEY_LIFETIME))
+                        && userKey.getResetKeyHash() != null && passwordService.checkPasswordMatch(keySecret, userKey.getResetKeyHash()))
+                .flatMap(userKey -> userRepository.findById(userKey.getUserId())).map(user -> {
+                    // Hashing can reject the password; keep the reset link usable if it fails.
                     user.setPassword(passwordService.hashPassword(newPassword));
                     userRecoveryKeyService.clearResetKey(user.getId());
                     saveUser(user);
@@ -331,14 +377,17 @@ public class UserService {
      * Set password reset data for a user if eligible
      *
      * @param user user requesting reset
-     * @return true if the user is eligible
+     * @return The newly created reset key for resetting the password; {@code Optional.empty()} iff. not eligible.
      */
-    public boolean prepareUserForPasswordReset(User user) {
+    public Optional<PasswordResetKeyDTO> prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
-            return true;
+            String resetKeyId = RandomUtil.generateResetKeyId();
+            String resetKeySecret = RandomUtil.generateResetKeySecret();
+            String resetKeyHash = passwordService.hashPassword(resetKeySecret);
+            userRecoveryKeyService.storeResetKey(user.getId(), resetKeyId, resetKeyHash, Instant.now());
+            return Optional.of(new PasswordResetKeyDTO(resetKeyId, resetKeySecret));
         }
-        return false;
+        return Optional.empty();
     }
 
     /**
@@ -352,7 +401,7 @@ public class UserService {
         // Prepare the new user object.
         final var newUser = new User();
         String passwordHash = passwordService.hashPassword(password);
-        newUser.setLogin(userDTO.getLogin().toLowerCase());
+        newUser.setLogin(userDTO.getLogin().toLowerCase(Locale.ENGLISH));
         if (IRIS_BOT_LOGIN.equals(newUser.getLogin())) {
             throw new UsernameAlreadyUsedException();
         }
@@ -360,7 +409,7 @@ public class UserService {
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());
         newUser.setLastName(userDTO.getLastName());
-        newUser.setEmail(userDTO.getEmail().toLowerCase());
+        newUser.setEmail(userDTO.getEmail());
         newUser.setImageUrl(userDTO.getImageUrl());
         newUser.setLangKey(userDTO.getLangKey());
         // new user is not active
@@ -374,25 +423,16 @@ public class UserService {
         newUser.setAuthorities(authorities);
 
         // Find user that has the same login
-        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
+        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase(Locale.ENGLISH));
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
-        // Find user that has the same email
-        optionalExistingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
-        if (optionalExistingUser.isPresent()) {
-            User existingUser = optionalExistingUser.get();
-
-            // An account with the same login is already activated.
-            if (existingUser.getActivated()) {
-                throw new EmailAlreadyUsedException();
-            }
-
-            // The email is different which means that the user wants to re-register the same
-            // account with a different email. Block this.
-            throw new AccountRegistrationBlockedException(newUser.getEmail());
+        // The unique index makes the address the caller is registering the only decisive fact, so an existence check is
+        // all that is needed; loading the account that holds it would tell the caller who that is.
+        if (newUser.getEmail() != null && userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
+            throw new EmailAlreadyUsedException();
         }
 
         // we need to save first so that the user can be found in the database in the subsequent method
@@ -423,7 +463,9 @@ public class UserService {
         // The user has the same login and email, but the account is not activated.
         // Return the existing non-activated user so that Artemis can re-send the
         // activation link.
-        if (existingUser.getEmail().equals(newUser.getEmail())) {
+        // Null-safe since canonicalEmail turns a blank address into null: an account registered without one must
+        // still get its activation link resent rather than a NullPointerException.
+        if (Objects.equals(User.canonicalEmail(existingUser.getEmail()), newUser.getEmail())) {
             // Update the existing user and VCS
             newUser.setId(existingUser.getId());
             User updatedExistingUser = userRepository.save(newUser);
@@ -475,7 +517,7 @@ public class UserService {
      * <p>
      * The account is created externally managed and activated: it authenticates against the directory, so Artemis has no
      * activation step to offer it. Creating it unactivated instead used to leave imported students unable to use their
-     * repositories - see {@link User#activated}.
+     * repositories - see {@link User#getActivated()}.
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
      * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByLogin(email)"
@@ -496,7 +538,7 @@ public class UserService {
                     // load the user with authorities because they might be needed later
                     var existingUser = userRepository.findOneWithAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
-                        LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
+                        ldapUserService.orElseThrow().syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
                         return existingUser;
                     }
@@ -516,10 +558,13 @@ public class UserService {
     }
 
     /**
-     * Performs soft-delete on the user based on login string
+     * Legacy implementation retained temporarily for compatibility tests and migrations. Production deletion paths must
+     * use {@code PermanentUserDeletionService}; no new tombstones may be created. Remove this method together with the
+     * {@code is_deleted} compatibility column after legacy tombstones have drained.
      *
      * @param login user login string
      */
+    @Deprecated(forRemoval = true)
     public void softDeleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             // Covers the participation and repository tokens and the SSH keys this method used to delete individually,
@@ -531,7 +576,6 @@ public class UserService {
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
-            user.setLearnerProfile(null);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
         });
@@ -573,7 +617,7 @@ public class UserService {
         scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(userImageString), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(new FileSystemLocation.ProfilePicture(userImageString).path(), 0);
         }
     }
 
@@ -641,7 +685,7 @@ public class UserService {
      * <p>
      * The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
      * <p>
-     * If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
+     * If the password is not null, it must satisfy the character length limits and the BCrypt UTF-8 byte limit.
      *
      * @param password The password to check
      */
@@ -654,6 +698,9 @@ public class UserService {
         }
         if (password.length() > PASSWORD_MAX_LENGTH) {
             throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
+        }
+        if (password.getBytes(StandardCharsets.UTF_8).length > PASSWORD_MAX_BYTES) {
+            throw new AccessForbiddenException("The password must not exceed " + PASSWORD_MAX_BYTES + " UTF-8 bytes");
         }
     }
 
@@ -747,7 +794,7 @@ public class UserService {
      * and all three being blank returns empty immediately.
      * <p>
      * An account created from the directory here is created activated, like one created on first login - see
-     * {@link User#activated}.
+     * {@link User#getActivated()}.
      *
      * @param registrationNumber the registration number of the user
      * @param login              the login of the user
@@ -840,7 +887,6 @@ public class UserService {
      *
      * @param user            the user associated with the vcs access token
      * @param participationId the participation's participationId associated with the vcs access token
-     *
      * @return the users participation vcs access token, or throws an exception if it does not exist
      */
     public ParticipationVCSAccessToken getParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
@@ -852,7 +898,6 @@ public class UserService {
      *
      * @param user            the user associated with the vcs access token
      * @param participationId the participation's participationId associated with the vcs access token
-     *
      * @return the users newly created participation vcs access token, or throws an exception if it already existed
      */
     public ParticipationVCSAccessToken createParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {

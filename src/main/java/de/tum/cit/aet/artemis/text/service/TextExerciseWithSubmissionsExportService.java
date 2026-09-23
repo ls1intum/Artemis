@@ -5,15 +5,17 @@ import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 
 /**
  * Service for exporting Text Exercises with the student submissions.
@@ -24,9 +26,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Service
 public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
-    public TextExerciseWithSubmissionsExportService(FileService fileService, TextSubmissionExportService textSubmissionExportService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
-        super(fileService, springMvcJacksonConverter, textSubmissionExportService);
+    public TextExerciseWithSubmissionsExportService(TextSubmissionExportService textSubmissionExportService, JsonMapper objectMapper) {
+        super(objectMapper, textSubmissionExportService);
     }
 
     /**
@@ -42,5 +43,15 @@ public class TextExerciseWithSubmissionsExportService extends ExerciseWithSubmis
     public Path exportTextExerciseWithSubmissions(TextExercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
             List<ArchivalReportEntry> reportEntries) {
         return exportExerciseWithSubmissions(exercise, optionsDTO, exportDir, exportErrors, reportEntries);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The cast is safe: this service only exports text exercises.
+     */
+    @Override
+    protected Record exerciseDetailsForExport(Exercise exercise) {
+        return TextExerciseResponseDTO.forExport((TextExercise) exercise);
     }
 }

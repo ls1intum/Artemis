@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EMPTY, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, of, throwError } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -37,6 +37,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import * as DownloadUtils from 'app/foundation/util/download.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
@@ -72,6 +73,8 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
     let lectureService: LectureService;
+    /** The route's query params, pushable so tests can exercise the deep-link parsing. */
+    let queryParams: BehaviorSubject<Record<string, string>>;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -79,6 +82,7 @@ describe('CourseLectureDetailsComponent', () => {
     MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
 
     beforeEach(async () => {
+        queryParams = new BehaviorSubject<Record<string, string>>({});
         const releaseDate = dayjs('18-03-2020 13:30', 'DD-MM-YYYY HH:mm');
         const endDate = dayjs('18-03-2020 15:30', 'DD-MM-YYYY HH:mm');
 
@@ -166,7 +170,9 @@ describe('CourseLectureDetailsComponent', () => {
                  * run as an unhandled rejection, without failing a single test.
                  */
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                { provide: IrisChatService, useValue: { openChat: vi.fn() } },
+                // `AttachmentVideoUnitComponent` is rendered for attachment units and subscribes to `pointOut$` in its
+                // constructor, so the mock has to expose the stream as well as `openChat`.
+                { provide: IrisChatService, useValue: { openChat: vi.fn(), pointOut$: EMPTY } },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -174,7 +180,7 @@ describe('CourseLectureDetailsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ lectureId: '1' }),
-                        queryParams: of({}),
+                        queryParams,
                         parent: {
                             parent: {
                                 params: of({ courseId: '1' }),
@@ -444,6 +450,34 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
         });
 
+        it('should read the combined-view request off the deep link', () => {
+            // An Iris point-out marker clicked from elsewhere routes here and asks for the view Iris pointed in;
+            // a lecture citation leaves the flag off and stays with the unit on the page.
+            const targetUnit = new AttachmentVideoUnit();
+            targetUnit.id = 100;
+            targetUnit.videoSource = 'https://example.com/video.mp4';
+            targetUnit.attachment = new Attachment();
+            targetUnit.attachment.link = '/path/to/slides.pdf';
+            targetUnit.lecture = lecture;
+
+            // Unlike its siblings here this test goes through the query-param parsing itself, which lives in
+            // ngOnInit — so the component has to be initialised before the params are pushed. The unit is put in
+            // place afterwards, because ensureValidDeepLinkTargets drops targets that name a unit off the page.
+            fixture.detectChanges();
+            courseLecturesDetailsComponent.lectureUnits.set([targetUnit]);
+
+            queryParams.next({ unit: '100', page: '3', timestamp: '42', combined: 'true' });
+
+            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(100);
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(42);
+            expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(true);
+
+            queryParams.next({ unit: '100', page: '3' });
+
+            expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(false);
+        });
+
         it('should preserve page for unit with only PDF', () => {
             const pdfUnit = new AttachmentVideoUnit();
             pdfUnit.id = 101;
@@ -601,25 +635,8 @@ describe('CourseLectureDetailsComponent', () => {
     });
 
     describe('loadData branches', () => {
-        it('should prefix attachment links with the public file prefix', async () => {
-            const attachment = new Attachment();
-            attachment.id = 42;
-            attachment.link = 'files/attachments/lecture/1/slides.pdf';
-            const lectureWithAttachment = { ...lecture, attachments: [attachment], lectureUnits: [] };
-            const responseWithAttachment = of(new HttpResponse({ body: lectureWithAttachment, status: 200 }));
-            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(responseWithAttachment);
-
-            courseLecturesDetailsComponent.ngOnInit();
-            fixture.changeDetectorRef.detectChanges();
-            await fixture.whenStable();
-
-            expect(attachment.linkUrl).toBeDefined();
-            expect(attachment.linkUrl).toContain(attachment.link!);
-            expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
-        });
-
         it('should build information boxes only for the dates that are present', async () => {
-            const lectureStartOnly = { ...lecture, startDate: dayjs(), endDate: undefined, attachments: [], lectureUnits: [] };
+            const lectureStartOnly = cloneWith(lecture, { startDate: dayjs(), endDate: undefined, lectureUnits: [] });
             const startOnlyResponse = of(new HttpResponse({ body: lectureStartOnly, status: 200 }));
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(startOnlyResponse);
 
@@ -694,7 +711,7 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(4);
         });
 
-        it('should ignore an invalid timestamp and page while keeping the unit', () => {
+        it('should ignore invalid timestamp and page numbers while keeping the unit', () => {
             setupUnitWithBoth();
             reInitWithQueryParams({ unit: '7', timestamp: '-5', page: '0' });
 
@@ -745,12 +762,14 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.targetUnitId.set(9999);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(12);
             courseLecturesDetailsComponent.targetPdfPage.set(3);
+            courseLecturesDetailsComponent.targetCombinedView.set(true);
 
             courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
 
             expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
             expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(false);
         });
 
         it('should clear timestamp and page for a non attachment/video target unit', () => {

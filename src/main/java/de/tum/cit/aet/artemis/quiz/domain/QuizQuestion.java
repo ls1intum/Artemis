@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
@@ -8,12 +7,10 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
@@ -27,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 
 /**
@@ -74,13 +72,10 @@ public abstract class QuizQuestion extends DomainObject {
     @Column(name = "invalid")
     private Boolean invalid = false;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JoinColumn(unique = true)
-    private QuizQuestionStatistic quizQuestionStatistic;
-
-    @ManyToOne
-    @JoinColumn(name = "exercise_id")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "exercise_id", nullable = false)
     @JsonIgnore
+    @Parent
     private QuizExercise exercise;
 
     // The question type-specific "correct answer" content (drop locations / drag items / correct mappings for DnD, answer options for MC, spots / solutions / correct mappings for
@@ -184,14 +179,6 @@ public abstract class QuizQuestion extends DomainObject {
         this.invalid = invalid;
     }
 
-    public QuizQuestionStatistic getQuizQuestionStatistic() {
-        return quizQuestionStatistic;
-    }
-
-    public void setQuizQuestionStatistic(QuizQuestionStatistic quizQuestionStatistic) {
-        this.quizQuestionStatistic = quizQuestionStatistic;
-    }
-
     public QuizExercise getExercise() {
         return exercise;
     }
@@ -227,14 +214,6 @@ public abstract class QuizQuestion extends DomainObject {
      */
     public void filterForStudentsDuringQuiz() {
         setExplanation(null);
-        setQuizQuestionStatistic(null);
-    }
-
-    /**
-     * filter out information about correct answers
-     */
-    public void filterForStatisticWebsocket() {
-        setExplanation(null);
     }
 
     /**
@@ -256,10 +235,5 @@ public abstract class QuizQuestion extends DomainObject {
      * @return an empty question just including the id of the object
      */
     public abstract QuizQuestion copyQuestionId();
-
-    /**
-     * Initialize QuizQuestionStatistic of the implementor
-     */
-    public abstract void initializeStatistic();
 
 }

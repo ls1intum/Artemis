@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
  * Guards the cost of triggering builds for many participations of one exercise, which is what an instructor's
@@ -32,16 +32,17 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     private static final String TEST_PREFIX = "localcitriggercount";
 
     /**
-     * Loading the exercise with its build config and auxiliary repositories, the course it eagerly brings with it, and
-     * the exercise's build statistics. All three are per exercise, not per participation.
+     * Loading the exercise with its auxiliary repositories, the course it eagerly brings with it, the exercise's build
+     * statistics and its build configuration. All four are per exercise, not per participation: the configuration is a
+     * row of its own that names the exercise, so it is read once for the batch rather than with the exercise.
      */
-    private static final int PER_EXERCISE_QUERY_COUNT = 3;
+    private static final int PER_EXERCISE_QUERY_COUNT = 4;
 
     /**
-     * Only the exercise's build statistics: the caller of the projection based path hands over an exercise it already
-     * loaded, so that load is not part of this measurement.
+     * The exercise's build statistics and its build configuration: the caller of the projection based path hands over
+     * an exercise it already loaded, so that load is not part of this measurement.
      */
-    private static final int PER_EXERCISE_QUERY_COUNT_WITH_LOADED_EXERCISE = 1;
+    private static final int PER_EXERCISE_QUERY_COUNT_WITH_LOADED_EXERCISE = 2;
 
     /** The insert of the build job itself, which is the only unavoidable per-participation write. */
     private static final int PER_PARTICIPATION_QUERY_COUNT = 1;
@@ -56,9 +57,9 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     @Autowired
     private ProgrammingTriggerService programmingTriggerService;
 
-    private LocalRepository testsRepo;
+    private LocalVCTestRepository testsRepo;
 
-    private final List<LocalRepository> studentRepos = new ArrayList<>();
+    private final List<LocalVCTestRepository> studentRepos = new ArrayList<>();
 
     @Override
     protected String getTestPrefix() {
@@ -69,18 +70,18 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     void setUpRepositories() throws Exception {
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
         sharedQueueProcessingService.setPauseState(true);
-        testsRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
-        localVCLocalCITestService.commitFile(testsRepo.workingCopyGitRepoFile.toPath(), testsRepo.workingCopyGitRepo);
-        testsRepo.workingCopyGitRepo.push().call();
+        testsRepo = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, testsRepositorySlug);
+        localVCLocalCITestService.commitFile(testsRepo.workingCopyPath(), testsRepo.workingCopy());
+        testsRepo.workingCopy().push().call();
     }
 
     @AfterEach
     void removeRepositories() throws Exception {
-        for (LocalRepository repository : studentRepos) {
-            repository.resetLocalRepo();
+        for (LocalVCTestRepository repository : studentRepos) {
+            repository.deleteWorkingCopy();
         }
         studentRepos.clear();
-        testsRepo.resetLocalRepo();
+        testsRepo.deleteWorkingCopy();
         sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
     }
@@ -118,7 +119,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void theDetachedParticipationCarriesEverythingTheTriggerReads() throws Exception {
         createParticipationsWithSubmissions(1);
-        var exercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        var exercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         var data = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(programmingExercise.getId()).getFirst();
 
         var participation = data.toDetachedParticipation(exercise);
@@ -184,7 +185,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     void triggeringFromTheProjectionOnlyAddsOneQueryEach() throws Exception {
         int participationCount = 4;
         List<ParticipationBuildTriggerDTO> triggerData = createParticipationsWithSubmissions(participationCount);
-        var exercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        var exercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
 
         assertThatDb(() -> {
             programmingTriggerService.triggerBuildForParticipationData(triggerData, exercise);
@@ -197,10 +198,11 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
         for (int i = 1; i <= count; i++) {
             String login = TEST_PREFIX + "student" + i;
             var participation = localVCLocalCITestService.createParticipation(programmingExercise, login);
-            LocalRepository repository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, localVCLocalCITestService.getRepositorySlug(projectKey1, login));
+            LocalVCTestRepository repository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1,
+                    localVCLocalCITestService.getRepositorySlug(projectKey1, login));
             studentRepos.add(repository);
-            localVCLocalCITestService.commitFile(repository.workingCopyGitRepoFile.toPath(), repository.workingCopyGitRepo);
-            repository.workingCopyGitRepo.push().call();
+            localVCLocalCITestService.commitFile(repository.workingCopyPath(), repository.workingCopy());
+            repository.workingCopy().push().call();
             programmingExerciseUtilService.createProgrammingSubmission(participation, false);
         }
         // Read them back exactly the way the production trigger-all path does.

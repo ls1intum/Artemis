@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationJobStartDTO;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
+@FeatureUsage("authoring-assistance/code-generation")
 @RestController
 @RequestMapping("api/hyperion/")
 public class HyperionCodeGenerationResource {
@@ -176,10 +178,6 @@ public class HyperionCodeGenerationResource {
     private void validateExerciseForGeneration(ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             throw new BadRequestAlertException("Code generation is only supported for Java exercises", ENTITY_NAME, "unsupportedProgrammingLanguage");
-        }
-
-        if (exercise.getBuildConfig() == null) {
-            throw new BadRequestAlertException("Exercise must have build configuration for code generation", ENTITY_NAME, "missingBuildConfig");
         }
     }
 

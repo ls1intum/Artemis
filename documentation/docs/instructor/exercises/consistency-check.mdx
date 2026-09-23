@@ -1,7 +1,11 @@
+---
+id: consistency-check
+title: Consistency Check
+sidebar_label: Consistency Check
+---
+
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-
-# Consistency Check
 
 The consistency check is an AI-assisted feature in Hyperion that detects cross-artifact inconsistencies in programming exercises before they are published to students.
 
@@ -11,14 +15,10 @@ When one artifact is changed without updating the others, students may face exer
 For the formal definition of the underlying issue types and ontology, see:
 [Dietrich et al., *"Automated Consistency Checking of Multi-Artifact Programming Exercises"*](https://dl.acm.org/doi/10.1145/3769994.3770042), Koli Calling 2025.
 
----
-
 ## Triggering a Consistency Check
 
 Instructors with at least **Editor** role can trigger a consistency check from the exercise management view.
 The check runs synchronously and typically completes within 20–50 seconds.
-
----
 
 ## Understanding the Report
 
@@ -50,8 +50,6 @@ The checker deliberately ignores intentional pedagogical gaps:
 - Empty method stubs and `TODO` comments in the template repository
 - Abstract method bodies
 - Issues already covered by existing review threads on the exercise
-
----
 
 ## Reliability
 

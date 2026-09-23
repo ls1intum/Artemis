@@ -1,11 +1,16 @@
-<label for="explanationText" jhiTranslate="artemisApp.modelingSubmission.explanationText"></label>
-<textarea
-    #textEditor
-    id="explanationText"
-    class="text-editor-textarea"
-    [maxLength]="maxCharacterCount"
-    [(ngModel)]="explanation"
-    (keydown.tab)="onTextEditorTab(textEditor, $event)"
-    [readOnly]="readOnly()"
-    [disabled]="readOnly()"
-></textarea>
+<jhi-modeling-explanation-surface [labelId]="labelId" [labelKey]="labelKey()" [notchWidth]="notchWidth()" [minHeight]="surfaceMinHeight()">
+    <textarea
+        #resizableContent
+        [id]="textareaId"
+        class="text-editor-textarea nokey nowheel"
+        rows="1"
+        cdkTextareaAutosize
+        [cdkAutosizeMinRows]="autosizeMinRows()"
+        [cdkAutosizeMaxRows]="autosizeMaxRows()"
+        [attr.aria-labelledby]="labelId"
+        [maxLength]="maxCharacterCount()"
+        [(ngModel)]="explanation"
+        [attr.placeholder]="placeholderKey() ? (placeholderKey() | artemisTranslate) : undefined"
+        [readOnly]="readOnly()"
+    ></textarea>
+</jhi-modeling-explanation-surface>

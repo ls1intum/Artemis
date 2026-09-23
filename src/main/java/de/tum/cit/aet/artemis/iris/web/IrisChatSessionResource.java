@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  */
 @Conditional(IrisEnabled.class)
 @Lazy
+@FeatureUsage("chat/chat-sessions")
 @RestController
 @RequestMapping("api/iris/chat/")
 public class IrisChatSessionResource {
@@ -142,13 +144,13 @@ public class IrisChatSessionResource {
     // -------------------------------------------------------------------------
 
     /**
-     * GET api/iris/chat/{courseId}/session/{sessionId}: Retrieve an Iris Session by id.
+     * GET api/iris/chat/courses/{courseId}/sessions/{sessionId}: Retrieve an Iris Session by id.
      *
      * @param courseId  of the course
      * @param sessionId of the session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris session
      */
-    @GetMapping({ "courses/{courseId}/sessions/{sessionId}", "{courseId}/session/{sessionId}" })
+    @GetMapping("courses/{courseId}/sessions/{sessionId}")
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisChatSessionResponseDTO> getSessionById(@PathVariable Long courseId, @PathVariable Long sessionId) {

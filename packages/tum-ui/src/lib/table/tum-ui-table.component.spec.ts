@@ -71,6 +71,21 @@ describe('TumUiTableComponent', () => {
         expect(cellText).toContain('Beta');
     });
 
+    it('marks only the rows the highlight predicate accepts', async () => {
+        fixture.componentRef.setInput('rowHighlighted', (row: Row) => row.name === 'Beta');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const highlighted = fixture.debugElement.queryAll(By.css('tr[cdk-row]')).map((d) => (d.nativeElement as HTMLElement).classList.contains('tum-ui-table-row-highlighted'));
+        expect(highlighted).toEqual([false, true]);
+    });
+
+    it('marks no row when no highlight predicate is given', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const rows = fixture.debugElement.queryAll(By.css('tr[cdk-row]'));
+        expect(rows.every((d) => !(d.nativeElement as HTMLElement).classList.contains('tum-ui-table-row-highlighted'))).toBe(true);
+    });
+
     it('announces the table as busy while loading', () => {
         fixture.componentRef.setInput('loading', true);
         fixture.detectChanges();
@@ -168,5 +183,38 @@ describe('TumUiTableComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ pageIndex: 0, pageSize: 50 }));
+    });
+
+    it('returns to the first page and re-emits when the consumer calls resetPage', async () => {
+        fixture.componentRef.setInput('totalRecords', 130);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.debugElement.query(By.css('button[aria-label="Last page"]')).nativeElement.click();
+        fixture.detectChanges();
+        const spy = vi.spyOn(component.dataRequest, 'emit');
+
+        component.resetPage();
+
+        expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ pageIndex: 0, pageSize: 50 }));
+    });
+
+    it('renders a help control named by the header tooltip only for columns that declare one', async () => {
+        fixture.componentRef.setInput('columns', [{ ...COLUMNS[0], headerTooltip: 'How this column is measured' }, COLUMNS[1]]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const helpControls = fixture.debugElement.queryAll(By.css('th button[aria-label]'));
+        expect(helpControls.length).toBe(1);
+        expect(helpControls[0].nativeElement.getAttribute('aria-label')).toBe('How this column is measured');
+    });
+
+    it('does not re-emit when resetPage is called while already on the first page', async () => {
+        fixture.componentRef.setInput('totalRecords', 130);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const spy = vi.spyOn(component.dataRequest, 'emit');
+
+        component.resetPage();
+
+        expect(spy).not.toHaveBeenCalled();
     });
 });

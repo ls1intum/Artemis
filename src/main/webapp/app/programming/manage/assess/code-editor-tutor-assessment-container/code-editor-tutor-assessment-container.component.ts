@@ -187,7 +187,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.feedbackSuggestions().length > 0);
 
-    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(this.exercise()?.feedbackSuggestionModule));
+    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled));
 
     constructor() {
         this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -298,7 +298,22 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         await this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
         if (submissionId === 'new') {
             // Update the url with the new id, without reloading the page, to make the history consistent
-            const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission()!.id}`);
+            // Build the path through the router. Artemis uses path-based routing, so window.location.hash is empty and
+            // using it here rewrites the address to the application root once the submission has loaded.
+            const newUrl = this.router
+                .createUrlTree(
+                    getLinkToSubmissionAssessment(
+                        ExerciseType.PROGRAMMING,
+                        this.courseId,
+                        this.exerciseId,
+                        submission.participation?.id,
+                        submission.id!,
+                        this.examId,
+                        this.exerciseGroupId,
+                    ),
+                    { queryParams: this.route.snapshot.queryParams },
+                )
+                .toString();
             this.location.go(newUrl);
         }
     }

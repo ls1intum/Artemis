@@ -28,11 +28,11 @@ async function globalSetup() {
     // Pre-authenticate all users and cache JWT tokens
     const adminJwt = await preAuthenticateUsers();
 
-    // Warm up backend caches (JIT, Hibernate, Hazelcast, connection pools) by hitting a curated
+    // Warm up server caches (JIT, Hibernate, Hazelcast, connection pools) by hitting a curated
     // set of slow read endpoints in parallel. Eliminates the 30-90s cold-start tail that
     // otherwise causes the first test of each feature area to hang on its initial waitForResponse.
     if (adminJwt) {
-        await prewarmBackend(adminJwt);
+        await prewarmServer(adminJwt);
     }
 
     // Clean up accumulated test data (group chats, etc.) to prevent limit errors
@@ -127,21 +127,23 @@ async function preAuthenticateUsers(): Promise<string | undefined> {
 }
 
 /**
- * Pre-warm a curated set of read-only backend endpoints with the admin JWT to force
+ * Pre-warm a curated set of read-only server endpoints with the admin JWT to force
  * JIT compilation of the Spring controller chain, populate Hibernate query plans and
  * second-level caches, initialize Hazelcast partition ownership, and fill the JDBC
  * connection pool. All seed IDs come from `support/seedData.ts` so a single source of
  * truth defines what the warmer touches.
  *
  * The flow:
- *   1. Strict health gate — one `GET /management/health` must return 200, otherwise
- *      we throw. This separates "backend down" (real outage, fail loud) from "endpoint
- *      slow" (warm-up, fail soft).
+ *   1. Strict health gate — one `GET /management/health/readiness` must return 200,
+ *      otherwise we throw. This separates "server down" (real outage, fail loud) from
+ *      "endpoint slow" (warm-up, fail soft). The readiness probe is used instead of the
+ *      aggregate `/management/health`, which also reports external connectors (e.g. the
+ *      Hermes push relay) and would fail every run while one of them is degraded.
  *   2. Soft warm pass — fire ~12 GETs in parallel. Each result is logged but never
  *      throws; a 404 because seed-data drifted or a 503 because one module is still
  *      starting up is acceptable.
  */
-async function prewarmBackend(adminJwt: string): Promise<void> {
+async function prewarmServer(adminJwt: string): Promise<void> {
     const baseURL = process.env.BASE_URL ?? 'http://localhost:9000';
     const ctx = await request.newContext({
         baseURL,
@@ -149,13 +151,13 @@ async function prewarmBackend(adminJwt: string): Promise<void> {
         extraHTTPHeaders: { cookie: `jwt=${adminJwt}` },
     });
     try {
-        // Strict health gate
+        // Strict readiness gate
         const healthStart = Date.now();
-        const healthResp = await ctx.get('/management/health', { timeout: 30_000 });
+        const healthResp = await ctx.get('/management/health/readiness', { timeout: 30_000 });
         if (!healthResp.ok()) {
-            throw new Error(`[prewarm] backend health check failed: HTTP ${healthResp.status()}`);
+            throw new Error(`[prewarm] server readiness check failed: HTTP ${healthResp.status()}`);
         }
-        console.log(`[prewarm] health OK (${Date.now() - healthStart} ms)`);
+        console.log(`[prewarm] readiness OK (${Date.now() - healthStart} ms)`);
 
         // Soft warm pass — read endpoints against seed entities, no side effects
         const atlas = SEED_COURSES.atlas1.id;

@@ -23,16 +23,16 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -42,8 +42,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.ImportTextExerciseDTO;
@@ -57,6 +55,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
  */
 @Conditional(TextEnabled.class)
 @Lazy
+@FeatureUsage("authoring/import-export")
 @RestController
 @RequestMapping("api/text/")
 public class TextExerciseExportImportResource {
@@ -71,8 +70,6 @@ public class TextExerciseExportImportResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final TextExerciseRepository textExerciseRepository;
 
     private final UserRepository userRepository;
@@ -84,14 +81,13 @@ public class TextExerciseExportImportResource {
     private final Optional<ExerciseGroupApi> exerciseGroupApi;
 
     public TextExerciseExportImportResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, Optional<AthenaApi> athenaApi,
-            ExerciseVersionService exerciseVersionService, CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi) {
+            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExerciseVersionService exerciseVersionService,
+            CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
-        this.athenaApi = athenaApi;
         this.exerciseVersionService = exerciseVersionService;
         this.courseRepository = courseRepository;
         this.exerciseGroupApi = exerciseGroupApi;
@@ -103,19 +99,17 @@ public class TextExerciseExportImportResource {
      * This will import the whole exercise except for the participations and dates. Referenced
      * entities will get cloned and assigned a new id.
      *
-     * @param sourceExerciseIdQuery The ID of the original exercise which should get imported (provided as a query parameter; preferred)
-     * @param sourceExerciseIdPath  The ID of the original exercise which should get imported (provided as a legacy path variable; deprecated)
-     * @param importExerciseDTO     The new exercise containing values that should get overwritten in the
-     *                                  imported exercise, s.a. the title or difficulty
+     * @param sourceExerciseId  The ID of the original exercise which should get imported
+     * @param importExerciseDTO The new exercise containing values that should get overwritten in the
+     *                              imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
      *         or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping({ "text-exercises/import", "text-exercises/import/{sourceExerciseId}" })
+    @PostMapping("text-exercises/import")
     @EnforceAtLeastEditor
-    public ResponseEntity<TextExerciseResponseDTO> importExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
-            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ImportTextExerciseDTO importExerciseDTO) throws URISyntaxException {
-        long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
+    public ResponseEntity<TextExerciseResponseDTO> importExercise(@RequestParam long sourceExerciseId, @RequestBody ImportTextExerciseDTO importExerciseDTO)
+            throws URISyntaxException {
         // Build a transient entity from the dumb DTO, attaching managed Course/ExerciseGroup loaded by id.
         final TextExercise importedExercise = toExercise(importExerciseDTO);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
@@ -129,16 +123,6 @@ public class TextExerciseExportImportResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalTextExercise, user);
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
-
-        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
-        // If Athena is disabled and the service is not present, we also disable feedback suggestions
-        try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME),
-                    () -> importedExercise.setFeedbackSuggestionModule(null));
-        }
-        catch (BadRequestAlertException e) {
-            importedExercise.setFeedbackSuggestionModule(null);
-        }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(importedExercise, originalTextExercise);
         exerciseVersionService.createExerciseVersion(newTextExercise, user);
@@ -186,16 +170,12 @@ public class TextExerciseExportImportResource {
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
         }
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setReleaseDate(dto.releaseDate());
         exercise.setStartDate(dto.startDate());
@@ -208,7 +188,7 @@ public class TextExerciseExportImportResource {
             exercise.setTeamAssignmentConfig(dto.teamAssignmentConfig().toEntity());
         }
         if (dto.plagiarismDetectionConfig() != null) {
-            exercise.setPlagiarismDetectionConfig(toPlagiarismDetectionConfig(dto.plagiarismDetectionConfig()));
+            exercise.setPlagiarismDetectionConfig(dto.plagiarismDetectionConfig().toEntity());
         }
 
         // Grading criteria (with their structured grading instructions, needed for the copy tracker during import)
@@ -249,17 +229,6 @@ public class TextExerciseExportImportResource {
         return exercise;
     }
 
-    private static PlagiarismDetectionConfig toPlagiarismDetectionConfig(PlagiarismDetectionConfigDTO dto) {
-        PlagiarismDetectionConfig config = new PlagiarismDetectionConfig();
-        config.setContinuousPlagiarismControlEnabled(dto.continuousPlagiarismControlEnabled());
-        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(dto.continuousPlagiarismControlPostDueDateChecksEnabled());
-        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(dto.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod());
-        config.setSimilarityThreshold(dto.similarityThreshold());
-        config.setMinimumScore(dto.minimumScore());
-        config.setMinimumSize(dto.minimumSize());
-        return config;
-    }
-
     /**
      * POST /text-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
@@ -268,16 +237,11 @@ public class TextExerciseExportImportResource {
      * @return ResponseEntity with status
      */
     @PostMapping("text-exercises/{exerciseId}/export-submissions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
-
-        // TAs are not allowed to download all participations
-        if (submissionExportOptions.exportAllParticipants()) {
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, textExercise.getCourseViaExerciseGroupOrCourseMember(), null);
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, null);
 
         Path zipFilePath = textSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);

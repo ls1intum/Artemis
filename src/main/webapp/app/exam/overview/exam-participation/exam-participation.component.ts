@@ -805,15 +805,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return startDate ? startDate.isBefore(this.serverDateService.now()) : false;
     }
 
-    checkVerticalOverflow(): boolean {
-        // Get the sidebar-content element
-        const sidebarContent = document.querySelector('.content-exam-height');
-        if (sidebarContent) {
-            return sidebarContent.scrollHeight > sidebarContent.clientHeight;
-        }
-        return false;
-    }
-
     ngOnDestroy(): void {
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
@@ -1082,7 +1073,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
-        return this.courseExerciseService.startExercise(exercise.id!).pipe(
+        return this.courseExerciseService.startExercise(exercise.id!, exercise).pipe(
             map((createdParticipation: StudentParticipation) => {
                 // note: it is important that we exchange the existing student participation and that we do not push it
                 exercise.studentParticipations = [createdParticipation];
@@ -1158,24 +1149,27 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
+                        this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.textSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
                         break;
                     case ExerciseType.MODELING:
+                        this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.modelingSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
                         break;
                     case ExerciseType.PROGRAMMING:
                         // nothing to do here, because programming exercises are submitted differently
                         break;
                     case ExerciseType.QUIZ:
+                        this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
                         break;
                     case ExerciseType.FILE_UPLOAD:
@@ -1193,6 +1187,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
+        this.examParticipationService.setSubmissionSaving(submission, false);
         submission.isSynced = true;
         submission.submitted = true;
         // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
@@ -1223,7 +1218,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         );
     }
 
-    private onSaveSubmissionError(error: HttpErrorResponse) {
+    private onSaveSubmissionError(error: HttpErrorResponse, submission: Submission) {
+        this.examParticipationService.setSubmissionSaving(submission, false);
         this.examParticipationService.setLastSaveFailed(true, this.courseId(), this.examId());
         // The submission stays isSynced=false after a failed save; notify sync-state-dependent UI to re-evaluate
         // (e.g. keep the save button enabled) since the flag was mutated in place.

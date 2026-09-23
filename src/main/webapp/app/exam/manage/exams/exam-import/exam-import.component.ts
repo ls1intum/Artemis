@@ -18,6 +18,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 export interface ExamImportDialogData {
     subsequentExerciseGroupSelection?: boolean;
@@ -39,6 +40,7 @@ export interface ExamImportDialogData {
         PaginatorModule,
         ExamExerciseImportComponent,
         ExamImportProgressDialogComponent,
+        ExamModeBadgeComponent,
     ],
 })
 export class ExamImportComponent extends ImportComponent<Exam> implements OnInit {
@@ -132,13 +134,13 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
                     if (errorKey === 'invalidKey') {
                         // The Server sends back all the exercise groups and exercises and removed the shortName / title for all conflicting programming exercises
                         this.exam.update((exam) => cloneWith(exam!, { exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
-                        // The updateMapsAfterRejectedImport Method is called to update the displayed exercises in the child component
-                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey();
+                        // Pass the returned groups explicitly: the child's exam input updates on the next change detection pass.
+                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey(this.exam()!.exerciseGroups);
                         const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
                     } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
                         this.exam.update((exam) => cloneWith(exam!, { exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
-                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
+                        this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle(this.exam()!.exerciseGroups);
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
                     } else {
                         onError(this.alertService, httpErrorResponse);

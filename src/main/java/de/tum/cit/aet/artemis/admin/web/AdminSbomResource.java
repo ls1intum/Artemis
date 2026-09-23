@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.SbomDTO;
@@ -22,6 +21,7 @@ import de.tum.cit.aet.artemis.admin.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 
 /**
  * REST controller for managing Software Bill of Materials (SBOM) as admin.
@@ -30,9 +30,10 @@ import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
+@FeatureUsage("dependencies/software-bill-of-materials")
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminSbomResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminSbomResource.class);

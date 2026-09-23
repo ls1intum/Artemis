@@ -6,7 +6,7 @@ import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model
 import { ActivatedRoute, Router } from '@angular/router';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { catchError, finalize, tap } from 'rxjs/operators';
-import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
@@ -27,6 +27,9 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -54,6 +57,9 @@ export enum BonusStrategyDiscreteness {
         FormsModule,
         CommonModule,
         HelpIconComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumUiButtonDirective,
     ],
 })
 export class BonusComponent implements OnInit {
@@ -69,7 +75,7 @@ export class BonusComponent implements OnInit {
     // Icons
     readonly faSave = faSave;
     readonly faPlus = faPlus;
-    readonly faTimes = faTimes;
+    readonly faTrash = faTrash;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faQuestionCircle = faQuestionCircle;
 

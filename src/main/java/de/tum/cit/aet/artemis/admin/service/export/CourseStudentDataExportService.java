@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -86,6 +87,9 @@ public class CourseStudentDataExportService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseStudentDataExportService.class);
 
+    /** Everything an exam title may not contribute to a file name, replaced by an underscore. */
+    private static final Pattern UNSAFE_TITLE_CHARACTER = Pattern.compile("[^a-zA-Z0-9-_]");
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final ParticipationRepository participationRepository;
@@ -112,14 +116,14 @@ public class CourseStudentDataExportService {
 
     private final UserRepository userRepository;
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     public CourseStudentDataExportService(ParticipationRepository participationRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi,
-            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, ObjectMapper objectMapper,
+            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, JsonMapper objectMapper,
             ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.participationRepository = participationRepository;
         this.postRepository = postRepository;
@@ -727,7 +731,7 @@ public class CourseStudentDataExportService {
             headerParts.add("Submitted");
 
             // Add exercise group columns
-            for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
+            for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
                 headerParts.add(escapeCSV(exerciseGroup.title()) + " Exercise");
                 headerParts.add(escapeCSV(exerciseGroup.title()) + " Points");
                 headerParts.add(escapeCSV(exerciseGroup.title()) + " Score");
@@ -774,7 +778,7 @@ public class CourseStudentDataExportService {
 
             // Build data rows for each student
             final var points = examScores.maxPoints() != null ? String.valueOf(examScores.maxPoints()) : "";
-            for (ExamScoresDTO.StudentResult studentResult : examScores.studentResults()) {
+            for (ExamScoresDTO.StudentResultDTO studentResult : examScores.studentResults()) {
                 List<String> rowParts = new ArrayList<>();
                 rowParts.add(escapeCSV(studentResult.name()));
                 rowParts.add(studentResult.login() != null ? studentResult.login() : "");
@@ -783,8 +787,8 @@ public class CourseStudentDataExportService {
                 rowParts.add(studentResult.submitted() != null ? String.valueOf(studentResult.submitted()) : "false");
 
                 // Add exercise group columns
-                for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
-                    ExamScoresDTO.ExerciseResult exerciseResult = studentResult.exerciseGroupIdToExerciseResult() != null
+                for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
+                    ExamScoresDTO.ExerciseResultDTO exerciseResult = studentResult.exerciseGroupIdToExerciseResult() != null
                             ? studentResult.exerciseGroupIdToExerciseResult().get(exerciseGroup.id())
                             : null;
 
@@ -870,9 +874,9 @@ public class CourseStudentDataExportService {
             }
 
             // Prepare data for statistics rows
-            List<Long> exerciseGroupIds = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroup::id).toList();
+            List<Long> exerciseGroupIds = examScores.exerciseGroups().stream().map(ExamScoresDTO.ExerciseGroupDTO::id).toList();
             Map<Long, Double> maxPointsByGroup = examScores.exerciseGroups().stream()
-                    .collect(Collectors.toMap(ExamScoresDTO.ExerciseGroup::id, eg -> eg.maxPoints() != null ? eg.maxPoints() : 0.0));
+                    .collect(Collectors.toMap(ExamScoresDTO.ExerciseGroupDTO::id, eg -> eg.maxPoints() != null ? eg.maxPoints() : 0.0));
 
             // Max row
             lines.add(String.join(",", createExamMaxRow(examScores, points, course)));
@@ -900,7 +904,7 @@ public class CourseStudentDataExportService {
             lines.add(String.join(",", createStatisticsRow("Std Dev", exerciseGroupIds, pointsByExerciseGroup, maxPointsByGroup, StatisticsUtil::calculateStandardDeviation,
                     allOverallPoints, maxPointsDouble, course)));
 
-            String sanitizedExamTitle = examScores.title() != null ? examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_") : "unnamed";
+            String sanitizedExamTitle = examScores.title() != null ? UNSAFE_TITLE_CHARACTER.matcher(examScores.title()).replaceAll("_") : "unnamed";
             Path outputFile = outputDir.resolve("exam-scores-" + examId + "-" + sanitizedExamTitle + ".csv");
             exportedFiles.add(writeLinesToFile(lines, outputFile));
 
@@ -928,7 +932,7 @@ public class CourseStudentDataExportService {
         List<String> maxRow = new ArrayList<>();
         maxRow.add("Max");
         maxRow.addAll(Collections.nCopies(4, ""));
-        for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
+        for (ExamScoresDTO.ExerciseGroupDTO exerciseGroup : examScores.exerciseGroups()) {
             maxRow.add("");
             maxRow.add(exerciseGroup.maxPoints() != null ? formatValue(exerciseGroup.maxPoints(), course) : "");
             maxRow.add(formatValue(100.0, course));
@@ -1071,7 +1075,7 @@ public class CourseStudentDataExportService {
             // Count students per grade using the grade from the DTO (more accurate than recalculating)
             Map<String, Integer> gradeCountMap = new LinkedHashMap<>();
             gradingScale.getGradeSteps().forEach(step -> gradeCountMap.put(step.getGradeName(), 0));
-            for (ExamScoresDTO.StudentResult studentResult : examScores.studentResults()) {
+            for (ExamScoresDTO.StudentResultDTO studentResult : examScores.studentResults()) {
                 if (studentResult.overallGrade() != null && !studentResult.overallGrade().isEmpty()) {
                     gradeCountMap.merge(studentResult.overallGrade(), 1, Integer::sum);
                 }
@@ -1083,7 +1087,7 @@ public class CourseStudentDataExportService {
             // Score interval distribution
             writeIntervalDistributionRows(lines, overallScores, totalStudents);
 
-            String sanitizedExamTitle = examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_");
+            String sanitizedExamTitle = UNSAFE_TITLE_CHARACTER.matcher(examScores.title()).replaceAll("_");
             Path outputFile = outputDir.resolve("exam-" + examId + "-" + sanitizedExamTitle + "-grade-distribution.csv");
             return Optional.of(writeLinesToFile(lines, outputFile));
         }

@@ -5,6 +5,9 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
@@ -24,6 +27,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -35,6 +39,8 @@ import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
@@ -82,7 +88,7 @@ public class UserCreationService {
      * <p>
      * The account is created <b>activated</b> unless its own owner is expected to activate it, which requires
      * {@code isInternal}: only an internal account gets {@code activated = false} and an activation key. See
-     * {@link User#activated} for why an externally managed account must never be created unactivated, and for why this is
+     * {@link User#getActivated()} for why an externally managed account must never be created unactivated, and for why this is
      * deliberately not narrowed further to instances that have self-registration enabled.
      *
      * @param login              user login string
@@ -114,6 +120,7 @@ public class UserCreationService {
         newUser.setFirstName(firstName);
         newUser.setLastName(lastName);
         newUser.setEmail(email);
+        validateEmailIsAvailable(newUser.getEmail(), null);
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(registrationNumber)) {
             newUser.setRegistrationNumber(registrationNumber);
@@ -140,7 +147,7 @@ public class UserCreationService {
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
         try {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(newUser.getEmail());
             newUser.setOrganizations(matchingOrganizations);
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
@@ -168,6 +175,7 @@ public class UserCreationService {
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
         user.setEmail(userDTO.getEmail());
+        validateEmailIsAvailable(user.getEmail(), null);
         user.setImageUrl(userDTO.getImageUrl());
         if (userDTO.getLangKey() == null) {
             user.setLangKey(Constants.DEFAULT_LANGUAGE); // default language
@@ -183,7 +191,7 @@ public class UserCreationService {
             user.setPassword(passwordService.hashPassword(password));
         }
         try {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(user.getEmail());
             user.setOrganizations(matchingOrganizations);
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
@@ -197,19 +205,11 @@ public class UserCreationService {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
         saveUser(user);
-        // An administrator-created account gets a reset key so its owner can set their own password.
-        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
 
         log.debug("Created Information for User: {}", user);
         return user;
     }
 
-    /**
-     * Updates the authorities for the user according to the ones set in the DTO.
-     *
-     * @param userDTO The source for the authorities that should be set.
-     * @param user    The target user where the authorities are set.
-     */
     private void setUserAuthorities(final ManagedUserVM userDTO, final User user) {
         // A user needs to have at least some role, otherwise an authentication token can never be constructed
         if (userDTO.getAuthorities() == null || userDTO.getAuthorities().isEmpty()) {
@@ -234,9 +234,9 @@ public class UserCreationService {
      */
     public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
+            updateEmailIfChanged(user, email);
             user.setFirstName(firstName);
             user.setLastName(lastName);
-            user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
             if (imageUrl != null) {
                 user.setImageUrl(imageUrl);
@@ -262,10 +262,10 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
-        user.setLogin(updatedUserDTO.getLogin().toLowerCase());
+        updateEmailIfChanged(user, updatedUserDTO.getEmail());
+        user.setLogin(updatedUserDTO.getLogin().toLowerCase(Locale.ENGLISH));
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
-        user.setEmail(updatedUserDTO.getEmail().toLowerCase());
 
         // allow to remove the registration: an empty string is considered as null to satisfy the unique constraint on registration number
         if (!StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
@@ -310,7 +310,7 @@ public class UserCreationService {
         // top of that stays opt-in, because the admin form asks for it separately.
         boolean revokeCredentialsAfterPasswordChange = isPasswordBeingChanged && updatedUserDTO.isRevokeCredentials();
         boolean credentialsChanged = isBeingDeactivated || isPasswordBeingChanged;
-        user.setOrganizations(updatedUserDTO.getOrganizations());
+        user.setOrganizations(updatedUserDTO.getOrganizations() == null ? null : resolveOrganizations(updatedUserDTO.getOrganizations()));
         setUserAuthorities(updatedUserDTO, user);
 
         log.debug("Changed Information for User: {}", user);
@@ -354,6 +354,35 @@ public class UserCreationService {
         }
         return savedUser;
     }
+
+    /**
+     * Loads the organizations an admin referenced by id and rejects references without an id or with an unknown id.
+     *
+     * @param organizationDTOs the organization references from the admin form
+     * @return the managed organizations, as a fresh set the user entity can own
+     */
+    private Set<Organization> resolveOrganizations(Set<OrganizationDTO> organizationDTOs) {
+        Set<Long> organizationIds = new HashSet<>();
+        for (OrganizationDTO organizationDTO : organizationDTOs) {
+            if (organizationDTO == null || organizationDTO.id() == null) {
+                throw new BadRequestAlertException("Every organization reference must contain an ID", "userManagement", "invalidOrganizationReference");
+            }
+            organizationIds.add(organizationDTO.id());
+        }
+        List<Organization> organizations = organizationRepository.findAllById(organizationIds);
+        if (organizations.size() != organizationIds.size()) {
+            organizations.forEach(organization -> organizationIds.remove(organization.getId()));
+            throw new BadRequestAlertException("Organization with ID " + organizationIds.iterator().next() + " does not exist", "userManagement", "invalidOrganizationReference");
+        }
+        return new HashSet<>(organizations);
+    }
+
+    /**
+     * Updates the authorities for the user according to the ones set in the DTO.
+     *
+     * @param userDTO The source for the authorities that should be set.
+     * @param user    The target user where the authorities are set.
+     */
 
     /**
      * Activates an account, clears its activation key, and records the change in the audit log.
@@ -435,6 +464,48 @@ public class UserCreationService {
     public User saveUser(User user) {
         log.debug("Save user {}", user);
         return userRepository.save(user);
+    }
+
+    /**
+     * Rejects a non-blank email address that belongs to another account, so that a caller is told what is wrong instead of seeing the database refuse the write. The unique
+     * index on the column is what actually enforces this; it also closes the concurrent-write race that a check before the write cannot.
+     *
+     * @param email         the proposed email address
+     * @param currentUserId the current account when updating, or {@code null} when creating an account
+     * @throws EmailAlreadyUsedException if another account already uses the address, ignoring case
+     */
+    public void validateEmailIsAvailable(@Nullable String email, @Nullable Long currentUserId) {
+        String canonicalEmail = User.canonicalEmail(email);
+        if (canonicalEmail == null) {
+            return;
+        }
+
+        boolean emailAlreadyUsed = currentUserId == null ? userRepository.existsByEmailIgnoreCase(canonicalEmail)
+                : userRepository.existsByEmailIgnoreCaseAndIdNot(canonicalEmail, currentUserId);
+        if (emailAlreadyUsed) {
+            throw new EmailAlreadyUsedException();
+        }
+    }
+
+    /**
+     * Applies an email update only when its canonical value differs from the account's current canonical value. This prevents case-only values from external systems from
+     * causing repeated validation and saves.
+     *
+     * @param user  the account to update
+     * @param email the proposed address, which may be {@code null} or blank
+     * @return whether the canonical email value changed
+     * @throws EmailAlreadyUsedException if the changed non-blank address belongs to another account
+     */
+    public boolean updateEmailIfChanged(User user, @Nullable String email) {
+        String currentEmail = User.canonicalEmail(user.getEmail());
+        String updatedEmail = User.canonicalEmail(email);
+        if (Objects.equals(currentEmail, updatedEmail)) {
+            return false;
+        }
+
+        validateEmailIsAvailable(updatedEmail, user.getId());
+        user.setEmail(updatedEmail);
+        return true;
     }
 
     /**

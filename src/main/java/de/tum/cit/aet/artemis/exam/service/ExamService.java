@@ -38,7 +38,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -191,7 +191,7 @@ public class ExamService {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
-    private final ObjectMapper defaultObjectMapper;
+    private final JsonMapper defaultObjectMapper;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -484,7 +484,7 @@ public class ExamService {
 
         Map<Long, Long> exerciseIdToNumberParticipants = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::exerciseId, Collectors.counting()));
         PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
-        var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroup>();
+        var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroupDTO>();
 
         // Adding exercise group information to DTO
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
@@ -494,7 +494,7 @@ public class ExamService {
 
             // Counter for exerciseGroup participations. Is calculated by summing up the number of exercise participations
             long numberOfExerciseGroupParticipants = 0;
-            var containedExercises = new ArrayList<ExamScoresDTO.ExerciseGroup.ExerciseInfo>();
+            var containedExercises = new ArrayList<ExamScoresDTO.ExerciseGroupDTO.ExerciseInfoDTO>();
             // Add information about exercise groups and exercises
 
             for (Exercise exercise : exerciseGroup.getExercises()) {
@@ -504,10 +504,10 @@ public class ExamService {
                     participantsForExercise = 0L;
                 }
                 numberOfExerciseGroupParticipants += participantsForExercise;
-                containedExercises.add(new ExamScoresDTO.ExerciseGroup.ExerciseInfo(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise,
+                containedExercises.add(new ExamScoresDTO.ExerciseGroupDTO.ExerciseInfoDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), participantsForExercise,
                         exercise.getClass().getSimpleName()));
             }
-            var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroup(exerciseGroup.getId(), exerciseGroup.getTitle(), maxPointsGroup, numberOfExerciseGroupParticipants,
+            var exerciseGroupDTO = new ExamScoresDTO.ExerciseGroupDTO(exerciseGroup.getId(), exerciseGroup.getTitle(), maxPointsGroup, numberOfExerciseGroupParticipants,
                     containedExercises);
             exerciseGroups.add(exerciseGroupDTO);
         }
@@ -531,7 +531,7 @@ public class ExamService {
                     .ifPresent(student -> participationsByStudentId.computeIfAbsent(student.getId(), _ -> new ArrayList<>()).add(participation)));
         }
 
-        var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
+        var studentResults = new ArrayList<ExamScoresDTO.StudentResultDTO>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
 
         // Resolve the participations of every student exam first. A test run and a test exam load theirs individually,
@@ -567,7 +567,7 @@ public class ExamService {
         int numberOfStudentResults = studentResults.size();
         var averagePointsAchieved = 0.0;
         if (numberOfStudentResults != 0) {
-            double sumOverallPoints = studentResults.stream().mapToDouble(ExamScoresDTO.StudentResult::overallPointsAchieved).sum();
+            double sumOverallPoints = studentResults.stream().mapToDouble(ExamScoresDTO.StudentResultDTO::overallPointsAchieved).sum();
             averagePointsAchieved = sumOverallPoints / numberOfStudentResults;
         }
 
@@ -688,7 +688,7 @@ public class ExamService {
         var scores = calculateExamScores(examId);
         var studentIdSet = new HashSet<>(studentIds);
         return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId()))
-                .collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
+                .collect(Collectors.toMap(ExamScoresDTO.StudentResultDTO::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
                         studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()))));
 
     }
@@ -874,7 +874,7 @@ public class ExamService {
     }
 
     /**
-     * Generates a StudentResult from the given studentExam and participations of the student by aggregating scores and points
+     * Generates a StudentResultDTO from the given studentExam and participations of the student by aggregating scores and points
      * achieved per exercise by the relevant student if the given studentExam is assessed.
      * Calculates the corresponding grade if a GradingScale is given.
      *
@@ -885,25 +885,25 @@ public class ExamService {
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
      * @return exam result for a student who participated in the exam
      */
-    private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, Set<ExamGradeScoreDTO> examGrades, Exam exam, Optional<GradingScale> gradingScale,
-            boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts, PlagiarismMapping plagiarismMapping,
-            ExamBonusCalculator examBonusCalculator, List<Exercise> studentExercises, List<StudentParticipation> participations,
+    private ExamScoresDTO.StudentResultDTO calculateStudentResultWithGrade(StudentExam studentExam, Set<ExamGradeScoreDTO> examGrades, Exam exam,
+            Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts,
+            PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator, List<Exercise> studentExercises, List<StudentParticipation> participations,
             Map<Long, List<CorrectionRoundResultDTO>> manualResultsBySubmissionId) {
         User user = studentExam.getUser();
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             String noParticipationGrade = gradingScale.map(GradingScale::getNoParticipationGradeOrDefault).orElse(GradingScale.DEFAULT_NO_PARTICIPATION_GRADE);
-            return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
+            return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
                     0.0, noParticipationGrade, noParticipationGrade, false, 0.0, null, null, null);
         }
         else if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
             String plagiarismGrade = gradingScale.map(GradingScale::getPlagiarismGradeOrDefault).orElse(GradingScale.DEFAULT_PLAGIARISM_GRADE);
-            return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
+            return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
                     0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
         }
         var overallPointsAchieved = 0.0;
         var overallScoreAchieved = 0.0;
         var overallPointsAchievedInFirstCorrection = 0.0;
-        Map<Long, ExamScoresDTO.ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
+        Map<Long, ExamScoresDTO.ExerciseResultDTO> exerciseGroupIdToExerciseResult = new HashMap<>();
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(user.getId());
         for (ExamGradeScoreDTO examGrade : examGrades) {
             ExamGradeScoreDTO finalExamGrade = examGrade;
@@ -939,7 +939,7 @@ public class ExamService {
             }
             double resultScore = (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                    new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
+                    new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
@@ -966,7 +966,7 @@ public class ExamService {
             var studentVerdictsFromExercises = plagiarismCasesForStudent.values().stream().map(PlagiarismCase::getVerdict).toList();
             mostSevereVerdict = PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
         }
-        return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(),
+        return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(),
                 overallPointsAchieved, overallScoreAchieved, overallGrade, overallGradeInFirstCorrection, hasPassed, overallPointsAchievedInFirstCorrection, gradeWithBonus,
                 exerciseGroupIdToExerciseResult, mostSevereVerdict);
     }
@@ -983,15 +983,6 @@ public class ExamService {
         return false;
     }
 
-    /**
-     * Calculates the points achieved in the first correction round if applicable.
-     *
-     * @param participation                      the participation of the student in the exercise
-     * @param exam                               the exam the exercise belongs to
-     * @param examGrade                          the exam grade dto containing the score and max points of the exercise
-     * @param plagiarismPointDeductionPercentage the percentage of points to be deducted due to plagiarism
-     * @return the points achieved in the first correction round or 0.0 if not applicable
-     */
     /**
      * Reads the manual results of the latest submission of every given participation, grouped by submission.
      * <p>
@@ -1397,7 +1388,7 @@ public class ExamService {
         long start = System.nanoTime();
         log.debug("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
-        quizExercises.stream().map(Exercise::getId).forEach(quizResultService::evaluateQuizAndUpdateStatistics);
+        quizExercises.stream().map(Exercise::getId).forEach(quizResultService::evaluateQuiz);
         if (log.isDebugEnabled()) {
             log.debug("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
         }
@@ -1524,7 +1515,7 @@ public class ExamService {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXAM);
         final var searchTerm = search.getSearchTerm();
         final Page<Exam> examPage;
-        if (authorizationCheckService.isAdmin(user)) {
+        if (authorizationCheckService.isCurrentUserAdminAccessEnabled()) {
             if (withExercises) {
                 examPage = examRepository.queryNonEmptyBySearchTermInAllCourses(searchTerm, pageable);
             }
@@ -1591,15 +1582,15 @@ public class ExamService {
 
     /**
      * Updates the working times for student exams based on a given change in working time and reschedules exercises accordingly.
-     * This method considers any existing time extensions for individual students and adjusts their working times relative to the original exam duration and the specified change.
+     * This method considers any existing time extensions for individual students and adjusts their working times relative to the original regular working time and the specified
+     * change.
      * After updating the working times, it saves the changes and, if the exam is already visible, notifies both the students and relevant instances about the update.
      *
-     * @param exam                 The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
-     * @param originalExamDuration The original duration of the exam, in seconds, before any changes.
-     * @param workingTimeChange    The amount of time, in seconds, to add or subtract from the exam's original duration and the student's working time. This value can be positive
-     *                                 (to extend time) or negative (to reduce time).
+     * @param exam                       The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
+     * @param originalRegularWorkingTime The regular working time before the change: the duration for real exams, or the configured working time for test exams.
+     * @param workingTimeChange          The change to the regular working time, in seconds; positive extends and negative reduces it.
      */
-    public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
+    public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalRegularWorkingTime, int workingTimeChange) {
         if (workingTimeChange == 0) {
             return;
         }
@@ -1612,7 +1603,7 @@ public class ExamService {
         for (var studentExam : studentExams) {
             int originalStudentWorkingTime = studentExam.getWorkingTime();
             originalWorkingTimes.put(studentExam.getId(), originalStudentWorkingTime);
-            studentExam.setWorkingTime(ExamDateService.projectWorkingTimeAfterDurationChange(originalStudentWorkingTime, originalExamDuration, workingTimeChange));
+            studentExam.setWorkingTime(ExamDateService.projectWorkingTimeAfterDurationChange(originalStudentWorkingTime, originalRegularWorkingTime, workingTimeChange));
         }
         // Important: persist all student exams BEFORE sending WebSocket notifications.
         // The client uses a REST fallback (GET /student-exams/live-events) to recover missed events.
@@ -1654,13 +1645,11 @@ public class ExamService {
      */
     public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
         if (visibleOrStartDateChanged || endDateChanged) {
-            searchableItemWeaviateService.ifPresent(service -> {
-                examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
-                    service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
-                    service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
-                            .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
-                });
-            });
+            searchableItemWeaviateService.ifPresent(service -> examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
+                service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                        .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+            }));
         }
     }
 
@@ -1670,13 +1659,11 @@ public class ExamService {
      * @param exam the exam whose metadata and exercises should be synced
      */
     public void syncExamExercisesMetadata(Exam exam) {
-        searchableItemWeaviateService.ifPresent(service -> {
-            examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
-                service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
-                service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
-                        .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
-            });
-        });
+        searchableItemWeaviateService.ifPresent(service -> examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
+            service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+            service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                    .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+        }));
     }
 
     /**

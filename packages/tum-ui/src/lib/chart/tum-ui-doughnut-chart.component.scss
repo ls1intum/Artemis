@@ -1,0 +1,9 @@
+@use './tum-ui-chart.layout';
+
+.tum-ui-doughnut-chart-slice-interactive {
+    cursor: pointer;
+}
+
+.tum-ui-doughnut-chart-slice:hover {
+    filter: brightness(1.08);
+}

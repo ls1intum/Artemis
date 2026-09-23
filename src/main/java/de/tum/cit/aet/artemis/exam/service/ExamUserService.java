@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import java.awt.Rectangle;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -12,6 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.function.TriConsumer;
@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -64,6 +65,9 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 public class ExamUserService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamUserService.class);
+
+    /** An eight digit registration number, which is what the second word of a scanned exam user line has to be. */
+    private static final Pattern REGISTRATION_NUMBER = Pattern.compile("^[0-9]{8}$");
 
     private static final String ENTITY_NAME = "examUserService";
 
@@ -109,7 +113,7 @@ public class ExamUserService {
                 String string = stripper.getTextForRegion("image:" + (image.page() - 1));
                 String[] studentInformation = string.split("\\s");
 
-                if (StringUtils.hasText(string) && studentInformation.length > 1 && studentInformation[1].matches("^[0-9]{8}$")) {
+                if (StringUtils.hasText(string) && studentInformation.length > 1 && REGISTRATION_NUMBER.matcher(studentInformation[1]).matches()) {
                     // if the string is only numbers and has 8 digits, then it is the registration number
                     // and it should be the second element in the array of the string
                     studentWithImages.add(new ExamUserWithImageDTO(studentInformation[1], image));
@@ -170,12 +174,11 @@ public class ExamUserService {
             Path basePath = FilePathConverter.getStudentImageFilePath().resolve(examUser.getId().toString());
             Path savedPath = FileUtil.saveFile(studentImageFile, basePath, FilePathType.EXAM_USER_IMAGE, true);
 
-            examUser.setStudentImagePath(FilePathConverter.externalUriForFileSystemPath(savedPath, FilePathType.EXAM_USER_IMAGE, examUser.getId()).toString());
+            examUser.setStudentImagePath(savedPath.getFileName().toString());
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {
-                Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_IMAGE);
-                fileService.schedulePathForDeletion(oldPath, 0);
+                fileService.schedulePathForDeletion(new FileSystemLocation.ExamUserImage(examUser.getId(), oldPathString).path(), 0);
             }
         }
 
@@ -189,10 +192,10 @@ public class ExamUserService {
      * @param user the exam user whose images should be deleted
      */
     public void deleteAvailableExamUserImages(ExamUser user) {
-        Optional.ofNullable(user.getSigningImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_SIGNATURE))
+        Optional.ofNullable(user.getSigningImagePath()).map(storedPath -> new FileSystemLocation.ExamUserSignature(storedPath).path())
                 .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
 
-        Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
+        Optional.ofNullable(user.getStudentImagePath()).map(storedPath -> new FileSystemLocation.ExamUserImage(user.getId(), storedPath).path())
                 .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
     }
 
@@ -292,7 +295,7 @@ public class ExamUserService {
     /**
      * Returns a page of {@link ExamStudentDTO} for the given exam.
      * Pagination and sorting are applied on a lightweight ID query first, then the current page's
-     * {@link ExamUser} entities and their {@link ExamStudentDTO.StudentExamSummary} data are fetched in two
+     * {@link ExamUser} entities and their {@link ExamStudentDTO.StudentExamSummaryDTO} data are fetched in two
      * targeted queries — one per entity type, both scoped to the current page only.
      *
      * @param examId the exam to query
@@ -310,8 +313,8 @@ public class ExamUserService {
         Map<Long, ExamUser> examUserById = examUsers.stream().collect(Collectors.toMap(ExamUser::getId, Function.identity()));
 
         List<Long> userIds = examUsers.stream().map(eu -> eu.getUser() != null ? eu.getUser().getId() : null).filter(Objects::nonNull).toList();
-        Map<Long, ExamStudentDTO.StudentExamSummary> summaryByUserId = studentExamRepository.findSummaryByExamIdAndUserIds(examId, userIds).stream()
-                .collect(Collectors.toMap(ExamStudentDTO.StudentExamSummary::userId, Function.identity(), (a, b) -> a));
+        Map<Long, ExamStudentDTO.StudentExamSummaryDTO> summaryByUserId = studentExamRepository.findSummaryByExamIdAndUserIds(examId, userIds).stream()
+                .collect(Collectors.toMap(ExamStudentDTO.StudentExamSummaryDTO::userId, Function.identity(), (a, b) -> a));
 
         List<ExamStudentDTO> dtos = ids.stream().map(examUserById::get).filter(Objects::nonNull).map(eu -> mapToExamStudentDTO(eu, summaryByUserId)).toList();
 
@@ -345,7 +348,7 @@ public class ExamUserService {
         return new PageImpl<>(dtos, pageable, users.getTotalElements());
     }
 
-    private ExamStudentDTO mapToExamStudentDTO(ExamUser eu, Map<Long, ExamStudentDTO.StudentExamSummary> summaryByUserId) {
+    private ExamStudentDTO mapToExamStudentDTO(ExamUser eu, Map<Long, ExamStudentDTO.StudentExamSummaryDTO> summaryByUserId) {
         User user = eu.getUser();
         Long userId = user != null ? user.getId() : null;
         String login = user != null ? user.getLogin() : null;
@@ -355,7 +358,7 @@ public class ExamUserService {
         String lastName = user != null && user.getLastName() != null ? user.getLastName() : "";
         String name = (firstName + " " + lastName).trim();
 
-        ExamStudentDTO.StudentExamSummary se = userId != null ? summaryByUserId.get(userId) : null;
+        ExamStudentDTO.StudentExamSummaryDTO se = userId != null ? summaryByUserId.get(userId) : null;
 
         Long studentExamId = se != null ? se.studentExamId() : null;
         Integer workingTime = se != null ? se.workingTime() : null;

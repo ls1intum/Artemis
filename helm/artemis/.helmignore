@@ -1,0 +1,14 @@
+# Patterns to ignore when building packages.
+*.tmpl
+.DS_Store
+# AppleDouble sidecars, which macOS writes when the chart is copied through a tar or a non-native filesystem.
+# Helm reads every file under templates/, so one of these makes the whole install fail on a YAML parse error.
+._*
+.git/
+.gitignore
+*.swp
+*.bak
+*.orig
+*~
+.vscode/
+.idea/

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -70,7 +69,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH c.lectureUnitLinks lul
                 LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
-                LEFT JOIN FETCH l.attachments
             WHERE c.course.id = :courseId
             """)
     Set<CourseCompetency> findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(@Param("courseId") long courseId);
@@ -84,7 +82,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH l.lectureUnits
-                LEFT JOIN FETCH l.attachments
             WHERE c.id = :id
             """)
     Optional<CourseCompetency> findByIdWithExercisesAndLectureUnitsAndLectures(@Param("id") long id);
@@ -101,7 +98,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 LEFT JOIN FETCH c.lectureUnitLinks lul
                 LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
-                LEFT JOIN FETCH l.attachments
             WHERE c.id IN :ids
             """)
     Set<CourseCompetency> findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(@Param("ids") Set<Long> ids);
@@ -219,7 +215,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             FROM CourseCompetency c
             WHERE c.id = :competencyId
             """)
-    @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
     String getCompetencyTitle(@Param("competencyId") long competencyId);
 
     /**
@@ -239,9 +234,9 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             SELECT c
             FROM CourseCompetency c
             WHERE (:isAdmin = TRUE OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = c.course.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR)))
-                AND (:partialTitle IS NULL OR c.title LIKE %:partialTitle%)
-                AND (:partialDescription IS NULL OR c.description LIKE %:partialDescription%)
-                AND (:partialCourseTitle IS NULL OR c.course.title LIKE %:partialCourseTitle%)
+                AND (:partialTitle IS NULL OR LOWER(c.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%'))
+                AND (:partialDescription IS NULL OR LOWER(c.description) LIKE CONCAT('%', LOWER(CAST(:partialDescription AS string)), '%'))
+                AND (:partialCourseTitle IS NULL OR LOWER(c.course.title) LIKE CONCAT('%', LOWER(CAST(:partialCourseTitle AS string)), '%'))
                 AND (:semester IS NULL OR c.course.semester = :semester)
             """)
     Page<CourseCompetency> findForImportAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialDescription") String partialDescription,

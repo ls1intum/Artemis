@@ -7,7 +7,7 @@
             <span>{{ channel().name }}</span>
         </div>
         @if (channel().isMember) {
-            <span class="badge bg-success rounded-pill">{{ 'artemisApp.dialogs.channelOverview.channelItem.joined:' | artemisTranslate }}</span>
+            <span class="badge bg-success rounded-pill" data-testid="channel-joined-badge">{{ 'artemisApp.dialogs.channelOverview.channelItem.joined:' | artemisTranslate }}</span>
         }
         <span> {{ channel().numberOfMembers }} {{ 'artemisApp.dialogs.channelOverview.channelItem.members' | artemisTranslate }}</span>
         @if (channel().description && channel().description!.length > 0) {

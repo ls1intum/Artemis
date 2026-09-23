@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -45,7 +46,6 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param allowFeedbackRequests                  whether feedback requests are allowed
  * @param presentationScoreEnabled               whether presentation scores are enabled
  * @param secondCorrectionEnabled                whether a second correction round is enabled
- * @param feedbackSuggestionModule               the feedback suggestion module
  * @param gradingInstructions                    the free-text grading instructions
  * @param releaseDate                            the release date
  * @param startDate                              the start date
@@ -67,12 +67,11 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
         @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints,
         @Nullable IncludedInOverallScore includedInOverallScore, @Nullable AssessmentType assessmentType, @Nullable ExerciseMode mode, boolean teamMode,
         @Nullable FileUploadTeamAssignmentConfigDTO teamAssignmentConfig, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
-        @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String feedbackSuggestionModule, @Nullable String gradingInstructions,
-        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
-        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution, @Nullable String filePattern, boolean gradingInstructionFeedbackUsed,
-        @Nullable CourseContextDTO course, @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup,
-        @Nullable Set<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks,
-        @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) {
+        @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
+        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
+        @Nullable String exampleSolution, @Nullable String filePattern, boolean gradingInstructionFeedbackUsed, @Nullable CourseContextDTO course,
+        @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable Set<GradingCriterionDTO> gradingCriteria,
+        @Nullable Set<CompetencyLinkDTO> competencyLinks, @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CourseManagementExerciseDTO {
 
     /**
      * Maps a full create, import, detail, update, or re-evaluation response. Optional associations are included only when Hibernate has initialized them.
@@ -81,7 +80,19 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @return the full response DTO
      */
     public static FileUploadExerciseDTO of(FileUploadExercise exercise) {
-        return map(exercise, true, true);
+        return map(exercise, true, true, false);
+    }
+
+    /**
+     * Maps the record written into the exercise details file of an archive: the full response without the id of the
+     * team assignment configuration, which is a row of this instance and means nothing in a file read back elsewhere.
+     * The plagiarism configuration of a file upload exercise carries no id.
+     *
+     * @param exercise the exercise to export
+     * @return the export response DTO
+     */
+    public static FileUploadExerciseDTO forExport(FileUploadExercise exercise) {
+        return map(exercise, true, true, true);
     }
 
     /**
@@ -91,7 +102,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @return the lean search response DTO
      */
     public static FileUploadExerciseDTO forSearch(FileUploadExercise exercise) {
-        return map(exercise, true, false);
+        return map(exercise, true, false, false);
     }
 
     /**
@@ -102,14 +113,17 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @return the lean course-list response DTO
      */
     public static FileUploadExerciseDTO forCourseList(FileUploadExercise exercise) {
-        return map(exercise, false, false);
+        return map(exercise, false, false, false);
     }
 
-    private static FileUploadExerciseDTO map(FileUploadExercise exercise, boolean includeContext, boolean includeInitializedAssociations) {
+    private static FileUploadExerciseDTO map(FileUploadExercise exercise, boolean includeContext, boolean includeInitializedAssociations, boolean forExport) {
         Set<String> categories = initialized(exercise.getCategories()) ? Set.copyOf(exercise.getCategories()) : null;
         FileUploadTeamAssignmentConfigDTO teamAssignmentConfig = includeInitializedAssociations && initialized(exercise.getTeamAssignmentConfig())
                 ? FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
                 : null;
+        if (forExport && teamAssignmentConfig != null) {
+            teamAssignmentConfig = teamAssignmentConfig.withoutId();
+        }
         Set<GradingCriterionDTO> gradingCriteria = includeInitializedAssociations ? mapGradingCriteria(exercise.getGradingCriteria()) : null;
         Set<CompetencyLinkDTO> competencyLinks = includeInitializedAssociations && initialized(exercise.getCompetencyLinks())
                 ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
@@ -124,10 +138,10 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
         return new FileUploadExerciseDTO(exercise.getId(), "file-upload", exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 categories, exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getAssessmentType(),
                 exercise.getMode(), exercise.isTeamMode(), teamAssignmentConfig, exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
-                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(),
-                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
-                exercise.getExampleSolution(), exercise.getFilePattern(), exercise.isGradingInstructionFeedbackUsed(), course, exerciseGroup, exerciseVariantGroup, gradingCriteria,
-                competencyLinks, plagiarismDetectionConfig);
+                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
+                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
+                exercise.getFilePattern(), exercise.isGradingInstructionFeedbackUsed(), course, exerciseGroup, exerciseVariantGroup, gradingCriteria, competencyLinks,
+                plagiarismDetectionConfig);
     }
 
     private static Set<GradingCriterionDTO> mapGradingCriteria(@Nullable Set<GradingCriterion> gradingCriteria) {

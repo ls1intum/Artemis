@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.text;
 
-import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,20 +37,23 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
@@ -176,6 +178,27 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(result).isPresent();
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentRejectsMissingGradingInstruction(boolean submit) throws Exception {
+        var submission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var result = submission.getLatestResult();
+        var originalFeedback = new Feedback().credits(2.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("original assessment");
+        participationUtilService.addFeedbackToResult(originalFeedback, result);
+        var instruction = new GradingInstruction();
+        instruction.setId(Long.MAX_VALUE);
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("invalid instruction");
+        feedback.setGradingInstruction(instruction);
+
+        saveOrSubmitTextAssessment(submission.getParticipation().getId(), result.getId(), new TextAssessmentDTO(List.of(FeedbackDTO.of(feedback)), null, null), submit,
+                HttpStatus.BAD_REQUEST);
+
+        assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId()).getFeedbacks()).singleElement()
+                .satisfies(item -> assertThat(item.getId()).isEqualTo(originalFeedback.getId()));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void saveAssessmentWithExistingLongFeedbackPreservesFullText() throws Exception {
@@ -227,7 +250,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
         final String editedLongText = "Edited long feedback ".repeat(100);
         FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedLongText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
-                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase());
         TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -253,7 +276,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
         final String editedShortText = "Short edited feedback";
         FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedShortText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
-                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction(), feedbackDTO.testCase());
         TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
@@ -289,6 +312,49 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         resultRepository.save(result);
         TextParticipationDTO participation = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.LOCKED, TextParticipationDTO.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void retrieveParticipationForSubmission_negativeCorrectionRound_badRequest() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("correction-round", "-1");
+
+        request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.BAD_REQUEST, TextParticipationDTO.class, params);
+
+        assertThat(resultRepository.existsBySubmissionId(textSubmission.getId())).as("no result is created for a negative correction round").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void retrieveParticipationForSubmission_correctionRoundBeyondExercise_badRequest() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        var params = new LinkedMultiValueMap<String, String>();
+        // a course exercise has exactly one correction round, so round 1 is the first round that does not exist
+        params.add("correction-round", "1");
+
+        request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.BAD_REQUEST, TextParticipationDTO.class, params);
+
+        assertThat(resultRepository.existsBySubmissionId(textSubmission.getId())).as("no result is created for a correction round the exercise does not have").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getTextSubmissionWithoutAssessmentAndLock_correctionRoundBeyondExercise_badRequest() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        exerciseDueDatePassed();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("lock", "true");
+        params.add("correction-round", "1");
+
+        request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.BAD_REQUEST, TextSubmissionWithoutAssessmentDTO.class,
+                params);
+
+        assertThat(resultRepository.existsBySubmissionId(textSubmission.getId())).as("no result is created for a correction round the exercise does not have").isFalse();
     }
 
     @Test
@@ -357,7 +423,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
         TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
                 new HashSet<>());
 
@@ -373,7 +439,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
         TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
                 new HashSet<>());
 
@@ -459,8 +525,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(new ArrayList<>(), null, null);
 
-        ResultDTO result = saveOrSubmitTextAssessment(participationId(submissionWithoutAssessment), Objects.requireNonNull(latestResultId(submissionWithoutAssessment)),
-                textAssessmentDTO, submit, HttpStatus.OK);
+        var latestResultId = latestResultId(submissionWithoutAssessment);
+        assertThat(latestResultId).isNotNull();
+        ResultDTO result = saveOrSubmitTextAssessment(participationId(submissionWithoutAssessment), latestResultId, textAssessmentDTO, submit, HttpStatus.OK);
         assertThat(result).as("saved result found").isNotNull();
         // The student of the participation is hidden for non-instructors: ResultDTO.participation() (ParticipationDTO) structurally carries no student field.
         assertThat(result.participation()).as("participation of result is present (student is structurally omitted)").isNotNull();
@@ -473,8 +540,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // feedbacks omitted entirely (null), not just an empty list: this used to NPE/500 on the unguarded feedbacks.stream() path.
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(null, null, null);
 
-        ResultDTO result = request.postWithResponseBody("/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/"
-                + Objects.requireNonNull(latestResultId(submissionWithoutAssessment)) + "/submit-text-assessment", textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
+        ResultDTO result = request.postWithResponseBody(
+                "/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/" + latestResultId(submissionWithoutAssessment) + "/submit-text-assessment",
+                textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
 
         assertThat(result).as("submitting an assessment with omitted feedbacks returns 200 (not 500)").isNotNull();
     }
@@ -486,8 +554,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(new ArrayList<>(), null, null);
 
-        ResultDTO result = saveOrSubmitTextAssessment(1343L, Objects.requireNonNull(latestResultId(submissionWithoutAssessment)), textAssessmentDTO, submit,
-                HttpStatus.BAD_REQUEST);
+        var latestResultId = latestResultId(submissionWithoutAssessment);
+        assertThat(latestResultId).isNotNull();
+        ResultDTO result = saveOrSubmitTextAssessment(1343L, latestResultId, textAssessmentDTO, submit, HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
     }
 
@@ -1125,11 +1194,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 200L);
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 200L);
 
-        Course course = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
-                Course.class);
-        Exercise exercise = (Exercise) course.getExercises().toArray()[0];
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
+        CourseAssessmentDashboardDTO dashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard",
+                HttpStatus.OK, CourseAssessmentDashboardDTO.class);
+        CourseAssessmentDashboardDTO.AssessmentExerciseDTO exercise = dashboard.exercises().iterator().next();
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds().getFirst().inTime()).isEqualTo(1L);
     }
 
     @Test
@@ -1290,8 +1359,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAthenaEnabled() throws Exception {
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
-        textExerciseRepository.save(textExercise);
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseRepository.save(course);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();

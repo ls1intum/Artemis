@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
  * <strong>Entry lifetimes.</strong> Most of these caches are invalidated explicitly by their writers and are therefore
  * requested without expiry, which is what the Hazelcast map configuration did for them before. The few that carried a
  * time-to-live keep it, declared in {@code timeToLivePerCache} at the one place that constructs this manager rather than
- * in backend configuration a reader of the call site would never find.
+ * in provider configuration a reader of the call site would never find.
  */
 public class DistributedDataCacheManager implements CacheManager {
 

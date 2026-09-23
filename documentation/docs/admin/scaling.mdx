@@ -1,7 +1,7 @@
 ---
 id: scaling
 title: Scaling Artemis
-sidebar_label: Scaling & Sizing
+sidebar_label: 'Scaling & Sizing'
 description: "How to size an Artemis installation: how many servers, how much CPU and memory, when to add nodes, and what the measurements show."
 ---
 
@@ -10,8 +10,6 @@ import { CalloutVariant } from "../../src/components/Callout/Callout.types";
 import Image, { ImageSize } from "../../src/components/Image/Image";
 
 import deploymentSingleMulti from "./assets/scaling/deployment_single_multi.png";
-
-# Scaling Artemis
 
 This is the reference for capacity planning and hardware requirements in an Artemis deployment. It
 answers the four questions that come up before an installation exists, and again before the first large
@@ -30,8 +28,6 @@ means the same thing.
 Everything here is either measured or marked as an estimate. The measurements come from
 [benchmark runs](/admin/benchmarking-tool#measured-results) against real deployments. This page carries
 the conclusions and links to the numbers rather than repeating them.
-
----
 
 ## Start here
 
@@ -55,8 +51,6 @@ second machine to take over if it fails while the exam is running.
   and less error-prone than assembling a cluster by hand.
 
 </Callout>
-
----
 
 ## The two kinds of node
 
@@ -87,8 +81,6 @@ during the exam arrives in minutes rather than seconds. Spending the other way r
 many build agents behind too few core nodes gain you no capacity, because students cannot reach the exam
 to produce builds in the first place.
 
----
-
 ## One machine or several
 
 <Image
@@ -109,7 +101,7 @@ At the same total cost, several small core nodes usually beat one large one:
   it finds the other nodes through the
   [service registry](/admin/production-setup/multiple-artemis-instances#discovery-service), which the
   setup pages also call the discovery service; with
-  [Redis](/developer/guidelines/distributed-data#redis-needs-no-service-registry) no registry is needed at
+  [Redis](/admin/production-setup/distributed-data#redis-does-not-need-a-service-registry) no registry is needed at
   all. Either way, nothing has to be reconfigured on the nodes that are already running.
 - **Load really does spread.** In both measured cluster runs the traffic reached all three core nodes.
   One of them was busier than the other two, but the other two were carrying a substantial share of the
@@ -122,8 +114,6 @@ repositories, a
 scheduled tasks and WebSocket connections consistent across the nodes, and a load balancer in front of
 them all. None of these turned out to be expensive in practice: see
 [what not to spend on](#what-not-to-spend-on).
-
----
 
 ## A starting point for sizing
 
@@ -165,8 +155,6 @@ Two adjustments worth making to the units:
 A build agent can run several build jobs at the same time. Budget at least 2 CPUs and 2 GB of memory for
 each concurrent job on that machine, and do not raise the number of concurrent jobs beyond what the
 machine's own CPUs and memory can support.
-
----
 
 ## What has been measured
 
@@ -216,8 +204,6 @@ numbers together: on its own, neither of them says anything.
 
 </Callout>
 
----
-
 ## What to scale when
 
 When an installation already exists and something is slow, match the symptom to the resource rather than
@@ -244,8 +230,6 @@ adding capacity everywhere. The middle column is what to check before spending m
 
 </Callout>
 
----
-
 ## Everything else in the deployment
 
 Outside the core nodes and the build agents, capacity planning is mostly a matter of giving each
@@ -255,7 +239,7 @@ component one machine and knowing what would actually increase its load.
 | --- | --- | --- | --- |
 | Database | The dataset, not the user count | Under half of one machine | [Database Tips](/admin/database-tips) |
 | Repository storage | Total repository volume | ~11% of one machine | [File system](/admin/production-setup/multiple-artemis-instances#file-system) |
-| Coordination (Hazelcast or Redis) | Number of nodes, not users | ~10% CPU and 44 MB of memory (measured on Redis; Hazelcast was not measured separately) | [Database cache](/admin/production-setup/multiple-artemis-instances#database-cache), [Distributed Data](/developer/guidelines/distributed-data) |
+| Coordination (Hazelcast or Redis) | Number of nodes, not users | ~10% CPU and 44 MB of memory (measured on Redis; Hazelcast was not measured separately) | [Database cache](/admin/production-setup/multiple-artemis-instances#database-cache), [Distributed Data](/admin/production-setup/distributed-data) |
 | Load balancer / reverse proxy | Request and git traffic | 8-11% of one machine | [nginx configuration](/admin/production-setup/multiple-artemis-instances#nginx-configuration), [configuration templates](/admin/production-setup/additional-tips#nginx-configuration-templates) |
 | Service registry (Hazelcast only) | Number of nodes | Negligible | [Discovery service](/admin/production-setup/multiple-artemis-instances#discovery-service) |
 | Global search | How much content is indexed, and the embedding strategy chosen | Not part of the exam benchmark | [Global Search & Weaviate](/admin/global-search-weaviate) |
@@ -272,8 +256,6 @@ for at all. The [Cleanup Service](/admin/cleanup-service) and the
 [automatic nightly cleanup](/admin/production-setup/additional-tips#automatic-cleanup) remove it, which is
 cheaper than buying storage for data that nobody needs.
 
----
-
 ## What not to spend on
 
 The supporting services never came close to a limit in any measurement: the repository storage used about
@@ -288,8 +270,6 @@ Two more places where money does not help:
   before they ran out of processor, and started swapping to disk under load.
 - **Extra build agents behind too few core nodes.** How quickly feedback arrives does not matter if
   students cannot reach the exam in the first place.
-
----
 
 ## Knowing when to scale
 
@@ -314,8 +294,6 @@ installation slows down without discovering it during a real exam.
 to record, so that a result still means something after the hardware or the Artemis version changes.
 Results from other institutions are very welcome.
 
----
-
 ## Related documentation
 
 **Setting up the deployment**
@@ -324,6 +302,8 @@ Results from other institutions are very welcome.
   build agents, coordination, WebSockets, the shared file system and nginx
 - [Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup) covers the
   built-in version control and build system
+- [LocalCI Build Runners](/admin/production-setup/build-runners) explains how a build agent executes a
+  build, and how to choose between the Docker and Kubernetes runners
 - [Jenkins and LocalVC Setup](/admin/jenkins-localvc) covers the external CI alternative and its build
   agents
 - [Additional Production Setup Tips](/admin/production-setup/additional-tips) collects systemd units,
@@ -342,7 +322,7 @@ Results from other institutions are very welcome.
 
 - [Benchmarking Tool](/admin/benchmarking-tool) holds the tool, the scenarios and the full measured
   results behind this page
-- [Distributed Data](/developer/guidelines/distributed-data) explains how cross-node state works and how
+- [Distributed Data](/admin/production-setup/distributed-data) explains how cross-node state works and how
   to choose between Hazelcast and Redis
 - [Performance](/developer/guidelines/performance) documents the server-side practices that keep the
   database load low in the first place

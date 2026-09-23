@@ -1,21 +1,20 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
-import java.io.IOException;
 import java.util.List;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 @Converter
 public class LectureTranscriptionSegmentConverter implements AttributeConverter<List<LectureTranscriptionSegment>, String> {
 
-    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
     @Override
     public String convertToDatabaseColumn(List<LectureTranscriptionSegment> transcriptionSegments) {
@@ -25,7 +24,7 @@ public class LectureTranscriptionSegmentConverter implements AttributeConverter<
         try {
             return objectMapper.writeValueAsString(transcriptionSegments);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new IllegalArgumentException("Could not convert list of transcription segments to JSON", e);
         }
     }
@@ -45,7 +44,7 @@ public class LectureTranscriptionSegmentConverter implements AttributeConverter<
 
             return objectMapper.readValue(jsonData, type);
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new IllegalArgumentException("Could not convert JSON to list of transcription segments", e);
         }
     }

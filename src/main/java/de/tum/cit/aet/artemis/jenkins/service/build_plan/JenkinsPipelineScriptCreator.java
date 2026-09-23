@@ -71,7 +71,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
      */
     private String loadPipelineScript(final ProgrammingExercise exercise, final Optional<ProjectType> projectType) {
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        final boolean isSequentialTestRuns = exercise.getBuildConfig().hasSequentialTestRuns();
+        final boolean isSequentialTestRuns = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).hasSequentialTestRuns();
 
         final Path pipelinePath = buildResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
         final Resource resource = resourceLoaderService.getResource(pipelinePath);
@@ -101,7 +101,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
         final var pipelineScriptFilename = "pipeline.groovy";
         final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
-        final var programmingLanguageName = programmingLanguage.name().toLowerCase();
+        final var programmingLanguageName = programmingLanguage.name().toLowerCase(Locale.ROOT);
         final Optional<String> projectTypeName = getProjectTypeName(programmingLanguage, projectType);
 
         Path resourcePath = Path.of("templates", "jenkins", programmingLanguageName);

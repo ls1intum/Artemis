@@ -32,9 +32,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
@@ -50,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
  * Active only when {@link SharingEnabled} matches; otherwise the controller is not loaded.
  * </p>
  */
+@FeatureUsage("authoring/sharing")
 @RestController
 @RequestMapping("api/programming/sharing/")
 @Conditional(SharingEnabled.class)
@@ -57,6 +63,8 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
 public class ExerciseSharingResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
+
+    private static final String ENTITY_NAME = "programmingExercise";
 
     /**
      * FileInputStream wrapper that deletes the underlying temporary file on close.
@@ -97,11 +105,15 @@ public class ExerciseSharingResource {
 
     private final ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, SharingConnectorService sharingConnectorService,
-            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService) {
+            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.exerciseSharingService = exerciseSharingService;
         this.programmingExerciseImportFromSharingService = programmingExerciseImportFromSharingService;
         this.sharingConnectorService = sharingConnectorService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -144,15 +156,21 @@ public class ExerciseSharingResource {
      * </p>
      *
      * @param sharingSetupInfo details required to import (exercise metadata, templates, etc.)
-     * @return {@code 200 OK} with the created {@link ProgrammingExercise}; {@code 500 Internal Server Error}
-     *         on import failures (e.g., VCS operations, invalid payload, IO/URI issues)
+     * @return {@code 200 OK} with the created exercise; {@code 400 Bad Request} when the basket reference is
+     *         missing; {@code 500 Internal Server Error} on import failures (e.g., VCS operations, IO/URI issues)
      */
     @PostMapping("setup-import")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
+    public ResponseEntity<ProgrammingExerciseResponseDTO> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
+        // The whole import is driven by the basket reference; without it the service would dereference null.
+        if (sharingSetupInfo.sharingInfo() == null) {
+            throw new BadRequestAlertException("The sharing information is missing", ENTITY_NAME, "sharingInfoMissing");
+        }
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
-            return ResponseEntity.ok().body(exercise);
+            // The configuration is a row of its own that names the exercise, so the response reads it here.
+            return ResponseEntity.ok()
+                    .body(ProgrammingExerciseResponseDTO.of(exercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())));
         }
         catch (GitAPIException | SharingException | IOException | URISyntaxException e) {
             log.error("Error importing exercise from sharing platform", e);
@@ -168,38 +186,37 @@ public class ExerciseSharingResource {
      * </p>
      *
      * @param sharingInfo basket-scoped reference to an exercise; also carries a checksum for validation
-     * @return {@code 200 OK} with the {@link ProgrammingExercise} details; {@code 400 Bad Request}
+     * @return {@code 200 OK} with the exercise details; {@code 400 Bad Request}
      *         on checksum failure; {@code 404 Not Found} if the exercise cannot be resolved
      */
     // TODO: we should NOT use a POST request for a GET Operation
     @PostMapping("import/basket/exercise-details")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
+    public ResponseEntity<ImportProgrammingExerciseRequestDTO> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
         if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKey())) {
             return ResponseEntity.badRequest().build();
         }
-        ProgrammingExercise exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
+        // The details object backs the whole create form and is posted straight back to setup-import, so the response
+        // deliberately uses the very same record as that request.
+        ImportProgrammingExerciseRequestDTO exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
         return ResponseEntity.ok().body(exerciseDetails);
     }
 
     /**
-     * POST {@code api/programming/sharing/export/{exerciseId}}
+     * POST {@code api/programming/sharing/export}
      * <p>
      * Exports a programming exercise to the Sharing Platform and returns a one-time URL that the client
      * can follow. The method appends a {@code callBack} parameter (the UI-return URL) to the generated link.
      * </p>
      *
-     * @param callBackUrl     URL the Sharing Platform should redirect to after export completes
-     * @param exerciseIdQuery Artemis exercise identifier to export (provided as a query parameter; preferred)
-     * @param exerciseIdPath  Artemis exercise identifier to export (provided as a legacy path variable; deprecated)
+     * @param callBackUrl URL the Sharing Platform should redirect to after export completes
+     * @param exerciseId  Artemis exercise identifier to export
      * @return {@code 200 OK} with a JSON-quoted URL string pointing to the Sharing Platform;
      *         {@code 500 Internal Server Error} if export fails
      */
-    @PostMapping({ SHARING_EXPORT_RESOURCE_PATH, SHARING_EXPORT_RESOURCE_PATH + "/{exerciseId}" })
+    @PostMapping(SHARING_EXPORT_RESOURCE_PATH)
     @EnforceAtLeastEditor
-    public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @RequestParam(name = "exerciseId", required = false) Long exerciseIdQuery,
-            @PathVariable(name = "exerciseId", required = false) Long exerciseIdPath) {
-        Long exerciseId = exerciseIdQuery != null ? exerciseIdQuery : exerciseIdPath;
+    public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @RequestParam(name = "exerciseId") Long exerciseId) {
         try {
             URI uriRedirect = exerciseSharingService.exportExerciseToSharing(exerciseId).toURI();
             uriRedirect = UriBuilder.fromUri(uriRedirect).queryParam("callBack", callBackUrl).build();

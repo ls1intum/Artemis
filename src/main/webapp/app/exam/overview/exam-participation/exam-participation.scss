@@ -49,6 +49,16 @@
     background-color: var(--bs-body-bg);
 }
 
+/* The active exercise fills the height its column offers rather than being
+   sized by its own content. An exercise whose content IS a viewport-filling
+   surface — the modeling canvas, the online code editor — cannot derive a
+   height from itself, and a content-sized wrapper collapses it to nothing.
+   Only the active page is laid out; the others are `hidden`, i.e. display:none. */
+.exam-participation__exercise {
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
 .content-exam-height {
     height: calc(100vh - var(--exam-height-offset));
     overflow-y: auto;

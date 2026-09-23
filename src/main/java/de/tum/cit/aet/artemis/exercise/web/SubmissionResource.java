@@ -31,12 +31,14 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -54,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizer
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("submission/submissions")
 @RestController
 @RequestMapping("api/exercise/")
 public class SubmissionResource {
@@ -145,7 +148,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/test-run-submissions")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Submission>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<SubmissionResponseDTO>> getTestRunSubmissionsForAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get all test run submissions for exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!exercise.isExamExercise()) {
@@ -171,7 +174,7 @@ public class SubmissionResource {
                 latestSubmission.getResults().stream().filter(Objects::nonNull)
                         .forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
             }
-            return ResponseEntity.ok().body(List.of(latestSubmission));
+            return ResponseEntity.ok().body(List.of(SubmissionResponseDTO.of(latestSubmission)));
         }
         else {
             return ResponseEntity.ok(List.of());
@@ -230,7 +233,7 @@ public class SubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/submissions-for-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<Submission>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<SubmissionResponseDTO>> getSubmissionsOnPageWithSize(@PathVariable Long exerciseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get all Submissions for import : {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

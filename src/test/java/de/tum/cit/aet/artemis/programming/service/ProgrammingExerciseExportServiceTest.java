@@ -1,16 +1,25 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
@@ -19,20 +28,33 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.RepositoryExportContent;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -48,6 +70,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progexexportservice";
+
+    /** Fixed instead of relative to now, so a failure reproduces with the same dates. */
+    private static final ZonedDateTime DEADLINE = ZonedDateTime.parse("2200-01-10T12:00:00Z");
 
     /** The options course and exam archiving use: export everyone, change nothing. */
     private static final RepositoryExportOptionsDTO ARCHIVAL_OPTIONS = new RepositoryExportOptionsDTO(true, false, false, null, false, false, false, false, false);
@@ -76,11 +101,17 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     @Autowired
     private TempFileUtilService tempFileUtilService;
 
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryService auxiliaryRepositoryService;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
@@ -134,7 +165,8 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
      * The manual repository export and the data export ask for the history even when no rewriting option is set, because
      * an instructor may untick every checkbox in the export dialog. Deriving the content from the options alone would
      * hand them a snapshot with no commits at all, which is the opposite of what unticking "combine student commits"
-     * asks for, so those callers keep the checkout and the directory layout they have always produced.
+     * asks for. Those callers keep the directory layout they have always produced, but no longer pay for a checkout to
+     * get it: the repository is materialized straight from the bare repository.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -155,7 +187,11 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         // A .git directory on its own proves nothing; the commits are what unticking "combine student commits" is about.
         try (Git git = Git.open(exportedRepository.toFile())) {
             assertThat(git.log().call()).as("the student's commits must survive the export").isNotEmpty();
+            assertThat(git.status().call().isClean()).as("the materialized working tree must match the index it ships with").isTrue();
         }
+        // The history no longer costs a clone: without a rewriting option the repository is materialized straight from
+        // the bare repository, so the export never asks for a checkout directory.
+        verify(fileService, never()).createTemporaryDirectory(any(Path.class), any(), anyLong());
     }
 
     /**
@@ -184,6 +220,36 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         try (var filesInOutputDir = Files.list(outputDir)) {
             assertThat(filesInOutputDir).as("a failed export must not leave a truncated archive behind").isEmpty();
         }
+    }
+
+    /**
+     * More than one repository runs on a thread pool, and the tasks there collect their errors separately from the
+     * list the caller passed, because that list is not required to be thread safe. This asserts the handover back to
+     * the caller: without it a multi-repository export would report no errors at all, and the course archive would
+     * tell an instructor nothing about the repository it skipped.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositories_shouldReportAnUnreadableRepositoryAlongsideTheOnesItExported() throws Exception {
+        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(seedStudentParticipations(TEST_PREFIX + "student1"));
+        var unreadable = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student2");
+        // A URI for a repository that was never created on disk, as left behind by a failed participation setup.
+        String projectKey = programmingExercise.getProjectKey();
+        String missingSlug = localVCLocalCITestService.getRepositorySlug(projectKey, "never-created");
+        unreadable.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(TEST_PREFIX + "student2", projectKey, missingSlug));
+        participations.add(studentParticipationTestRepository.save(unreadable));
+
+        Path outputDir = tempFileUtilService.createTempDirectory("archival-export-partial");
+        // Deliberately a plain list, which is what exportStudentRepositoriesToZipFile passes.
+        List<String> exportErrors = new ArrayList<>();
+
+        List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, exportErrors,
+                ARCHIVAL_OPTIONS, RepositoryExportContent.WORKING_TREE_ONLY);
+
+        assertThat(participations).as("two repositories, so that the pool is used rather than the single-repository path").hasSize(2);
+        assertThat(exportedRepositories).as("the readable repository still has to be exported").hasSize(1);
+        assertThat(exportErrors).as("an export that skipped a repository has to say which one").anyMatch(error -> error.contains(unreadable.getId().toString()));
     }
 
     @Test
@@ -274,6 +340,20 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         }
     }
 
+    /**
+     * Seeds a student repository the way a started exercise leaves it: the commit that set the exercise up, and the student's own work on top of it.
+     * <p>
+     * Combining and anonymizing commits both rewrite the history back to the setup commit and refuse to run without one, so a repository that only carries the student's
+     * commits is not a repository those options can be tested against.
+     */
+    private ProgrammingExerciseStudentParticipation seedStudentParticipationOnTopOfTheExerciseSetup(String login) throws Exception {
+        var participation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, login);
+        var repository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("README.md", "the exercise"), SET_UP_TEMPLATE_FOR_EXERCISE);
+        RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("src/Main.java", "public class Main {}"), "my solution");
+        return studentParticipationTestRepository.save(participation);
+    }
+
     private List<ProgrammingExerciseStudentParticipation> seedStudentParticipations(String... logins) throws Exception {
         List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>();
         for (String login : logins) {
@@ -304,7 +384,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     void testExportProgrammingExerciseRepositories_shouldKeepSecondaryBranchesAndTags() throws Exception {
         var baseRepositories = createAndSeedBaseRepositories();
         var templateRepository = baseRepositories.templateRepository();
-        var workingCopy = templateRepository.workingCopyGitRepo;
+        var workingCopy = templateRepository.workingCopy();
         String defaultBranch = workingCopy.getRepository().getBranch();
 
         workingCopy.tag().setName("v1.0").setMessage("annotated release tag").setAnnotated(true).call();
@@ -374,7 +454,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         auxiliaryRepository.setExercise(programmingExercise);
         // The association is an ordered list, so the child has to be saved through the exercise: persisting it on its
         // own leaves the order column null and every later read of the exercise fails.
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
@@ -401,5 +481,565 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(exportErrors).anyMatch(error -> error.contains("the repository uri is not defined"));
         // The solution and tests repositories are unaffected and still make it into the export.
         assertThat(exportedRepositories).hasSize(2);
+    }
+
+    /**
+     * The export options that rewrite a repository - adding the participant name, combining commits, anonymizing and
+     * normalizing the code style - are the only ones that need a checkout, and the manual repository download is the
+     * caller that sets them. Everything the archiving tests above cover runs on the other path, so none of this code is
+     * reached by them.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositoriesToZipFile_withTheRewritingOptions_producesOneArchiveNamedAfterTheParticipants() throws Exception {
+        List<ProgrammingExerciseStudentParticipation> participations = List.of(seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1"),
+                seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student2"));
+        RepositoryExportOptionsDTO rewritingOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, true, true, false, true);
+
+        File exportedArchive = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, participations, rewritingOptions, Map.of());
+
+        assertThat(exportedArchive).as("the download hands back one archive for the whole exercise").isNotNull();
+        assertThat(exportedArchive.toPath()).isRegularFile();
+        assertThat(exportedArchive.getName()).as("the archive is named after the course and the exercise")
+                .startsWith(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName()).endsWith(".zip");
+        byte[] zipContent = Files.readAllBytes(exportedArchive.toPath());
+        for (ProgrammingExerciseStudentParticipation participation : participations) {
+            assertThat(ZipTestUtil.readEntryAsString(zipContent, participation.getParticipantIdentifier() + "/src/Main.java"))
+                    .as("the repository of %s is part of the archive, under a directory named after them", participation.getParticipantIdentifier())
+                    .isEqualTo("public class Main {}");
+        }
+        // An export that is not anonymized still drops the remote, so nothing in the archive points back at the Artemis instance it came from.
+        assertThat(ZipTestUtil.readEntryAsString(zipContent, participations.getFirst().getParticipantIdentifier() + "/.git/config")).as("the exported clone keeps no remote")
+                .isNotNull().doesNotContain("[remote");
+    }
+
+    /**
+     * Anonymizing is the one rewriting option that has to change what the archive reveals: the participant must not be
+     * identifiable from it, neither through the directory name nor through the commit authors.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositoriesToZipFile_whenAnonymizing_namesNoParticipant() throws Exception {
+        List<ProgrammingExerciseStudentParticipation> participations = List.of(seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1"));
+        RepositoryExportOptionsDTO anonymizingOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, false, true, true, false);
+
+        File exportedArchive = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, participations, anonymizingOptions, Map.of());
+
+        assertThat(exportedArchive).as("anonymizing still produces an archive").isNotNull();
+        byte[] zipContent = Files.readAllBytes(exportedArchive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zipContent, "-student-submission.git/src/Main.java")).as("the submitted work is exported under an anonymous directory")
+                .isEqualTo("public class Main {}");
+        assertThat(ZipTestUtil.listEntryNames(zipContent)).as("no entry names the student").noneMatch(name -> name.contains(TEST_PREFIX + "student1"));
+
+        // The directory name is the smaller half of anonymizing. The identity a reviewer would actually go looking for sits in the commits themselves.
+        Path extractedDir = tempFileUtilService.createTempDirectory("anonymized-export-extracted");
+        ZipTestUtil.extractZip(zipContent, extractedDir);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        try (var repositoryDirectories = Files.list(extractedDir)) {
+            Path exportedRepository = repositoryDirectories.findFirst().orElseThrow();
+            try (Git git = Git.open(exportedRepository.toFile())) {
+                assertThat(git.log().call()).as("the exported history is not empty").isNotEmpty().allSatisfy(commit -> {
+                    assertThat(commit.getAuthorIdent().getName()).as("no commit is authored by the student").isNotEqualTo(student.getName());
+                    assertThat(commit.getAuthorIdent().getEmailAddress()).as("no commit carries the student's address").isNotEqualTo(student.getEmail());
+                    assertThat(commit.getCommitterIdent().getName()).as("no commit is committed by the student").isNotEqualTo(student.getName());
+                    assertThat(commit.getCommitterIdent().getEmailAddress()).as("no commit carries the student's address as committer").isNotEqualTo(student.getEmail());
+                });
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportByParticipationIds_asTutor_ignoresIdentityRevealingOptions() throws Exception {
+        var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
+        var repository = RepositoryExportTestUtil.getWorkingCopyForParticipation(localVCLocalCITestService, participation);
+        String pom = "<project><name>Exercise</name><artifactId>exercise</artifactId></project>";
+        String project = "<projectDescription><name>Exercise</name></projectDescription>";
+        RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("pom.xml", pom, ".project", project), "project files");
+        var options = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
+
+        File archive = request.postWithResponseBodyFile(exportByParticipationIdsUrl(programmingExercise, participation), options, HttpStatus.OK);
+
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.listEntryNames(zip)).noneMatch(name -> name.contains(TEST_PREFIX + "student1"));
+        assertThat(ZipTestUtil.readEntryAsString(zip, "-student-submission.git/pom.xml")).isEqualTo(pom);
+        assertThat(ZipTestUtil.readEntryAsString(zip, "-student-submission.git/.project")).isEqualTo(project);
+        assertThat(ZipTestUtil.readEntryAsString(zip, "-student-submission.git/src/Main.java")).isEqualTo("public class Main {}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportByParticipantIdentifiers_asTutor_forbidden() throws Exception {
+        assertExportByParticipantIdentifiersForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void exportByParticipantIdentifiers_asEditor_forbidden() throws Exception {
+        assertExportByParticipantIdentifiersForbidden();
+    }
+
+    private void assertExportByParticipantIdentifiersForbidden() throws Exception {
+        seedStudentParticipations(TEST_PREFIX + "student1");
+        request.post("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + TEST_PREFIX + "student1",
+                new RepositoryExportOptionsDTO(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportByParticipantIdentifiers_asInstructor_keepsNamedExport() throws Exception {
+        seedStudentParticipations(TEST_PREFIX + "student1");
+        File archive = request.postWithResponseBodyFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/" + TEST_PREFIX + "student1",
+                new RepositoryExportOptionsDTO(), HttpStatus.OK);
+        assertThat(ZipTestUtil.readEntryAsString(Files.readAllBytes(archive.toPath()), TEST_PREFIX + "student1/src/Main.java")).isEqualTo("public class Main {}");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportByParticipationIds_asTutor_cannotExportAll() throws Exception {
+        var participation = seedStudentParticipationOnTopOfTheExerciseSetup(TEST_PREFIX + "student1");
+        request.post(exportByParticipationIdsUrl(programmingExercise, participation), ARCHIVAL_OPTIONS, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportByParticipationIds_fromAnotherExercise_forbidden() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        request.post(exportByParticipationIdsUrl(otherExercise, participation), new RepositoryExportOptionsDTO(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void exportStudentSnapshot_asTutor_hidesParticipantInFilename() throws Exception {
+        File archive = exportStudentSnapshot();
+        assertThat(archive.getName()).doesNotContain(TEST_PREFIX + "student1").endsWith("-student-submission.git.zip");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void exportStudentSnapshot_asOwner_keepsParticipantInFilename() throws Exception {
+        assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportStudentSnapshot_asInstructor_keepsParticipantInFilename() throws Exception {
+        assertThat(exportStudentSnapshot().getName()).contains(TEST_PREFIX + "student1");
+    }
+
+    private File exportStudentSnapshot() throws Exception {
+        var participation = seedStudentParticipations(TEST_PREFIX + "student1").getFirst();
+        File archive = request.getFile(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + participation.getId(), HttpStatus.OK);
+        byte[] zip = Files.readAllBytes(archive.toPath());
+        assertThat(ZipTestUtil.readEntryAsString(zip, "src/Main.java")).isEqualTo("public class Main {}");
+        assertThat(ZipTestUtil.listEntryNames(zip)).noneMatch(name -> name.contains(".git/"));
+        return archive;
+    }
+
+    private String exportByParticipationIdsUrl(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+        return "/api/programming/programming-exercises/" + exercise.getId() + "/export-repos-by-participation-ids/" + participation.getId();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositoriesToZipFile_withoutAnyParticipation_handsBackNothing() {
+        // Nothing to zip is not an error: an instructor can filter the export down to a set of students that turns out to be empty.
+        File exportedArchive = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, List.of(), ARCHIVAL_OPTIONS, Map.of());
+
+        assertThat(exportedArchive).as("an export without a single repository produces no archive").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositories_shouldSkipAParticipationWithoutARepository() throws Exception {
+        // Participations of old exercises can be stored without a repository URI. There is nothing to export for them, and nothing to report either.
+        List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
+        var participationWithoutRepository = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student2");
+        participationWithoutRepository.setRepositoryUri((String) null);
+        participations = new ArrayList<>(participations);
+        participations.add(studentParticipationTestRepository.save(participationWithoutRepository));
+        Path outputDir = tempFileUtilService.createTempDirectory("export-without-repository");
+        List<String> exportErrors = new ArrayList<>();
+
+        List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, exportErrors,
+                ARCHIVAL_OPTIONS, RepositoryExportContent.WORKING_TREE_ONLY);
+
+        assertThat(exportedRepositories).as("only the participation that has a repository is exported").hasSize(1);
+        assertThat(exportErrors).as("a participation without a repository is skipped, not reported as a failure").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositories_shouldSkipPracticeParticipationsWhenTheyAreExcluded() throws Exception {
+        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(seedStudentParticipations(TEST_PREFIX + "student1"));
+        var practiceParticipation = participations.getFirst();
+        practiceParticipation.setPracticeMode(true);
+        participations.set(0, studentParticipationTestRepository.save(practiceParticipation));
+        Path outputDir = tempFileUtilService.createTempDirectory("export-without-practice");
+        RepositoryExportOptionsDTO withoutPracticeSubmissions = new RepositoryExportOptionsDTO(true, false, false, null, true, false, false, false, false);
+        List<String> exportErrors = new ArrayList<>();
+
+        List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, exportErrors,
+                withoutPracticeSubmissions, RepositoryExportContent.WORKING_TREE_ONLY);
+
+        assertThat(exportedRepositories).as("a practice repository is left out when practice submissions are excluded").isEmpty();
+        assertThat(exportErrors).as("excluding a participation is not a failure").isEmpty();
+        assertThat(outputDir).as("nothing is written for an excluded participation").isEmptyDirectory();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesTheRepositoriesTheProblemStatementAndTheExerciseDetails() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setProblemStatement("Implement the sorting strategies.");
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        List<String> exportErrors = new ArrayList<>();
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, exportErrors);
+
+        assertThat(exportErrors).as("a complete exercise exports without errors").isEmpty();
+        assertThat(exportedArchive).isRegularFile();
+        assertThat(exportedArchive.getFileName().toString()).as("the archive is named after the course and the exercise")
+                .startsWith("Material-" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName()).endsWith(".zip");
+        byte[] zipContent = Files.readAllBytes(exportedArchive);
+        assertThat(ZipTestUtil.readEntryAsString(zipContent, "Problem-Statement-" + programmingExercise.getSanitizedExerciseTitle() + ".md"))
+                .as("the problem statement is part of the material").isEqualTo("Implement the sorting strategies.");
+        assertThat(ZipTestUtil.readEntryAsString(zipContent, "Exercise-Details-" + programmingExercise.getTitle() + ".json")).as("the exercise details are part of the material")
+                .isNotNull().contains(programmingExercise.getTitle());
+    }
+
+    /**
+     * The exercise details file is the create form of the import from file and of the sharing import: the client parses
+     * it and posts it back, so every field those imports bind has to survive the export.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesDetailsTheImportBindsBack() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setProblemStatement("Implement the sorting strategies.");
+        programmingExercise.setCategories(new HashSet<>(Set.of("{\"category\":\"homework\"}")));
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        // the export endpoint hands the service an exercise loaded with its configurations, so the test does the same
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        // the client compares the discriminator with the exercise type it imports, and refuses the archive without it
+        assertThat(details).as("the details keep the exercise type discriminator").contains("\"type\":\"programming\"");
+        assertThat(details).as("no student data and no entity back references are written").doesNotContain("studentParticipations").doesNotContain("\"exercises\"");
+
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+        assertThat(importRequest.title()).isEqualTo(programmingExercise.getTitle());
+        assertThat(importRequest.shortName()).isEqualTo(programmingExercise.getShortName());
+        assertThat(importRequest.problemStatement()).isEqualTo("Implement the sorting strategies.");
+        assertThat(importRequest.categories()).isEqualTo(programmingExercise.getCategories());
+        assertThat(importRequest.maxPoints()).isEqualTo(programmingExercise.getMaxPoints());
+        assertThat(importRequest.programmingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
+        assertThat(importRequest.projectType()).isEqualTo(programmingExercise.getProjectType());
+        assertThat(importRequest.packageName()).isEqualTo(programmingExercise.getPackageName());
+        assertThat(importRequest.allowOfflineIde()).isEqualTo(programmingExercise.isAllowOfflineIde());
+        assertThat(importRequest.buildConfig()).as("the build configuration is part of the create form").isNotNull();
+        assertThat(importRequest.buildConfig().buildScript()).isEqualTo(programmingExerciseUtilService.buildConfigOf(exerciseToExport).getBuildScript());
+
+        // The import creates a new exercise, so it must build fresh configurations instead of adopting the ids of the
+        // exported exercise's configuration rows.
+        var importedExercise = importRequest.toEntity();
+        assertThat(importedExercise.getPlagiarismDetectionConfig()).isNotNull();
+        assertThat(importedExercise.getPlagiarismDetectionConfig().getId()).as("the imported plagiarism configuration does not adopt an id").isNull();
+        assertThat(importedExercise.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(exerciseToExport.getPlagiarismDetectionConfig().getSimilarityThreshold());
+    }
+
+    /**
+     * The file itself carries no configuration id either, because the importer reading it is not necessarily this
+     * version: every released version copies the id of the plagiarism configuration from the request onto the exercise
+     * it creates and clears it only after that exercise was saved, and the association cascades ALL.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesNoConfigurationIds() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(exerciseToExport.getPlagiarismDetectionConfig().getId()).isNotNull();
+        assertThat(exerciseToExport.getTeamAssignmentConfig().getId()).isNotNull();
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        JsonNode written = JsonObjectMapper.get().readTree(details);
+        assertThat(written.get("plagiarismDetectionConfig").get("id")).as("the exported plagiarism configuration carries no id").isNull();
+        assertThat(written.get("teamAssignmentConfig").get("id")).as("the exported team assignment configuration carries no id").isNull();
+        // the settings themselves survive, only the identity is gone
+        assertThat(written.get("plagiarismDetectionConfig").get("similarityThreshold").asInt()).isEqualTo(exerciseToExport.getPlagiarismDetectionConfig().getSimilarityThreshold());
+        assertThat(written.get("teamAssignmentConfig").get("maxTeamSize").asInt()).isEqualTo(10);
+    }
+
+    /**
+     * An importer that has not upgraded copies the id of the plagiarism configuration out of the request and saves the
+     * exercise before clearing it. Such a file therefore has to import into a configuration that is still transient,
+     * so that the save inserts a row instead of reaching persistence with the identity of the exported exercise's row.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_detailsImportUnderAnIdCopyingImporter() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        Long sourceConfigId = exerciseToExport.getPlagiarismDetectionConfig().getId();
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+
+        // what the older mapper does with the request: copy the id, then copy the settings
+        PlagiarismDetectionConfig adopted = new PlagiarismDetectionConfig();
+        adopted.setId(importRequest.plagiarismDetectionConfig().id());
+        importRequest.plagiarismDetectionConfig().applyTo(adopted);
+        assertThat(adopted.getId()).as("the copied configuration stays transient, so the importing instance inserts its own row").isNull();
+
+        ProgrammingExercise imported = importRequest.toEntity();
+        imported.setPlagiarismDetectionConfig(adopted);
+        imported.setId(null);
+        imported.setShortName(programmingExercise.getShortName() + "imp");
+        imported.setTitle(programmingExercise.getTitle() + " imported");
+        imported.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+        var saved = programmingExerciseRepository.save(imported);
+
+        assertThat(saved.getPlagiarismDetectionConfig().getId()).as("the import created its own configuration row").isNotNull().isNotEqualTo(sourceConfigId);
+        var source = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(source.getPlagiarismDetectionConfig().getId()).as("the exported exercise keeps its own configuration row").isEqualTo(sourceConfigId);
+    }
+
+    /**
+     * The sharing import posts the details file back as the create form and drops nothing but the top-level id on the
+     * way (see {@code ExerciseSharingService#getExerciseDetailsFromBasket}). An auxiliary repository that still carried
+     * its id would therefore reach the creation, which rejects it with {@code INVALID_AUXILIARY_REPOSITORY_ID}: a
+     * shared exercise with an auxiliary repository could not be imported at all.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_detailsWithAuxiliaryRepositoriesImportIntoTheSharingCreation() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        // what the sharing import does to the file before it binds it: the exercise id goes, the nested ones stay
+        ObjectNode written = (ObjectNode) JsonObjectMapper.get().readTree(details);
+        written.remove("id");
+        assertThat(written.get("auxiliaryRepositories")).as("the auxiliary repository is part of the create form").hasSize(1);
+        assertThat(written.get("auxiliaryRepositories").get(0).get("id")).as("the exported auxiliary repository carries no id").isNull();
+
+        var importRequest = JsonObjectMapper.get().treeToValue(written, ImportProgrammingExerciseRequestDTO.class);
+        ProgrammingExercise imported = importRequest.toEntity();
+        assertThatCode(() -> auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(imported, imported.getAuxiliaryRepositories()))
+                .as("the shared exercise passes the validation the creation runs").doesNotThrowAnyException();
+        // the repository itself survives, only the identity is gone
+        assertThat(imported.getAuxiliaryRepositories()).hasSize(1);
+        assertThat(imported.getAuxiliaryRepositories().iterator().next().getName()).isEqualTo("solutionhints");
+        assertThat(imported.getAuxiliaryRepositories().iterator().next().getCheckoutDirectory()).isEqualTo("solutionhints");
+    }
+
+    /**
+     * The details file is read back by another instance, which creates a new exercise from it, and every nested record
+     * is bound by a {@code toEntity()} that copies the id through. One id that slips into the file therefore lets an
+     * import write onto a row of the exporting instance, so the file carries no nested id at all: the exercise's own
+     * id and the references to its course and exercise group are the only ones, and the import replaces those.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_writesNoNestedIds() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
+        programmingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        programmingExercise.setTeamAssignmentConfig(teamAssignmentConfig());
+        programmingExercise.setGradingCriteria(new HashSet<>(Set.of(criterionWithInstruction())));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        // No export query loads participations today. They are put on the exercise here so that the file is what the
+        // projection decides rather than what a query happened to fetch: a wider graph must not leak student work.
+        var studentParticipations = seedStudentParticipations(TEST_PREFIX + "student1");
+        exerciseToExport.setStudentParticipations(new HashSet<>(studentParticipations));
+        var templateParticipation = templateParticipationTestRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        ProgrammingSubmission templateSubmission = new ProgrammingSubmission();
+        templateSubmission.setCommitHash("cafebabe1234");
+        templateParticipation.setSubmissions(Set.of(templateSubmission));
+        exerciseToExport.setTemplateParticipation(templateParticipation);
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        JsonNode written = JsonObjectMapper.get().readTree(details);
+        // the fixture has to reach the file, otherwise the sweep below would pass on an empty exercise
+        assertThat(written.get("buildConfig")).as("the build configuration is part of the exported details").isNotNull();
+        assertThat(written.get("gradingCriteria")).as("the rubric is part of the exported details").hasSize(1);
+        assertThat(written.get("auxiliaryRepositories")).as("the auxiliary repository is part of the exported details").hasSize(1);
+        assertThat(written.get("plagiarismDetectionConfig")).as("the plagiarism configuration is part of the exported details").isNotNull();
+        assertThat(written.get("teamAssignmentConfig")).as("the team assignment configuration is part of the exported details").isNotNull();
+
+        assertThat(nestedIdPaths(written, "")).as("no nested id is written into the details file").isEmpty();
+        assertThat(written.has("studentParticipations")).as("no student participation is written into the details file").isFalse();
+        assertThat(details).as("no login of a student is written into the details file").doesNotContain(TEST_PREFIX + "student1");
+        assertThat(details).as("no submission and no build result is written into the details file").doesNotContain("submissions").doesNotContain("cafebabe1234");
+        assertThat(written.get("id")).as("the exercise's own id stays, the import drops it").isNotNull();
+    }
+
+    /**
+     * Collects the path of every {@code id} below the root of the given details node. The course and the exercise group
+     * are references to rows the import replaces with its own target, so their ids are not part of the result.
+     */
+    private static List<String> nestedIdPaths(JsonNode node, String path) {
+        List<String> found = new ArrayList<>();
+        if (node.isArray()) {
+            for (int index = 0; index < node.size(); index++) {
+                found.addAll(nestedIdPaths(node.get(index), path + "[" + index + "]"));
+            }
+            return found;
+        }
+        if (!node.isObject()) {
+            return found;
+        }
+        for (var property : node.properties()) {
+            String childPath = path.isEmpty() ? property.getKey() : path + "." + property.getKey();
+            if ("course".equals(property.getKey()) || "exerciseGroup".equals(property.getKey())) {
+                continue;
+            }
+            if ("id".equals(property.getKey())) {
+                if (!path.isEmpty() && !property.getValue().isNull()) {
+                    found.add(childPath);
+                }
+                continue;
+            }
+            found.addAll(nestedIdPaths(property.getValue(), childPath));
+        }
+        return found;
+    }
+
+    private static TeamAssignmentConfig teamAssignmentConfig() {
+        TeamAssignmentConfig config = new TeamAssignmentConfig();
+        config.setMinTeamSize(1);
+        config.setMaxTeamSize(10);
+        return config;
+    }
+
+    /**
+     * The download export nulls the criterion and instruction ids so that the import can persist them, which strips the
+     * only thing that told two otherwise identical criteria apart. The exported rubric still has to keep both rows.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForDownload_keepsIdenticalGradingCriteria() throws Exception {
+        createAndSeedBaseRepositories();
+        Set<GradingCriterion> criteria = new HashSet<>();
+        criteria.add(criterionWithInstruction());
+        criteria.add(criterionWithInstruction());
+        programmingExercise.setGradingCriteria(criteria);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        var exerciseToExport = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigGradingCriteriaAndCategoriesElseThrow(programmingExercise.getId());
+        assertThat(exerciseToExport.getGradingCriteria()).hasSize(2);
+
+        Path exportedArchive = programmingExerciseExportService.exportProgrammingExerciseForDownload(exerciseToExport, new ArrayList<>());
+
+        String details = ZipTestUtil.readEntryAsString(Files.readAllBytes(exportedArchive), "Exercise-Details-" + programmingExercise.getTitle() + ".json");
+        assertThat(JsonObjectMapper.get().readTree(details).get("gradingCriteria").size()).as("both stored criteria are exported").isEqualTo(2);
+
+        // the import reads the same file, so the second criterion has to survive the request binding and the database
+        var importRequest = JsonObjectMapper.get().readValue(details, ImportProgrammingExerciseRequestDTO.class);
+        assertThat(importRequest.gradingCriteria()).as("both criteria survive the request binding").hasSize(2);
+        var importedCriteria = importRequest.toEntity().getGradingCriteria();
+        assertThat(importedCriteria).as("both criteria become their own entity").hasSize(2);
+
+        importedCriteria.forEach(criterion -> criterion.setExercise(programmingExercise));
+        gradingCriterionRepository.saveAll(importedCriteria);
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId())).as("both imported criteria are stored as their own row")
+                .hasSize(4);
+    }
+
+    private static GradingCriterion criterionWithInstruction() {
+        GradingCriterion criterion = new GradingCriterion();
+        criterion.setTitle("same title");
+        GradingInstruction instruction = new GradingInstruction();
+        instruction.setCredits(1.0);
+        instruction.setGradingScale("good");
+        instruction.setInstructionDescription("same description");
+        instruction.setFeedback("same feedback");
+        instruction.setUsageCount(1);
+        criterion.addStructuredGradingInstruction(instruction);
+        return criterion;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseForArchival_writesTheInstructorAndTheStudentRepositoriesIntoTheGivenDirectory() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise.setProblemStatement("Implement the sorting strategies.");
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        seedStudentParticipations(TEST_PREFIX + "student1");
+        Path exportDir = tempFileUtilService.createTempDirectory("archival");
+        List<String> exportErrors = new ArrayList<>();
+        List<ArchivalReportEntry> archivalReportEntries = new ArrayList<>();
+
+        Optional<Path> exportedExercise = programmingExerciseExportService.exportProgrammingExerciseForArchival(programmingExercise, exportErrors, Optional.of(exportDir),
+                archivalReportEntries);
+
+        assertThat(exportErrors).as("a complete exercise archives without errors").isEmpty();
+        assertThat(exportedExercise).as("archiving writes into the directory it was given").contains(exportDir);
+        List<String> exportedFileNames = listFileNames(exportDir);
+        assertThat(exportedFileNames).as("the three instructor repositories are archived").anyMatch(name -> name.contains("-exercise")).anyMatch(name -> name.contains("-solution"))
+                .anyMatch(name -> name.contains("-tests"));
+        assertThat(exportedFileNames).as("the student repository is archived as well").anyMatch(name -> name.contains(TEST_PREFIX + "student1"));
+        assertThat(exportedFileNames).as("the problem statement is archived next to the repositories")
+                .contains("Problem-Statement-" + programmingExercise.getSanitizedExerciseTitle() + ".md");
+        assertThat(archivalReportEntries).as("the archive reports what it contained").isNotEmpty();
+    }
+
+    private static List<String> listFileNames(Path directory) throws IOException {
+        try (var entries = Files.list(directory)) {
+            return entries.map(path -> path.getFileName().toString()).toList();
+        }
+    }
+
+    /**
+     * Filtering late submissions moves the exported repository back to the last commit that was made before the
+     * deadline, which is how an export for grading stays faithful to what was submitted in time.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositories_whenFilteringLateSubmissions_exportsTheStateOfTheCommitBeforeTheDeadline() throws Exception {
+        var participation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        var repository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        var inTimeCommit = RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("src/Main.java", "public class Main {}"), "in time");
+        RepositoryExportTestUtil.writeFilesAndPush(repository, Map.of("src/Late.java", "public class Late {}"), "after the deadline");
+        participation = studentParticipationTestRepository.save(participation);
+        Path outputDir = tempFileUtilService.createTempDirectory("export-filter-late");
+        RepositoryExportOptionsDTO filterLateSubmissions = new RepositoryExportOptionsDTO(true, true, false, DEADLINE, false, false, false, false, false);
+        List<String> exportErrors = new ArrayList<>();
+
+        List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, List.of(participation),
+                Map.of(participation.getId(), inTimeCommit.getName()), outputDir, exportErrors, filterLateSubmissions, RepositoryExportContent.WITH_HISTORY);
+
+        assertThat(exportErrors).isEmpty();
+        assertThat(exportedRepositories).hasSize(1);
+        Path exportedRepository = exportedRepositories.getFirst();
+        assertThat(exportedRepository).as("filtering rewrites the repository, so it is exported as a directory").isDirectory();
+        assertThat(exportedRepository.resolve("src/Main.java")).as("what was submitted in time is exported").isRegularFile();
+        assertThat(exportedRepository.resolve("src/Late.java")).as("what was submitted after the deadline is not").doesNotExist();
     }
 }

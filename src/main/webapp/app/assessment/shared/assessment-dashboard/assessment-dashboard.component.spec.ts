@@ -10,11 +10,11 @@ import dayjs from 'dayjs/esm';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -49,8 +49,6 @@ describe('AssessmentDashboardComponent', () => {
     let courseManagementService: CourseManagementService;
     let getCourseWithInterestingExercisesForTutorsStub: MockInstance;
     let getStatsForTutorsStub: MockInstance;
-
-    let exerciseService: ExerciseService;
 
     let sortService: SortService;
 
@@ -100,8 +98,11 @@ describe('AssessmentDashboardComponent', () => {
         includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
     } as FileUploadExercise;
 
-    const course = { id: 10, exercises: [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, modelingExercise, textExercise, modelingExercise] } as Course;
-    const exercises = [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, fileUploadExercise, modelingExercise, textExercise];
+    const course = {
+        id: 10,
+        isAtLeastInstructor: true,
+        exercises: [programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, modelingExercise, textExercise, modelingExercise],
+    } as Course;
     const exerciseGroup1 = { id: 141, exercises: [programmingExercise, modelingExercise] } as ExerciseGroup;
     const exerciseGroup2 = { id: 142, exercises: [textExercise, fileUploadExercise] } as ExerciseGroup;
     const exam = { id: 20, exerciseGroups: [exerciseGroup1, exerciseGroup2], course: { id: 10 } } as Exam;
@@ -151,7 +152,6 @@ describe('AssessmentDashboardComponent', () => {
 
                 courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
                 examManagementService = TestBed.inject(ExamManagementService);
-                exerciseService = TestBed.inject(ExerciseService);
                 sortService = TestBed.inject(SortService);
 
                 getExamWithInterestingExercisesForAssessmentDashboardStub = vi
@@ -164,6 +164,8 @@ describe('AssessmentDashboardComponent', () => {
                 getCourseWithInterestingExercisesForTutorsStub = vi
                     .spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors')
                     .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
+                const accountService = TestBed.inject(AccountService);
+                vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(true);
                 getStatsForTutorsStub = vi
                     .spyOn(courseManagementService, 'getStatsForTutors')
                     .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
@@ -211,17 +213,6 @@ describe('AssessmentDashboardComponent', () => {
         expect(comp.currentlyShownExercises()).toHaveLength(4);
     });
 
-    it('should toggle correctionRound for exercises', () => {
-        comp.currentlyShownExercises.set(exercises);
-        const toggleSecondCorrectionStub = vi.spyOn(exerciseService, 'toggleSecondCorrection');
-        toggleSecondCorrectionStub.mockReturnValue(of(true));
-        comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.currentlyShownExercises().find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(true);
-        toggleSecondCorrectionStub.mockReturnValue(of(false));
-        comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.currentlyShownExercises().find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
-    });
-
     it('should update exercises when finished exercises are filtered', () => {
         comp.allExercises.set([programmingExercise, programmingExerciseComplaintsOnAutomaticAssessment, textExercise, modelingExercise, fileUploadExercise]);
         comp.currentlyShownExercises.set([programmingExercise, textExercise, modelingExercise]);
@@ -249,8 +240,8 @@ describe('AssessmentDashboardComponent', () => {
     it('should sort rows', () => {
         const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
         comp.currentlyShownExercises.set([textExercise]);
-        comp.exercisesSortingPredicate = 'assessmentDueDate';
-        comp.exercisesReverseOrder = false;
+        comp.exercisesSortingPredicate.set('assessmentDueDate');
+        comp.exercisesReverseOrder.set(false);
 
         comp.sortRows();
 
@@ -476,5 +467,25 @@ describe('AssessmentDashboardComponent', () => {
 
             expect(triggerSpy).not.toHaveBeenCalled();
         });
+    });
+
+    it('should show waiting notice and not load dashboard when tutor accesses running exam', () => {
+        const activatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.snapshot = {
+            paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
+            url: [{ path: 'course-management' }, { path: '10' }, { path: 'assessment-dashboard' }] as any,
+        } as any;
+
+        const accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
+        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(
+            of({ body: { latestIndividualEndDate: dayjs().add(2, 'hours') } as ExamInformationDTO }) as Observable<HttpResponse<ExamInformationDTO>>,
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.examNotFinished()).toBe(true);
+        expect(getExamWithInterestingExercisesForAssessmentDashboardStub).not.toHaveBeenCalled();
+        expect(fixture.debugElement.nativeElement.querySelector('#assessment-not-possible-yet')).not.toBeNull();
     });
 });

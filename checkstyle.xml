@@ -20,6 +20,26 @@
             <property name="allowedAnnotations" value="Override,Test,ParameterizedTest,BeforeEach,AfterEach,BeforeAll,AfterAll"/>
         </module>
         <module name="ModifierOrder"/>
+        <!--
+            Objects.requireNonNull asserts a contract at runtime, which is what a null does on its own: the next
+            dereference throws, and a helpful NullPointerException names the expression it could not resolve. The call
+            only adds a second place for the contract to live. State it at the declaration instead, with @NonNull or
+            @Nullable from org.jspecify.annotations, where a reader and a static analyser both see it.
+
+            Checked here rather than with ArchUnit on purpose. ArchUnit reads bytecode, and javac emits
+            Objects.requireNonNull for constructs nobody wrote: a method reference bound to an expression
+            (repository::delete) and a pattern-matching switch both compile to one. An ArchUnit rule reported 724 calls
+            where the source had 53. Checkstyle reads source, so it sees only what was written.
+
+            requireNonNullElse and requireNonNullElseGet are not matched: "Else" sits between the name and the
+            parenthesis, and they supply a default rather than assert a contract.
+        -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\brequireNonNull\s*\(" />
+            <property name="message" value="Objects.requireNonNull is not used in this project. Declare the contract with @NonNull or @Nullable from org.jspecify.annotations instead; a plain NullPointerException is a good enough runtime signal." />
+            <property name="ignoreComments" value="true" />
+            <property name="severity" value="error" />
+        </module>
         <!-- Enforce braces for if/else/for/while/do -->
         <module name="NeedBraces">
             <property name="tokens" value="LITERAL_IF,LITERAL_ELSE,LITERAL_FOR,LITERAL_WHILE,LITERAL_DO"/>

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import java.security.Principal;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +14,15 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.config.websocket.WebsocketConfiguration;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -36,6 +43,103 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    /**
+     * The admin build queue, job and agent topics need request-bound elevation, not the persisted administrator role:
+     * the session the handshake established has to carry the administrator authority, and the account has to still be
+     * an administrator. The passkey half of that decision is configuration-dependent and is covered by
+     * {@code ElevatedAccessServiceTest}; this asserts that the destination check goes through elevation at all.
+     */
+    @Test
+    void testAdministratorSubscriptionRequiresElevationRatherThanAccountClassification() {
+        userUtilService.addAdmin(TEST_PREFIX);
+        String adminLogin = TEST_PREFIX + "admin";
+
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var msgMock = (Message<String>) mock(Message.class);
+        try (var ignored = mockStatic(StompHeaderAccessor.class)) {
+            var headerAccessorMock = mock(StompHeaderAccessor.class);
+            when(StompHeaderAccessor.wrap(msgMock)).thenReturn(headerAccessorMock);
+            when(headerAccessorMock.getCommand()).thenReturn(StompCommand.SUBSCRIBE);
+            var channel = mock(MessageChannel.class);
+
+            for (String destination : List.of("/topic/admin/queued-jobs", "/topic/admin/running-jobs", "/topic/admin/finished-jobs", "/topic/admin/build-agents")) {
+                when(headerAccessorMock.getDestination()).thenReturn(destination);
+
+                // An elevated administrator: the session carries the administrator authority.
+                when(headerAccessorMock.getUser()).thenReturn(authenticationFor(adminLogin, Role.ADMIN));
+                assertThat(interceptor.preSend(msgMock, channel)).as("an elevated administrator may subscribe to %s", destination).isEqualTo(msgMock);
+
+                // The same account on a session that does not carry the administrator authority.
+                when(headerAccessorMock.getUser()).thenReturn(authenticationFor(adminLogin, Role.STUDENT));
+                assertThat(interceptor.preSend(msgMock, channel)).as("a session without the administrator authority must not subscribe to %s", destination).isNull();
+
+                // A principal that is not an Authentication carries no authorities to check at all.
+                var principalMock = mock(Principal.class);
+                when(principalMock.getName()).thenReturn(adminLogin);
+                when(headerAccessorMock.getUser()).thenReturn(principalMock);
+                assertThat(interceptor.preSend(msgMock, channel)).as("a principal without authorities must not subscribe to %s", destination).isNull();
+            }
+        }
+    }
+
+    private static Authentication authenticationFor(String login, Role role) {
+        return new UsernamePasswordAuthenticationToken(login, "irrelevant", List.of(new SimpleGrantedAuthority(role.getAuthority())));
+    }
+
+    @Test
+    void testRoleProtectedSubscriptionsUseWebsocketAuthentication() {
+        userUtilService.addAdmin(TEST_PREFIX);
+        String adminLogin = TEST_PREFIX + "admin";
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
+        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+        var participation = exercise.getStudentParticipations().stream().findFirst().orElseThrow();
+        var exam = examUtilService.addExerciseGroupsAndExercisesToExam(examUtilService.addExam(course), false);
+        var examExercise = exam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var channel = mock(MessageChannel.class);
+        var previousContext = SecurityContextHolder.getContext();
+        SecurityContextHolder.clearContext();
+        try {
+            for (String destination : List.of("/topic/courses/" + course.getId() + "/queued-jobs", "/topic/courses/" + course.getId() + "/running-jobs",
+                    "/topic/courses/" + course.getId() + "/build-job/test-job", "/topic/exercise/" + exercise.getId() + "/newResults",
+                    "/topic/exercise/" + examExercise.getId() + "/newResults", "/topic/exams/" + exam.getId() + "/exercise-start-status",
+                    "/topic/exercises/" + exercise.getId() + "/synchronization")) {
+                SecurityContextHolder.clearContext();
+                var headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+                headers.setLeaveMutable(true);
+                headers.setDestination(destination);
+                headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
+                var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("elevated administrator: %s", destination).isSameAs(message);
+                assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+
+                // Even an elevated thread context must not override the WebSocket session's permissions.
+                SecurityContextHolder.getContext().setAuthentication(authenticationFor(adminLogin, Role.ADMIN));
+                headers.setUser(authenticationFor(adminLogin, Role.STUDENT));
+                message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("non-elevated session: %s", destination).isNull();
+
+                headers.setUser(() -> adminLogin);
+                message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("principal without authentication: %s", destination).isNull();
+
+                headers.setUser(authenticationFor(TEST_PREFIX + "instructor1", Role.INSTRUCTOR));
+                message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+                assertThat(interceptor.preSend(message, channel)).as("explicit instructor: %s", destination).isSameAs(message);
+            }
+
+            var headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+            headers.setDestination("/topic/participations/" + participation.getId() + "/team");
+            headers.setUser(authenticationFor(adminLogin, Role.ADMIN));
+            var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+            assertThat(interceptor.preSend(message, channel)).as("administrator override must not bypass ownership").isNull();
+        }
+        finally {
+            SecurityContextHolder.setContext(previousContext);
+        }
+    }
 
     @Test
     void testAllowSubscription() {

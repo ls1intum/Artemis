@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.extractValidJwt
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
@@ -64,6 +66,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
+@FeatureUsage("public/account")
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicAccountResource {
@@ -156,7 +159,7 @@ public class PublicAccountResource {
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
         // The template renders the key, which now lives in user_recovery_key rather than on the user.
-        mailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(user, userRecoveryKeyService.findActivationKey(user.getId()), null));
+        mailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(user, userRecoveryKeyService.findActivationKey(user.getId())));
         // No separate notification: the activation mail already goes to the address that was registered.
         accountSecurityEventService.recordAccountRegistered(user);
         return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
@@ -167,7 +170,7 @@ public class PublicAccountResource {
      * <p>
      * The only way an activation key is ever redeemed, and gated behind the self-registration feature just like the mail that
      * carries the key. That is why an unactivated account is only ever meaningful for an internal account on an instance with
-     * registration enabled - see {@link User#activated}.
+     * registration enabled - see {@link User#getActivated()}.
      *
      * @param key the activation key.
      * @return ResponseEntity with status 200 (OK)
@@ -298,7 +301,7 @@ public class PublicAccountResource {
     @EnforceNothing
     public ResponseEntity<Void> changeLanguageKey(@RequestBody String languageKey) {
         User user = userRepository.getUser();
-        String langKey = languageKey.replaceAll("\"", "").toLowerCase().trim();
+        String langKey = languageKey.replace("\"", "").toLowerCase(Locale.ROOT).trim();
         if (!"en".equals(langKey) && !"de".equals(langKey)) {
             throw new BadRequestAlertException("Language key %s not supported!".formatted(languageKey), "Account", "invalidLanguageKey");
         }
@@ -316,6 +319,8 @@ public class PublicAccountResource {
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mailUsername) {
+        // For failure paths: Pretend the request has been successful to prevent checking which emails or usernames
+        // really exist but log that an invalid attempt has been made
         List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
         if (!users.isEmpty()) {
             List<User> internalUsers = users.stream().filter(User::isInternal).toList();
@@ -328,19 +333,21 @@ public class PublicAccountResource {
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
             var internalUser = internalUsers.getFirst();
-            if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(internalUser, null, userRecoveryKeyService.findResetKey(internalUser.getId())));
-                accountSecurityEventService.recordPasswordResetRequested(internalUser);
+            if (internalUser.getEmail() == null) { // Should not happen but constraint is not enforced on db.
+                log.warn("Password reset requested for user with login '{}' which has no email specified.", mailUsername);
             }
             else {
-                // Not activated, so no reset key was issued and no mail was sent.
-                accountSecurityEventService.recordPasswordResetRequestRejected("account-not-activated");
+                userService.prepareUserForPasswordReset(internalUser).ifPresentOrElse(resetKey -> {
+                    mailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(internalUser, resetKey));
+                    accountSecurityEventService.recordPasswordResetRequested(internalUser);
+                }, () -> {
+                    // Not activated, so no reset key was issued and no mail was sent.
+                    accountSecurityEventService.recordPasswordResetRequestRejected("account-not-activated");
+                });
             }
         }
         else {
-            // Pretend the request has been successful to prevent checking which emails or usernames really exist
-            // but log that an invalid attempt has been made
-            log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
+            log.warn("Password reset requested for a non-existing account");
             accountSecurityEventService.recordPasswordResetRequestRejected("unknown-identifier");
         }
         return ResponseEntity.ok().build();
@@ -358,15 +365,15 @@ public class PublicAccountResource {
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (accountService.isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
+        if (accountService.isPasswordLengthInvalid(keyAndPassword.newPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
-        // TODO: the key should be 20 characters long according to jhipsters RandomUtil.DEF_COUNT, we should improve the following input validation
-        // Idea: the key follows the same ideas as e.g. JWT: it should only be valid for a short time (i.e. the key should expire e.g. after 2 days)
-        if (StringUtils.isEmpty(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
+        if (StringUtils.isEmpty(keyAndPassword.keyId()) || StringUtils.isEmpty(keyAndPassword.keySecret()) || keyAndPassword.keyId().length() < 10
+                || keyAndPassword.keySecret().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey(), keyAndPassword.revokeCredentialsOrAll());
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(), keyAndPassword.keyId(), keyAndPassword.keySecret(),
+                keyAndPassword.revokeCredentialsOrAll());
 
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");

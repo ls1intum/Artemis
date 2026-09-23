@@ -38,6 +38,8 @@ public class IrisBotUserService {
 
     public static final String IRIS_BOT_IMAGE_URL = "/public/images/iris/iris-logo-small.png";
 
+    private static final String IRIS_BOT_EMAIL = "iris-bot@localhost";
+
     private final UserRepository userRepository;
 
     private final PasswordService passwordService;
@@ -78,7 +80,12 @@ public class IrisBotUserService {
                 bot.setLogin(IRIS_BOT_LOGIN);
                 bot.setFirstName("Iris");
                 bot.setLastName("Bot");
-                bot.setEmail("iris-bot@localhost");
+                if (userRepository.existsByEmailIgnoreCase(IRIS_BOT_EMAIL)) {
+                    log.warn("The Iris bot email address {} already belongs to another account, so the bot is created without an email address.", IRIS_BOT_EMAIL);
+                }
+                else {
+                    bot.setEmail(IRIS_BOT_EMAIL);
+                }
                 bot.setActivated(true);
                 bot.setInternal(true);
                 bot.setImageUrl(IRIS_BOT_IMAGE_URL);

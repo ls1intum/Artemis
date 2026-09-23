@@ -55,6 +55,8 @@ jobs:
         run: ./gradlew spotlessCheck
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
+      - name: Java Test Code Style
+        run: ./gradlew checkstyleTest -x webapp
         if: ${{ !cancelled() }}
       # Tightly-coupled dependency families (HttpComponents, Bouncy Castle, JGit, SSHD) must not resolve to mixed or
       # downgraded versions: that is a runtime LinkageError rather than a build failure, so nothing else catches it.
@@ -110,6 +112,10 @@ jobs:
         if: ${{ !cancelled() }}
       - name: Playwright Code Style
         run: pnpm run lint
+        working-directory: src/test/playwright
+        if: ${{ !cancelled() }}
+      - name: Playwright Typechecking
+        run: pnpm run typecheck
         working-directory: src/test/playwright
         if: ${{ !cancelled() }}
 
@@ -195,6 +201,10 @@ jobs:
           # points, which put both over the ten-dependency line. Pushing them back under it means extracting
           # ExerciseService.reEvaluateExercise and the grading service's score calculation into services of their own,
           # which is a refactoring of its own rather than part of the table split.
+          # NOTE on max_large_classes: LearningPathRecommendationService still crosses a thousand lines since #13864.
+          # Getting it back under the line means extracting the recommendation state it threads through most of its
+          # methods, which is a refactoring of its own. The count is back at seventeen because GitService dropped off
+          # the list when the bare-repository handling moved into BareGitRepositoryService.
           max_large_classes=17
           max_complex_beans=20
 
