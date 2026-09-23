@@ -77,6 +77,7 @@ const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serialized
 
 interface OpenApiSchema {
     type?: string;
+    format?: string;
     $ref?: string;
     items?: OpenApiSchema;
     oneOf?: OpenApiSchema[];
@@ -123,6 +124,59 @@ const getMultipartObjectPartNames = (openApiSpecification: OpenApiSpecification)
                 .map(([partName]) => partName);
         }),
     );
+};
+
+const getMultipartBinaryPartNames = (openApiSpecification: OpenApiSpecification): string[] => {
+    return Object.values(openApiSpecification.paths ?? {}).flatMap(path =>
+        Object.values(path).flatMap(operation => {
+            const multipartSchema = operation.requestBody?.content?.["multipart/form-data"]?.schema;
+            if (!multipartSchema?.properties) {
+                return [];
+            }
+            return Object.entries(multipartSchema.properties)
+                .filter(([, schema]) => {
+                    const valueSchema = schema.items ?? schema;
+                    return valueSchema.type === "string" && valueSchema.format === "binary";
+                })
+                .map(([partName]) => partName);
+        }),
+    );
+};
+
+// The generator types a binary part as Blob. FormData.append then labels it "blob", because only a File carries a
+// name, and the server resolves uploads by their original filename — so two Blobs collide on one key. Retype the
+// parameter to File and pass the name explicitly.
+const nameGeneratedBinaryFormDataParts = (sourceFile: SourceFile, namedPartsInFile: number, multipartBinaryPartNames: Set<string>) => {
+    for (const callExpression of sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+        if (callExpression.getExpression().getText() !== "formData.append") {
+            continue;
+        }
+
+        const [partName, formDataValue, fileName] = callExpression.getArguments();
+        if (!Node.isStringLiteral(partName) || !multipartBinaryPartNames.has(partName.getLiteralValue())) {
+            continue;
+        }
+        if (fileName) {
+            namedPartsInFile++;
+            continue;
+        }
+        if (!Node.isIdentifier(formDataValue)) {
+            throw new Error(`Cannot name multipart binary part in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        const method = callExpression.getFirstAncestorByKind(SyntaxKind.MethodDeclaration);
+        const parameter = method?.getParameter(partName.getLiteralValue());
+        const parameterType = parameter?.getTypeNode()?.getText();
+        if (!parameter || !parameterType?.includes("Blob")) {
+            throw new Error(`Multipart binary part is not a Blob parameter in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        parameter.setType(parameterType.replaceAll("Blob", "File"));
+        callExpression.addArgument(`${formDataValue.getText()}.name`);
+        namedPartsInFile++;
+    }
+
+    return namedPartsInFile;
 };
 
 const referencedUnionSchemas = (openApiSpecification: OpenApiSpecification): Array<[string, string[]]> => {
@@ -236,17 +290,21 @@ const main = async () => {
     const openApiSpecification = parse(readFileSync("openapi/openapi.yaml", "utf8")) as OpenApiSpecification;
     const multipartObjectPartNames = getMultipartObjectPartNames(openApiSpecification);
     const multipartObjectPartNameSet = new Set(multipartObjectPartNames);
+    const multipartBinaryPartNames = getMultipartBinaryPartNames(openApiSpecification);
+    const multipartBinaryPartNameSet = new Set(multipartBinaryPartNames);
     const totalReplacedUnionModels = replaceOneOfModelsWithUnionTypes(project, openApiSpecification);
 
     const typeChecker = project.getTypeChecker();
     let totalRemovedImports = 0;
     let totalRenamedMethods = 0;
     let totalSerializedFormDataParts = 0;
+    let totalNamedBinaryParts = 0;
 
     for (const sourceFile of project.getSourceFiles()) {
         let removedImportsInFile = 0;
         let renamedMethodsInFile = 0;
         let serializedFormDataPartsInFile = 0;
+        let namedBinaryPartsInFile = 0;
 
         for (const importDeclaration of sourceFile.getImportDeclarations()) {
             for (const namedImport of importDeclaration.getNamedImports()) {
@@ -279,6 +337,7 @@ const main = async () => {
 
         renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
         serializedFormDataPartsInFile = serializeGeneratedModelFormDataParts(sourceFile, serializedFormDataPartsInFile, multipartObjectPartNameSet);
+        namedBinaryPartsInFile = nameGeneratedBinaryFormDataParts(sourceFile, namedBinaryPartsInFile, multipartBinaryPartNameSet);
         const path = sourceFile.getFilePath();
         const leadingBanner = leadingBanners.get(sourceFile);
         const text = sourceFile.getFullText();
@@ -288,14 +347,16 @@ const main = async () => {
         const fixedContent = isWindows ? normalizeLineEndings(content, "CRLF") : content;
 
         writeFileSync(path, fixedContent, "utf8");
-        if (removedImportsInFile + renamedMethodsInFile + serializedFormDataPartsInFile > 0) {
+        if (removedImportsInFile + renamedMethodsInFile + serializedFormDataPartsInFile + namedBinaryPartsInFile > 0) {
             totalRemovedImports += removedImportsInFile;
             totalRenamedMethods += renamedMethodsInFile;
             totalSerializedFormDataParts += serializedFormDataPartsInFile;
+            totalNamedBinaryParts += namedBinaryPartsInFile;
             console.log(
                 `🧹 Removed ${removedImportsInFile} imports, ` +
                 `renamed ${renamedMethodsInFile} methods, ` +
-                `serialized ${serializedFormDataPartsInFile} multipart model parts in ${sourceFile.getBaseName()}`
+                `serialized ${serializedFormDataPartsInFile} multipart model parts, ` +
+                `named ${namedBinaryPartsInFile} multipart binary parts in ${sourceFile.getBaseName()}`
             );
         }
     }
@@ -304,10 +365,15 @@ const main = async () => {
         throw new Error(`Expected ${multipartObjectPartNames.length} multipart object parts to be serialized, but serialized ${totalSerializedFormDataParts}`);
     }
 
+    if (totalNamedBinaryParts !== multipartBinaryPartNames.length) {
+        throw new Error(`Expected ${multipartBinaryPartNames.length} multipart binary parts to be named, but named ${totalNamedBinaryParts}`);
+    }
+
     console.log(
         `✅ Done. Total imports removed: ${totalRemovedImports}, ` +
         `methods renamed: ${totalRenamedMethods}, ` +
         `multipart model parts serialized: ${totalSerializedFormDataParts}, ` +
+        `multipart binary parts named: ${totalNamedBinaryParts}, ` +
         `oneOf models converted to union types: ${totalReplacedUnionModels}`
     );
 };

@@ -31,14 +31,14 @@ export class QuizExerciseCreationUpdateApi {
      * @param exercise
      * @param files
      */
-    createCourseQuizExercise(courseId: number, exercise: QuizExerciseCreate, files?: Array<Blob>): Observable<QuizExerciseDetails> {
+    createCourseQuizExercise(courseId: number, exercise: QuizExerciseCreate, files?: Array<File>): Observable<QuizExerciseDetails> {
         const url = `${this.basePath}/api/quiz/courses/${courseId}/quiz-exercises`;
         const formData = new FormData();
         if (exercise !== undefined && exercise !== null) {
             formData.append('exercise', new Blob([JSON.stringify(exercise)], { type: 'application/json' }));
         }
         if (files !== undefined && files !== null) {
-            files.forEach(item => formData.append('files', item));
+            files.forEach(item => formData.append('files', item, item.name));
         }
         return this.http.post<QuizExerciseDetails>(url, formData);
     }
@@ -50,14 +50,14 @@ export class QuizExerciseCreationUpdateApi {
      * @param exercise
      * @param files
      */
-    createExamQuizExercise(exerciseGroupId: number, exercise: QuizExerciseCreate, files?: Array<Blob>): Observable<QuizExerciseDetails> {
+    createExamQuizExercise(exerciseGroupId: number, exercise: QuizExerciseCreate, files?: Array<File>): Observable<QuizExerciseDetails> {
         const url = `${this.basePath}/api/quiz/exercise-groups/${exerciseGroupId}/quiz-exercises`;
         const formData = new FormData();
         if (exercise !== undefined && exercise !== null) {
             formData.append('exercise', new Blob([JSON.stringify(exercise)], { type: 'application/json' }));
         }
         if (files !== undefined && files !== null) {
-            files.forEach(item => formData.append('files', item));
+            files.forEach(item => formData.append('files', item, item.name));
         }
         return this.http.post<QuizExerciseDetails>(url, formData);
     }
@@ -70,7 +70,7 @@ export class QuizExerciseCreationUpdateApi {
      * @param notificationText
      * @param files
      */
-    updateQuizExercise(exerciseId: number, exercise: UpdateQuizExercise, notificationText?: string, files?: Array<Blob>): Observable<QuizExerciseDetails> {
+    updateQuizExercise(exerciseId: number, exercise: UpdateQuizExercise, notificationText?: string, files?: Array<File>): Observable<QuizExerciseDetails> {
         const queryParams = new URLSearchParams();
         if (notificationText !== undefined && notificationText !== null) {
             queryParams.set('notificationText', String(notificationText));
@@ -82,7 +82,7 @@ export class QuizExerciseCreationUpdateApi {
             formData.append('exercise', new Blob([JSON.stringify(exercise)], { type: 'application/json' }));
         }
         if (files !== undefined && files !== null) {
-            files.forEach(item => formData.append('files', item));
+            files.forEach(item => formData.append('files', item, item.name));
         }
         return this.http.put<QuizExerciseDetails>(url, formData);
     }

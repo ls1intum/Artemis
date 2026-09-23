@@ -39,14 +39,14 @@ export class QuizExerciseEvaluationApi {
      * @param exercise
      * @param files
      */
-    reEvaluateQuizExercise(quizExerciseId: number, exercise: QuizExerciseReEvaluate, files?: Array<Blob>): Observable<void> {
+    reEvaluateQuizExercise(quizExerciseId: number, exercise: QuizExerciseReEvaluate, files?: Array<File>): Observable<void> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/re-evaluate`;
         const formData = new FormData();
         if (exercise !== undefined && exercise !== null) {
             formData.append('exercise', new Blob([JSON.stringify(exercise)], { type: 'application/json' }));
         }
         if (files !== undefined && files !== null) {
-            files.forEach(item => formData.append('files', item));
+            files.forEach(item => formData.append('files', item, item.name));
         }
         return this.http.put<void>(url, formData);
     }
