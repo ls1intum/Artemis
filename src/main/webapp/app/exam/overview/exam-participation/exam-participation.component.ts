@@ -109,6 +109,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private liveEventsService = inject(ExamParticipationLiveEventsService);
+
+    /** Set once the component is destroyed, so that a late response does not restart work for the exam that was left. */
+    private isDestroyed = false;
     private courseService = inject(CourseManagementService);
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
@@ -608,6 +611,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
+                    if (this.isDestroyed) {
+                        // The student left before the response arrived: the publication above made the live events service handle this exam again
+                        this.liveEventsService.reset();
+                    }
 
                     // Leave the hand-in-early cover: the exam is submitted, so its Finish button is disabled from here on and the
                     // student has to reach the submission confirmation instead. Without this they stay on the confirmation screen
@@ -817,6 +824,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
         this.examLoadSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
+        this.isDestroyed = true;
         this.liveEventsService.reset();
         this.stopAutoSaveTimer();
     }
