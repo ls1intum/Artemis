@@ -659,7 +659,8 @@ public class AgentLoopRunner {
                     markUsageUncertain(usageSink);
                 }
                 catch (RuntimeException accountingFailure) {
-                    error.addSuppressed(accountingFailure);
+                    accountingFailure.addSuppressed(error);
+                    throw accountingFailure;
                 }
             }
             throw error;
@@ -743,6 +744,9 @@ public class AgentLoopRunner {
         }
         catch (CancellationException ignored) {
             return conversation;
+        }
+        catch (UsageAccountingException e) {
+            throw e;
         }
         catch (RuntimeException e) {
             log.warn("Compaction summarization failed ({}); dropping {} older message(s) behind a marker instead.", e.getClass().getSimpleName(), toSummarize.size());
@@ -898,13 +902,31 @@ public class AgentLoopRunner {
 
     private static void emitUsage(@Nullable Consumer<ChatResponse> usageSink, @Nullable ChatResponse response) {
         if (usageSink != null && response != null) {
-            usageSink.accept(response);
+            try {
+                usageSink.accept(response);
+            }
+            catch (RuntimeException e) {
+                throw new UsageAccountingException(e);
+            }
         }
     }
 
     private static void markUsageUncertain(@Nullable Consumer<ChatResponse> usageSink) {
         if (usageSink instanceof ProviderUsageSink providerUsageSink) {
-            providerUsageSink.markUncertain();
+            try {
+                providerUsageSink.markUncertain();
+            }
+            catch (RuntimeException e) {
+                throw new UsageAccountingException(e);
+            }
+        }
+    }
+
+    /** Accounting failures cannot use the summarizer's best-effort fallback. */
+    private static final class UsageAccountingException extends RuntimeException {
+
+        private UsageAccountingException(RuntimeException cause) {
+            super("Provider usage accounting failed", cause);
         }
     }
 
