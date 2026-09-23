@@ -29,7 +29,7 @@
                     <a
                         (click)="useHttpsToken()"
                         (keydown.enter)="useHttpsToken()"
-                        (keydown.space)="useHttpsToken()"
+                        (keydown.space)="$event.preventDefault(); useHttpsToken()"
                         role="button"
                         tabindex="0"
                         class="fw-bold text-decoration-underline"
