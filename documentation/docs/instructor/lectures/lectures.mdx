@@ -52,18 +52,17 @@ end date; the content is added afterwards.
 
 Artemis can split one lecture PDF into several units instead of adding them one at a time. The option belongs to
 an existing lecture rather than to the creation form, so save the lecture first, reopen it, and check **Automatic
-content processing**. Artemis then explains what it looks for in the file and asks for the PDF: drop it onto the
-area below the explanation, or click the area to choose it. Artemis splits it when you click **Process content**.
+content processing**. Artemis then explains what it looks for in the file and asks which PDF of the lecture to split,
+so add the PDF as content first, for example by dropping it onto the upload area. A lecture with a single PDF has it
+selected already. **Process content** splits the PDF into new units and keeps the unit it came from. A dropped PDF is
+released to students 15 minutes after the drop, so if students should only see the sections, move its release date
+or delete the unit once the split is done. The split uses every page of the PDF, including pages hidden in that unit.
 
 <Image src={automaticUnitProcessing} alt="Automatic Unit Processing" size={ImageSize.large}></Image>
 
 Once the units are processed, instructors can view how the units are split, beginning from a start page to an end page. A name is automatically generated for each lecture unit. Instructors can also customize the table entries by removing or adding new units. Additionally, they can enter keywords if they want particular slides to be removed. Slides containing one of the comma-separated keywords will be removed.
 
 <Image src={processedLectureUnits} alt="Processed Lecture Units" size={ImageSize.large} caption={"Processed Lecture Units"}></Image>
-
-The following video shows how to split a lecture PDF into multiple units.
-
-<TumLiveVideo src="40577" title="Splitting lecture PDF into multiple units" />
 
 ### Option 2: Import Lecture
 

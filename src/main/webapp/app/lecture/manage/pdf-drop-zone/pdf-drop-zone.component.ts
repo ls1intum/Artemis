@@ -7,8 +7,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 
-let nextHintId = 0;
-
 @Component({
     selector: 'jhi-pdf-drop-zone',
     standalone: true,
@@ -21,19 +19,11 @@ export class PdfDropZoneComponent {
 
     filesDropped = output<File[]>();
     disabled = input<boolean>(false);
-    /** When false, the file browser allows a single file and only the first valid PDF of a drop is emitted. */
-    multiple = input<boolean>(true);
-    /** Translation key of the headline, which also serves as the accessible name of the drop zone. */
-    titleKey = input<string>('artemisApp.lecture.pdfUpload.dropZoneTitle');
-    /** Translation key of the line below the headline. */
-    hintKey = input<string>('artemisApp.lecture.pdfUpload.dropZoneHint');
 
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
     protected readonly faCloudUploadAlt = faCloudUploadAlt;
     protected readonly faFilePdf = faFilePdf;
-    /** Several drop zones can be on one page, so each needs its own id to point aria-describedby at its hint. */
-    protected readonly hintId = `pdf-drop-zone-hint-${nextHintId++}`;
 
     isDragOver = signal(false);
 
@@ -101,7 +91,7 @@ export class PdfDropZoneComponent {
         }
 
         if (pdfFiles.length > 0) {
-            this.filesDropped.emit(this.multiple() ? pdfFiles : pdfFiles.slice(0, 1));
+            this.filesDropped.emit(pdfFiles);
         }
     }
 }

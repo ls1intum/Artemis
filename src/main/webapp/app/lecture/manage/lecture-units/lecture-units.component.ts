@@ -49,6 +49,15 @@ export class LectureUpdateUnitsComponent implements OnInit {
     lecture = input.required<Lecture>();
 
     unitManagementComponent = viewChild(LectureUnitManagementComponent);
+    /** The lecture's units that hold an uploaded PDF, which the automatic content processing can split. */
+    readonly pdfUnits = computed(() =>
+        (this.unitManagementComponent()?.lectureUnits() ?? []).filter(
+            (unit): unit is AttachmentVideoUnit =>
+                unit.type === LectureUnitType.ATTACHMENT_VIDEO &&
+                (unit as AttachmentVideoUnit).attachment?.attachmentType !== AttachmentType.URL &&
+                !!(unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+        ),
+    );
     editFormContainer = viewChild<ElementRef<HTMLElement>>('editFormContainer');
 
     textUnitForm = viewChild(TextUnitFormComponent);

@@ -88,37 +88,40 @@
                     </div>
                 }
                 @if (processUnitMode()) {
-                    <jhi-pdf-drop-zone
-                        data-testid="processing-file-drop-zone"
-                        [multiple]="false"
-                        [disabled]="isSaving() || isProcessing()"
-                        titleKey="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.dropZoneTitle"
-                        hintKey="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.dropZoneHint"
-                        (filesDropped)="onProcessingFileSelected($event)"
-                    />
-                    <div aria-live="polite">
-                        @if (fileName()) {
-                            <div class="flex items-center gap-2" data-testid="processing-file">
-                                <fa-icon [icon]="faFilePdf" />
-                                <span class="break-all">{{ fileName() }}</span>
-                                <button
-                                    tumUiButton
-                                    type="button"
-                                    severity="secondary"
-                                    variant="text"
-                                    size="small"
-                                    data-testid="remove-processing-file-button"
-                                    [disabled]="isSaving() || isProcessing()"
-                                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeFile' | artemisTranslate"
-                                    [tumUiTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeFile' | artemisTranslate"
-                                    [tumUiTooltipDescribesHost]="false"
-                                    (click)="removeProcessingFile()"
-                                >
-                                    <fa-icon [icon]="faXmark" />
-                                </button>
-                            </div>
+                    @if (processingUnits().length) {
+                        <tum-ui-form-field class="mb-3 block" controlId="processing-unit-select">
+                            <span tumUiFormFieldLabel jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processingUnit"></span>
+                            <tum-ui-select
+                                class="w-full"
+                                inputId="processing-unit-select"
+                                data-testid="processing-unit-select"
+                                [options]="processingUnits()"
+                                optionLabel="name"
+                                optionValue="id"
+                                [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processingUnitPlaceholder' | artemisTranslate"
+                                [ngModel]="selectedProcessingUnit()?.id"
+                                [ngModelOptions]="{ standalone: true }"
+                                (ngModelChange)="selectedProcessingUnitId.set($event)"
+                                [disabled]="isSaving() || isProcessing()"
+                            />
+                        </tum-ui-form-field>
+                        @if (selectedProcessingUnit()?.attachment?.studentVersion) {
+                            <tum-ui-message
+                                class="mb-3 block"
+                                severity="warn"
+                                data-testid="processing-hidden-slides-warning"
+                                [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.hiddenSlidesWarning' | artemisTranslate"
+                            />
                         }
-                    </div>
+                    } @else {
+                        <tum-ui-message
+                            class="mb-3 block"
+                            severity="info"
+                            data-testid="processing-no-pdf-hint"
+                            [icon]="faCircleInfo"
+                            [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noPdfUnit' | artemisTranslate"
+                        />
+                    }
                 }
                 <div class="d-flex">
                     @if (processUnitMode()) {
@@ -127,7 +130,7 @@
                                 <button
                                     type="button"
                                     id="process-units-entity"
-                                    [disabled]="editForm.form.invalid || isSaving() || !processUnitMode() || isProcessing() || !fileName() || !areSectionsValid()"
+                                    [disabled]="editForm.form.invalid || isSaving() || !processUnitMode() || isProcessing() || !selectedProcessingUnit() || !areSectionsValid()"
                                     class="btn btn-success"
                                     (click)="proceedToUnitSplit()"
                                 >

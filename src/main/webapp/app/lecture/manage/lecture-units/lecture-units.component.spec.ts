@@ -29,7 +29,7 @@ import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfDropZoneComponent } from 'app/lecture/manage/pdf-drop-zone/pdf-drop-zone.component';
-import { Component, ElementRef, NO_ERRORS_SCHEMA, Signal, computed, input, output } from '@angular/core';
+import { Component, ElementRef, NO_ERRORS_SCHEMA, Signal, computed, input, output, signal } from '@angular/core';
 import { ngMocks } from 'ng-mocks';
 
 // Tell ng-mocks to skip auto-mocking PdfDropZoneComponent
@@ -161,6 +161,25 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should initialize', () => {
         wizardUnitComponentFixture.detectChanges();
         expect(wizardUnitComponent).not.toBeNull();
+    });
+
+    it('should offer only the PDF files of the lecture for automatic content processing', () => {
+        const attachmentUnit = (id: number, attachment?: Attachment) => ({ id, type: LectureUnitType.ATTACHMENT_VIDEO, attachment }) as AttachmentVideoUnit;
+        const pdf = attachmentUnit(1, { attachmentType: AttachmentType.FILE, link: 'attachments/attachment-unit/1/slides.pdf' } as Attachment);
+        const upperCasePdf = attachmentUnit(2, { attachmentType: AttachmentType.FILE, link: 'attachments/attachment-unit/2/Slides.PDF' } as Attachment);
+        const nonPdfFile = attachmentUnit(3, { attachmentType: AttachmentType.FILE, link: 'attachments/attachment-unit/3/notes.zip' } as Attachment);
+        const pdfLink = attachmentUnit(4, { attachmentType: AttachmentType.URL, link: 'https://example.org/slides.pdf' } as Attachment);
+        const videoOnly = attachmentUnit(5);
+        const textUnit = { id: 6, type: LectureUnitType.TEXT } as TextUnit;
+        const lectureUnits = signal([pdf, textUnit, upperCasePdf, nonPdfFile, pdfLink, videoOnly]);
+        wizardUnitComponent.unitManagementComponent = computed(() => ({ lectureUnits }) as unknown as LectureUnitManagementComponent) as Signal<
+            LectureUnitManagementComponent | undefined
+        >;
+
+        expect(wizardUnitComponent.pdfUnits()).toEqual([pdf, upperCasePdf]);
+
+        lectureUnits.set([textUnit]);
+        expect(wizardUnitComponent.pdfUnits()).toEqual([]);
     });
 
     it('should open online form when clicked', async () => {
