@@ -795,6 +795,24 @@ public class SubmissionService {
     }
 
     /**
+     * Like {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}, but for an endpoint that opens one specific submission. Such a
+     * submission may already hold a result for a round beyond the exercise's number of correction rounds: the response to a complaint
+     * is stored as an additional manual result with the next round. Opening that existing result is valid and creates nothing.
+     *
+     * @param exercise        the exercise the submission belongs to
+     * @param submissionId    the id of the submission that is opened
+     * @param correctionRound the requested correction round
+     * @throws BadRequestAlertException if the round is negative, or neither below the exercise's number of correction rounds nor the round of an
+     *                                      existing result of the submission
+     */
+    public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, long submissionId, int correctionRound) {
+        if (correctionRound >= 0 && resultRepository.existsBySubmissionIdAndCorrectionRound(submissionId, correctionRound)) {
+            return;
+        }
+        checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
+    }
+
+    /**
      * Checks that manual assessment of the given exam exercise is already possible, i.e. that the exam is over for every
      * student and, for programming exercises, that the tests have run once more on the final submissions.
      * <p>

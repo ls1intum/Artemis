@@ -492,6 +492,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsBySubmissionId(long submissionId);
 
     /**
+     * Checks if the given submission has a result for the given correction round.
+     *
+     * @param submissionId    the ID of the submission to check.
+     * @param correctionRound the correction round of the result.
+     * @return true if the submission has a result for the given correction round, false otherwise.
+     */
+    boolean existsBySubmissionIdAndCorrectionRound(long submissionId, int correctionRound);
+
+    /**
      * Returns the manual results of the given submissions together with the correction round each belongs to.
      * <p>
      * Two callers need this. The scores overview renders assessment actions per correction round, so it needs one entry
