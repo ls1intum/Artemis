@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.runtime.verification;
+package de.tum.cit.aet.artemis.junitreport;
 
 import java.io.IOException;
 import java.util.List;

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
+import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 
 /** Cross-module API for serializing external programming-exercise mutations with Hyperion generation. */
@@ -61,11 +62,4 @@ public class HyperionExerciseMutationApi implements AbstractApi {
         return new ParticipationReservation(() -> clearParticipationSlot(exerciseId, token));
     }
 
-    public record ParticipationReservation(Runnable release) implements AutoCloseable {
-
-        @Override
-        public void close() {
-            release.run();
-        }
-    }
 }

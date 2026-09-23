@@ -143,28 +143,50 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    void aiTopicsRejectDirectPublicationWithoutChangingOtherDestinations() {
+    void serverOwnedTopicsRejectDirectPublication() {
         var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
         var channel = mock(MessageChannel.class);
         for (Role role : List.of(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN)) {
             for (String destination : List.of("/topic/hyperion", "/topic/hyperion/exercise-generation/exercises/1/state", "/user/topic/hyperion/jobs/1",
                     "/user/victim/topic/hyperion/jobs/1", "/user/victim/queue/hyperion/jobs/1", "/topic/admin/ai-workers", "/topic/admin/ai-generations", "/topic/user-registry",
-                    "/topic/unresolved-user")) {
-                var headers = StompHeaderAccessor.create(StompCommand.SEND);
-                headers.setUser(authenticationFor("caller", role));
-                headers.setDestination(destination);
-                assertThat(interceptor.preSend(MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders()), channel))
-                        .as("%s cannot publish AI server events to %s", role, destination).isNull();
+                    "/topic/unresolved-user", "/topic/admin/queued-jobs", "/topic/other-feature", "/topic/participations/1/team", "/app/other-feature")) {
+                assertThat(interceptor.preSend(sendMessage(destination, authenticationFor("caller", role)), channel)).as("%s cannot publish to %s", role, destination).isNull();
             }
         }
-        for (String destination : List.of("/topic/exercises/1/synchronization", "/topic/participations/1/team", "/topic/admin/queued-jobs", "/topic/other-feature",
-                "/user/topic/other-feature", "/app/other-feature")) {
-            var headers = StompHeaderAccessor.create(StompCommand.SEND);
-            headers.setUser(authenticationFor("caller", Role.STUDENT));
-            headers.setDestination(destination);
-            var message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
-            assertThat(interceptor.preSend(message, channel)).as("existing security handling is unchanged for %s", destination).isSameAs(message);
+    }
+
+    @Test
+    void clientSendDestinationsRequireTheirExistingOwners() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
+        var exercise = course.getExercises().stream().findFirst().orElseThrow();
+        var participation = exercise.getStudentParticipations().stream().findFirst().orElseThrow();
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var channel = mock(MessageChannel.class);
+
+        for (String suffix : List.of("trigger", "typing", "modeling-submissions/update", "modeling-submissions/patch", "text-submissions/update")) {
+            String destination = "/topic/participations/" + participation.getId() + "/team/" + suffix;
+            var ownerMessage = sendMessage(destination, authenticationFor(TEST_PREFIX + "student1", Role.STUDENT));
+            assertThat(interceptor.preSend(ownerMessage, channel)).as("owner may send %s", destination).isSameAs(ownerMessage);
+            assertThat(interceptor.preSend(sendMessage(destination, authenticationFor(TEST_PREFIX + "student2", Role.STUDENT)), channel))
+                    .as("another student may not send %s", destination).isNull();
         }
+
+        String synchronization = "/topic/exercises/" + exercise.getId() + "/synchronization";
+        var editorMessage = sendMessage(synchronization, authenticationFor(TEST_PREFIX + "editor1", Role.EDITOR));
+        assertThat(interceptor.preSend(editorMessage, channel)).isSameAs(editorMessage);
+        assertThat(interceptor.preSend(sendMessage(synchronization, authenticationFor(TEST_PREFIX + "student1", Role.STUDENT)), channel)).isNull();
+        assertThat(interceptor.preSend(sendMessage(synchronization, authenticationFor(TEST_PREFIX + "tutor1", Role.TEACHING_ASSISTANT)), channel)).isNull();
+
+        var irisAck = sendMessage("/topic/iris/command-ack", authenticationFor(TEST_PREFIX + "student1", Role.STUDENT));
+        assertThat(interceptor.preSend(irisAck, channel)).isSameAs(irisAck);
+    }
+
+    private static Message<byte[]> sendMessage(String destination, Principal principal) {
+        var headers = StompHeaderAccessor.create(StompCommand.SEND);
+        headers.setUser(principal);
+        headers.setDestination(destination);
+        return MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
     }
 
     @Test

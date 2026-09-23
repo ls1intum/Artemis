@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.config.websocket;
 
 import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.isNonPersonalExerciseResultDestination;
+import static de.tum.cit.aet.artemis.core.config.Constants.AI_WORKER_MONITORING_TOPIC;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_GENERATION_MONITORING_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.isParticipationTeamDestination;
@@ -63,7 +65,6 @@ import org.springframework.web.socket.sockjs.transport.handler.WebSocketTranspor
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.aiworker.service.WorkerMonitoringService;
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -76,7 +77,6 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationMonitoringWebsocketService;
 
 @Profile(PROFILE_CORE)
 @Configuration
@@ -94,6 +94,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private static final Pattern HYPERION_EXERCISE_STATE_TOPIC_PATTERN = Pattern.compile("^/topic/hyperion/exercise-generation/exercises/(\\d+)/state$");
 
     private static final Pattern HYPERION_USER_DESTINATION_PATTERN = Pattern.compile("/user/(?:[^/]+/)?(?:topic|queue)/hyperion(?:/.*)?");
+
+    private static final Pattern TEAM_SEND_DESTINATION_PATTERN = Pattern
+            .compile("^/topic/participations/(\\d+)/team/(?:trigger|typing|modeling-submissions/(?:update|patch)|text-submissions/update)$");
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
@@ -352,7 +355,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             StompCommand command = headerAccessor.getCommand();
             if (StompCommand.SUBSCRIBE.equals(command) || StompCommand.SEND.equals(command)) {
                 try {
-                    boolean allowed = StompCommand.SUBSCRIBE.equals(command) ? allowSubscription(principal, destination) : allowSend(destination);
+                    boolean allowed = StompCommand.SUBSCRIBE.equals(command) ? allowSubscription(principal, destination) : allowSend(principal, destination);
                     if (!allowed) {
                         logUnauthorizedDestinationAccess(principal, destination);
                         return null;
@@ -405,7 +408,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             final var login = principal.getName();
 
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)
-                    || WorkerMonitoringService.TOPIC.equals(destination) || GenerationMonitoringWebsocketService.TOPIC.equals(destination)) {
+                    || AI_WORKER_MONITORING_TOPIC.equals(destination) || HYPERION_GENERATION_MONITORING_TOPIC.equals(destination)) {
                 // Request-bound elevation rather than account classification: the session the handshake established
                 // has to prove the configured passkey requirement, so an administrator who signed in with a password
                 // must not reach the admin build queue, job and agent topics on their persisted role alone.
@@ -458,12 +461,22 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             return principal instanceof Authentication authentication && elevatedAccessService.getObject().isAdminElevationActive(authentication);
         }
 
-        /** AI activity and monitoring are server-published; other destinations retain their existing security handling. */
-        private boolean allowSend(@Nullable String destination) {
-            return destination == null
-                    || !(destination.equals("/topic/hyperion") || destination.startsWith("/topic/hyperion/") || HYPERION_USER_DESTINATION_PATTERN.matcher(destination).matches()
-                            || WorkerMonitoringService.TOPIC.equals(destination) || GenerationMonitoringWebsocketService.TOPIC.equals(destination)
-                            || destination.equals("/topic/user-registry") || destination.equals("/topic/unresolved-user"));
+        /** Only controller-handled client commands may be sent; broker topics are server-published. */
+        private boolean allowSend(@Nullable Principal principal, @Nullable String destination) {
+            if (!(principal instanceof Authentication authentication) || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken
+                    || destination == null) {
+                return false;
+            }
+            if ("/topic/iris/command-ack".equals(destination)) {
+                return true;
+            }
+            var teamDestination = TEAM_SEND_DESTINATION_PATTERN.matcher(destination);
+            if (teamDestination.matches()) {
+                return isParticipationOwnedByUser(principal, Long.valueOf(teamDestination.group(1)));
+            }
+            var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
+            return synchronizationExerciseId.isPresent()
+                    && (userRepository.isAtLeastEditorInExercise(principal.getName(), synchronizationExerciseId.get()) || hasAdministratorAccess(principal));
         }
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {

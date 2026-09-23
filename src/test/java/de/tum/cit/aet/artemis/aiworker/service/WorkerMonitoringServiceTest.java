@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.aiworker.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.AI_WORKER_MONITORING_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -39,7 +40,7 @@ class WorkerMonitoringServiceTest {
         var subscription = mock(SimpSubscription.class);
         when(subscribers.findSubscriptions(any())).thenAnswer(invocation -> {
             SimpSubscriptionMatcher matcher = invocation.getArgument(0);
-            when(subscription.getDestination()).thenReturn(WorkerMonitoringService.TOPIC);
+            when(subscription.getDestination()).thenReturn(AI_WORKER_MONITORING_TOPIC);
             assertThat(matcher.match(subscription)).isTrue();
             when(subscription.getDestination()).thenReturn("/topic/other");
             assertThat(matcher.match(subscription)).isFalse();
@@ -48,9 +49,9 @@ class WorkerMonitoringServiceTest {
         var snapshot = List.of(mock(WorkerStatusDTO.class));
         when(source.workerStatuses()).thenReturn(snapshot);
         service.publish();
-        verify(messaging).sendMessage(WorkerMonitoringService.TOPIC, snapshot);
+        verify(messaging).sendMessage(AI_WORKER_MONITORING_TOPIC, snapshot);
         when(source.workerStatuses()).thenReturn(List.of());
         service.publish();
-        verify(messaging).sendMessage(WorkerMonitoringService.TOPIC, List.of());
+        verify(messaging).sendMessage(AI_WORKER_MONITORING_TOPIC, List.of());
     }
 }

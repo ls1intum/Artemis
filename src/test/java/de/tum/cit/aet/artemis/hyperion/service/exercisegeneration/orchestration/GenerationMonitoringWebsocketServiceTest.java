@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_GENERATION_MONITORING_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -39,7 +40,7 @@ class GenerationMonitoringWebsocketServiceTest {
         var subscription = mock(SimpSubscription.class);
         when(subscribers.findSubscriptions(any())).thenAnswer(invocation -> {
             SimpSubscriptionMatcher matcher = invocation.getArgument(0);
-            when(subscription.getDestination()).thenReturn(GenerationMonitoringWebsocketService.TOPIC);
+            when(subscription.getDestination()).thenReturn(HYPERION_GENERATION_MONITORING_TOPIC);
             assertThat(matcher.match(subscription)).isTrue();
             when(subscription.getDestination()).thenReturn("/topic/other");
             assertThat(matcher.match(subscription)).isFalse();
@@ -48,9 +49,9 @@ class GenerationMonitoringWebsocketServiceTest {
         var snapshot = List.of(mock(ActiveGenerationDTO.class));
         when(source.activeGenerations()).thenReturn(snapshot);
         service.publish();
-        verify(messaging).sendMessage(GenerationMonitoringWebsocketService.TOPIC, snapshot);
+        verify(messaging).sendMessage(HYPERION_GENERATION_MONITORING_TOPIC, snapshot);
         when(source.activeGenerations()).thenReturn(List.of());
         service.publish();
-        verify(messaging).sendMessage(GenerationMonitoringWebsocketService.TOPIC, List.of());
+        verify(messaging).sendMessage(HYPERION_GENERATION_MONITORING_TOPIC, List.of());
     }
 }

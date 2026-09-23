@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.hyperion.runtime.verification.JUnitReportParser;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier.VerificationInfrastructureException;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
+import de.tum.cit.aet.artemis.junitreport.JUnitReportParser;
 
 /**
  * Aggregates one verifier build with the production JUnit parser shared by ordinary LocalCI grading.

@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
@@ -355,12 +356,12 @@ public class ParticipationResource {
     }
 
     /** Holds a shared template-copy reservation without serializing concurrent student starts. */
-    private HyperionExerciseMutationApi.ParticipationReservation claimParticipationReservation(Exercise exercise) {
+    private ParticipationReservation claimParticipationReservation(Exercise exercise) {
         if (exercise instanceof ProgrammingExercise && hyperionExerciseMutationApi.isPresent()) {
             var api = hyperionExerciseMutationApi.get();
             return api.reserveParticipation(exercise.getId());
         }
-        return new HyperionExerciseMutationApi.ParticipationReservation(() -> {
+        return new ParticipationReservation(() -> {
         });
     }
 

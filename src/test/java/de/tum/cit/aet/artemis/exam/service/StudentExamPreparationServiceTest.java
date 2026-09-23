@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -87,9 +88,9 @@ class StudentExamPreparationServiceTest {
         when(mutations.reserveParticipation(2L)).thenAnswer(ignored -> reserve(2));
     }
 
-    private HyperionExerciseMutationApi.ParticipationReservation reserve(int id) {
+    private ParticipationReservation reserve(int id) {
         calls.add("reserve" + id);
-        return new HyperionExerciseMutationApi.ParticipationReservation(() -> calls.add("release" + id));
+        return new ParticipationReservation(() -> calls.add("release" + id));
     }
 
     @Test

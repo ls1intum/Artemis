@@ -5,6 +5,7 @@ apply plugin: 'org.cyclonedx.bom'
 dependencies {
     implementation project(':aiworker')
     implementation project(':hyperion')
+    implementation project(':junit-report')
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
     implementation('org.springframework.ai:spring-ai-starter-model-openai') {

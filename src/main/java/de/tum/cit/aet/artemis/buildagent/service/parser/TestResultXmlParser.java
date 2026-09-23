@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
-import de.tum.cit.aet.artemis.hyperion.runtime.verification.JUnitReportParser;
+import de.tum.cit.aet.artemis.junitreport.JUnitReportParser;
 
 /** Adapts the shared production JUnit parser to LocalCI's result DTOs. */
 public class TestResultXmlParser {

@@ -1,0 +1,7 @@
+apply from: rootProject.file('gradle/isolated-module.gradle')
+
+dependencies {
+    implementation 'tools.jackson.core:jackson-databind'
+    implementation 'tools.jackson.dataformat:jackson-dataformat-xml'
+    implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
+}

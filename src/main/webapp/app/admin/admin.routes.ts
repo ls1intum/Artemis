@@ -1,5 +1,5 @@
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { AiGenerationGuard } from 'app/admin/ai-generation.guard';
+import { AiGenerationGuard } from 'app/hyperion/admin/ai-generation.guard';
 import { Routes } from '@angular/router';
 import { userManagementRoute } from 'app/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';

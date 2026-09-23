@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.runtime.verification;
+package de.tum.cit.aet.artemis.junitreport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.hyperion.runtime.verification.JUnitReportParser.TestCaseResult;
+import de.tum.cit.aet.artemis.junitreport.JUnitReportParser.TestCaseResult;
 
 class JUnitReportParserTest {
 

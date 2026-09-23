@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.AI_WORKER_MONITORING_TOPIC;
+
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -19,8 +21,6 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 @Conditional(AiWorkerEnabled.class)
 public class WorkerMonitoringService {
 
-    public static final String TOPIC = "/topic/admin/ai-workers";
-
     private final WorkerRegistryService source;
 
     private final WebsocketMessagingService messaging;
@@ -37,8 +37,8 @@ public class WorkerMonitoringService {
     @EventListener(ApplicationReadyEvent.class)
     @Scheduled(fixedDelay = 5000)
     public void publish() {
-        if (!subscribers.findSubscriptions(subscription -> TOPIC.equals(subscription.getDestination())).isEmpty()) {
-            messaging.sendMessage(TOPIC, source.workerStatuses());
+        if (!subscribers.findSubscriptions(subscription -> AI_WORKER_MONITORING_TOPIC.equals(subscription.getDestination())).isEmpty()) {
+            messaging.sendMessage(AI_WORKER_MONITORING_TOPIC, source.workerStatuses());
         }
     }
 }

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_GENERATION_MONITORING_TOPIC;
+
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -19,8 +21,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 @Conditional(HyperionExerciseGenerationEnabled.class)
 public class GenerationMonitoringWebsocketService {
 
-    public static final String TOPIC = "/topic/admin/ai-generations";
-
     private final GenerationMonitoringService source;
 
     private final WebsocketMessagingService messaging;
@@ -37,8 +37,8 @@ public class GenerationMonitoringWebsocketService {
     @EventListener(ApplicationReadyEvent.class)
     @Scheduled(fixedDelay = 5000)
     public void publish() {
-        if (!subscribers.findSubscriptions(subscription -> TOPIC.equals(subscription.getDestination())).isEmpty()) {
-            messaging.sendMessage(TOPIC, source.activeGenerations());
+        if (!subscribers.findSubscriptions(subscription -> HYPERION_GENERATION_MONITORING_TOPIC.equals(subscription.getDestination())).isEmpty()) {
+            messaging.sendMessage(HYPERION_GENERATION_MONITORING_TOPIC, source.activeGenerations());
         }
     }
 }

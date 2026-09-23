@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Owns student exam assignment reservations and preparation progress. */
@@ -107,7 +108,7 @@ public class StudentExamPreparationService {
     }
 
     private <T> T withReservations(Collection<Exercise> exercises, java.util.function.Supplier<T> assignment) {
-        List<HyperionExerciseMutationApi.ParticipationReservation> reservations = new ArrayList<>();
+        List<ParticipationReservation> reservations = new ArrayList<>();
         try {
             reserve(exercises, reservations);
             return assignment.get();
@@ -117,12 +118,12 @@ public class StudentExamPreparationService {
         }
     }
 
-    private void reserve(Collection<Exercise> exercises, List<HyperionExerciseMutationApi.ParticipationReservation> reservations) {
+    private void reserve(Collection<Exercise> exercises, List<ParticipationReservation> reservations) {
         mutationApi.ifPresent(api -> exercises.stream().filter(ProgrammingExercise.class::isInstance).map(Exercise::getId).distinct().sorted()
                 .forEach(id -> reservations.add(api.reserveParticipation(id))));
     }
 
-    private static void close(List<HyperionExerciseMutationApi.ParticipationReservation> reservations) {
+    private static void close(List<ParticipationReservation> reservations) {
         RuntimeException failure = null;
         for (var reservation : reservations.reversed()) {
             try {
