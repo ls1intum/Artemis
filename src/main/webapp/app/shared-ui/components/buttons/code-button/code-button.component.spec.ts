@@ -363,7 +363,7 @@ describe('CodeButtonComponent', () => {
             expect(component.copyEnabled()).toBe(true);
         });
 
-        it('should display password warning nudge when HTTPS is selected and switch to token on click', () => {
+        it('should display password warning nudge when password is selected and switch to token on click', () => {
             fixture.componentRef.setInput('participations', [participation]);
 
             fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
@@ -384,6 +384,17 @@ describe('CodeButtonComponent', () => {
 
             expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
             expect(component.useToken()).toBe(true);
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+        });
+
+        it('should not display password warning nudge when token mechanism is not available in configuration', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+            component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password]);
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Password);
             expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
         });
 

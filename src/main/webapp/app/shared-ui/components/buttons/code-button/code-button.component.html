@@ -22,11 +22,20 @@
         @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired()) {
             <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip()"></div>
         }
-        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password) {
+        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password && authenticationMechanisms().includes(RepositoryAuthenticationMethod.Token)) {
             <div class="alert alert-warning d-flex align-items-center" data-testid="password-warning-nudge">
                 <span>
                     {{ 'artemisApp.exerciseActions.passwordWarningTip' | artemisTranslate }}
-                    <a (click)="useHttpsToken()" class="alert-link" role="button" style="cursor: pointer; text-decoration: underline">Token</a>
+                    <a
+                        (click)="useHttpsToken()"
+                        (keydown.enter)="useHttpsToken()"
+                        (keydown.space)="useHttpsToken()"
+                        role="button"
+                        tabindex="0"
+                        class="fw-bold text-decoration-underline"
+                        style="cursor: pointer"
+                        >Token</a
+                    >
                     {{ 'artemisApp.exerciseActions.passwordWarningTipSuffix' | artemisTranslate }}
                 </span>
                 <jhi-help-icon class="ms-1" placement="right auto" text="artemisApp.exerciseActions.passwordWarningHelp" />
