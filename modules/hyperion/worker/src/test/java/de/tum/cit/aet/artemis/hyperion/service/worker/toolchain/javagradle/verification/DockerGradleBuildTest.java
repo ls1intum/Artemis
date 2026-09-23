@@ -217,7 +217,8 @@ class DockerGradleBuildTest {
             }
         }
         var result = sandbox.exec(session, Duration.ofMinutes(3), "sh", "-c",
-                "set -e; cd /tmp/ordinary-ci && export GRADLE_USER_HOME=/tmp/hyperion-gradle-home && " + String.join("\n", phases));
+                "set -e; if [ ! -d /tmp/ordinary-gradle-home ]; then mkdir /tmp/ordinary-gradle-home; cp -a /root/.gradle/. /tmp/ordinary-gradle-home/; fi; "
+                        + "cd /tmp/ordinary-ci && export GRADLE_USER_HOME=/tmp/ordinary-gradle-home && " + String.join("\n", phases));
         assertThat(result.timedOut()).as(result.combinedOutput()).isFalse();
         Map<String, byte[]> reports = new LinkedHashMap<>();
         try (var tar = sandbox.copyOut(session, "/tmp/ordinary-ci/build/test-results/test")) {
