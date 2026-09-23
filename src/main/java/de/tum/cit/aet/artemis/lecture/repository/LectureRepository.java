@@ -163,7 +163,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
             WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = lecture.course.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR))
-                AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
+                AND (LOWER(lecture.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%') OR LOWER(lecture.course.title) LIKE CONCAT('%', LOWER(CAST(:partialCourseTitle AS string)), '%'))
             """)
     Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("userId") long userId, Pageable pageable);

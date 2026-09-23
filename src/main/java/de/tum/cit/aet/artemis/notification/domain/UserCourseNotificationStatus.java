@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * Represents the entity class for tracking a user's course notification status. Note that we can only track status like
@@ -31,11 +32,13 @@ public class UserCourseNotificationStatus implements Serializable {
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_notification_id", nullable = false)
+    @Parent
     private CourseNotification courseNotification;
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @Parent
     private User user;
 
     // TODO: convert it into a string based enum (real database enum)

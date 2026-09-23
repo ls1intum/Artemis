@@ -10,7 +10,7 @@ import { integerValidator } from 'app/shared-ui/form/integer-validator.directive
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
@@ -159,8 +159,14 @@ export class CourseUpdateComponent implements OnInit {
     messagingEnabled = true;
     readonly athenaFeedbackEnabled = signal(false);
     readonly atlasEnabled = signal(false);
+    /**
+     * Whether autonomous orchestration exists on this instance. Separate from {@link atlasEnabled}, because Atlas
+     * carries competencies and learning paths on its own: the orchestrator and its settings endpoint only exist where
+     * a chat model is configured, so the settings below would otherwise be editable for a pipeline that cannot run.
+     */
+    readonly atlasLLMEnabled = signal(false);
     readonly ltiEnabled = signal(false);
-    // Global auto-orchestration defaults, fetched when Atlas is active, shown as the override-field
+    // Global auto-orchestration defaults, fetched when auto orchestration is available, shown as the override-field
     // placeholders so instructors see what an empty override resolves to. `undefined` until loaded
     // (or if the fetch fails) — the template falls back to a plain "Use default" label.
     readonly debounceWindowSecondsDefault = signal<number | undefined>(undefined);
@@ -217,14 +223,15 @@ export class CourseUpdateComponent implements OnInit {
         });
 
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
+        this.atlasLLMEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM));
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         // Load the global auto-orchestration defaults to display as override placeholders. Best-effort:
         // if the feature toggle is off or the request fails, the placeholders stay on the plain
         // "Use default" label.
-        if (this.atlasEnabled()) {
-            // The defaults endpoint is gated by FeatureToggle.AtlasAgent (and 403s when it is off), the same
-            // toggle that hides the override controls. Only fetch when the toggle is active to avoid a failing
-            // request on every course-edit load in deployments where the agent feature is disabled.
+        if (this.atlasLLMEnabled()) {
+            // Two gates, and both are needed. The endpoint lives on CompetencyOrchestrationResource, which is not
+            // registered at all without AtlasLLM, so asking there would fail on every course-edit load and be
+            // swallowed by the catch below. FeatureToggle.AtlasAgent then 403s when off, and hides the same controls.
             firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent))
                 .then((atlasAgentActive) => {
                     if (!atlasAgentActive) {
@@ -416,9 +423,15 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
+            this.courseManagementService.update(this.course.id, course, file).subscribe({
+                next: (response) => this.completeSave(response.body?.id, response.body ?? undefined),
+                error: (res: HttpErrorResponse) => this.onSaveError(res),
+            });
         } else {
-            this.subscribeToSaveResponse(this.courseAdminService.create(course, file));
+            this.courseAdminService.create(course, file).subscribe({
+                next: (response) => this.completeSave(response.body?.id),
+                error: (res: HttpErrorResponse) => this.onSaveError(res),
+            });
         }
     }
 
@@ -431,29 +444,20 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Async response after saving a course, handles appropriate action in case of error
-     * @param result The Http response from the server
-     */
-    private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {
-        result.subscribe({
-            next: (response: HttpResponse<Course>) => this.onSaveSuccess(response.body),
-            error: (res: HttpErrorResponse) => this.onSaveError(res),
-        });
-    }
-
-    /**
      * Action on successful course creation or edit.
-     * Organization assignments are persisted via dedicated admin endpoints (the course update payload
-     * intentionally does not carry organizations), so the diff is synced here before finalizing.
+     * Organization assignments are persisted via dedicated admin endpoints (the course payloads
+     * intentionally do not carry organizations), so the diff is synced here before finalizing.
+     * @param courseId the id of the saved course
+     * @param updatedCourse the course the update endpoint returned; absent after a create, which returns only the id
      */
-    private onSaveSuccess(updatedCourse: Course | null) {
-        if (updatedCourse?.id !== undefined && this.isAdmin()) {
-            this.syncCourseOrganizations(updatedCourse.id).subscribe({
-                next: () => this.finalizeSave(updatedCourse),
+    private completeSave(courseId: number | undefined, updatedCourse?: Course) {
+        if (courseId !== undefined && this.isAdmin()) {
+            this.syncCourseOrganizations(courseId).subscribe({
+                next: () => this.finalizeSave(courseId, updatedCourse),
                 error: (res: HttpErrorResponse) => this.onSaveError(res),
             });
         } else {
-            this.finalizeSave(updatedCourse);
+            this.finalizeSave(courseId, updatedCourse);
         }
     }
 
@@ -491,20 +495,19 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Broadcasts the modification, updates the local course store and navigates back to the course.
+     * Broadcasts the modification, updates the local course store when the server returned the course,
+     * and navigates to the course.
      */
-    private finalizeSave(updatedCourse: Course | null) {
+    private finalizeSave(courseId: number | undefined, updatedCourse?: Course) {
         this.isSaving.set(false);
 
-        if (this.course != updatedCourse) {
-            this.eventManager.broadcast({
-                name: 'courseModification',
-                content: 'Changed a course',
-            });
-            this.courseStorageService.updateCourse(updatedCourse!);
-        }
+        this.eventManager.broadcast({
+            name: 'courseModification',
+            content: 'Changed a course',
+        });
+        this.courseStorageService.updateCourse(updatedCourse);
 
-        void this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
+        void this.router.navigate(['course-management', courseId?.toString()]);
         scrollToTopOfPage();
     }
 

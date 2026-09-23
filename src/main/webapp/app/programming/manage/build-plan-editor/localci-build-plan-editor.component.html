@@ -1,0 +1,65 @@
+@if (programmingExercise()) {
+    <div class="flex content-between flex-wrap mb-2">
+        @if (!loadingResults()) {
+            <div class="flex flex-col">
+                <div>
+                    <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation"></span>
+                    @if (programmingExercise()?.templateParticipation) {
+                        <jhi-updating-result
+                            [exercise]="programmingExercise()!"
+                            [participation]="programmingExercise()!.templateParticipation!"
+                            [showUngradedResults]="true"
+                            [personalParticipation]="false"
+                        />
+                    }
+                </div>
+                <div>
+                    <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation"></span>
+                    @if (programmingExercise()?.solutionParticipation) {
+                        <jhi-updating-result
+                            [exercise]="programmingExercise()!"
+                            [participation]="programmingExercise()!.solutionParticipation!"
+                            [showUngradedResults]="true"
+                            [personalParticipation]="false"
+                        />
+                    }
+                </div>
+            </div>
+        }
+        <tum-ui-button
+            id="submit_button"
+            severity="success"
+            class="ms-auto"
+            [icon]="farPlayCircle"
+            [disabled]="isSaving() || !canSubmit()"
+            (clicked)="submit()"
+            [tumUiTooltip]="'artemisApp.programmingExercise.buildPlanConfiguration.submitTooltip' | artemisTranslate"
+        >
+            <span jhiTranslate="artemisApp.editor.submit"></span>
+        </tum-ui-button>
+    </div>
+    <jhi-programming-exercise-build-configuration
+        [programmingExercise]="programmingExercise()!"
+        [dockerImage]="dockerImage()"
+        [dockerImagePlaceholder]="defaultDockerImage()"
+        (dockerImageChange)="dockerImage.set($event)"
+        [timeout]="timeout()"
+        (timeoutChange)="timeout.set($event)"
+    />
+    <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
+    <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
+    <jhi-build-phases-editor [phases]="phases()" (phasesChange)="phases.set($event)" [isExamMode]="isExamMode()" />
+    @if (!arePhaseNamesValid()) {
+        <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames"></div>
+    }
+    @if (!isTimeoutValid()) {
+        <div
+            class="text-state-danger mt-1"
+            jhiTranslate="artemisApp.programmingExercise.timeout.outOfBounds"
+            [translateValues]="{ min: timeoutMinValue(), max: timeoutMaxValue() }"
+        ></div>
+    }
+    @if (!isBuildPlanConfigurationWithinSizeLimit()) {
+        <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong"></div>
+    }
+}

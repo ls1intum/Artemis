@@ -57,7 +57,7 @@ export class StartPracticeModeButtonComponent {
     startPractice(useGradedParticipation: boolean): void {
         this._startingPracticeMode.set(true);
         this.courseExerciseService
-            .startPractice(this.exercise().id!, useGradedParticipation)
+            .startPractice(this.exercise().id!, useGradedParticipation, this.exercise())
             .pipe(finalize(() => this._startingPracticeMode.set(false)))
             .subscribe({
                 next: (participation) => {

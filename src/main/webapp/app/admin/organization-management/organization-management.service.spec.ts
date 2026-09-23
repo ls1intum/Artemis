@@ -16,6 +16,7 @@ import { firstValueFrom } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('Organization Service', () => {
     let service: OrganizationManagementService;
@@ -40,6 +41,8 @@ describe('Organization Service', () => {
         elemDefault.id = 0;
         elemDefault.name = 'test';
         elemDefault.shortName = 'test';
+        elemDefault.url = 'https://example.org';
+        elemDefault.description = 'Test organization';
         elemDefault.emailPattern = '.*@test';
     });
 
@@ -51,13 +54,17 @@ describe('Organization Service', () => {
 
         const result = await resultPromise;
         expect(result).toMatchObject(elemDefault);
+        expect(result.numberOfUsers).toBeUndefined();
+        expect(result.numberOfCourses).toBeUndefined();
     });
 
     it('should return all Organizations a course is assigned to', async () => {
         const returnElement = createTestReturnElement();
         const resultPromise = firstValueFrom(service.getOrganizationsByCourse(1));
 
-        const req = httpMock.expectOne({ method: 'GET' });
+        // Asserting the URL and not only the method: this endpoint lives on the account resource, and a
+        // method-only expectation let a stale legacy prefix through unnoticed.
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/account/organizations/courses/1' });
         req.flush(returnElement);
 
         const result = await resultPromise;
@@ -86,12 +93,8 @@ describe('Organization Service', () => {
     });
 
     it('should update an Organization', async () => {
-        const updatedElem = Object.assign(
-            {
-                name: 'updated',
-            },
-            elemDefault,
-        );
+        const updatedElem = deepClone(elemDefault);
+        updatedElem.name = 'updated';
         const resultPromise = firstValueFrom(service.update(updatedElem));
 
         const req = httpMock.expectOne({ method: 'PUT' });

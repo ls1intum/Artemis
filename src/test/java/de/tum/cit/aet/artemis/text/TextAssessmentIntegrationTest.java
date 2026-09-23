@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
+import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
@@ -174,6 +176,27 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
         var result = resultRepository.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentRejectsMissingGradingInstruction(boolean submit) throws Exception {
+        var submission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var result = submission.getLatestResult();
+        var originalFeedback = new Feedback().credits(2.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("original assessment");
+        participationUtilService.addFeedbackToResult(originalFeedback, result);
+        var instruction = new GradingInstruction();
+        instruction.setId(Long.MAX_VALUE);
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("invalid instruction");
+        feedback.setGradingInstruction(instruction);
+
+        saveOrSubmitTextAssessment(submission.getParticipation().getId(), result.getId(), new TextAssessmentDTO(List.of(FeedbackDTO.of(feedback)), null, null), submit,
+                HttpStatus.BAD_REQUEST);
+
+        assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId()).getFeedbacks()).singleElement()
+                .satisfies(item -> assertThat(item.getId()).isEqualTo(originalFeedback.getId()));
     }
 
     @Test
@@ -1171,11 +1194,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 200L);
         addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 200L);
 
-        Course course = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
-                Course.class);
-        Exercise exercise = (Exercise) course.getExercises().toArray()[0];
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-        assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
+        CourseAssessmentDashboardDTO dashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard",
+                HttpStatus.OK, CourseAssessmentDashboardDTO.class);
+        CourseAssessmentDashboardDTO.AssessmentExerciseDTO exercise = dashboard.exercises().iterator().next();
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds()).hasSize(1);
+        assertThat(exercise.numberOfAssessmentsOfCorrectionRounds().getFirst().inTime()).isEqualTo(1L);
     }
 
     @Test

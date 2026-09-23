@@ -644,6 +644,12 @@ pre {
         #irisSendButton {
             flex-shrink: 0;
         }
+
+        // Without the context selector the send button is the only child, so `space-between` would park it
+        // on the left edge of the row instead of keeping it on the right where it always sits.
+        &--send-only {
+            justify-content: flex-end;
+        }
     }
 
     // These values must stay in sync with the textarea padding (16px)

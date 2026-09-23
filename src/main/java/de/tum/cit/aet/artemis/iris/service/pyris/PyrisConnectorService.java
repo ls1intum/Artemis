@@ -65,6 +65,11 @@ import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResourc
 @Conditional(IrisEnabled.class)
 public class PyrisConnectorService {
 
+    /**
+     * What Pyris puts in the body when it is asked about a lecture unit it has not ingested.
+     */
+    private static final String LECTURE_UNIT_NOT_INGESTED_DETAIL = "Lecture unit has not been ingested";
+
     private static final Logger log = LoggerFactory.getLogger(PyrisConnectorService.class);
 
     /**
@@ -221,16 +226,19 @@ public class PyrisConnectorService {
     /**
      * Searches for lecture units in Pyris using a query string.
      *
-     * @param query         the search query
-     * @param limit         the maximum number of results to return
-     * @param courseIds     optional list of course IDs to restrict the search scope; null means global search across all courses
-     * @param accessContext the requesting user's role-grouped course access, applied by Pyris as an opaque filter; null for old clients
+     * @param query            the search query
+     * @param limit            the maximum number of results to return
+     * @param courseIds        optional list of course IDs to restrict the search scope; null means global search across all courses
+     * @param excludeCourseIds optional list of course IDs Pyris has to hide itself; only needed for a caller sent without a course ceiling, since every other
+     *                             exclusion is already subtracted from {@code courseIds}
+     * @param accessContext    the requesting user's role-grouped course access, applied by Pyris as an opaque filter; null for old clients
      * @return list of matching lecture search results
      */
-    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds, @Nullable PyrisAccessContextDTO accessContext) {
+    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds,
+            @Nullable PyrisAccessContextDTO accessContext) {
         var endpoint = "/api/v1/search/lectures";
         try {
-            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds, accessContext);
+            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds, excludeCourseIds, accessContext);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
                 return List.of();
@@ -325,13 +333,20 @@ public class PyrisConnectorService {
      * Executes a lightweight lecture metadata webhook in Pyris.
      *
      * @param dto The DTO sent as a body for the execution
+     * @return whether Pyris accepted the update, false if it does not hold the lecture unit
      */
-    public void executeLectureMetadataWebhook(PyrisLectureUnitMetadataWebhookDTO dto) {
+    public boolean executeLectureMetadataWebhook(PyrisLectureUnitMetadataWebhookDTO dto) {
         var endpoint = "/api/v1/webhooks/lectures/metadata";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
+            return true;
         }
         catch (HttpStatusCodeException e) {
+            if (reportsLectureUnitNotIngested(e)) {
+                // See executeLectureVisibilityWebhook: a unit Pyris never ingested has no metadata to update either.
+                log.info("Pyris does not hold lecture unit {}, so its metadata has nothing to update", dto.lectureUnitId());
+                return false;
+            }
             log.error("Failed to send lecture unit metadata {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
             throw toIrisException(e);
         }
@@ -345,13 +360,21 @@ public class PyrisConnectorService {
      * Executes a lightweight lecture visibility webhook in Pyris.
      *
      * @param dto The DTO sent as a body for the execution
+     * @return whether Pyris accepted the update, false if it does not hold the lecture unit
      */
-    public void executeLectureVisibilityWebhook(PyrisLectureUnitVisibilityWebhookDTO dto) {
+    public boolean executeLectureVisibilityWebhook(PyrisLectureUnitVisibilityWebhookDTO dto) {
         var endpoint = "/api/v1/webhooks/lectures/visibility";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
+            return true;
         }
         catch (HttpStatusCodeException e) {
+            if (reportsLectureUnitNotIngested(e)) {
+                // Pyris answers 404 for a unit it never ingested. There is no visibility to update, and a retry cannot
+                // create one, so this is reported back as an outcome rather than raised as a failure.
+                log.info("Pyris does not hold lecture unit {}, so its visibility has nothing to update", dto.lectureUnitId());
+                return false;
+            }
             log.error("Failed to send lecture unit visibility {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
             throw toIrisException(e);
         }
@@ -379,6 +402,19 @@ public class PyrisConnectorService {
             log.error("Failed to send lectures to Pyris", e);
             throw new PyrisConnectorException("Could not fetch response from Pyris");
         }
+    }
+
+    /**
+     * @param exception the error Pyris answered a lecture unit webhook with
+     * @return whether it is Pyris reporting that it does not hold the lecture unit, rather than any other 404
+     */
+    private static boolean reportsLectureUnitNotIngested(HttpStatusCodeException exception) {
+        if (exception.getStatusCode() != HttpStatus.NOT_FOUND) {
+            return false;
+        }
+        // The status alone is not enough. A renamed endpoint or a gateway in front of Pyris also answers 404, and
+        // reading that as "this unit was never ingested" would settle every lecture unit of the installation at once.
+        return exception.getResponseBodyAsString().contains(LECTURE_UNIT_NOT_INGESTED_DETAIL);
     }
 
     private IrisException toIrisException(HttpStatusCodeException e) {

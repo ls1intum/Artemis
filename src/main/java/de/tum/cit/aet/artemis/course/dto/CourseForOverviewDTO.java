@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
 /**
@@ -28,7 +29,7 @@ import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguratio
  * @param startDate                                      when the course starts
  * @param endDate                                        when the course ends; separates active from archived courses
  * @param color                                          the course colour used across the overview
- * @param courseIcon                                     the course icon, from which the client derives its display path
+ * @param courseIcon                                     the path the course icon is served under, relative to {@code api/core/files/}
  * @param testCourse                                     whether this is a test course
  * @param onlineCourse                                   whether this is an LTI online course
  * @param enrollmentEnabled                              whether self-enrollment is on; the unenrollment dialog reads it
@@ -59,6 +60,14 @@ public record CourseForOverviewDTO(long id, String title, @Nullable ZonedDateTim
         @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
         boolean requestMoreFeedbackEnabled, int maxRequestMoreFeedbackTimeDays, boolean athenaGradingFeedbackEnabled, boolean athenaFormativeFeedbackEnabled,
         long courseNotificationCount) {
+
+    /**
+     * The icon comes out of the column as a filename, so it is turned into the path the client requests it under. The conversion is idempotent, which is what lets
+     * {@link #withNotificationCount(long)} rebuild the record from an already converted value.
+     */
+    public CourseForOverviewDTO {
+        courseIcon = ServedFileUrl.courseIcon(id, courseIcon);
+    }
 
     /**
      * JPQL constructor, leaving the notification count at zero for {@link #withNotificationCount(long)} to fill in.

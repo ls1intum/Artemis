@@ -119,7 +119,7 @@ Three settings control how students can work on the exercise:
 - **Package Name**: The package structure students must use. Not available for every language.
 - **Enable Static Code Analysis**: Adds automated code quality checks to the build. **Cannot be changed after creation.** See [Configure Static Code Analysis](/instructor/exercises/programming-exercise/configure-the-build#configure-static-code-analysis).
 - **Sequential Test Runs**: Runs structural tests before behavioral ones. Not compatible with static code analysis. **Cannot be changed after creation.**
-- **Customize Build Configuration**: Lets you adapt the build plan, and is adjustable after creation. Only shown with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle); Jenkins exercises use their own build plan configuration. See [Configure the Build](/instructor/exercises/programming-exercise/configure-the-build).
+- **Build plan**: Artemis creates a default build plan for the exercise. You adapt it after creation on the dedicated build plan editor page, see [Adapt Build Phases](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional). Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle); Jenkins exercises use their own build plan configuration.
 
 ## Version Control
 
@@ -196,7 +196,11 @@ Shown in advanced mode only.
 
 <Callout variant={CalloutVariant.info}>
 
-  After the due date, students can keep committing and receiving feedback in practice mode. Those results are not rated.
+  After the due date, students can keep committing and receiving feedback in practice mode. Those results are not
+  rated. Practice mode is also available for quiz exercises, and for text and modeling exercises on an instance that
+  runs the Athena service. Enabling AI feedback for the course is a separate condition: it decides whether a student
+  may request feedback on what they practice, not whether they may practice at all. See
+  [Practice Mode](/student/exercises/practice-mode) in the student documentation.
 
 </Callout>
 

@@ -31,7 +31,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -364,7 +364,8 @@ describe('Course Management Update Component', () => {
             // CourseAthenaConfigResource - so the saved course does not carry them either.
             delete entity.athenaGradingFeedbackEnabled;
             delete entity.athenaFormativeFeedbackEnabled;
-            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 42 } })));
+            const navigateStub = vi.spyOn(TestBed.inject(Router), 'navigate');
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
@@ -391,6 +392,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
+            expect(navigateStub).toHaveBeenCalledExactlyOnceWith(['course-management', '42']);
             expect(comp.isSaving()).toBe(false);
         });
 
@@ -1672,7 +1674,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         return course;
     }
 
-    async function setupWithCourse(course: Course): Promise<void> {
+    async function setupWithCourse(course: Course, activeModuleFeatures: string[] = [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM]): Promise<void> {
         const route = { data: of({ course }) } as any as ActivatedRoute;
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
@@ -1700,7 +1702,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         profileService = TestBed.inject(ProfileService);
         organizationService = TestBed.inject(OrganizationManagementService);
 
-        const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        const profileInfo = { activeProfiles: [], activeModuleFeatures } as unknown as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
         vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
 
@@ -1822,12 +1824,32 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         expect(dto.maxDailyOrchestrationOverride).toBeUndefined();
     });
 
-    it('should load the global orchestration defaults to back the override placeholders when Atlas is active', async () => {
+    it('should load the global orchestration defaults to back the override placeholders when auto orchestration is available', async () => {
         vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults').mockResolvedValue({ debounceWindowSeconds: 1800, maxDailyOrchestrations: 10 });
         await setupWithCourse(buildCourse(false));
         await Promise.resolve();
 
         expect(comp.debounceWindowSecondsDefault()).toBe(1800);
         expect(comp.maxDailyOrchestrationDefault()).toBe(10);
+    });
+
+    it('should not ask for the orchestration defaults when Atlas is active but AtlasLLM is not', async () => {
+        // CompetencyOrchestrationResource is not registered without AtlasLLM, so the request would fail on every
+        // course-edit load and be swallowed by the best-effort catch, leaving no trace of why the page is slow.
+        const getDefaultsSpy = vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults');
+        await setupWithCourse(buildCourse(false), [MODULE_FEATURE_ATLAS]);
+        await Promise.resolve();
+
+        expect(getDefaultsSpy).not.toHaveBeenCalled();
+        expect(comp.debounceWindowSecondsDefault()).toBeUndefined();
+    });
+
+    it('should hide the auto orchestration settings when Atlas is active but AtlasLLM is not', async () => {
+        await setupWithCourse(buildCourse(false), [MODULE_FEATURE_ATLAS]);
+        await Promise.resolve();
+
+        // Administrators must not be offered settings for a pipeline this instance cannot run.
+        expect(comp.atlasLLMEnabled()).toBe(false);
+        expect(fixture.nativeElement.querySelector('#field_autoOrchestratorEnabled')).toBeNull();
     });
 });

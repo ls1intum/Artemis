@@ -30,9 +30,12 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
@@ -48,6 +51,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 @Entity
 @Table(name = "course")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("The main aggregate root.")
 public class Course extends DomainObject {
 
     public static final String ENTITY_NAME = "course";
@@ -186,10 +190,10 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
-    // Unidirectional Course -> ExerciseVariantGroup: the course owns its variant groups (FK course_id lives on
-    // exercise_variant_group), which lets empty groups exist in exercise management before any exercise is added.
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
+    // The group holds the key, so it can never exist without a course. Empty groups are still fine: a group is created
+    // in exercise management before any exercise is added to it.
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<ExerciseVariantGroup> exerciseVariantGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
@@ -562,12 +566,22 @@ public class Course extends DomainObject {
         this.color = color;
     }
 
+    /**
+     * The path the course icon is served under, relative to {@code api/core/files/}. The column stores only the filename.
+     *
+     * @return the served path of the icon, or its filename while the course has no id yet
+     */
     public String getCourseIcon() {
-        return courseIcon;
+        return ServedFileUrl.courseIcon(getId(), courseIcon);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param courseIcon the filename of the icon, or the URL it is served under
+     */
     public void setCourseIcon(String courseIcon) {
-        this.courseIcon = courseIcon;
+        this.courseIcon = FileSystemLocation.storedFilename(courseIcon);
     }
 
     public Boolean isEnrollmentEnabled() {

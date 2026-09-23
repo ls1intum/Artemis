@@ -16,6 +16,9 @@ public final class Constants {
 
     public static final int PASSWORD_MAX_LENGTH = 100;
 
+    /** Maximum UTF-8 byte length supported by BCrypt. */
+    public static final int PASSWORD_MAX_BYTES = 72;
+
     public static final String SET_UP_TEMPLATE_FOR_EXERCISE = "Set up template for exercise";
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
@@ -65,8 +68,6 @@ public final class Constants {
      * de.tum.cit.aet.artemis.assessment.domain.Result.
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
-
-    public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
 
@@ -473,6 +474,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLASML = "atlasml";
 
     /**
+     * The name of the module feature used for the LLM-backed part of Atlas.
+     */
+    public static final String MODULE_FEATURE_ATLASLLM = "atlasllm";
+
+    /**
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
@@ -566,6 +572,13 @@ public final class Constants {
      * The name of the property used to enable or disable AtlasML functionality.
      */
     public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
+
+    /**
+     * The name of the property used to enable or disable the LLM-backed part of Atlas: the chat agent, the autonomous
+     * competency orchestrator, and the tool surfaces they call. Disabled by default, because none of it can work
+     * without a configured chat model, and every bean behind it is dead weight on an installation that has none.
+     */
+    public static final String ATLASLLM_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasllm.enabled";
 
     /**
      * The name of the property used to enable or disable Hyperion functionality.

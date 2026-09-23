@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiMessageComponent, TumUiPanelComponent, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiEmptyStateComponent, TumUiPanelComponent, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -19,6 +19,7 @@ import {
     faFileImport,
     faLayerGroup,
     faList,
+    faMagnifyingGlass,
     faPen,
     faPlus,
     faTrash,
@@ -81,7 +82,7 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
         TumUiPanelComponent,
         TumUiButtonComponent,
         TumUiButtonDirective,
-        TumUiMessageComponent,
+        TumUiEmptyStateComponent,
         TumUiTooltipDirective,
         FaIconComponent,
         ExerciseTableComponent,
@@ -107,6 +108,9 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
     protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faCode = faCode;
+    protected readonly faList = faList;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
     protected readonly faWrench = faWrench;
@@ -347,8 +351,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     private deleteObservableFor(exercise: Exercise, event: { [key: string]: boolean }): Observable<HttpResponse<void>> {
         switch (exercise.type) {
             case ExerciseType.PROGRAMMING:
-                // The cleanup checks are only offered on non-LocalCI setups, so the flags default to false.
-                return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans ?? false, event.deleteBaseReposBuildPlans ?? false);
+                // Preserve omitted LocalCI cleanup flags so the server applies its repository deletion defaults.
+                return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
             case ExerciseType.QUIZ:
                 return this.quizExerciseService.delete(exercise.id!);
             case ExerciseType.TEXT:

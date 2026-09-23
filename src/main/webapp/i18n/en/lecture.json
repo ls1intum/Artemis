@@ -12,7 +12,14 @@
                     "filterFuture": "Future",
                     "filterUnspecifiedDates": "Unspecified Date(s)"
                 },
-                "createOrEditLabel": "Create or Edit Lecture"
+                "createOrEditLabel": "Create or Edit Lecture",
+                "empty": {
+                    "title": "No lectures yet",
+                    "description": "Create a lecture or import one from another course to add content to this course.",
+                    "documentation": "Learn about lectures",
+                    "noMatchingTitle": "No lectures match the selected filters",
+                    "noMatchingDescription": "Try adjusting the selected filters."
+                }
             },
             "created": "Created new lecture with identifier {{ param }}",
             "updated": "Updated lecture with identifier {{ param }}",

@@ -171,6 +171,9 @@
                                 @if (registerForm.controls.password.errors?.maxlength) {
                                     <small jhiTranslate="global.messages.validate.newpassword.maxlength" [translateValues]="{ max: PASSWORD_MAX_LENGTH }"></small>
                                 }
+                                @if (registerForm.controls.password.errors?.maxbytes) {
+                                    <small jhiTranslate="global.messages.validate.newpassword.maxbytes" [translateValues]="{ max: PASSWORD_MAX_BYTES }"></small>
+                                }
                             </ng-container>
                             <jhi-password-strength-bar [passwordToCheck]="registerForm.controls.password.value" />
                         </tum-ui-form-field>

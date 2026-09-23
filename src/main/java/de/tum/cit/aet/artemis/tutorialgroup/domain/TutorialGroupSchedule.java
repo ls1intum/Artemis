@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A {@link TutorialGroupSchedule} is a schedule for a {@link TutorialGroup}. It represents a recurrence pattern for {@link TutorialGroupSession}s.
@@ -34,7 +35,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 public class TutorialGroupSchedule extends DomainObject {
 
     @OneToOne
-    @JoinColumn(name = "tutorial_group_id")
+    @JoinColumn(name = "tutorial_group_id", nullable = false)
+    @Parent
     private TutorialGroup tutorialGroup;
 
     /**

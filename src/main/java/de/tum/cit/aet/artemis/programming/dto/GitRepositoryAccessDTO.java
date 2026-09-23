@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -44,12 +45,18 @@ public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMod
      *
      * @param exercise the loaded exercise, with its course and, for an exam exercise, its exercise group and exam
      * @return the same values the query projects
+     * @throws IllegalStateException if no course is reachable from the exercise, which means the caller did not load the graph this projection needs
      */
     public static GitRepositoryAccessDTO of(ProgrammingExercise exercise) {
         Exam exam = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam() : null;
-        return new GitRepositoryAccessDTO(exercise.getId(), exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getMode(), exercise.isAllowOfflineIde(),
-                exercise.getStartDate(), exercise.getReleaseDate(), exercise.getDueDate(), exam == null ? null : exam.getId(), exam == null ? null : exam.getStartDate(),
-                exam == null ? null : exam.isTestExam());
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            // The course id is the whole point of this projection - every role check downstream is keyed by it - so an exercise that cannot produce one is a caller error
+            // rather than a case to represent. Name the exercise; the alternative is a NullPointerException raised deep inside a repository handshake.
+            throw new IllegalStateException("Cannot build the repository access projection for exercise " + exercise.getId() + ": no course is reachable from it.");
+        }
+        return new GitRepositoryAccessDTO(exercise.getId(), course.getId(), exercise.getMode(), exercise.isAllowOfflineIde(), exercise.getStartDate(), exercise.getReleaseDate(),
+                exercise.getDueDate(), exam == null ? null : exam.getId(), exam == null ? null : exam.getStartDate(), exam == null ? null : exam.isTestExam());
     }
 
     /**

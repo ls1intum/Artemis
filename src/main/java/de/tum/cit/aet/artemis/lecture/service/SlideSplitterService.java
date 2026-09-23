@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -33,9 +32,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -92,8 +91,14 @@ public class SlideSplitterService {
             return CompletableFuture.completedFuture(null);
         }
 
-        Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
-        File file = attachmentPath.toFile();
+        Optional<FileSystemLocation> fileLocation = attachmentVideoUnit.getAttachment().fileLocation();
+        if (fileLocation.isEmpty()) {
+            // An attachment that links to a document hosted elsewhere has no PDF here to split, and the filename its link ends in may belong to an unrelated attachment.
+            log.debug("Skipping slide split job for AttachmentVideoUnit {}, whose attachment links to a document this application does not store", job.attachmentVideoUnitId());
+            return CompletableFuture.completedFuture(null);
+        }
+
+        File file = fileLocation.get().path().toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
             if (job.pageOrder() == null) {
@@ -163,7 +168,7 @@ public class SlideSplitterService {
         SlideOperation operation = new SlideOperation();
         operation.recordRestorePoint(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()));
         // Read a second time, and before anything is written: this loop creates a slide per page unconditionally, so
-        // the slides of the previous version of the file have to be collected now and detached at the end, or the unit
+        // the slides of the previous version of the file have to be collected now and marked at the end, or the unit
         // ends up carrying both sets. A separate read because the restore point above must not alias what is mutated.
         List<Slide> supersededSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId());
         try {
@@ -183,13 +188,13 @@ public class SlideSplitterService {
                 operation.recordCreatedFile(savePath);
 
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
+                slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
                 operation.save(slideEntity);
             }
 
-            detachSupersededSlides(operation, supersededSlides);
+            markSupersededSlides(operation, supersededSlides);
         }
         catch (IOException e) {
             operation.compensate();
@@ -291,6 +296,9 @@ public class SlideSplitterService {
             slideEntity = existingSlidesMap.get(slideId);
         }
 
+        // The slide image is stored in a directory named by the slide's number, so the number the slide had while that image was written is needed to find it again. Read it
+        // before the new order overwrites it.
+        int numberTheImageWasWrittenUnder = slideEntity.getSlideNumber();
         slideEntity.setSlideNumber(order);
         ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap, slideId);
 
@@ -298,7 +306,7 @@ public class SlideSplitterService {
             createNewSlideImage(operation, slideEntity, pdfRenderer, fileNameWithOutExt, attachmentVideoUnit, order, totalPages);
         }
         else {
-            updateExistingSlideImage(operation, slideEntity, fileNameWithOutExt, attachmentVideoUnit, order);
+            updateExistingSlideImage(operation, slideEntity, fileNameWithOutExt, attachmentVideoUnit, order, numberTheImageWasWrittenUnder);
         }
 
         // Save slide and schedule unhiding if needed
@@ -349,17 +357,25 @@ public class SlideSplitterService {
                     .resolve(String.valueOf(order)).resolve(filename));
             operation.recordCreatedFile(savePath);
 
-            slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
+            slideEntity.setSlideImagePath(savePath.getFileName().toString());
         }
     }
 
     /**
      * Update image for an existing slide.
+     *
+     * @param operation                     the running operation, which records the file written and the one it supersedes so a failure can be undone
+     * @param slideEntity                   the slide being renumbered
+     * @param fileNameWithOutExt            the name of the document the slide belongs to, without its extension
+     * @param attachmentVideoUnit           the attachment video unit the slide belongs to
+     * @param order                         the number the slide is being given
+     * @param numberTheImageWasWrittenUnder the number the slide had while its current image was written, which names the directory that image is in
      */
-    private void updateExistingSlideImage(SlideOperation operation, Slide slideEntity, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order) {
+    private void updateExistingSlideImage(SlideOperation operation, Slide slideEntity, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order,
+            int numberTheImageWasWrittenUnder) {
         String oldPath = slideEntity.getSlideImagePath();
         if (oldPath != null && !oldPath.isEmpty()) {
-            Path originalPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPath), FilePathType.SLIDE);
+            Path originalPath = new FileSystemLocation.Slide(attachmentVideoUnit.getId(), numberTheImageWasWrittenUnder, oldPath).path();
             String newFilename = uniqueSlideFilename(fileNameWithOutExt, attachmentVideoUnit.getId(), order);
 
             try {
@@ -376,7 +392,7 @@ public class SlideSplitterService {
                     operation.recordCreatedFile(savePath);
                     operation.recordSupersededFile(originalPath);
 
-                    slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
+                    slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 }
                 else {
                     log.warn("Could not find existing slide file at path: {}", originalPath);
@@ -403,29 +419,30 @@ public class SlideSplitterService {
     }
 
     /**
-     * Detach the slides that belonged to the previous version of the file, so that a re-upload replaces the deck
+     * Mark the slides that belonged to the previous version of the file, so that a re-upload replaces the deck
      * rather than adding a second copy of it.
      * <p>
-     * Detached rather than deleted, for the same reason {@link #cleanupRemovedSlides} gives: the row may still be
-     * referenced, and {@code attachment_unit_id} is {@code ON DELETE SET NULL}, so clearing the unit is how a slide
-     * leaves a unit here. The image files are left alone, because the detached rows still point at them.
+     * Marked rather than deleted: the row may still be wanted, and the image files are left alone because these rows
+     * still point at them. The slides keep their unit, so they stay inside its lifetime and go when it goes; every
+     * query that lists a unit's slides leaves the superseded ones out.
      *
      * @param operation        the undo log of the operation writing the new slides
      * @param supersededSlides the slides the unit carried before this operation, read before anything was written
      */
-    private void detachSupersededSlides(SlideOperation operation, List<Slide> supersededSlides) {
+    private void markSupersededSlides(SlideOperation operation, List<Slide> supersededSlides) {
         if (supersededSlides.isEmpty()) {
             return;
         }
         for (Slide slide : supersededSlides) {
-            slide.setAttachmentVideoUnit(null);
+            slide.setSuperseded(true);
             operation.save(slide);
         }
-        log.debug("Detached {} slides belonging to the previous version of the file", supersededSlides.size());
+        log.debug("Marked {} slides belonging to the previous version of the file as superseded", supersededSlides.size());
     }
 
     /**
-     * Update slides that are no longer in the page order by setting their attachmentVideoUnit to null instead of deleting them.
+     * Marks the slides an instructor dropped from the page order, instead of deleting them. They keep their unit, so
+     * they remain part of it and are left out of every query that lists it.
      */
     private void cleanupRemovedSlides(SlideOperation operation, List<SlideOrderDTO> pageOrderList, List<Slide> existingSlides) {
         if (pageOrderList == null || pageOrderList.isEmpty()) {
@@ -435,17 +452,17 @@ public class SlideSplitterService {
         Set<String> slideIdsInPageOrder = pageOrderList.stream().map(SlideOrderDTO::slideId).filter(id -> !id.startsWith("temp_")).collect(Collectors.toSet());
 
         if (!slideIdsInPageOrder.isEmpty()) {
-            List<Slide> slidesToDetach = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
+            List<Slide> slidesToSupersede = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
 
-            if (!slidesToDetach.isEmpty()) {
-                for (Slide slide : slidesToDetach) {
-                    slide.setAttachmentVideoUnit(null);
+            if (!slidesToSupersede.isEmpty()) {
+                for (Slide slide : slidesToSupersede) {
+                    slide.setSuperseded(true);
                     // Through the operation like every other write here. These rows already exist, so nothing is
                     // recorded as created and the restore point already covers them; routing it here keeps that true
                     // if this ever starts writing a row of its own.
                     operation.save(slide);
                 }
-                log.debug("Detached {} slides that are no longer in the page order by setting their attachmentVideoUnit to null", slidesToDetach.size());
+                log.debug("Marked {} slides that are no longer in the page order as superseded", slidesToSupersede.size());
             }
         }
     }

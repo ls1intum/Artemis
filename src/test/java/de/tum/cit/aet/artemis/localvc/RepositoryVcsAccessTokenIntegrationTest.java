@@ -572,8 +572,8 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     /**
-     * Attaches an auxiliary repository with the given canonical URI to the exercise. Goes through the util helper (which writes the {@code @OrderColumn} index by saving the
-     * exercise) and keeps the in-memory exercise object consistent so the service can resolve the auxiliary repository by id.
+     * Attaches an auxiliary repository with the given canonical URI to the exercise. Goes through the util helper and
+     * keeps the in-memory exercise object consistent so the service can resolve the auxiliary repository by id.
      */
     private AuxiliaryRepository persistAuxiliaryRepository(String repositoryUri) {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);

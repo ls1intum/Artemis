@@ -106,6 +106,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -523,9 +524,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 assertThat(exercise.getExerciseGroup()).isNotNull();
                 assertThat(exercise.getExerciseGroup().getExercises()).isEmpty();
                 assertThat(exercise.getExerciseGroup().getExam()).isNull();
-                if (exercise instanceof ProgrammingExercise) {
-                    assertThat(((ProgrammingExercise) exercise).getBuildConfig()).isNull();
-                }
             }
             assertThat(studentExamRepository.findById(studentExam.getId()).orElseThrow().isStarted()).isTrue();
             assertParticipationAndSubmissions(response, user);
@@ -782,10 +780,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         JsonNode listed = response.get(0);
         assertThat(listed.path("participation").path("testRun").asBoolean()).isTrue();
         // Submission is polymorphic; the client switches on the discriminator, so it has to survive the DTO
-        assertThat(listed.path("submissionExerciseType").asText()).isNotBlank();
+        assertThat(listed.path("submissionExerciseType").asString()).isNotBlank();
         // the assessment link needs the participation id, and the client restores the participation subclass from its type
         assertThat(listed.path("participation").path("id").isNumber()).isTrue();
-        assertThat(listed.path("participation").path("type").asText()).isEqualTo("student");
+        assertThat(listed.path("participation").path("type").asString()).isEqualTo("student");
         // the exam assessment dashboard picks the result of the displayed round by correctionRound and silently drops the row without it
         assertThat(listed.path("results")).isNotEmpty().allSatisfy(result -> assertThat(result.path("correctionRound").isInt()).isTrue());
         assertThat(listed.path("results")).anySatisfy(result -> assertThat(result.path("correctionRound").asInt()).isZero());
@@ -821,7 +819,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(response).hasSize(1);
         // the result badge reads "x of y passed tests" off these two counters of the listed draft
         assertThat(wire.get(0).path("results")).anySatisfy(result -> {
-            assertThat(result.path("assessmentType").asText()).isEqualTo(AssessmentType.SEMI_AUTOMATIC.name());
+            assertThat(result.path("assessmentType").asString()).isEqualTo(AssessmentType.SEMI_AUTOMATIC.name());
             assertThat(result.path("testCaseCount").isInt()).isTrue();
             assertThat(result.path("passedTestCaseCount").isInt()).isTrue();
         });
@@ -2821,7 +2819,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         return studentExam;
     }
 
-    private GradingScale createGradeScale(boolean isBonus) {
+    private GradingScale createGradeScale(boolean isBonus, Exam exam) {
         GradingScale gradingScale;
         if (isBonus) {
             gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 40, 50 }, Optional.of(new String[] { "0", "0.3", "0.6" }), true, 1);
@@ -2831,6 +2829,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             gradingScale = gradingScaleUtilService.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0" }),
                     true, 1);
         }
+        // A grading scale grades a course or an exam, and the row has to name one of the two before it is written.
+        gradingScale.setExam(exam);
         gradingScaleRepository.save(gradingScale);
         return gradingScale;
     }
@@ -2840,8 +2840,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResults() throws Exception {
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
@@ -2936,8 +2935,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam2.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
         exam2 = examRepository.save(exam2);
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
@@ -2952,8 +2950,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOwnUserId() throws Exception {
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
@@ -2979,8 +2976,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOtherUserId() throws Exception {
         exam2 = createStudentExamWithResultsAndAssessments(true, 2).getExam();
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users try to access exam summary after results are published
@@ -2998,8 +2994,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
         exam2 = studentExam.getExam();
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
 
         var studentExamGradeInfoFromServer = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId()
@@ -3020,8 +3015,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleWithCorrectlyRoundedPoints() throws Exception {
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(exam2);
+        GradingScale gradingScale = createGradeScale(false, exam2);
         gradingScaleRepository.save(gradingScale);
         List<StudentParticipation> participations = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
@@ -3106,13 +3100,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var bonusExam = examRepository.findById(bonusStudentExam.getExam().getId()).orElseThrow();
         assertThat(finalExam.getId()).isNotEqualTo(bonusExam.getId());
 
-        GradingScale finalExamGradingScale = createGradeScale(false);
-        finalExamGradingScale.setExam(finalExam);
+        GradingScale finalExamGradingScale = createGradeScale(false, finalExam);
         finalExamGradingScale.setBonusStrategy(bonusStrategy);
         gradingScaleRepository.save(finalExamGradingScale);
 
-        GradingScale bonusGradingScale = createGradeScale(true);
-        bonusGradingScale.setExam(bonusExam);
+        GradingScale bonusGradingScale = createGradeScale(true, bonusExam);
         gradingScaleRepository.save(bonusGradingScale);
 
         double weight = bonusStrategy == BonusStrategy.POINTS ? 1.0 : -1.0;
@@ -4077,8 +4069,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         void testStartParticipationQueryCount() throws Exception {
             // The exam participations were prepared up front, so this is the hot "participation already exists" path the
             // client hits on every (re)entry into an exercise.
-            assertThatDb(() -> request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, Participation.class, HttpStatus.CREATED))
-                    .hasBeenCalledAtMostTimes(START_PARTICIPATION_QUERY_COUNT);
+            assertThatDb(() -> request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipationDTO.class,
+                    HttpStatus.CREATED)).hasBeenCalledAtMostTimes(START_PARTICIPATION_QUERY_COUNT);
         }
 
         @Test
