@@ -111,7 +111,10 @@ describe('ExerciseActionsComponent', () => {
             hyperionFixture.componentRef.setInput('exercise', programming);
             hyperionFixture.componentRef.setInput('courseId', 1);
             hyperionFixture.componentRef.setInput('course', course);
-            expect(hyperionFixture.componentInstance.mainActions().map((a) => a.id)).toContain('create-variant-ai');
+            const variantAction = hyperionFixture.componentInstance.mainActions().find((a) => a.id === 'create-variant-ai');
+            expect(variantAction).toBeDefined();
+            variantAction!.onClick!();
+            expect(hyperionFixture.componentInstance['aiVariantModalVisible']()).toBe(true);
 
             hyperionFixture.componentRef.setInput('exercise', textExercise({ id: 5, type: ExerciseType.PROGRAMMING, isAtLeastEditor: false }));
             expect(hyperionFixture.componentInstance.mainActions().map((a) => a.id)).not.toContain('create-variant-ai');

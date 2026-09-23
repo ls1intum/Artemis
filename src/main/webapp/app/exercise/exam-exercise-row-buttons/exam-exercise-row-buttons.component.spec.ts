@@ -174,6 +174,8 @@ describe('ExamExerciseRowButtonsComponent', () => {
             fixture.componentRef.setInput('exam', exam);
             fixture.componentRef.setInput('exerciseGroupId', 5);
             expect(idsFor(programmingExercise, { editor: true })).toContain('create-variant-ai');
+            component.mainActions().find((action) => action.id === 'create-variant-ai')!.onClick!();
+            expect(component.aiVariantModalVisible()).toBe(true);
             expect(idsFor(programmingExercise, { editor: false })).not.toContain('create-variant-ai');
         });
 

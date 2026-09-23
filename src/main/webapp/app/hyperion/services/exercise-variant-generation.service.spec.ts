@@ -161,6 +161,54 @@ describe('ExerciseVariantGenerationService', () => {
         expect(websocketMock.subscribeToJob).not.toHaveBeenCalledWith('done-1');
     });
 
+    it('loadJobs detaches from a job that finished while its terminal event was missed', () => {
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+        service.startGeneration(42, {}).subscribe();
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledWith('job-1');
+
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([{ jobId: 'job-1', phase: 'COMPLETED' }]));
+        service.loadJobs().subscribe();
+
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
+        expect(service.runningJobs()).toEqual([]);
+    });
+
+    it('startGeneration merges into a job that a re-sync already listed instead of adding it twice', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([{ jobId: 'job-1', phase: 'PLANNING', sourceExerciseId: 42 }]));
+        service.loadJobs().subscribe();
+        apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
+
+        service.startGeneration(42, {}, 'Sorting Basics').subscribe();
+
+        expect(service.jobs()).toHaveLength(1);
+        expect(service.jobs()[0]).toMatchObject({ jobId: 'job-1', sourceExerciseTitle: 'Sorting Basics', phase: 'ANALYZING' });
+        // The re-sync already attached to the running job, so starting it must not subscribe a second time.
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledOnce();
+    });
+
+    it('jobEvents attaches the tray to the job once and returns its event stream', () => {
+        const received: VariantGenerationEvent[] = [];
+        service.jobEvents('job-1').subscribe((event) => received.push(event));
+        service.jobEvents('job-1').subscribe();
+
+        eventSubjects.get('job-1')!.next({ type: 'PHASE_CHANGED', phase: 'PLANNING' } as VariantGenerationEvent);
+
+        expect(received).toHaveLength(1);
+        // One subscription drives the tray; each jobEvents call returns the stream itself.
+        expect(websocketMock.subscribeToJob).toHaveBeenCalledTimes(3);
+    });
+
+    it('getJobDetail delegates to the job-detail endpoint', () => {
+        const detail = { job: { jobId: 'job-1', phase: 'COMPLETED' } };
+        apiMock.getJobDetail.mockReturnValue(of(detail));
+
+        let received: unknown;
+        service.getJobDetail('job-1').subscribe((value) => (received = value));
+
+        expect(apiMock.getJobDetail).toHaveBeenCalledWith('job-1');
+        expect(received).toEqual(detail);
+    });
+
     it('cancelJob issues the DELETE and the entry transitions to CANCELLED on the CANCELLED event', async () => {
         apiMock.generateVariant.mockReturnValue(of({ jobId: 'job-1' }));
         apiMock.cancelJob.mockReturnValue(of(undefined));
