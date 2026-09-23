@@ -342,6 +342,31 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void retrieveParticipationForSubmission_resultOfComplaintResponse_ok() throws Exception {
+        TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result manualAssessment = textSubmission.getLatestResult();
+        manualAssessment.setAssessmentType(AssessmentType.MANUAL);
+        manualAssessment = resultRepository.save(manualAssessment);
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(manualAssessment, TEST_PREFIX + "tutor2");
+        TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
+                new HashSet<>());
+        request.putWithResponseBody(
+                "/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
+                textAssessmentUpdate, ResultDTO.class, HttpStatus.OK);
+        assertThat(resultRepository.existsManualResultBySubmissionIdAndCorrectionRound(textSubmission.getId(), 1)).as("the complaint response is stored as the result of round 1")
+                .isTrue();
+        long numberOfResults = resultRepository.countBySubmissionId(textSubmission.getId());
+
+        var params = new LinkedMultiValueMap<String, String>();
+        // the course exercise has one correction round, but the result of the complaint response exists and can be opened
+        params.add("correction-round", "1");
+        request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class, params);
+
+        assertThat(resultRepository.countBySubmissionId(textSubmission.getId())).as("opening the existing result creates no further result").isEqualTo(numberOfResults);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getTextSubmissionWithoutAssessmentAndLock_correctionRoundBeyondExercise_badRequest() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
