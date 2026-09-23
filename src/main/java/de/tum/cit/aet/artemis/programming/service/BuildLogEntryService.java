@@ -93,32 +93,35 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Deletes every build log of a submission without touching the submission entity, for a caller that holds only a
-     * detached skeleton of it: the first container of a multi-container build to merge clears the logs an earlier
-     * build of the same submission left behind, as {@link #saveBuildLogs} does for a single-container build.
+     * Deletes the build logs of the builds of a submission that are over, without touching the submission entity, for a
+     * caller that holds only a detached skeleton of it: the first container of a multi-container build to merge clears
+     * the logs earlier builds of the same submission left behind, as {@link #saveBuildLogs} does for a single-container
+     * build. The logs of a build of the same submission that is still merging are kept.
      *
      * @param submissionId the id of the submission whose logs are deleted
      */
-    public void deleteBuildLogsOfSubmission(long submissionId) {
-        buildLogEntryRepository.deleteByProgrammingSubmissionId(submissionId);
+    public void deleteBuildLogsOfFinishedBuilds(long submissionId) {
+        buildLogEntryRepository.deleteLogsOfFinishedBuilds(submissionId);
     }
 
     /**
-     * Saves the build logs of one container of a multi-container build, labeled with the container's name. Unlike
-     * {@link #saveBuildLogs}, only the logs the same container saved for an earlier build of this submission are
-     * replaced; the logs its sibling containers contributed are kept, so every failed container of a submission keeps
-     * its own labeled logs.
+     * Saves the build logs of one container of a multi-container build, labeled with the container's name and attributed
+     * to the build's aggregated result. Unlike {@link #saveBuildLogs}, only the logs the same container saved for the
+     * same build are replaced (a container that was retried after its agent was lost reports twice); the logs its
+     * sibling containers contributed are kept, so every failed container of a build keeps its own labeled logs.
      *
      * @param buildLogs             the build logs of the container
      * @param programmingSubmission the submission shared by all containers of the build
      * @param containerName         the name of the container that produced the logs
+     * @param resultId              the id of the aggregated result of the build
      * @return the saved build log entries
      */
-    public List<BuildLogEntry> appendBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, String containerName) {
-        buildLogEntryRepository.deleteByProgrammingSubmissionIdAndContainerName(programmingSubmission.getId(), containerName);
+    public List<BuildLogEntry> appendBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, String containerName, long resultId) {
+        buildLogEntryRepository.deleteByProgrammingSubmissionIdAndResultIdAndContainerName(programmingSubmission.getId(), resultId, containerName);
         return buildLogs.stream().map(buildLogEntry -> {
             buildLogEntry.truncateLogToMaxLength();
             buildLogEntry.setContainerName(containerName);
+            buildLogEntry.setResultId(resultId);
             // The entry owns the foreign key, so setting the submission before saving writes it with the insert.
             buildLogEntry.setProgrammingSubmission(programmingSubmission);
             return buildLogEntryRepository.save(buildLogEntry);
@@ -134,6 +137,19 @@ public class BuildLogEntryService {
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
         return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf)
                 .orElseGet(List::of);
+    }
+
+    /**
+     * Retrieves the build logs of a submission that belong to the given result: the logs of the multi-container build
+     * that produced the result, and the logs of a single-container build, which carry no result. The logs of another
+     * multi-container build of the same submission, such as an overlapping re-run of the same commit, are left out.
+     *
+     * @param programmingSubmission the submission the logs belong to
+     * @param resultId              the id of the result whose logs are shown
+     * @return the build log entries of that result
+     */
+    public List<BuildLogEntry> getBuildLogsOfResult(ProgrammingSubmission programmingSubmission, long resultId) {
+        return getLatestBuildLogs(programmingSubmission).stream().filter(entry -> entry.getResultId() == null || entry.getResultId() == resultId).toList();
     }
 
     private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",

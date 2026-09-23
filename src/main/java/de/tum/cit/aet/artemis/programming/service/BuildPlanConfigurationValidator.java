@@ -46,7 +46,8 @@ public final class BuildPlanConfigurationValidator {
 
     /**
      * Validates that a build plan can be executed, i.e. that it defines at least one container, that the container names
-     * are unique, and that every container has a usable Docker image and valid build phases. A legacy build plan that carries a flat list of phases
+     * are unique, and that every container has a usable Docker image, a positive timeout if it sets one, and valid build phases. A legacy build plan that carries a flat list of
+     * phases
      * is validated as the single container it is normalized into.
      *
      * @param buildPlan the build plan to validate
@@ -63,6 +64,7 @@ public final class BuildPlanConfigurationValidator {
         for (final BuildContainerDTO container : containers) {
             validateContainerName(container, containerNames);
             validateDockerImageOf(container);
+            validateTimeoutOf(container);
             validatePhasesOf(container);
         }
     }
@@ -85,6 +87,14 @@ public final class BuildPlanConfigurationValidator {
         // null selects the default image of the exercise; a blank image would be persisted verbatim and fail every build
         if (container.dockerImage() != null && container.dockerImage().isBlank()) {
             throw new BadRequestAlertException("The Docker image must not be blank", ENTITY_NAME, "blankDockerImage");
+        }
+    }
+
+    private static void validateTimeoutOf(BuildContainerDTO container) {
+        // null means the container uses the exercise's timeout; the agent would replace a non-positive timeout by its
+        // instance maximum, which is not what an instructor who typed it intended
+        if (container.timeoutSeconds() != null && container.timeoutSeconds() <= 0) {
+            throw badRequest("The timeout of a build container must be positive", "invalidBuildContainerTimeout", Map.of("container", container.name()));
         }
     }
 

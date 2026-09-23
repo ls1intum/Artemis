@@ -38,6 +38,12 @@ public class BuildLogEntry extends DomainObject {
     @Column(name = "container_name")
     private String containerName;
 
+    // The id of the aggregated result of the multi-container build that produced this log line, or null for a submission
+    // built by a single container. The client asks for the logs of a result, so the logs of two overlapping builds of the
+    // same commit, which share the submission, are told apart by it.
+    @Column(name = "result_id")
+    private Long resultId;
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(nullable = false)
@@ -61,6 +67,14 @@ public class BuildLogEntry extends DomainObject {
 
     public ZonedDateTime getTime() {
         return time;
+    }
+
+    public Long getResultId() {
+        return resultId;
+    }
+
+    public void setResultId(Long resultId) {
+        this.resultId = resultId;
     }
 
     public void setTime(ZonedDateTime time) {

@@ -329,6 +329,7 @@
         "duplicateBuildContainerName": "The build container name {{ container }} is used more than once.",
         "invalidBuildContainerName": "The build container name {{ container }} is invalid. Use only letters, digits and underscores, and do not start with a digit.",
         "emptyBuildContainer": "The build container {{ container }} must contain at least one build phase.",
+        "invalidBuildContainerTimeout": "The timeout of the build container {{ container }} must be a positive number of seconds.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }

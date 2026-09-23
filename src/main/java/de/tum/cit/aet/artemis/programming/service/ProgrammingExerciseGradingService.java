@@ -347,24 +347,23 @@ public class ProgrammingExerciseGradingService {
             // fallback is already saved.
             ProgrammingSubmission submission = parsed.submission();
 
+            Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise, aggregatedResultId);
             // Preserve the build logs of a failed container, labeled by its name and saved next to the logs of the other
             // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
-            // logs are only kept when the build failed). The submission's own log collection is deliberately not touched:
-            // saveBuildLogs would delete the logs the sibling containers already contributed.
-            // The first container of a build to merge starts the attempt and clears the logs an earlier build of the
-            // same submission left behind, as saveBuildLogs does on the single-container path: a container that failed
-            // then and succeeds now must not keep showing its old logs next to the logs of a sibling that fails now.
-            // Two overlapping builds of the same commit can still interleave their logs; unlike the aggregate and the
-            // build-failed flag, the logs are not kept apart per group.
+            // logs are only kept when the build failed). They are attributed to the build's aggregated result, which is
+            // the build group as the client sees it: it asks for the logs of a result, so an overlapping build of the
+            // same commit, which shares the submission, cannot mix its lines into this build's. The first container to
+            // merge clears the logs of the builds that are over, as saveBuildLogs does on the single-container path, so
+            // a container that failed then and succeeds now does not keep its old logs; the logs of a build still in
+            // progress stay. The submission's own log collection is deliberately not touched: saveBuildLogs would
+            // delete the logs the sibling containers already contributed.
             if (aggregatedResultId == null) {
-                buildLogService.deleteBuildLogsOfSubmission(submission.getId());
+                buildLogService.deleteBuildLogsOfFinishedBuilds(submission.getId());
             }
             if (containerFailed && buildResult.hasLogs()) {
                 var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
-                buildLogService.appendBuildLogs(buildLogs, submission, containerName);
+                buildLogService.appendBuildLogs(buildLogs, submission, containerName, aggregatedResult.getId());
             }
-
-            Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise, aggregatedResultId);
             // Whether this container built is handed back rather than written to the submission here. The flag on the
             // submission is shared by every build of the same commit, so a container of an overlapping build could
             // overwrite it before this build finalizes. The caller records the verdict on the container's build job, and

@@ -188,16 +188,17 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     }
 
     /**
-     * Seeds the editor with the language default plan when the exercise has no build plan configuration yet (a null
-     * configuration builds on the language default at build time), so it opens with the real default plan instead of an
-     * empty list. The seeded plan becomes one default container. Does nothing when the editor already has containers or
-     * the exercise has no programming language. The response is only applied while it still fits the editor state that
-     * asked for it, so neither a slow response for a previously opened exercise nor one overtaken by the instructor's own
-     * edits can overwrite what is on screen.
+     * Requests the language default plan of the exercise. Its Docker image is the placeholder every container without an
+     * image of its own shows, so it is fetched for a saved plan as well. Its phases seed the editor only when the exercise
+     * has no build plan configuration yet (a null configuration builds on the language default at build time), so it
+     * opens with the real default plan instead of an empty list; the seeded plan becomes one default container. Does
+     * nothing when the exercise has no programming language. The response is only applied while it still fits the editor
+     * state that asked for it, so neither a slow response for a previously opened exercise nor one overtaken by the
+     * instructor's own edits can overwrite what is on screen.
      */
     private seedDefaultsFromTemplate(exercise: ProgrammingExercise): void {
         const programmingLanguage = exercise.programmingLanguage;
-        if (!programmingLanguage || this.containers().length > 0) {
+        if (!programmingLanguage) {
             return;
         }
         // the field values as they stand before the request: only the seeded containers may later be folded into the
@@ -217,7 +218,8 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
                     if (template.dockerImage) {
                         this.defaultDockerImage.set(template.dockerImage);
                     }
-                    // re-check the containers here: the instructor may have authored one while the request was in flight
+                    // only an editor that is still empty is seeded: a saved plan keeps its containers, and the instructor may
+                    // have authored one while the request was in flight
                     if (template.phases?.length && this.containers().length === 0) {
                         // the image stays unset so the seeded container inherits; the template's image is only the placeholder
                         const seeded = [{ name: DEFAULT_BUILD_CONTAINER_NAME, phases: template.phases }];

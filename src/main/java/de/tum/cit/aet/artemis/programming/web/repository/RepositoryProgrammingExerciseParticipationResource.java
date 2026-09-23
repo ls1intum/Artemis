@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -433,6 +434,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *                            used.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
+    /**
+     * @param submission a submission whose results are loaded
+     * @return the id of its latest result, or null if it has none
+     */
+    private static Long latestResultIdOf(ProgrammingSubmission submission) {
+        return submission.getResults() == null ? null : submission.getResults().stream().map(Result::getId).filter(Objects::nonNull).max(Long::compare).orElse(null);
+    }
+
     @GetMapping(value = "participations/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -464,8 +473,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(List.of());
         }
 
-        // Load the logs from the database
-        List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
+        // The logs of a multi-container build are attributed to its result, so the logs shown are the ones of the result
+        // shown: an overlapping build of the same commit, which shares the submission, cannot mix its lines in.
+        Long shownResultId = resultId.isPresent() ? resultId.get() : latestResultIdOf(programmingSubmission);
+        List<BuildLogEntry> buildLogs = shownResultId == null ? buildLogService.getLatestBuildLogs(programmingSubmission)
+                : buildLogService.getBuildLogsOfResult(programmingSubmission, shownResultId);
         return ResponseEntity.ok(buildLogs.stream().map(BuildLogEntryDTO::of).toList());
     }
 }

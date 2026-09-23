@@ -86,6 +86,15 @@ class BuildPlanConfigurationValidatorTest {
     }
 
     @Test
+    void testRejectsNonPositiveContainerTimeout() {
+        // the annotation on the DTO only runs for the build plan endpoint; the exercise update path relies on the validator
+        assertThat(errorKeyOf(planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, null, List.of(phase("compile")), 0)))).isEqualTo("invalidBuildContainerTimeout");
+        assertThat(errorKeyOf(planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, null, List.of(phase("compile")), -30)))).isEqualTo("invalidBuildContainerTimeout");
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, null, List.of(phase("compile")), 90))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     void testAcceptsContainerWithoutImage() {
         // null selects the default image of the exercise
         assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(new BuildContainerDTO("tests", null, List.of(phase("compile")))))).doesNotThrowAnyException();

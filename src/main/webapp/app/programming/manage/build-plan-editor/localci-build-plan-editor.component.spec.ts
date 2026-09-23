@@ -343,7 +343,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.defaultDockerImage()).toBe('');
     });
 
-    it('should not request a template when the exercise already has both a docker image and phases', () => {
+    it('should keep a saved plan and use the template image only as the placeholder', () => {
         const exercise = {
             id: 7,
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -356,9 +356,17 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         comp.ngOnInit();
 
-        // nothing is missing, so there is no reason to fetch the template
+        // the template is still requested: its image is the placeholder of a container without an image of its own
+        expect(getTemplateStub).toHaveBeenCalledOnce();
+        getTemplateSubject.next({
+            phases: [{ name: 'other', script: 'echo other', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+            dockerImage: 'language-default-image',
+        });
+
+        // the saved plan is not replaced by the template's phases
         expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'some-image', phases }]);
-        expect(getTemplateStub).not.toHaveBeenCalled();
+        expect(comp.defaultDockerImage()).toBe('language-default-image');
+        expect(comp.canDeactivate()).toBe(true);
     });
 
     it('should treat a stored timeout of 0 as valid without pinning it', () => {
