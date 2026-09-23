@@ -117,7 +117,8 @@ public class PublicUserJwtResource {
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
+            // The resolved login rather than what was typed: a login with an email address or an alias of it would not find the user again
+            artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
