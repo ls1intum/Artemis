@@ -440,19 +440,23 @@ final class GenerationJobReplayStore {
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
-            if (!isActiveJob(key, jobId)) {
-                return false;
-            }
-            GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
-            if (transcript == null || !transcript.jobId().equals(jobId) || transcript.done()) {
-                return false;
-            }
-            transcriptMap().put(key, transcript.withEvents(transcript.events(), transcript.done(), truncateSpecDocument(specDocument)));
-            return true;
+            return recordSpecDocumentWhileLocked(key, jobId, specDocument);
         }
         finally {
             jobMap().unlock(key);
         }
+    }
+
+    private boolean recordSpecDocumentWhileLocked(String key, String jobId, String specDocument) {
+        if (!isActiveJob(key, jobId)) {
+            return false;
+        }
+        GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
+        if (transcript == null || !transcript.jobId().equals(jobId) || transcript.done()) {
+            return false;
+        }
+        transcriptMap().put(key, transcript.withEvents(transcript.events(), transcript.done(), truncateSpecDocument(specDocument)));
+        return true;
     }
 
     /** Records the latest lightweight change per path for reconnect replay; dropped when {@code jobId} does not match the retained store (a stale or older run). */
@@ -491,6 +495,11 @@ final class GenerationJobReplayStore {
             }
             else if (existing != null && existing.jobId().equals(jobId)) {
                 artifactMap().remove(key);
+            }
+            // The worker sends only the approved design with content. Publish it on the status transcript while the run is still active.
+            if ("SPEC.md".equals(fileChange.path()) && !ExerciseGenerationFileChangeDTO.ACTION_DELETE.equals(fileChange.action()) && update.content() != null
+                    && !update.content().isBlank()) {
+                recordSpecDocumentWhileLocked(key, jobId, update.content());
             }
             return true;
         }

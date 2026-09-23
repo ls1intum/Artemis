@@ -1838,6 +1838,23 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void approvedDesignUpdateAppearsInOwnerStatusBeforeTheRunEnds() {
+        long exerciseId = 504L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        ExerciseGenerationFileChangeDTO design = ExerciseGenerationFileChangeDTO.of("SPEC.md", ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1);
+
+        assertThat(jobService.recordFileChange(exerciseId, jobId, design)).isTrue();
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isNull();
+        assertThat(jobService.recordFileUpdate(exerciseId, jobId, new GenerationFileUpdate(design, "# Approved design"))).isTrue();
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo("# Approved design");
+        assertThat(jobService.getStatus(user("other"), exercise).orElseThrow().specDocument()).isNull();
+        assertThat(jobService.recordFileUpdate(exerciseId, "old-job", new GenerationFileUpdate(design, "# Stale design"))).isFalse();
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().specDocument()).isEqualTo("# Approved design");
+    }
+
+    @Test
     void recordFileChangeDropsStaleJobAndNewRunStartsClean() {
         long exerciseId = 502L;
         User owner = user("owner");
