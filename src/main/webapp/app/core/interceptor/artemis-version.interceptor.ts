@@ -6,6 +6,8 @@ import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { SwUpdate } from '@angular/service-worker';
 import { Alert, AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { TranslateService } from '@ngx-translate/core';
+import { translationNotFoundMessage } from 'app/core/config/translation.config';
 
 export const WINDOW_INJECTOR_TOKEN = new InjectionToken<Window>('Window');
 
@@ -18,6 +20,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
     private updates = inject(SwUpdate);
     private serverDateService = inject(ArtemisServerDateService);
     private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
     private injectedWindow = inject<Window>(WINDOW_INJECTOR_TOKEN);
 
     // The currently displayed alert
@@ -94,9 +97,15 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         // don't spam errors when service workers are not available, instead rely on the Content-Version header of responses
         const update = this.updates.isEnabled ? this.updates.checkForUpdate().catch(() => false) : Promise.resolve(false);
 
+        if (this.hasSeenOutdatedInThisSession) {
+            // Already known to be outdated, so do not depend on a service worker that may never answer
+            this.showOutdatedAlert();
+            return;
+        }
+
         // first update the service worker
         void update.then((updateAvailable: boolean) => {
-            if (this.hasSeenOutdatedInThisSession || updateAvailable) {
+            if (updateAvailable) {
                 this.showOutdatedAlert();
             }
         });
@@ -107,8 +116,10 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
      */
     private showOutdatedAlert() {
         this.hasSeenOutdatedInThisSession = true;
+        // Right after the start, the translations may not be loaded yet, so the alert would show its translation key. It is shown with the next
+        // response or the next periodic check instead.
         // If we haven't shown an alert yet or the alert has been closed: Spawn new alert
-        if (!this.alert?.isOpen) {
+        if (!this.alert?.isOpen && this.areTranslationsLoaded()) {
             this.alert = this.alertService.addAlert({
                 type: AlertType.INFO,
                 message: 'artemisApp.outdatedAlert',
@@ -127,6 +138,11 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                 },
             });
         }
+    }
+
+    private areTranslationsLoaded(): boolean {
+        const translation = this.translateService.instant('artemisApp.outdatedAlert');
+        return translation !== 'artemisApp.outdatedAlert' && !translation.startsWith(translationNotFoundMessage);
     }
 }
 

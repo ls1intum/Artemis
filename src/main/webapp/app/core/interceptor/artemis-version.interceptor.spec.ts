@@ -19,6 +19,7 @@ describe(`ArtemisVersionInterceptor`, () => {
     let checkForUpdateSpy: any;
     let activateUpdateSpy: any;
     let unrecoverable: Subject<unknown>;
+    let translateInstantSpy: any;
 
     beforeAll(() => {
         vi.useFakeTimers();
@@ -60,6 +61,8 @@ describe(`ArtemisVersionInterceptor`, () => {
         });
 
         alertService = TestBed.inject(AlertService);
+        // the translations are loaded
+        translateInstantSpy = vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key: string | string[]) => 'translated ' + key.toString());
     });
 
     afterEach(() => {
@@ -171,6 +174,20 @@ describe(`ArtemisVersionInterceptor`, () => {
 
             expect(checkForUpdateSpy).toHaveBeenCalledTimes(2);
             expect(addAlertSpy).not.toHaveBeenCalled();
+            vi.clearAllTimers();
+        });
+
+        it('should show the update alert only once the translations are loaded', async () => {
+            translateInstantSpy.mockImplementation((key: string | string[]) => key.toString());
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            const intercept = TestBed.inject(ArtemisVersionInterceptor);
+            await firstValueFrom(intercept.intercept(requestMock, responseWithVersion('10.2.0')));
+            expect(addAlertSpy).not.toHaveBeenCalled();
+
+            translateInstantSpy.mockImplementation((key: string | string[]) => 'translated ' + key.toString());
+            await firstValueFrom(intercept.intercept(requestMock, responseWithVersion('10.2.0')));
+
+            expect(addAlertSpy).toHaveBeenCalledOnce();
             vi.clearAllTimers();
         });
 
