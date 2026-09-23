@@ -91,10 +91,32 @@ public class BuildJob extends DomainObject {
     @Column(name = "docker_image")
     private String dockerImage;
 
+    /**
+     * Whether the build this job ran failed to build, as the result processing judged it from what the job reported: no
+     * test results although tests were expected, or a non-zero exit code of a compile-only script. The job status only
+     * records how the job executed, so a container whose build script crashed still completes as a SUCCESSFUL job. This
+     * is where a multi-container build keeps each container's build outcome; the submission's build-failed flag is
+     * derived from the jobs of a group when the group finalizes, so that an overlapping attempt of the same commit
+     * cannot overwrite it in between.
+     */
+    @Column(name = "build_failed")
+    private boolean buildFailed;
+
     public BuildJob() {
     }
 
     public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+        this(queueItem, buildStatus, result, false);
+    }
+
+    /**
+     * @param queueItem   the queue item the job was executed from
+     * @param buildStatus how the job executed
+     * @param result      the result the job's feedback went into, or null if it produced none
+     * @param buildFailed whether the build itself failed, see {@link #isBuildFailed()}
+     */
+    public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, boolean buildFailed) {
+        this.buildFailed = buildFailed;
         this.buildJobId = queueItem.id();
         this.name = queueItem.name();
         this.exerciseId = queueItem.exerciseId();
@@ -118,6 +140,14 @@ public class BuildJob extends DomainObject {
 
     public String getBuildJobId() {
         return buildJobId;
+    }
+
+    public boolean isBuildFailed() {
+        return buildFailed;
+    }
+
+    public void setBuildFailed(boolean buildFailed) {
+        this.buildFailed = buildFailed;
     }
 
     public void setBuildJobId(String buildJobId) {

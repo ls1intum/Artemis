@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Record on a build job whether the build it ran failed to build. The status of a job only says how it executed; a
+         container of a multi-container build whose build script failed still completes as a successful job. The flag is
+         what the submission's build-failed flag is derived from once every container of the build has finished, so that
+         two overlapping builds of the same commit cannot overwrite each other's outcome on the shared submission. -->
+    <changeSet id="20260923120000-01-add-build-failed-to-build-job" author="greinwald">
+        <addColumn tableName="build_job">
+            <column name="build_failed" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

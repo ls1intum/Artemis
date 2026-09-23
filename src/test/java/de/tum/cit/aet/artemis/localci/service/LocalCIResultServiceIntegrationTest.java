@@ -115,14 +115,14 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         // First container finishes: its feedback is appended to a new, still in-progress result (no completion date yet).
         BuildResult resultA = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, false, "container_a", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, false, "container_a", null).result();
         assertThat(aggregatedResult).isNotNull();
         assertThat(aggregatedResult.getCompletionDate()).as("the result stays in progress until every container finished").isNull();
         buildJobRepository.save(new BuildJob(buildJobFor("merge-0", "merge", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
         // Second container finishes: it appends to the same result rather than creating a second one.
         BuildResult resultB = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, false, "container_b", aggregatedResult.getId());
+        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, false, "container_b", aggregatedResult.getId()).result();
         assertThat(aggregatedResultAgain.getId()).as("all containers of one submission share a single result").isEqualTo(aggregatedResult.getId());
         buildJobRepository.save(new BuildJob(buildJobFor("merge-1", "merge", participation, commitHash, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResultAgain));
 
@@ -134,7 +134,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         // Finalizing marks the aggregated result complete. Neither container reported a test case, so no relevant test
         // case passed: the result is not successful, although every container ran.
-        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain.getId(), participation, true, ZonedDateTime.now());
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain.getId(), participation, true, false, ZonedDateTime.now());
         assertThat(finalizedResult.getCompletionDate()).isNotNull();
         assertThat(finalizedResult.isSuccessful()).isFalse();
     }
@@ -177,10 +177,10 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         submission.setParticipation(participation);
         submission = programmingSubmissionRepository.save(submission);
         BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, false, "container_a", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, false, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("rated-0", "rated", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
-        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, ZonedDateTime.now());
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
 
         // Persisted, not merely set on the returned object.
         Result persistedResult = resultRepository.findById(finalizedResult.getId()).orElseThrow();
@@ -223,15 +223,16 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         // the instructor container finishes with a passing test
         var instructorJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("instructorTest", List.of())));
         BuildResult instructorResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(instructorJob), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, instructorResult, true, "instructor_tests", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, instructorResult, true, "instructor_tests", null).result();
         assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(aggregatedResult.getId()))).as("the instructor container produced feedback").isNotEmpty();
         buildJobRepository.save(new BuildJob(buildJobFor("crash-0", "crash", participation, commitHash, "instructor_tests"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
         // the student container crashes: no test feedback, but build logs and a non-zero exit code
         var crashLog = new BuildLogDTO(ZonedDateTime.now(), "student container terminated: out of memory");
         BuildResult studentResult = new BuildResult(null, commitHash, commitHash, false, ZonedDateTime.now(), List.of(), List.of(crashLog), null, true, 137);
-        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, studentResult, true, "student_tests", aggregatedResult.getId());
-        buildJobRepository.save(new BuildJob(buildJobFor("crash-1", "crash", participation, commitHash, "student_tests"), BuildStatus.FAILED, aggregatedResultAgain));
+        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, studentResult, true, "student_tests", aggregatedResult.getId())
+                .result();
+        buildJobRepository.save(new BuildJob(buildJobFor("crash-1", "crash", participation, commitHash, "student_tests"), BuildStatus.FAILED, aggregatedResultAgain, true));
 
         // the instructor container's feedback survives the student container's crash
         assertThat(aggregatedResultAgain.getId()).isEqualTo(aggregatedResult.getId());
@@ -240,7 +241,6 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         // the crashed container's build logs are preserved and labeled with its container name
         ProgrammingSubmission reloadedSubmission = programmingSubmissionRepository.findById(submission.getId()).orElseThrow();
-        assertThat(reloadedSubmission.isBuildFailed()).isTrue();
         List<BuildLogEntry> buildLogs = buildLogEntryService.getLatestBuildLogs(reloadedSubmission);
         assertThat(buildLogs).anySatisfy(logEntry -> {
             assertThat(logEntry.getContainerName()).isEqualTo("student_tests");
@@ -250,10 +250,13 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         // finalizing once both containers finished marks the result complete but not successful
         boolean allContainersSucceeded = !buildJobRepository.existsByBuildGroupIdAndBuildStatusNot("crash", BuildStatus.SUCCESSFUL);
         assertThat(allContainersSucceeded).isFalse();
+        boolean anyContainerFailedToBuild = buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue("crash");
+        assertThat(anyContainerFailedToBuild).as("the crashed container's verdict is read from the group's jobs").isTrue();
         Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain.getId(), participation, allContainersSucceeded,
-                ZonedDateTime.now());
+                anyContainerFailedToBuild, ZonedDateTime.now());
         assertThat(finalizedResult.getCompletionDate()).isNotNull();
         assertThat(finalizedResult.isSuccessful()).isFalse();
+        assertThat(programmingSubmissionRepository.findById(submission.getId()).orElseThrow().isBuildFailed()).as("written to the submission when the group finalizes").isTrue();
     }
 
     /**
@@ -281,11 +284,11 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         // the container ran to completion and built, but its only test failed
         var job = new LocalCIJobDTO(List.of(new LocalCITestJobDTO("failingTest", List.of("expected 2 but was 3"))), List.of());
         BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(job), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("failing-0", "failing", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
         assertThat(programmingSubmissionRepository.findById(submission.getId()).orElseThrow().isBuildFailed()).as("the build itself did not fail").isFalse();
 
-        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, ZonedDateTime.now());
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
 
         assertThat(finalizedResult.getScore()).isLessThan(100.0);
         assertThat(finalizedResult.isSuccessful()).as("a failing test makes the merged result unsuccessful").isFalse();
@@ -321,16 +324,16 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         var jobA = new LocalCIJobDTO(List.of(), shareA.stream().map(name -> new LocalCITestJobDTO(name, List.of())).toList());
         BuildResult resultA = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(jobA), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, true, "container_a", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, true, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("passing-0", "passing", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
         var jobB = new LocalCIJobDTO(List.of(), shareB.stream().map(name -> new LocalCITestJobDTO(name, List.of())).toList());
         BuildResult resultB = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(jobB), null, null, false, 0);
-        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, true, "container_b", aggregatedResult.getId());
+        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, true, "container_b", aggregatedResult.getId()).result();
         buildJobRepository.save(new BuildJob(buildJobFor("passing-1", "passing", participation, commitHash, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResultAgain));
         assertThat(programmingSubmissionRepository.findById(submission.getId()).orElseThrow().isBuildFailed()).as("no container failed to build").isFalse();
 
-        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain.getId(), participation, true, ZonedDateTime.now());
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain.getId(), participation, true, false, ZonedDateTime.now());
 
         assertThat(finalizedResult.getScore()).isEqualTo(100.0);
         assertThat(finalizedResult.getTestCaseCount()).isEqualTo(testNames.size());
@@ -361,12 +364,12 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         // The first attempt's container opens the attempt's aggregate; its sibling has not reported yet.
         BuildResult firstAttempt = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result firstAggregate = programmingExerciseGradingService.appendContainerResult(participation, firstAttempt, false, "container_a", null);
+        Result firstAggregate = programmingExerciseGradingService.appendContainerResult(participation, firstAttempt, false, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("attempt1-0", "attempt1", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, firstAggregate));
 
         // A second attempt of the same commit starts: no job of its group has merged yet, so its container gets no aggregate id.
         BuildResult secondAttempt = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result secondAggregate = programmingExerciseGradingService.appendContainerResult(participation, secondAttempt, false, "container_a", null);
+        Result secondAggregate = programmingExerciseGradingService.appendContainerResult(participation, secondAttempt, false, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("attempt2-0", "attempt2", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, secondAggregate));
 
         assertThat(secondAggregate.getId()).as("a new attempt does not join the earlier attempt's open aggregate").isNotEqualTo(firstAggregate.getId());
@@ -374,7 +377,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         assertThat(buildJobRepository.findResultIdsOfBuildGroup("attempt2", PageRequest.of(0, 1))).containsExactly(secondAggregate.getId());
 
         // Finalizing the second attempt leaves the first attempt's aggregate untouched and still in progress.
-        Result finalizedSecond = programmingExerciseGradingService.finalizeContainerResult(secondAggregate.getId(), participation, true, ZonedDateTime.now());
+        Result finalizedSecond = programmingExerciseGradingService.finalizeContainerResult(secondAggregate.getId(), participation, true, false, ZonedDateTime.now());
         assertThat(finalizedSecond.getCompletionDate()).isNotNull();
         assertThat(resultRepository.findById(firstAggregate.getId()).orElseThrow().getCompletionDate()).isNull();
     }
@@ -397,18 +400,18 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         String completeCommit = completeSubmission.getCommitHash();
         var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
         BuildResult resultA = new BuildResult(null, completeCommit, completeCommit, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, true, "container_a", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, true, "container_a", null).result();
         saveFinishedJob(buildJobFor("sweep-0", "sweep", participation, completeCommit, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult,
                 ZonedDateTime.now().minusMinutes(5));
         BuildResult resultB = new BuildResult(null, completeCommit, completeCommit, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, false, "container_b", aggregatedResult.getId());
+        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, false, "container_b", aggregatedResult.getId()).result();
         saveFinishedJob(buildJobFor("sweep-1", "sweep", participation, completeCommit, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResultAgain,
                 ZonedDateTime.now().minusMinutes(4));
 
         // the second group's first container merged just as long ago, but its sibling is still queued
         String openCommit = openSubmission.getCommitHash();
         BuildResult openResult = new BuildResult(null, openCommit, openCommit, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result openAggregate = programmingExerciseGradingService.appendContainerResult(participation, openResult, false, "container_a", null);
+        Result openAggregate = programmingExerciseGradingService.appendContainerResult(participation, openResult, false, "container_a", null).result();
         saveFinishedJob(buildJobFor("open-0", "open", participation, openCommit, "container_a"), BuildStatus.SUCCESSFUL, openAggregate, ZonedDateTime.now().minusMinutes(5));
         buildJobRepository.save(new BuildJob(buildJobFor("open-1", "open", participation, openCommit, "container_b"), BuildStatus.QUEUED, null));
 
@@ -448,10 +451,10 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         String commitHash = submissionOf(participation, "0000000000000000000000000000000000000009").getCommitHash();
         var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
         BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("penalty-0", "penalty", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
-        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, ZonedDateTime.now());
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
 
         assertThat(finalizedResult.getFeedbacks()).as("the penalty feedback the scoring added")
                 .anyMatch(feedback -> feedback.getText() != null && feedback.getText().startsWith(Feedback.SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
@@ -486,10 +489,10 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         String commitHash = submission.getCommitHash();
         var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
         BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("leftover-0", "leftover", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
-        Result reportedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, ZonedDateTime.now());
+        Result reportedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
 
         assertThat(reportedResult.getId()).as("the feedback was merged into the assessment, which is the result to report").isEqualTo(assessment.getId());
     }
@@ -561,18 +564,101 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         // recorded as failed without a result link, which leaves the build-failed flag untouched
         var instructorJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("instructorTest", List.of())));
         BuildResult instructorResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(instructorJob), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(solutionParticipation, instructorResult, true, "instructor_tests", null);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(solutionParticipation, instructorResult, true, "instructor_tests", null).result();
         buildJobRepository.save(new BuildJob(buildJobFor("recon-0", "recon", solutionParticipation, commitHash, "instructor_tests"), BuildStatus.SUCCESSFUL, aggregatedResult));
         buildJobRepository.save(new BuildJob(buildJobFor("recon-1", "recon", solutionParticipation, commitHash, "student_tests"), BuildStatus.ERROR, null));
         assertThat(programmingSubmissionRepository.findById(submission.getId()).orElseThrow().isBuildFailed()).as("a failed merge does not fail the build").isFalse();
 
         List<String> activeBefore = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true).stream().map(ProgrammingExerciseTestCase::getTestName).toList();
 
-        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), solutionParticipation, false, ZonedDateTime.now());
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), solutionParticipation, false, false, ZonedDateTime.now());
 
         assertThat(finalizedResult.isSuccessful()).isFalse();
         assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(ProgrammingExerciseTestCase::getTestName)
                 .as("no test case is deactivated, the unreported one of the failed container included").containsExactlyInAnyOrderElementsOf(activeBefore).contains("studentTest");
+    }
+
+    /**
+     * The build-failed flag of a submission is derived from the jobs of the group being finalized, not from whichever
+     * container of whichever build wrote it last: a re-triggered build of the same commit that overlaps with an earlier
+     * one must neither hide the earlier build's failure nor inherit it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheBuildFailedFlagFollowsTheGroupBeingFinalizedWhenTwoBuildsOverlap() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "000000000000000000000000000000000000000d";
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepository.save(submission);
+        long submissionId = submission.getId();
+
+        // the first build: its only container fails to build
+        BuildResult failedResult = new BuildResult(null, commitHash, commitHash, false, ZonedDateTime.now(), List.of(), List.of(new BuildLogDTO(ZonedDateTime.now(), "failed")),
+                null, true, 1);
+        var appendedFirst = programmingExerciseGradingService.appendContainerResult(participation, failedResult, false, "container_a", null);
+        assertThat(appendedFirst.containerFailed()).isTrue();
+        buildJobRepository
+                .save(new BuildJob(buildJobFor("overlap-a-0", "overlap-a", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, appendedFirst.result(), true));
+
+        // a re-triggered build of the same commit merges before the first one finalizes, and its container builds fine
+        BuildResult okResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
+        var appendedSecond = programmingExerciseGradingService.appendContainerResult(participation, okResult, false, "container_a", null);
+        assertThat(appendedSecond.containerFailed()).isFalse();
+        buildJobRepository
+                .save(new BuildJob(buildJobFor("overlap-b-0", "overlap-b", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, appendedSecond.result(), false));
+
+        Result finalizedFirst = programmingExerciseGradingService.finalizeContainerResult(appendedFirst.result().getId(), participation, true,
+                buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue("overlap-a"), ZonedDateTime.now());
+        assertThat(finalizedFirst.isSuccessful()).isFalse();
+        assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).as("the first build's failure is not hidden by the second build").isTrue();
+
+        programmingExerciseGradingService.finalizeContainerResult(appendedSecond.result().getId(), participation, true,
+                buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue("overlap-b"), ZonedDateTime.now());
+        assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).as("the second build does not inherit the first build's failure")
+                .isFalse();
+    }
+
+    /**
+     * The first container of a build to merge starts the build and clears the logs an earlier build of the same
+     * submission left behind: a container that failed then and succeeds now must not keep showing its old logs next to
+     * the logs of a sibling that fails now.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheFirstContainerToMergeClearsTheLogsOfAnEarlierBuild() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "000000000000000000000000000000000000000e";
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepository.save(submission);
+        ProgrammingSubmission reloaded = programmingSubmissionRepository.findById(submission.getId()).orElseThrow();
+
+        // an earlier build: container_a failed and left its logs
+        BuildResult earlierFailure = new BuildResult(null, commitHash, commitHash, false, ZonedDateTime.now(), List.of(),
+                List.of(new BuildLogDTO(ZonedDateTime.now(), "container_a failed earlier")), null, true, 1);
+        programmingExerciseGradingService.appendContainerResult(participation, earlierFailure, false, "container_a", null);
+        assertThat(buildLogEntryService.getLatestBuildLogs(reloaded)).extracting(BuildLogEntry::getLog).containsExactly("container_a failed earlier");
+
+        // the new build: container_a succeeds and merges first, then container_b fails
+        BuildResult okResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
+        var appendedA = programmingExerciseGradingService.appendContainerResult(participation, okResult, false, "container_a", null);
+        assertThat(buildLogEntryService.getLatestBuildLogs(reloaded)).as("the new build starts without the earlier build's logs").isEmpty();
+        BuildResult failureNow = new BuildResult(null, commitHash, commitHash, false, ZonedDateTime.now(), List.of(),
+                List.of(new BuildLogDTO(ZonedDateTime.now(), "container_b failed now")), null, true, 1);
+        programmingExerciseGradingService.appendContainerResult(participation, failureNow, false, "container_b", appendedA.result().getId());
+
+        assertThat(buildLogEntryService.getLatestBuildLogs(reloaded)).extracting(BuildLogEntry::getLog).containsExactly("container_b failed now");
     }
 
     private BuildJobQueueItem buildJobFor(String id, String buildGroupId, ProgrammingExerciseParticipation participation, String commitHash, String containerName) {

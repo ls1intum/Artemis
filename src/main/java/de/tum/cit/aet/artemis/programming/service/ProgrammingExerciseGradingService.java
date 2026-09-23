@@ -326,10 +326,11 @@ public class ProgrammingExerciseGradingService {
      * @param containerName      the name of the container that produced this result, used to label its build logs
      * @param aggregatedResultId the id of the result the earlier containers of the same build merged into, or null if this
      *                               is the first container of the build to report
-     * @return the aggregated result with this container's feedback appended, or null if it could not be created
+     * @return the aggregated result with this container's feedback appended and whether this container failed to build,
+     *         or null if the result could not be created
      */
-    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected, @Nullable String containerName,
-            @Nullable Long aggregatedResultId) {
+    public AppendedContainerResult appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected,
+            @Nullable String containerName, @Nullable Long aggregatedResultId) {
         try {
             ProgrammingExercise exercise = participation.getProgrammingExercise();
             // This container reports only its own test cases; not deactivating the absent ones keeps a solution build
@@ -350,19 +351,24 @@ public class ProgrammingExerciseGradingService {
             // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
             // logs are only kept when the build failed). The submission's own log collection is deliberately not touched:
             // saveBuildLogs would delete the logs the sibling containers already contributed.
+            // The first container of a build to merge starts the attempt and clears the logs an earlier build of the
+            // same submission left behind, as saveBuildLogs does on the single-container path: a container that failed
+            // then and succeeds now must not keep showing its old logs next to the logs of a sibling that fails now.
+            // Two overlapping builds of the same commit can still interleave their logs; unlike the aggregate and the
+            // build-failed flag, the logs are not kept apart per group.
+            if (aggregatedResultId == null) {
+                buildLogService.deleteBuildLogsOfSubmission(submission.getId());
+            }
             if (containerFailed && buildResult.hasLogs()) {
                 var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
                 buildLogService.appendBuildLogs(buildLogs, submission, containerName);
             }
 
             Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise, aggregatedResultId);
-            // The build-failed flag is written with a targeted update, as on the single-container path. The first
-            // container of a build starts a fresh attempt and resets the flag left over from an earlier attempt of the
-            // same submission; any container that fails to build sets it. finalizeContainerResult reads it back from
-            // the stored submission.
-            if (aggregatedResultId == null || containerFailed) {
-                programmingSubmissionRepository.updateBuildFailed(submission.getId(), containerFailed);
-            }
+            // Whether this container built is handed back rather than written to the submission here. The flag on the
+            // submission is shared by every build of the same commit, so a container of an overlapping build could
+            // overwrite it before this build finalizes. The caller records the verdict on the container's build job, and
+            // finalizeContainerResult derives the submission's flag from the jobs of the group it finalizes.
             // Drop feedback for a test case the aggregated result already carries from an earlier container. A shared
             // setup phase (e.g. the main-method check the DejaGnu containers each need) runs in several containers and
             // reports the same test case in each, but a test name is unique per exercise: without this, the merged
@@ -380,12 +386,22 @@ public class ProgrammingExerciseGradingService {
             // static code analysis feedback carries no test case and is appended as reported
             List<ScaFeedback> newScaFeedbacks = parsed.result().getScaFeedbacks().stream().peek(feedback -> feedback.setResult(aggregatedResult)).toList();
             scaFeedbackRepository.saveAll(newScaFeedbacks);
-            return aggregatedResult;
+            return new AppendedContainerResult(aggregatedResult, containerFailed);
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Container result for participation {} could not be appended", participation.getId(), ex);
             return null;
         }
+    }
+
+    /**
+     * What appending one container's result produced: the aggregated result its feedback went into, and whether the
+     * container failed to build, which the caller records on the container's build job.
+     *
+     * @param result          the aggregated result of the build
+     * @param containerFailed whether this container failed to build, judged as on the single-container path
+     */
+    public record AppendedContainerResult(Result result, boolean containerFailed) {
     }
 
     /**
@@ -521,22 +537,30 @@ public class ProgrammingExerciseGradingService {
      * score over the feedback of all containers, marks the result successful only if every container ran and built and
      * every relevant test case passed, and sets the completion date so the result is shown as complete.
      *
-     * @param resultId         the id of the aggregated result to finalize
-     * @param participation    the participation that was built
-     * @param allJobsSucceeded whether every container's build job finished with a successful job status and merged its result
-     * @param completionDate   the completion date to set on the finalized result
+     * @param resultId                  the id of the aggregated result to finalize
+     * @param participation             the participation that was built
+     * @param allJobsSucceeded          whether every container's build job finished with a successful job status and merged its result
+     * @param anyContainerFailedToBuild whether a container of the build failed to build, derived by the caller from the
+     *                                      verdicts recorded on the group's build jobs
+     * @param completionDate            the completion date to set on the finalized result
      * @return the finalized result
      */
-    public Result finalizeContainerResult(long resultId, ProgrammingExerciseParticipation participation, boolean allJobsSucceeded, ZonedDateTime completionDate) {
+    public Result finalizeContainerResult(long resultId, ProgrammingExerciseParticipation participation, boolean allJobsSucceeded, boolean anyContainerFailedToBuild,
+            ZonedDateTime completionDate) {
         Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         // the scoring below reads the typed feedback of every container, which the eager fetch above does not load
         hydrateTypedFeedback(aggregatedResult);
         boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
                 && !(participation instanceof TemplateProgrammingExerciseParticipation);
         // A job status only records how the job executed: a container whose build script crashed still completes as a
-        // SUCCESSFUL job. The build outcome itself is the submission's build-failed flag, maintained per container in
-        // appendContainerResult, so the result is successful only when both agree.
-        boolean anyContainerFailedToBuild = aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission && submission.isBuildFailed();
+        // SUCCESSFUL job. The build outcome itself is what the containers reported, recorded on their jobs and derived
+        // for this group by the caller, so the result is successful only when both agree. It is written to the
+        // submission only now, with a targeted update as on the single-container path: written per container, a
+        // container of an overlapping build of the same commit could overwrite it before this build finalizes.
+        if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission) {
+            programmingSubmissionRepository.updateBuildFailed(submission.getId(), anyContainerFailedToBuild);
+            submission.setBuildFailed(anyContainerFailedToBuild);
+        }
         // A solution build generates the exercise's test cases, but each container of a multi-container build reported
         // only its own share and could not deactivate a test removed from the solution (its absence there is a sibling's
         // test, not a removal). Now that every container's feedback is merged, a test case no container reported is

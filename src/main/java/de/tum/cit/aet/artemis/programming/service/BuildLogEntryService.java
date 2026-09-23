@@ -93,6 +93,17 @@ public class BuildLogEntryService {
     }
 
     /**
+     * Deletes every build log of a submission without touching the submission entity, for a caller that holds only a
+     * detached skeleton of it: the first container of a multi-container build to merge clears the logs an earlier
+     * build of the same submission left behind, as {@link #saveBuildLogs} does for a single-container build.
+     *
+     * @param submissionId the id of the submission whose logs are deleted
+     */
+    public void deleteBuildLogsOfSubmission(long submissionId) {
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(submissionId);
+    }
+
+    /**
      * Saves the build logs of one container of a multi-container build, labeled with the container's name. Unlike
      * {@link #saveBuildLogs}, only the logs the same container saved for an earlier build of this submission are
      * replaced; the logs its sibling containers contributed are kept, so every failed container of a submission keeps

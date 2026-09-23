@@ -91,6 +91,14 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsByBuildGroupIdAndResultIsNull(String buildGroupId);
 
     /**
+     * Checks whether a job of a build group ran a build that failed to build, see {@link BuildJob#isBuildFailed()}.
+     *
+     * @param buildGroupId the id of the build group
+     * @return true if at least one job of the group recorded a failed build
+     */
+    boolean existsByBuildGroupIdAndBuildFailedTrue(String buildGroupId);
+
+    /**
      * The build groups whose jobs have all finished while their aggregated result is still in progress: groups whose last
      * container's finalization did not go through, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}.
      * A group with a job that is still queued, building or missing is not complete and is left alone, and so is a group

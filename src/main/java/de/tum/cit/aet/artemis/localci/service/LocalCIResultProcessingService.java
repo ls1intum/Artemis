@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildSta
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService.AppendedContainerResult;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
@@ -509,12 +510,14 @@ public class LocalCIResultProcessingService {
                 // results: a retry or a re-push of the same commit is a new group with an aggregate of its own, and a
                 // tutor's draft assessment on the submission can never be mistaken for it.
                 Long aggregatedResultId = findAggregatedResultId(buildGroupId);
-                appendedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, buildGroup.containerName(),
-                        aggregatedResultId);
-                if (appendedResult != null) {
+                AppendedContainerResult appended = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected,
+                        buildGroup.containerName(), aggregatedResultId);
+                if (appended != null) {
+                    appendedResult = appended.result();
                     // Link this container's build job to the shared result; the link is how the siblings that finish after
-                    // this one find the aggregate.
-                    linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult);
+                    // this one find the aggregate. The job also records whether this container built, from which the
+                    // finalization derives the build outcome of the group.
+                    linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult, appended.containerFailed());
                     if (linkedContainerJob == null) {
                         // saveFinishedBuildJob logs its failure and returns null. Nothing rolls the merged rows back, but
                         // without the link the siblings cannot find the aggregate and the group's count is one short, so
@@ -599,7 +602,10 @@ public class LocalCIResultProcessingService {
         // the agent reported: SUCCESSFUL for a job that ran fine and could not be merged.
         boolean allJobsSucceeded = !buildJobRepository.existsByBuildGroupIdAndBuildStatusNot(buildGroupId, BuildStatus.SUCCESSFUL)
                 && !buildJobRepository.existsByBuildGroupIdAndResultIsNull(buildGroupId);
-        return programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, completionDate);
+        // Whether a container failed to build is read from this group's jobs rather than from the submission, which every
+        // build of the same commit shares: an overlapping build must neither hide this group's failure nor inherit it.
+        boolean anyContainerFailedToBuild = buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue(buildGroupId);
+        return programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild, completionDate);
     }
 
     /**
@@ -646,8 +652,21 @@ public class LocalCIResultProcessingService {
      * @return the saved the build job
      */
     private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+        return saveFinishedBuildJob(queueItem, buildStatus, result, false);
+    }
+
+    /**
+     * Saves a finished container job, recording whether the container's build failed to build.
+     *
+     * @param queueItem   the build job object from the queue
+     * @param buildStatus the status of the build job
+     * @param result      the aggregated result the container's feedback went into
+     * @param buildFailed whether the container failed to build, see {@link BuildJob#isBuildFailed()}
+     * @return the saved build job
+     */
+    private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, boolean buildFailed) {
         try {
-            BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
+            BuildJob buildJob = new BuildJob(queueItem, buildStatus, result, buildFailed);
             buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> buildJob.setId(existingBuildJob.getId()));
             BuildJob savedBuildJob = buildJobRepository.save(buildJob);
 
