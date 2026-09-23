@@ -250,27 +250,24 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Test
     @WithAnonymousUser
     void recoveryRequiresAuthentication() throws Exception {
-        request.performMvcRequest(get("/api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot", exerciseId)).andExpect(status().isUnauthorized());
-        request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/token", exerciseId).param("reason", "incident"))
+        request.performMvcRequest(get("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot", exerciseId)).andExpect(status().isUnauthorized());
+        request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot/token", exerciseId).param("reason", "incident"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void recoveryRejectsCourseInstructor() throws Exception {
-        request.performMvcRequest(get("/api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot", exerciseId)).andExpect(status().isForbidden());
-        request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/token", exerciseId).param("reason", "incident"))
-                .andExpect(status().isForbidden());
+        request.performMvcRequest(get("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot", exerciseId)).andExpect(status().isForbidden());
+        request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot/token", exerciseId).param("reason", "incident")).andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void recoveryAdminReachesValidationAndExactTokenLookup() throws Exception {
-        request.performMvcRequest(get("/api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot", exerciseId)).andExpect(status().isNotFound());
-        request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/token", exerciseId).param("reason", "incident"))
-                .andExpect(status().isNotFound());
-        request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/token", exerciseId).param("reason", " "))
-                .andExpect(status().isBadRequest());
+        request.performMvcRequest(get("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot", exerciseId)).andExpect(status().isNotFound());
+        request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot/token", exerciseId).param("reason", "incident")).andExpect(status().isNotFound());
+        request.performMvcRequest(delete("/api/hyperion/admin/exercises/{exerciseId}/wedged-slot/token", exerciseId).param("reason", " ")).andExpect(status().isBadRequest());
     }
 
     private String generateExerciseRequestBody() throws Exception {

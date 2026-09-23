@@ -1744,7 +1744,7 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/AuthoringRunPage'}
-  /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot:
+  /api/hyperion/admin/exercises/{exerciseId}/wedged-slot:
     get:
       tags: [admin-hyperion-generation]
       operationId: getWedgedSlot
@@ -1759,7 +1759,7 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseGenerationWedgedSlot'}
-  /api/hyperion/admin/exercises/generations:
+  /api/hyperion/admin/generations:
     get:
       tags: [admin-hyperion-generation-monitoring]
       operationId: getActiveGenerations
@@ -1897,7 +1897,7 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
-  /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/{token}:
+  /api/hyperion/admin/exercises/{exerciseId}/wedged-slot/{token}:
     delete:
       tags: [admin-hyperion-generation]
       operationId: recoverWedgedSlot

@@ -384,7 +384,8 @@
                 "title": "KI-Generierung",
                 "refresh": "Aktualisieren",
                 "description": "Aktive Übungsgenerierungen, verfügbare Kapazität und Worker-Status auf einen Blick.",
-                "loadFailed": "Der Worker-Status konnte nicht aktualisiert werden. Vorher geladene Einträge können veraltet sein. Die Generierung kann auf diesem Knoten auch deaktiviert sein.",
+                "liveUpdatesPaused": "Live-Aktualisierungen sind unterbrochen. Aktualisiere die Ansicht, um den aktuellen Stand zu prüfen. Nach Wiederherstellung der Verbindung laufen die Aktualisierungen weiter.",
+                "loadFailed": "Der Generierungsstatus konnte nicht aktualisiert werden. Vorher geladene Läufe können veraltet sein.",
                 "summary": "{{available}} von {{total}} konfigurierten Workern verfügbar",
                 "worker": "Worker",
                 "status": "Status",
@@ -430,7 +431,6 @@
                 "keepRunning": "Weiterlaufen lassen",
                 "workerSlot": "Worker",
                 "kind": "Lauf",
-                "openRun": "Lauf öffnen",
                 "mode": {
                     "GENERATE": "Erstellen",
                     "ADAPT": "Anpassen"

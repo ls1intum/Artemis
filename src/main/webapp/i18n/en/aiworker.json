@@ -9,7 +9,7 @@
             "availableSlots": "Free / total slots",
             "occupied": "Slots in use",
             "unavailable": "Unavailable",
-            "retainedReservations": "{{ count }} offline worker(s) have unfinished work. Check their health before restarting them.",
+            "retainedReservations": "{{ count }} offline worker(s) still hold core reservations. Current job details are unavailable; check server and worker logs before recovery.",
             "empty": "No workers are configured.",
             "worker": "Worker",
             "status": "State",
@@ -22,7 +22,13 @@
                 "BUSY": "Running"
             },
             "unknownCapacity": "Capacity is unknown until a current worker heartbeat is available.",
-            "runningJobs": "Running jobs"
+            "runningJobs": "Running jobs",
+            "details": "Details",
+            "profile": "Worker profile",
+            "image": "Image digest",
+            "slot": "Slot",
+            "job": "Job",
+            "resource": "Resource"
         }
     }
 }

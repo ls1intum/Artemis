@@ -38,7 +38,7 @@ describe('AiWorkersComponent', () => {
         const rows = fixture.nativeElement.querySelectorAll('tbody tr');
         expect(rows).toHaveLength(2);
         expect(rows[0].textContent).toContain('ready-worker');
-        expect(rows[0].textContent).not.toContain('sha256:abc');
+        expect(rows[0].querySelector('details').textContent).toContain('sha256:abc');
         expect(rows[1].getAttribute('data-state')).toBe('OFFLINE');
         expect(rows[1].textContent).toContain('—');
         expect(fixture.nativeElement.querySelector('caption').textContent).toContain('artemisApp.aiworker.title');
@@ -58,7 +58,7 @@ describe('AiWorkersComponent', () => {
         expect(fixture.componentInstance['occupied']()).toBe(1);
         expect(fixture.componentInstance['unavailable']()).toBe(1);
         expect(fixture.nativeElement.querySelector('[data-testid="ai-workers-retained-reservations"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('details')).toHaveLength(0);
+        expect(fixture.nativeElement.querySelectorAll('details')).toHaveLength(1);
     });
 
     it('counts free slots independently from the number of workers', () => {
@@ -81,7 +81,7 @@ describe('AiWorkersComponent', () => {
         expect(fixture.nativeElement.querySelector('details')).toBeNull();
     });
 
-    it('shows running work without exposing transport identifiers', () => {
+    it('shows job context without exposing transport identifiers', () => {
         fixture.componentRef.setInput('workers', [
             {
                 workerId: 'worker',
@@ -90,14 +90,17 @@ describe('AiWorkersComponent', () => {
                 availableSlots: 0,
                 capability: { workload: 'hyperion-generation', version: 1, profile: 'java-gradle' },
                 executions: [
-                    { slot: 0, executionId: 'execution-one' },
-                    { slot: 1, executionId: 'execution-two' },
+                    { slot: 0, executionId: 'execution-one', jobId: 'job-one', resourceId: 'exercise-one' },
+                    { slot: 1, executionId: 'execution-two', jobId: 'job-two', resourceId: 'exercise-two' },
                 ],
             },
         ]);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="ai-worker-running"]').textContent).toContain('2');
-        expect(fixture.nativeElement.textContent).not.toContain('java-gradle');
-        expect(fixture.nativeElement.querySelector('details')).toBeNull();
+        const details = fixture.nativeElement.querySelector('details');
+        expect(details.textContent).toContain('java-gradle');
+        expect(details.textContent).toContain('job-one');
+        expect(details.textContent).toContain('exercise-two');
+        expect(fixture.nativeElement.textContent).not.toContain('execution-one');
     });
 });

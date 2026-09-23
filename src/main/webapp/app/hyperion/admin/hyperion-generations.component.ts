@@ -7,7 +7,7 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, finalize, forkJoin, of } from 'rxjs';
+import { Subscription, catchError, finalize, forkJoin, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -68,8 +68,6 @@ export class HyperionGenerationsComponent implements OnInit {
                 run,
                 workerId: worker?.workerId,
                 exerciseLink,
-                runLink: run.exerciseId !== undefined && run.jobId ? [] : undefined,
-                runQuery: { aiRun: `authoring:${run.exerciseId}:${run.jobId}` },
             };
         }),
     );
@@ -91,7 +89,12 @@ export class HyperionGenerationsComponent implements OnInit {
     protected readonly workers = signal<WorkerStatus[]>([]);
     protected readonly loading = signal(false);
     protected readonly failed = signal(false);
-    protected readonly updatedAt = signal<Date | undefined>(undefined);
+    protected readonly workersUpdatedAt = signal<Date | undefined>(undefined);
+    protected readonly generationsUpdatedAt = signal<Date | undefined>(undefined);
+    protected readonly liveUpdatesPaused = signal(false);
+    private workerRevision = 0;
+    private generationRevision = 0;
+    private refreshSubscription?: Subscription;
 
     protected selectCancellation(run: ActiveGeneration): void {
         this.cancelTarget.set(run);
@@ -136,25 +139,35 @@ export class HyperionGenerationsComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.refresh();
         this.websocket
             .subscribe<WorkerStatus[]>('/topic/admin/ai-workers')
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((workers) => {
+                this.workerRevision++;
                 this.workers.set(workers);
                 this.workersFailed.set(false);
-                this.updatedAt.set(new Date());
+                this.workersUpdatedAt.set(new Date());
             });
         if (this.generationEnabled) {
             this.websocket
-                .subscribe<ActiveGeneration[]>('/topic/admin/ai-generations')
+                .subscribe<ActiveGeneration[]>('/topic/admin/hyperion-generations')
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe((generations) => {
+                    this.generationRevision++;
                     this.updateGenerations(generations);
                     this.failed.set(false);
-                    this.updatedAt.set(new Date());
+                    this.generationsUpdatedAt.set(new Date());
                 });
         }
+        this.websocket.connectionState.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
+            if (state.connected) {
+                if (this.liveUpdatesPaused()) this.refresh();
+                this.liveUpdatesPaused.set(false);
+            } else if (state.wasEverConnectedBefore) {
+                this.liveUpdatesPaused.set(true);
+            }
+        });
+        this.refresh();
     }
 
     private updateGenerations(generations: ActiveGeneration[]): void {
@@ -164,27 +177,25 @@ export class HyperionGenerationsComponent implements OnInit {
     }
 
     protected refresh(): void {
-        if (this.loading()) {
-            return;
-        }
+        this.refreshSubscription?.unsubscribe();
+        const workerRevision = this.workerRevision;
+        const generationRevision = this.generationRevision;
         this.loading.set(true);
-        this.failed.set(false);
-        this.workersFailed.set(false);
-        forkJoin({
+        this.refreshSubscription = forkJoin({
             workers: this.api.getWorkers().pipe(
                 catchError(() => {
-                    this.workersFailed.set(true);
+                    if (this.workerRevision === workerRevision) this.workersFailed.set(true);
                     return of(undefined);
                 }),
             ),
             generations: this.generationEnabled
                 ? this.generationApi.getActiveGenerations().pipe(
                       catchError(() => {
-                          this.failed.set(true);
+                          if (this.generationRevision === generationRevision) this.failed.set(true);
                           return of(undefined);
                       }),
                   )
-                : of([]),
+                : of(undefined),
         })
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
@@ -192,9 +203,16 @@ export class HyperionGenerationsComponent implements OnInit {
             )
             .subscribe({
                 next: ({ workers, generations }) => {
-                    if (workers) this.workers.set(workers);
-                    if (generations) this.updateGenerations(generations);
-                    this.updatedAt.set(new Date());
+                    if (workers && this.workerRevision === workerRevision) {
+                        this.workers.set(workers);
+                        this.workersFailed.set(false);
+                        this.workersUpdatedAt.set(new Date());
+                    }
+                    if (generations && this.generationRevision === generationRevision) {
+                        this.updateGenerations(generations);
+                        this.failed.set(false);
+                        this.generationsUpdatedAt.set(new Date());
+                    }
                 },
                 error: () => this.failed.set(true),
             });

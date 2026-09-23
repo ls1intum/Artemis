@@ -6,20 +6,25 @@
         </tum-ui-button>
     </div>
     <p class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.workers.description"></p>
+    @if (liveUpdatesPaused()) {
+        <tum-ui-message severity="warn" data-testid="hyperion-live-updates-paused">
+            <span jhiTranslate="artemisApp.hyperion.workers.liveUpdatesPaused"></span>
+        </tum-ui-message>
+    }
     @if (failed()) {
         <tum-ui-message severity="error" data-testid="hyperion-workers-error">
             <span jhiTranslate="artemisApp.hyperion.workers.loadFailed"></span>
         </tum-ui-message>
     }
-    @if (updatedAt(); as updated) {
-        <p class="m-0 text-xs text-muted-color" data-testid="hyperion-workers-updated">
-            <span jhiTranslate="artemisApp.hyperion.workers.updated"></span> {{ updated | date: 'mediumTime' }}
-        </p>
-    }
     @if (generationEnabled) {
         <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-3">
             <h2 id="hyperion-active-generations-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></h2>
-            @if (updatedAt() && !generations().length && !failed()) {
+            @if (generationsUpdatedAt(); as updated) {
+                <p class="m-0 text-xs text-muted-color" data-testid="hyperion-generations-updated">
+                    <span jhiTranslate="artemisApp.hyperion.workers.updated"></span> {{ updated | date: 'mediumTime' }}
+                </p>
+            }
+            @if (generationsUpdatedAt() && !generations().length && !failed()) {
                 <p data-testid="hyperion-no-active-runs" jhiTranslate="artemisApp.hyperion.workers.noActiveRuns"></p>
             }
             @if (generations().length) {
@@ -47,18 +52,7 @@
                                         } @else {
                                             {{ run.exerciseTitle || '#' + run.exerciseId }}
                                         }
-                                        <div class="text-xs text-muted-color">
-                                            #{{ run.exerciseId }}
-                                            @if (row.runLink; as link) {
-                                                ·
-                                                <a
-                                                    [routerLink]="link"
-                                                    [queryParams]="row.runQuery"
-                                                    data-testid="hyperion-admin-run-page"
-                                                    jhiTranslate="artemisApp.hyperion.workers.openRun"
-                                                ></a>
-                                            }
-                                        </div>
+                                        <div class="text-xs text-muted-color">#{{ run.exerciseId }}</div>
                                     </td>
                                     <td>
                                         <!-- Adaptation rewrites an exercise instructors may already have polished; that is worth seeing before cancelling. -->
@@ -115,7 +109,7 @@
             }
         </section>
     }
-    <jhi-ai-workers [workers]="workers()" [loading]="loading()" [failed]="workersFailed()" [updatedAt]="updatedAt()" />
+    <jhi-ai-workers [workers]="workers()" [loading]="loading()" [failed]="workersFailed()" [updatedAt]="workersUpdatedAt()" />
 </section>
 
 <tum-ui-dialog

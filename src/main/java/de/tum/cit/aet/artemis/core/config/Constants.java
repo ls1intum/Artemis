@@ -85,7 +85,7 @@ public final class Constants {
 
     public static final String AI_WORKER_MONITORING_TOPIC = "/topic/admin/ai-workers";
 
-    public static final String HYPERION_GENERATION_MONITORING_TOPIC = "/topic/admin/ai-generations";
+    public static final String HYPERION_GENERATION_MONITORING_TOPIC = "/topic/admin/hyperion-generations";
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
 

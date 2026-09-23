@@ -384,7 +384,8 @@
                 "title": "AI Generation",
                 "refresh": "Refresh",
                 "description": "Monitor active exercise generation, available capacity, and worker health in one place.",
-                "loadFailed": "Worker status could not be refreshed. Previously loaded entries may be stale. Generation may also be disabled on this node.",
+                "liveUpdatesPaused": "Live updates are paused. Refresh to check the current state; updates will resume when the connection returns.",
+                "loadFailed": "Generation status could not be refreshed. Previously loaded runs may be stale.",
                 "summary": "{{available}} of {{total}} configured workers available",
                 "worker": "Worker",
                 "status": "State",
@@ -430,7 +431,6 @@
                 "keepRunning": "Keep running",
                 "workerSlot": "Worker",
                 "kind": "Run",
-                "openRun": "open run",
                 "mode": {
                     "GENERATE": "Generate",
                     "ADAPT": "Adapt"

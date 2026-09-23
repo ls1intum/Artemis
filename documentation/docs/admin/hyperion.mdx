@@ -458,7 +458,7 @@ entered reason so the operator can refresh and assess the current state.
 Administrator-only APIs expose the same metadata and controls:
 
 - `GET /api/hyperion/admin/workers` (404 when generation is disabled).
-- `GET /api/hyperion/admin/exercises/generations` (active runs only).
+- `GET /api/hyperion/admin/generations` (active runs only).
 - `DELETE /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}?reason=...`
   (202 when accepted, 409 if no longer cancellable).
 
@@ -514,8 +514,8 @@ generation-enabled core node so their job state is reconciled too:
 
 1. Confirm that the owning JVM is stopped, not merely disconnected from the cluster.
 2. Reconcile the exercise's repository heads and metadata before allowing new edits.
-3. As an administrator, read `GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot`.
-4. Release that exact token with `DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`, supplying a nonblank incident reason of at most 500 characters.
+3. As an administrator, read `GET /api/hyperion/admin/exercises/{id}/wedged-slot`.
+4. Release that exact token with `DELETE /api/hyperion/admin/exercises/{id}/wedged-slot/{token}?reason=...`, supplying a nonblank incident reason of at most 500 characters.
 
 Recovery records an audit attempt before releasing anything, refuses a live owner,
 and requires a complete coordination view. Hazelcast additionally requires a

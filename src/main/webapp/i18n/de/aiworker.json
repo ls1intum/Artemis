@@ -9,7 +9,7 @@
             "availableSlots": "Freie / gesamte Slots",
             "occupied": "Belegte Plätze",
             "unavailable": "Nicht verfügbar",
-            "retainedReservations": "{{ count }} nicht erreichbare Worker haben nicht abgeschlossene Aufträge. Prüfe ihren Zustand vor einem Neustart.",
+            "retainedReservations": "{{ count }} nicht erreichbare Worker halten noch Core-Reservierungen. Aktuelle Auftragsdetails sind nicht verfügbar. Prüfe vor der Wiederherstellung die Server- und Worker-Protokolle.",
             "empty": "Keine Worker konfiguriert.",
             "worker": "Worker",
             "status": "Status",
@@ -22,7 +22,13 @@
                 "BUSY": "Wird ausgeführt"
             },
             "unknownCapacity": "Die Kapazität ist erst mit einem aktuellen Heartbeat des Workers bekannt.",
-            "runningJobs": "Laufende Aufträge"
+            "runningJobs": "Laufende Aufträge",
+            "details": "Details",
+            "profile": "Worker-Profil",
+            "image": "Image-Digest",
+            "slot": "Slot",
+            "job": "Auftrag",
+            "resource": "Ressource"
         }
     }
 }

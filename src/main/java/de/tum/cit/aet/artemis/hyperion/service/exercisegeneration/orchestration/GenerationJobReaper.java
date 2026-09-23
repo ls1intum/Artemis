@@ -102,8 +102,8 @@ final class GenerationJobReaper {
                 log.warn(
                         "Retaining non-cancellable generation slot for job {} (exercise {}) after its owner {} disconnected from the coordination store: cluster departure does not prove that "
                                 + "the in-flight persistence/revert mutation has stopped. The slot stays claimed and blocks generation, revert and ordinary REST edits of this "
-                                + "exercise until an operator recovers it: read it with GET /api/admin/exercises/{}/hyperion-wedged-slot and, once the old owner and its Git/DB "
-                                + "requests are confirmed quiescent, release it with DELETE /api/admin/exercises/{}/hyperion-wedged-slots/{}?reason=...",
+                                + "exercise until an operator recovers it: read it with GET /api/hyperion/admin/exercises/{}/wedged-slot and, once the old owner and its Git/DB "
+                                + "requests are confirmed quiescent, release it with DELETE /api/hyperion/admin/exercises/{}/wedged-slot/{}?reason=...",
                         current.jobId(), current.exerciseId(), current.ownerNodeId(), current.exerciseId(), current.exerciseId(), current.jobId());
             }
             return false;

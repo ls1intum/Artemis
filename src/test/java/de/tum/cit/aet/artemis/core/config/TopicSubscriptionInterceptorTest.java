@@ -64,7 +64,7 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             var channel = mock(MessageChannel.class);
 
             for (String destination : List.of("/topic/admin/queued-jobs", "/topic/admin/running-jobs", "/topic/admin/finished-jobs", "/topic/admin/build-agents",
-                    "/topic/admin/ai-workers", "/topic/admin/ai-generations")) {
+                    "/topic/admin/ai-workers", "/topic/admin/hyperion-generations")) {
                 when(headerAccessorMock.getDestination()).thenReturn(destination);
 
                 // An elevated administrator: the session carries the administrator authority.
@@ -148,8 +148,8 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
         var channel = mock(MessageChannel.class);
         for (Role role : List.of(Role.STUDENT, Role.INSTRUCTOR, Role.ADMIN)) {
             for (String destination : List.of("/topic/hyperion", "/topic/hyperion/exercise-generation/exercises/1/state", "/user/topic/hyperion/jobs/1",
-                    "/user/victim/topic/hyperion/jobs/1", "/user/victim/queue/hyperion/jobs/1", "/topic/admin/ai-workers", "/topic/admin/ai-generations", "/topic/user-registry",
-                    "/topic/unresolved-user", "/topic/admin/queued-jobs", "/topic/other-feature", "/topic/participations/1/team", "/app/other-feature")) {
+                    "/user/victim/topic/hyperion/jobs/1", "/user/victim/queue/hyperion/jobs/1", "/topic/admin/ai-workers", "/topic/admin/hyperion-generations",
+                    "/topic/user-registry", "/topic/unresolved-user", "/topic/admin/queued-jobs", "/topic/other-feature", "/topic/participations/1/team", "/app/other-feature")) {
                 assertThat(interceptor.preSend(sendMessage(destination, authenticationFor("caller", role)), channel)).as("%s cannot publish to %s", role, destination).isNull();
             }
         }

@@ -1,5 +1,8 @@
 <section class="flex flex-col gap-4" aria-labelledby="ai-workers-title" [attr.aria-busy]="loading()">
     <h2 id="ai-workers-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.aiworker.title"></h2>
+    @if (updatedAt(); as updated) {
+        <p class="m-0 text-xs text-muted-color" data-testid="ai-workers-updated"><span jhiTranslate="artemisApp.aiworker.updated"></span> {{ updated | date: 'mediumTime' }}</p>
+    }
     @if (failed()) {
         <tum-ui-message severity="error" data-testid="ai-workers-error">
             <span jhiTranslate="artemisApp.aiworker.loadFailed"></span>
@@ -59,7 +62,26 @@
                             }
                         </td>
                         <td>{{ (worker.lastHeartbeat | date: 'medium') ?? '—' }}</td>
-                        <td class="tabular-nums" data-testid="ai-worker-running">{{ row.capacityKnown ? (worker.executions?.length ?? 0) : '—' }}</td>
+                        <td data-testid="ai-worker-running">
+                            <span class="tabular-nums">{{ row.capacityKnown ? (worker.executions?.length ?? 0) : '—' }}</span>
+                            @if (worker.executions?.length || worker.imageDigest || worker.capability?.profile) {
+                                <details class="mt-1 text-sm">
+                                    <summary jhiTranslate="artemisApp.aiworker.details"></summary>
+                                    @if (worker.capability?.profile) {
+                                        <div><span jhiTranslate="artemisApp.aiworker.profile"></span>: {{ worker.capability?.profile }}</div>
+                                    }
+                                    @if (worker.imageDigest) {
+                                        <div class="break-all"><span jhiTranslate="artemisApp.aiworker.image"></span>: {{ worker.imageDigest }}</div>
+                                    }
+                                    @for (execution of worker.executions ?? []; track execution.slot ?? $index) {
+                                        <div>
+                                            <span jhiTranslate="artemisApp.aiworker.slot"></span> {{ execution.slot ?? '—' }} · <span jhiTranslate="artemisApp.aiworker.job"></span>
+                                            {{ execution.jobId ?? '—' }} · <span jhiTranslate="artemisApp.aiworker.resource"></span> {{ execution.resourceId ?? '—' }}
+                                        </div>
+                                    }
+                                </details>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
