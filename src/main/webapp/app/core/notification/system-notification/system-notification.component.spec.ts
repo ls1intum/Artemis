@@ -139,6 +139,20 @@ describe('System Notification Component', () => {
         vi.useRealTimers();
     });
 
+    it('should reload the notifications after a short interruption that emits no disconnected state', () => {
+        vi.useFakeTimers();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, true));
+
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
     describe('Persistence of dismissed notification IDs', () => {
         it('should save closed notification IDs to localStorage', () => {
             vi.useFakeTimers();

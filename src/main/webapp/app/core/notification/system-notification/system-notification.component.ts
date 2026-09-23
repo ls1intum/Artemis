@@ -6,7 +6,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { User } from 'app/account/user/user.model';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass } from '@angular/common';
-import { Subscription, filter, pairwise } from 'rxjs';
+import { Subscription, filter, skip } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { updateHeaderHeight } from 'app/foundation/util/navbar.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -62,14 +62,17 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
                     // The websocket service restores the subscription itself after a reconnect. Subscribing again on every reconnect
                     // would only send redundant UNSUBSCRIBE and SUBSCRIBE frames, so just reload what may have changed meanwhile.
                     this.websocketStatusSubscription?.unsubscribe();
+                    // Skip the current state: every later connected state is a reconnect. A short interruption does not emit a disconnected state
+                    // in between, as the websocket service hides it from consumers.
                     this.websocketStatusSubscription = this.websocketService.connectionState
                         .pipe(
-                            pairwise(),
-                            filter(([previous, current]) => !previous.connected && current.connected),
+                            skip(1),
+                            filter((status) => status.connected),
                         )
                         .subscribe(() => this.loadActiveNotification());
                 }, 500);
             } else {
+                clearTimeout(this.websocketDelayTimeout);
                 this.websocketStatusSubscription?.unsubscribe();
                 this.systemNotificationSubscription?.unsubscribe();
             }
