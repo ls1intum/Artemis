@@ -78,18 +78,24 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void mixedSubmitBatchExecutesAllToolsBeforeEnding() {
+    void mixedSubmitBatchRejectsAllCallsBeforeAnyWorkspaceChange() {
         ChatModel model = mock(ChatModel.class);
-        when(model.call(any(Prompt.class))).thenReturn(calls("stop", "submit", "edit", "write"));
+        when(model.call(any(Prompt.class))).thenReturn(calls("stop", "submit", "edit", "write"), calls("edit", "write", "stop", "submit"), calls("stop", "submit"));
         RecordingTools tools = new RecordingTools();
 
         var session = runner(model).runSession("system", null, "brief", tools, 4, () -> false, null, null);
 
         assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        assertThat(tools.actions).containsExactly("submit", "write");
+        assertThat(session.result().turns()).isEqualTo(3);
+        assertThat(tools.actions).containsExactly("submit");
         var results = (ToolResponseMessage) session.conversation().getLast();
-        assertThat(results.getResponses()).extracting(ToolResponseMessage.ToolResponse::id).containsExactly("stop", "edit");
-        verify(model).call(any(Prompt.class));
+        assertThat(results.getResponses()).extracting(ToolResponseMessage.ToolResponse::id).containsExactly("stop");
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        org.mockito.Mockito.verify(model, org.mockito.Mockito.times(3)).call(prompts.capture());
+        for (int turn = 1; turn <= 2; turn++) {
+            var rejection = (ToolResponseMessage) prompts.getAllValues().get(turn).getInstructions().getLast();
+            assertThat(rejection.getResponses()).allSatisfy(result -> assertThat(result.responseData()).contains("no call in this batch was executed"));
+        }
     }
 
     @Test
@@ -173,7 +179,7 @@ class AgentLoopRunnerTest {
     @CsvSource({ "terminated,true,CANCELLED", "exception,true,CANCELLED", "submit,true,CANCELLED", "terminated,false,ERROR", "exception,false,ERROR", "submit,false,COMPLETED" })
     void cancellationDuringToolsTakesPrecedenceOverOtherExits(String exit, boolean cancel, AgentLoopResult.Status expected) {
         ChatModel model = mock(ChatModel.class);
-        when(model.call(any(Prompt.class))).thenReturn(calls("write-id", "write", "submit-id", "submit"));
+        when(model.call(any(Prompt.class))).thenReturn(exit.equals("submit") ? calls("submit-id", "submit") : calls("write-id", "write"));
         AtomicBoolean cancelled = new AtomicBoolean();
         var result = runner(model).run("system", "brief", new CancellingTools(cancelled, cancel, exit), 4, cancelled::get, null, null);
         assertThat(result.status()).isEqualTo(expected);
@@ -205,6 +211,7 @@ class AgentLoopRunnerTest {
 
         @Tool(description = "Submit the current workspace")
         public String submit() {
+            cancelled.set(cancel);
             return "submitted";
         }
 
