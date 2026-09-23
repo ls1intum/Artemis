@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfDropZoneComponent } from './pdf-drop-zone.component';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider, ngMocks } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -17,7 +17,7 @@ describe('PdfDropZoneComponent', () => {
         })
             .overrideComponent(PdfDropZoneComponent, {
                 remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
-                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
+                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (key: string) => key)] },
             })
             .compileComponents();
 
@@ -241,6 +241,72 @@ describe('PdfDropZoneComponent', () => {
             component.onDrop(event);
 
             expect(emitSpy).toHaveBeenCalledWith([pdfFile1, pdfFile2, pdfFile3]);
+        });
+    });
+
+    it('should let the file browser select several files by default', () => {
+        expect(component.fileInput().nativeElement.multiple).toBe(true);
+    });
+
+    describe('single file mode', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('multiple', false);
+            fixture.detectChanges();
+        });
+
+        it('should let the file browser select only one file', () => {
+            expect(component.fileInput().nativeElement.multiple).toBe(false);
+        });
+
+        it('should emit only the first PDF when several files are dropped', () => {
+            const textFile = new File(['text'], 'notes.txt', { type: 'text/plain' });
+            const pdfFile1 = new File(['content1'], 'test1.pdf', { type: 'application/pdf' });
+            const pdfFile2 = new File(['content2'], 'test2.pdf', { type: 'application/pdf' });
+            const files = [textFile, pdfFile1, pdfFile2];
+            const mockFileList = {
+                length: 3,
+                0: textFile,
+                1: pdfFile1,
+                2: pdfFile2,
+                item: (index: number) => files[index] ?? null,
+            } as unknown as FileList;
+            const event = {
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
+                dataTransfer: { files: mockFileList },
+            } as unknown as DragEvent;
+            const emitSpy = vi.spyOn(component.filesDropped, 'emit');
+
+            component.onDrop(event);
+
+            expect(emitSpy).toHaveBeenCalledExactlyOnceWith([pdfFile1]);
+        });
+    });
+
+    describe('texts', () => {
+        it('should use the default upload texts', () => {
+            const translatedKeys = ngMocks.findAll(fixture.debugElement, TranslateDirective).map((element) => ngMocks.input(element, 'jhiTranslate'));
+
+            expect(translatedKeys).toEqual(['artemisApp.lecture.pdfUpload.dropZoneTitle', 'artemisApp.lecture.pdfUpload.dropZoneHint']);
+        });
+
+        it('should use the given title and hint keys', () => {
+            fixture.componentRef.setInput('titleKey', 'custom.title');
+            fixture.componentRef.setInput('hintKey', 'custom.hint');
+            fixture.detectChanges();
+
+            const translatedKeys = ngMocks.findAll(fixture.debugElement, TranslateDirective).map((element) => ngMocks.input(element, 'jhiTranslate'));
+
+            expect(translatedKeys).toEqual(['custom.title', 'custom.hint']);
+            expect(fixture.nativeElement.querySelector('[role="button"]').getAttribute('aria-label')).toBe('custom.title');
+        });
+
+        it('should describe the drop zone with its hint', () => {
+            const dropZone: HTMLElement = fixture.nativeElement.querySelector('[role="button"]');
+            const hint: HTMLElement = fixture.nativeElement.querySelector(`#${dropZone.getAttribute('aria-describedby')}`);
+
+            expect(hint).not.toBeNull();
+            expect(ngMocks.input(ngMocks.find(fixture.debugElement, `#${hint.id}`), 'jhiTranslate')).toBe('artemisApp.lecture.pdfUpload.dropZoneHint');
         });
     });
 });

@@ -136,6 +136,9 @@
                 "lectureFileToolTip": "Please select to enable automatic separation of lecture content.",
                 "processUnits": "Process content",
                 "processAutomatically": "Automatic content processing",
+                "dropZoneTitle": "Drop the lecture PDF for automatic processing here",
+                "dropZoneHint": "or click to select a PDF file (max. size 20 MB)",
+                "removeFile": "Remove selected file",
                 "removeSlides": "Remove slides",
                 "removeSlidesInfo": {
                     "firstLine": "All slides that contain any of the following key phrases will be removed from all content.",

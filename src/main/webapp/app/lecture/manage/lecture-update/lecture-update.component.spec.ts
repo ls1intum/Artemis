@@ -1,4 +1,4 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,7 +15,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -313,24 +313,66 @@ describe('LectureUpdateComponent', () => {
         expect(saveButton.disabled).toBe(true);
     });
 
-    it('should call onFileChange on changed file', async () => {
+    it('should select the file for automatic processing through a single-file drop zone', async () => {
         await configureActiveRouteMockAndCompileComponents();
-        lectureUpdateComponent.processUnitMode.set(false);
-        await lectureUpdateComponentFixture.whenStable();
-        expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
-
-        const onFileChangeStub = vi.spyOn(lectureUpdateComponent, 'onFileChange');
-
-        const processUnit = lectureUpdateComponentFixture.debugElement.query(By.css('input[name="processUnit"]')).nativeElement;
-        processUnit.checked = true;
-        processUnit.dispatchEvent(new Event('change'));
         lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
+        const processingDropZone = By.css('[data-testid="processing-file-drop-zone"]');
+        expect(lectureUpdateComponentFixture.debugElement.query(processingDropZone)).toBeNull();
+
         lectureUpdateComponent.processUnitMode.set(true);
-        lectureUpdateComponentFixture.autoDetectChanges();
-        const fileInput = lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
-        expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
-        fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalledTimes(1);
+        lectureUpdateComponentFixture.detectChanges();
+        const dropZone = lectureUpdateComponentFixture.debugElement.query(processingDropZone);
+        expect(dropZone).not.toBeNull();
+        const dropZoneInstance = dropZone.componentInstance as PdfDropZoneComponent;
+        expect(dropZoneInstance.multiple()).toBe(false);
+        expect(dropZoneInstance.titleKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.dropZoneTitle');
+        expect(dropZoneInstance.hintKey()).toBe('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.dropZoneHint');
+        expect(dropZoneInstance.disabled()).toBe(false);
+
+        const file = new File(['content'], 'lecture.pdf', { type: 'application/pdf' });
+        dropZone.triggerEventHandler('filesDropped', [file]);
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.file).toBe(file);
+        expect(lectureUpdateComponent.fileName()).toBe('lecture.pdf');
+        const selectedFile = lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="processing-file"]'));
+        expect(selectedFile.nativeElement.textContent).toContain('lecture.pdf');
+    });
+
+    it('should re-enable the processing controls when saving before processing fails', async () => {
+        await configureActiveRouteMockAndCompileComponents();
+        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
+        lectureUpdateComponent.processUnitMode.set(true);
+        lectureUpdateComponent.onProcessingFileSelected([new File(['content'], 'lecture.pdf', { type: 'application/pdf' })]);
+        lectureUpdateComponent.lecture.set({ id: 6, title: 'test1', channelName: 'test1' } as Lecture);
+        vi.spyOn(lectureService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        lectureUpdateComponent.proceedToUnitSplit();
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.isProcessing()).toBe(false);
+        expect(lectureUpdateComponent.isSaving()).toBe(false);
+        const dropZone = lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="processing-file-drop-zone"]'));
+        expect((dropZone.componentInstance as PdfDropZoneComponent).disabled()).toBe(false);
+        expect(lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="remove-processing-file-button"]')).nativeElement.disabled).toBe(false);
+    });
+
+    it('should remove the file selected for automatic processing', async () => {
+        await configureActiveRouteMockAndCompileComponents();
+        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
+        lectureUpdateComponent.processUnitMode.set(true);
+        lectureUpdateComponent.onProcessingFileSelected([new File(['content'], 'lecture.pdf', { type: 'application/pdf' })]);
+        lectureUpdateComponentFixture.detectChanges();
+
+        lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="remove-processing-file-button"]')).nativeElement.click();
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(lectureUpdateComponent.file).toBeUndefined();
+        expect(lectureUpdateComponent.fileName()).toBe('');
+        expect(lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="processing-file"]'))).toBeNull();
     });
 
     describe('isChangeMadeToTitleSection', () => {

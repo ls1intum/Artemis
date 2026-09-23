@@ -135,6 +135,9 @@
                 "addUnit": "Inhalt hinzufügen",
                 "processUnits": "Inhalte festlegen",
                 "processAutomatically": "Automatische Inhaltsverarbeitung",
+                "dropZoneTitle": "Vorlesungs-PDF für die automatische Verarbeitung hier ablegen",
+                "dropZoneHint": "oder klicken, um eine PDF-Datei auszuwählen (max. Größe 20 MB)",
+                "removeFile": "Ausgewählte Datei entfernen",
                 "removeSlides": "Entferne Folien",
                 "removeSlidesInfo": {
                     "firstLine": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt.",

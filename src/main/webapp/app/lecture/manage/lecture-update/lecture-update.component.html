@@ -88,31 +88,35 @@
                     </div>
                 }
                 @if (processUnitMode()) {
-                    <div class="form-group">
-                        <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}*</label>
-                        <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            [ngbTooltip]="
-                                'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }
-                            "
-                        />
-                        <div class="input-group background-file">
-                            <div class="custom-file overflow-ellipsis">
-                                <input
-                                    id="fileInput"
-                                    type="file"
-                                    class="custom-file-input file-input-margin"
-                                    [accept]="acceptedFileExtensionsFileBrowser"
-                                    (change)="onFileChange($event)"
-                                    aria-describedby="fileHelp"
-                                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
-                                    (click)="fileInputTouched = true"
-                                />
+                    <jhi-pdf-drop-zone
+                        data-testid="processing-file-drop-zone"
+                        [multiple]="false"
+                        [disabled]="isSaving() || isProcessing()"
+                        titleKey="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.dropZoneTitle"
+                        hintKey="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.dropZoneHint"
+                        (filesDropped)="onProcessingFileSelected($event)"
+                    />
+                    <div aria-live="polite">
+                        @if (fileName()) {
+                            <div class="flex items-center gap-2" data-testid="processing-file">
+                                <fa-icon [icon]="faFilePdf" />
+                                <span class="break-all">{{ fileName() }}</span>
+                                <button
+                                    tumUiButton
+                                    type="button"
+                                    severity="secondary"
+                                    variant="text"
+                                    size="small"
+                                    data-testid="remove-processing-file-button"
+                                    [disabled]="isSaving() || isProcessing()"
+                                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeFile' | artemisTranslate"
+                                    [tumUiTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeFile' | artemisTranslate"
+                                    [tumUiTooltipDescribesHost]="false"
+                                    (click)="removeProcessingFile()"
+                                >
+                                    <fa-icon [icon]="faXmark" />
+                                </button>
                             </div>
-                        </div>
-                        @if (!fileName() && fileInputTouched) {
-                            <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
                         }
                     </div>
                 }

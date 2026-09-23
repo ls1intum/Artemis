@@ -4,10 +4,9 @@ import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faCircleInfo, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleInfo, faFilePdf, faPuzzlePiece, faQuestionCircle, faSave, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/foundation/constants/file-extensions.constants';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.utils';
@@ -19,6 +18,7 @@ import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
+import { PdfDropZoneComponent } from 'app/lecture/manage/pdf-drop-zone/pdf-drop-zone.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -33,6 +33,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumUiButtonDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -58,6 +59,9 @@ interface CreateLectureOption {
         LectureTimelineComponent,
         FaIconComponent,
         LectureUpdateUnitsComponent,
+        PdfDropZoneComponent,
+        TumUiButtonDirective,
+        TumUiTooltipDirective,
         NgbTooltip,
         ArtemisTranslatePipe,
         SelectButtonModule,
@@ -74,8 +78,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
     protected readonly faCircleInfo = faCircleInfo;
-    protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
-    protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
+    protected readonly faFilePdf = faFilePdf;
+    protected readonly faXmark = faXmark;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     private readonly alertService = inject(AlertService);
@@ -103,7 +107,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     domainActionsDescription = [new FormulaAction()];
     file?: File;
     readonly fileName = signal<string>(undefined!);
-    fileInputTouched = false;
     isNewlyCreatedExercise = false;
     readonly isChangeMadeToTitleOrPeriodSection = signal(false);
     readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true, invalidItems: [] });
@@ -268,14 +271,21 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         this.processUnitMode.update((value) => !value);
     }
 
-    onFileChange(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        if (!input.files?.length) {
-            this.fileName.set('');
-            return;
-        }
-        this.file = input.files[0];
-        this.fileName.set(this.file.name);
+    /**
+     * Keeps the PDF chosen in the drop zone for the automatic content processing.
+     * The drop zone runs in single-file mode, so it emits at most one file.
+     */
+    onProcessingFileSelected(files: File[]): void {
+        this.file = files[0];
+        this.fileName.set(this.file?.name ?? '');
+    }
+
+    /**
+     * Discards the PDF chosen for the automatic content processing, which disables processing until a new one is chosen.
+     */
+    removeProcessingFile(): void {
+        this.file = undefined;
+        this.fileName.set('');
     }
 
     /**
@@ -329,6 +339,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving.set(false);
+        // otherwise the processing controls stay disabled after a failed "Process content" save
+        this.isProcessing.set(false);
 
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
