@@ -438,11 +438,11 @@ public abstract class AbstractGitService {
         }
         try {
             FileUtils.deleteDirectory(renamedPath.toFile());
+            log.debug("Deleted Repository at {}", repoPath);
         }
         catch (IOException e) {
             log.warn("Could not delete the renamed repository folder {} of {}: {}", renamedPath, repoPath, e.getMessage());
         }
-        log.debug("Deleted Repository at {}", repoPath);
     }
 
     protected abstract LsRemoteCommand lsRemoteCommand();

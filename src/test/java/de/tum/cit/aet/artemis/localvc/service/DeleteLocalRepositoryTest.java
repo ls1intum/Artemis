@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -51,6 +52,8 @@ class DeleteLocalRepositoryTest {
 
     @Test
     void deleteLocalRepository_whenTheContentCannotBeDeleted_stillFreesThePath() throws Exception {
+        // Missing write permissions do not keep root from deleting, so the failure cannot be simulated this way when running as root
+        assumeFalse("root".equals(System.getProperty("user.name")), "running as root");
         Repository repository = workingCopy("locked");
         // A folder whose entries cannot be removed, like files that are still open on a network file system
         Path lockedFolder = Files.createDirectories(repository.getLocalPath().resolve("locked"));
