@@ -8,6 +8,7 @@ import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -82,6 +83,18 @@ describe('TextBlockFeedbackEditorComponent', () => {
 
         const input = compiled.querySelector('input');
         expect(input).toBeTruthy();
+    });
+
+    it('should make titled and untitled criterion submenus keyboard reachable', () => {
+        fixture.componentRef.setInput('criteria', [{ title: 'Quality', structuredGradingInstructions: [] }, { structuredGradingInstructions: [] }] as GradingCriterion[]);
+        fixture.detectChanges();
+
+        const buttons = compiled.querySelectorAll('ul.dropdown-menu > li > button.dropdown-item') as NodeListOf<HTMLButtonElement>;
+        expect(buttons).toHaveLength(2);
+        expect(buttons[0].type).toBe('button');
+        buttons[0].focus();
+        expect(document.activeElement).toBe(buttons[0]);
+        expect(buttons[1].querySelector('[jhitranslate="artemisApp.textAssessment.feedbackEditor.noTitle"]')).not.toBeNull();
     });
 
     it('should show delete button for empty feedback only', () => {

@@ -37,7 +37,7 @@
                         type="number"
                         [step]="CREDITS_STEP"
                         [value]="currentFeedback().credits ?? ''"
-                        (input)="updateCredits($any($event.target).valueAsNumber)"
+                        (change)="updateCredits($any($event.target).valueAsNumber)"
                         [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                         (keydown)="handleKeydown($event)"
                     />

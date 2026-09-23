@@ -69,12 +69,14 @@
                                 @for (criterion of criteria(); track criterion) {
                                     <li>
                                         @if (criterion.title) {
-                                            <a class="dropdown-item"> {{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /> </a>
+                                            <button type="button" class="dropdown-item">{{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /></button>
                                         } @else {
-                                            <a class="dropdown-item"
-                                                >(No title)
-                                                <fa-icon class="float-end" [icon]="faAngleRight" />
-                                            </a>
+                                            <button type="button" class="dropdown-item">
+                                                <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.noTitle"></span>&nbsp;<fa-icon
+                                                    class="float-end"
+                                                    [icon]="faAngleRight"
+                                                />
+                                            </button>
                                         }
                                         <ul class="dropdown-menu dropdown-submenu">
                                             <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />

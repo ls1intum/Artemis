@@ -67,6 +67,7 @@ type ContainerInternalsOverrides = {
     athenaService: AthenaService;
     dialogService: DialogService;
     loadFeedbackSuggestions: () => Promise<void>;
+    handleReceivedSubmission: (submission: ProgrammingSubmission) => Promise<void>;
     onSubmissionReceived: (submissionId: string, submission?: ProgrammingSubmission) => Promise<void>;
 };
 type ContainerInternals = Omit<CodeEditorTutorAssessmentContainerComponent, keyof ContainerInternalsOverrides> & ContainerInternalsOverrides;
@@ -999,6 +1000,43 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         subject.complete();
         await loadPromise;
 
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+    });
+
+    it('should ignore suggestions from a previous submission while the next request is pending', async () => {
+        const oldRequest = new Subject<Feedback[]>();
+        const nextRequest = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockImplementation((_exercise, id) =>
+            id === 41 ? oldRequest.asObservable() : nextRequest.asObservable(),
+        );
+        comp.exercise.set(exercise);
+        comp.submission.set({ id: 41 } as ProgrammingSubmission);
+        comp.feedbackSuggestions.set([{ text: 'Old suggestion' }]);
+        const oldLoad = comp['loadFeedbackSuggestions']();
+
+        const nextSubmission = structuredClone(submission);
+        nextSubmission.id = 42;
+        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
+            comp.submission.set(received);
+        });
+        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => {});
+        await internals(comp).onSubmissionReceived('42', nextSubmission);
+        expect(comp.feedbackSuggestions()).toEqual([]);
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+
+        const nextLoad = comp['loadFeedbackSuggestions']();
+        expect(comp.loadingFeedbackSuggestions()).toBe(true);
+        oldRequest.next([{ text: 'Old suggestion' }]);
+        oldRequest.complete();
+        await oldLoad;
+        expect(comp.feedbackSuggestions()).toEqual([]);
+        expect(comp.loadingFeedbackSuggestions()).toBe(true);
+
+        const nextSuggestion = { text: 'New suggestion' } as Feedback;
+        nextRequest.next([nextSuggestion]);
+        nextRequest.complete();
+        await nextLoad;
+        expect(comp.feedbackSuggestions()).toEqual([nextSuggestion]);
         expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 

@@ -56,6 +56,32 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(feedbackId);
     });
 
+    it('should keep tutor edits when a loaded feedback card remounts', async () => {
+        const feedback = { id: 42, hasLongFeedbackText: true } as Feedback;
+        const getLongFeedbackTextSpy = vi.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue('Original long feedback');
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(feedback.detailText).toBe('Original long feedback');
+        expect(feedback.hasLongFeedbackText).toBe(false);
+        feedback.detailText = 'Tutor edit';
+        fixture.destroy();
+
+        const remounted = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
+        remounted.componentRef.setInput('feedback', feedback);
+        remounted.componentRef.setInput('resultId', 1);
+        remounted.componentRef.setInput('readOnly', false);
+        remounted.detectChanges();
+        await remounted.whenStable();
+
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledOnce();
+        expect(feedback.detailText).toBe('Tutor edit');
+        remounted.destroy();
+    });
+
     it('should update feedback with SGI and emit to parent', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         const feedback = {
@@ -223,6 +249,33 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(comp.feedback()).toBe(originalFeedback);
         expect(comp.feedback().credits).toBe(0.5);
         expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
+    });
+
+    it('should keep partial negative points until the input loses focus', () => {
+        const feedback = { credits: 1, detailText: 'note' } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('.feedback-card__points-input') as HTMLInputElement;
+        // jsdom sanitizes "-" for number inputs; emulate the partial value a browser displays while typing.
+        Object.defineProperty(input, 'value', { configurable: true, writable: true, value: '-' });
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(input.value).toBe('-');
+        expect(feedback.credits).toBe(1);
+
+        Reflect.deleteProperty(input, 'value');
+        input.value = '-2';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(input.value).toBe('-2');
+        expect(feedback.credits).toBe(1);
+
+        input.dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(feedback.credits).toBe(-2);
     });
 
     it('should give each card unique control ids linked to Title and Feedback labels', () => {

@@ -3,7 +3,7 @@
         <h4 class="modal-title">
             <span jhiTranslate="artemisApp.assessment.suggestionPendingDialog.title"></span>
         </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="close(false)"></button>
+        <button type="button" class="btn-close" data-dismiss="modal" [attr.aria-label]="'entity.action.close' | artemisTranslate" (click)="close(false)"></button>
     </div>
     <div class="modal-body">
         <p jhiTranslate="artemisApp.assessment.suggestionPendingDialog.description"></p>

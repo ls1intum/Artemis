@@ -5,11 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-suggestions-pending-confirmation-dialog',
     templateUrl: './feedback-suggestions-pending-confirmation-dialog.component.html',
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgClass],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class FeedbackSuggestionsPendingConfirmationDialogComponent {
     private dialogRef = inject(DynamicDialogRef);

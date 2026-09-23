@@ -506,7 +506,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         const pointsInput = fixture.nativeElement.querySelector('#feedback-points') as HTMLInputElement;
         pointsInput.value = '';
-        pointsInput.dispatchEvent(new Event('input'));
+        pointsInput.dispatchEvent(new Event('change'));
         fixture.detectChanges();
 
         expect(comp.currentFeedback().credits).toBeUndefined();
@@ -516,6 +516,33 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
         comp.updateFeedback();
         expect(onUpdateFeedbackSpy).not.toHaveBeenCalled();
+    });
+
+    it('should keep partial negative points in the input until editing is complete', () => {
+        const feedback = new Feedback();
+        feedback.credits = 1;
+        fixture.componentRef.setInput('feedback', feedback);
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('#feedback-points') as HTMLInputElement;
+        // jsdom sanitizes "-" for number inputs; emulate the partial value a browser displays while typing.
+        Object.defineProperty(input, 'value', { configurable: true, writable: true, value: '-' });
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(input.value).toBe('-');
+        expect(comp.currentFeedback().credits).toBe(1);
+
+        Reflect.deleteProperty(input, 'value');
+        input.value = '-2';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(input.value).toBe('-2');
+        expect(comp.currentFeedback().credits).toBe(1);
+
+        input.dispatchEvent(new Event('change'));
+        fixture.detectChanges();
+        expect(comp.currentFeedback().credits).toBe(-2);
     });
 
     it('should normalize typed points before saving', () => {

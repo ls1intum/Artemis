@@ -166,6 +166,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         const feedback = this.feedback();
         if (feedback.id && feedback.hasLongFeedbackText) {
             feedback.detailText = await this.feedbackService.getLongFeedbackText(feedback.id);
+            feedback.hasLongFeedbackText = false;
             this.feedback.set(feedback);
             this.onFeedbackChange.emit(feedback);
         }

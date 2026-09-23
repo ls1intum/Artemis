@@ -636,10 +636,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param feedback The feedback item of the feedback suggestion.
      */
     acceptSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
-        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
-        this.updateFeedback(feedback);
-        this.onAcceptSuggestion.emit(feedback);
+        const original = this.feedbackSuggestionsInternal().find((suggestion) => Feedback.areIdentical(suggestion, feedback));
+        if (!original) {
+            return;
+        }
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((suggestion) => !Feedback.areIdentical(suggestion, original)));
+        const accepted = cloneWith(original, {
+            text: (original.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER),
+        });
+        this.updateFeedback(accepted);
+        this.onAcceptSuggestion.emit(original);
     }
 
     /**
@@ -647,7 +653,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param feedback The feedback item of the feedback suggestion.
      */
     discardSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((suggestion) => !Feedback.areIdentical(suggestion, feedback)));
         this.renderFeedbackWidgets();
         this.onDiscardSuggestion.emit(feedback);
     }

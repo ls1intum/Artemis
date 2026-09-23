@@ -75,6 +75,7 @@
                                 type="number"
                                 [step]="CREDITS_STEP"
                                 [ngModel]="feedback().credits"
+                                [ngModelOptions]="{ updateOn: 'blur' }"
                                 (ngModelChange)="updateCredits($event)"
                                 [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                             />
@@ -143,6 +144,7 @@
                             type="number"
                             [step]="CREDITS_STEP"
                             [ngModel]="feedback().credits"
+                            [ngModelOptions]="{ updateOn: 'blur' }"
                             (ngModelChange)="updateCredits($event)"
                             [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                         />

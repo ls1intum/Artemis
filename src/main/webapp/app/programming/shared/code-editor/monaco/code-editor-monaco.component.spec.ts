@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { type Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -20,7 +22,7 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
@@ -129,6 +131,39 @@ describe('CodeEditorMonacoComponent', () => {
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
         expect(element!.hidden).toBe(true);
+    });
+
+    it('should remove a rendered suggestion from both widget and parent lists when accepted', () => {
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const suggestion = {
+            id: 17,
+            reference: 'file:file1.java_line:2',
+            text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Title`,
+            detailText: 'Comment',
+        } as Feedback;
+        let parentSuggestions = [suggestion];
+        const onUpdateFeedback = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateFeedback);
+        comp.onAcceptSuggestion.subscribe((original) => {
+            expect(original).toBe(suggestion);
+            expect(original.text).toBe(`${FEEDBACK_SUGGESTION_IDENTIFIER}Title`);
+            parentSuggestions = parentSuggestions.filter((item) => !Feedback.areIdentical(item, original));
+            fixture.componentRef.setInput('feedbackSuggestions', parentSuggestions);
+        });
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbackSuggestions', parentSuggestions);
+        fixture.detectChanges();
+
+        const widget = fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent))
+            .componentInstance as CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent;
+        expect(widget.feedback()).not.toBe(suggestion);
+        widget.onAcceptSuggestion.emit(widget.feedback());
+        fixture.detectChanges();
+
+        expect(comp.feedbackSuggestionsInternal()).toEqual([]);
+        expect(parentSuggestions).toEqual([]);
+        expect(comp.feedbackSuggestions()).toEqual([]);
+        expect(onUpdateFeedback).toHaveBeenCalledWith([expect.objectContaining({ text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title` })]);
     });
 
     it('should not try to load a file if none is selected', async () => {

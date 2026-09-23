@@ -295,6 +295,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
+        this.feedbackSuggestions.set([]);
+        this.loadingFeedbackSuggestions.set(false);
         if (!submission) {
             // there are no unassessed submissions
             this.submission.set(submission);
@@ -401,9 +403,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
+        const submissionId = this.submission()?.id;
         this.loadingFeedbackSuggestions.set(true);
         try {
             const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
+            if (this.submission()?.id !== submissionId) {
+                return;
+            }
             const allFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
             this.feedbackSuggestions.set(
                 feedbackSuggestions.filter((suggestion) =>
@@ -411,7 +417,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 ),
             );
         } finally {
-            this.loadingFeedbackSuggestions.set(false);
+            if (this.submission()?.id === submissionId) {
+                this.loadingFeedbackSuggestions.set(false);
+            }
         }
     }
 
