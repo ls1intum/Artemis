@@ -221,7 +221,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         try {
             return (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(exercise, submission))) ?? [];
         } catch (error) {
-            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
+            if ((error as HttpErrorResponse)?.error?.errorKey === 'llmSelectionRequired') {
+                // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it and
+                // this request; refresh so the opt-in hint reacts instead of showing a generic failure.
+                await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+            } else {
+                this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
+            }
             return [];
         }
     }
@@ -332,16 +338,31 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.isLoading.set(false);
 
-        const feedbacks = this.result()?.feedbacks ?? [];
+        void this.maybeAutoFetchFeedbackSuggestions(this.result()?.feedbacks ?? []);
+    }
+
+    /**
+     * Decides whether to auto-fetch Athena feedback suggestions for a freshly opened, unassessed submission, and
+     * fetches them if so. Split out of handleReceivedSubmission() (which many synchronous call sites depend on)
+     * so the AI Experience choice can be refreshed from the server first: another tab may have changed it since
+     * this tab cached it, and firing the request on a stale "accepted" cache only to have the server reject it
+     * produces a confusing generic error instead of the opt-in hint.
+     */
+    private async maybeAutoFetchFeedbackSuggestions(feedbacks: Feedback[]): Promise<void> {
         const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;
         // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL), so an
         // adapted suggestion still counts toward automaticFeedbackCount above even though it is no longer a fresh
         // assessment. Excluding any feedback that already carries a suggestion marker keeps this a genuine
         // "nothing assessed yet" check instead of re-fetching (and re-appending) suggestions on every reload.
         const hasPersistedSuggestions = feedbacks.some((feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION);
-        if (this.isFeedbackSuggestionsEnabled() && !this.requiresAiExperienceOptIn() && !hasPersistedSuggestions && feedbacks.length === automaticFeedbackCount) {
-            void this.fetchAndApplyFeedbackSuggestions();
+        if (!this.isFeedbackSuggestionsEnabled() || hasPersistedSuggestions || feedbacks.length !== automaticFeedbackCount) {
+            return;
         }
+        await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+        if (this.requiresAiExperienceOptIn()) {
+            return;
+        }
+        void this.fetchAndApplyFeedbackSuggestions();
     }
 
     private async fetchAndApplyFeedbackSuggestions(): Promise<void> {

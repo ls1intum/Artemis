@@ -35,7 +35,7 @@ import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-t
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
@@ -255,9 +255,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore.set(this.computeTotalScore(this.assessments));
         this.isLoading.set(false);
 
-        if (this.isFeedbackSuggestionsEnabled() && !this.requiresAiExperienceOptIn()) {
-            this.loadFeedbackSuggestions();
-        }
+        void this.maybeAutoFetchFeedbackSuggestions();
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
@@ -307,6 +305,24 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     onOptInToAiFeedbackSuggestions(): void {
         this.aiExperienceOptInService.promptForAiUsage(() => this.loadFeedbackSuggestions());
+    }
+
+    /**
+     * Decides whether to auto-fetch Athena feedback suggestions for the current submission, and fetches them if
+     * so. Split out of setPropertiesFromServerResponse() (which many synchronous callers depend on) so the AI
+     * Experience choice can be refreshed from the server first: another tab may have changed it since this tab
+     * cached it, and firing the request on a stale "accepted" cache only to have the server reject it produces a
+     * confusing generic error instead of the opt-in hint.
+     */
+    private async maybeAutoFetchFeedbackSuggestions(): Promise<void> {
+        if (!this.isFeedbackSuggestionsEnabled()) {
+            return;
+        }
+        await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+        if (this.requiresAiExperienceOptIn()) {
+            return;
+        }
+        this.loadFeedbackSuggestions();
     }
 
     private checkPermissions(result?: Result): void {
@@ -437,9 +453,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.hasAutomaticFeedback.set(feedbackSuggestions.length > 0);
                 this.loadingFeedbackSuggestions.set(false);
             },
-            error: () => {
-                if (!isStale()) {
-                    this.loadingFeedbackSuggestions.set(false);
+            error: (error: HttpErrorResponse) => {
+                if (isStale()) {
+                    return;
+                }
+                this.loadingFeedbackSuggestions.set(false);
+                if (error.error?.errorKey === 'llmSelectionRequired') {
+                    // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it
+                    // and this request; refresh so the opt-in hint reacts instead of leaving this silently failed.
+                    this.aiExperienceOptInService.refreshAiExperience().subscribe();
                 }
             },
         });

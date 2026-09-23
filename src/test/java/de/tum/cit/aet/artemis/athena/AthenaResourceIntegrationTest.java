@@ -224,7 +224,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFeedbackSuggestionsForbiddenWhenAssessorDeclinedAiUsage() throws Exception {
+    void testGetFeedbackSuggestionsRejectedWhenAssessorDeclinedAiUsage() throws Exception {
         // Enable Athena grading feedback at course level
         var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = new CourseAthenaConfig();
@@ -235,12 +235,14 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), AiSelectionDecision.NO_AI);
 
         // No Athena mock is set up: the request must be rejected before any call to Athena is made.
-        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
+        // BAD_REQUEST (not FORBIDDEN) with errorKey "llmSelectionRequired", the same one the student-facing
+        // non-graded check uses, so the client can react to either one identically.
+        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.BAD_REQUEST, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFeedbackSuggestionsForbiddenWhenAssessorHasNoAiDecision() throws Exception {
+    void testGetFeedbackSuggestionsRejectedWhenAssessorHasNoAiDecision() throws Exception {
         // Enable Athena grading feedback at course level
         var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = new CourseAthenaConfig();
@@ -251,7 +253,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         userUtilService.clearAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
 
         // No Athena mock is set up: the request must be rejected before any call to Athena is made.
-        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.BAD_REQUEST, List.class);
     }
 
     @Test

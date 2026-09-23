@@ -398,8 +398,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if (this.isFeedbackSuggestionsEnabled() && !this.requiresAiExperienceOptIn() && (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
-            await this.loadFeedbackSuggestions();
+        if (this.isFeedbackSuggestionsEnabled() && (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
+            // Another tab may have changed the AI Experience choice since this tab cached it; re-check right before
+            // deciding whether to auto-fetch, so a stale "accepted" cache doesn't fire a request the server will reject.
+            await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+            if (!this.requiresAiExperienceOptIn()) {
+                await this.loadFeedbackSuggestions();
+            }
         }
     }
 
@@ -461,6 +466,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 // Auto-accepted suggestions are unsaved changes: warn on navigation away like any other edit.
                 this.hasPendingChanges = true;
                 this.handleFeedback();
+            }
+        } catch (error) {
+            if ((error as HttpErrorResponse)?.error?.errorKey === 'llmSelectionRequired') {
+                // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it and
+                // this request; refresh so the opt-in hint reacts instead of leaving this silently failed.
+                await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
             }
         } finally {
             if (this.submission() === submissionAtStart) {

@@ -125,7 +125,12 @@ public class AthenaResource {
         final var user = userRepository.getUser();
         // The assessor's own AI Experience consent gates every graded feedback-suggestion request: submission content
         // must never reach Athena for an assessor who has not opted into AI usage, regardless of what the client sends.
-        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        // Same errorKey as the student-facing non-graded check in AthenaFeedbackSuggestionsService.extractSelectedLLMUsage,
+        // so the client can react to either one identically; skipAlert since the assessment editors react to it locally
+        // (re-showing the AI Experience opt-in hint) instead of a generic "not authorized" toast.
+        if (!userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())) {
+            throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);
+        }
 
         try {
             return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true, user));

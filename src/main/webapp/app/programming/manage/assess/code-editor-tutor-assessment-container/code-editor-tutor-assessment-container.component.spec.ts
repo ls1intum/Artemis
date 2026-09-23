@@ -61,6 +61,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
@@ -914,6 +915,37 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             await firstLoad;
 
             expect(suggestionsSpy).toHaveBeenCalledOnce();
+            expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should re-check the AI Experience choice before auto-fetching, so a No AI choice made in another tab is honored', async () => {
+            // Regression test: the assessor accepted AI usage earlier, but switched to No AI in another tab since;
+            // this tab's cached AiExperienceOptInService state is still stale until refreshed.
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockImplementation(() => {
+                vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+                return of(LLMSelectionDecision.NO_AI);
+            });
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should refresh the AI Experience choice and skip the generic alert when the server rejects a stale-accepted suggestion request', async () => {
+            // Regression test: the server rejects the request with errorKey "llmSelectionRequired" when the assessor's
+            // AI Experience turns out (on the server, freshly) to be No AI, even though this tab thought it was enabled.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(of(LLMSelectionDecision.NO_AI));
+            vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(
+                throwError(() => ({ error: { errorKey: 'llmSelectionRequired' } }) as HttpErrorResponse),
+            );
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+
+            expect(refreshSpy).toHaveBeenCalled();
             expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
             expect(comp.loadingFeedbackSuggestions()).toBe(false);
         });

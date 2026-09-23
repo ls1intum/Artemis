@@ -74,6 +74,18 @@ describe('AiExperienceOptInService', () => {
         });
     });
 
+    describe('refreshAiExperience', () => {
+        it('delegates to AccountService.refreshSelectedLLMUsage', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as any);
+            const refreshSpy = vi.spyOn(accountService, 'refreshSelectedLLMUsage');
+
+            const result = await new Promise((resolve) => service.refreshAiExperience().subscribe(resolve));
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(result).toBe(LLMSelectionDecision.NO_AI);
+        });
+    });
+
     describe('promptForAiUsage', () => {
         it('does not persist a decision or call onAccepted when the modal is dismissed', async () => {
             vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);

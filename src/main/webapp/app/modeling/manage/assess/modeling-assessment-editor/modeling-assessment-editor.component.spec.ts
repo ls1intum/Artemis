@@ -48,6 +48,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
@@ -530,6 +531,61 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.unreferencedFeedback()).toHaveLength(1);
             expect(component.unreferencedFeedback()[0]?.id).toBe(unreferencedSuggestion.id);
             expect(component.result()?.feedbacks).toContainEqual(unreferencedSuggestion);
+        });
+
+        it('should re-check the AI Experience choice before auto-fetching, so a No AI choice made in another tab is honored', async () => {
+            // Regression test: the assessor accepted AI usage earlier, but switched to No AI in another tab since;
+            // this tab's cached AiExperienceOptInService state is still stale until refreshed.
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockImplementation(() => {
+                vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+                return of(LLMSelectionDecision.NO_AI);
+            });
+            paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: { id: 1, type: 'modeling', feedbackSuggestionModule: 'modeling', course: { athenaGradingFeedbackEnabled: true } } as unknown as Exercise,
+                },
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions');
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should show the AI Experience opt-in hint instead of a generic error when the server rejects a stale-accepted suggestion request', async () => {
+            // Regression test: the server rejects the request with errorKey "llmSelectionRequired" when the assessor's
+            // AI Experience turns out (on the server, freshly) to be No AI, even though this tab thought it was enabled.
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(of(LLMSelectionDecision.NO_AI));
+            paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: { id: 1, type: 'modeling', feedbackSuggestionModule: 'modeling', course: { athenaGradingFeedbackEnabled: true } } as unknown as Exercise,
+                },
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(
+                throwError(() => ({ error: { errorKey: 'llmSelectionRequired' } }) as HttpErrorResponse),
+            );
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(alertSpy).not.toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
         });
 
         it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {

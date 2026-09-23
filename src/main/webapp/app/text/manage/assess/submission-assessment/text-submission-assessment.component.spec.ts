@@ -68,6 +68,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('TextSubmissionAssessmentComponent', () => {
@@ -261,22 +262,54 @@ describe('TextSubmissionAssessmentComponent', () => {
             return guardParticipation;
         };
 
-        it('should not automatically load feedback suggestions when the assessor has not accepted AI usage', () => {
+        it('should not automatically load feedback suggestions when the assessor has not accepted AI usage', async () => {
             vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
             const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
 
             component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
 
             expect(suggestionsSpy).not.toHaveBeenCalled();
         });
 
-        it('should automatically load feedback suggestions once Athena is active and the assessor has accepted AI usage', () => {
+        it('should automatically load feedback suggestions once Athena is active and the assessor has accepted AI usage', async () => {
             vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
             const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([]));
 
             component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
 
             expect(suggestionsSpy).toHaveBeenCalled();
+        });
+
+        it('should re-check the AI Experience choice before auto-fetching, so a No AI choice made in another tab is honored', async () => {
+            // Regression test: the assessor accepted AI usage earlier, but switched to No AI in another tab since;
+            // this tab's cached AiExperienceOptInService state is still stale until refreshed.
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockImplementation(() => {
+                vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+                return of(LLMSelectionDecision.NO_AI);
+            });
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should refresh the AI Experience choice and skip loading when the server rejects a stale-accepted suggestion request', async () => {
+            // Regression test: the server rejects the request with errorKey "llmSelectionRequired" when the assessor's
+            // AI Experience turns out (on the server, freshly) to be No AI, even though this tab thought it was enabled.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(of(LLMSelectionDecision.NO_AI));
+            vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(throwError(() => ({ error: { errorKey: 'llmSelectionRequired' } }) as HttpErrorResponse));
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(component.loadingFeedbackSuggestions()).toBe(false);
         });
     });
 
