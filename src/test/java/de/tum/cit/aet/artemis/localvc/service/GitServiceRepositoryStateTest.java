@@ -176,6 +176,21 @@ class GitServiceRepositoryStateTest {
     }
 
     @Test
+    void getOrCheckoutRepository_withAnIncompleteWorkingCopy_clonesTheRepositoryAgain() throws Exception {
+        checkoutOf("abc-incomplete").close();
+        // The skeleton a partially failed deletion leaves behind: the git directory still has objects, but no HEAD and no config.
+        Path workingCopy = baseDir.resolve("incomplete-working-copy");
+        Files.createDirectories(workingCopy.resolve(".git").resolve("refs").resolve("heads"));
+        Files.createDirectories(workingCopy.resolve(".git").resolve("objects").resolve("pack"));
+        FileUtils.write(workingCopy.resolve(".git").resolve("objects").resolve("pack").resolve(".nfs0000000000000001").toFile(), "leftover", StandardCharsets.UTF_8);
+
+        try (Repository repository = gitService.getOrCheckoutRepositoryWithLocalPath(uriFor("abc-incomplete"), workingCopy, true, false)) {
+            assertThat(repository.resolve(Constants.HEAD)).as("the working copy is cloned again and has a HEAD").isNotNull();
+            assertThat(workingCopy.resolve("README.md")).as("the files of the repository are checked out").exists();
+        }
+    }
+
+    @Test
     void listFilesAndFolders_reportsFilesAndFoldersAndNeverTheGitDirectory() throws Exception {
         try (Repository repository = checkoutOf("abc-listing")) {
             ReflectionTestUtils.setField(repository, "localPath", repository.getWorkTree().toPath());

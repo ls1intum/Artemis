@@ -18,7 +18,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
 import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiTooltipDirective } from '@tumaet/ui-angular';
@@ -80,6 +80,9 @@ export class ExamExerciseRowButtonsComponent {
     );
 
     private readonly localCIEnabled = signal(this.profileService.isProfileActive(PROFILE_LOCALCI));
+
+    /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
+    private readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     /**
      * The wall clock as a signal. The action set depends on the exam's start and end having passed, and nothing
@@ -207,8 +210,9 @@ export class ExamExerciseRowButtonsComponent {
             });
         }
         // Sits between the info/success-colored actions above and the warning-colored edit actions below, matching its
-        // own warning color. Only offered for exercise types the generator supports; the server rejects the rest.
-        if (course.isAtLeastEditor && supportsAiVariantGeneration(ex) && (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)) {
+        // own warning color. Programming exercises also require the server's generation capability.
+        if (this.hyperionEnabled && course.isAtLeastEditor && supportsAiVariantGeneration(ex)
+                && (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)) {
             items.push({
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',

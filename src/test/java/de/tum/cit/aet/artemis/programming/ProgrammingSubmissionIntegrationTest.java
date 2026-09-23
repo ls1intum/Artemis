@@ -586,6 +586,29 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionForTheResultOfAComplaintResponse() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(50), submission);
+        // The response to a complaint is stored as an additional manual result with the next correction round
+        Result complaintResponseResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(10), submission);
+        complaintResponseResult.setCorrectionRound(1);
+        resultRepository.save(complaintResponseResult);
+        long numberOfResults = resultRepository.countBySubmissionId(submission.getId());
+
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        // the course exercise has one correction round, but the result of the complaint response exists and can be opened
+        paramMap.add("correction-round", "1");
+        request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
+
+        assertThat(resultRepository.countBySubmissionId(submission.getId())).as("opening the existing result creates no further result").isEqualTo(numberOfResults);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionKeepsAutomaticFeedback() throws Exception {
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");

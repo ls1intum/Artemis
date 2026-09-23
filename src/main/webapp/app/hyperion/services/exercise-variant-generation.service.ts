@@ -8,6 +8,8 @@ import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVari
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 /**
  * Client service for AI exercise-variant generation. Two responsibilities:
@@ -21,6 +23,7 @@ export class ExerciseVariantGenerationService {
     private readonly api = inject(HyperionExerciseVariantApi);
     private readonly websocketService = inject(ExerciseVariantWebsocketService);
     private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
 
     private readonly jobSubscriptions = new Map<string, Subscription>();
 
@@ -43,8 +46,9 @@ export class ExerciseVariantGenerationService {
                 this.loadedForLogin = login;
                 // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, so fetching as
                 // a student produced nothing but a 403 in the console. Mirror the server's rule here — a user who
-                // cannot generate variants has no jobs to show, and the tray stays hidden either way.
-                if (login && this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
+                // cannot generate variants has no jobs to show, and the tray stays hidden either way. Without
+                // Hyperion the endpoint is not registered at all, so there is nothing to fetch either.
+                if (login && this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION)) {
                     this.loadJobs().subscribe({ error: () => {} });
                 }
             });
