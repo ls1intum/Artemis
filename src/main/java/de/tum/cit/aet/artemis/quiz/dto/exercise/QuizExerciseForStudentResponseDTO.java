@@ -1,16 +1,25 @@
 package de.tum.cit.aet.artemis.quiz.dto.exercise;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * Quiz exercise response for a student. The quiz state selects the response shape and controls whether questions or solutions are included.
+ */
 @Schema(discriminatorProperty = "quizQuestionsType", discriminatorMapping = {
         @DiscriminatorMapping(value = "before-quiz-start", schema = QuizExerciseWithoutQuestionsForStudentDTO.class),
         @DiscriminatorMapping(value = "live-quiz", schema = QuizExerciseWithQuestionsForStudentDTO.class),
         @DiscriminatorMapping(value = "after-quiz-end", schema = QuizExerciseWithSolutionForStudentDTO.class) }, oneOf = { QuizExerciseWithoutQuestionsForStudentDTO.class,
                 QuizExerciseWithQuestionsForStudentDTO.class, QuizExerciseWithSolutionForStudentDTO.class })
+@JsonSubTypes({ @JsonSubTypes.Type(value = QuizExerciseWithoutQuestionsForStudentDTO.class, name = QuizExerciseForStudentResponseDTO.BEFORE_QUIZ_START),
+        @JsonSubTypes.Type(value = QuizExerciseWithQuestionsForStudentDTO.class, name = QuizExerciseForStudentResponseDTO.LIVE_QUIZ),
+        @JsonSubTypes.Type(value = QuizExerciseWithSolutionForStudentDTO.class, name = QuizExerciseForStudentResponseDTO.AFTER_QUIZ_END) })
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "quizQuestionsType", visible = true)
 public sealed interface QuizExerciseForStudentResponseDTO
         permits QuizExerciseWithoutQuestionsForStudentDTO, QuizExerciseWithQuestionsForStudentDTO, QuizExerciseWithSolutionForStudentDTO {
 

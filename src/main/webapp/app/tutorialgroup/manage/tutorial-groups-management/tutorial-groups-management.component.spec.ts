@@ -26,6 +26,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
+import { convertTutorialGroupSummaryArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -152,7 +153,7 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should get all tutorial groups for course', () => {
-        expect(component.tutorialGroups()).toEqual([expect.objectContaining(tutorialGroupOne), expect.objectContaining(tutorialGroupTwo)]);
+        expect(component.tutorialGroups()).toStrictEqual(convertTutorialGroupSummaryArrayDatesFromServer([tutorialGroupOne, tutorialGroupTwo]));
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();

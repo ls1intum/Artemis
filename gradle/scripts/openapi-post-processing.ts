@@ -35,7 +35,7 @@ const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: Sour
     return renamedMethodsInFile;
 };
 
-const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serializedPartsInFile: number) => {
+const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serializedPartsInFile: number, multipartObjectPartNames: Set<string>) => {
     const generatedModelTypes = new Set(
         sourceFile
             .getImportDeclarations()
@@ -49,7 +49,7 @@ const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serialized
         }
 
         const [partName, formDataValue] = callExpression.getArguments();
-        if (!Node.isStringLiteral(partName) || partName.getLiteralValue() !== "exercise") {
+        if (!Node.isStringLiteral(partName) || !multipartObjectPartNames.has(partName.getLiteralValue())) {
             continue;
         }
 
@@ -59,13 +59,13 @@ const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serialized
             continue;
         }
         if (!Node.isIdentifier(formDataValue)) {
-            throw new Error(`Cannot serialize multipart exercise part in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+            throw new Error(`Cannot serialize multipart object part in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
         }
 
         const parameterDeclaration = formDataValue.getSymbol()?.getDeclarations().find(Node.isParameterDeclaration);
         const parameterType = parameterDeclaration?.getTypeNode()?.getText();
         if (!parameterType || !generatedModelTypes.has(parameterType)) {
-            throw new Error(`Multipart exercise part is not a generated model in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+            throw new Error(`Multipart object part is not a generated model in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
         }
 
         formDataValue.replaceWithText(`new Blob([JSON.stringify(${formDataValue.getText()})], { type: 'application/json' })`);
@@ -75,15 +75,55 @@ const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serialized
     return serializedPartsInFile;
 };
 
-interface OpenApiSpecification {
-    components?: {
-        schemas?: Record<string, {
-            oneOf?: Array<{
-                $ref?: string;
-            }>;
+interface OpenApiSchema {
+    type?: string;
+    $ref?: string;
+    items?: OpenApiSchema;
+    oneOf?: OpenApiSchema[];
+    anyOf?: OpenApiSchema[];
+    allOf?: OpenApiSchema[];
+    properties?: Record<string, OpenApiSchema>;
+}
+
+interface OpenApiOperation {
+    requestBody?: {
+        content?: Record<string, {
+            schema?: OpenApiSchema;
         }>;
     };
 }
+
+interface OpenApiSpecification {
+    paths?: Record<string, Record<string, OpenApiOperation>>;
+    components?: {
+        schemas?: Record<string, OpenApiSchema>;
+    };
+}
+
+const isObjectSchema = (schema: OpenApiSchema): boolean => {
+    return Boolean(
+        schema.$ref ||
+        schema.type === "object" ||
+        (schema.items && isObjectSchema(schema.items)) ||
+        schema.oneOf?.some(isObjectSchema) ||
+        schema.anyOf?.some(isObjectSchema) ||
+        schema.allOf?.some(isObjectSchema),
+    );
+};
+
+const getMultipartObjectPartNames = (openApiSpecification: OpenApiSpecification): string[] => {
+    return Object.values(openApiSpecification.paths ?? {}).flatMap(path =>
+        Object.values(path).flatMap(operation => {
+            const multipartSchema = operation.requestBody?.content?.["multipart/form-data"]?.schema;
+            if (!multipartSchema?.properties) {
+                return [];
+            }
+            return Object.entries(multipartSchema.properties)
+                .filter(([, schema]) => isObjectSchema(schema))
+                .map(([partName]) => partName);
+        }),
+    );
+};
 
 const referencedUnionSchemas = (openApiSpecification: OpenApiSpecification): Array<[string, string[]]> => {
     return Object.entries(openApiSpecification.components?.schemas ?? {}).flatMap(([schemaName, schema]) => {
@@ -120,7 +160,6 @@ const replaceOneOfModelsWithUnionTypes = (project: Project, openApiSpecification
         if (!sourceFile || referencedSourceFiles.some(referencedSourceFile => referencedSourceFile === undefined)) {
             continue;
         }
-
         for (const [index, referencedSchemaName] of referencedSchemaNames.entries()) {
             const referencedSourceFile = referencedSourceFiles[index];
             if (!referencedSourceFile || referencedSourceFile === sourceFile) {
@@ -184,7 +223,19 @@ const main = async () => {
     });
     project.addSourceFilesAtPaths(files);
 
+    // The generator writes its banner as a leading comment on the file's first statement, so removing an unused first
+    // import or replacing a first-statement interface takes the banner with it. Snapshot it up front, restore on write.
+    const leadingBanners = new Map<SourceFile, string>();
+    for (const sourceFile of project.getSourceFiles()) {
+        const banner = /^\/\*\*[\s\S]*?\*\/\r?\n/.exec(sourceFile.getFullText())?.[0];
+        if (banner) {
+            leadingBanners.set(sourceFile, banner);
+        }
+    }
+
     const openApiSpecification = parse(readFileSync("openapi/openapi.yaml", "utf8")) as OpenApiSpecification;
+    const multipartObjectPartNames = getMultipartObjectPartNames(openApiSpecification);
+    const multipartObjectPartNameSet = new Set(multipartObjectPartNames);
     const totalReplacedUnionModels = replaceOneOfModelsWithUnionTypes(project, openApiSpecification);
 
     const typeChecker = project.getTypeChecker();
@@ -227,9 +278,11 @@ const main = async () => {
         }
 
         renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
-        serializedFormDataPartsInFile = serializeGeneratedModelFormDataParts(sourceFile, serializedFormDataPartsInFile);
+        serializedFormDataPartsInFile = serializeGeneratedModelFormDataParts(sourceFile, serializedFormDataPartsInFile, multipartObjectPartNameSet);
         const path = sourceFile.getFilePath();
-        const content = sourceFile.getFullText()
+        const leadingBanner = leadingBanners.get(sourceFile);
+        const text = sourceFile.getFullText();
+        const content = (leadingBanner && !text.startsWith(leadingBanner) ? leadingBanner + text : text)
             .replace(/[ \t]+(?=\r?$)/gm, "")
             .replace(/(?:\r?\n)+$/, "\n");
         const fixedContent = isWindows ? normalizeLineEndings(content, "CRLF") : content;
@@ -247,8 +300,8 @@ const main = async () => {
         }
     }
 
-    if (totalSerializedFormDataParts === 0) {
-        throw new Error("No generated multipart exercise parts were serialized");
+    if (totalSerializedFormDataParts !== multipartObjectPartNames.length) {
+        throw new Error(`Expected ${multipartObjectPartNames.length} multipart object parts to be serialized, but serialized ${totalSerializedFormDataParts}`);
     }
 
     console.log(

@@ -7,6 +7,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+/**
+ * Statistics for a drag-and-drop quiz question.
+ */
 @Schema(requiredProperties = { "type" })
 @SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

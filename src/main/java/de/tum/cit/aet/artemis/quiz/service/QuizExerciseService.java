@@ -1412,7 +1412,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param quizExercise the quiz exercise to map
      * @param batch        the optional quiz batch associated with the student
-     * @return the mapped DTO (QuizExerciseWithoutQuestionsDTO, QuizExerciseWithQuestionsDTO, or QuizExerciseWithSolutionsDTO)
+     * @return the response DTO for the current quiz state
      */
     public QuizExerciseForStudentResponseDTO createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
         if (quizExercise.isQuizEnded()) {
