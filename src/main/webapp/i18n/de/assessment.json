@@ -125,7 +125,7 @@
                 "generativeAIAssessmentInfo": "Vorschläge prüfen und bei Bedarf anpassen — die Verantwortung für die Bewertung liegt weiterhin bei dir.",
                 "loading": "KI-Feedback-Vorschläge werden generiert…",
                 "aiExperienceOptInHint": "Diese Aufgabe unterstützt KI-generierte Feedback-Vorschläge. Wähle deine KI-Erfahrung, um sie für diese und zukünftige Bewertungen zu nutzen.",
-                "aiExperienceOptInHintNoAi": "KI-Feedback-Vorschläge sind deaktiviert, weil du „Keine KI“ ausgewählt hast. Ändere deine KI-Erfahrung, um sie für diese und zukünftige Bewertungen zu nutzen.",
+                "aiExperienceOptInHintNoAi": "Ändere deine KI-Erfahrung, um KI-generierte Feedback-Vorschläge zu erhalten.",
                 "chooseAiExperience": "KI-Erfahrung wählen",
                 "changeAiExperience": "KI-Erfahrung ändern"
             },

@@ -125,7 +125,7 @@
                 "generativeAIAssessmentInfo": "Review and adapt suggestions as needed — you remain responsible for the final assessment.",
                 "loading": "Generating AI feedback suggestions…",
                 "aiExperienceOptInHint": "This exercise supports AI-generated feedback suggestions. Choose your AI Experience to use them for this and future assessments.",
-                "aiExperienceOptInHintNoAi": "AI feedback suggestions are disabled because you selected No AI. Change your AI Experience to use them for this and future assessments.",
+                "aiExperienceOptInHintNoAi": "Change your AI Experience to get AI-generated feedback suggestions.",
                 "chooseAiExperience": "Choose AI Experience",
                 "changeAiExperience": "Change AI Experience"
             },
