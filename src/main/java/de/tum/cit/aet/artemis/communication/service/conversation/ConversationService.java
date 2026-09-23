@@ -504,7 +504,11 @@ public class ConversationService {
                     try {
                         conversationParticipantRepository.save(createReadParticipant(requestingUser, channel, now));
                     }
-                    catch (DataIntegrityViolationException alreadyExists) {
+                    catch (DataIntegrityViolationException saveFailed) {
+                        // Only a participant that exists by now was created concurrently; any other integrity violation is a real error
+                        if (!conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), userId)) {
+                            throw saveFailed;
+                        }
                         concurrentlyCreatedConversationIds.add(channel.getId());
                     }
                 }

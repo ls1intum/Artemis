@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -9,10 +11,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -67,11 +71,32 @@ class ConversationServiceMarkAllAsReadUnitTest {
         when(conversationParticipantRepository.saveAll(anyList())).thenThrow(new DataIntegrityViolationException("conversation_participant_uq"));
         when(conversationParticipantRepository.save(argThat(participant -> participant != null && participant.getConversation() == openedConcurrently)))
                 .thenThrow(new DataIntegrityViolationException("conversation_participant_uq"));
+        when(conversationParticipantRepository.existsByConversationIdAndUserId(openedConcurrently.getId(), user.getId())).thenReturn(true);
 
         conversationService.markAllConversationOfAUserAsRead(COURSE_ID, user);
 
-        verify(conversationParticipantRepository, times(2)).save(any(ConversationParticipant.class));
-        verify(conversationParticipantRepository).save(argThat(participant -> participant != null && participant.getConversation() == notYetAccessed));
-        verify(conversationParticipantRepository).updateMultipleLastReadAsync(eq(user.getId()), eq(List.of(openedConcurrently.getId())), any());
+        ArgumentCaptor<ConversationParticipant> savedParticipants = ArgumentCaptor.forClass(ConversationParticipant.class);
+        verify(conversationParticipantRepository, times(2)).save(savedParticipants.capture());
+        ArgumentCaptor<ZonedDateTime> lastRead = ArgumentCaptor.forClass(ZonedDateTime.class);
+        verify(conversationParticipantRepository).updateMultipleLastReadAsync(eq(user.getId()), eq(List.of(openedConcurrently.getId())), lastRead.capture());
+        assertThat(savedParticipants.getAllValues()).as("both participants are saved one by one, marked as read").hasSize(2).allSatisfy(participant -> {
+            assertThat(participant.getUnreadMessagesCount()).isZero();
+            assertThat(participant.getLastRead()).isEqualTo(lastRead.getValue());
+        });
+        assertThat(savedParticipants.getAllValues()).extracting(ConversationParticipant::getConversation).containsExactly(openedConcurrently, notYetAccessed);
+    }
+
+    @Test
+    void markAllAsRead_whenSavingFailsForAnotherReason_rethrowsTheError() {
+        var user = new User();
+        user.setId(42L);
+        Channel deletedConcurrently = channel(12L);
+        when(conversationParticipantRepository.findConversationIdsByUserIdAndCourseId(user.getId(), COURSE_ID)).thenReturn(List.of());
+        when(conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(COURSE_ID, user.getId())).thenReturn(List.of(deletedConcurrently));
+        when(conversationParticipantRepository.saveAll(anyList())).thenThrow(new DataIntegrityViolationException("foreign key violation"));
+        when(conversationParticipantRepository.save(any(ConversationParticipant.class))).thenThrow(new DataIntegrityViolationException("foreign key violation"));
+        when(conversationParticipantRepository.existsByConversationIdAndUserId(deletedConcurrently.getId(), user.getId())).thenReturn(false);
+
+        assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> conversationService.markAllConversationOfAUserAsRead(COURSE_ID, user));
     }
 }
