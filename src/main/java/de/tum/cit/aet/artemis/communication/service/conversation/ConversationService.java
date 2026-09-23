@@ -488,16 +488,39 @@ public class ConversationService {
         List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
         List<ConversationParticipant> participants = new ArrayList<>();
         for (Channel channel : courseWideChannelsWithoutParticipants) {
-            var newParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-            newParticipant.setUnreadMessagesCount(0L);
-            newParticipant.setLastRead(now);
-            participants.add(newParticipant);
+            participants.add(createReadParticipant(requestingUser, channel, now));
         }
         // save all new conversation participants (i.e. for course-wide channels that the user has not yet accessed)
         if (!participants.isEmpty()) {
-            conversationParticipantRepository.saveAll(participants);
+            try {
+                conversationParticipantRepository.saveAll(participants);
+            }
+            catch (DataIntegrityViolationException e) {
+                // A concurrent request (e.g. opening one of these channels) created a participant in the meantime, which rolled back the whole batch.
+                // Save them one by one instead, with new instances as the batch may have assigned ids that were rolled back, and mark the participants
+                // created concurrently as read as well.
+                List<Long> concurrentlyCreatedConversationIds = new ArrayList<>();
+                for (Channel channel : courseWideChannelsWithoutParticipants) {
+                    try {
+                        conversationParticipantRepository.save(createReadParticipant(requestingUser, channel, now));
+                    }
+                    catch (DataIntegrityViolationException alreadyExists) {
+                        concurrentlyCreatedConversationIds.add(channel.getId());
+                    }
+                }
+                if (!concurrentlyCreatedConversationIds.isEmpty()) {
+                    conversationParticipantRepository.updateMultipleLastReadAsync(userId, concurrentlyCreatedConversationIds, now);
+                }
+            }
         }
         log.debug("Marking all conversations without participants (i.e. creating new ones) as read took {} ms", TimeLogUtil.formatDurationFrom(start));
+    }
+
+    private static ConversationParticipant createReadParticipant(User user, Channel channel, ZonedDateTime lastRead) {
+        var participant = ConversationParticipant.createWithDefaultValues(user, channel);
+        participant.setUnreadMessagesCount(0L);
+        participant.setLastRead(lastRead);
+        return participant;
     }
 
     /**
