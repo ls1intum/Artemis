@@ -111,8 +111,14 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Set when the service is shut down, so that the delayed startup task cannot reactivate it: the scheduler still runs delayed tasks after its shutdown.
+     * Guarded by {@link #lifecycleLock}.
      */
-    private volatile boolean shutDown = false;
+    private boolean shutDown = false;
+
+    /**
+     * Makes the shutdown check and the activation in the delayed startup task atomic with respect to {@link #shutdown()}.
+     */
+    private final Object lifecycleLock = new Object();
 
     public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, Optional<CompetencyProgressApi> competencyProgressApi,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
@@ -148,10 +154,12 @@ public class ParticipantScoreScheduleService {
     @PostConstruct
     public void startup() {
         scheduler.schedule(() -> {
-            if (shutDown) {
-                return;
+            synchronized (lifecycleLock) {
+                if (shutDown) {
+                    return;
+                }
+                isRunning.set(true);
             }
-            isRunning.set(true);
             try {
                 // this should never prevent the application start of Artemis
                 scheduleTasks();
@@ -171,8 +179,10 @@ public class ParticipantScoreScheduleService {
      */
     @PreDestroy
     public void shutdown() {
-        shutDown = true;
-        isRunning.set(false);
+        synchronized (lifecycleLock) {
+            shutDown = true;
+            isRunning.set(false);
+        }
         // Stop all running tasks, we will reschedule them on startup again
         scheduledTasks.values().forEach(future -> future.cancel(true));
         scheduledTasks.clear();
