@@ -4,8 +4,8 @@ import { Subscription } from 'rxjs';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
+import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import {
@@ -14,7 +14,7 @@ import {
     PROMPT_LENGTH_WARNING_THRESHOLD,
     deriveDraftMetadataPrefill,
     isTemplateOrEmpty,
-} from 'app/programming/manage/shared/problem-statement.utils';
+} from 'app/hyperion/problem-statement/problem-statement.utils';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 

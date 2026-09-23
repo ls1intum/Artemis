@@ -28,24 +28,24 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/prog
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 
-import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/hyperion/editor/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
-import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import {
     EditorSelectionWithPosition,
     INLINE_REFINEMENT_PROMPT_WIDTH_PX,
     InlineRefinementEvent,
     InstructionSelectionPosition,
-} from 'app/programming/manage/shared/problem-statement.utils';
+} from 'app/hyperion/problem-statement/problem-statement.utils';
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { InlineRefinementButtonComponent } from 'app/editor/monaco-editor/inline-refinement-button/inline-refinement-button.component';
+import { InlineRefinementButtonComponent } from 'app/hyperion/editor/inline-refinement-button/inline-refinement-button.component';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';

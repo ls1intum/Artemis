@@ -2,7 +2,7 @@ import { NgClass } from '@angular/common';
 import { Component, ViewEncapsulation, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { GeneratedQuestion, GeneratedQuestionType } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 
 @Component({
     selector: 'jhi-quiz-ai-generated-question-card',

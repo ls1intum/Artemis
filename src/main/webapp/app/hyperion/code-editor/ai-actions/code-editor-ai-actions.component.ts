@@ -17,7 +17,7 @@ import {
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/hyperion/problem-statement/problem-statement.utils';
 
 /**
  * The code editor's AI actions: **Adapt exercise** as the primary action and a menu with the problem-statement

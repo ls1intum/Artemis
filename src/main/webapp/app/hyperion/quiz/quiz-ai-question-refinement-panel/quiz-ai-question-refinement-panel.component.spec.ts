@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { QuizAiQuestionRefinementPanelComponent } from './quiz-ai-question-refinement-panel.component';
-import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
+import { QuizAiGenerationService } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';

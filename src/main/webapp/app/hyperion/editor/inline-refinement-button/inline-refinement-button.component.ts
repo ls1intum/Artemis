@@ -5,7 +5,7 @@ import { faPaperPlane, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonDirective } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/programming/manage/shared/problem-statement.utils';
+import { PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/hyperion/problem-statement/problem-statement.utils';
 
 /**
  * Floating refinement button component that appears near text selection.

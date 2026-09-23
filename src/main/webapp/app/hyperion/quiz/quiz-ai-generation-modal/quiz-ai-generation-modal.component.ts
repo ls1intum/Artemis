@@ -14,9 +14,9 @@ import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fo
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { QuizAiGeneratedQuestionCardComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generated-question-card/quiz-ai-generated-question-card.component';
-import { GeneratedQuestion, GeneratedQuestionType, GenerationLanguage } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
-import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
+import { QuizAiGeneratedQuestionCardComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generated-question-card/quiz-ai-generated-question-card.component';
+import { GeneratedQuestion, GeneratedQuestionType, GenerationLanguage } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { QuizAiGenerationService } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { finalize } from 'rxjs/operators';
 import { Subscription, from } from 'rxjs';
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quiz-question-generation-request';

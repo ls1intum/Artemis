@@ -26,7 +26,7 @@ import {
     LOW_COMPETENCY_LINK_WEIGHT,
     MEDIUM_COMPETENCY_LINK_WEIGHT,
 } from 'app/atlas/shared/entities/competency.model';
-import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/hyperion/problem-statement/problem-statement.utils';
 
 describe('ChecklistPanelComponent', () => {
     let component: ChecklistPanelComponent;

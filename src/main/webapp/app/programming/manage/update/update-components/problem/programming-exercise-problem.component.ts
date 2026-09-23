@@ -17,14 +17,14 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
+import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
+import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
+import { ChecklistPanelComponent } from 'app/hyperion/problem-statement/checklist-panel/checklist-panel.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH } from 'app/foundation/constants/input.constants';
 

@@ -49,7 +49,7 @@ import { catchError, concatMap, map, pairwise, switchMap, tap, toArray } from 'r
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { FormsModule } from '@angular/forms';
 import { Checkbox } from 'primeng/checkbox';
-import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
+import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';

@@ -15,7 +15,7 @@ import {
     getCourseId,
     isValidGenerationResponse,
     isValidRefinementResponse,
-} from 'app/programming/manage/shared/problem-statement.utils';
+} from 'app/hyperion/problem-statement/problem-statement.utils';
 
 /** Result of a problem statement operation (generation or refinement). */
 export interface OperationResult {

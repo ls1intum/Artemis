@@ -11,7 +11,7 @@ import {
     GeneratedQuestionType,
     QuizQuestionBulkRefinementResult,
     QuizQuestionRefinementResult,
-} from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+} from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';

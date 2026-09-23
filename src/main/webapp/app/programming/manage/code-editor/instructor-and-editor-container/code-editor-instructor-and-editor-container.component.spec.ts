@@ -36,10 +36,10 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistency-check-response';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 
 import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';

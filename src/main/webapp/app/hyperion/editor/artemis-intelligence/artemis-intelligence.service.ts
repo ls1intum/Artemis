@@ -1,9 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
-import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
 import { ProblemStatementRewriteRequest } from 'app/openapi/model/problem-statement-rewrite-request';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problem-statement-rewrite-response';
