@@ -11,11 +11,14 @@ import { SwUpdate } from '@angular/service-worker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApplicationRef } from '@angular/core';
 
+vi.mock('app/app.constants', async (importOriginal) => ({ ...(await importOriginal<typeof import('app/app.constants')>()), VERSION: '10.1.0' }));
+
 describe(`ArtemisVersionInterceptor`, () => {
     let alertService: AlertService;
     let swUpdate: any;
     let checkForUpdateSpy: any;
     let activateUpdateSpy: any;
+    let unrecoverable: Subject<unknown>;
 
     beforeAll(() => {
         vi.useFakeTimers();
@@ -26,10 +29,12 @@ describe(`ArtemisVersionInterceptor`, () => {
     });
 
     beforeEach(() => {
+        unrecoverable = new Subject<unknown>();
         swUpdate = {
             isEnabled: true,
             activated: EMPTY,
             available: EMPTY,
+            unrecoverable,
             checkForUpdate: () => Promise.resolve(true),
             activateUpdate: () => Promise.resolve(true),
         };
@@ -86,6 +91,7 @@ describe(`ArtemisVersionInterceptor`, () => {
         // TODO: mock the injected services in ArtemisVersionInterceptor
         TestBed.inject(ArtemisVersionInterceptor);
         await Promise.resolve();
+        await Promise.resolve();
         expect(addAlertSpy).toHaveBeenCalledOnce();
         expect(funMock).toHaveBeenCalledOnce();
         expect(funMock).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.INFO, message: 'artemisApp.outdatedAlert' }));
@@ -115,5 +121,72 @@ describe(`ArtemisVersionInterceptor`, () => {
         await firstValueFrom(intercept.intercept(requestMock, mockHandler));
         expect(checkForUpdateSpy).toHaveBeenCalledTimes(2);
         vi.clearAllTimers();
+    });
+
+    describe('outdated detection when the service worker reports no update', () => {
+        const requestMock = new HttpRequest('GET', '/test');
+        const responseWithVersion = (version: string) => ({
+            handle: vi.fn(() => of(new HttpResponse({ status: 200, body: {}, headers: new HttpHeaders({ [ARTEMIS_VERSION_HEADER]: version }) }))),
+        });
+
+        it('should show the update alert if the server reports a newer version', async () => {
+            checkForUpdateSpy.mockResolvedValue(false);
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            const intercept = TestBed.inject(ArtemisVersionInterceptor);
+            await Promise.resolve();
+            expect(addAlertSpy).not.toHaveBeenCalled();
+
+            await firstValueFrom(intercept.intercept(requestMock, responseWithVersion('10.2.0')));
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(addAlertSpy).toHaveBeenCalledOnce();
+            expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'artemisApp.outdatedAlert' }));
+            vi.clearAllTimers();
+        });
+
+        it('should show the update alert if the service worker check fails and the server reports a newer version', async () => {
+            checkForUpdateSpy.mockResolvedValueOnce(false).mockRejectedValue(new Error('service worker unavailable'));
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            const intercept = TestBed.inject(ArtemisVersionInterceptor);
+            await Promise.resolve();
+
+            await firstValueFrom(intercept.intercept(requestMock, responseWithVersion('10.2.0')));
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(addAlertSpy).toHaveBeenCalledOnce();
+            vi.clearAllTimers();
+        });
+
+        it('should not show the update alert if the server reports an older version', async () => {
+            checkForUpdateSpy.mockResolvedValue(false);
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            const intercept = TestBed.inject(ArtemisVersionInterceptor);
+            await Promise.resolve();
+
+            await firstValueFrom(intercept.intercept(requestMock, responseWithVersion('10.0.2')));
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(checkForUpdateSpy).toHaveBeenCalledTimes(2);
+            expect(addAlertSpy).not.toHaveBeenCalled();
+            vi.clearAllTimers();
+        });
+
+        it('should show the update alert if the service worker reaches an unrecoverable state', async () => {
+            checkForUpdateSpy.mockResolvedValue(false);
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            TestBed.inject(ArtemisVersionInterceptor);
+            await Promise.resolve();
+            expect(addAlertSpy).not.toHaveBeenCalled();
+
+            unrecoverable.next({ type: 'UNRECOVERABLE_STATE', reason: 'missing asset' });
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(addAlertSpy).toHaveBeenCalledOnce();
+            vi.clearAllTimers();
+        });
     });
 });

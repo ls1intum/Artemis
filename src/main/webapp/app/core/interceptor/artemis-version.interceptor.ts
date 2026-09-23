@@ -40,6 +40,9 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         const updateIntervalOnceAppIsStable$ = concat(appIsStableOrTimeout, updateInterval);
 
         updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates(false));
+
+        // The service worker cannot serve the version this client was loaded from anymore, so only a reload helps
+        this.updates.unrecoverable.subscribe(() => this.checkForUpdates(true));
     }
 
     intercept(request: HttpRequest<unknown>, nextHandler: HttpHandler): Observable<HttpEvent<unknown>> {
@@ -50,7 +53,9 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                     const serverVersion = response.headers.get(ARTEMIS_VERSION_HEADER);
                     if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest) {
                         // Version mismatch detected from HTTP headers. Let SW look for updates!
-                        this.checkForUpdates(true);
+                        // A newer server version means this client is outdated, even if the service worker does not report an update (e.g. because
+                        // another tab already activated it). An older server version can only be a node that has not been updated yet.
+                        this.checkForUpdates(isNewerVersion(serverVersion, VERSION));
                     }
 
                     // only invoke the time call if the call was not already the time call to prevent recursion here
@@ -71,15 +76,16 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
      * We need to have this second option because the "checkForUpdate()" call sometimes starts to return false after a while, even though we didn't reload / update yet.
      * And if service workers are not available we can't actually check for updates, so we have to rely on ever having seen a different version number in a request
      *
-     * @param hasUpdate if it is known that there is an update, only relevant if service workers are not available
+     * @param hasUpdate if it is known that there is an update, independent of what the service worker reports
      */
     private checkForUpdates(hasUpdate: boolean) {
         // don't spam errors when service workers are not available, instead rely on the Content-Version header of responses
-        const update = this.updates.isEnabled ? this.updates.checkForUpdate() : Promise.resolve(hasUpdate);
+        // a failing check (e.g. a broken service worker) must not suppress an update that is known from the header
+        const update = this.updates.isEnabled ? this.updates.checkForUpdate().catch(() => false) : Promise.resolve(false);
 
         // first update the service worker
         void update.then((updateAvailable: boolean) => {
-            if (this.hasSeenOutdatedInThisSession || updateAvailable) {
+            if (this.hasSeenOutdatedInThisSession || updateAvailable || hasUpdate) {
                 this.hasSeenOutdatedInThisSession = true;
 
                 // If we haven't shown an alert yet or the alert has been closed: Spawn new alert
@@ -106,4 +112,31 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
             }
         });
     }
+}
+
+/**
+ * Checks whether the given version is newer than the current one, comparing the numeric major, minor and patch parts.
+ * A version that cannot be parsed counts as newer, so that an unexpected format does not hide an update.
+ *
+ * @param version the version to check, e.g. the version the server reports
+ * @param currentVersion the version of this client
+ */
+function isNewerVersion(version: string, currentVersion: string): boolean {
+    const parse = (value: string) =>
+        value
+            .split('-')[0]
+            .split('.')
+            .map((part) => Number.parseInt(part, 10));
+    const parts = parse(version);
+    const currentParts = parse(currentVersion);
+    if ([...parts, ...currentParts].some((part) => Number.isNaN(part))) {
+        return true;
+    }
+    for (let i = 0; i < Math.max(parts.length, currentParts.length); i++) {
+        const difference = (parts[i] ?? 0) - (currentParts[i] ?? 0);
+        if (difference !== 0) {
+            return difference > 0;
+        }
+    }
+    return false;
 }
