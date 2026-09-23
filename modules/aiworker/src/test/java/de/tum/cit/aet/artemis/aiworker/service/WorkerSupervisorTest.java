@@ -45,6 +45,25 @@ class WorkerSupervisorTest {
     }
 
     @Test
+    void blankCheckpointRetainsAnErrorTerminal() throws InterruptedException {
+        for (String checkpointText : new String[] { "", " " }) {
+            var events = new LinkedBlockingQueue<WorkerEventDTO>();
+            try (var worker = worker(events, (assignment, cancelled, observer, checkpoint) -> {
+                checkpoint.accept(checkpointText);
+                return result();
+            }, () -> {
+            }, new AtomicLong())) {
+                WorkerCommandDTO command = start(worker, events);
+                worker.accept(command);
+                WorkerEventDTO terminal = take(events, WorkerEventType.ERROR);
+                assertThat(terminal.identity()).isEqualTo(command.identity());
+                assertThat(terminal.ready()).isTrue();
+                assertThat(events).noneMatch(event -> event.type() == WorkerEventType.CHECKPOINT || event.type() == WorkerEventType.FINISHED);
+            }
+        }
+    }
+
+    @Test
     void blockedRejectionPublicationDoesNotHoldTheCommandListener() throws Exception {
         var events = new LinkedBlockingQueue<WorkerEventDTO>();
         var publishing = new CountDownLatch(1);
