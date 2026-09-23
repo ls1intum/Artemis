@@ -103,6 +103,24 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
             await lectureManagement.openAttachmentUnitCreationPage(lecture.id!);
             await expect(page.getByText('Create File/Video Content')).toBeVisible();
         });
+
+        test('Shows the current file of a file unit and replaces it', async ({ lectureManagement, page }) => {
+            await lectureManagement.openUnitsPage(lecture.id!);
+            const unit = await lectureManagement.addAttachmentVideoUnit(lecture.id!, 'Slides', Fixtures.getAbsoluteFilePath('pdf-test-file.pdf'));
+            expect(unit.attachment?.version).toBe(1);
+
+            await lectureManagement.openAttachmentVideoUnitEditPage(course.id, lecture.id!, unit.id!);
+            await expect(page.getByTestId('current-file-name')).toHaveText('pdf-test-file.pdf');
+            await expect(page.getByTestId('current-file-version')).toContainText('1');
+            await expect(page.getByTestId('choose-file-button')).toHaveCount(0);
+
+            const response = await lectureManagement.replaceAttachmentVideoUnitFile(Fixtures.getAbsoluteFilePath('course/icon.png'));
+            expect(response.status()).toBe(200);
+
+            await lectureManagement.openAttachmentVideoUnitEditPage(course.id, lecture.id!, unit.id!);
+            await expect(page.getByTestId('current-file-name')).toHaveText('icon.png');
+            await expect(page.getByTestId('current-file-version')).toContainText('2');
+        });
     });
 
     test.afterEach('Delete lecture', async ({ courseManagementAPIRequests }) => {

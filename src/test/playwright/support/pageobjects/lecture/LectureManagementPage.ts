@@ -1,6 +1,7 @@
 import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
 import { fillDateTimePicker, setMonacoEditorContentByLocator } from '../../utils';
@@ -142,6 +143,59 @@ export class LectureManagementPage {
         await exerciseUnit.waitFor();
         await exerciseUnit.click();
         return this.submitUnit('#createButton');
+    }
+
+    /**
+     * Creates a file/video content unit from a file through the creation form of the unit management page.
+     * The unit is looked up in the lecture afterwards, because the body of a response to a file upload cannot
+     * be read reliably (see readResponseJson).
+     * @param lectureId - The lecture the unit management page belongs to.
+     * @param name - The name of the unit.
+     * @param filePath - Absolute path of the file to attach.
+     * @returns A promise that resolves with the created unit.
+     */
+    async addAttachmentVideoUnit(lectureId: number, name: string, filePath: string) {
+        await this.openCreateUnit(UnitType.ATTACHMENT_VIDEO);
+        await this.getAttachmentFileInput().setInputFiles(filePath);
+        await this.page.fill('#name', name);
+        const responsePromise = this.page.waitForResponse(
+            (response) => response.request().method() === 'POST' && /\/lecture\/lectures\/\d+\/attachment-video-units$/.test(new URL(response.url()).pathname),
+        );
+        await this.page.click('#submitButton');
+        expect((await responsePromise).status()).toBe(201);
+        const lectureResponse = await this.page.request.get(`${BASE_API}/lecture/lectures/${lectureId}/details`);
+        const lecture = (await lectureResponse.json()) as Lecture;
+        return lecture.lectureUnits!.find((unit) => unit.name === name) as AttachmentVideoUnit;
+    }
+
+    /**
+     * Opens the edit form of a file/video content unit.
+     */
+    async openAttachmentVideoUnitEditPage(courseId: number, lectureId: number, unitId: number) {
+        await Commands.gotoAndEnsureRendered(this.page, `/course-management/${courseId}/lectures/${lectureId}/unit-management/attachment-video-units/${unitId}/edit`);
+        await this.page.getByTestId('current-file').waitFor({ state: 'visible', timeout: 30_000 });
+    }
+
+    /**
+     * Replaces the file of the file/video content unit whose edit form is open and saves it.
+     * @param filePath - Absolute path of the new file.
+     * @returns A promise that resolves with the response of the update.
+     */
+    async replaceAttachmentVideoUnitFile(filePath: string) {
+        await this.getAttachmentFileInput().setInputFiles(filePath);
+        await this.page.getByTestId('replacement-file').waitFor({ state: 'visible' });
+        const responsePromise = this.page.waitForResponse(
+            (response) => response.request().method() === 'PUT' && /\/lecture\/lectures\/\d+\/attachment-video-units\/\d+$/.test(new URL(response.url()).pathname),
+        );
+        await this.page.click('#submitButton');
+        return responsePromise;
+    }
+
+    /**
+     * The hidden file input of the file/video content form, which its "Choose file" and "Replace file" buttons open.
+     */
+    getAttachmentFileInput() {
+        return this.page.getByTestId('attachment-file-input');
     }
 
     /**
