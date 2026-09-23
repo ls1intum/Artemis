@@ -9,6 +9,7 @@ artemis:
     repo-download-clone-path: ./local/server-integration-test/repos-download
     data-export-path: ./local/server-integration-test/data-exports
     build-logs-path: ./local/server-integration-test/build-logs
+    failed-build-logs-path: ./local/server-integration-test/failed-build-logs
     file-upload-path: ./local/server-integration-test/uploads
     submission-export-path: ./local/server-integration-test/exports
     checked-out-repos-path: ./local/server-integration-test/checked-out-repos

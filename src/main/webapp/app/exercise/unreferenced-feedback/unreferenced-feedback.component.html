@@ -35,7 +35,7 @@
         }
     </div>
 
-    @if (unreferencedFeedback.length + feedbackSuggestions().length === 0) {
+    @if (unreferencedFeedback.length === 0) {
         <tum-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
@@ -60,28 +60,6 @@
                         (onFeedbackDelete)="deleteFeedback(feedback)"
                         [readOnly]="readOnly()"
                         [highlightDifferences]="highlightDifferences()"
-                        [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText()"
-                    />
-                }
-            </div>
-        </section>
-    }
-
-    @if (feedbackSuggestions().length > 0) {
-        <section class="unreferenced-feedback__group">
-            <header class="unreferenced-feedback__group-header">
-                <h5 class="unreferenced-feedback__group-title" jhiTranslate="artemisApp.assessment.detail.feedbackSuggestions"></h5>
-            </header>
-            <div class="unreferenced-feedback__cards">
-                @for (suggestion of feedbackSuggestions(); track suggestion) {
-                    <jhi-unreferenced-feedback-detail
-                        [feedback]="suggestion"
-                        [resultId]="resultId()"
-                        [isSuggestion]="true"
-                        [readOnly]="true"
-                        (onAcceptSuggestion)="acceptSuggestion($event)"
-                        (onDiscardSuggestion)="discardSuggestion($event)"
-                        [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText()"
                     />
                 }
             </div>

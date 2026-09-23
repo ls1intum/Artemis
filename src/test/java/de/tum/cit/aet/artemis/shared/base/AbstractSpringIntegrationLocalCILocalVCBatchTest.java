@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
         "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci-batch/ssh-keys",
         "artemis.hyperion.enabled=true", "artemis.deimos.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true",
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
+        "artemis.failed-build-logs-path=./local/server-integration-test-localci-batch/failed-build-logs",
         "artemis.repo-clone-path=./local/server-integration-test-localci-batch/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci-batch/local-vcs-repos", "artemis.lti.enabled=true" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)

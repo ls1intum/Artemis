@@ -460,9 +460,15 @@ artemis:
     repo-download-clone-path: {{ artemis_repo_basepath }}/repos-download/
     file-upload-path: {{ artemis_repo_basepath }}/uploads
     submission-export-path: {{ artemis_repo_basepath }}/exports
+    build-logs-path: {{ artemis_repo_basepath }}/build-logs
+    failed-build-logs-path: {{ artemis_repo_basepath }}/failed-build-logs
 ```
 
 Where `{{ artemis_repo_basepath }}` is the path to the shared folder
+
+The two build log folders have to be shared as well, because the instance that writes a build log is rarely the one
+that later serves it: `build-logs-path` holds the downloadable log of every build job, and `failed-build-logs-path`
+holds the logs of failed builds that the build output panel, Iris and Hyperion read.
 
 The file system stores (as its names suggests) files, these are e.g. submissions to file upload exercises,
 repositories that are checked out for the online editor, course icons, etc.

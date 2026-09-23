@@ -1350,24 +1350,6 @@ body.transparent-background {
 }
 
 /*
- * Header card of a detail page: a row with the title and the page's actions, the information boxes below it, and one
- * grey divider to the content card. Shared by the exercise and the lecture page so the two read alike — the rows are
- * separated by a gap rather than by a rule, and the title row keeps a constant height so a page without actions ends
- * up exactly as tall as one with them.
- */
-.detail-header-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-
-    > .detail-header-title-row {
-        display: flex;
-        align-items: center;
-        min-height: var(--detail-header-title-row-height);
-    }
-}
-
-/*
  * Opt-in for a control a narrow bar drops rather than shrinks. Below the threshold there is no room left for
  * secondary controls once the title and the primary action have taken theirs, and squeezing them just leaves a row of
  * unreadable stubs — course management exercises put its search and its import and export buttons in this class, all

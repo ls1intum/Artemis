@@ -1773,13 +1773,25 @@ public class LocalVCServletService {
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
-            var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
-                    localVCRepositoryUri.toString(), null);
+            // One id, no entity. The log stores the participation as a foreign key and reads nothing from it, so
+            // nothing more is loaded: the previous call fetched the participation with its submissions, and reached
+            // them through an exercise that was passed as null, which is what threw the NullPointerException.
+            var participation = programmingExerciseParticipationService.getParticipationReferenceForRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
+                    localVCRepositoryUri.toString(), localVCRepositoryUri.getProjectKey());
+            if (participation.isEmpty()) {
+                return;
+            }
             var ipAddress = servletRequest.getRemoteAddr();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.get(), RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }
         catch (LocalVCAuthException | EntityNotFoundException ignored) {
-            // Caught when: 1) no user, or 2) no participation was found. In both cases it does not make sense to write a log
+            // Caught when: 1) no user, or 2) no exercise or participation was found. In none of these cases does it make sense to write a log
+        }
+        catch (RuntimeException e) {
+            // This runs while a failed authentication is being answered, so nothing that happens here may replace the
+            // 401 the caller is about to send. Writing the access log is best effort by nature: it describes an attempt
+            // that was already rejected.
+            log.warn("Could not write the VCS access log for a failed authentication on {}", servletRequest.getRequestURI(), e);
         }
     }
 

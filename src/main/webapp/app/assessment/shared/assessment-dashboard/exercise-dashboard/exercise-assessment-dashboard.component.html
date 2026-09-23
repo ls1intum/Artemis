@@ -458,6 +458,7 @@
                                                                     [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
                                                                     [participation]="submission.participation!"
                                                                     [exercise]="exercise()"
+                                                                    [isOwnParticipation]="false"
                                                                 />
                                                             </td>
                                                             @if (exercise().type === ExerciseType.TEXT) {
@@ -582,6 +583,7 @@
                                                         [result]="submissionWithComplaint.submission.latestResult"
                                                         [participation]="submissionWithComplaint.complaint.result!.submission!.participation!"
                                                         [exercise]="exercise()"
+                                                        [isOwnParticipation]="false"
                                                     />
                                                 </td>
                                                 <td>
@@ -686,7 +688,7 @@
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                                 <td>
-                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" />
+                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" [isOwnParticipation]="false" />
                                                 </td>
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {

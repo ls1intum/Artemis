@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -13,7 +14,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -172,6 +176,44 @@ class LocalVCServletServiceTest {
 
         ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", java.nio.file.Path.of("/tmp/test-repos"));
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create("http://localhost"));
+    }
+
+    @Test
+    void writesTheAccessLogWhenAFetchAuthenticationFails() {
+        HttpServletRequest request = failedFetchRequest();
+        when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
+        when(programmingExerciseParticipationService.getParticipationReferenceForRepository(anyString(), anyString(), eq(testExercise.getProjectKey())))
+                .thenReturn(Optional.of(testParticipation));
+
+        localVCServletService.createVCSAccessLogForFailedAuthenticationAttempt(request);
+
+        verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(testParticipation), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.PASSWORD), anyString(),
+                eq("10.0.0.1"));
+        // Neither the exercise nor the participation's submissions are needed to record that a repository was touched.
+        verifyNoInteractions(programmingExerciseRepository);
+    }
+
+    @Test
+    void doesNotLetAFailedAccessLogReplaceTheAuthenticationFailure() {
+        HttpServletRequest request = failedFetchRequest();
+        when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
+        when(programmingExerciseParticipationService.getParticipationReferenceForRepository(anyString(), anyString(), anyString()))
+                .thenThrow(new IllegalStateException("the database is away"));
+
+        // The caller is in the middle of answering a rejected authentication with 401. An exception escaping here
+        // reaches the servlet container instead, and the client is told the server is broken rather than being asked
+        // for credentials, which is what a null exercise used to do.
+        assertThatCode(() -> localVCServletService.createVCSAccessLogForFailedAuthenticationAttempt(request)).doesNotThrowAnyException();
+        verifyNoInteractions(vcsAccessLogService);
+    }
+
+    private HttpServletRequest failedFetchRequest() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String projectKey = testExercise.getProjectKey();
+        when(request.getRequestURI()).thenReturn("/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-testuser.git/info/refs");
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.getEncoder().encodeToString("testuser:wrong-password".getBytes(StandardCharsets.UTF_8)));
+        lenient().when(request.getRemoteAddr()).thenReturn("10.0.0.1");
+        return request;
     }
 
     @Test

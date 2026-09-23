@@ -1,9 +1,6 @@
 import { FeedbackItemService } from 'app/exercise/feedback/item/feedback-item-service';
 import { Injectable, inject } from '@angular/core';
 import {
-    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackType,
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
@@ -111,20 +108,18 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      */
     private createFeedbackSuggestionItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         // A feedback suggestion should look like a manual feedback
-        let titleWithoutIdentifier = feedback.text ?? '';
-        // Remove prefix if it exists
-        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
-            if (titleWithoutIdentifier.startsWith(prefix)) {
-                titleWithoutIdentifier = titleWithoutIdentifier.substring(prefix.length);
-                break;
-            }
-        }
+        const titleWithoutIdentifier = Feedback.stripSuggestionPrefix(feedback.text ?? '');
         const codeReference = this.getAiFeedbackCodeReference(feedback);
+        // Athena may have matched the suggestion to a structured grading instruction; its own feedback text is the
+        // criterion's canned wording and must be shown alongside Athena's free-text detail, exactly like a manually
+        // linked grading instruction (see createGradingInstructionFeedbackItem).
+        const gradingInstructionText = feedback.gradingInstruction?.feedback;
+        const text = gradingInstructionText ? gradingInstructionText + (feedback.detailText ? `\n${feedback.detailText}` : '') : feedback.detailText;
         return {
             type: 'Reviewer', // Treat it like normal feedback from the TA
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: titleWithoutIdentifier,
-            text: feedback.detailText,
+            text,
             positive: feedback.positive,
             credits: feedback.credits,
             feedbackReference: feedback,

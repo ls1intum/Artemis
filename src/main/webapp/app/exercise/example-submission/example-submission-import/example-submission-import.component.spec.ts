@@ -20,6 +20,8 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { ResultComponent } from 'app/exercise/result/result.component';
+import dayjs from 'dayjs/esm';
 
 describe('ExampleSubmissionImportComponent', () => {
     let component: ExampleSubmissionImportComponent;
@@ -148,5 +150,24 @@ describe('ExampleSubmissionImportComponent', () => {
 
     it('getLatestResult returns undefined when the submission has no participation', () => {
         expect(component.getLatestResult({ id: 9 } as Submission)).toBeUndefined();
+    });
+
+    it('does not offer the listed result as a link into the student exercise page', async () => {
+        // #13921: this modal is instructor-facing and lists other students' participations. For a text or modeling
+        // exercise the badge would otherwise deep-link into the student exercise page, which 403s for an exam
+        // exercise and substitutes the instructor's own participation in a course.
+        vi.useFakeTimers();
+        const ratedResult = { id: 7, score: 90, rated: true, completionDate: dayjs().subtract(1, 'hour') } as Result;
+        const sibling = { id: 5, results: [ratedResult] } as Submission;
+        const listed = { id: 5, participation: { id: 2, type: ParticipationType.STUDENT, submissions: [sibling] } as StudentParticipation } as Submission;
+        searchSpy.mockReturnValue(of({ numberOfPages: 1, resultsOnPage: [listed] }));
+
+        component.searchTerm = 'search';
+        await vi.advanceTimersByTimeAsync(300);
+        fixture.detectChanges();
+
+        const result = fixture.debugElement.query(By.directive(ResultComponent)).componentInstance as ResultComponent;
+        expect(result.isOwnParticipation()).toBe(false);
+        expect(result.canShowDetails()).toBe(false);
     });
 });
