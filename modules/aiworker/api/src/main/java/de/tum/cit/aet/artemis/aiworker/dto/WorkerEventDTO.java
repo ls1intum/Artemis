@@ -15,6 +15,8 @@ public record WorkerEventDTO(int protocolVersion, String workerId, UUID incarnat
         @Nullable ExecutionIdentityDTO identity, boolean ready, String imageDigest, @Nullable String message, @Nullable String payload, WorkerCapacityDTO capacity,
         WorkloadCapabilityDTO capability) {
 
+    public static final int MAX_PAYLOAD_LENGTH = 48 * 1024 * 1024;
+
     private static final java.util.regex.Pattern WORKER_ID_PATTERN = java.util.regex.Pattern.compile("[a-zA-Z0-9_-]{1,64}");
 
     private static final java.util.regex.Pattern IMAGE_PATTERN = java.util.regex.Pattern.compile("sha256:[a-f0-9]{64}");
@@ -22,7 +24,7 @@ public record WorkerEventDTO(int protocolVersion, String workerId, UUID incarnat
     public WorkerEventDTO {
         if (protocolVersion != WorkerCommandDTO.PROTOCOL_VERSION || workerId == null || !WORKER_ID_PATTERN.matcher(workerId).matches() || incarnation == null || sequence < 1
                 || timestamp == null || type == null || imageDigest == null || !IMAGE_PATTERN.matcher(imageDigest).matches() || capacity == null || capability == null
-                || message != null && message.length() > 8192 || payload != null && payload.length() > 48 * 1024 * 1024) {
+                || message != null && message.length() > 8192 || payload != null && payload.length() > MAX_PAYLOAD_LENGTH) {
             throw new IllegalArgumentException("Invalid worker event");
         }
         if (identity != null && (!workerId.equals(identity.workerId()) || !incarnation.equals(identity.workerIncarnation()))

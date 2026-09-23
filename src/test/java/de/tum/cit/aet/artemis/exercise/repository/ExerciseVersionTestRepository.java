@@ -27,11 +27,14 @@ public interface ExerciseVersionTestRepository extends ExerciseVersionRepository
      * <p>
      * A snapshot of an older shape cannot be produced through the record, which writes only the fields it declares
      * today, so a test that needs one has to put it into the column directly.
+     * <p>
+     * The cast is written for MySQL and PostgreSQL, which are what the server is tested and run against. H2 stores the
+     * value as a json string rather than an object, so a caller of this method does not work on the H2 profile.
      *
      * @param exerciseVersionId the id of the exercise version to overwrite
      * @param snapshot          the json to store
      */
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional // ok because of modifying query
     @Query(value = "UPDATE exercise_version SET exercise_snapshot = CAST(:snapshot AS json) WHERE id = :exerciseVersionId", nativeQuery = true)
     void overwriteSnapshot(@Param("exerciseVersionId") long exerciseVersionId, @Param("snapshot") String snapshot);
