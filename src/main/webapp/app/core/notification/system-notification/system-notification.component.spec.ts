@@ -7,7 +7,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
-import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -116,6 +116,26 @@ describe('System Notification Component', () => {
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(WEBSOCKET_CHANNEL);
         expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('should keep the websocket subscription on reconnect and reload the notifications instead', () => {
+        vi.useFakeTimers();
+        const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
+        const subscribeSpy = vi.spyOn(websocketService, 'subscribe');
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(false, true));
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
         vi.useRealTimers();
     });
 
