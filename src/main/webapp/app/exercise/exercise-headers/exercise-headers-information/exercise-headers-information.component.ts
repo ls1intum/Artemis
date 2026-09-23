@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -10,7 +10,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
+import { InformationBox, InformationBoxComponent, InformationBoxLayout } from 'app/shared-ui/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -66,6 +66,15 @@ export function quizLiveHeaderInfoEqual(a: QuizLiveHeaderInfo | undefined, b: Qu
     );
 }
 
+/**
+ * Where an instance of the information boxes renders, which decides which boxes it shows.
+ *
+ * `panel` is the full set, above the problem statement. `titleBar` is only the pair the exercise title bar takes over
+ * when it has the room for them — the submission due date and the status — laid out as one-line boxes beside the
+ * buttons, the way the quiz countdown already sits there.
+ */
+export type InformationPlacement = 'panel' | 'titleBar';
+
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
@@ -111,17 +120,53 @@ export class ExerciseHeadersInformationComponent {
      * the variant cards), keeping the tooltip and results popover inert without an outside style override.
      */
     readonly interactive = input<boolean>(true);
+    /**
+     * Whether the dates an enclosing timeline governs are shown: the start date, the submission due date (with the
+     * live-quiz countdown that stands in for it) and the assessment due date. False on the variant cards of an
+     * exercise group, whose server-side timeline overwrites those three on every member
+     * ({@code ExerciseVariantGroupService#applyGroupTimeline}), so the group header states them once instead of once
+     * per card. Two dates are not covered, because neither is the group's to state: the complaint due date, derived
+     * per student from that student's last result, and a participation's individual due date (see
+     * {@link hasIndividualDueDate}).
+     */
+    readonly showSharedTimelineDates = input<boolean>(true);
+    /** True while a fresh practice quiz attempt is in progress, so result-derived boxes show the in-progress state instead of the previous attempt's result. */
+    readonly quizPracticeInProgress = input<boolean>(false);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
     /** Live participation status override for the result badge (e.g. PARTICIPATING/SUBMITTED) during a live quiz. */
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     /** Live quiz info to render as extra header boxes; undefined for non-quiz exercises or outside a live/practice participation. */
     readonly quizLiveHeaderInfo = input<QuizLiveHeaderInfo>();
+    /** See {@link InformationPlacement}. */
+    readonly placement = input<InformationPlacement>('panel');
+    /**
+     * Whether the title bar is currently rendering the pills itself, in which case the panel leaves them out rather
+     * than stating the same two facts twice on one screen. Only the `panel` placement reads this.
+     */
+    readonly titleBarShowsPills = input<boolean>(false);
+
+    /**
+     * Test hook for the row, one per placement. Both instances are mounted at once whenever the bar shows the pills, so
+     * a shared hook would match twice and every Playwright assertion using it would fail on strict mode. The status
+     * itself carries `exercise-status` in either placement, since it is only ever rendered by one of them.
+     */
+    protected readonly rootTestId = computed<string>(() => (this.placement() === 'titleBar' ? 'exercise-title-bar-information' : 'exercise-headers-information'));
+
+    /** How each box arranges itself: stacked in the panel, one line in the title bar so it sits at the bar's height. */
+    protected readonly boxLayout = computed<InformationBoxLayout>(() => (this.placement() === 'titleBar' ? 'inline' : 'stacked'));
 
     /** Course resolved from the explicit input, falling back to the exercise's own course. */
     readonly resolvedCourse = computed<Course | undefined>(() => this.course() ?? getCourseFromExercise(this.exercise()));
 
     readonly dueDate = computed<dayjs.Dayjs | undefined>(() => getExerciseDueDate(this.exercise(), this.studentParticipation()));
+
+    /**
+     * Whether the shown due date comes from the participation's individual due date rather than from the exercise.
+     * Such an extension is granted per student, so no enclosing group timeline governs it and it stays visible even
+     * when {@link showSharedTimelineDates} suppresses the group-governed dates.
+     */
+    private readonly hasIndividualDueDate = computed<boolean>(() => this.studentParticipation()?.individualDueDate !== undefined && this.exercise().dueDate !== undefined);
 
     private readonly allResults = computed<Result[]>(() => getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
 
@@ -135,14 +180,25 @@ export class ExerciseHeadersInformationComponent {
 
     readonly numberOfSubmissions = computed<number>(() => countSubmissions(this.studentParticipation()));
 
-    readonly achievedPoints = computed<number>(() => {
+    /** The previous result currently selected in the result-history dropdown, or undefined when the latest result is shown. */
+    readonly displayedResult = signal<Result | undefined>(undefined);
+
+    /** The latest result, used by all result-derived boxes when no previous result is selected in the history dropdown. */
+    private readonly latestResult = computed<Result | undefined>(() => {
         const results = this.sortedHistoryResults();
         // Practice results are unrated, so in practice mode use the latest result regardless of the rated flag.
-        const latestResult = this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
-        if (!latestResult) {
+        return this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
+    });
+
+    /** The result the header reflects: the one selected in the history dropdown, falling back to the latest. */
+    readonly relevantResult = computed<Result | undefined>(() => this.displayedResult() ?? this.latestResult());
+
+    readonly achievedPoints = computed<number>(() => {
+        const relevantResult = this.quizPracticeInProgress() ? undefined : this.relevantResult();
+        if (relevantResult?.score === undefined) {
             return 0;
         }
-        return roundValueSpecifiedByCourseSettings((latestResult.score! * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
+        return roundValueSpecifiedByCourseSettings((relevantResult.score * this.exercise().maxPoints!) / 100, this.resolvedCourse()) ?? 0;
     });
 
     readonly currentFeedbackRequestCount = computed<number>(
@@ -157,14 +213,67 @@ export class ExerciseHeadersInformationComponent {
         return ComplaintService.getIndividualComplaintDueDate(this.exercise(), course.maxComplaintTimeDays, this.allResults().last(), this.studentParticipation());
     });
 
+    /**
+     * The submission due date box, or undefined when there is none to show. Held apart from the other due dates
+     * because it is one of the two boxes the title bar takes over; the assessment and complaint due dates stay in the
+     * panel either way.
+     *
+     * A running quiz shows its remaining time in the title bar, so there is no due date box while it runs: the clock
+     * takes that slot. While the quiz participation component hasn't mounted yet, `quizLiveHeaderInfo` is still
+     * undefined; the box is skipped for that brief window too, otherwise the due date flashes before the clock appears
+     * (the exercise's own due date is known immediately, the quiz info lags behind it).
+     *
+     * Under an enclosing group timeline ({@link showSharedTimelineDates}) none of that applies: the group header
+     * states the shared deadline, leaving only a per-student extension for this to show.
+     */
+    readonly submissionDueItem = computed<InformationBox | undefined>(() => {
+        if (!this.showSharedTimelineDates()) {
+            // A variant card's group header states the shared deadline once, so only a per-student extension belongs
+            // here. The quiz guards below cannot apply to it: a variant card never runs a live quiz.
+            return this.hasIndividualDueDate() ? this.getDueDateItem() : undefined;
+        }
+        const quizInfo = this.quizLiveHeaderInfo();
+        const titleBarShowsQuizTime = !!(quizInfo?.showRemainingTime || quizInfo?.showDuration);
+        if (titleBarShowsQuizTime || (this.exercise().type === ExerciseType.QUIZ && quizInfo === undefined)) {
+            return undefined;
+        }
+        return this.getDueDateItem();
+    });
+
+    /**
+     * The boxes the title bar renders when it has the room: the submission due date, when there is one, and the
+     * status. This is the whole set for the `titleBar` placement, and exactly what the panel drops in return.
+     */
+    readonly titleBarPillItems = computed<InformationBox[]>(() => {
+        const items: InformationBox[] = [];
+        const dueDateItem = this.submissionDueItem();
+        if (dueDateItem) {
+            items.push(dueDateItem);
+        }
+        items.push(this.getSubmissionStatusItem());
+        return items;
+    });
+
     /** All header information boxes, in display order: the generic exercise boxes first, then the live quiz boxes last. */
     readonly informationBoxItems = computed<InformationBox[]>(() => {
-        const items: InformationBox[] = [...this.getPointsItems(), ...this.getDueDateItems()];
-        const startDateItem = this.getStartDateItem();
+        if (this.placement() === 'titleBar') {
+            return this.titleBarPillItems();
+        }
+        // The two pills are the title bar's when it shows them, so the panel states each fact once, not twice.
+        const panelShowsPills = !this.titleBarShowsPills();
+        const items: InformationBox[] = [...this.getPointsItems()];
+        const dueDateItem = this.submissionDueItem();
+        if (panelShowsPills && dueDateItem) {
+            items.push(dueDateItem);
+        }
+        items.push(...this.getAssessmentAndComplaintDueItems());
+        const startDateItem = this.showSharedTimelineDates() ? this.getStartDateItem() : undefined;
         if (startDateItem) {
             items.push(startDateItem);
         }
-        items.push(this.getSubmissionStatusItem());
+        if (panelShowsPills) {
+            items.push(this.getSubmissionStatusItem());
+        }
         const submissionPolicyItem = this.getSubmissionPolicyItemIfActive();
         if (submissionPolicyItem) {
             items.push(submissionPolicyItem);
@@ -206,24 +315,12 @@ export class ExerciseHeadersInformationComponent {
         return [this.getPointsItem('points', maxPoints, achievedPoints)];
     }
 
-    getDueDateItems(): InformationBox[] {
+    /** The due dates that follow the submission deadline. They stay in the panel wherever the submission due date goes. */
+    getAssessmentAndComplaintDueItems(): InformationBox[] {
         const items: InformationBox[] = [];
-        // During a running live/practice quiz the remaining-time countdown takes the place of the due date.
-        // While the quiz participation component hasn't mounted yet, quizLiveHeaderInfo is still undefined; skip the
-        // due-date fallback for that brief window too, otherwise the due date flashes before being replaced once the
-        // quiz-specific box resolves (the exercise's own due date is known immediately, the quiz box lags behind it).
-        const quizTimeItem = this.getQuizTimeItem();
-        if (quizTimeItem) {
-            items.push(quizTimeItem);
-        } else if (!(this.exercise().type === ExerciseType.QUIZ && this.quizLiveHeaderInfo() === undefined)) {
-            const dueDateItem = this.getDueDateItem();
-            if (dueDateItem) {
-                items.push(dueDateItem);
-            }
-        }
         const exercise = this.exercise();
         // If the due date is in the past and the assessment due date is in the future, show the assessment due date
-        if (this.dueDate()?.isBefore(this.now) && exercise.assessmentDueDate?.isAfter(this.now)) {
+        if (this.showSharedTimelineDates() && this.dueDate()?.isBefore(this.now) && exercise.assessmentDueDate?.isAfter(this.now)) {
             items.push({
                 title: 'artemisApp.courseOverview.exerciseDetails.assessmentDue',
                 content: {
@@ -392,7 +489,9 @@ export class ExerciseHeadersInformationComponent {
     }
 
     getStaticCodeAnalysisItem(): InformationBox {
-        const issueCount = this.sortedHistoryResults().first()?.codeIssueCount ?? 0;
+        // Unlike the achieved points, which only count rated results, the code issues reflect the latest build whether
+        // it is rated or not, so this falls back to the latest result rather than to relevantResult().
+        const issueCount = (this.displayedResult() ?? this.sortedHistoryResults().first())?.codeIssueCount ?? 0;
         return {
             title: 'artemisApp.courseOverview.exerciseDetails.codeIssues',
             content: {
@@ -427,30 +526,6 @@ export class ExerciseHeadersInformationComponent {
             contentColor: this.currentFeedbackRequestCount() >= this.feedbackRequestLimit() ? 'danger' : 'warning',
             tooltip: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequestsTooltip',
         };
-    }
-
-    getQuizTimeItem(): InformationBox | undefined {
-        const info = this.quizLiveHeaderInfo();
-        if (info?.showRemainingTime) {
-            return {
-                title: 'artemisApp.quizExercise.remainingTime',
-                content: {
-                    type: 'string',
-                    value: info.remainingTimeText ?? '',
-                },
-                contentColor: info.remainingTimeColor,
-            };
-        }
-        if (info?.showDuration) {
-            return {
-                title: 'artemisApp.quizExercise.duration',
-                content: {
-                    type: 'string',
-                    value: info.durationText ?? '',
-                },
-            };
-        }
-        return undefined;
     }
 
     getQuizLiveInfoItems(): InformationBox[] {

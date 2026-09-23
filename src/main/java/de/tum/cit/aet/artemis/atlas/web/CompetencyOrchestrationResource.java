@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.OrchestratorDefaultsDTO;
@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
  * {@link Feature#AtlasAgent} feature toggle — the same toggle that controls the Atlas Companion
  * chat agent. No separate orchestrator toggle exists.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @FeatureUsage("ai/competency-orchestration")
 @RestController
@@ -79,6 +79,7 @@ public class CompetencyOrchestrationResource {
             case IN_PROGRESS -> HttpStatus.CONFLICT;
             case FAILED -> switch (result.failureReason()) {
                 case NO_CHAT_CLIENT -> HttpStatus.SERVICE_UNAVAILABLE;
+                case TOOL_CALL_LIMIT_EXCEEDED, INCOMPLETE_ORCHESTRATION -> HttpStatus.UNPROCESSABLE_CONTENT;
                 case LLM_ERROR -> HttpStatus.BAD_GATEWAY;
                 case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
                 case UNSUPPORTED_EXERCISE -> HttpStatus.UNPROCESSABLE_CONTENT;

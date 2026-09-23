@@ -2,19 +2,18 @@ package de.tum.cit.aet.artemis.account.service.user.deletion;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.AssessmentDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CommunicationDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CourseContextDataCleanupRepository;
@@ -22,8 +21,7 @@ import de.tum.cit.aet.artemis.account.repository.cleanup.ExamUserImagePaths;
 import de.tum.cit.aet.artemis.account.repository.cleanup.ExerciseDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.LearningDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.PlatformDataCleanupRepository;
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -52,8 +50,6 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 @Service
 public class UserOwnedContentDeletionService {
 
-    private final UserRepository userRepository;
-
     private final ParticipationDeletionService participationDeletionService;
 
     private final CommunicationDataCleanupRepository communicationDataCleanupRepository;
@@ -70,12 +66,10 @@ public class UserOwnedContentDeletionService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
-    public UserOwnedContentDeletionService(UserRepository userRepository, ParticipationDeletionService participationDeletionService,
-            CommunicationDataCleanupRepository communicationDataCleanupRepository, AssessmentDataCleanupRepository assessmentDataCleanupRepository,
-            ExerciseDataCleanupRepository exerciseDataCleanupRepository, CourseContextDataCleanupRepository courseContextDataCleanupRepository,
-            PlatformDataCleanupRepository platformDataCleanupRepository, LearningDataCleanupRepository learningDataCleanupRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
-        this.userRepository = userRepository;
+    public UserOwnedContentDeletionService(ParticipationDeletionService participationDeletionService, CommunicationDataCleanupRepository communicationDataCleanupRepository,
+            AssessmentDataCleanupRepository assessmentDataCleanupRepository, ExerciseDataCleanupRepository exerciseDataCleanupRepository,
+            CourseContextDataCleanupRepository courseContextDataCleanupRepository, PlatformDataCleanupRepository platformDataCleanupRepository,
+            LearningDataCleanupRepository learningDataCleanupRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.participationDeletionService = participationDeletionService;
         this.communicationDataCleanupRepository = communicationDataCleanupRepository;
         this.assessmentDataCleanupRepository = assessmentDataCleanupRepository;
@@ -96,18 +90,6 @@ public class UserOwnedContentDeletionService {
         List<Path> archivePaths = platformDataCleanupRepository.findDataExportFilePaths(userId).stream().map(Path::of).toList();
         platformDataCleanupRepository.deleteDataExports(userId);
         return archivePaths;
-    }
-
-    /**
-     * Removes the account's learner profile, per-course parts first, after the account has let go of it.
-     *
-     * @param userId           the account being deleted
-     * @param learnerProfileId its learner profile
-     */
-    public void deleteLearnerProfile(long userId, long learnerProfileId) {
-        userRepository.clearLearnerProfileForDeletion(userId);
-        learningDataCleanupRepository.deleteCourseLearnerProfiles(learnerProfileId);
-        learningDataCleanupRepository.deleteLearnerProfile(learnerProfileId);
     }
 
     /**
@@ -167,16 +149,16 @@ public class UserOwnedContentDeletionService {
 
         List<Path> imagePaths = new ArrayList<>();
         for (ExamUserImagePaths registration : courseContextDataCleanupRepository.findExamUserImagePaths(userId)) {
-            addImagePath(imagePaths, registration.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE);
-            addImagePath(imagePaths, registration.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE);
+            addImagePath(imagePaths, registration.getSigningImagePath(), FileSystemLocation.ExamUserSignature::new);
+            addImagePath(imagePaths, registration.getStudentImagePath(), filename -> new FileSystemLocation.ExamUserImage(registration.getId(), filename));
         }
         courseContextDataCleanupRepository.deleteExamRegistrations(userId);
         return imagePaths;
     }
 
-    private static void addImagePath(List<Path> imagePaths, @Nullable String imageUri, FilePathType filePathType) {
-        if (imageUri != null) {
-            imagePaths.add(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUri), filePathType));
+    private static void addImagePath(List<Path> imagePaths, @Nullable String storedImagePath, Function<String, FileSystemLocation> location) {
+        if (storedImagePath != null) {
+            imagePaths.add(location.apply(storedImagePath).path());
         }
     }
 

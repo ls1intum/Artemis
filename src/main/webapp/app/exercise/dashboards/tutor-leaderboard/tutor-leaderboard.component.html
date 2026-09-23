@@ -1,74 +1,96 @@
-<div class="row table-responsive mt-3">
-    <table class="table">
+<div class="w-full overflow-x-auto border-t border-surface">
+    <table
+        size="small"
+        class="min-w-[42rem] table-fixed xl:min-w-[64rem] [&_th.text-end_.tum-ui-sort-button]:justify-end"
+        tumUiTable
+        [striped]="true"
+        [rowHover]="true"
+        [sortField]="sortPredicate()"
+        [sortOrder]="reverseOrder() ? 1 : -1"
+        (sortChange)="onSortChange($event)"
+    >
         <thead>
-            <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="reverseOrder">
-                <th>#</th>
-                <th jhiSortBy="name">
-                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.name"></a>
-                    <fa-icon [icon]="faSort" />
+            <tr>
+                <th class="w-12">#</th>
+                <th class="min-w-[12rem]" tumUiSortableColumn="name">
+                    <span class="block min-w-0 shrink whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.name"></span>
                 </th>
-                <th jhiSortBy="points">
-                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.points"></a>
-                    <fa-icon [icon]="faSort" />
+                <th class="w-24 min-w-20 !whitespace-normal text-end" tumUiSortableColumn="points">
+                    <span class="block min-w-0 shrink whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.points"></span>
                 </th>
-                <th jhiSortBy="numberOfAssessments">
-                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAssessments"></a>
-                    <fa-icon [icon]="faSort" />
+                <th class="w-32 min-w-28 !whitespace-normal text-end" tumUiSortableColumn="numberOfAssessments">
+                    <span
+                        class="block min-w-0 shrink whitespace-normal break-words leading-tight"
+                        jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAssessments"
+                    ></span>
                 </th>
-                <th jhiSortBy="numberOfAcceptedComplaints">
-                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAcceptedComplaints"></a>
-                    <fa-icon [icon]="faSort" />
-                </th>
-                @if (!isExamMode()) {
-                    <th jhiSortBy="numberOfNotAnsweredMoreFeedbackRequests">
-                        <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests"></a>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                }
-                <th jhiSortBy="numberOfComplaintResponses">
-                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfComplaintResponses"></a>
-                    <fa-icon [icon]="faSort" />
+                <th class="w-32 min-w-28 !whitespace-normal text-end" tumUiSortableColumn="numberOfAcceptedComplaints">
+                    <span
+                        class="block min-w-0 shrink whitespace-normal break-words leading-tight"
+                        jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAcceptedComplaints"
+                    ></span>
                 </th>
                 @if (!isExamMode()) {
-                    <th jhiSortBy="numberOfAnsweredMoreFeedbackRequests">
-                        <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests"></a>
-                        <fa-icon [icon]="faSort" />
+                    <th class="w-28 min-w-24 !whitespace-normal text-end" tumUiSortableColumn="numberOfNotAnsweredMoreFeedbackRequests">
+                        <span
+                            class="block min-w-0 shrink whitespace-normal break-words leading-tight"
+                            jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfNotAnsweredMoreFeedbackRequests"
+                        ></span>
                     </th>
                 }
-                <th jhiSortBy="averageScore">
-                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.averageScore"></a>
-                    <fa-icon [icon]="faSort" />
+                <th class="hidden w-32 min-w-28 !whitespace-normal text-end xl:table-cell" tumUiSortableColumn="numberOfComplaintResponses">
+                    <span
+                        class="block min-w-0 shrink whitespace-normal break-words leading-tight"
+                        jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfComplaintResponses"
+                    ></span>
                 </th>
-                <th jhiSortBy="averageRating">
-                    <a class="th-link" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.averageRating"></a>
-                    <fa-icon [icon]="faSort" />
+                @if (!isExamMode()) {
+                    <th class="hidden w-32 min-w-28 !whitespace-normal text-end xl:table-cell" tumUiSortableColumn="numberOfAnsweredMoreFeedbackRequests">
+                        <span
+                            class="block min-w-0 shrink whitespace-normal break-words leading-tight"
+                            jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.numberOfAnsweredMoreFeedbackRequests"
+                        ></span>
+                    </th>
+                }
+                <th class="hidden w-28 min-w-24 !whitespace-normal text-end xl:table-cell" tumUiSortableColumn="averageScore">
+                    <span
+                        class="block min-w-0 shrink whitespace-normal break-words leading-tight"
+                        jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.averageScore"
+                    ></span>
+                </th>
+                <th class="hidden w-28 min-w-24 !whitespace-normal text-end xl:table-cell" tumUiSortableColumn="averageRating">
+                    <span
+                        class="block min-w-0 shrink whitespace-normal break-words leading-tight"
+                        jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.averageRating"
+                    ></span>
                 </th>
             </tr>
         </thead>
         <tbody>
             @for (tutor of sortedTutorsData(); track tutor; let i = $index) {
                 <tr>
-                    <td>{{ i + 1 }}</td>
-                    <td>
-                        {{ tutor.name }}
+                    <td class="w-12">{{ i + 1 }}</td>
+                    <td class="min-w-[12rem] whitespace-normal break-words">
+                        <span class="break-words whitespace-normal">{{ tutor.name }}</span>
                         @if (course()?.isAtLeastInstructor && tutor.hasIssuesWithPerformance) {
                             <fa-icon
                                 [icon]="faExclamationTriangle"
-                                class="text-warning"
-                                [pTooltip]="'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name }"
+                                class="text-state-warning"
+                                [tumUiTooltip]="'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name }"
+                                tumUiTooltipPlacement="right"
                             />
                         }
                     </td>
-                    <td>{{ tutor.points }}</td>
-                    <td>{{ tutor.numberOfAssessments }}</td>
+                    <td class="w-24 whitespace-nowrap text-end">{{ tutor.points }}</td>
+                    <td class="w-32 whitespace-nowrap text-end">{{ tutor.numberOfAssessments }}</td>
                     @if (course() && !course()!.isAtLeastInstructor) {
-                        <td>{{ tutor.numberOfAcceptedComplaints }}</td>
+                        <td class="w-32 whitespace-nowrap text-end">{{ tutor.numberOfAcceptedComplaints }}</td>
                         @if (!isExamMode()) {
-                            <td>{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
+                            <td class="w-28 whitespace-nowrap text-end">{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
                         }
                     } @else {
                         @if (isExerciseDashboard() && exercise() && exercise()!.id && course() && course()!.id) {
-                            <td>
+                            <td class="w-32 whitespace-nowrap text-end">
                                 <a
                                     [routerLink]="['/course-management', course()!.id, exercise()!.type + '-exercises', exercise()!.id, 'complaints']"
                                     [queryParams]="{ tutorId: tutor.userId }"
@@ -77,7 +99,7 @@
                                 </a>
                             </td>
                             @if (!isExamMode()) {
-                                <td>
+                                <td class="w-28 whitespace-nowrap text-end">
                                     <a
                                         [routerLink]="['/course-management', course()!.id, exercise()!.type + '-exercises', exercise()!.id, 'more-feedback-requests']"
                                         [queryParams]="{ tutorId: tutor.userId }"
@@ -89,21 +111,21 @@
                         }
                         @if (!isExerciseDashboard() && course() && course()!.id) {
                             @if (isExamMode()) {
-                                <td>
+                                <td class="w-32 whitespace-nowrap text-end">
                                     <a [routerLink]="['/course-management', course()!.id, 'exams', exam()!.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
                                         {{ tutor.numberOfAcceptedComplaints }}
                                     </a>
                                 </td>
                             }
                             @if (!isExamMode()) {
-                                <td>
+                                <td class="w-28 whitespace-nowrap text-end">
                                     <a [routerLink]="['/course-management', course()!.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
                                         {{ tutor.numberOfAcceptedComplaints }}
                                     </a>
                                 </td>
                             }
                             @if (!isExamMode()) {
-                                <td>
+                                <td class="w-28 whitespace-nowrap text-end">
                                     <a [routerLink]="['/course-management', course()!.id, 'more-feedback-requests']" [queryParams]="{ tutorId: tutor.userId }">
                                         {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}
                                     </a>
@@ -111,11 +133,11 @@
                             }
                         }
                     }
-                    <td>{{ tutor.numberOfComplaintResponses }}</td>
+                    <td class="hidden w-32 whitespace-nowrap text-end xl:table-cell">{{ tutor.numberOfComplaintResponses }}</td>
                     @if (!isExamMode()) {
-                        <td>{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
+                        <td class="hidden w-32 whitespace-nowrap text-end xl:table-cell">{{ tutor.numberOfAnsweredMoreFeedbackRequests }}</td>
                     }
-                    <td>
+                    <td class="hidden w-28 whitespace-nowrap text-end xl:table-cell">
                         @if (tutor.numberOfAssessments > 0) {
                             <span> {{ tutor.averageScore.toFixed(1) }}% </span>
                         }
@@ -123,7 +145,7 @@
                             <span> n.a. </span>
                         }
                     </td>
-                    <td>
+                    <td class="hidden w-28 whitespace-nowrap text-end xl:table-cell">
                         @if (tutor.numberOfTutorRatings > 0) {
                             <span> {{ tutor.averageRating.toFixed(1) }} ⭐ ({{ tutor.numberOfTutorRatings }}) </span>
                         }

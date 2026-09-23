@@ -71,7 +71,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
      */
     private String loadPipelineScript(final ProgrammingExercise exercise, final Optional<ProjectType> projectType) {
         final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        final boolean isSequentialTestRuns = exercise.getBuildConfig().hasSequentialTestRuns();
+        final boolean isSequentialTestRuns = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).hasSequentialTestRuns();
 
         final Path pipelinePath = buildResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
         final Resource resource = resourceLoaderService.getResource(pipelinePath);

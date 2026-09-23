@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
@@ -405,11 +407,20 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * @return saved QuizSubmission
      */
     @Override
-    protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user, @Nullable StudentParticipation participationFromExamGate) {
+    protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user, @Nullable StudentParticipationSubmitTargetDTO participationFromExamGate) {
         // For exam submissions the participation was already resolved (and its ownership implicitly established) by the
         // exam submission gate a few frames up, which handed it to the caller. Looking it up again would repeat the same
         // row read on every quiz save.
-        quizSubmission.setParticipation(participationFromExamGate != null ? participationFromExamGate : this.getParticipation(quizExercise, quizSubmission, user));
+        // only the foreign key is needed from the gate's participation, which its id gives without a load
+        StudentParticipation participation = participationFromExamGate != null ? StudentParticipation.idOnlyReference(participationFromExamGate.id())
+                : this.getParticipation(quizExercise, quizSubmission, user);
+        // The save merges, so a client-supplied id has to belong to the resolved participation before it can drive an update.
+        // The exam gate already replaced the id with its participation's own submission when it resolved the participation.
+        if (participationFromExamGate == null && quizSubmission.getId() != null
+                && !quizSubmissionRepository.existsByIdAndParticipationId(quizSubmission.getId(), participation.getId())) {
+            throw new AccessForbiddenException();
+        }
+        quizSubmission.setParticipation(participation);
         var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
@@ -754,4 +765,5 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         answer.setSubmittedTexts(submittedTexts);
         return answer;
     }
+
 }

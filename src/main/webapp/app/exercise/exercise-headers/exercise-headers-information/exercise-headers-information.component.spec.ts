@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideTranslateService } from '@ngx-translate/core';
 
@@ -22,6 +24,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseHeadersInformationComponent', () => {
     let component: ExerciseHeadersInformationComponent;
@@ -62,6 +65,99 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    describe('handing the status and due date to the title bar', () => {
+        const STATUS = 'artemisApp.courseOverview.exerciseDetails.status';
+        const SUBMISSION_DUE_OVER = 'artemisApp.courseOverview.exerciseDetails.submissionDueOver';
+        const ASSESSMENT_DUE = 'artemisApp.courseOverview.exerciseDetails.assessmentDue';
+
+        function titles(): string[] {
+            return component.informationBoxItems().map((item) => item.title);
+        }
+
+        it('shows the two boxes in the panel while the title bar has no room for them', () => {
+            expect(titles()).toContain(STATUS);
+            expect(titles()).toContain(SUBMISSION_DUE_OVER);
+        });
+
+        it('drops exactly those two from the panel once the title bar shows them, so neither is stated twice', () => {
+            const beforeHandover = titles();
+
+            fixture.componentRef.setInput('titleBarShowsPills', true);
+            fixture.detectChanges();
+
+            const afterHandover = titles();
+            expect(beforeHandover.filter((title) => !afterHandover.includes(title))).toEqual([SUBMISSION_DUE_OVER, STATUS]);
+            // The panel keeps everything else, including the due dates that come after the submission deadline.
+            expect(afterHandover).toContain(ASSESSMENT_DUE);
+        });
+
+        it('shows only those two in the title bar, laid out on one line', () => {
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            expect(titles()).toEqual([SUBMISSION_DUE_OVER, STATUS]);
+            const box: HTMLElement = fixture.nativeElement.querySelector('#test-information-box');
+            expect(box.classList).toContain('information-box-inline');
+        });
+
+        it('shows the status alone in the title bar when the exercise has no due date', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, dueDate: undefined, assessmentDueDate: undefined });
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            expect(titles()).toEqual([STATUS]);
+        });
+
+        it('gives each placement its own row hook, since both are mounted while the bar shows the pills', () => {
+            const rowTestId = (): string | null => fixture.nativeElement.querySelector('[data-testid$="information"]').getAttribute('data-testid');
+
+            expect(rowTestId()).toBe('exercise-headers-information');
+
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            // A shared hook would match twice on the page and every Playwright assertion using it would fail strict mode.
+            expect(rowTestId()).toBe('exercise-title-bar-information');
+        });
+
+        it('carries the status hook in whichever placement is currently rendering the status', () => {
+            const statusHooks = (): number => fixture.nativeElement.querySelectorAll('[data-testid="exercise-status"]').length;
+
+            expect(statusHooks()).toBe(1);
+
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+            expect(statusHooks()).toBe(1);
+
+            // Handed to the title bar, the panel stops rendering it - so across the page there is still exactly one.
+            fixture.componentRef.setInput('placement', 'panel');
+            fixture.componentRef.setInput('titleBarShowsPills', true);
+            fixture.detectChanges();
+
+            expect(statusHooks()).toBe(0);
+        });
+
+        it('leaves the build progress bar to the panel, since it is two rows tall and a pill is one line', () => {
+            const showsProgressBar = (): boolean => fixture.debugElement.query(By.directive(SubmissionResultStatusComponent)).componentInstance.showProgressBar();
+
+            expect(showsProgressBar()).toBe(true);
+
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            expect(showsProgressBar()).toBe(false);
+        });
+
+        it('leaves the due date to the running quiz clock, which already holds that slot in the bar', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.QUIZ, dueDate: dayjs().add(1, 'hours') });
+            fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, showResultsAvailable: false });
+            fixture.componentRef.setInput('placement', 'titleBar');
+            fixture.detectChanges();
+
+            expect(titles()).toEqual([STATUS]);
+        });
     });
 
     it('should render one information box per computed item', () => {
@@ -203,6 +299,43 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(component.achievedPoints()).toBe(8);
     });
 
+    describe('selected history result', () => {
+        const latestResult = { id: 2, score: 80, rated: true } as Result;
+        const previousResult = { id: 1, score: 30, rated: true } as Result;
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [previousResult, latestResult] }] } as StudentParticipation);
+            fixture.detectChanges();
+        });
+
+        it('should reflect the latest result when no result is selected', () => {
+            expect(component.relevantResult()).toEqual(latestResult);
+            expect(component.achievedPoints()).toBe(8);
+        });
+
+        it('should reflect the result selected in the history dropdown', () => {
+            component.displayedResult.set(previousResult);
+
+            expect(component.relevantResult()).toEqual(previousResult);
+            expect(component.achievedPoints()).toBe(3);
+        });
+
+        it('should show no achieved points for a selected result without a score', () => {
+            component.displayedResult.set({ id: 3, rated: true } as Result);
+
+            expect(component.achievedPoints()).toBe(0);
+        });
+
+        it('should show no achieved points while a fresh quiz practice attempt is in progress', () => {
+            fixture.componentRef.setInput('isPractice', true);
+            fixture.componentRef.setInput('quizPracticeInProgress', true);
+            fixture.detectChanges();
+
+            expect(component.achievedPoints()).toBe(0);
+        });
+    });
+
     it('should not make the status clickable when there are no history results', () => {
         const compiled = fixture.nativeElement as HTMLElement;
         expect(compiled.querySelector('[role="button"]')).toBeNull();
@@ -219,7 +352,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(compiled.querySelector('[role="button"]')).toBeTruthy();
     });
 
-    it('should render the remaining-time box in the due-date slot and results-available last', () => {
+    it('should leave the remaining time to the title bar and keep results-available last', () => {
         fixture.componentRef.setInput('quizLiveHeaderInfo', {
             showRemainingTime: true,
             remainingTimeText: '5 min',
@@ -232,11 +365,8 @@ describe('ExerciseHeadersInformationComponent', () => {
         const items = component.informationBoxItems();
         const titles = items.map((item) => item.title);
 
-        // Remaining time takes the due-date slot: it sits before the submission status, not at the very end.
-        const remainingTimeBox = items.find((item) => item.title === 'artemisApp.quizExercise.remainingTime')!;
-        expect((remainingTimeBox.content as { value: string }).value).toBe('5 min');
-        expect(remainingTimeBox.contentColor).toBe('warning');
-        expect(titles.indexOf('artemisApp.quizExercise.remainingTime')).toBeLessThan(titles.indexOf('artemisApp.courseOverview.exerciseDetails.status'));
+        // The remaining time belongs to the title bar's countdown; repeating it here would say the same thing twice.
+        expect(titles).not.toContain('artemisApp.quizExercise.remainingTime');
 
         // Results available stays last.
         const lastItem = items[items.length - 1];
@@ -254,14 +384,15 @@ describe('ExerciseHeadersInformationComponent', () => {
         // Without quiz info, the (past) due date renders the submission-due-over box.
         expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.submissionDueOver')).toBe(true);
 
-        // Countdown active: the due-date box is replaced by the live "time left" box.
+        // Countdown active in the title bar: no due-date box here, and no duplicate of the clock either.
         fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, remainingTimeText: '5 min', showResultsAvailable: false });
         fixture.detectChanges();
 
         let titles = component.informationBoxItems().map((item) => item.title);
         expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
         expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
-        expect(titles).toContain('artemisApp.quizExercise.remainingTime');
+        // Nor is the time repeated here: the title bar's countdown has that slot for as long as it runs.
+        expect(titles).not.toContain('artemisApp.quizExercise.remainingTime');
 
         // Quiz info present but countdown not shown (e.g. before start / results / preview): the due date is shown again.
         fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: false, showResultsAvailable: false });
@@ -269,6 +400,89 @@ describe('ExerciseHeadersInformationComponent', () => {
 
         titles = component.informationBoxItems().map((item) => item.title);
         expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+    });
+
+    describe('showSharedTimelineDates', () => {
+        // A variant group overwrites its members' start, due and assessment-due dates with its own, so the group
+        // header states them once and the cards must not repeat them. The complaint due date is per student.
+        it('should drop the start, submission-due and assessment-due boxes while keeping the complaint due date', () => {
+            const assessmentDueDate = dayjs().subtract(1, 'day');
+            const lastResult = { id: 1, completionDate: assessmentDueDate, rated: true };
+            fixture.componentRef.setInput(
+                'exercise',
+                cloneWith(baseExercise, {
+                    startDate: dayjs().add(2, 'days'),
+                    assessmentDueDate,
+                    course: { maxComplaintTimeDays: 7 },
+                }),
+            );
+            // The complaint due date is derived from the participation's own last result, not from the exercise.
+            fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [{ id: 1, results: [lastResult] }] });
+            fixture.detectChanges();
+
+            const shown = component.informationBoxItems().map((item) => item.title);
+            expect(shown).toContain('artemisApp.courseOverview.exerciseDetails.complaintDue');
+
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const hidden = component.informationBoxItems().map((item) => item.title);
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.startDate');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+            // Derived per student from that student's own last result, so it is not the group's to state.
+            expect(hidden).toContain('artemisApp.courseOverview.exerciseDetails.complaintDue');
+        });
+
+        it('should keep the per-variant boxes', () => {
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { difficulty: DifficultyLevel.EASY, maxPoints: 10 }));
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const titles = component.informationBoxItems().map((item) => item.title);
+            expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.points');
+            expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.difficulty');
+        });
+
+        it('should keep a participation-specific individual due date', () => {
+            // An extension is granted per student, so the group header cannot state it and the card has to.
+            const individualDueDate = dayjs().add(3, 'days');
+            fixture.componentRef.setInput('studentParticipation', { id: 1, individualDueDate });
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const dueDateItem = component.informationBoxItems().find((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(dueDateItem?.content.value).toBe(individualDueDate);
+        });
+
+        it('should not show an individual due date for an exercise without a due date', () => {
+            // getExerciseDueDate ignores the individual date in that case, so there is nothing to state.
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { dueDate: undefined }));
+            fixture.componentRef.setInput('studentParticipation', { id: 1, individualDueDate: dayjs().add(3, 'days') });
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const titles = component.informationBoxItems().map((item) => item.title);
+            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+        });
+
+        it('should drop the due date of a quiz card, the slot a running countdown takes over', () => {
+            // This arrived asserting that the panel's quiz-time box is dropped. That box no longer exists here - the
+            // countdown moved to the title bar - so the assertion could not fail. What the group timeline suppresses
+            // on a quiz card is the same due date slot it suppresses everywhere else, which is what is checked now.
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { type: ExerciseType.QUIZ }));
+            // Resolved with no clock running, so the due date is what the card would otherwise state.
+            fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: false, showResultsAvailable: false });
+            fixture.detectChanges();
+            expect(component.informationBoxItems().map((item) => item.title)).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().map((item) => item.title)).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+        });
     });
 
     describe('AI feedback quota box', () => {

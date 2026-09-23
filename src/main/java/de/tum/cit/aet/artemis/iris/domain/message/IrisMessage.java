@@ -12,7 +12,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
@@ -28,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
@@ -44,6 +44,7 @@ public class IrisMessage extends DomainObject {
     @ManyToOne(optional = false)
     @JoinColumn(name = "session_id")
     @JsonIgnore
+    @Parent
     private IrisSession session;
 
     @Nullable
@@ -58,6 +59,30 @@ public class IrisMessage extends DomainObject {
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
 
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin")
+    private IrisMessageOrigin origin;
+
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "proactive_outcome")
+    private IrisProactiveOutcome proactiveOutcome;
+
+    @Nullable
+    @Column(name = "proactive_episode_id")
+    private String proactiveEpisodeId;
+
+    /**
+     * The exercise the proactive message was decided for, stamped at insert time. Deliberately NOT derived from
+     * {@code session.entityId}: a session is born a COURSE_CHAT and its mode/entityId change on every context switch,
+     * so the session is not a durable record of which exercise a row belongs to. Episode lookups scope by this column
+     * so an episode id reused across two exercises cannot make one exercise's outcome terminal for the other.
+     */
+    @Nullable
+    @Column(name = "proactive_exercise_id")
+    private Long proactiveExerciseId;
+
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
@@ -70,8 +95,14 @@ public class IrisMessage extends DomainObject {
     @Column(name = "created_memories", columnDefinition = "json")
     private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
 
+    /**
+     * Deliberately not annotated {@code @Lob}. The column is plain text on both databases - Liquibase {@code clob}
+     * becomes {@code longtext} on MySQL and {@code text} on PostgreSQL - whereas a CLOB on PostgreSQL is a large
+     * object: Hibernate binds and extracts the column as an {@code oid}, so reading a row whose {@code tool_activity}
+     * holds the converted JSON fails with "Bad value for type long". Without the annotation the converted JSON is
+     * bound and extracted as a string, which round-trips on both databases.
+     */
     @Nullable
-    @Lob
     @Convert(converter = IrisMessageToolActivityConverter.class)
     @Column(name = "tool_activity")
     private List<PyrisActivityDTO> toolActivity;
@@ -115,6 +146,42 @@ public class IrisMessage extends DomainObject {
 
     public void setSender(IrisMessageSender sender) {
         this.sender = sender;
+    }
+
+    @Nullable
+    public IrisMessageOrigin getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(@Nullable IrisMessageOrigin origin) {
+        this.origin = origin;
+    }
+
+    @Nullable
+    public IrisProactiveOutcome getProactiveOutcome() {
+        return proactiveOutcome;
+    }
+
+    public void setProactiveOutcome(@Nullable IrisProactiveOutcome proactiveOutcome) {
+        this.proactiveOutcome = proactiveOutcome;
+    }
+
+    @Nullable
+    public String getProactiveEpisodeId() {
+        return proactiveEpisodeId;
+    }
+
+    public void setProactiveEpisodeId(@Nullable String proactiveEpisodeId) {
+        this.proactiveEpisodeId = proactiveEpisodeId;
+    }
+
+    @Nullable
+    public Long getProactiveExerciseId() {
+        return proactiveExerciseId;
+    }
+
+    public void setProactiveExerciseId(@Nullable Long proactiveExerciseId) {
+        this.proactiveExerciseId = proactiveExerciseId;
     }
 
     public List<IrisMessageContent> getContent() {

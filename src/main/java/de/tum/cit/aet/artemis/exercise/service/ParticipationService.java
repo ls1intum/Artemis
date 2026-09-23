@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -330,29 +331,16 @@ public class ParticipationService {
      * @return started participation
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
-        // The template participation and the build config are only needed to resolve the source repository and its branch,
-        // and copyRepository skips both entirely once the participation has its own repository. Loading them lazily keeps
-        // the common path free of a query it never reads: exam participations are prepared up front, so every student who
-        // (re)starts an exam exercise takes the already-copied branch.
-        Supplier<ProgrammingExercise> exerciseWithTemplateAndBuildConfig = memoize(
-                () -> programmingExerciseRepository.findByIdWithTemplateParticipationAndBuildConfigElseThrow(exercise.getId()));
-        // Step 1a) create the student repository (based on the template repository). The template uri and the branch both
-        // come out of that single memoized load, so the branch no longer needs a query of its own either.
-        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateAndBuildConfig.get()),
-                () -> branchOf(exerciseWithTemplateAndBuildConfig.get()), participation);
+        // The template participation and the branch are only needed to resolve the source repository, and copyRepository
+        // skips both entirely once the participation has its own repository. Loading them lazily keeps the common path
+        // free of queries it never reads: exam participations are prepared up front, so every student who (re)starts an
+        // exam exercise takes the already-copied branch.
+        Supplier<ProgrammingExercise> exerciseWithTemplateParticipation = memoize(() -> programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exercise.getId()));
+        Supplier<String> branch = memoize(() -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()));
+        // Step 1a) create the student repository (based on the template repository).
+        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, participation);
 
         return startProgrammingParticipation(participation);
-    }
-
-    /**
-     * Reads the branch off an exercise whose build config was loaded eagerly, so the caller does not need a separate
-     * {@code findBranchByExerciseId} query.
-     *
-     * @param exerciseWithBuildConfig a programming exercise loaded together with its build config
-     * @return the configured branch, or null if the exercise has no build config
-     */
-    private static String branchOf(ProgrammingExercise exerciseWithBuildConfig) {
-        return exerciseWithBuildConfig.getBuildConfig() != null ? exerciseWithBuildConfig.getBuildConfig().getBranch() : null;
     }
 
     /**
@@ -882,6 +870,84 @@ public class ParticipationService {
         // multiple test runs exist for the same exercise.
         if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
             return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        return gradedParticipation;
+    }
+
+    /**
+     * The participation a submission should be saved against, as a projection rather than an entity.
+     * <p>
+     * Resolves exactly as {@link #findOneByExerciseAndStudentWithEagerSubmissionsAnyState} does - team, test exam,
+     * practice after the effective due date, instructor test run - but reads six columns instead of the participation
+     * with its eager exercise, that exercise's course, and for an exam exercise the exercise group, its exam and the
+     * exam's course. Nothing is turned back into an entity: the save writes the foreign key from the id, and the
+     * response is mapped from these columns. A caller that needs the participation's submissions cannot use this.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param student  the student submitting
+     * @return the projected participation, or empty when the student has none
+     */
+    public Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetByExerciseAndStudent(Exercise exercise, User student) {
+        if (exercise.isTeamMode()) {
+            return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId())
+                    .flatMap(team -> studentParticipationRepository.findSubmitTargetByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+        }
+        if (exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        Optional<StudentParticipationSubmitTargetDTO> gradedParticipation = studentParticipationRepository.findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                student.getId(), false);
+        ZonedDateTime effectiveDueDate = gradedParticipation.map(StudentParticipationSubmitTargetDTO::individualDueDate).orElse(exercise.getDueDate());
+        if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
+            Optional<StudentParticipationSubmitTargetDTO> practiceParticipation = studentParticipationRepository
+                    .findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), true);
+            if (practiceParticipation.isPresent()) {
+                return practiceParticipation;
+            }
+        }
+        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        return gradedParticipation;
+    }
+
+    /**
+     * The participant a submit target belongs to, for the response that reports it.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param student  the student submitting
+     * @return the team for a team exercise, otherwise the student
+     */
+    public Participant findSubmitParticipant(Exercise exercise, User student) {
+        if (exercise.isTeamMode()) {
+            return teamRepository.findOneWithStudentsByExerciseIdAndUserId(exercise.getId(), student.getId()).orElse(null);
+        }
+        return student;
+    }
+
+    /**
+     * The projected participation of an individual student, before it is rebuilt.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param student  the student submitting
+     * @return the projection, or empty when the student has none
+     */
+    private Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetOfStudent(Exercise exercise, User student) {
+        if (exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
+        }
+        Optional<StudentParticipationSubmitTargetDTO> gradedParticipation = studentParticipationRepository.findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                student.getId(), false);
+        ZonedDateTime effectiveDueDate = gradedParticipation.map(StudentParticipationSubmitTargetDTO::individualDueDate).orElse(exercise.getDueDate());
+        if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
+            Optional<StudentParticipationSubmitTargetDTO> practiceParticipation = studentParticipationRepository
+                    .findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), true);
+            if (practiceParticipation.isPresent()) {
+                return practiceParticipation;
+            }
+        }
+        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
+            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
         }
         return gradedParticipation;
     }

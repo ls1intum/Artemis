@@ -16,11 +16,13 @@
     li {
         position: relative;
 
-        &:hover {
+        &:hover,
+        &:focus-within {
             background-color: var(--textblock-feedback-editor-dropdown-hover);
         }
 
-        &:hover > .dropdown-submenu {
+        &:hover > .dropdown-submenu,
+        &:focus-within > .dropdown-submenu {
             display: block;
             position: absolute;
             left: 100%;

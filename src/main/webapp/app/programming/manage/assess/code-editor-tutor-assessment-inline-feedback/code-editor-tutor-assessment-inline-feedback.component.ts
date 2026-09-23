@@ -108,12 +108,16 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const feedback = this.currentFeedback();
         feedback.type = this.MANUAL;
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        if (!Feedback.isFeedbackSuggestion(feedback)) {
-            feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        // The unified card's own title/detail/credits handlers already rewrite an accepted suggestion's prefix to
+        // adapted, but the SGI-drop path (updateFeedbackOnDrop) mutates the feedback directly and commits here
+        // without going through those handlers, so it needs the same rewrite before the suggestion check below.
+        if (feedback.text) {
+            feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
         }
-        if (feedback.credits && feedback.credits > 0) {
-            feedback.positive = true;
+        if (!Feedback.isFeedbackSuggestion(feedback) && !feedback.text) {
+            feedback.text = this.derivedTitle();
         }
+        feedback.positive = (feedback.credits ?? 0) > 0;
         this.onUpdateFeedback.emit(feedback);
     }
 

@@ -14,7 +14,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
  * Minimal DTO identifying the team participant of a team participation (id, name, short name) plus the team members
  * (id, login, name). The members are required client-side to verify participation ownership for the owning student
  * (the client matches the logged-in login against {@code team.students[*].login}); without them the text editor cannot
- * confirm ownership. Simple DTO: only scalar values and other DTOs, no entity references.
+ * confirm ownership. The team box in the text editor renders each member's name from the same list. Simple DTO: only
+ * scalar values and other DTOs, no entity references.
  *
  * @param id        the team id
  * @param name      the team name
@@ -36,7 +37,7 @@ public record TeamDTO(Long id, String name, String shortName, List<UserNameDTO> 
             return null;
         }
         List<UserNameDTO> students = null;
-        if (Hibernate.isInitialized(team.getStudents()) && team.getStudents() != null) {
+        if (team.getStudents() != null && Hibernate.isInitialized(team.getStudents())) {
             students = team.getStudents().stream().map(UserNameDTO::of).toList();
         }
         return new TeamDTO(team.getId(), team.getName(), team.getShortName(), students);

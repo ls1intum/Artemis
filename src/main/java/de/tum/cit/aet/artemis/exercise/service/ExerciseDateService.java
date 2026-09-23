@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -18,8 +19,10 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -110,6 +113,30 @@ public class ExerciseDateService {
     }
 
     /**
+     * Checks if submissions are no longer possible, for a caller holding a projection of the exercise.
+     * <p>
+     * The same decision as {@link #isAfterDueDate(ParticipationInterface, Exercise)}, for the git request path, which
+     * authorizes against {@link GitRepositoryAccessDTO} rather than the exercise entity. An exam exercise still reads
+     * its exam, because the working-period rules are written against it - but only here, and only once.
+     *
+     * @param participation in a course or exam exercise
+     * @param exercise      the projected exercise
+     * @return true if the due date has passed and submissions are no longer possible
+     */
+    public boolean isAfterDueDate(ParticipationInterface participation, GitRepositoryAccessDTO exercise) {
+        if (exercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            long examId = exercise.examId();
+            if (participation instanceof StudentParticipation studentParticipation) {
+                return api.isIndividualExerciseWorkingPeriodOver(examId, studentParticipation);
+            }
+            return api.isExamWithGracePeriodOver(examId);
+        }
+        ZonedDateTime dueDate = participation.getIndividualDueDate() != null ? participation.getIndividualDueDate() : exercise.dueDate();
+        return dueDate != null && ZonedDateTime.now().isAfter(dueDate);
+    }
+
+    /**
      * Checks if the due date for the given participation is in the future.
      *
      * @param participation in a course or exam exercise.
@@ -117,6 +144,48 @@ public class ExerciseDateService {
      */
     public boolean isBeforeDueDate(ParticipationInterface participation) {
         return !isAfterDueDate(participation);
+    }
+
+    /**
+     * Whether submissions are no longer possible, for a caller holding a projection of the participation.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @param student  the student the participation belongs to
+     * @return true if the due date has passed and submissions are no longer possible
+     */
+    public boolean isAfterDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target, User student) {
+        if (exercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            return api.isIndividualExerciseWorkingPeriodOver(exercise.getExam(), target.testRun(), student.getId(), target.id());
+        }
+        return getDueDate(exercise, target).map(ZonedDateTime.now()::isAfter).orElse(false);
+    }
+
+    /**
+     * Whether the due date for a projected participation is still in the future.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @param student  the student the participation belongs to
+     * @return true if the due date has not yet passed
+     */
+    public boolean isBeforeDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target, User student) {
+        return !isAfterDueDate(exercise, target, student);
+    }
+
+    /**
+     * The individual due date of a projected participation if it has one, else the exercise due date.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param target   the projected participation
+     * @return the due date that applies, or nothing when neither is set
+     */
+    public static Optional<ZonedDateTime> getDueDate(Exercise exercise, StudentParticipationSubmitTargetDTO target) {
+        if (target.individualDueDate() != null) {
+            return Optional.of(target.individualDueDate());
+        }
+        return Optional.ofNullable(exercise.getDueDate());
     }
 
     /**

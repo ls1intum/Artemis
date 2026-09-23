@@ -41,7 +41,8 @@
             "feedbackEditor": {
                 "dismissFeedback": "Soll das Feedback gelöscht werden?",
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!",
-                "connectToInstruction": "Feedback mit einer Bewertungsanweisung verknüpfen"
+                "connectToInstruction": "Feedback mit einer Bewertungsanweisung verknüpfen",
+                "noTitle": "(Kein Titel)"
             },
             "assessmentInstruction": "Bitte bewege die Maus über den zu bewertenden Textblock und klicke diesen an, um ihn zu bewerten.<br>Um eigene Textblöcke zu bewerten, drücke <code>alt</code>/<code>option</code> und klicke in beliebiger Reihenfolge auf das erste und letzte Wort eines Textabschnitts."
         }

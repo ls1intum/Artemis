@@ -31,6 +31,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -193,6 +194,41 @@ describe('ResultComponent', () => {
             expect(fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR).classList).toContain('clickable-result');
         });
 
+        it('renders a zero-test programming test run as compilation-only, from the payload the list endpoint sends', () => {
+            // verbatim shape of GET exercises/{exerciseId}/test-run-submissions: the participation carries no exercise,
+            // so the only source of the exercise type is the exercise the assessment dashboard binds next to it
+            const testRunSubmission = {
+                id: 77,
+                submitted: true,
+                submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
+                participation: { id: 12, type: ParticipationType.PROGRAMMING, testRun: true } as Participation,
+                results: [
+                    {
+                        id: 13,
+                        completionDate: dayjs().subtract(1, 'minute'),
+                        successful: true,
+                        score: 0,
+                        rated: true,
+                        assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                        testCaseCount: 0,
+                        passedTestCaseCount: 0,
+                    } as Result,
+                ],
+            };
+            const examProgrammingExercise = { ...mockExercise, id: 4, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
+            expect(testRunSubmission.participation.exercise).toBeUndefined();
+
+            fixture.componentRef.setInput('exercise', examProgrammingExercise);
+            fixture.componentRef.setInput('participation', testRunSubmission.participation);
+            fixture.componentRef.setInput('result', testRunSubmission.results[0]);
+            fixture.detectChanges();
+
+            expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+            // 0 of 0 passed tests is a pass, not a failure: the badge stays green
+            expect(comp.textColorClass()).toBe('text-state-success');
+            expect(comp.resultIconClass()).toBe(faCheckCircle);
+        });
+
         describe('results that belong to no participation', () => {
             const exampleSubmissionResult: Result = {
                 id: 7,
@@ -324,6 +360,61 @@ describe('ResultComponent', () => {
             'result',
             mockResult.id,
         ]);
+    });
+
+    describe('a result the viewer does not own', () => {
+        // #13921: the tutor and instructor pages render the badge for a participation that is not the viewer's. The
+        // text/modeling deep link is the student exercise page, which 403s for an exam exercise and swaps in the
+        // viewer's own participation in a course, so the badge must not offer it there.
+        // Without a due date the result is simply graded; with `mockExercise`'s past one it would render as LATE,
+        // which is a different, never-clickable branch of the template.
+        const gradedExercise = (type: ExerciseType) => ({ ...mockExercise, type, dueDate: undefined });
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('does not link a %s result to the student submission view', (type) => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            fixture.componentRef.setInput('exercise', gradedExercise(type));
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isOwnParticipation', false);
+            fixture.detectChanges();
+
+            expect(comp.templateStatus()).toEqual(ResultTemplateStatus.HAS_RESULT);
+            expect(comp.canShowDetails()).toBe(false);
+            const badge = fixture.debugElement.nativeElement.querySelector('#result-score');
+            expect(badge.classList).not.toContain('clickable-result');
+
+            badge.dispatchEvent(new Event('click'));
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('still links a %s result to it for the participation owner', (type) => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            fixture.componentRef.setInput('exercise', gradedExercise(type));
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.detectChanges();
+
+            expect(comp.canShowDetails()).toBe(true);
+            fixture.debugElement.nativeElement.querySelector('#result-score').dispatchEvent(new Event('click'));
+
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('still opens the feedback dialog for a programming result, which renders any participation', () => {
+            const openModalSpy = vi.spyOn(dialogService, 'open');
+            vi.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
+            fixture.componentRef.setInput('exercise', mockExercise);
+            fixture.componentRef.setInput('participation', mockParticipation);
+            fixture.componentRef.setInput('result', mockResult);
+            fixture.componentRef.setInput('isOwnParticipation', false);
+            fixture.detectChanges();
+
+            expect(comp.canShowDetails()).toBe(true);
+            fixture.debugElement.nativeElement.querySelector('#result-score').dispatchEvent(new Event('click'));
+
+            expect(openModalSpy).toHaveBeenCalledOnce();
+        });
     });
 
     it('should open the details only when isInSidebarCard is false', () => {

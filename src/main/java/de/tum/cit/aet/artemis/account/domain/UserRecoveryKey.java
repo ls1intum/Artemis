@@ -11,6 +11,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.core.domain.Parent;
+
 /**
  * The key an account currently has outstanding to activate itself or to complete a password reset.
  * <p>
@@ -24,6 +26,7 @@ public class UserRecoveryKey {
 
     @Id
     @Column(name = "user_id")
+    @Parent
     private long userId;
 
     /**
@@ -38,12 +41,19 @@ public class UserRecoveryKey {
     private String activationKey = null;
 
     /**
-     * One-time key a user redeems to set a new password, issued by a password reset request and cleared once used.
+     * Identifier used to link a password reset procedure to a user account.
+     */
+    @Column(name = "reset_key_id", length = 20, unique = true)
+    @JsonIgnore
+    private String resetKeyId = null;
+
+    /**
+     * Hash of the one-time key a user redeems to set a new password, issued by a password reset request and cleared once used.
      */
     @Nullable
     @JsonIgnore
-    @Column(name = "reset_key", length = 20)
-    private String resetKey = null;
+    @Column(name = "reset_key_hash", length = 255)
+    private String resetKeyHash = null;
 
     /**
      * When the outstanding reset key was issued, against which its expiry is checked.
@@ -78,12 +88,21 @@ public class UserRecoveryKey {
     }
 
     @Nullable
-    public String getResetKey() {
-        return resetKey;
+    public String getResetKeyId() {
+        return resetKeyId;
     }
 
-    public void setResetKey(@Nullable String resetKey) {
-        this.resetKey = resetKey;
+    public void setResetKeyId(@Nullable String resetKeyId) {
+        this.resetKeyId = resetKeyId;
+    }
+
+    @Nullable
+    public String getResetKeyHash() {
+        return resetKeyHash;
+    }
+
+    public void setResetKeyHash(@Nullable String resetKeyHash) {
+        this.resetKeyHash = resetKeyHash;
     }
 
     @Nullable
@@ -101,6 +120,6 @@ public class UserRecoveryKey {
      * @return true if neither key nor reset date is set
      */
     public boolean isEmpty() {
-        return activationKey == null && resetKey == null && resetDate == null;
+        return activationKey == null && resetKeyId == null && resetKeyHash == null && resetDate == null;
     }
 }

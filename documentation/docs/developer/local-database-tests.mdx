@@ -11,8 +11,6 @@ import postgresTestsConfig from './assets/intellij-postgres-tests-run-configurat
 
 Server integration tests run against PostgreSQL by default using Docker containers managed by Testcontainers. No additional flags are needed — `./gradlew test -x webapp` uses PostgreSQL automatically. The Gradle test task pulls the necessary Docker images and starts the containers.
 
----
-
 ## Prerequisites
 
 Before running server tests, make sure you have a working Docker setup:
@@ -20,14 +18,12 @@ Before running server tests, make sure you have a working Docker setup:
 1. Install [Docker Desktop](https://docs.docker.com/desktop/) or [Docker Engine and Docker CLI](https://docs.docker.com/engine/install/).
 2. Enable [remote access for the Docker daemon](https://docs.docker.com/config/daemon/remote-access/).
 
----
-
 ## Executing Tests from IntelliJ
 
 You can execute the database tests by running the run configurations provided in the repository:
 
-- **For PostgreSQL tests (recommended):** `Artemis Server Tests Postgres`
-- **For MySQL tests:** `Artemis Server Tests MySQL`
+- **For PostgreSQL tests (recommended):** **Artemis Server Tests Postgres**
+- **For MySQL tests:** **Artemis Server Tests MySQL**
 
 ### Creating a Custom Configuration
 
@@ -39,8 +35,6 @@ Alternatively, you can create a custom configuration.
     size={ImageSize.large}
     caption="IntelliJ run configuration for Postgres server tests"
 />
-
----
 
 ## Executing Tests from the Console
 

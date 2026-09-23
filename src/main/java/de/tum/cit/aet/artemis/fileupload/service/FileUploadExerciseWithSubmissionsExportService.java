@@ -10,10 +10,12 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
 
 /**
  * Service for exporting File Upload Exercises with the student submissions.
@@ -40,5 +42,15 @@ public class FileUploadExerciseWithSubmissionsExportService extends ExerciseWith
     public Path exportFileUploadExerciseWithSubmissions(FileUploadExercise exercise, SubmissionExportOptionsDTO optionsDTO, Path exportDir, List<String> exportErrors,
             List<ArchivalReportEntry> reportEntries) {
         return exportExerciseWithSubmissions(exercise, optionsDTO, exportDir, exportErrors, reportEntries);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The cast is safe: this service only exports file upload exercises.
+     */
+    @Override
+    protected Record exerciseDetailsForExport(Exercise exercise) {
+        return FileUploadExerciseDTO.forExport((FileUploadExercise) exercise);
     }
 }

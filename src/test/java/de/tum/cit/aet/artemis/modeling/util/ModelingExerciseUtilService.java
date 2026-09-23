@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -75,9 +74,6 @@ public class ModelingExerciseUtilService {
 
     @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
-
-    @Autowired
-    private FeedbackRepository feedbackRepo;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -265,7 +261,9 @@ public class ModelingExerciseUtilService {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         var user = userUtilService.getUserByLogin(login);
-        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null);
+        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null).submission();
+        // the save wrote the foreign key from an id; this utility holds the participation itself and saves again below
+        submission.setParticipation(participation);
         Result result = new Result();
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
@@ -433,11 +431,11 @@ public class ModelingExerciseUtilService {
      * @return The created Result
      */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
+        // Left unsaved: the assessment below attaches them to the result it creates and writes them from there, and
+        // result_id is not nullable, so saving them detached first fails the insert.
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(feedback1);
-        feedbacks.add(feedback2);
+        feedbacks.add(new Feedback().detailText("detail1"));
+        feedbacks.add(new Feedback().detailText("detail2"));
 
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, null, submit);
         result.setAssessor(userUtilService.getUserByLogin(login));

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,10 +34,10 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -99,7 +101,7 @@ public class ParticipationUpdateResource {
      */
     @PutMapping("exercises/{exerciseId}/participations")
     @EnforceAtLeastTutor
-    public ResponseEntity<Participation> updateParticipation(@PathVariable long exerciseId, @RequestBody ParticipationUpdateDTO dto) {
+    public ResponseEntity<StudentParticipationDTO> updateParticipation(@PathVariable long exerciseId, @Valid @RequestBody ParticipationUpdateDTO dto) {
         log.debug("REST request to update Participation : {}", dto);
         if (dto.exerciseId() != exerciseId) {
             throw new ConflictException("The exercise of the participation does not match the exercise id in the URL", ENTITY_NAME, "noidmatch");
@@ -115,6 +117,8 @@ public class ParticipationUpdateResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
 
         Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation);
+        String participantLabel = hideParticipant ? existingParticipation.getId().toString() : existingParticipation.getParticipant().getName();
         Double newPresentationScore = dto.presentationScore();
 
         if (newPresentationScore != null && existingParticipation.getExercise().getPresentationScoreEnabled() != null
@@ -146,7 +150,7 @@ public class ParticipationUpdateResource {
                 if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
                     throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
                             "invalid.presentations.maxNumberOfPresentationsExceeded",
-                            Map.of("name", existingParticipation.getParticipant().getName(), "presentationsNumber", gradingScale.get().getPresentationsNumber()));
+                            Map.of("name", participantLabel, "presentationsNumber", gradingScale.get().getPresentationsNumber()));
                 }
             }
         }
@@ -165,9 +169,10 @@ public class ParticipationUpdateResource {
         // Apply the update to the managed entity
         existingParticipation.setPresentationScore(newPresentationScore);
 
-        Participation updatedParticipation = studentParticipationRepository.saveAndFlush(existingParticipation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, existingParticipation.getParticipant().getName()))
-                .body(updatedParticipation);
+        StudentParticipation updatedParticipation = studentParticipationRepository.saveAndFlush(existingParticipation);
+        var response = StudentParticipationDTO.ofAfterUpdate(updatedParticipation);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participantLabel))
+                .body(hideParticipant ? response.withoutParticipantInformation() : response);
     }
 
     /**
@@ -182,8 +187,8 @@ public class ParticipationUpdateResource {
      */
     @PutMapping("exercises/{exerciseId}/participations/update-individual-due-date")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentParticipation>> updateParticipationDueDates(@PathVariable long exerciseId,
-            @RequestBody List<ParticipationDueDateUpdateDTO> dueDateUpdateDTOs) {
+    public ResponseEntity<List<StudentParticipationDTO>> updateParticipationDueDates(@PathVariable long exerciseId,
+            @Valid @RequestBody List<@Valid ParticipationDueDateUpdateDTO> dueDateUpdateDTOs) {
         final boolean anyInvalidExerciseId = dueDateUpdateDTOs.stream().anyMatch(dto -> dto.exerciseId() != exerciseId);
         if (anyInvalidExerciseId) {
             throw new BadRequestAlertException("The participation needs to be connected to the specified exercise", ENTITY_NAME, "exerciseidmismatch");
@@ -214,7 +219,7 @@ public class ParticipationUpdateResource {
             }
         }
 
-        return ResponseEntity.ok().body(updatedParticipations);
+        return ResponseEntity.ok().body(updatedParticipations.stream().map(StudentParticipationDTO::ofAfterUpdate).toList());
     }
 
 }

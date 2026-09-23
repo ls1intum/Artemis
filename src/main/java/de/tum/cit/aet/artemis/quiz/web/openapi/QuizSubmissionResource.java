@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -48,7 +50,6 @@ import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDT
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 
 /**
@@ -74,8 +75,6 @@ public class QuizSubmissionResource {
 
     private final QuizSubmissionService quizSubmissionService;
 
-    private final QuizSubmissionRepository quizSubmissionRepository;
-
     private final ParticipationService participationService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -86,12 +85,11 @@ public class QuizSubmissionResource {
 
     private final Optional<ExamSubmissionApi> examSubmissionApi;
 
-    public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, QuizSubmissionRepository quizSubmissionRepository,
-            ParticipationService participationService, ResultWebsocketService resultWebsocketService, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            Optional<ExamSubmissionApi> examSubmissionApi, StudentParticipationRepository studentParticipationRepository) {
+    public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
+            ResultWebsocketService resultWebsocketService, UserRepository userRepository, AuthorizationCheckService authCheckService, Optional<ExamSubmissionApi> examSubmissionApi,
+            StudentParticipationRepository studentParticipationRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionService = quizSubmissionService;
-        this.quizSubmissionRepository = quizSubmissionRepository;
         this.participationService = participationService;
         this.resultWebsocketService = resultWebsocketService;
         this.userRepository = userRepository;
@@ -242,28 +240,19 @@ public class QuizSubmissionResource {
         // issuing its own query. This is the autosave path, so it runs repeatedly per student per exercise.
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, quizExercise, user);
+        // The exam gates below are the only checks on this endpoint, so a course quiz must not reach the save.
+        if (!quizExercise.isExamExercise()) {
+            throw new BadRequestAlertException("The quiz exercise is not part of an exam", ENTITY_NAME, "notExamExercise");
+        }
 
         QuizSubmission quizSubmission = quizSubmissionService.buildSubmissionFromLiveClientDTO(submissionDTO, quizExercise);
 
-        StudentParticipation participationFromExamGate = null;
-        if (quizExercise.isExamExercise()) {
-            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
+        ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
+        api.checkSubmissionAllowanceElseThrow(quizExercise, user);
 
-            // Apply further checks if it is an exam submission
-            api.checkSubmissionAllowanceElseThrow(quizExercise, user);
-
-            // For test exams, preventMultipleSubmissions returns immediately, so a non-null id from the client
-            // would otherwise drive an UPDATE on whichever row matches that id — including another student's
-            // submission. Drop the id unless it actually belongs to the requesting user, in which case
-            // saveSubmissionForExamMode merge-updates the existing row instead of inserting a new one.
-            if (quizSubmission.getId() != null && quizExercise.getExam().isTestExam() && !quizSubmissionRepository.existsByIdAndStudentId(quizSubmission.getId(), user.getId())) {
-                quizSubmission.setId(null);
-            }
-
-            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
-            // place and returns the participation it resolved, so the save below does not have to read it again.
-            participationFromExamGate = api.preventMultipleSubmissions(quizExercise, quizSubmission, user);
-        }
+        // Prevent multiple submissions. The gate modifies the submission in place and returns the participation it
+        // resolved, so the save below does not have to read it again.
+        StudentParticipationSubmitTargetDTO participationFromExamGate = api.preventMultipleSubmissions(quizExercise, quizSubmission, user);
 
         QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user, participationFromExamGate);
         long end = System.currentTimeMillis();

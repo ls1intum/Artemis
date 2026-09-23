@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -53,11 +54,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 LEFT JOIN FETCH se.exercises e
                 LEFT JOIN FETCH e.exerciseGroup eg
                 LEFT JOIN FETCH eg.exam
-                LEFT JOIN FETCH e.course eCourse
-                LEFT JOIN FETCH eCourse.athenaConfig
+                LEFT JOIN FETCH e.course
                 LEFT JOIN FETCH se.exam ex
-                LEFT JOIN FETCH ex.course exCourse
-                LEFT JOIN FETCH exCourse.athenaConfig
+                LEFT JOIN FETCH ex.course
                 LEFT JOIN FETCH se.user
             WHERE se.id = :studentExamId
             """)
@@ -134,13 +133,27 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExam> findWithExercisesParticipationsSubmissionsById(@Param("studentExamId") long studentExamId, @Param("isTestRun") boolean isTestRun);
 
+    /**
+     * Counts the user's other test runs of the same exam that are not submitted yet.
+     * <p>
+     * Test-run participations are shared between the user's runs of an exercise, so an unsubmitted run can still
+     * overwrite the submission an already submitted run points at.
+     *
+     * @param examId        the id of the exam the test runs belong to
+     * @param userId        the id of the user owning the test runs
+     * @param studentExamId the test run to exclude, i.e. the one being acted on
+     * @return how many other test runs of this user and exam are still unsubmitted
+     */
     @Query("""
-            SELECT se
+            SELECT COUNT(se)
             FROM StudentExam se
             WHERE se.exam.id = :examId
-                AND se.testRun = FALSE
+                AND se.user.id = :userId
+                AND se.testRun = TRUE
+                AND se.id <> :studentExamId
+                AND (se.submitted IS NULL OR se.submitted = FALSE)
             """)
-    Set<StudentExam> findByExamId(@Param("examId") long examId);
+    long countOtherUnsubmittedTestRuns(@Param("examId") long examId, @Param("userId") long userId, @Param("studentExamId") long studentExamId);
 
     @Query("""
             SELECT se
@@ -152,7 +165,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Set<StudentExam> findByExamIdWithSessions(@Param("examId") long examId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO$StudentExamSummary(
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO$StudentExamSummaryDTO(
                 se.user.id, se.id, se.workingTime, se.started, se.submitted,
                 se.startedDate, se.submissionDate, COUNT(sess.id)
             )
@@ -165,14 +178,14 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                      se.startedDate, se.submissionDate
             """)
     /**
-     * Returns a {@link ExamStudentDTO.StudentExamSummary} for each non-test-run {@link StudentExam} whose user is in {@code userIds}.
+     * Returns a {@link ExamStudentDTO.StudentExamSummaryDTO} for each non-test-run {@link StudentExam} whose user is in {@code userIds}.
      * The number of exam sessions is returned as a {@code COUNT} aggregate, avoiding the cost of loading session entities.
      *
      * @param examId  the exam to query
      * @param userIds the user IDs to restrict the query to (typically the current page's users)
      * @return one summary per matching student exam, in unspecified order
      */
-    List<ExamStudentDTO.StudentExamSummary> findSummaryByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
+    List<ExamStudentDTO.StudentExamSummaryDTO> findSummaryByExamIdAndUserIds(@Param("examId") long examId, @Param("userIds") List<Long> userIds);
 
     @Query("""
             SELECT se
@@ -331,6 +344,34 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
 
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 
+    /**
+     * What deciding a student's exam working period needs, for their newest student exam in an exam.
+     * <p>
+     * A projection rather than the entity: {@code StudentExam.exam} is a {@code @ManyToOne} and therefore eager, and so
+     * is that exam's course and the course's Athena configuration, so reading two booleans off the entity cost four
+     * further selects. A student can take a test exam more than once; the newest attempt is picked by id inside the
+     * query, so the database returns one row rather than every attempt for the caller to discard. Test runs are left
+     * out: an instructor can hold one next to their own attempt, and it would otherwise decide the working period of
+     * that attempt.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the student
+     * @return the values for the student's newest student exam, or empty when they have none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO(
+                se.submitted, se.testRun, se.started, se.startedDate, se.workingTime)
+            FROM StudentExam se
+            WHERE se.id = (
+                SELECT MAX(se2.id)
+                FROM StudentExam se2
+                WHERE se2.exam.id = :examId
+                    AND se2.user.id = :userId
+                    AND (se2.testRun IS NULL OR se2.testRun = FALSE)
+            )
+            """)
+    Optional<StudentExamWorkingPeriodDTO> findNewestWorkingPeriodByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+
     @Query("""
             SELECT se
             FROM StudentExam se
@@ -442,6 +483,22 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Set<User> findUsersWithStudentExamsForExam(@Param("examId") Long examId);
 
+    /**
+     * Get the ids of the users who already have a student exam, without loading the users themselves.
+     * <p>
+     * The caller only subtracts this set from the registered users, so the entities were never needed.
+     *
+     * @param examId the exam to query for
+     * @return the ids of the users with a student exam
+     */
+    @Query("""
+            SELECT DISTINCT se.user.id
+            FROM StudentExam se
+            WHERE se.testRun = FALSE
+                AND se.exam.id = :examId
+            """)
+    Set<Long> findUserIdsWithStudentExamsForExam(@Param("examId") Long examId);
+
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
@@ -475,38 +532,43 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
 
     /**
-     * Counts the number of test-exam attempts for which the user has reserved an Athena feedback request (see
+     * Counts the number of attempts for which the user has reserved an Athena feedback request (see
      * {@link #reserveAthenaFeedbackRequestIfBelowCap}). Because one feedback request fans out to every text/modeling
      * submission in the attempt, each attempt counts as one request regardless of how many exercises the exam contains.
      * The reservation, not the eventual success of the generated feedback, is what is counted: a failed generation still
      * consumes the attempt's slot, so a student cannot retry indefinitely by triggering failures.
+     * <p>
+     * Test-run attempts of an instructor and test-exam attempts of a student form separate buckets, selected by
+     * {@code testRun}, so an instructor's test runs never eat into the cap of their own test-exam attempts.
      *
-     * @param userId the id of the user
-     * @param examId the id of the test exam
-     * @return the number of distinct test-exam attempts that reserved an Athena feedback request
+     * @param userId  the id of the user
+     * @param examId  the id of the exam
+     * @param testRun whether test-run attempts (true) or regular attempts (false) should be counted
+     * @return the number of distinct attempts that reserved an Athena feedback request
      */
     @Query("""
             SELECT COUNT(se)
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
-                AND se.testRun = FALSE
+                AND se.testRun = :testRun
                 AND se.athenaFeedbackRequestedDate IS NOT NULL
             """)
-    long countTestExamAttemptsWithAthenaFeedbackRequestedByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
+    long countAttemptsWithAthenaFeedbackRequestedByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId, @Param("testRun") boolean testRun);
 
     /**
-     * Locks all of this user's non-test-run attempts for the given exam with a pessimistic write lock, so that the cap
-     * check and reservation performed by the caller (see {@code StudentExamAthenaFeedbackService}) serialize against
-     * any other transaction trying to do the same for this user/exam. A plain "count reserved attempts, then update
-     * the target row" sequence does not provide this guarantee: under READ COMMITTED, two concurrent transactions
-     * reserving <em>different</em> attempts each take their own row lock, so both can read the same pre-reservation
-     * count and both succeed, overshooting the cap. Locking every candidate row up front forces the second transaction
-     * to block until the first commits, so it then recounts with the first transaction's reservation visible.
+     * Locks all of this user's attempts of the requested kind (test run or not) for the given exam with a pessimistic
+     * write lock, so that the cap check and reservation performed by the caller (see
+     * {@code StudentExamAthenaFeedbackService}) serialize against any other transaction trying to do the same for this
+     * user/exam. A plain "count reserved attempts, then update the target row" sequence does not provide this
+     * guarantee: under READ COMMITTED, two concurrent transactions reserving <em>different</em> attempts each take
+     * their own row lock, so both can read the same pre-reservation count and both succeed, overshooting the cap.
+     * Locking every candidate row up front forces the second transaction to block until the first commits, so it then
+     * recounts with the first transaction's reservation visible.
      *
-     * @param userId the id of the user whose attempts should be locked
-     * @param examId the id of the exam the attempts belong to
+     * @param userId  the id of the user whose attempts should be locked
+     * @param examId  the id of the exam the attempts belong to
+     * @param testRun whether test-run attempts (true) or regular attempts (false) should be locked
      * @return the locked attempts, including their current {@code athenaFeedbackRequestedDate}
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -515,10 +577,10 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
-                AND se.testRun = FALSE
+                AND se.testRun = :testRun
             """)
-    List<StudentExam> findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(@Param("userId") Long userId, @Param("examId") Long examId);
+    List<StudentExam> findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(@Param("userId") Long userId, @Param("examId") Long examId,
+            @Param("testRun") boolean testRun);
 
     /**
      * Atomically reserves this test-exam attempt's slot against the cross-attempt Athena feedback request cap: sets
@@ -528,16 +590,17 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * concurrent call for a <em>different</em> attempt of the same user/exam blocks until this transaction commits,
      * rather than reading a stale pre-reservation count and also succeeding past the cap.
      *
-     * @param studentExamId the id of the test-exam attempt to reserve
+     * @param studentExamId the id of the attempt to reserve
      * @param userId        the id of the user the attempt belongs to
      * @param examId        the id of the exam the attempt belongs to
+     * @param testRun       whether the attempt is a test run, which is capped separately from regular attempts
      * @param requestedDate the timestamp to record as the reservation time
      * @param cap           the maximum number of reserved attempts allowed for this user/exam
      * @return the number of rows updated: 1 if the reservation succeeded, 0 if the attempt was already reserved or the cap was reached
      */
     @Transactional // ok because of pessimistic locking combined with a conditional write
-    default int reserveAthenaFeedbackRequestIfBelowCap(Long studentExamId, Long userId, Long examId, ZonedDateTime requestedDate, int cap) {
-        List<StudentExam> lockedAttempts = findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(userId, examId);
+    default int reserveAthenaFeedbackRequestIfBelowCap(Long studentExamId, Long userId, Long examId, boolean testRun, ZonedDateTime requestedDate, int cap) {
+        List<StudentExam> lockedAttempts = findStudentExamAttemptsForAthenaFeedbackReservationWithPessimisticWriteLock(userId, examId, testRun);
         long alreadyReserved = lockedAttempts.stream().filter(attempt -> attempt.getAthenaFeedbackRequestedDate() != null).count();
         if (alreadyReserved >= cap) {
             return 0;
@@ -626,13 +689,17 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     }
 
     /**
-     * Generates random exams for each user in the given users set and saves them.
+     * Generates random exams for each of the given users and saves them.
+     * <p>
+     * The {@link User} on each generated student exam is an id-only reference: only the foreign key is written on this
+     * path, and loading the full user cost one select per student. No field other than the id is populated, so a caller
+     * that needs the login, name or any other attribute has to load the users itself.
      *
-     * @param exam  exam for which the individual student exams will be generated
-     * @param users users for which the individual exams will be generated
-     * @return List of StudentExams generated for the given users
+     * @param exam    exam for which the individual student exams will be generated
+     * @param userIds ids of the users for which the individual exams will be generated
+     * @return List of StudentExams generated for the given users, each carrying an id-only {@link User}
      */
-    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users) {
+    default List<StudentExam> createRandomStudentExams(Exam exam, Set<Long> userIds) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
 
@@ -657,13 +724,15 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             }
         }
 
-        for (User user : users) {
+        for (Long userId : userIds) {
             // Create one student exam per user
             StudentExam studentExam = new StudentExam();
 
             studentExam.setWorkingTime(defaultWorkingTime);
             studentExam.setExam(exam);
-            studentExam.setUser(user);
+            // Only the foreign key is written here, so the id is all this needs. Loading the User to set it cost a
+            // select per student, and nothing on this path reads anything else from it.
+            studentExam.setUser(new User(userId));
             studentExam.setSubmitted(false);
             studentExam.setTestRun(false);
 

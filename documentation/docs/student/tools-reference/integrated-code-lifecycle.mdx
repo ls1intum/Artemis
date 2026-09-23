@@ -4,446 +4,223 @@ title: Integrated Code Lifecycle
 sidebar_label: Integrated Code Lifecycle
 ---
 
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, { ImageSize } from '../../../src/components/Image/Image';
 
-import openRepositoryStudentImg from '../assets/integrated-code-lifecycle/open-repository-student.png';
-import currentRepositoryContentImg from '../assets/integrated-code-lifecycle/current-repository-content-view.png';
-import commitHistoryViewImg from '../assets/integrated-code-lifecycle/commit-history-view.png';
-import commitDiffViewImg from '../assets/integrated-code-lifecycle/commit-diff-view.png';
-import openRepositoryButtonImg from '../assets/integrated-code-lifecycle/open-repository-button.png';
-import codeButtonExtendedImg from '../assets/integrated-code-lifecycle/code-button-extended-authentication.png';
+import repositorySource from '../assets/integrated-code-lifecycle/repository-source.png';
+import commitHistory from '../assets/integrated-code-lifecycle/commit-history.png';
+import commitDetails from '../assets/integrated-code-lifecycle/commit-details.png';
+import cloneDialog from '../assets/integrated-code-lifecycle/clone-dialog.png';
+import sshKeys from '../assets/integrated-code-lifecycle/ssh-keys.png';
+import sshAddKey from '../assets/integrated-code-lifecycle/ssh-add-key.png';
+import sshFingerprints from '../assets/integrated-code-lifecycle/ssh-fingerprints.png';
+import accessTokens from '../assets/integrated-code-lifecycle/access-tokens.png';
 
-import openSettingsImg from '../assets/integrated-code-lifecycle/open-settings.png';
-import sshAddPublicKeyImg from '../assets/integrated-code-lifecycle/ssh-add-public-key.png';
+Every programming exercise gives you a Git repository of your own. Artemis hosts it itself — there is no separate
+account to create and no other site to sign in to — and builds and tests whatever you push to it.
 
-Artemis' Integrated Code Lifecycle consists of two main components: Local Version Control and Local Continuous Integration.
+This page is about getting at that repository: reading it in the browser, cloning it to your computer, and proving
+who you are when you do. What to *do* with it once it is cloned is covered by
+[Programming Exercises](/student/exercises/programming-exercise).
 
-## General Information
+## Reading Your Repository in Artemis
 
-Artemis offers the Integrated Code Lifecycle (ICL), a comprehensive feature designed to streamline the development process for programming exercises.
-ICL combines version control, secure communication, and continuous integration to provide a seamless experience for students.
-Understanding these components is crucial for effectively using Artemis, especially if you're new to concepts like SSH and Git. The key components of ICL are:
+Open the exercise and press **Code**, then the arrow icon beside the repository address. Artemis opens your
+repository in a read-only view headed **Source**.
 
-- Local Version Control: Use the Local Version Control to interact with the repositories of programming exercises.
-- Repository Authentication Mechanisms: The different available and configurable repository authentication mechanisms.
-- Tokens: Use VCS access tokens to perform Git operations on repositories.
-- SSH: Use SSH to perform Git operations on repositories.
-- Local Continuous Integration: Exercise submissions are built and tested by the Local CI system.
+<Image src={repositorySource} alt="The Source view of a student repository, with the file browser, a Java file, the problem statement and the result of the last push" size={ImageSize.large} caption="Your repository in Artemis, with the result of your latest push above it" />
 
----
+The file browser on the left lists everything in the repository; selecting a file shows it, and you can read but not
+edit it here. To the right sits the problem statement, with each task marked by how many of its tests pass. The
+result of your most recent push sits at the top, beside three actions:
 
-## Local Version Control
+- **Open Commit History** lists everything you have pushed.
+- **Code** shows the repository address again, so you can clone it without going back to the exercise.
+- **Download Repository** saves the current contents as a ZIP file.
 
-### Repository View
+### What You Have Pushed
 
-Programming exercises use a version control system called **Git**. Git is a distributed version control system that allows you to track changes in your code.
-These changes are stored in a repository. A repository is a collection of files and directories that are tracked by Git.
-How to navigate through the repository and view the code is explained in the following sections.
-It is demonstrated using course programming exercises, but the same principles apply to exams as well.
+**Open Commit History** lists what you have pushed, most recent first, in groups numbered down the **#** column. A
+group runs up to and including the commit Artemis built, so it is usually one push, and the commits under group 3
+are numbered `3.2`, `3.3` and so on. The **Commits** column counts them. Groups open expanded; **Collapse all**
+folds each one down to its first row and **Expand all** opens them again.
 
-#### Access Repositories as a Student
+<Image src={commitHistory} alt="The commit history, with three groups, the last carrying three commits numbered 3, 3.2 and 3.3" size={ImageSize.large} caption="Three groups, the oldest holding three commits and ending at the template" />
 
-As a student, you can use the repository to view your course submissions.
-To access your submissions, you need to navigate to the exercise, press the '_Code_' button, and click on <Image src={openRepositoryButtonImg} alt={"Open Repository"} size={ImageSize.small} inline />.
+**A result belongs to the group, not to each commit in it.** A push of five commits produces one result, against
+the commit that was built, and the other four rows leave the **Result** column empty. That is also why a push still
+being built does not get a row of its own: a group closes when a result arrives, so an unbuilt push is shown
+together with the one after it.
 
-<Image src={openRepositoryStudentImg} alt={'Opening the repository in the student view'} size={ImageSize.large} />
+The last row of the oldest group is marked **Template**: that is the starting point Artemis put in the repository
+for you, not something you wrote.
 
-After pressing the button, you will be redirected to the **Current Repository Content** page of the repository.
-This view shows the current content of the repository with the latest changes in a read-only code editor. You can view the code, but you cannot edit it.
-You can also navigate through the whole code by clicking on the file names in the file browser on the left side.
-To the right side of the screen, above the problem statement, you can see the result of the submission. You can also copy the repository URI by pressing
-the '_Code_' button to clone the repository to your local machine and see the full commit history by pressing the '_Open Commit History_' button. Finally, you can
-download the repository as a ZIP file by pressing the '_Download Repository_' button.
+Selecting a commit hash opens a page of its own, headed **Commit** and the full hash, showing what that commit
+changed against the one before it — removed lines in red on the left, added lines in green on the right, file by
+file.
 
-<Image src={currentRepositoryContentImg} alt={'Current Repository Content'} size={ImageSize.large} />
+<Image src={commitDetails} alt="One commit's page, with its author, date and message above a side-by-side diff" size={ImageSize.large} caption="One commit, against the commit before it" />
 
-The _Commit History_ page shows all the commits that you uploaded to the repository. The commits are ordered from the latest to the oldest.
-You can see the commit message, the author of the commit, the date of the commit, the commit hash and the result of the commit.
-If you created a submission with multiple commits, you can see all of them here but only the last commit has the result of the submission.
-Lastly, you can also view the code of the commit by pressing on the commit hash.
+## Cloning the Repository to Your Computer
 
-<Image src={commitHistoryViewImg} alt={'Commit History View'} size={ImageSize.large} />
+**Code** — in the exercise header, or on the **Source** view — gives you the address to clone.
 
-By clicking on a commit hash, you are redirected to the **Commit Diff** page. This page shows the changes that you made in this commit.
-You can see the changes in the code, the files that have been added, the files that have been deleted and the files that have been modified.
-Green color indicates the lines that have been added and red color indicates the lines that have been deleted.
-You can also see the commit message, the author of the commit, the date of the commit and the commit hash.
+<Image src={cloneDialog} alt="The clone dialog with the authentication dropdown open, offering Token, SSH and HTTPS" size={ImageSize.medium} caption="The clone dialog, with the three ways of authenticating" />
 
-<Image src={commitDiffViewImg} alt={'Commit Diff View'} size={ImageSize.large} />
+The button on the left of the address chooses how you authenticate, and the address changes with it. A token is
+masked on screen as `**********`; **Copy URL** puts the real address on your clipboard.
 
----
+The buttons underneath hand the repository straight to a tool instead. **Open in …** names the IDE you picked under
+**User Settings → IDE Preferences**, **Clone in Git client** opens Sourcetree or Tower, and where your instructor
+has enabled it, **Open online IDE** opens an editor in the browser with nothing to install.
 
-## Authentication Mechanisms
+<Callout variant={CalloutVariant.info}>
 
-<Image src={codeButtonExtendedImg} alt={'Commit Diff View'} size={ImageSize.large} />
+  No **Code** button on an exercise means your instructor has not enabled **Allow Offline IDE** for it. Work on that
+  exercise in the online editor.
 
-Artemis supports three mechanisms for authenticating to repositories: password authentication, token authentication and authentication via SSH.
-Admins can configure which mechanisms should be available for users, and the order in which they appear in the code button drop down, as described in the Artemis configuration.
+</Callout>
 
-As a student, token authentication normally uses a participation token.
-Artemis automatically generates one token for each programming exercise repository you participate in and provides it through the code button dialog.
-Instructor and course-staff token behavior is documented separately in the [instructor Integrated Code Lifecycle documentation](/instructor/integrations/integrated-code-lifecycle#repository-access-and-automatic-tokens-for-course-staff).
+### Which Authentication Method to Use
 
-Here is a short overview on the advantages and disadvantages of the provided mechanisms:
+| Method | Setup | Scope | Worth knowing |
+|---|---|---|---|
+| **Token** | none | one repository | The default, and the right answer for almost every student |
+| **SSH** | a key pair, once | every repository you can reach | Worth the setup if you work across many exercises |
+| **HTTPS** | none | every repository you can reach | Your Artemis password, typed into Git |
 
-### Password
+Your administrator decides which of the three appear and in what order; the default order is the one above. If one
+of them is missing from the dropdown, it is switched off for the whole instance.
 
-**Advantages**
+**Token** is the one to reach for. Artemis creates an access token for each exercise repository you participate in
+and puts it straight into the address, so cloning works with nothing set up and the token is useless anywhere else.
 
-- easy to use
+**HTTPS** authenticates with your Artemis password. It works, but it puts your account password into a Git client,
+and one leaked password exposes everything your account can reach rather than a single exercise.
 
-**Disadvantages**
+### Cloning From a Terminal
 
-- slow with external authentication
-- insecure (when user has weak password)
-- not available to all universities
-
-### Participation Token
-
-**Advantages**
-
-- easy to use, no setup needed
-- limited access scope to a single exercise
-- secure
-
-**Disadvantages**
-
-- only usable for one repository
-
-You can review and revoke the participation tokens you own at any time under **User Settings → Access Tokens**.
-Revoking a token invalidates it immediately; a new one is created automatically the next time you open the clone dialog for that exercise.
-
-### SSH
-
-**Advantages**
-
-- secure
-- industry standard for use with git
-- easy to use after correct set up
-
-**Disadvantages**
-
-- slower than HTTPS
-- can be difficult to use
-- can be overwhelming for new users
-
-The participation token is the recommended authentication method for students due to its simplicity, security, and lack of setup requirements.
-While SSH provides strong security, its complexity and setup challenges may make it less convenient.
-Password authentication should be used with caution — admins are encouraged to disable it when possible or enforce strong password policies to enhance security.
-The default order of authentication mechanisms is: token, SSH, and lastly password.
-
----
-
-## Cloning a repository
-
-Using the chosen mechanism, you can use `Tower <https://www.git-tower.com/>`_, `git from the terminal <https://git-scm.com/downloads/>`_, or `any other client <https://git-scm.com/downloads/guis/>`\_ you like to clone your Git repository.
-These instructions show you how to clone your repository using Git from the terminal.
-
-From the exercise view, click the code button to display the Clone dialog.
-Copy the clone URL (either the SSH format or the HTTPS, with or without token).
-If you are using the SSH protocol, ensure your public key is stored in your Artemis account settings and loaded on the local system to which you are cloning.
-From a terminal window, change to the local directory where you want to clone your repository.
-
-Paste the link you copied from Artemis, for example:
-
-**Clone over HTTPS:**
+Copy the address from the dialog and clone it. With a token the address already carries everything Git needs:
 
 ```bash
-git clone https://username@artemis.tum.de/course/documentation-tests.git
+git clone https://your_login:your_token@artemis.example.org/git/COURSE/course-your_login.git
 ```
 
-**Clone over HTTPS with access token:**
+Over SSH, the key you added to your account is what identifies you:
 
 ```bash
-git clone https://username:<your-access-token>@artemis.tum.de/course/documentation-tests.git
+git clone ssh://git@artemis.example.org:7921/git/COURSE/course-your_login.git
 ```
 
-**Clone over SSH:**
+And over HTTPS, Git asks for your password:
 
 ```bash
-git clone ssh://git@artemis.tum.de/course/documentation-tests.git
+git clone https://your_login@artemis.example.org/git/COURSE/course-your_login.git
 ```
 
-If the clone was successful, a new sub-directory appears on your local drive.
-This directory has the same name as the repository that you cloned.
-The clone contains the files and metadata that Git requires to maintain the changes you make to the source files.
+Any Git client works just as well — the addresses are ordinary Git URLs.
 
----
+### Reviewing and Revoking Your Tokens
 
-## VCS access tokens
+**User Settings → Access Tokens** lists every access token you hold, saying which exercise and repository each one
+covers. No token value is shown anywhere in Artemis — not here, and not in the clone dialog, which masks it.
+**Copy URL** is the only way to get one.
 
-The tokens for student repositories are automatically created and provided through the code button dialog.
-For every programming exercise you participate in, Artemis automatically generates an access token associated only with that repository.
-You do not need to create this token manually.
+<Image src={accessTokens} alt="The Access Tokens overview, listing one participation token per exercise with a revoke action" size={ImageSize.large} caption="One token per repository, each revocable on its own" />
 
-**Warning:** Never share your access tokens or commit them to version control. Treat tokens like passwords. If a token is compromised, revoke it immediately and create a new one.
+Revoking a token stops it working immediately, which is what to do if one has ended up somewhere it should not be —
+a chat message, a screenshot, a committed file. You are not locked out: the next time you open that exercise's clone
+dialog, Artemis issues a fresh one.
 
----
+<Callout variant={CalloutVariant.warning}>
 
-## Using SSH keys to secure Git operations
+  Treat an access token as you would a password. Never share one, and never commit one — a clone address pasted into
+  a file and pushed puts your token in the repository history, where deleting the line does not remove it.
 
-Artemis provides a simple way for users to connect securely to repositories, using SSH to perform Git operations.
-Next is a small and basic introduction to SSH, and if you already know it, there is a guide on how to create SSH keys.
-If you already have an SSH key, learn how to add it to your Artemis account.
+</Callout>
 
----
+## Setting Up SSH
 
-## SSH
+SSH is worth setting up if you work on many exercises, or if you would rather not have credentials in your Git
+configuration at all. It is a one-off: you create a key pair, give Artemis the public half, and every repository
+you can reach then works without anything further.
 
-Artemis uses SSH as a simple way for users to connect securely to repositories to perform Git operations.
+### How It Works
 
-### What is SSH?
+A key pair is two matching files. The **private key** stays on your computer and is never shared. The **public
+key** is the half you hand out — you give it to Artemis, and Artemis recognises you by it from then on.
 
-SSH (Secure Shell) is a protocol that allows you to securely connect to another computer over a network.
-It's mostly used by system administrators, developers, and IT professionals to remotely manage servers or computers.
-SSH provides a secure and encrypted communication channel between your computer and a remote machine, so any data passed (like passwords or commands) is protected from eavesdropping.
-In Artemis you can use SSH to access your repositories with Git.
+When you connect, your computer proves it holds the private key without ever sending it. Nothing that crosses the
+network can be replayed by someone watching, which is what makes SSH worth the setup over a password.
 
-### Why use SSH?
+### Creating a Key Pair
 
-The main advantage of SSH is security.
-When you connect to a remote machine using SSH, all the data exchanged between your computer and the server is encrypted.
-This means if someone tries to intercept the communication, they can't read it. It's like sending messages through a locked box that only you and the server can open.
+If you already have a key — `~/.ssh/id_ed25519.pub` on macOS and Linux, `%USERPROFILE%\.ssh\id_ed25519.pub` on
+Windows — use it. One key can serve any number of sites and repositories.
 
-### How does SSH work?
-
-SSH works by using two components:
-
-- **Client:** The computer you are using to connect.
-- **Server:** The machine you want to connect to.
-
-When you want to connect, your SSH client sends a request to the server.
-If the connection is successful, you can log in to the server and start working as if you were sitting in front of it.
-The connection uses SSH keys for authentication. Although it is also possible to use username and password to connect over SSH, this is discouraged.
-
-### What are SSH Keys?
-
-SSH keys are a more secure alternative to passwords for logging into a server.
-They are based on public-key cryptography and come in pairs: a public key and a private key.
-
-- **Public Key:** This key is stored on the server. Think of it like a lock that only you can open.
-- **Private Key:** This key stays on your local machine (never shared!). It's like the key to that lock.
-
-When you try to connect to the server, your computer proves it has the private key that matches the server's public key, granting you access.
-You can add a personal SSH key to your user account to easily authenticate when performing read operations from your local machine.
-You can add multiple SSH keys to your Artemis account.
-For instructions on how to add your SSH key to your Artemis account, please refer to the relevant documentation.
-
-Before you can use SSH keys to secure a connection with Artemis the following must have already been done:
-
-- SSH is enabled on your university's Artemis instance.
-- You need an SSH key.
-
-**Note:**
-
-- You can use the same SSH key for multiple repositories or projects.
-- You can add multiple SSH keys to your account.
-- Artemis supports ECDSA, RSA, and Ed25519 key types.
-
----
-
-## Creating SSH keys
-
-SSH keys can be used to establish a secure connection with the Artemis Local Version Control, where you are performing Git operations from your local machine.
-The SSH key needs to be added to Artemis before you can make use of the key.
-
-### Creating an SSH key on Windows
-
-#### 1. Check for existing keys
-
-You should check for existing SSH keys on your local computer. Open a command prompt, and run:
+To create one, run `ssh-keygen` in a terminal, or in Git Bash on Windows:
 
 ```bash
-cd %userprofile%/.ssh
+ssh-keygen -t ed25519 -C "your_login@your-laptop"
 ```
 
-- If you see "No such file or directory", then there aren't any existing keys: go to step 3.
-- Check to see if you have a key already:
+It asks where to save the key — press Enter for the default — and then for a passphrase. Set one. It encrypts the
+private key on disk, so a copied laptop is not a compromised account.
 
-```bash
-dir id_*
-```
+The comment after `-C` is only a label, but Artemis offers it as the key's name later. Put the computer in it rather
+than your email address: what you will want to know in a year is which machine a key belongs to, so that you can
+remove the right one.
 
-If there are existing keys, you may want to use those: add your key to Artemis.
+You now have two files: `id_ed25519`, the private key, which never leaves your computer, and `id_ed25519.pub`, the
+public key, which is what you hand to Artemis.
 
-#### 2. Back up old SSH keys
+<Callout variant={CalloutVariant.danger}>
 
-If you have existing SSH keys, but you don't want to use them, you should back those up.
-In a command prompt on your local computer, run:
+  Only ever upload the `.pub` file. If you are asked for a private key by anything other than your own SSH client,
+  something is wrong.
 
-```bash
-mkdir key_backup
-copy * key_backup
-```
+</Callout>
 
-#### 3. Generate a new SSH key
+### Adding the Key to Your Account
 
-If you don't have an existing SSH key that you wish to use, generate one as follows:
+**User Settings → SSH** lists the keys on your account and is where you add one.
 
-1. Log in to your local computer as an administrator.
-2. In a command prompt, run:
+<Image src={sshKeys} alt="The SSH keys settings page, listing two keys with their hashes, one of them with an expiry date" size={ImageSize.large} caption="The keys on your account" />
 
-```bash
-ssh-keygen -t ed25519 -C "your_email@example.com"
-```
+**Add new SSH key** opens the form. Paste the whole contents of your `.pub` file into **Key** — the page shows the
+command that copies it to your clipboard on your operating system.
 
-Associating the key with your email address helps you to identify the key later on.
-Note that the ssh-keygen command is only available if you have already installed Git (with Git Bash).
-You'll see a response similar to this:
+<Image src={sshAddKey} alt="The Add new SSH key form, with the key field, the label and the expiry choice" size={ImageSize.large} caption="Adding a key: the key itself, a label, and how long it should last" />
 
-```
-C:\Users\artemis>ssh-keygen -t ed25519 -C "your_email@example.com"
-Generating public/private ed25519 key pair.
-Enter file in which to save the key (/c/Users/artemis/.ssh/id_ed25519):
-```
+**Label** names the key in the list. Leave it empty and Artemis uses the comment from the key itself. Name it after
+the computer, so that a key you want to remove later is the one you can recognise.
 
-3. Just press `<Enter>` to accept the default location and file name. If the .ssh directory doesn't exist, the system creates one for you.
-4. Enter, and re-enter, a passphrase when prompted. The whole interaction will look similar to this:
+**Expiry** decides how long the key stays valid. **Do not expire** keeps it until you delete it; **Expire
+automatically** takes a date and stops it working after that. Setting an expiry on a key you use from a shared or
+borrowed machine limits what a forgotten key can do.
 
-```
-C:\Users\artemis>ssh-keygen -t ed25519 -C "your_email@example.com"
-Generating public/private ed25519 key pair.
-Enter file in which to save the key (/c/Users/artemis/.ssh/id_ed25519):
-Created directory '/c/Users/artemis/.ssh'.
-Enter passphrase (empty for no passphrase):
-Enter same passphrase again:
-Your identification has been saved in c/Users/artemis/.ssh/id_ed25519.
-Your public key has been saved in c/Users/artemis/.ssh/id_ed25519.pub.
-The key fingerprint is:
-SHA256:wvaHYeLtY6+DlvV5sFZgDi3abcdefghijklmnopqrstuvw your_email@example.com
-```
+**Save** adds the key, and it works immediately. Adding more than one is normal — one per computer means losing a
+laptop costs you one key, not all of them. Remove a key with the **…** menu beside it.
 
-5. You're done and you can now add your key to Artemis.
+<Callout variant={CalloutVariant.info}>
 
-### Creating an SSH key on Linux & macOS
+  Pick SSH in the clone dialog without a key on your account and Artemis says so, with a link to this settings page,
+  and leaves **Copy URL** disabled until you have one. It warns you the same way when any key on your account has
+  expired.
 
-#### 1. Check for existing SSH keys
+</Callout>
 
-You should check for existing SSH keys on your local computer. Open a terminal and run:
+### Checking the Server Fingerprint
 
-```bash
-cd ~/.ssh
-```
+The first time you connect over SSH, your Git client shows the server's fingerprint and asks whether to trust it.
+That is the one moment in SSH where you are trusting something you have not checked, so check it.
 
-If you see "No such file or directory", then there aren't any existing keys: go to step 3.
+**Show SSH fingerprints**, which the SSH settings page offers once you have added a key, lists Artemis's own.
+Compare the one your client shows against that list; if they match, you are talking to Artemis. If they do not,
+stop, and tell your instructor.
 
-Check to see if you have a key already:
+<Image src={sshFingerprints} alt="The SSH Fingerprints page, listing the fingerprint of the server's host key" size={ImageSize.large} caption="Artemis's fingerprints, to check against what your client shows you" />
 
-```bash
-ls id_*
-```
-
-If there are existing keys, you may want to use those: add your key to Artemis.
-
-#### 2. Back up old SSH keys
-
-If you have existing SSH keys, but you don't want to use them, you should back those up.
-In a command prompt on your local computer, run:
-
-```bash
-mkdir key_backup
-cp * key_backup
-```
-
-#### 3. Generate a new SSH key
-
-If you don't have an existing SSH key that you wish to use, generate one as follows:
-
-1. Open a terminal on your local computer and enter the following:
-
-```bash
-ssh-keygen -t ed25519 -C "your_email@example.com"
-```
-
-Associating the key with your email address helps you to identify the key later on. You'll see a response similar to this:
-
-```
-artemis@homemac ~ % ssh-keygen -t ed25519 -C artemis@email.com
-Generating public/private ed25519 key pair.
-Enter file in which to save the key (/Users/artemis/.ssh/id_ed25519):
-```
-
-2. Just press `<Enter>` to accept the default location and file name. If the .ssh directory doesn't exist, the system creates one for you.
-3. Enter, and re-enter, a passphrase when prompted. The whole interaction will look similar to this:
-
-```
-artemis@homemac ~ % ssh-keygen -t ed25519 -C artemis@email.com
-Generating public/private ed25519 key pair.
-Enter file in which to save the key (/Users/artemis/.ssh/id_ed25519):
-Enter passphrase (empty for no passphrase):
-Enter same passphrase again:
-Your identification has been saved in /Users/artemis/.ssh/id_ed25519.
-Your public key has been saved in /Users/artemis/.ssh/id_ed25519.pub.
-The key fingerprint is:
-SHA256:gTVWKbn41z6JgBNu3wYjLC4abcdefghijklmnopqrstuvwxy artemis@email.com
-The keys randomart image is:
-+--[ED25519 256]--+
-|==+.    +o..     |
-|.oE.   +o..      |
-|    . ...o       |
-|     .o...       |
-|     oo+S  .     |
-|  + ..B = . .    |
-|.+.+.oo+ * o .   |
-|o++.o+  . + +    |
-|B+ o.    .   .   |
-+----[SHA256]-----+
-artemis@homemac ~ %
-```
-
-4. You're done and you can now add your key to Artemis.
-
----
-
-## Using SSH with Artemis
-
-You can use SSH keys to establish a secure connection between your computer and Artemis when you are performing Git operations (pull, clone, push) from your local machine.
-Personal keys are linked to your Artemis account, inheriting its permissions and operating under its unique identity.
-To use your generated SSH keys with Artemis, you need to add it in the account settings.
-
-### Add an SSH key to your Artemis account
-
-#### 1. Copy your public key
-
-On Windows in your command prompt, change directory to your .ssh directory, and copy the public key file to your clipboard by running:
-
-```bash
-cd %userprofile%/.ssh
-clip < id_ed25519.pub
-```
-
-On macOS or Linux simply run the following in a terminal:
-
-```bash
-pbcopy < ~/.ssh/id_ed25519.pub
-```
-
-If pbcopy isn't working, locate the hidden .ssh folder, open the file in a text editor, and copy it to your clipboard.
-On Linux, you may need to download and install xclip, then use that:
-
-```bash
-sudo apt-get install xclip
-xclip -sel clip < ~/.ssh/id_ed25519.pub
-```
-
-Note that the key's name is not necessarily id_ed25519.pub, but can be arbitrary, and depends on how you saved it.
-
-#### 2. Add the key to your Artemis account
-
-Open the settings, go to the SSH tab, and select 'New Key'.
-Then paste the copied SSH key into the text box.
-
-<div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-    <Image src={openSettingsImg} alt={'Open account settings'} size={ImageSize.medium} />
-    <Image src={sshAddPublicKeyImg} alt={'Add public SSH key to account'} size={ImageSize.medium} />
-</div>
-
-#### 3. Save the key. You're done!
-
-### Use SSH to connect to Artemis repositories
-
-After everything is set up, you can go to a programming exercise, and use the SSH clone URL with git to access the repository locally, like this, for example:
-
-```bash
-git clone ssh://git@artemis.cit.tum.de:7921/git/COURSE/exercise-user_1.git
-```
+Your client only asks once per server. After you have accepted a fingerprint it is remembered, and a later warning
+that it has changed is worth taking seriously rather than clicking past.

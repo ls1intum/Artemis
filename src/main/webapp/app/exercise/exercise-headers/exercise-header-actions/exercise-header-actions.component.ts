@@ -124,6 +124,7 @@ export class ExerciseHeaderActionsComponent {
     readonly onRestartPractice = input<() => boolean>();
     readonly submitDisabled = input<boolean>(false);
     readonly submitLabel = input<string>('entity.action.submit');
+    readonly quizPracticeAttemptFinished = input<boolean>(false);
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 
@@ -314,19 +315,34 @@ export class ExerciseHeaderActionsComponent {
         return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation());
     }
 
+    /**
+     * Whether the quiz "Start practice" button should be shown: in the graded view only until the first practice
+     * attempt exists, and in the practice view only once the current attempt is finished (to start another). It is
+     * hidden while viewing a previous result (where the "Continue" action returns to the latest submission first).
+     * Once a practice attempt exists, a student in the graded view switches to practice mode, which opens the latest
+     * practice result, and starts another attempt from there.
+     */
+    readonly showQuizStartPracticeButton = computed(() => {
+        if (!this.isStartPracticeAvailable() || this.onContinueExercise()) {
+            return false;
+        }
+        if (this.participationMode() === 'practice') {
+            return this.quizPracticeAttemptFinished();
+        }
+        return !this._practiceParticipation();
+    });
+
     startExercise() {
         this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
         this.courseExerciseService
-            .startExercise(this.exercise().id!)
+            .startExercise(this.exercise().id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
-                    if (participation) {
-                        this.receiveNewParticipation(participation);
-                    }
+                    this.receiveNewParticipation(participation);
                     if (programmingExercise) {
-                        if (participation?.initializationState === InitializationState.INITIALIZED) {
+                        if (participation.initializationState === InitializationState.INITIALIZED) {
                             if (programmingExercise.allowOfflineIde) {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                             } else {
@@ -350,14 +366,12 @@ export class ExerciseHeaderActionsComponent {
         this._isLoading.set(true);
         const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
         this.courseExerciseService
-            .resumeProgrammingExercise(this.exercise().id!, participation!.id!)
+            .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (resumedParticipation: StudentParticipation) => {
-                    if (resumedParticipation) {
-                        this.receiveNewParticipation(resumedParticipation);
-                        this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
-                    }
+                    this.receiveNewParticipation(resumedParticipation);
+                    this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                 },
                 error: (error) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);

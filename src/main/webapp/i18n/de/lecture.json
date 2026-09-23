@@ -12,7 +12,14 @@
                     "filterFuture": "Zukünftige",
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
-                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
+                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
+                "empty": {
+                    "title": "Noch keine Vorlesungen",
+                    "description": "Erstelle eine Vorlesung oder importiere eine aus einem anderen Kurs, um Inhalte zu diesem Kurs hinzuzufügen.",
+                    "documentation": "Mehr über Vorlesungen erfahren",
+                    "noMatchingTitle": "Keine Vorlesungen entsprechen den ausgewählten Filtern",
+                    "noMatchingDescription": "Passe die ausgewählten Filter an."
+                }
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",

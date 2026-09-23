@@ -1,27 +1,35 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { WritableSignal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { EMPTY, Observable, of, throwError } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { InformationBox } from 'app/shared-ui/information-box/information-box.component';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { CourseExerciseGroupDetailComponent } from 'app/course/overview/course-exercises/group-detail/course-exercise-group-detail.component';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
-import { ExerciseProblemStatementDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('CourseExerciseGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseExerciseGroupDetailComponent>;
@@ -41,7 +49,6 @@ describe('CourseExerciseGroupDetailComponent', () => {
                 includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
                 exerciseVariantGroup: reference,
                 studentParticipations: [{ id: 101 }],
-                problemStatement: 'a',
             } as unknown as Exercise,
             {
                 id: 2,
@@ -50,7 +57,6 @@ describe('CourseExerciseGroupDetailComponent', () => {
                 includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
                 exerciseVariantGroup: reference,
                 studentParticipations: [{ id: 102 }],
-                problemStatement: 'b',
             } as unknown as Exercise,
         ];
     }
@@ -58,40 +64,67 @@ describe('CourseExerciseGroupDetailComponent', () => {
     /** An additional variant of the given inclusion type worth 10 points, joining group 10. */
     function extraVariant(includedInOverallScore: IncludedInOverallScore, groupMaxPoints: number | undefined): Exercise {
         const reference = { id: GROUP_ID, title: 'Sorting variants', maxPoints: groupMaxPoints };
-        return { id: 3, type: ExerciseType.TEXT, maxPoints: 10, includedInOverallScore, exerciseVariantGroup: reference, problemStatement: 'c' } as unknown as Exercise;
+        return { id: 3, type: ExerciseType.TEXT, maxPoints: 10, includedInOverallScore, exerciseVariantGroup: reference } as unknown as Exercise;
     }
 
-    async function setup(exercises: Exercise[], options?: { getProblemStatements?: () => Observable<ExerciseProblemStatementDTO[]> }): Promise<void> {
+    async function setup(exercises: Exercise[], renderTemplate = false): Promise<void> {
         const course = { id: 1, exercises } as Course;
         const route = {
             params: of({ groupId: String(GROUP_ID) }),
             parent: { parent: { snapshot: { params: { courseId: '1' } } } },
         } as unknown as ActivatedRoute;
 
-        await TestBed.configureTestingModule({
+        const testBed = TestBed.configureTestingModule({
             imports: [CourseExerciseGroupDetailComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(CourseOverviewExercisesService, { loadIfNeeded: () => of({ exercises } as CourseExercisesForOverviewDTO) }),
                 MockProvider(CourseStorageService, { getCourse: () => course, subscribeToCourseUpdates: () => EMPTY }),
-                MockProvider(ExerciseVariantGroupService, { getProblemStatements: (options?.getProblemStatements ?? (() => EMPTY)) as never }),
                 MockProvider(EntityTitleService),
-                MockProvider(ProgrammingExercisePlantUmlExtensionWrapper, {
-                    subscribeForInjectableElementsFound: () => EMPTY,
-                    // A markdown-it plugin is a function; a bare object would make markdownIt.use() throw.
-                    getExtension: () => (() => {}) as never,
-                }),
                 MockProvider(ArtemisServerDateService, { now: () => dayjs() }),
-                MockProvider(DomSanitizer, { bypassSecurityTrustHtml: (value: string) => value }),
                 { provide: ScoresStorageService, useValue: { getStoredAchievedGroupPoints: (_courseId: number, groupId: number) => storedGroupPoints.get(groupId) } },
                 { provide: ParticipationService, useClass: MockParticipationService },
+                // The sidebar toggle button in the rendered header translates its tooltip.
+                { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
+        });
+
+        if (renderTemplate) {
+            // Keep the real template, but stub everything it projects into, so the assertions are about the header
+            // itself rather than about what an exercise card or an information box renders.
+            testBed.overrideComponent(CourseExerciseGroupDetailComponent, {
+                remove: {
+                    imports: [
+                        RouterLink,
+                        ExerciseHeadersInformationComponent,
+                        InformationBoxComponent,
+                        TumUiTooltipDirective,
+                        TranslateDirective,
+                        ArtemisDatePipe,
+                        ArtemisTimeAgoPipe,
+                        ArtemisTranslatePipe,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockDirective(RouterLink),
+                        MockComponent(ExerciseHeadersInformationComponent),
+                        MockComponent(InformationBoxComponent),
+                        MockDirective(TumUiTooltipDirective),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisDatePipe),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
+                },
+            });
+        } else {
             // Render nothing: this spec exercises the component's scoring logic, not its template.
-            .overrideComponent(CourseExerciseGroupDetailComponent, { set: { template: '' } })
-            .compileComponents();
+            testBed.overrideComponent(CourseExerciseGroupDetailComponent, { set: { template: '' } });
+        }
+        await testBed.compileComponents();
 
         fixture = TestBed.createComponent(CourseExerciseGroupDetailComponent);
     }
@@ -106,7 +139,6 @@ describe('CourseExerciseGroupDetailComponent', () => {
         variantsInfoBoxData: () => InformationBox;
         pointsInfoBoxData: () => InformationBox;
         groupDateInfoBoxes: () => InformationBox[];
-        renderedStatements: () => Map<number, SafeHtml>;
         exerciseParticipation: (exercise: Exercise) => StudentParticipation | undefined;
         exerciseLink: (exercise: Exercise) => string;
     } {
@@ -267,56 +299,6 @@ describe('CourseExerciseGroupDetailComponent', () => {
         });
     });
 
-    describe('problem statements', () => {
-        it('renders inline problem statements of the members', async () => {
-            await setup(exercisesInGroup(undefined));
-            fixture.detectChanges();
-            await fixture.whenStable();
-            const rendered = comp().renderedStatements();
-            expect(rendered.get(1)).toBeDefined();
-            expect(rendered.get(2)).toBeDefined();
-        });
-
-        it('batch-loads missing problem statements from the group preview endpoint', async () => {
-            const reference = { id: GROUP_ID, title: 'Sorting variants' };
-            const member = { id: 1, type: ExerciseType.TEXT, exerciseVariantGroup: reference } as unknown as Exercise;
-            const previews = of<ExerciseProblemStatementDTO[]>([{ exerciseId: 1, problemStatement: 'loaded **statement**' }]);
-            await setup([member], { getProblemStatements: () => previews });
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(comp().renderedStatements().get(1)).toBeDefined();
-        });
-
-        it('issues a single batch request for the whole group instead of one per member', async () => {
-            // The whole point of the endpoint: opening a group must not fan out one detail request per member.
-            const reference = { id: GROUP_ID, title: 'Sorting variants' };
-            const memberIds = [1, 2, 3];
-            const members = memberIds.map((id) => ({ id, type: ExerciseType.TEXT, exerciseVariantGroup: reference }) as unknown as Exercise);
-            const previewsSpy = vi.fn(() => of<ExerciseProblemStatementDTO[]>(memberIds.map((id) => ({ exerciseId: id, problemStatement: `statement ${id}` }))));
-            await setup(members, { getProblemStatements: previewsSpy });
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(previewsSpy).toHaveBeenCalledTimes(1);
-            expect(previewsSpy).toHaveBeenCalledWith(1, GROUP_ID);
-            expect(comp().renderedStatements().size).toBe(3);
-        });
-
-        it('releases the requested group on a failed batch so a retry is possible', async () => {
-            const reference = { id: GROUP_ID, title: 'Sorting variants' };
-            const member = { id: 1, type: ExerciseType.TEXT, exerciseVariantGroup: reference } as unknown as Exercise;
-            const previewsSpy = vi.fn(() => throwError(() => new Error('boom')));
-            await setup([member], { getProblemStatements: previewsSpy });
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(previewsSpy).toHaveBeenCalled();
-            const requested = (fixture.componentInstance as unknown as { requestedGroupIds: Set<number> })['requestedGroupIds'];
-            expect(requested.has(GROUP_ID)).toBe(false);
-        });
-    });
-
     describe('helpers', () => {
         it('returns the graded participation and the exercise link', async () => {
             await setup(exercisesInGroup(undefined));
@@ -332,6 +314,44 @@ describe('CourseExerciseGroupDetailComponent', () => {
             exercises[0].studentParticipations = [{ id: 201, testRun: true } as StudentParticipation, { id: 101 } as StudentParticipation];
             await setup(exercises);
             expect(comp().exerciseParticipation(comp().exercises()[0])?.id).toBe(101);
+        });
+    });
+
+    describe('title bar', () => {
+        /** Access to the protected sidebar state the header renders from. */
+        function sidebar(): { isSidebarCollapsed: WritableSignal<boolean>; showSidebarToggle: () => boolean } {
+            return fixture.componentInstance as never;
+        }
+
+        it('renders the compact title bar the exercise page uses, not the taller detail header', async () => {
+            // #13918: a group page and the variants it links to sit side by side in the same shell, so they must
+            // wear the same bar. `page-top-bar` is what pins it to the shell's title-bar height.
+            await setup(exercisesInGroup(undefined), true);
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('.page-top-bar'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('.detail-header-card'))).toBeNull();
+        });
+
+        it('offers the sidebar expand button only once the sidebar is collapsed', async () => {
+            await setup(exercisesInGroup(undefined), true);
+            fixture.detectChanges();
+            // Nothing has handed the page a toggle yet, so there is no button to show.
+            expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeNull();
+
+            const toggleSidebar = vi.fn();
+            fixture.componentInstance.setSidebarToggle(false, toggleSidebar);
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeNull();
+
+            sidebar().isSidebarCollapsed.set(true);
+            fixture.detectChanges();
+            const button = fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent));
+            expect(button).not.toBeNull();
+
+            // #13918: without this the collapsed sidebar could only be brought back by the keyboard shortcut.
+            (button.componentInstance as CourseSidebarToggleButtonComponent).toggleSidebar.emit();
+            expect(toggleSidebar).toHaveBeenCalledOnce();
         });
     });
 });

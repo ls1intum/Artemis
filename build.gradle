@@ -72,7 +72,7 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "io.github.ben-manes.versions" version "0.61.0"
+    id "io.github.ben-manes.versions" version "0.62.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
@@ -83,7 +83,17 @@ plugins {
     id "org.sonarqube" version "${sonarqube_plugin_version}"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    id "org.openapi.generator" version "7.21.0"
+    // Bump this one by hand, never on the strength of a green build. The custom "angular22" generator on the
+    // buildscript classpath above declares openapi-generator 7.21.0 and is discovered through ServiceLoader, so
+    // raising the plugin runs that generator against a core it was not compiled against - and nothing in CI would
+    // notice, because the generated client is committed and CI never runs openApiGenerate. Verify a candidate by
+    // regenerating on the old and the new version and diffing the two outputs against each other (not against the
+    // committed client, which has drifted from the spec): `./gradlew openApiGenerate`, copy
+    // src/main/webapp/app/openapi aside, `git checkout` it, switch version, regenerate, diff.
+    // 7.21.0 -> 7.25.0 was checked that way: the generator loads and emits a complete client, and the only
+    // difference is `{ [key: string]: any }` becoming `{ [key: string]: any | null }` for free-form maps, which is
+    // the same type in TypeScript.
+    id "org.openapi.generator" version "7.25.0"
     id "com.google.osdetector" version "1.7.3"
     id "org.cyclonedx.bom" version "3.4.1"
 }
@@ -96,7 +106,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.0"
+version = "10.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -161,6 +171,30 @@ modernizer {
         "org/apache/commons/io/FileUtils.copyFile:(Ljava/io/File;Ljava/io/File;)V",
         "org/apache/commons/io/FileUtils.writeStringToFile:(Ljava/io/File;Ljava/lang/String;)V",
         "org/apache/commons/io/FileUtils.writeStringToFile:(Ljava/io/File;Ljava/lang/String;Ljava/nio/charset/Charset;)V",
+        // The remaining FileUtils write and move rules, for the same reason. FileUtil is the one class the ArchUnit rule
+        // exempts, and it keeps FileUtils there deliberately too: moveFile falls back to copy-and-delete across
+        // filesystems, which a bare Files.move cannot do, and writeByteArrayToFile creates the temp directory the write
+        // targets.
+        "org/apache/commons/io/FileUtils.writeByteArrayToFile:(Ljava/io/File;[B)V",
+        "org/apache/commons/io/FileUtils.writeByteArrayToFile:(Ljava/io/File;[BZ)V",
+        "org/apache/commons/io/FileUtils.writeLines:(Ljava/io/File;Ljava/util/Collection;)V",
+        "org/apache/commons/io/FileUtils.writeLines:(Ljava/io/File;Ljava/util/Collection;Z)V",
+        "org/apache/commons/io/FileUtils.writeLines:(Ljava/io/File;Ljava/lang/String;Ljava/util/Collection;)V",
+        "org/apache/commons/io/FileUtils.writeLines:(Ljava/io/File;Ljava/lang/String;Ljava/util/Collection;Z)V",
+        "org/apache/commons/io/FileUtils.moveFile:(Ljava/io/File;Ljava/io/File;)V",
+        "org/apache/commons/io/FileUtils.moveFile:(Ljava/io/File;Ljava/io/File;[Ljava/nio/file/CopyOption;)V",
+        // List.of and Set.of reject null elements, and Artemis passes null into both on purpose: the exercise timeline
+        // validation compares lists of nullable dates, and two tests assert how a null element is handled. Swapping the
+        // factory would turn those into a NullPointerException.
+        "java/util/Collections.singletonList:(Ljava/lang/Object;)Ljava/util/List;",
+        "java/util/Collections.singleton:(Ljava/lang/Object;)Ljava/util/Set;",
+        // ProgrammingExercise's File extends java.io.File to carry its Repository, so its constructors have to call
+        // super(String). Path.of is not a substitute for a superclass constructor.
+        'java/io/File."<init>":(Ljava/lang/String;)V',
+        // Files.createTempFile is reserved for TempFileUtilService by TempFileArchitectureTest, which fails the build
+        // on a direct call from anywhere else, so java.io.File.createTempFile is the alternative that is allowed here.
+        "java/io/File.createTempFile:(Ljava/lang/String;Ljava/lang/String;)Ljava/io/File;",
+        "java/io/File.createTempFile:(Ljava/lang/String;Ljava/lang/String;Ljava/io/File;)Ljava/io/File;",
     ]
 }
 
@@ -398,7 +432,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.7"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.8"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -588,13 +622,14 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.85"
-    // 1.85.2 is a provider-only patch (AES CBC-256 via the id_aes256_CBC OID silently derived a 192-bit key,
-    // bc-java #2390) with no bcpkix/bcpg/bcutil counterpart; spring-cloud-starter asks for it too. See the
-    // org.bouncycastle entry in gradle/dependency-families.gradle for why the family guard accepts the odd one out.
-    implementation "org.bouncycastle:bcprov-jdk18on:1.85.2"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.86"
+    // 1.86 is a joint release of every module, so the provider is back in step with its siblings and no longer
+    // needs the out-of-band patch level 1.85.2 carried (AES CBC-256 via the id_aes256_CBC OID silently derived a
+    // 192-bit key, bc-java #2390). The org.bouncycastle entry in gradle/dependency-families.gradle keeps accepting
+    // such a patch, because BC ships one whenever a single module needs fixing between joint releases.
+    implementation "org.bouncycastle:bcprov-jdk18on:1.86"
     // pulled transitively by sshd-git; pin to patched version
-    implementation "org.bouncycastle:bcpg-jdk18on:1.85"
+    implementation "org.bouncycastle:bcpg-jdk18on:1.86"
 
     // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
@@ -623,7 +658,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -669,10 +704,10 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.194"
+    testImplementation "io.github.classgraph:classgraph:4.8.195"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.6.1"
+    testImplementation "org.gradle:gradle-tooling-api:9.7.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.0"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
@@ -681,7 +716,7 @@ dependencies {
     testImplementation "com.tngtech.archunit:archunit:1.5.0"
 
     // we only need the database present at runtime
-    runtimeOnly "com.h2database:h2:2.4.240"
+    runtimeOnly "com.h2database:h2:2.5.250"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20260814"

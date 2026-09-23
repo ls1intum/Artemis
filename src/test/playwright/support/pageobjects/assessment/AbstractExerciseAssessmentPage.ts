@@ -21,7 +21,9 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async fillFeedback(points: number, feedback?: string) {
-        const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail');
+        // Scoped to the newest card: with multiple unreferenced feedback entries present, an unscoped locator
+        // matches every card's stepper/points input and Playwright strict mode rejects the ambiguous match.
+        const unreferencedFeedback = this.page.locator('.unreferenced-feedback-detail').last();
         await this.setPointsViaStepper(unreferencedFeedback, points);
         if (feedback) {
             await unreferencedFeedback.locator('.unified-feedback-detail-input').clear();

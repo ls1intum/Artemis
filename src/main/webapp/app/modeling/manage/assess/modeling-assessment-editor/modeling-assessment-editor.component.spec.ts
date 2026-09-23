@@ -13,7 +13,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -92,6 +92,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                         snapshot: {
                             paramMap: convertToParamMap({}),
                             queryParamMap: convertToParamMap({}),
+                            queryParams: { 'correction-round': '0', testRun: 'false' },
                         },
                         parent: {
                             paramMap: of(convertToParamMap({})),
@@ -193,14 +194,15 @@ describe('ModelingAssessmentEditorComponent', () => {
 
     it('should rewrite only the new segment of the assessment path once a random submission is locked', async () => {
         const location = TestBed.inject(Location);
-        vi.spyOn(location, 'path').mockReturnValue('/course-management/1/modeling-exercises/7/submissions/new/assessment?correction-round=0');
         const go = vi.spyOn(location, 'go').mockImplementation(() => {});
+        component.courseId = 1;
+        component.exerciseId = 7;
         vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(getSubmissionWithData()));
 
         component['loadRandomSubmission'](7);
         await fixture.whenStable();
 
-        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0');
+        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0&testRun=false');
     });
 
     describe('ngOnInit tests', () => {
@@ -375,6 +377,25 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.loadingFeedbackSuggestions()).toBe(false);
         });
 
+        it('should not re-fetch feedback suggestions when the submission already has a persisted adapted suggestion', async () => {
+            // Referenced modeling suggestions are typed AUTOMATIC, so a saved adapted suggestion alone still looked
+            // like "only automatic feedback" (a fresh assessment) to the old gate, causing it to refetch and
+            // duplicate the suggestion - and its credits - on every reload.
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [
+                { id: 3, reference: 'element:1', type: FeedbackType.AUTOMATIC, credits: 2, text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Adapted suggestion` } as Feedback,
+            ];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback()]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+            expect(component.result()?.feedbacks).toHaveLength(1);
+        });
+
         it('should not fetch feedback suggestions when Athena grading feedback is disabled', async () => {
             const submission = getSubmissionWithData();
             submission.results![0].feedbacks = [];
@@ -452,6 +473,42 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.unreferencedFeedback()).toHaveLength(1);
             expect(component.unreferencedFeedback()[0]?.id).toBe(unreferencedSuggestion.id);
             expect(component.result()?.feedbacks).toContainEqual(unreferencedSuggestion);
+        });
+
+        it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
+            const mockSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                    } as Exercise,
+                },
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(new HttpResponse<ComplaintDTO>({ body: undefined })));
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
+            const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    courseId: '2',
+                    examId: '3',
+                    exerciseGroupId: '4',
+                    exerciseId: '14',
+                }),
+            );
+            await fixture.whenStable();
+
+            expect(createUrlTreeSpy).toHaveBeenCalledWith(
+                ['/course-management', '2', 'exams', '3', 'exercise-groups', '4', 'modeling-exercises', '14', 'submissions', '123', 'assessment'],
+                { queryParams: { 'correction-round': '0', testRun: 'false' } },
+            );
+            expect(goSpy).toHaveBeenCalledExactlyOnceWith(
+                '/course-management/2/exams/3/exercise-groups/4/modeling-exercises/14/submissions/123/assessment?correction-round=0&testRun=false',
+            );
         });
     });
 

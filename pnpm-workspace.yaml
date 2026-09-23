@@ -7,21 +7,21 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.7.1
-  '@analogjs/vitest-angular': 2.7.1
+  '@analogjs/vite-plugin-angular': 2.7.2
+  '@analogjs/vitest-angular': 2.7.2
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2201.7
-  '@angular-devkit/core': 22.1.7
-  '@angular/build': 22.1.7
-  '@angular/cdk': 22.1.5
-  '@angular/cli': 22.1.7
-  '@angular/common': 22.1.5
-  '@angular/compiler': 22.1.5
-  '@angular/compiler-cli': 22.1.5
-  '@angular/core': 22.1.5
-  '@angular/forms': 22.1.5
-  '@angular/localize': 22.1.5
-  '@angular/platform-browser': 22.1.5
+  '@angular-devkit/architect': 0.2201.8
+  '@angular-devkit/core': 22.1.8
+  '@angular/build': 22.1.8
+  '@angular/cdk': 22.1.7
+  '@angular/cli': 22.1.8
+  '@angular/common': 22.1.7
+  '@angular/compiler': 22.1.7
+  '@angular/compiler-cli': 22.1.7
+  '@angular/core': 22.1.7
+  '@angular/forms': 22.1.7
+  '@angular/localize': 22.1.7
+  '@angular/platform-browser': 22.1.7
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -33,7 +33,7 @@ catalog:
   '@storybook/addon-vitest': 10.6.0
   '@storybook/angular-vite': 10.6.0
   '@tailwindcss/postcss': 4.3.3
-  '@types/node': 24.13.3
+  '@types/node': 24.13.4
   '@types/react': 19.2.18
   '@vitest/browser': 4.1.11
   '@vitest/browser-playwright': 4.1.11
@@ -51,9 +51,11 @@ catalog:
   postcss: 8.5.28
   publint: 0.3.24
   playwright: 1.63.0
+  # Only here to satisfy Storybook's peer requirement (packages/tum-ui declares it); Artemis itself is Angular.
+  # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.104.0
+  sass: 1.104.1
   semver: 7.8.5
   storybook: 10.6.0
   stylelint: 17.15.0
@@ -62,7 +64,7 @@ catalog:
   typescript: 6.0.3
   vite: 8.1.5
   vitest: 4.1.11
-  yaml: 2.9.0
+  yaml: 2.9.1
   zone.js: 0.16.3
 
 # No hoist shim: rely on pnpm's default isolated layout. Every package the
@@ -70,7 +72,7 @@ catalog:
 # go through pnpm.patchedDependencies (which works on the .pnpm symlink store
 # directly, without requiring transitive deps at top-level node_modules).
 
-# Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
+# Auto-install peer dependencies (default in pnpm 10, opt-in since pnpm 11).
 # Without this, peer deps are not installed, and the Angular esbuild bundle
 # fails with "Could not resolve ..." errors.
 autoInstallPeers: true
@@ -101,7 +103,7 @@ peerDependencyRules:
     '@angular/platform-browser-dynamic': '22'
     '@angular/router': '22'
 
-# Dependency overrides. pnpm 11 reads overrides from this file in preference to
+# Dependency overrides. pnpm reads overrides from this file in preference to
 # the legacy `pnpm.overrides` block in package.json. We pin a handful of
 # transitive packages to CVE-patched versions and force the current Angular major
 # across the ng-mocks subtree (its peer range trails the Angular release train).
@@ -117,6 +119,9 @@ peerDependencyRules:
 # because it never uses Vite. Without an override, @angular/build's own exact pin governs
 # and the mismatch cannot happen. `pnpm run check:vite-override` fails the build if it does.
 overrides:
+  # Rolldown 1.2.0 corrupts KaTeX surrogate escapes during chunk optimization (oxc-project/oxc#25084).
+  # Remove when @angular/build pins a fixed Rolldown version; keep chunk optimization enabled.
+  '@angular/build>rolldown': '1.2.9'
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
   'ng-mocks>@angular/forms': '^22.0.0'
@@ -127,7 +132,12 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': '22.1.5'
+  '@angular/localize': '22.1.7'
+  # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
+  # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
+  # animations 22.1.7 and animations asks for core 22.1.7 - so without this pin an Angular patch bump
+  # leaves animations behind on the old patch against the new core. Keep it equal to @angular/core.
+  '@angular/animations': '22.1.7'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
@@ -136,7 +146,7 @@ overrides:
   '@primeuix/utils': '0.7.2'
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
-  brace-expansion: '5.0.9'
+  brace-expansion: '5.0.12'
   braces: '3.0.3'
   cookie: '1.1.1'
   debug: '4.4.3'
@@ -151,9 +161,14 @@ overrides:
   globals: '17.12.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
-  ip-address: '10.7.0'
+  ip-address: '10.7.2'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
   js-yaml: '4.3.2'
+  # Held at 30.0.1: in 30.1.0 a detached element's style object no longer passes jsdom's own
+  # brand check, so reading a property off it throws "called on an object that is not a valid
+  # instance of CSSStyleProperties". PrimeNG's MotionDirective does exactly that while tearing
+  # down, which failed 65 tests across two specs on teardown alone. Revisit once PrimeNG or
+  # jsdom fixes it; keep this equal to the catalog entry.
   jsdom: '30.0.1'
   katex: '0.18.7'
   # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
@@ -165,10 +180,24 @@ overrides:
   minimatch: '10.2.6'
   # Reached dev-side via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
-  nanoid: '3.3.18'
+  nanoid: '3.3.19'
   piscina: '5.3.2'
   postcss: '8.5.28'
   punycode: '2.3.1'
+  # React and react-dom must resolve to one version each, and to the same one: react-dom asserts this at import time
+  # and throws "Incompatible React versions" otherwise. Only Storybook renders React here, but that is enough - the
+  # mismatch takes down all 76 tum-ui story tests and the documentation Playwright suite with them.
+  # This is easy to split by accident, because react is a catalog entry while react-dom is never declared at all:
+  # it arrives as an auto-installed peer, and packages asking for `^19` will happily pull a newer react than the
+  # catalog pins. Pinning both here makes the pairing enforced rather than a coincidence of resolution order.
+  # Keep these two and the `react` catalog entry on the same version.
+  # Left at 19.2.8 rather than moved to 19.3.0. Nothing here needs the newer react - it only exists
+  # to satisfy Storybook's peer requirement - and the gate that would qualify the bump cannot: the
+  # forced-colors check in .storybook/tests/accessibility-preferences.spec.ts is flaky, failing
+  # roughly a third of runs on 19.2.8 and on 19.3.0 alike (1 of 6 and 2 of 4 locally). Do not read
+  # a single red AutoDocs run as a verdict on a react bump; re-run it several times first.
+  react: '19.2.8'
+  react-dom: '19.2.8'
   # Reached through express / body-parser, which both already sit on their newest release and
   # still resolve qs to 6.15.x. 6.16.0 fixed GHSA-4mjr-xmp4-gh2g (uncaught TypeError when a
   # parsed object with a non-callable constructor.isBuffer is stringified again) and
@@ -180,7 +209,7 @@ overrides:
   tar: '7.5.22'
   tmp: '0.2.7'
   tough-cookie: '6.0.2'
-  undici: '7.29.0'
+  undici: '7.29.1'
   uuid: '14.0.2'
   # Vite 8 leaves decorators in external spec helpers untransformed. Keep the Vitest toolchain on
   # Vite 7 until @analogjs/vite-plugin-angular handles those helpers; Angular and Storybook use Vite 8.
@@ -198,7 +227,7 @@ patchedDependencies:
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
-# pnpm 11 blocks build scripts by default; these are needed for native bindings
+# pnpm blocks build scripts by default; these are needed for native bindings
 # (@swc/core, esbuild, @parcel/watcher, lmdb, msgpackr-extract, unrs-resolver),
 # polyfill setup (core-js), or our own dev-time hooks (husky).
 allowBuilds:
@@ -225,16 +254,3 @@ allowBuilds:
 auditConfig:
   ignoreGhsas:
     - 'GHSA-8988-4f7v-96qf'
-
-minimumReleaseAgeExclude:
-  - '@angular-eslint/builder@22.3.0'
-  - '@angular-eslint/bundled-angular-compiler@22.3.0'
-  - '@angular-eslint/eslint-plugin-template@22.3.0'
-  - '@angular-eslint/eslint-plugin@22.3.0'
-  - '@angular-eslint/schematics@22.3.0'
-  - '@angular-eslint/template-parser@22.3.0'
-  - '@angular-eslint/utils@22.3.0'
-  - angular-eslint@22.3.0
-  - dompurify@3.4.15
-  - katex@0.18.7
-  - ng-mocks@14.17.5

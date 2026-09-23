@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
@@ -72,6 +73,8 @@ public class RepositoryService {
 
     private final GitService gitService;
 
+    private final BareGitRepositoryService bareGitRepositoryService;
+
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
@@ -84,8 +87,9 @@ public class RepositoryService {
         NONE, EXTENSION, CONTENT
     }
 
-    public RepositoryService(GitService gitService, Optional<VcsAccessLogService> vcsAccessLogService) {
+    public RepositoryService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
         this.vcsAccessLogService = vcsAccessLogService;
     }
 
@@ -142,7 +146,7 @@ public class RepositoryService {
             ProgrammingExerciseParticipation participation, @Nullable Set<String> selectedFilePaths) throws IOException {
         log.debug("Getting files {} at commit {} for participation {}", selectedFilePaths, commitId, participation.getId());
         var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
-        try (Repository repository = gitService.getBareRepository(repoUri, false)) {
+        try (Repository repository = bareGitRepositoryService.getBareRepository(repoUri, false)) {
             ObjectId commitObjectId = resolveCommit(repository, commitId);
             if (commitObjectId == null) {
                 return Map.of();
@@ -264,7 +268,7 @@ public class RepositoryService {
      */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
 
-        try (Repository bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+        try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
         }
         catch (GitException exception) {
@@ -321,7 +325,7 @@ public class RepositoryService {
      * @throws IOException if an I/O error occurs
      */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(LocalVCRepositoryUri repositoryUri, ZonedDateTime deadline) throws IOException {
-        try (Repository bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+        try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(bareRepository, deadline);
         }
         catch (GitException exception) {
@@ -492,7 +496,7 @@ public class RepositoryService {
             else {
                 File templateFile = templateRepoFiles.get(fileName);
                 try {
-                    if (FileUtils.contentEquals(file, templateFile)) {
+                    if (Files.mismatch(file.toPath(), templateFile.toPath()) == -1) {
                         filesWithInformationAboutChange.put(fileName, false);
                     }
                     else {

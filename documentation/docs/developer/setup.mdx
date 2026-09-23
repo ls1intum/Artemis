@@ -22,8 +22,6 @@ Artemis is based on [JHipster](https://jhipster.github.io), combining:
 
 To get an overview of the technology stack, visit the [JHipster Technology Stack](https://jhipster.github.io/tech-stack) and refer to other tutorials on the JHipster homepage.
 
----
-
 ## Development Environment Setup
 
 Before installing Artemis, install and configure the following dependencies:
@@ -41,7 +39,7 @@ Before installing Artemis, install and configure the following dependencies:
    Download from [Node.js](https://nodejs.org/en/download).
    Required for compiling and running the Angular client.
 
-4. **[pnpm](https://pnpm.io) (≥ 11.19.0) — the package manager Artemis uses for the Angular client**
+4. **[pnpm](https://pnpm.io) (≥ 12.5.1) — the package manager Artemis uses for the Angular client**
 
    The official pnpm website is [pnpm.io](https://pnpm.io/); the CLI reference for `pnpm install` is at [pnpm.io/cli/install](https://pnpm.io/cli/install) and the installation guide at [pnpm.io/installation](https://pnpm.io/installation).
    Artemis uses pnpm instead of npm. We do **not** use `npm` / `npx` anywhere; please don't run `npm install` in this repo — it will create a `package-lock.json` that conflicts with the committed `pnpm-lock.yaml`. The exact pnpm version is pinned in `package.json` via the `packageManager` field, so every developer and every CI job uses the same version.
@@ -55,7 +53,7 @@ Before installing Artemis, install and configure the following dependencies:
    After that, any `pnpm` command run inside the Artemis repository automatically uses the pinned version. Verify the setup with:
 
    ```bash
-   pnpm --version          # should print 11.19.0 (matches packageManager in package.json)
+   pnpm --version          # should print 12.5.1 (matches packageManager in package.json)
    which pnpm              # should point at the Corepack shim, e.g. ~/.nvm/.../bin/pnpm
    ```
 
@@ -80,8 +78,6 @@ Before installing Artemis, install and configure the following dependencies:
     Missing Graphviz in production may cause rendering errors for exercise descriptions.
 </Callout>
 
----
-
 ### IDE Setup
 
 We recommend using [IntelliJ IDEA Ultimate](https://www.jetbrains.com/idea) for development.
@@ -91,15 +87,11 @@ Refer to JHipster's guide on configuring an IDE: [JHipster IDE Setup](https://jh
     The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the [comparison matrix](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html) for details.
 </Callout>
 
----
-
 ## Set up Artemis
 
 Once the development environment is set up, the next step is to configure the Artemis server. This includes optional features such as programming exercises, which require a version control and build system.
 
 Start by following the [Database Setup](#database-setup) guide, then proceed with [Server Setup](#server-setup) and [Client Setup](#client-setup).
-
----
 
 ## Database Setup
 
@@ -109,7 +101,7 @@ Artemis supports MySQL and PostgreSQL databases. The required Artemis schema is 
 
 You can set up a MySQL database for Artemis using one of the following methods:
 
-#### 1. Using Docker (Recommended)
+#### Using Docker (Recommended)
 
 The easiest way to set up a MySQL database for development is by using Docker.
 Run the following command to start a MySQL database using the provided Docker Compose file:
@@ -120,7 +112,7 @@ docker compose --env-file .env -f docker/mysql.yml up
 
 This method simplifies setup and management, making it ideal for development environments.
 
-#### 2. Using a Local MySQL Installation
+#### Using a Local MySQL Installation
 
 If you prefer to install MySQL locally, download and install the [MySQL Community Server (9.2.x)](https://dev.mysql.com/downloads/mysql) from the official MySQL website.
 
@@ -183,8 +175,6 @@ spring:
 <Callout variant={CalloutVariant.info}>
     This example assumes that you use the mentioned Docker Compose file on your localhost, leading to a database called `Artemis` that runs on port `5432` and where no password is necessary. You might have to update `spring.datasource.url` if you use another configuration and set the password in `spring.datasource.password`.
 </Callout>
-
----
 
 ## Server Setup
 
@@ -260,6 +250,8 @@ artemis:
     # Required module feature toggles
     atlas:
       enabled: true
+      atlasllm:
+        enabled: false   # Atlas chat agent and competency orchestration; needs a chat model under spring.ai (see artemis-intelligence.mdx). Competencies and learning paths work without it.
     exam:
       enabled: true
     fileupload:
@@ -449,13 +441,13 @@ The Artemis server should startup by running the main class `de.tum.cit.aet.arte
 
 If you use IntelliJ (Community or Ultimate) you can set the active profiles by:
 
-- Choosing `Run | Edit Configurations...`
-- Going to the `Configuration Tab`
-- Expanding the `Environment` section to reveal `VM Options` and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
+- Choosing **Run | Edit Configurations...**
+- Going to the **Configuration** tab
+- Expanding the **Environment** section to reveal **VM Options** and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
 
 #### Set Spring profiles with IntelliJ Ultimate
 
-If you use IntelliJ Ultimate, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
+If you use IntelliJ Ultimate, add the following entry to the **Active Profiles** field (within **Spring Boot**) in the server run configuration:
 
 ```
 dev,jenkins,localvc,artemis,scheduling
@@ -479,18 +471,16 @@ Hyperion provides AI-assisted exercise creation features via Spring AI. No exter
 
 For production setup, see [Hyperion Service](/admin/hyperion) in the Administration Guide for instructions on enabling the module in production and configuring LLM credentials.
 
----
-
 ## Client Setup
 
 You need Node.js on your local machine, plus pnpm activated via Corepack (`corepack enable`). The pnpm version is pinned in `package.json` via the `packageManager` field. If you haven't activated pnpm yet, see [step 4 of Required Dependencies](#required-dependencies) above for the full first-time setup and troubleshooting tips.
 
 ### Using IntelliJ
 
-If you are using [IntelliJ](https://www.jetbrains.com/idea/download/) you can use the pre-configured `Artemis (Client)` run configuration that will be delivered with this repository:
+If you are using [IntelliJ](https://www.jetbrains.com/idea/download/) you can use the pre-configured **Artemis (Client)** run configuration that will be delivered with this repository:
 
-- Choose `Run | Edit Configurations...`
-- Select the `Artemis (Client)` configuration from the `npm section` (IntelliJ groups `package.json` scripts under "npm" even though we run pnpm)
+- Choose **Run | Edit Configurations...**
+- Select the **Artemis (Client)** configuration from the **npm** section (IntelliJ groups `package.json` scripts under "npm" even though we run pnpm)
 - Now you can run the configuration in the upper right corner of IntelliJ
 
 ### Using the command line
@@ -523,13 +513,11 @@ This compiles TypeScript code to JavaScript code, starts the live reloading feat
 If you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
 
 <Callout variant={CalloutVariant.info}>
-    In case you encounter any problems regarding JavaScript heap memory leaks when executing `pnpm start` or any other scripts from `package.json`, you can adjust the [memory limit parameter](https://nodejs.org/docs/latest-v24.x/api/cli.html#--max-old-space-sizesize-in-megabytes) (`node-options=--max-old-space-size=6144`) which is set by default in the project-wide `.npmrc` file. pnpm 11 honours `node-options` from `.npmrc` for Node settings; pnpm's own install/resolution configuration lives in `pnpm-workspace.yaml` (e.g. `autoInstallPeers`, `allowBuilds`, `patchedDependencies`). If you still face the issue, you can try to set a lower/higher value than 6144 MB. Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB), 6144 (6GB), 7168 (7GB), and 8192 (8GB). You can override the project-wide `.npmrc` file by [using a per-user `~/.npmrc`](https://pnpm.io/npmrc). Make sure to **not commit changes** in the project-wide `.npmrc` unless the GitHub build also needs these settings.
+    In case you encounter any problems regarding JavaScript heap memory leaks when executing `pnpm start` or any other scripts from `package.json`, you can adjust the [memory limit parameter](https://nodejs.org/docs/latest-v24.x/api/cli.html#--max-old-space-sizesize-in-megabytes) (`node-options=--max-old-space-size=6144`) which is set by default in the project-wide `.npmrc` file. pnpm honours `node-options` from `.npmrc` for Node settings; pnpm's own install/resolution configuration lives in `pnpm-workspace.yaml` (e.g. `autoInstallPeers`, `allowBuilds`, `patchedDependencies`). If you still face the issue, you can try to set a lower/higher value than 6144 MB. Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB), 6144 (6GB), 7168 (7GB), and 8192 (8GB). You can override the project-wide `.npmrc` file by [using a per-user `~/.npmrc`](https://pnpm.io/npmrc). Make sure to **not commit changes** in the project-wide `.npmrc` unless the GitHub build also needs these settings.
 </Callout>
 
 For more information, review [Working with Angular](https://angular.dev/tutorials).
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
-
----
 
 ## Common Setup Problems
 
@@ -557,8 +545,6 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 - **Accidentally ran `npm install` and got a `package-lock.json`:** delete `package-lock.json` and `node_modules`, then run `pnpm install`. The repository's `.gitignore` blocks `package-lock.json` from being committed, but a stray copy still confuses tooling.
 - **`pnpm install` complains the lockfile is out of date:** the lockfile is authoritative; running `pnpm install` locally without `--frozen-lockfile` updates it. If your edit was intentional (e.g. you bumped a dependency in `package.json`), commit the updated `pnpm-lock.yaml`. If not, run `git checkout pnpm-lock.yaml` and rerun `pnpm install --frozen-lockfile`.
 
----
-
 ## Production Setup and Extension Services
 
 ### Production Setup
@@ -576,8 +562,6 @@ Artemis allows extension with several additional services, such as:
 
 The setup for these additional services is described as part of the [Extension Service Setup](/admin/extensions-setup).
 
----
-
 ## Setup with Helios
 
 [Helios](https://helios.aet.cit.tum.de/) is an application that provides a well-designed UI for deploying various services the AET is building using GitHub Actions.
@@ -593,8 +577,6 @@ For detailed instructions on setting up Artemis with Helios, refer to the offici
 <Callout variant={CalloutVariant.info}>
     If the above link is unavailable, go to the [Helios documentation homepage](https://ls1intum.github.io/Helios/) and navigate to **User Guide → Helios User Guide**.
 </Callout>
-
----
 
 ## Additional Setup Guides
 

@@ -24,7 +24,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
-import de.tum.cit.aet.artemis.core.config.liquibase.AsyncSpringLiquibase;
+import de.tum.cit.aet.artemis.core.config.liquibase.ArtemisSpringLiquibase;
 import de.tum.cit.aet.artemis.core.config.migration.DatabaseMigration;
 import de.tum.cit.aet.helios.HeliosClient;
 import liquibase.Scope;
@@ -81,7 +81,7 @@ public class LiquibaseConfiguration {
             databaseMigration.checkMigrationPath();
         }
 
-        SpringLiquibase liquibase = AsyncSpringLiquibase.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
+        SpringLiquibase liquibase = ArtemisSpringLiquibase.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
         Scope.setScopeManager(new SingletonScopeManager());
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
         liquibase.setContexts(liquibaseProperties.getContexts() != null ? String.join(",", liquibaseProperties.getContexts()) : null);

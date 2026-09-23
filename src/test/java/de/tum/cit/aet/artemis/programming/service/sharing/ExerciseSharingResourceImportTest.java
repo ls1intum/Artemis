@@ -312,11 +312,11 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
             JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
             assertThat(response.get("id").asLong()).isPositive();
-            assertThat(response.get("type").asText()).isEqualTo("programming");
-            assertThat(response.get("title").asText()).isEqualTo(exerciseDetails.title());
+            assertThat(response.get("type").asString()).isEqualTo("programming");
+            assertThat(response.get("title").asString()).isEqualTo(exerciseDetails.title());
             // The nested course drives the follow-up navigation, so it must not be flattened to an id.
             assertThat(response.get("course").get("id").asLong()).isEqualTo(course.getId());
-            assertThat(response.get("course").get("title").asText()).isEqualTo(course.getTitle());
+            assertThat(response.get("course").get("title").asString()).isEqualTo(course.getTitle());
 
             long importedExerciseId = response.get("id").asLong();
             savedExercise = programmingExerciseRepository.findByIdElseThrow(importedExerciseId);

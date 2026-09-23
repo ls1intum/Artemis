@@ -131,6 +131,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
         // typed rows on the result already hold them.
         newManualResult.getFeedbacks()
                 .removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback()));
+        // what is left carries the ids of the manual feedback the tutor loaded for this result, so the stored result decides which ids may be written
+        checkFeedbackBelongsToResultElseThrow(newManualResult.getFeedbacks(), existingManualResult);
         // The client-built result has empty typed collections; hydrate them from the database so that
         // saving the result does not orphan-remove the stored typed automatic feedback.
         if (newManualResult.getId() != null) {

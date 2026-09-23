@@ -168,6 +168,19 @@ export class Feedback implements BaseEntity {
         return text;
     }
 
+    /**
+     * Rewrites an accepted feedback suggestion's `text` prefix to adapted, leaving everything else unchanged. A
+     * suggestion transitions to adapted the moment it is edited in any way; every other state (already adapted,
+     * not a suggestion, or the unreachable bare "suggested") is returned as-is. This is a one-way, sticky
+     * transition - it never reverts even if the edit is undone later.
+     */
+    public static markAdaptedIfAcceptedSuggestion(text: string): string {
+        if (!text.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+            return text;
+        }
+        return `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}${text.slice(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER.length)}`;
+    }
+
     public static hasDetailText(that: Feedback): boolean {
         return that.detailText != undefined && that.detailText.length > 0;
     }

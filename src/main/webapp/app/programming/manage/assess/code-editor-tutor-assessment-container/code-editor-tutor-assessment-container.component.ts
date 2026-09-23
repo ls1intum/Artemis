@@ -24,7 +24,7 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -157,6 +157,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly hasAcceptedFeedbackSuggestions = signal(false);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
+    /**
+     * Referenced (manual + automatic) feedback bound to CodeEditorContainerComponent's `referencedFeedback` input
+     * for its file badges: manual on its own would omit automatic feedback (e.g. static analysis findings) that
+     * the file badges counted before this feedback list was split into per-type signals.
+     */
+    readonly referencedFeedbackForBadges = computed(() => [...this.referencedFeedback(), ...this.automaticFeedback()]);
+
     /** Full assessment feedback for the unreferenced-feedback score summary. */
     allAssessmentFeedbacks(): Feedback[] {
         return [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
@@ -182,7 +189,19 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     faExternalLink = faExternalLink;
     faCircleInfo = faCircleInfo;
 
-    readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.hasAcceptedFeedbackSuggestions());
+    /**
+     * True whenever automatic or AI-suggested feedback is present: freshly generated automatic feedback, suggestions
+     * accepted during this session ({@link hasAcceptedFeedbackSuggestions}), or - on reload - accepted/adapted
+     * suggestions already persisted as manual feedback, which the two checks above cannot see.
+     */
+    readonly hasAutomaticFeedback = computed(
+        () =>
+            this.automaticFeedback().length > 0 ||
+            this.hasAcceptedFeedbackSuggestions() ||
+            [...this.referencedFeedback(), ...this.unreferencedFeedback()].some(
+                (feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+    );
 
     readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled));
 
@@ -295,7 +314,22 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         await this.handleReceivedSubmission(submission).then(() => this.validateFeedback());
         if (submissionId === 'new') {
             // Update the url with the new id, without reloading the page, to make the history consistent
-            const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission()!.id}`);
+            // Build the path through the router. Artemis uses path-based routing, so window.location.hash is empty and
+            // using it here rewrites the address to the application root once the submission has loaded.
+            const newUrl = this.router
+                .createUrlTree(
+                    getLinkToSubmissionAssessment(
+                        ExerciseType.PROGRAMMING,
+                        this.courseId,
+                        this.exerciseId,
+                        submission.participation?.id,
+                        submission.id!,
+                        this.examId,
+                        this.exerciseGroupId,
+                    ),
+                    { queryParams: this.route.snapshot.queryParams },
+                )
+                .toString();
             this.location.go(newUrl);
         }
     }
@@ -393,7 +427,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             }
             const allFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
             const newSuggestions = feedbackSuggestions.filter((suggestion) =>
-                allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+                allFeedback.every(
+                    (feedback) =>
+                        Feedback.stripSuggestionPrefix(feedback.text ?? '') !== Feedback.stripSuggestionPrefix(suggestion.text ?? '') ||
+                        feedback.detailText !== suggestion.detailText ||
+                        feedback.reference !== suggestion.reference,
+                ),
             );
             // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
             if (newSuggestions.length > 0) {

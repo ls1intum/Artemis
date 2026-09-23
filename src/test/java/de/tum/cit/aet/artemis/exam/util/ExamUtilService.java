@@ -747,8 +747,8 @@ public class ExamUtilService {
         ExerciseGroup programmingGroup = exam.getExerciseGroups().get(4);
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup);
         Set<GradingCriterion> gradingCriteria = ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         exerciseRepository.save(programmingExercise);
+        saveBuildConfig(programmingExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
         programmingGroup.addExercise(programmingExercise);
@@ -898,6 +898,16 @@ public class ExamUtilService {
      * @param withProgrammingExercise True, if a ProgrammingExercise should be added
      * @return The updated Exam
      */
+    /**
+     * Writes the build configuration of an exam programming exercise. The exercise does not carry it - the
+     * configuration is a row of its own that names the exercise - and starting a participation reads the branch off it.
+     *
+     * @param programmingExercise the stored exercise the configuration belongs to
+     */
+    private void saveBuildConfig(ProgrammingExercise programmingExercise) {
+        programmingExerciseBuildConfigRepository.saveForExercise(ProgrammingExerciseFactory.generateGradleBuildConfig(), programmingExercise);
+    }
+
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
         return addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, false);
     }
@@ -977,8 +987,8 @@ public class ExamUtilService {
             var exerciseGroup6 = exam.getExerciseGroups().get(6);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup6, "Programming");
-            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepository.save(programmingExercise1);
+            saveBuildConfig(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
 
@@ -1025,8 +1035,8 @@ public class ExamUtilService {
             var exerciseGroup2 = exam.getExerciseGroups().get(2);
             // Programming exercises need a proper setup for 'prepare exam start' to work
             ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
-            programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
             exerciseRepository.save(programmingExercise1);
+            saveBuildConfig(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
             exerciseGroup2.setExercises(Set.of(programmingExercise1));

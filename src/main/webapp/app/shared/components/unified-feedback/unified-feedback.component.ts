@@ -130,6 +130,7 @@ export class UnifiedFeedbackComponent {
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
+    private readonly creditsInput = viewChild<ElementRef<HTMLInputElement>>('creditsInput');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
@@ -227,17 +228,24 @@ export class UnifiedFeedbackComponent {
 
     readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
 
-    readonly canDismissWithoutConfirm = computed(
-        () =>
+    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    canDismissWithoutConfirm(): boolean {
+        return (
             (this.feedbackCredits() ?? 0) === 0 &&
             (this.feedbackDetail() ?? '').length === 0 &&
             this.displayTitle().length === 0 &&
             !this.feedback()?.gradingInstruction &&
-            !this.feedback()?.id,
-    );
+            !this.feedback()?.id
+        );
+    }
 
     readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
-    readonly isDetailMissing = computed(() => this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback);
+
+    /** Plain method, not computed: see {@link gradingInstructionText} for why this must re-read on every call. */
+    isDetailMissing(): boolean {
+        return this.editable() && !this.feedback()?.reference && !this.feedbackDetail() && !this.feedback()?.gradingInstruction?.feedback;
+    }
+
     readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
@@ -329,12 +337,10 @@ export class UnifiedFeedbackComponent {
      * goes through onTitleInput.
      */
     private markAdaptedIfSuggestion(): void {
-        const current = this.currentTitlePrefix();
-        if (current !== FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER) {
-            return;
+        const title = this.feedbackTitle();
+        if (title) {
+            this.feedbackTitle.set(Feedback.markAdaptedIfAcceptedSuggestion(title));
         }
-        const title = (this.feedbackTitle() ?? '').slice(current.length);
-        this.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}${title}`);
     }
 
     onTitleInput(value: string): void {
@@ -359,7 +365,15 @@ export class UnifiedFeedbackComponent {
     }
 
     onCreditsChange(value: number): void {
-        this.feedbackCredits.set(this.normalizedCredits(value));
+        const normalized = this.normalizedCredits(value);
+        this.feedbackCredits.set(normalized);
+        // [ngModel] is one-way here, and set() is a no-op under Object.is when normalization lands back on the
+        // value the signal already held (e.g. 1.6 snapping to an already-current 1.5), so the DOM would otherwise
+        // keep showing the un-normalized value the tutor typed while the stored/saved credits differ from it.
+        const input = this.creditsInput()?.nativeElement;
+        if (input) {
+            input.value = normalized === undefined ? '' : String(normalized);
+        }
         this.markAdaptedIfSuggestion();
     }
 

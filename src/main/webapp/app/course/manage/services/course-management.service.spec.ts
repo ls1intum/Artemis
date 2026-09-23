@@ -12,7 +12,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -26,16 +26,38 @@ import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/shared
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
-import { CoursesForDashboardDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
+import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashboardFromDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
 import { provideHttpClient } from '@angular/common/http';
 import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
-import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import {
+    CourseAssessmentDashboardDTO,
+    CourseDashboardExerciseResponseDTO,
+    CourseManagementExerciseDTO,
+    courseFromAssessmentDashboardDTO,
+    exerciseFromCourseDashboardDTO,
+    exerciseFromCourseManagementDTO,
+} from 'app/course/shared/entities/course-content-response.dto';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import type { UMLDiagramType } from '@tumaet/apollon';
+import { CourseForEnrollmentDTO, CourseManagementDTO, courseFromEnrollmentDTO, courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
+import type { LockedCourseSubmissionDTO } from 'app/course/shared/entities/locked-course-submission.dto';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 
 const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
 type CourseDateField = (typeof courseDateFields)[number];
@@ -56,6 +78,7 @@ describe('Course Management Service', () => {
     let isAtLeastInstructorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let convertExercisesDateFromServerSpy: ReturnType<typeof vi.spyOn>;
     let convertDatesForLecturesFromServerSpy: ReturnType<typeof vi.spyOn>;
+    let parseExerciseCategoriesSpy: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/course/courses';
 
@@ -96,21 +119,21 @@ describe('Course Management Service', () => {
         convertDatesForLecturesFromServerSpy = vi.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
         ({ course, exercises } = createSampleCourse());
 
-        courseForDashboard = new CourseForDashboardDTO();
-        courseForDashboard.course = course;
         courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
-        courseForDashboard.totalScores = courseScores;
-        courseForDashboard.programmingScores = courseScores;
-        courseForDashboard.modelingScores = courseScores;
-        courseForDashboard.quizScores = courseScores;
-        courseForDashboard.textScores = courseScores;
-        courseForDashboard.fileUploadScores = courseScores;
-        participationResult = new ParticipationResultDTO();
-        participationResult.participationId = 432;
-        courseForDashboard.participationResults = [participationResult];
+        participationResult = { participationId: 432 };
+        courseForDashboard = {
+            course,
+            totalScores: courseScores,
+            programmingScores: courseScores,
+            modelingScores: courseScores,
+            quizScores: courseScores,
+            textScores: courseScores,
+            fileUploadScores: courseScores,
+            participationResults: [participationResult],
+            courseNotificationCount: 0,
+        };
 
-        coursesForDashboard = new CoursesForDashboardDTO();
-        coursesForDashboard.courses = [courseForDashboard];
+        coursesForDashboard = { courses: [courseForDashboard] };
 
         scoresPerExerciseType = new Map<ExerciseType, CourseScores>();
         scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseScores);
@@ -123,6 +146,7 @@ describe('Course Management Service', () => {
         onlineCourseConfiguration.id = 234;
         returnedFromService = { ...course } as Course;
         convertExercisesDateFromServerSpy = vi.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+        parseExerciseCategoriesSpy = vi.spyOn(ExerciseService, 'parseExerciseCategories');
     });
 
     afterEach(() => {
@@ -130,9 +154,10 @@ describe('Course Management Service', () => {
         vi.restoreAllMocks();
     });
 
-    const expectDateConversionToBeCalled = (courseForConversion: Course) => {
-        expect(convertExercisesDateFromServerSpy).toHaveBeenCalledWith(courseForConversion.exercises);
-        expect(convertDatesForLecturesFromServerSpy).toHaveBeenCalledWith(courseForConversion.lectures);
+    /** The response adapter owns the conversion, so the service must not run a second date or category pass over it. */
+    const expectNoSecondConversion = () => {
+        expect(convertExercisesDateFromServerSpy).not.toHaveBeenCalled();
+        expect(convertDatesForLecturesFromServerSpy).not.toHaveBeenCalled();
     };
 
     const expectAccessRightsToBeCalled = (tutorTimes: number, editorTimes: number, instructorTimes: number) => {
@@ -141,10 +166,10 @@ describe('Course Management Service', () => {
         expect(isAtLeastInstructorInCourseSpy).toHaveBeenCalledTimes(instructorTimes);
     };
 
-    const requestAndExpectDateConversion = (method: string, url: string, flushedObject: any = returnedFromService, courseToCheck: Course, checkAccessRights?: boolean) => {
+    const requestAndExpectSingleConversion = (method: string, url: string, flushedObject: any = returnedFromService, checkAccessRights?: boolean) => {
         const req = httpMock.expectOne({ method, url });
         req.flush(flushedObject);
-        expectDateConversionToBeCalled(courseToCheck);
+        expectNoSecondConversion();
         if (checkAccessRights) {
             expectAccessRightsToBeCalled(3, 3, 3);
         }
@@ -193,7 +218,7 @@ describe('Course Management Service', () => {
             .find(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}`);
     });
 
     it('should convert all course date fields from server ISO strings to dayjs on find', () => {
@@ -266,7 +291,7 @@ describe('Course Management Service', () => {
             .find(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course, true);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, true);
     });
 
     it('should find course with exercises', () => {
@@ -274,17 +299,26 @@ describe('Course Management Service', () => {
             .findWithExercises(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises`, returnedFromService, course);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}/with-exercises`);
+    });
+
+    it('lets the response adapter own the exercise conversion and runs it exactly once per exercise', () => {
+        courseManagementService.findWithExercises(course.id!).pipe(take(1)).subscribe();
+
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/with-exercises` }).flush(returnedFromService);
+
+        expect(parseExerciseCategoriesSpy).toHaveBeenCalledTimes(exercises.length);
+        expectNoSecondConversion();
     });
 
     it('should find course with organizations', () => {
         course.organizations = [new Organization()];
-        returnedFromService = { ...course };
         courseManagementService
             .findWithOrganizations(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-organizations`, returnedFromService, course);
+            .subscribe((res) => expect(res.body?.organizations).toEqual(course.organizations));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/with-organizations` });
+        req.flush({ course: returnedFromService, organizations: course.organizations });
     });
 
     it('should find all courses for dashboard', () => {
@@ -294,10 +328,12 @@ describe('Course Management Service', () => {
             .findAllForDashboard()
             .pipe(take(1))
             .subscribe((res) => {
-                expect(res.body!.courses[0].course).toEqual(course);
+                expect(res.body!.courses[0].course).toMatchObject({ id: course.id, title: course.title });
+                expect(res.body!.courses[0].course.exercises?.map((exercise) => exercise.id)).toEqual(exercises.map((exercise) => exercise.id));
+                expect(res.body!.courses[0].course.lectures).toEqual([]);
                 expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
             });
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, course);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/for-dashboard`);
     });
 
     it('should pass on an empty response body when fetching all courses for dashboard and there is no response body sent from the server', () => {
@@ -305,51 +341,6 @@ describe('Course Management Service', () => {
 
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-dashboard` });
         req.flush(null);
-    });
-
-    // `findOneForDashboard` is deprecated for the web client but the endpoint stays for the iOS, Android and
-    // VS Code clients, so these three tests are the only remaining coverage of it and have to keep calling it.
-    it('should find one course for dashboard', () => {
-        returnedFromService = { ...courseForDashboard };
-        courseStorageService
-            .subscribeToCourseUpdates(course.id!)
-            .pipe(take(1))
-            .subscribe((updatedCourse) => {
-                expect(updatedCourse).toEqual(course);
-            });
-        courseManagementService
-            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note above this test
-            .findOneForDashboard(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-dashboard`, returnedFromService, course, true);
-    });
-
-    it('should pass on an empty response body when fetching one course for dashboard and there is no response body sent from the server', () => {
-        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note on the test above
-        courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toBeNull());
-
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
-        req.flush(null);
-    });
-
-    it('should set the totalScores, the scoresPerExerciseType, and the participantScores in the scoresStorageService', () => {
-        const setStoredTotalScoresSpy = vi.spyOn(scoresStorageService, 'setStoredTotalScores');
-        const setStoredScoresPerExerciseTypeSpy = vi.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
-        const setParticipationResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
-        const setAchievedGroupPointsSpy = vi.spyOn(scoresStorageService, 'setStoredAchievedPointsPerVariantGroup');
-        courseManagementService
-            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see the note two tests above
-            .findOneForDashboard(course.id!)
-            .pipe(take(1))
-            .subscribe(() => {
-                expect(setStoredTotalScoresSpy).toHaveBeenCalledWith(course.id!, courseScores);
-                expect(setStoredScoresPerExerciseTypeSpy).toHaveBeenCalledWith(course.id!, scoresPerExerciseType);
-                expect(setParticipationResultsSpy).toHaveBeenCalledWith(courseForDashboard.participationResults);
-                expect(setAchievedGroupPointsSpy).toHaveBeenCalledWith(course.id!, courseForDashboard.achievedPointsPerVariantGroup);
-            });
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
-        req.flush(courseForDashboard);
     });
 
     it('should find grade scores for the course', () => {
@@ -373,12 +364,13 @@ describe('Course Management Service', () => {
     });
 
     it('should find all courses to register', () => {
-        returnedFromService = [{ ...course }];
+        returnedFromService = [{ ...course, prerequisites: [] }];
         courseManagementService
             .findAllForRegistration()
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/for-enrollment`, returnedFromService, course);
+            .subscribe((res) => expect(res.body?.[0].id).toBe(course.id));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-enrollment` });
+        req.flush(returnedFromService);
     });
 
     it('should find course with interesting exercises', () => {
@@ -386,7 +378,7 @@ describe('Course Management Service', () => {
             .getCourseWithInterestingExercisesForTutors(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-assessment-dashboard`, returnedFromService, course);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}/for-assessment-dashboard`);
     });
 
     it('should get stats of course', () => {
@@ -428,7 +420,7 @@ describe('Course Management Service', () => {
             .getAllCoursesWithQuizExercises()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, course, true);
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, true);
     });
 
     it('should get all courses for overview', () => {
@@ -484,13 +476,34 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
     });
 
-    it('should find all locked submissions of course', () => {
-        const submission = new ModelingSubmission();
-        const submissions = [submission];
-        returnedFromService = [...submissions];
-        courseManagementService.findAllLockedSubmissionsOfCourse(course.id!).subscribe((res) => expect(res.body).toEqual(submissions));
+    it('should find all locked submissions of course', async () => {
+        const submission: LockedCourseSubmissionDTO = {
+            id: 42,
+            submissionExerciseType: SubmissionExerciseType.MODELING,
+            participation: {
+                id: 43,
+                submissionCount: 1,
+                exercise: { id: 44, type: ExerciseType.MODELING, title: 'Modeling exercise' },
+            },
+            latestResult: { score: 80 },
+        };
+        returnedFromService = [submission];
+        const responsePromise = firstValueFrom(courseManagementService.findAllLockedSubmissionsOfCourse(course.id!));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/locked-submissions` });
         req.flush(returnedFromService);
+        const response = await responsePromise;
+        expect(response.body).toEqual([
+            expect.objectContaining({
+                id: 42,
+                submissionExerciseType: SubmissionExerciseType.MODELING,
+                participation: expect.objectContaining({
+                    id: 43,
+                    submissionCount: 1,
+                    exercise: expect.objectContaining({ id: 44, type: ExerciseType.MODELING, title: 'Modeling exercise' }),
+                }),
+                latestResult: expect.objectContaining({ score: 80 }),
+            }),
+        ]);
     });
 
     it('should add user to course group', () => {
@@ -564,8 +577,13 @@ describe('Course Management Service', () => {
     });
 
     it('should fetch a course with exercises, lectures, and competencies through its dedicated endpoint', () => {
-        courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => expect(response.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, course);
+        courseManagementService.findWithExercisesAndLecturesAndCompetencies(course.id!).subscribe((response) => {
+            expect(response.body).toMatchObject({ id: course.id, title: course.title, exercises });
+            expect(response.body?.lectures).toEqual([]);
+            expect(response.body?.competencies).toEqual([]);
+            expect(response.body?.prerequisites).toEqual([]);
+        });
+        requestAndExpectSingleConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`);
     });
 
     it('should fetch the minimal course list for dropdowns', () => {
@@ -574,8 +592,9 @@ describe('Course Management Service', () => {
     });
 
     it('should fetch the limited course representation used by registration fallback', () => {
-        courseManagementService.findOneForRegistration(course.id!).subscribe((response) => expect(response.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-enrollment`, returnedFromService, course);
+        courseManagementService.findOneForRegistration(course.id!).subscribe((response) => expect(response.body?.id).toBe(course.id));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-enrollment` });
+        req.flush({ ...returnedFromService, prerequisites: [] });
     });
 
     it('should fetch the course archive summaries without requesting full courses', () => {
@@ -699,6 +718,287 @@ describe('Course Management Service', () => {
         expect(request.request.params.keys()).toEqual([]);
         request.flush(tabs);
     });
+
+    it('should map notification course ids without processing them as complete courses', () => {
+        const setTitleSpy = vi.spyOn(entityTitleService, 'setTitle');
+        let responseCourses: Course[] | null | undefined;
+
+        courseManagementService.findAllForNotifications().subscribe((response) => (responseCourses = response.body));
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/for-notifications' }).flush([{ id: 7 }]);
+
+        expect(responseCourses).toHaveLength(1);
+        expect(responseCourses?.[0]).toBeInstanceOf(Course);
+        expect(responseCourses?.[0]?.id).toBe(7);
+        expect(setTitleSpy).not.toHaveBeenCalled();
+    });
+});
+
+describe('Course DTO adapter boundary', () => {
+    const minimalCourseManagementDTO: CourseManagementDTO = {
+        id: 1,
+        title: 'Course',
+        shortName: 'C1',
+        testCourse: false,
+        unenrollmentEnabled: false,
+        onboardingDone: false,
+        onlineCourse: false,
+        maxComplaintTimeDays: 7,
+        maxRequestMoreFeedbackTimeDays: 7,
+        maxComplaintTextLimit: 2000,
+        maxComplaintResponseTextLimit: 2000,
+        complaintsEnabled: true,
+        requestMoreFeedbackEnabled: true,
+        athenaGradingFeedbackEnabled: false,
+        athenaFormativeFeedbackEnabled: false,
+        learningPathsEnabled: false,
+        trainingEnabled: false,
+    };
+
+    const exerciseCategoryJson = JSON.stringify({ category: 'Important', color: '#3e8acc' });
+
+    const managementExerciseFixtures: Record<ExerciseType, CourseManagementExerciseDTO> = {
+        [ExerciseType.PROGRAMMING]: {
+            id: 501,
+            type: ExerciseType.PROGRAMMING,
+            title: 'Programming fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
+            categories: [exerciseCategoryJson],
+            teamMode: true,
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            programmingLanguage: ProgrammingLanguage.JAVA,
+        },
+        [ExerciseType.TEXT]: {
+            id: 502,
+            type: ExerciseType.TEXT,
+            title: 'Text fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
+            categories: [exerciseCategoryJson],
+            teamMode: true,
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            exampleSolution: 'sample solution',
+        },
+        [ExerciseType.MODELING]: {
+            id: 503,
+            type: ExerciseType.MODELING,
+            title: 'Modeling fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
+            categories: [exerciseCategoryJson],
+            teamMode: true,
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            diagramType: 'ClassDiagram' as UMLDiagramType,
+        },
+        [ExerciseType.FILE_UPLOAD]: {
+            id: 504,
+            type: ExerciseType.FILE_UPLOAD,
+            title: 'File upload fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exampleSolutionPublicationDate: '2026-03-01T00:00:00Z',
+            categories: [exerciseCategoryJson],
+            teamMode: true,
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            filePattern: 'pdf,zip',
+        },
+        [ExerciseType.QUIZ]: {
+            id: 505,
+            type: ExerciseType.QUIZ,
+            title: 'Quiz fixture',
+            releaseDate: '2026-01-01T00:00:00Z',
+            startDate: '2026-01-02T00:00:00Z',
+            dueDate: '2026-02-01T00:00:00Z',
+            assessmentDueDate: '2026-02-15T00:00:00Z',
+            exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+            quizMode: QuizMode.SYNCHRONIZED,
+            quizBatches: [{ id: 3, startTime: '2026-02-01T09:00:00Z', started: true }],
+        },
+    };
+
+    const expectedModelClass: Record<ExerciseType, new (...args: never[]) => Exercise> = {
+        [ExerciseType.PROGRAMMING]: ProgrammingExercise,
+        [ExerciseType.TEXT]: TextExercise,
+        [ExerciseType.MODELING]: ModelingExercise,
+        [ExerciseType.FILE_UPLOAD]: FileUploadExercise,
+        [ExerciseType.QUIZ]: QuizExercise,
+    };
+
+    it.each(Object.values(ExerciseType))('hydrates the %s management payload into its concrete model with every date converted', (type) => {
+        const dto = managementExerciseFixtures[type];
+
+        const exercise = exerciseFromCourseManagementDTO(dto);
+
+        expect(exercise).toBeInstanceOf(expectedModelClass[type]);
+        expect(exercise.type).toBe(type);
+        expect(dayjs.isDayjs(exercise.releaseDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.startDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.dueDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.assessmentDueDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.exerciseVariantGroup?.dueDate)).toBe(true);
+    });
+
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])(
+        'parses the categories and the example solution publication date of the %s management payload',
+        (type) => {
+            const exercise = exerciseFromCourseManagementDTO(managementExerciseFixtures[type]);
+
+            expect(exercise.categories).toEqual([new ExerciseCategory('Important', '#3e8acc')]);
+            expect(exercise.teamMode).toBe(true);
+            expect(dayjs.isDayjs(exercise.exampleSolutionPublicationDate)).toBe(true);
+        },
+    );
+
+    it('carries the subtype fields of each management payload onto the concrete model', () => {
+        expect((exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.PROGRAMMING]) as ProgrammingExercise).programmingLanguage).toBe(ProgrammingLanguage.JAVA);
+        expect((exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.TEXT]) as TextExercise).exampleSolution).toBe('sample solution');
+        expect((exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.MODELING]) as ModelingExercise).diagramType).toBe('ClassDiagram');
+        expect((exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.FILE_UPLOAD]) as FileUploadExercise).filePattern).toBe('pdf,zip');
+
+        const quiz = exerciseFromCourseManagementDTO(managementExerciseFixtures[ExerciseType.QUIZ]) as QuizExercise;
+        expect(quiz.quizMode).toBe(QuizMode.SYNCHRONIZED);
+        expect(dayjs.isDayjs(quiz.quizBatches?.[0].startTime)).toBe(true);
+    });
+
+    const dashboardExerciseFixture: CourseDashboardExerciseResponseDTO = {
+        id: 601,
+        type: ExerciseType.PROGRAMMING,
+        title: 'Dashboard fixture',
+        releaseDate: '2026-01-01T00:00:00Z',
+        startDate: '2026-01-02T00:00:00Z',
+        dueDate: '2026-02-01T00:00:00Z',
+        assessmentDueDate: '2026-02-15T00:00:00Z',
+        categories: [exerciseCategoryJson],
+        teamMode: true,
+        exerciseVariantGroup: { id: 9, title: 'Group', dueDate: '2026-02-05T00:00:00Z' },
+        studentParticipations: [
+            {
+                id: 701,
+                type: ParticipationType.PROGRAMMING,
+                initializationState: InitializationState.INITIALIZED,
+                initializationDate: '2026-01-03T00:00:00Z',
+                testRun: false,
+                repositoryUri: 'https://clone-me.git',
+                submissions: [
+                    {
+                        id: 801,
+                        submissionDate: '2026-01-20T00:00:00Z',
+                        submitted: true,
+                        submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
+                        commitHash: 'abc123',
+                        results: [{ id: 901, completionDate: '2026-01-21T00:00:00Z', score: 80, rated: true, successful: true }],
+                    },
+                ],
+            },
+        ],
+    };
+
+    it('converts the whole dashboard participation graph and reconnects its back-references', () => {
+        const exercise = exerciseFromCourseDashboardDTO(dashboardExerciseFixture);
+
+        expect(exercise).toBeInstanceOf(ProgrammingExercise);
+        expect(exercise.teamMode).toBe(true);
+        expect(exercise.categories).toEqual([new ExerciseCategory('Important', '#3e8acc')]);
+        expect(dayjs.isDayjs(exercise.dueDate)).toBe(true);
+        expect(dayjs.isDayjs(exercise.exerciseVariantGroup?.dueDate)).toBe(true);
+
+        const participation = exercise.studentParticipations![0];
+        expect(participation).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+        expect(dayjs.isDayjs(participation.initializationDate)).toBe(true);
+
+        const submission = participation.submissions![0];
+        expect(submission).toBeInstanceOf(ProgrammingSubmission);
+        expect(dayjs.isDayjs(submission.submissionDate)).toBe(true);
+        expect(submission.participation).toBe(participation);
+
+        const result = submission.results![0];
+        expect(result).toBeInstanceOf(Result);
+        expect(dayjs.isDayjs(result.completionDate)).toBe(true);
+        expect(result.submission).toBe(submission);
+    });
+
+    it('hydrates examMaxPoints onto the active exam, and leaves it undefined (not defaulted to 1) when the server omits it', () => {
+        const dto: CoursesForDashboardResponseDTO = {
+            courses: [],
+            activeExams: [
+                {
+                    id: 1,
+                    title: 'Exam with points',
+                    startDate: '2026-01-01T00:00:00Z',
+                    endDate: '2026-01-01T02:00:00Z',
+                    testExam: false,
+                    examMaxPoints: 20,
+                    course: { id: 5, title: 'Course' },
+                },
+                { id: 2, title: 'Exam without points', startDate: '2026-01-01T00:00:00Z', endDate: '2026-01-01T02:00:00Z', testExam: false, course: { id: 5, title: 'Course' } },
+            ],
+        };
+
+        const result = coursesForDashboardFromDTO(dto);
+
+        expect(result.activeExams?.[0].examMaxPoints).toBe(20);
+        expect(result.activeExams?.[1].examMaxPoints).toBeUndefined();
+    });
+
+    it('carries teamMode from the assessment-dashboard exercise DTO onto the Exercise model', () => {
+        const dto: CourseAssessmentDashboardDTO = {
+            ...minimalCourseManagementDTO,
+            exercises: [
+                {
+                    id: 10,
+                    type: ExerciseType.TEXT,
+                    title: 'Team exercise',
+                    teamMode: true,
+                    numberOfAssessmentsOfCorrectionRounds: [],
+                    secondCorrectionEnabled: false,
+                    allowComplaintsForAutomaticAssessments: false,
+                    tutorParticipations: [],
+                },
+            ],
+        };
+
+        const course = courseFromAssessmentDashboardDTO(dto);
+
+        expect(course.exercises?.[0]?.teamMode).toBe(true);
+    });
+
+    it('round-trips courseArchivePath from CourseManagementDTO onto the Course model', () => {
+        const withArchive: CourseManagementDTO = { ...minimalCourseManagementDTO, courseArchivePath: 'archives/course-1.zip' };
+
+        expect(courseFromManagementDTO(withArchive).courseArchivePath).toBe('archives/course-1.zip');
+        expect(courseFromManagementDTO(minimalCourseManagementDTO).courseArchivePath).toBeUndefined();
+    });
+
+    it('hydrates title, semester, description and prerequisites from the enrollment DTO', () => {
+        const dto: CourseForEnrollmentDTO = {
+            id: 3,
+            title: 'Interactive Learning',
+            description: 'Enroll to learn interactively',
+            semester: 'WS26',
+            enrollmentConfirmationMessage: 'Welcome!',
+            prerequisites: [{ id: 9, title: 'Basics', masteryThreshold: 80, optional: false, type: CourseCompetencyType.COMPETENCY, softDueDate: '2026-01-01T00:00:00Z' }],
+        };
+
+        const course = courseFromEnrollmentDTO(dto);
+
+        expect(course.title).toBe('Interactive Learning');
+        expect(course.semester).toBe('WS26');
+        expect(course.description).toBe('Enroll to learn interactively');
+        expect(course.prerequisites).toHaveLength(1);
+        expect(course.prerequisites?.[0]).toMatchObject({ id: 9, title: 'Basics' });
+        expect(dayjs.isDayjs(course.prerequisites?.[0]?.softDueDate)).toBe(true);
+    });
 });
 
 describe('CourseManagementService - authentication state changes', () => {
@@ -761,8 +1061,7 @@ describe('CourseManagementService - authentication state changes', () => {
 
         authState.next(undefined);
 
-        const dto = new CoursesForDashboardDTO();
-        dto.courses = [];
+        const dto: CoursesForDashboardDTO = { courses: [] };
         inFlight.flush(dto);
 
         // The in-flight response must not write back into the cleared subject.

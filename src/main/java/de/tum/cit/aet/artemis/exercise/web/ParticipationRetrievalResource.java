@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -33,11 +34,14 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -90,12 +94,13 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}/with-latest-result")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipationDTO> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        return new ResponseEntity<>(participation, HttpStatus.OK);
+        var response = StudentParticipationDTO.ofWithLatestResult(participation);
+        return ResponseEntity.ok(canSeeParticipant(participation) ? response : response.withoutParticipantInformation());
     }
 
     /**
@@ -106,12 +111,13 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getParticipationForCurrentUser(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipationDTO> getParticipationForCurrentUser(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
         checkAccessPermissionOwner(participation, user);
-        return new ResponseEntity<>(participation, HttpStatus.OK);
+        var response = StudentParticipationDTO.ofForCurrentUser(participation);
+        return ResponseEntity.ok(canSeeParticipant(participation) ? response : response.withoutParticipantInformation());
     }
 
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
@@ -142,12 +148,13 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}/submissions")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
+    public ResponseEntity<List<DetailedSubmissionDTO>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
-        return ResponseEntity.ok(submissions);
+        DetailedParticipationDTO participationWithExercise = DetailedParticipationDTO.withExercise(participation);
+        return ResponseEntity.ok(submissions.stream().map(submission -> DetailedSubmissionDTO.of(submission, participationWithExercise)).toList());
     }
 
     /**
@@ -170,7 +177,11 @@ public class ParticipationRetrievalResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         }
 
+        boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
         Page<ParticipationManagementDTO> page = participationService.findParticipationsForExercise(exercise, search);
+        if (hideParticipant) {
+            page = page.map(ParticipationManagementDTO::withoutParticipantInformation);
+        }
 
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
@@ -214,10 +225,29 @@ public class ParticipationRetrievalResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         }
 
+        boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
         Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search);
+        if (hideParticipant) {
+            page = page.map(ParticipationScoreDTO::withoutParticipantInformation);
+        }
 
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    private boolean canSeeParticipant(StudentParticipation participation) {
+        return authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastInstructorInCourse(findCourseFromParticipation(participation), null);
+    }
+
+    private boolean shouldHideParticipantInformation(Exercise exercise, String searchTerm, String sortedColumn) {
+        if (authCheckService.isAtLeastInstructorForExercise(exercise)) {
+            return false;
+        }
+        // Filtering or ordering by identity would let tutors correlate an anonymous participation with a known student.
+        if (StringUtils.hasText(searchTerm) || "participantName".equals(sortedColumn) || "participantIdentifier".equals(sortedColumn) || "buildPlanId".equals(sortedColumn)) {
+            throw new AccessForbiddenException("Only instructors may search or sort participations by participant identity.");
+        }
+        return true;
     }
 
 }

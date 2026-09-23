@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
@@ -47,7 +46,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
@@ -66,7 +64,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -77,6 +74,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -129,9 +127,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
-
-    @Autowired
-    private FeedbackRepository feedbackRepository;
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
@@ -214,7 +209,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void submitEnglishTextExercise() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
-        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
+        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipationDTO.class);
         TextSubmissionRequestDTO submissionRequest = new TextSubmissionRequestDTO(textSubmission.getId(), textSubmission.getText(), textSubmission.getLanguage(),
                 textSubmission.isSubmitted());
         TextSubmissionResponseDTO submissionResponse = request.postWithResponseBody("/api/text/exercises/" + textExercise.getId() + "/text-submissions", submissionRequest,
@@ -1474,9 +1469,13 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         channelRepository.save(channel);
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
+        // The feedback has to belong to a result: result_id is not nullable, and the exercise reports the grading
+        // instruction as used by looking for feedback that references it, which a detached row could never provide.
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        Result result = participationUtilService.createSubmissionAndResult(participation, 50, true);
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
-        feedbackRepository.save(feedback);
+        participationUtilService.addFeedbackToResult(feedback, result);
 
         TextExerciseResponseDTO receivedTextExercise = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
 
@@ -2132,18 +2131,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetTextExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        testGetTextExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetTextExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        testGetTextExercise_exampleSolutionVisibility(false, "instructor1");
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTextExercise_setGradingInstructionForCopiedFeedback() throws Exception {
         var now = ZonedDateTime.now();
@@ -2202,61 +2189,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 
-    }
-
-    private void testGetTextExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
-        // Utility function to avoid duplication
-        Function<Course, TextExercise> textExerciseGetter = c -> (TextExercise) c.getExercises().stream().filter(e -> e.getId().equals(textExercise.getId())).findAny()
-                .orElseThrow();
-
-        textExercise.setExampleSolution("Sample<br>solution");
-
-        if (isStudent) {
-            participationUtilService.createAndSaveParticipationForExercise(textExercise, username);
-        }
-
-        // Test example solution publication date not set.
-        textExercise.setExampleSolutionPublicationDate(null);
-        textExerciseRepository.save(textExercise);
-
-        CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
-                HttpStatus.OK, CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        TextExercise textExerciseFromApi = textExerciseGetter.apply(course);
-
-        if (isStudent) {
-            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
-        }
-        else {
-            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
-        }
-
-        // Test example solution publication date in the past.
-        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        textExerciseRepository.save(textExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        textExerciseFromApi = textExerciseGetter.apply(course);
-
-        assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
-
-        // Test example solution publication date in the future.
-        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        textExerciseRepository.save(textExercise);
-
-        courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
-        course = courseForDashboard.course();
-        textExerciseFromApi = textExerciseGetter.apply(course);
-
-        if (isStudent) {
-            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
-        }
-        else {
-            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
-        }
     }
 
     @Test

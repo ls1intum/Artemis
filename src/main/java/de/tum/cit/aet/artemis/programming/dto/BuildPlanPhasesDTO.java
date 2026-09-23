@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.dto;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -14,7 +15,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.core.config.ArtemisJacksonDefaults;
 
 @JsonInclude()
-public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String dockerImage) {
+public record BuildPlanPhasesDTO(List<@Valid @NotNull BuildPhaseDTO> phases, String dockerImage) {
 
     /**
      * Parsing bounds for the user-provided build plan configuration JSON. A build plan configuration is a small list of

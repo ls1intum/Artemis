@@ -14,8 +14,14 @@
     <div class="step-body">
         <div class="row mb-3">
             <div class="col">
-                <label class="form-label" jhiTranslate="artemisApp.course.description"></label>
-                <textarea class="form-control" rows="3" [ngModel]="course().description" (ngModelChange)="updateField('description', $event)"></textarea>
+                <label class="form-label" for="onboarding-description" jhiTranslate="artemisApp.course.description"></label>
+                <textarea
+                    class="form-control"
+                    id="onboarding-description"
+                    rows="3"
+                    [ngModel]="course().description"
+                    (ngModelChange)="updateField('description', $event)"
+                ></textarea>
             </div>
         </div>
 
@@ -38,6 +44,7 @@
                     labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
                     [ngModel]="course().startDate"
                     (ngModelChange)="updateField('startDate', $event)"
+                    [requiredField]="true"
                 />
             </div>
             <div class="col-md-6">
@@ -45,23 +52,30 @@
                     labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
                     [ngModel]="course().endDate"
                     (ngModelChange)="updateField('endDate', $event)"
+                    [requiredField]="true"
                 />
             </div>
         </div>
 
         <div class="row mb-3 g-3">
             <div class="col-md-6">
-                <label class="form-label" jhiTranslate="artemisApp.course.semester"></label>
-                <select class="form-select" [ngModel]="course().semester" (ngModelChange)="updateField('semester', $event)">
+                <label class="form-label" for="onboarding-semester" jhiTranslate="artemisApp.course.semester"></label>
+                <select
+                    class="form-select"
+                    id="onboarding-semester"
+                    [class.is-invalid]="semesterMissing()"
+                    [ngModel]="course().semester"
+                    (ngModelChange)="updateField('semester', $event)"
+                >
                     <option [ngValue]="undefined"></option>
-                    @for (semester of semesters; track semester) {
+                    @for (semester of semesters(); track semester) {
                         <option [value]="semester">{{ semester }}</option>
                     }
                 </select>
             </div>
             <div class="col-md-6">
-                <label class="form-label" jhiTranslate="artemisApp.course.language"></label>
-                <select class="form-select" [ngModel]="course().language" (ngModelChange)="updateField('language', $event)">
+                <label class="form-label" for="onboarding-language" jhiTranslate="artemisApp.course.language"></label>
+                <select class="form-select" id="onboarding-language" [ngModel]="course().language" (ngModelChange)="updateField('language', $event)">
                     <option [ngValue]="undefined"></option>
                     @for (lang of languageOptions; track lang.key) {
                         <option [value]="lang.key">{{ lang.value }}</option>
@@ -72,8 +86,13 @@
 
         <div class="row mb-3">
             <div class="col-md-6">
-                <label class="form-label" jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
-                <select class="form-select" [ngModel]="course().defaultProgrammingLanguage" (ngModelChange)="updateField('defaultProgrammingLanguage', $event)">
+                <label class="form-label" for="onboarding-default-programming-language" jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
+                <select
+                    class="form-select"
+                    id="onboarding-default-programming-language"
+                    [ngModel]="course().defaultProgrammingLanguage"
+                    (ngModelChange)="updateField('defaultProgrammingLanguage', $event)"
+                >
                     <option [ngValue]="undefined"></option>
                     @for (pl of ProgrammingLanguage | keyvalue; track pl) {
                         <option [value]="pl.key">{{ pl.value }}</option>
@@ -95,23 +114,42 @@
                 } @else {
                     <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisDisabledHint"></p>
                 }
-                <div class="feature-toggle">
-                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': isIrisEnabled() }" [attr.aria-pressed]="isIrisEnabled()" (click)="setIrisEnabled(true)">
-                        <fa-icon [icon]="faCheck" />
-                        <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
-                    </button>
-                    <button
-                        type="button"
-                        class="toggle-btn"
-                        [ngClass]="{ 'active-disabled': !isIrisEnabled() }"
-                        [attr.aria-pressed]="!isIrisEnabled()"
-                        (click)="setIrisEnabled(false)"
-                    >
-                        <fa-icon [icon]="faTimes" />
-                        <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
-                    </button>
-                </div>
+                <jhi-enabled-toggle
+                    class="max-w-fit"
+                    [enabled]="isIrisEnabled()"
+                    [ariaLabel]="'artemisApp.course.onboarding.generalSettings.irisTitle' | artemisTranslate"
+                    testId="onboarding-iris"
+                    (enabledChange)="setIrisEnabled($event)"
+                />
                 <p class="text-muted small mt-2" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
+            </div>
+        }
+
+        @if (athenaEnabled) {
+            <hr />
+            <div class="mb-3">
+                <h5 class="flex items-center gap-2">
+                    <jhi-athena-logo />
+                    <span jhiTranslate="artemisApp.course.athenaConfig.title"></span>
+                </h5>
+                @for (feature of athenaFeatures; track feature.key) {
+                    @let labelKey = 'artemisApp.course.athenaConfig.' + feature.key;
+                    <div class="mb-3">
+                        <strong [jhiTranslate]="labelKey + '.label'"></strong>
+                        @if (feature.enabled()) {
+                            <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.enabledHint'"></p>
+                        } @else {
+                            <p class="text-muted-color text-sm mb-2" [jhiTranslate]="labelKey + '.disabledHint'"></p>
+                        }
+                        <jhi-enabled-toggle
+                            class="max-w-fit"
+                            [enabled]="feature.enabled()"
+                            [ariaLabel]="labelKey + '.label' | artemisTranslate"
+                            [testId]="feature.testId"
+                            (enabledChange)="setAthenaFeatureEnabled(feature.key, $event)"
+                        />
+                    </div>
+                }
             </div>
         }
     </div>

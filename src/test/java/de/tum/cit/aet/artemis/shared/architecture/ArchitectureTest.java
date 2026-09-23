@@ -118,7 +118,6 @@ import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfigurati
 import de.tum.cit.aet.artemis.core.config.JGitConfig;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
-import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -431,7 +430,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoHibernateSecondLevelCacheAnnotation() {
         String reason = "Hibernate L2 cache is disabled cluster-wide. @Modifying queries bypass L2 invalidation and the absence of service-level @Transactional leaves no clean "
                 + "place to coordinate cache eviction within a REST call, both of which produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR "
-                + "#12578; further cleanup in PR #12579). Use Spring @Cacheable with explicit eviction for DTOs (see TitleCacheEvictionService for the canonical pattern). "
+                + "#12578; further cleanup in PR #12579). Use Spring @Cacheable with explicit eviction for DTOs (see FileService for the canonical pattern). "
                 + "Full rationale: documentation/docs/developer/guidelines/caching.mdx.";
 
         ArchRule noClassLevelCache = noClasses().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
@@ -441,6 +440,24 @@ class ArchitectureTest extends AbstractArchitectureTest {
         noClassLevelCache.check(productionClasses);
         noFieldLevelCache.check(productionClasses);
         noMethodLevelCache.check(productionClasses);
+    }
+
+    @Test
+    void testNoLobAnnotation() {
+        String reason = "a @Lob is a large object on PostgreSQL: Hibernate writes the value into pg_largeobject, stores the object's id in the column, and reads the column "
+                + "back as that id. The long text columns here are declared longtext in Liquibase, and tool_activity is declared clob; both become text on PostgreSQL, so "
+                + "the mapping and the column disagree: a row holding the text itself - as MySQL writes it, and as every row written before the move to PostgreSQL is "
+                + "stored - fails the read with \"Bad value for type long\" and takes the whole query with it, which is how one unreadable message brought down every Iris "
+                + "chat session load for its user. The "
+                + "objects are never reclaimed either, because nothing unlinks them when the row is deleted. A String or a converted attribute needs no annotation: bound and "
+                + "extracted as text it round-trips on both databases whatever its length, since a length in the mapping only shapes generated DDL and Artemis generates none. "
+                + "Full rationale: documentation/docs/developer/guidelines/database.mdx.";
+
+        ArchRule noFieldLevelLob = noFields().should().beAnnotatedWith("jakarta.persistence.Lob").because(reason);
+        ArchRule noMethodLevelLob = noMethods().should().beAnnotatedWith("jakarta.persistence.Lob").because(reason);
+
+        noFieldLevelLob.check(productionClasses);
+        noMethodLevelLob.check(productionClasses);
     }
 
     /**
@@ -474,7 +491,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit.attachment", "de.tum.cit.aet.artemis.lecture.domain.LectureTranscription.lectureUnit",
             "de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState.lectureUnit", "de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.course",
             "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase.post", "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission.plagiarismComparison",
-            "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig.programmingExercise",
             "de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation.programmingExercise",
             "de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation.programmingExercise",
             "de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy.programmingExercise",
@@ -913,12 +929,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
                 "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
                 "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
-                "LegacyCalendarResource",
                 // Unit tests of the logic a resource performs around its endpoints: the argument validation, the mapping of a
                 // failure to a status, and the access checks made inside the method rather than by its annotations. They call
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
-                "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "ProgrammingExerciseParticipationResourceResetTest", "PublicProgrammingExerciseResultResourceTest",
-                "RepositoryProgrammingExerciseParticipationResourceTest" };
+                "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest", "ProgrammingExerciseParticipationResourceResetTest",
+                "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -951,7 +966,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule rule = noFields().should().haveRawType(jakarta.persistence.EntityManager.class).orShould().haveRawType(jakarta.persistence.EntityManagerFactory.class)
                 .because("classes should use Spring Data repositories instead of EntityManager directly. " + "See server-development.mdx for details.");
         // TODO: Refactor these classes to eliminate direct EntityManager usage and remove from this exception list.
-        final var exceptions = new Class[] { RepositoryImpl.class, CustomPostRepositoryImpl.class, TitleCacheEvictionService.class };
+        final var exceptions = new Class[] { RepositoryImpl.class, CustomPostRepositoryImpl.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
@@ -1197,7 +1212,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
 
                 // method calls on and after a verify() line are usually not calls on the actual object
-                var firstVerifyLineNumber = firstVerifyLineNumberOptional.getAsInt();
+                var firstVerifyLineNumber = firstVerifyLineNumberOptional.orElseThrow();
                 return asyncCalls.anyMatch(call -> call.getLineNumber() < firstVerifyLineNumber);
             }
         };

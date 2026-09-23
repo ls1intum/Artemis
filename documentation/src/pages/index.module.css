@@ -414,6 +414,10 @@
     font-weight: 600;
     gap: 0.5rem;
     text-decoration: none;
+    /* The label and the arrow are separate flex items, so without this the label wraps to its own lines and leaves
+       the arrow stranded beside a three-line block. Sizing to the content keeps the link on one line. */
+    white-space: nowrap;
+    width: fit-content;
 }
 
 .qualityLink:hover {
