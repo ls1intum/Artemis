@@ -27,9 +27,9 @@ public class WorkerBrokerConfiguration {
         URI broker = URI.create(url);
         Map<String, String> options = new HashMap<>();
         if (broker.getRawQuery() != null) {
-            for (String option : broker.getRawQuery().split("[&;]")) {
+            for (String option : broker.getRawQuery().split("[&;]", -1)) {
                 String[] pair = option.split("=", 2);
-                if (pair.length != 2 || pair[0].indexOf('%') >= 0 || pair[0].indexOf('+') >= 0 || options.putIfAbsent(pair[0], pair[1]) != null) {
+                if (pair.length != 2 || pair[0].isBlank() || pair[0].indexOf('%') >= 0 || pair[0].indexOf('+') >= 0 || options.putIfAbsent(pair[0], pair[1]) != null) {
                     throw new IllegalArgumentException("Configure unambiguous AI worker broker TLS options");
                 }
             }
