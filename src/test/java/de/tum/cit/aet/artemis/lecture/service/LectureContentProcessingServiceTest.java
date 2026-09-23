@@ -1457,6 +1457,32 @@ class LectureContentProcessingServiceTest {
     @Nested
     class WebSocketNotifications {
 
+        /**
+         * Claudia-Anthropica review finding on PR #13798: the bulk failure statements do not touch the loaded
+         * entity, so the state change pushed afterwards could describe the run as still live — and a permanent
+         * failure schedules no retry that would later correct it. This pins what the client actually receives.
+         */
+        @Test
+        void shouldReportTheCommittedFailureToClientsForAPermanentError() {
+            testState.setId(1L);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+            testState.setStartedAt(ZonedDateTime.now().minusMinutes(5));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            // YOUTUBE_PRIVATE is classified as permanent, so no retry follows to correct a stale broadcast.
+            callbackService.handleProcessingFailureIfStillLive(testState, "YOUTUBE_PRIVATE", null, null);
+
+            ArgumentCaptor<LectureUnitCombinedStatusDTO> dtoCaptor = ArgumentCaptor.forClass(LectureUnitCombinedStatusDTO.class);
+            verify(websocketMessagingService).sendMessage(anyString(), dtoCaptor.capture());
+            LectureUnitCombinedStatusDTO sentDto = dtoCaptor.getValue();
+
+            assertThat(sentDto.processingPhase()).as("clients must not be left seeing an active run").isEqualTo(ProcessingPhase.FAILED);
+            assertThat(sentDto.processingErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
+            assertThat(sentDto.startedAt()).as("the dispatch attempt was undone, so there is no start time to show").isNull();
+            assertThat(sentDto.retryCount()).isEqualTo(1);
+        }
+
         @Test
         void shouldPreserveTranscriptionStatusOnFailure() {
             // Given: Unit in INGESTING phase with a completed transcription
