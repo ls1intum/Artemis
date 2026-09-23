@@ -18,7 +18,7 @@
         }
         @if (isSuggestion() || Feedback.isFeedbackSuggestion(feedback())) {
             <div class="flex flex-wrap items-center gap-1.5">
-                <jhi-feedback-suggestion-badge [feedback]="feedback()" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" />
+                <jhi-feedback-suggestion-badge [feedbackText]="feedback().text" />
             </div>
         }
 
@@ -43,6 +43,7 @@
                         <input
                             [id]="headerInputId"
                             tumUiInput
+                            [tumUiInputId]="headerInputId"
                             class="feedback-card__header-input box-border min-w-0 flex-1"
                             type="text"
                             [ngModel]="displayTitle() ?? ''"
@@ -69,6 +70,7 @@
                             <input
                                 [id]="pointsInputId"
                                 tumUiInput
+                                [tumUiInputId]="pointsInputId"
                                 class="feedback-card__points-input rounded-none text-center font-semibold"
                                 type="number"
                                 [step]="CREDITS_STEP"
@@ -136,6 +138,7 @@
                         <input
                             [id]="pointsInputId"
                             tumUiInput
+                            [tumUiInputId]="pointsInputId"
                             class="feedback-card__points-input rounded-none text-center font-semibold"
                             type="number"
                             [step]="CREDITS_STEP"
@@ -203,6 +206,7 @@
             <textarea
                 [id]="textareaId"
                 tumUiTextarea
+                [tumUiInputId]="textareaId"
                 class="feedback-card__textarea box-border w-full max-w-full resize-none"
                 rows="2"
                 [(ngModel)]="feedback().detailText"

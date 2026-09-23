@@ -3,7 +3,7 @@
     <div class="inline-feedback__content">
         @if (Feedback.isFeedbackSuggestion(feedback) && !readOnly()) {
             <div class="inline-feedback__badges">
-                <jhi-feedback-suggestion-badge [feedback]="feedback" />
+                <jhi-feedback-suggestion-badge [feedbackText]="feedback.text" />
             </div>
         }
 

@@ -40,7 +40,6 @@ describe('Unreferenced Feedback Detail Component', () => {
         fixture.componentRef.setInput('feedback', { id: 1, detailText: 'some feedback' } as Feedback);
         fixture.componentRef.setInput('resultId', 1);
         fixture.componentRef.setInput('readOnly', false);
-        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
 
         expect(() => fixture.detectChanges()).not.toThrow();
     });
@@ -101,7 +100,6 @@ describe('Unreferenced Feedback Detail Component', () => {
         fixture.componentRef.setInput('feedback', feedback);
         fixture.componentRef.setInput('resultId', 1);
         fixture.componentRef.setInput('readOnly', false);
-        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
 
         TestBed.inject(GradingInstructionSelectionService).armInstruction(instruction);
 
@@ -196,7 +194,6 @@ describe('Unreferenced Feedback Detail Component', () => {
         fixture.componentRef.setInput('feedback', originalFeedback);
         fixture.componentRef.setInput('readOnly', false);
         fixture.componentRef.setInput('resultId', 1);
-        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
         const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
         fixture.detectChanges();
 
@@ -232,7 +229,6 @@ describe('Unreferenced Feedback Detail Component', () => {
         fixture.componentRef.setInput('feedback', { detailText: 'note', credits: 1 } as Feedback);
         fixture.componentRef.setInput('readOnly', false);
         fixture.componentRef.setInput('resultId', 1);
-        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
         fixture.detectChanges();
 
         const header = fixture.nativeElement.querySelector('.feedback-card__header-input') as HTMLInputElement;

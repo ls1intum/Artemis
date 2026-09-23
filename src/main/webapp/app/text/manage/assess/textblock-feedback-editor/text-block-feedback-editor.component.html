@@ -1,6 +1,6 @@
 <div>
     @if (Feedback.isFeedbackSuggestion(feedback())) {
-        <jhi-feedback-suggestion-badge [feedback]="feedback()" [useDefaultText]="true" />
+        <jhi-feedback-suggestion-badge [feedbackText]="feedback().text" />
     }
     @if (!readOnly()) {
         <!-- Deleting is not selecting: the host of this editor treats any click as "select this text block", and selecting
@@ -117,7 +117,7 @@
                     (keydown.escape)="escKeyup()"
                     (click)="onScoreClick($event)"
                     (focus)="inFocus()"
-                    (ngModelChange)="didChange()"
+                    (ngModelChange)="onScoreChange(); didChange()"
                     [readOnly]="feedback().gradingInstruction || readOnly()"
                     [disabled]="!!feedback().gradingInstruction || readOnly()"
                 />

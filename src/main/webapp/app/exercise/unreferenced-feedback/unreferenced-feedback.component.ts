@@ -33,7 +33,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
 
     readonly readOnly = input<boolean>(undefined!);
     readonly highlightDifferences = input<boolean>(undefined!);
-    readonly useDefaultFeedbackSuggestionBadgeText = input(false);
     readonly resultId = input<number>(undefined!);
 
     /**
@@ -206,7 +205,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      */
     updateFeedback(feedback: Feedback) {
         const unreferencedFeedback = [...this.unreferencedFeedback];
-        const indexToUpdate = unreferencedFeedback.indexOf(feedback);
+        const indexToUpdate = unreferencedFeedback.findIndex((item) => item === feedback || (feedback.id !== undefined && item.id === feedback.id));
         if (indexToUpdate < 0) {
             unreferencedFeedback.push(feedback);
         } else {

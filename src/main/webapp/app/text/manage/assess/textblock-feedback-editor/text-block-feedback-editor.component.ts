@@ -151,8 +151,10 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
      */
     onScoreClick(event: MouseEvent): void {
         event.preventDefault();
+        this.onScoreChange();
+    }
 
-        // Reset the feedback correction status upon score change in order to hide it.
+    onScoreChange(): void {
         this.feedback().correctionStatus = undefined;
     }
 
@@ -162,7 +164,9 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     didChange(): void {
         const feedbackValue = this.feedback();
         const feedbackTextBefore = feedbackValue.text;
-        Feedback.updateFeedbackTypeOnChange(feedbackValue);
+        if (feedbackValue.text) {
+            feedbackValue.text = Feedback.markAdaptedIfAcceptedSuggestion(feedbackValue.text);
+        }
         this.feedbackChange.emit(feedbackValue);
         // send event to analytics if the feedback was adapted (=> title text changes to have prefix with "adapted" in it)
         if (feedbackTextBefore !== feedbackValue.text) {

@@ -64,7 +64,6 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     readonly isSuggestion = input<boolean>();
     public readonly readOnly = input.required<boolean>();
     readonly highlightDifferences = input<boolean>(false);
-    readonly useDefaultFeedbackSuggestionBadgeText = input.required<boolean>();
 
     public readonly onFeedbackChange = output<Feedback>();
     public readonly onFeedbackDelete = output<Feedback>();
@@ -181,7 +180,9 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         if (feedback.type === FeedbackType.AUTOMATIC) {
             feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
         }
-        Feedback.updateFeedbackTypeOnChange(feedback);
+        if (feedback.text) {
+            feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
+        }
         this.feedback.set(feedback);
         this.creditsEpoch.update((epoch) => epoch + 1);
         this.onFeedbackChange.emit(feedback);
