@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service.reconcile;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -122,6 +123,38 @@ class SearchableEntityDriftSweepTest {
 
         verify(enqueueService).enqueueDelete(COURSE, 42L, WeaviateOutboxOrigin.RECONCILE_DRIFT);
         verify(enqueueService, never()).enqueueUpsert(anyString(), anyLong(), any());
+    }
+
+    /**
+     * Regression test for a row whose repair enqueue fails: it must not be marked verified, or it moves to the
+     * back of the "least recently verified" queue on a failed repair, not just one still pending — leaving it
+     * unrepaired for up to a full cycle instead of retried on the very next tick.
+     */
+    @Test
+    void testAFailedDeleteEnqueueDoesNotMarkTheRowVerified() {
+        var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
+        when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.empty());
+        when(enqueueService.enqueueDelete(COURSE, 42L, WeaviateOutboxOrigin.RECONCILE_DRIFT)).thenThrow(new RuntimeException("outbox save failed"));
+
+        assertThatThrownBy(sweep::sweep).isInstanceOf(RuntimeException.class);
+
+        verify(syncStateRepository, never()).markVerified(anyString(), anyLong(), any());
+    }
+
+    /**
+     * Same regression as above, for the drifted-content branch.
+     */
+    @Test
+    void testAFailedUpsertEnqueueDoesNotMarkTheRowVerified() {
+        var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
+        when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.of(Map.of("type", COURSE, "entity_id", 42L, "title", "Advanced Algorithms")));
+        when(enqueueService.enqueueUpsert(COURSE, 42L, WeaviateOutboxOrigin.RECONCILE_DRIFT)).thenThrow(new RuntimeException("outbox save failed"));
+
+        assertThatThrownBy(sweep::sweep).isInstanceOf(RuntimeException.class);
+
+        verify(syncStateRepository, never()).markVerified(anyString(), anyLong(), any());
     }
 
     @Test

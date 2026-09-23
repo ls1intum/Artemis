@@ -145,24 +145,40 @@ public class SearchableEntityDriftSweep {
     }
 
     /**
-     * Compares one entity against what was last written for it, and records that it has now been looked at.
+     * Compares one entity against what was last written for it, and records that it has now been looked at —
+     * but only once the outcome is actually settled.
      * <p>
      * The row is marked checked whatever the outcome, including when it turned out to be gone and when a repair
      * for it is already waiting. Leaving it unmarked keeps it at the front of the queue, so every tick re-derives
-     * the same entity until the dispatcher catches up, spending the slice on work already in flight.
+     * the same entity until the dispatcher catches up, spending the slice on work already in flight. That is also
+     * why the mark comes last: {@code enqueueDelete}/{@code enqueueUpsert} do real repository work and can throw,
+     * and a row marked verified before that call would be pushed to the back of the "least recently verified"
+     * queue on a failed repair, not just one still pending — leaving it unrepaired for up to a full cycle instead
+     * of retried on the very next tick.
      */
     private CheckResult check(SearchableEntitySyncState state, ZonedDateTime checkedAt) {
         Optional<Map<String, Object>> desired = resolver.resolve(state.getEntityType(), state.getEntityId());
-        // A scoped update, not a save of the whole (possibly now stale) entity: see markVerified's javadoc.
-        syncStateRepository.markVerified(state.getEntityType(), state.getEntityId(), checkedAt);
 
         if (desired.isEmpty()) {
-            return enqueueService.enqueueDelete(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT) ? CheckResult.GONE : CheckResult.AWAITING_REPAIR;
+            boolean enqueued = enqueueService.enqueueDelete(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT);
+            markVerified(state, checkedAt);
+            return enqueued ? CheckResult.GONE : CheckResult.AWAITING_REPAIR;
         }
         if (contentHasher.hash(desired.get()).equals(state.getContentHash())) {
+            markVerified(state, checkedAt);
             return CheckResult.MATCHED;
         }
-        return enqueueService.enqueueUpsert(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT) ? CheckResult.DRIFTED : CheckResult.AWAITING_REPAIR;
+        boolean enqueued = enqueueService.enqueueUpsert(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT);
+        markVerified(state, checkedAt);
+        return enqueued ? CheckResult.DRIFTED : CheckResult.AWAITING_REPAIR;
+    }
+
+    /**
+     * A scoped update, not a save of the whole (possibly now stale) entity: see {@code markVerified}'s own javadoc
+     * on the repository.
+     */
+    private void markVerified(SearchableEntitySyncState state, ZonedDateTime checkedAt) {
+        syncStateRepository.markVerified(state.getEntityType(), state.getEntityId(), checkedAt);
     }
 
     private enum CheckResult {
