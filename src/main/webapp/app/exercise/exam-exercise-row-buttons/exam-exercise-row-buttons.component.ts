@@ -211,8 +211,12 @@ export class ExamExerciseRowButtonsComponent {
         }
         // Sits between the info/success-colored actions above and the warning-colored edit actions below, matching its
         // own warning color. Programming exercises also require the server's generation capability.
-        if (this.hyperionEnabled && course.isAtLeastEditor && supportsAiVariantGeneration(ex)
-                && (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)) {
+        if (
+            this.hyperionEnabled &&
+            course.isAtLeastEditor &&
+            supportsAiVariantGeneration(ex) &&
+            (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)
+        ) {
             items.push({
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',

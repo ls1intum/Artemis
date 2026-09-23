@@ -3,7 +3,7 @@ import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-sta
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiCardComponent, TumUiConfirmDialogComponent, TumUiConfirmationService } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiCardComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -48,6 +48,7 @@ interface RunFact {
         TumUiButtonDirective,
         TumUiCardComponent,
         TumUiConfirmDialogComponent,
+        TumUiMessageComponent,
         HyperionStatusComponent,
     ],
 })

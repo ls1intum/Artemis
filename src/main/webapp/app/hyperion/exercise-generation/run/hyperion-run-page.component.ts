@@ -26,6 +26,7 @@ import { getCourseId } from 'app/exercise/shared/entities/exercise/exercise.mode
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionArtifactsComponent } from 'app/hyperion/exercise-generation/run/hyperion-artifacts.component';
+import { artifactFiles } from 'app/hyperion/exercise-generation/artifacts/hyperion-artifact-file';
 import { HyperionRunHeaderComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-header.component';
 import { HyperionRunOutcomeCheck, HyperionRunOutcomeComponent, HyperionRunOutcomeView } from 'app/hyperion/exercise-generation/run/hyperion-run-outcome.component';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
@@ -182,7 +183,7 @@ export class HyperionRunPageComponent {
     /** `Step 2 of 5`, from position in the fixed five stages rather than from completion, so it never walks backwards. */
     protected readonly stepPosition = computed(() => stagePosition(this.stages()));
     protected readonly stepTotal = HYPERION_STAGE_COUNT;
-    protected readonly fileCount = computed(() => this.fileChanges().length);
+    protected readonly fileCount = computed(() => artifactFiles(this.fileChanges()).length);
     /**
      * Whether the page can still reach the server.
      *

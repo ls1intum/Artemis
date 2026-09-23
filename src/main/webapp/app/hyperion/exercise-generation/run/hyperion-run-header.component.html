@@ -74,6 +74,7 @@
                 size="small"
                 [loading]="startPending()"
                 [disabled]="!!startBlockedReasonText()"
+                [ariaDescribedBy]="startBlockedReasonText() ? 'hyperion-run-start-blocker' : undefined"
                 (clicked)="startRequested.emit()"
                 data-testid="hyperion-run-start"
             >
@@ -86,6 +87,7 @@
                 variant="outlined"
                 size="small"
                 [disabled]="!!startBlockedReasonText()"
+                [ariaDescribedBy]="startBlockedReasonText() ? 'hyperion-run-start-blocker' : undefined"
                 (clicked)="startRequested.emit()"
                 data-testid="hyperion-run-run-again"
             >
@@ -110,10 +112,11 @@
             </a>
         }
     </div>
+    @if ((startAvailable() || runAgainAvailable()) && startBlockedReasonText(); as reason) {
+        <tum-ui-message id="hyperion-run-start-blocker" severity="warn" class="mt-3 block min-w-0" data-testid="hyperion-run-start-blocker">
+            <span class="block wrap-anywhere">{{ reason }}</span>
+        </tum-ui-message>
+    }
 </tum-ui-card>
 
 <tum-ui-confirm-dialog [key]="cancelConfirmationKey" />
-
-@if ((startAvailable() || runAgainAvailable()) && startBlockedReasonText(); as reason) {
-    <p class="mt-2 text-sm text-muted-color">{{ reason }}</p>
-}

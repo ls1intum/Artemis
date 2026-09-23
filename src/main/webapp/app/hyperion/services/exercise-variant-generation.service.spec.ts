@@ -132,7 +132,6 @@ describe('ExerciseVariantGenerationService', () => {
 
         expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
         expect(service.jobs()).toEqual([]);
-        expect(service.hasJobs()).toBe(false);
     });
 
     it('startGeneration posts the request, adds a running entry, and subscribes to the per-job topic', () => {
@@ -200,7 +199,7 @@ describe('ExerciseVariantGenerationService', () => {
         service.loadJobs().subscribe();
 
         expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
-        expect(service.runningJobs()).toEqual([]);
+        expect(service.jobs()).toEqual([{ jobId: 'job-1', phase: 'COMPLETED' }]);
     });
 
     it('startGeneration merges into a job that a re-sync already listed instead of adding it twice', () => {
