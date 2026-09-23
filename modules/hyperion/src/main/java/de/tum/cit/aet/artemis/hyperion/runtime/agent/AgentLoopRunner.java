@@ -369,6 +369,19 @@ public class AgentLoopRunner {
                 }
             }
             boolean submitRequested = toolCalls.stream().anyMatch(toolCall -> SUBMIT_TOOL_NAME.equals(toolCall.name()));
+            if (submitRequested && toolCalls.size() != 1) {
+                conversation.add(response.getResult().getOutput());
+                List<ToolResponseMessage.ToolResponse> rejectedResponses = toolCalls.stream().map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
+                        "ERROR: no call in this batch was executed. Submit must be the only tool call in its response. Finish other actions first, then submit separately."))
+                        .toList();
+                conversation.add(ToolResponseMessage.builder().responses(rejectedResponses).build());
+                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, usageSink, cancelled, stepListener);
+                if (cancelled.getAsBoolean()) {
+                    return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
+                }
+                prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
+                continue;
+            }
             ToolExecutionResult toolExecutionResult;
             try {
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
