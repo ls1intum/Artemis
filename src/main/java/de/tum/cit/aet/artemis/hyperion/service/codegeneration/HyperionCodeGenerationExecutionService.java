@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationExcepti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -148,6 +149,8 @@ public class HyperionCodeGenerationExecutionService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private final ResultRepository resultRepository;
 
     private final ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
@@ -165,7 +168,7 @@ public class HyperionCodeGenerationExecutionService {
     public HyperionCodeGenerationExecutionService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService,
             RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
+            BuildLogEntryService buildLogEntryService, ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
             ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService,
@@ -177,6 +180,7 @@ public class HyperionCodeGenerationExecutionService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.buildLogEntryService = buildLogEntryService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -341,11 +345,9 @@ public class HyperionCodeGenerationExecutionService {
         if (result == null || !(result.getSubmission() instanceof ProgrammingSubmission programmingSubmission)) {
             return "Build failed to produce a result.";
         }
-        // The result is fetched without build logs, so the lazy association is detached here. Re-load the submission with an eager
-        // build-log graph; otherwise a compile failure (the most common retry trigger) is hidden behind a useless fallback message.
+        // The build logs of a failed build live on disk, keyed by submission; a build that failed before that store existed is still served from the table.
         try {
-            List<BuildLogEntry> buildLogEntries = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId())
-                    .map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf).orElse(List.of());
+            List<BuildLogEntry> buildLogEntries = buildLogEntryService.getLatestBuildLogs(programmingSubmission);
             if (!buildLogEntries.isEmpty()) {
                 return buildLogEntries.stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
             }

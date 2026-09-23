@@ -212,6 +212,26 @@ export class ExamParticipationLiveEventsService {
     }
 
     /**
+     * Stops handling live events of the current student exam, e.g. when the student leaves the exam. Without this, the reconnection
+     * handler above would keep fetching the events of an exam that is no longer displayed on every websocket reconnect.
+     * Loading a student exam again initializes the service anew.
+     */
+    public reset() {
+        this.lastAcknowledgedEventStatus = undefined;
+        this.unsubscribeFromExamLiveEvents();
+        if (this.fetchEventsTimeoutHandle) {
+            clearTimeout(this.fetchEventsTimeoutHandle);
+            this.fetchEventsTimeoutHandle = undefined;
+        }
+        this.events = [];
+        this.studentExamId = undefined;
+        this.examId = undefined;
+        this.courseId = undefined;
+        this.studentExam = undefined;
+        this.allEventsSubject.next([]);
+    }
+
+    /**
      * Marks an event as acknowledged, either by the system (automatic processing) or by the user
      * (explicit dismissal in the UI). The acknowledgement is persisted to localStorage so it
      * survives page reloads. Two independent timestamps are tracked per event:

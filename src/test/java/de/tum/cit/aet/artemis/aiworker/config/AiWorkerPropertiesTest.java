@@ -18,7 +18,8 @@ class AiWorkerPropertiesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "sslEnabled=false", "sslEnabled=true", "trustAll=false&trustAll=true", "verifyHost=false", "broken", "=true", "verifyHost=true#fragment" })
+    @ValueSource(strings = { "sslEnabled=false", "sslEnabled=true", "ssl%45nabled=false", "trust%41ll=true", "verify%48ost=false", "trustAll=false&trustAll=true",
+            "verifyHost=false", "broken", "=true", "verifyHost=true#fragment" })
     void rejectsDuplicateOrMalformedBrokerOptions(String option) {
         assertThatIllegalArgumentException().isThrownBy(() -> new AiWorkerProperties("tcp://broker.invalid:61617?sslEnabled=true&" + option, "core", "test-only", List.of("worker"),
                 Duration.ofSeconds(30), Duration.ofSeconds(45)));
