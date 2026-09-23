@@ -258,7 +258,7 @@
             [enableFileUpload]="editable()"
             [enableResize]="false"
             [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-            (markdownChange)="prepareForSave()"
+            (markdownChange)="onMarkdownChange()"
             (textWithDomainActionsFound)="onDomainActionsFound($event)"
         />
     }

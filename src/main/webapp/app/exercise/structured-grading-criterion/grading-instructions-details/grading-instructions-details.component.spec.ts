@@ -42,8 +42,8 @@ describe('GradingInstructionsDetailsComponent', () => {
     let alertService: MockAlertService;
 
     const criterionMarkdownText =
-        '[criterion] {@id:1} testCriteria\n' +
-        '\t[instruction] {@id:1}\n' +
+        '[criterion] testCriteria\n' +
+        '\t[instruction]\n' +
         '\t[credits] 1\n' +
         '\t[gradingScale] scale\n' +
         '\t[description] description\n' +
@@ -621,32 +621,33 @@ describe('GradingInstructionsDetailsComponent', () => {
             ] as TextWithDomainAction[];
         };
 
-        it('should report failure from prepareForSave when the flushed text is rejected', () => {
+        it('should apply a parse with duplicated legacy markers by content without rejecting', () => {
             exercise.gradingCriteria = [gradingCriterion];
             component.ngOnInit();
             component.showEditMode.set(false);
             vi.spyOn(alertService, 'error');
+            // Two renamed criteria both carrying a leftover {@id:1}; markers are ignored.
             const rejected = rejectedDomainActions();
             Object.defineProperty(component, 'markdownEditor', {
                 value: () => ({
-                    currentMarkdown: () => 'markdown with a duplicated marker',
+                    currentMarkdown: () => 'markdown with a duplicated legacy marker',
                     flushLiveMarkdownAndParse: vi.fn(() => component.onDomainActionsFound(rejected)),
                 }),
             });
 
-            expect(component.prepareForSave()).toBe(false);
-            expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+            expect(component.prepareForSave()).toBe(true);
+            expect(exercise.gradingCriteria).toHaveLength(2);
+            expect(alertService.error).not.toHaveBeenCalled();
         });
 
-        it('should stay in text mode when switching to structured mode is rejected', () => {
+        it('should enter structured mode after flushing text that carries duplicated legacy markers', () => {
             exercise.gradingCriteria = [gradingCriterion];
             component.ngOnInit();
             component.showEditMode.set(false);
-            vi.spyOn(alertService, 'error');
             const rejected = rejectedDomainActions();
             Object.defineProperty(component, 'markdownEditor', {
                 value: () => ({
-                    currentMarkdown: () => 'markdown with a duplicated marker',
+                    currentMarkdown: () => 'markdown with a duplicated legacy marker',
                     flushLiveMarkdownAndParse: vi.fn(() => component.onDomainActionsFound(rejected)),
                 }),
             });
@@ -654,10 +655,33 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.editModeValue.set('structured');
             component.setEditMode('structured');
 
-            // Switching would regenerate the markdown from the previous criteria and discard the text.
-            expect(component.showEditMode()).toBe(false);
-            expect(component.editModeValue()).toBe('text');
-            expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+            expect(component.showEditMode()).toBe(true);
+            expect(exercise.gradingCriteria).toHaveLength(2);
+        });
+
+        it('should reclaim persisted ids after a live empty clear when the same content is pasted back', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            Object.defineProperty(component, 'markdownEditor', {
+                value: () => ({
+                    currentMarkdown: () => '',
+                    flushLiveMarkdownAndParse: vi.fn(),
+                }),
+            });
+
+            // Debounced cut: clear the exercise model but keep the identity baseline.
+            component.onMarkdownChange();
+            expect(exercise.gradingCriteria).toEqual([]);
+
+            const originalCriterion = gradingCriterion;
+            const originalInstruction = gradingInstruction;
+            component.onDomainActionsFound(getDomainActionArray());
+
+            expect(exercise.gradingCriteria![0]).toBe(originalCriterion);
+            expect(exercise.gradingCriteria![0].id).toBe(1);
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(originalInstruction);
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
         });
 
         it('should flush the live monaco buffer before switching to structured mode', () => {
@@ -850,12 +874,12 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(gradingCriteria).toEqual(gradingCriterionWithoutId);
     });
 
-    it('should retain persisted criterion and instruction ids when parsing text for used feedback', () => {
+    it('should retain persisted criterion and instruction ids when parsing edited text', () => {
         exercise.gradingInstructionFeedbackUsed = true;
         exercise.gradingCriteria = [gradingCriterion];
         const originalCriterion = gradingCriterion;
         const originalInstruction = gradingInstruction;
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const domainActions = getDomainActionArray();
         domainActions[5] = { text: 'updated feedback', action: domainActions[5].action };
 
         component.onDomainActionsFound(domainActions);
@@ -871,14 +895,13 @@ describe('GradingInstructionsDetailsComponent', () => {
         exercise.gradingInstructionFeedbackUsed = true;
         exercise.gradingCriteria = [gradingCriterion];
         const originalInstruction = gradingInstruction;
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const domainActions = getDomainActionArray();
         const creditsAction = domainActions[2].action;
         const scaleAction = domainActions[3].action;
         const descriptionAction = domainActions[4].action;
         const feedbackAction = domainActions[5].action;
         const usageCountAction = domainActions[6].action;
         const instructionAction = domainActions[1].action;
-        // Insert a second instruction before the original — identity markers / content match must keep id 1 on the original row.
         domainActions.splice(
             1,
             0,
@@ -900,19 +923,17 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[1].id).toBe(1);
     });
 
-    it('should keep instruction id on a marked edited original when a markerless unchanged copy precedes it', () => {
-        exercise.gradingInstructionFeedbackUsed = true;
+    it('should give the persisted id to an unchanged copy that precedes an edited original', () => {
+        // Without markers, the unchanged fingerprint claims the id; the edited row becomes new.
         exercise.gradingCriteria = [gradingCriterion];
         const originalInstruction = gradingInstruction;
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const domainActions = getDomainActionArray();
         const instructionAction = domainActions[1].action;
         const creditsAction = domainActions[2].action;
         const scaleAction = domainActions[3].action;
         const descriptionAction = domainActions[4].action;
         const feedbackAction = domainActions[5].action;
         const usageCountAction = domainActions[6].action;
-        // Copy (unchanged content, no marker) first; original (edited, still {@id:1}) second.
-        // Fingerprint must not let the copy steal id 1 before the marker is reserved.
         domainActions.splice(
             1,
             0,
@@ -929,37 +950,35 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
         expect(instructions).toHaveLength(2);
-        expect(instructions[0].id).toBeUndefined();
+        expect(instructions[0]).toBe(originalInstruction);
+        expect(instructions[0].id).toBe(1);
         expect(instructions[0].feedback).toBe('feedback');
-        expect(instructions[1]).toBe(originalInstruction);
-        expect(instructions[1].id).toBe(1);
+        expect(instructions[1].id).toBeUndefined();
         expect(instructions[1].feedback).toBe('edited feedback');
     });
 
-    it('should keep instruction ids across reorders via identity markers', () => {
-        exercise.gradingInstructionFeedbackUsed = true;
+    it('should keep instruction ids across reorders of distinct content', () => {
         const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;
         const instructionB = { id: 20, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
         const criterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [instructionA, instructionB] } as GradingCriterion;
         exercise.gradingCriteria = [criterion];
 
-        const base = getDomainActionArray({ criterionId: 1, instructionId: 10 });
+        const base = getDomainActionArray();
         const instructionAction = base[1].action;
         const creditsAction = base[2].action;
         const scaleAction = base[3].action;
         const descriptionAction = base[4].action;
         const feedbackAction = base[5].action;
         const usageCountAction = base[6].action;
-        // Reorder: B then A (same shape — must not remount by position)
         const domainActions = [
             base[0],
-            { text: '{@id:20}', action: instructionAction },
+            { text: '', action: instructionAction },
             { text: '2', action: creditsAction },
             { text: 'b', action: scaleAction },
             { text: 'b', action: descriptionAction },
             { text: 'b', action: feedbackAction },
             { text: '0', action: usageCountAction },
-            { text: '{@id:10}', action: instructionAction },
+            { text: '', action: instructionAction },
             { text: '1', action: creditsAction },
             { text: 'a', action: scaleAction },
             { text: 'a', action: descriptionAction },
@@ -977,10 +996,9 @@ describe('GradingInstructionsDetailsComponent', () => {
     });
 
     it('should keep instruction id when content and structure both change', () => {
-        exercise.gradingInstructionFeedbackUsed = true;
         exercise.gradingCriteria = [gradingCriterion];
         const originalInstruction = gradingInstruction;
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const domainActions = getDomainActionArray();
         domainActions[5] = { text: 'edited feedback', action: domainActions[5].action };
         const instructionAction = domainActions[1].action;
         const creditsAction = domainActions[2].action;
@@ -1007,22 +1025,20 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[1].id).toBeUndefined();
     });
 
-    it('should not transfer a persisted instruction id to a copy of a marked block placed before the original', () => {
-        exercise.gradingInstructionFeedbackUsed = true;
+    it('should not transfer a persisted instruction id to an edited copy placed before the original', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const originalInstruction = gradingInstruction;
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const domainActions = getDomainActionArray();
         const instructionAction = domainActions[1].action;
         const creditsAction = domainActions[2].action;
         const scaleAction = domainActions[3].action;
         const descriptionAction = domainActions[4].action;
         const feedbackAction = domainActions[5].action;
         const usageCountAction = domainActions[6].action;
-        // The marked block was copied and edited, then pasted above its original — both carry {@id:1}.
         domainActions.splice(
             1,
             0,
-            { text: '{@id:1}', action: instructionAction },
+            { text: '', action: instructionAction },
             { text: '1', action: creditsAction },
             { text: 'scale', action: scaleAction },
             { text: 'description', action: descriptionAction },
@@ -1042,8 +1058,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[1].feedback).toBe('feedback');
     });
 
-    it('should keep title-less criterion identity across a used-feedback text round trip', () => {
-        exercise.gradingInstructionFeedbackUsed = true;
+    it('should keep title-less criterion identity across a content-identical text round trip', () => {
         const instruction = {
             id: 11,
             credits: 1,
@@ -1056,8 +1071,9 @@ describe('GradingInstructionsDetailsComponent', () => {
         exercise.gradingCriteria = [dummyCriterion];
 
         const markdown = component.generateMarkdown();
-        expect(markdown).toContain(`${GradingCriterionAction.IDENTIFIER} {@id:7}\n`);
-        expect(markdown).toContain(`${GradingInstructionAction.IDENTIFIER} {@id:11}`);
+        expect(markdown).not.toContain('{@id:');
+        expect(markdown).not.toContain(GradingCriterionAction.IDENTIFIER);
+        expect(markdown).toContain(GradingInstructionAction.IDENTIFIER);
 
         component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
 
@@ -1068,10 +1084,9 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(11);
     });
 
-    it('should drop unknown criterion marker ids that do not match the previous model', () => {
-        exercise.gradingInstructionFeedbackUsed = true;
+    it('should not adopt unknown legacy criterion markers as ids', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        const domainActions = getDomainActionArray({ criterionId: 999, instructionId: 888 });
+        const domainActions = getDomainActionArray();
         domainActions[0] = { text: '{@id:999} brand new criterion', action: domainActions[0].action };
         domainActions[5] = { text: 'brand new feedback', action: domainActions[5].action };
 
@@ -1083,10 +1098,9 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
     });
 
-    it('should drop unknown instruction marker ids that do not match the previous model', () => {
-        exercise.gradingInstructionFeedbackUsed = true;
+    it('should keep the instruction id via positional leftover when all fields change under the same criterion', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 999 });
+        const domainActions = getDomainActionArray();
         domainActions[2] = { text: '9', action: domainActions[2].action };
         domainActions[3] = { text: 'unknown', action: domainActions[3].action };
         domainActions[4] = { text: 'unknown', action: domainActions[4].action };
@@ -1096,27 +1110,12 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
         expect(exercise.gradingCriteria![0].id).toBe(1);
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).not.toBe(gradingInstruction);
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('unknown feedback');
     });
 
-    it('should drop unknown marker ids even when grading instruction feedback is not used', () => {
-        exercise.gradingCriteria = [gradingCriterion];
-        const domainActions = getDomainActionArray({ criterionId: 999, instructionId: 888 });
-        domainActions[0] = { text: '{@id:999} brand new criterion', action: domainActions[0].action };
-        domainActions[5] = { text: 'brand new feedback', action: domainActions[5].action };
-
-        component.onDomainActionsFound(domainActions);
-
-        expect(exercise.gradingCriteria![0].id).toBeUndefined();
-        expect(exercise.gradingCriteria![0].title).toBe('brand new criterion');
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('brand new feedback');
-    });
-
-    it('should reject the parse when a marked instruction moves to another criterion', () => {
-        vi.spyOn(alertService, 'error');
+    it('should apply a cross-criterion content move without preserving the moved instruction id', () => {
         const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;
         const instructionB = { id: 20, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
         const criterionA = { id: 1, title: 'Criterion A', structuredGradingInstructions: [instructionA] } as GradingCriterion;
@@ -1130,17 +1129,16 @@ describe('GradingInstructionsDetailsComponent', () => {
         const usageCountAction = new GradingUsageCountAction();
         const instructionAction = new GradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
         const criterionAction = new GradingCriterionAction(instructionAction);
-        // Move instruction A into criterion B (marker {@id:10} under B).
         const domainActions = [
-            { text: '{@id:1} Criterion A', action: criterionAction },
-            { text: '{@id:2} Criterion B', action: criterionAction },
-            { text: '{@id:20}', action: instructionAction },
+            { text: 'Criterion A', action: criterionAction },
+            { text: 'Criterion B', action: criterionAction },
+            { text: '', action: instructionAction },
             { text: '2', action: creditsAction },
             { text: 'b', action: scaleAction },
             { text: 'b', action: descriptionAction },
             { text: 'b', action: feedbackAction },
             { text: '0', action: usageCountAction },
-            { text: '{@id:10}', action: instructionAction },
+            { text: '', action: instructionAction },
             { text: '1', action: creditsAction },
             { text: 'a', action: scaleAction },
             { text: 'a', action: descriptionAction },
@@ -1150,19 +1148,19 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(domainActions);
 
-        // The server maps a criterion's instructions with orphan removal, so instruction 10 leaving
-        // criterion A is a delete there rather than a move, which would detach its feedback.
-        expect(exercise.gradingCriteria).toEqual([criterionA, criterionB]);
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(instructionA);
+        expect(exercise.gradingCriteria![0]).toBe(criterionA);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions).toEqual([]);
+        expect(exercise.gradingCriteria![1]).toBe(criterionB);
         expect(exercise.gradingCriteria![1].structuredGradingInstructions[0]).toBe(instructionB);
-        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.identityMarkerConflict');
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[0].id).toBe(20);
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[1].id).toBeUndefined();
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[1].feedback).toBe('a');
     });
 
-    it('should reject the parse and keep the previous model when both duplicate instruction copies are edited', () => {
+    it('should assign the persisted instruction id positionally when both duplicate copies are edited', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        vi.spyOn(alertService, 'error');
         const originalInstruction = gradingInstruction;
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const domainActions = getDomainActionArray();
         const instructionAction = domainActions[1].action;
         const creditsAction = domainActions[2].action;
         const scaleAction = domainActions[3].action;
@@ -1173,7 +1171,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         domainActions.splice(
             1,
             0,
-            { text: '{@id:1}', action: instructionAction },
+            { text: '', action: instructionAction },
             { text: '1', action: creditsAction },
             { text: 'scale', action: scaleAction },
             { text: 'description', action: descriptionAction },
@@ -1183,21 +1181,18 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(domainActions);
 
-        // Ordering must not decide which content inherits id 1, and dropping the id from both rows would
-        // delete the persisted instruction and detach its feedback — so the parse is rejected entirely.
-        expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
         const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
-        expect(instructions).toEqual([originalInstruction]);
+        expect(instructions).toHaveLength(2);
         expect(instructions[0]).toBe(originalInstruction);
         expect(instructions[0].id).toBe(1);
-        expect(instructions[0].feedback).toBe('feedback');
-        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.identityMarkerConflict');
+        expect(instructions[0].feedback).toBe('edited copy feedback');
+        expect(instructions[1].id).toBeUndefined();
+        expect(instructions[1].feedback).toBe('edited original feedback');
     });
 
-    it('should reject the parse and keep the previous model when both duplicate criterion copies are edited', () => {
+    it('should create two new criteria when both duplicate copies are renamed away from the persisted title', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        vi.spyOn(alertService, 'error');
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const domainActions = getDomainActionArray();
         const criterionAction = domainActions[0].action;
         const instructionAction = domainActions[1].action;
         const creditsAction = domainActions[2].action;
@@ -1205,16 +1200,15 @@ describe('GradingInstructionsDetailsComponent', () => {
         const descriptionAction = domainActions[4].action;
         const feedbackAction = domainActions[5].action;
         const usageCountAction = domainActions[6].action;
-        // Both criteria carry {@id:1} and both titles were edited away from the persisted one.
         const edited = [
-            { text: '{@id:1} renamed copy', action: criterionAction },
+            { text: 'renamed copy', action: criterionAction },
             { text: '', action: instructionAction },
             { text: '1', action: creditsAction },
             { text: 'scale', action: scaleAction },
             { text: 'description', action: descriptionAction },
             { text: 'copy feedback', action: feedbackAction },
             { text: '0', action: usageCountAction },
-            { text: '{@id:1} renamed original', action: criterionAction },
+            { text: 'renamed original', action: criterionAction },
             { text: '', action: instructionAction },
             { text: '2', action: creditsAction },
             { text: 'other', action: scaleAction },
@@ -1225,15 +1219,14 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(edited);
 
-        expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
-        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
-        expect(exercise.gradingCriteria![0].id).toBe(1);
-        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.identityMarkerConflict');
+        expect(exercise.gradingCriteria).toHaveLength(2);
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![1].id).toBeUndefined();
     });
 
-    it('should keep the persisted criterion with its instruction when an unrenamed criterion copy precedes the original', () => {
+    it('should keep the persisted criterion with the row whose instruction content still matches', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        const domainActions = getDomainActionArray({ criterionId: 1, instructionId: 1 });
+        const domainActions = getDomainActionArray();
         const criterionAction = domainActions[0].action;
         const instructionAction = domainActions[1].action;
         const creditsAction = domainActions[2].action;
@@ -1241,11 +1234,9 @@ describe('GradingInstructionsDetailsComponent', () => {
         const descriptionAction = domainActions[4].action;
         const feedbackAction = domainActions[5].action;
         const usageCountAction = domainActions[6].action;
-        // The whole criterion was copied above the original without renaming it, and only the copy's
-        // instruction was edited, so both criteria carry {@id:1} and the same title.
         const copied = [
-            { text: '{@id:1} testCriteria', action: criterionAction },
-            { text: '{@id:1}', action: instructionAction },
+            { text: 'testCriteria', action: criterionAction },
+            { text: '', action: instructionAction },
             { text: '1', action: creditsAction },
             { text: 'scale', action: scaleAction },
             { text: 'description', action: descriptionAction },
@@ -1256,31 +1247,28 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(copied);
 
-        // The title alone cannot tell the copy from the original, so the nested instructions decide:
-        // the persisted criterion stays with the row that still carries its instruction.
         const criteria = exercise.gradingCriteria!;
         expect(criteria).toHaveLength(2);
-        expect(criteria[0].id).toBeUndefined();
-        expect(criteria[0].structuredGradingInstructions[0].id).toBeUndefined();
+        // First copy: title match claims the criterion; edited instruction gets the id positionally.
+        expect(criteria[0]).toBe(gradingCriterion);
+        expect(criteria[0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(criteria[0].structuredGradingInstructions[0].id).toBe(1);
         expect(criteria[0].structuredGradingInstructions[0].feedback).toBe('copied feedback');
-        expect(criteria[1]).toBe(gradingCriterion);
-        expect(criteria[1].structuredGradingInstructions[0]).toBe(gradingInstruction);
-        expect(criteria[1].structuredGradingInstructions[0].id).toBe(1);
+        expect(criteria[1].id).toBeUndefined();
+        expect(criteria[1].structuredGradingInstructions[0].id).toBeUndefined();
     });
 
-    it('should reject the parse when a persisted instruction is moved into a new criterion', () => {
+    it('should treat a moved instruction under a new criterion title as a new instruction', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        vi.spyOn(alertService, 'error');
-        const domainActions = getDomainActionArray({ instructionId: 1 });
+        const domainActions = getDomainActionArray();
         domainActions[0] = { text: 'brand new criterion', action: domainActions[0].action };
 
         component.onDomainActionsFound(domainActions);
 
-        // A new criterion holding an existing instruction id reaches the server as a detached entity
-        // and would re-parent the instruction's feedback.
-        expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
-        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.identityMarkerConflict');
+        expect(exercise.gradingCriteria![0]).not.toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('feedback');
     });
 
     it('should keep a literal {id:N} criterion title prefix for an unsaved criterion', () => {
@@ -1291,6 +1279,16 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         expect(exercise.gradingCriteria![0].id).toBeUndefined();
         expect(exercise.gradingCriteria![0].title).toBe('{id:3} Intro');
+    });
+
+    it('should not emit identity markers in generated markdown', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+
+        const markdown = component.generateMarkdown();
+
+        expect(markdown).not.toContain('{@id:');
+        expect(markdown).toContain(`${GradingCriterionAction.IDENTIFIER} testCriteria`);
+        expect(markdown).toContain(GradingInstructionAction.IDENTIFIER);
     });
 
     it('should update properties for grading instruction', () => {

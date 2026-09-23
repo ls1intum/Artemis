@@ -97,8 +97,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     readonly criteriaGenerated = output<void>();
     private instructions: GradingInstruction[] = [];
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
-    /** Whether the last parse was rejected, so the model still holds the previous criteria. */
-    private parseRejected = false;
+    /**
+     * Last criteria that successfully carried persisted ids. Survives a live empty-buffer clear so a
+     * cut → paste of the same content can reclaim them. Cleared only when an empty buffer is committed
+     * (host save / mode switch via prepareForSave).
+     */
+    private identityBaseline: GradingCriterion[] = [];
 
     backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
@@ -178,6 +182,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
 
     ngOnInit() {
         this.criteria.set(this.exercise().gradingCriteria || []);
+        this.identityBaseline = this.exercise().gradingCriteria || [];
         this.backupExercise = deepClone(this.exercise());
         this.markdownEditorText.set(this.generateMarkdown());
         // Always start in the structured field editor; edit-as-text remains available via the mode toggle.
@@ -191,15 +196,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (gradingCriteria) {
             for (const criterion of gradingCriteria) {
                 if (criterion.title == undefined) {
-                    // Dummy (title-less) criterion: omit the title, but keep `{@id:N}` so used-feedback
-                    // round trips can reclaim the persisted criterion without inventing a title.
-                    if (criterion.id != undefined) {
-                        markdownText += `${GradingCriterionAction.IDENTIFIER} ${this.formatIdentityMarker(criterion.id)}\n\t${this.generateInstructionsMarkdown(criterion)}`;
-                    } else {
-                        markdownText += this.generateInstructionsMarkdown(criterion);
-                    }
+                    // Title-less (dummy) criterion: omit the [criterion] line; instructions alone round-trip
+                    // by content fingerprint. honey: identical instruction reorders can swap ids.
+                    markdownText += this.generateInstructionsMarkdown(criterion);
                 } else {
-                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${this.formatIdentityMarker(criterion.id)}${criterion.id != undefined ? ' ' : ''}${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
+                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
                 }
             }
         }
@@ -225,10 +226,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     }
 
     generateInstructionText(instruction: GradingInstruction): string {
-        const identitySuffix = instruction.id != undefined ? ` ${this.formatIdentityMarker(instruction.id)}` : '';
         return (
             GradingInstructionAction.IDENTIFIER +
-            identitySuffix +
             '\n' +
             '\t' +
             this.generateCreditsText(instruction) +
@@ -249,23 +248,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         );
     }
 
-    /** Stable id carried in text-mode markdown so parse/reconcile can keep persisted identities. */
-    private formatIdentityMarker(id: number | undefined): string {
-        // `{@id:N}` — not `{id:N}` — so a literal unsaved title like `{id:3} Intro` is not consumed as a marker.
-        return id != undefined ? `{@id:${id}}` : '';
-    }
-
     /**
-     * Reads an optional `{@id:N}` prefix from a domain-action text segment and assigns it to the entity.
-     * @returns remainder after the marker (e.g. criterion title)
+     * Strips a legacy `{@id:N}` prefix if present. Markers are no longer emitted or used for identity;
+     * leftover text from older sessions must not become part of the title.
      */
-    private applyParsedIdentity(entity: { id?: number }, text: string): string {
-        const match = /^\{@id:(\d+)\}\s*(.*)$/s.exec(text);
-        if (!match) {
-            return text;
-        }
-        entity.id = Number(match[1]);
-        return match[2];
+    private stripLegacyIdentityMarker(text: string): string {
+        const match = /^\{@id:\d+\}\s*(.*)$/s.exec(text);
+        return match ? match[1] : text;
     }
 
     generateCreditsText(instruction: GradingInstruction): string {
@@ -310,23 +299,31 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     }
 
     /**
+     * Debounced Monaco edits. Keeps the model in sync without committing an empty buffer (so a
+     * cut → paste can still reclaim ids by content).
+     */
+    onMarkdownChange(): void {
+        this.flushMarkdown(false);
+    }
+
+    /**
      * Flushes the live Monaco buffer into the exercise model. Hosts must call this synchronously
      * before setting isSaving (which sets editable=false and would no-op this method) or sending
      * the update DTO, otherwise a save inside the markdownChange debounce window keeps stale text.
      *
-     * @returns false when the flushed text was rejected, so the previous criteria are still in the
-     * model. The caller must abort: saving would persist criteria the user no longer sees and
-     * discard the text they typed.
+     * @returns always true; content-only reconciliation never rejects a parse.
      */
     prepareForSave(): boolean {
+        this.flushMarkdown(true);
+        return true;
+    }
+
+    private flushMarkdown(commitEmpty: boolean): void {
         if (!this.editable() || this.showEditMode()) {
-            return true;
+            return;
         }
         this.cleanupExerciseGradingInstructions();
         const editor = this.markdownEditor();
-        // A rejection from an earlier debounced parse must not block this save: only what the flush
-        // below reports counts.
-        this.parseRejected = false;
         editor?.flushLiveMarkdownAndParse();
         // parseMarkdown emits textWithDomainActionsFound only for non-empty markdown, so an emptied
         // buffer never reaches onDomainActionsFound and would otherwise keep the previous criteria.
@@ -334,15 +331,21 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         // a value (e.g. tests / unavailable Monaco), so leave whatever flush already applied.
         const liveMarkdown = editor?.currentMarkdown?.();
         if (liveMarkdown !== undefined && !liveMarkdown.trim()) {
-            this.clearGradingCriteria();
+            this.clearGradingCriteria(commitEmpty);
         }
-        return !this.parseRejected;
     }
 
-    private clearGradingCriteria(): void {
+    /**
+     * @param clearBaseline when true, also drops the identity baseline (committed empty buffer).
+     * Live clears leave the baseline so a subsequent paste of the same content can reclaim ids.
+     */
+    private clearGradingCriteria(clearBaseline = false): void {
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
+        if (clearBaseline) {
+            this.identityBaseline = [];
+        }
     }
 
     /**
@@ -407,7 +410,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             if (action instanceof GradingInstructionAction) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
-                this.applyParsedIdentity(newInstruction, text);
+                this.stripLegacyIdentityMarker(text);
                 dummyCriterion.structuredGradingInstructions = [];
                 dummyCriterion.structuredGradingInstructions.push(newInstruction);
                 this.instructions.push(newInstruction);
@@ -434,8 +437,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         for (const { text, action } of textWithDomainActions) {
             if (action instanceof GradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
-                const title = this.applyParsedIdentity(newCriterion, text);
-                // Empty remainder keeps title undefined so a marker-only dummy stays title-less.
+                const title = this.stripLegacyIdentityMarker(text);
                 if (title !== '') {
                     newCriterion.title = title;
                 }
@@ -448,7 +450,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                     endOfCriterion++;
                     if (instrAction instanceof GradingInstructionAction) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
-                        this.applyParsedIdentity(newInstruction, remainingTextWithDomainAction.text);
+                        this.stripLegacyIdentityMarker(remainingTextWithDomainAction.text);
                         newCriterion.structuredGradingInstructions.push(newInstruction);
                         this.instructions.push(newInstruction);
                     }
@@ -498,36 +500,25 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (!this.editable()) {
             return;
         }
-        this.parseRejected = false;
         const previousCriteria = this.exercise().gradingCriteria ?? [];
+        // After a live empty clear the exercise model is [], but the same content can still reclaim
+        // ids from the baseline.
+        const forMatch = previousCriteria.length > 0 ? previousCriteria : this.identityBaseline;
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
-        // Markers are emitted whenever ids exist, so unknown/copied ids must be sanitized in every mode.
-        this.reconcileParsedCriteria(previousCriteria);
+        this.reconcileParsedCriteria(forMatch);
     }
 
     /**
-     * Reuses previously persisted criterion/instruction objects so unchanged rows keep their
-     * database IDs (and feedback links). The match is planned first and only applied once it is
-     * valid, because applying writes the parsed values onto the persisted objects and could not be
-     * undone afterwards. A rejected parse leaves the previous model in place: saving an entity
-     * without its id deletes it, and `GradingInstruction.preRemove()` detaches its existing feedback.
+     * Reuses previously persisted criterion/instruction objects so unchanged (or positionally leftover)
+     * rows keep their database IDs and feedback links. Identity is content-only — no markers in text.
+     * honey: two instructions with identical fingerprints that swap order can keep the wrong ids.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
-        const previousInstructions = previousCriteria.flatMap((criterion) => [...(criterion.structuredGradingInstructions ?? [])]);
-        const plan = this.planReconciliation(previousCriteria, previousInstructions, parsedCriteria);
-        if (!plan) {
-            // Nothing has been mutated yet at this point, so the previous objects are still intact.
-            this.parseRejected = true;
-            this.exercise().gradingCriteria = previousCriteria;
-            this.criteria.set(previousCriteria);
-            this.instructions = previousInstructions;
-            this.alertService.error('artemisApp.exercise.identityMarkerConflict');
-            return;
-        }
+        const plan = this.planReconciliation(previousCriteria, parsedCriteria);
         const reconciled = plan.map(({ parsedCriterion, previousCriterion, instructions }) => {
             const criterion = previousCriterion ?? parsedCriterion;
             if (!previousCriterion) {
@@ -545,114 +536,47 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         });
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
+        this.identityBaseline = reconciled;
     }
 
     /**
      * Decides which persisted criterion / instruction each parsed row reclaims, without mutating
-     * anything. Returns undefined when the result would lose or misplace a persisted identity.
+     * anything. Match by content fingerprint (and criterion title), then pair leftovers in order so
+     * field edits still keep ids when the row was not reordered away from its unmatched siblings.
      */
-    private planReconciliation(
-        previousCriteria: GradingCriterion[],
-        previousInstructions: GradingInstruction[],
-        parsedCriteria: GradingCriterion[],
-    ): ReconciliationPlan | undefined {
-        const parsedInstructions = parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions ?? []);
-        const ambiguousCriterionIds = this.duplicateParsedIds(parsedCriteria);
-        const ambiguousInstructionIds = this.duplicateParsedIds(parsedInstructions);
+    private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan {
         const unusedCriteria = [...previousCriteria];
-        const previousOwners = new Map<number, GradingCriterion>();
-        for (const criterion of previousCriteria) {
-            for (const instruction of criterion.structuredGradingInstructions ?? []) {
-                if (instruction.id != undefined) {
-                    previousOwners.set(instruction.id, criterion);
-                }
-            }
-        }
-
-        // Unique valid markers claim first across all sibling rows. Otherwise a preceding markerless
-        // copy can consume the persisted entity by fingerprint/title before the marked row runs.
         const criterionEntries = parsedCriteria.map((parsedCriterion) => ({
             parsedCriterion,
-            previousCriterion: this.takeUniqueMarker(unusedCriteria, parsedCriterion, ambiguousCriterionIds),
+            previousCriterion: this.takeContentMatch(
+                unusedCriteria,
+                parsedCriterion,
+                (criterion) => this.criterionSignature(criterion),
+                (criterion) => criterion.title || undefined,
+            ),
         }));
-        for (const entry of criterionEntries) {
-            if (!entry.previousCriterion) {
-                entry.previousCriterion = this.takeContentMatch(
-                    unusedCriteria,
-                    entry.parsedCriterion,
-                    ambiguousCriterionIds,
-                    (criterion) => this.criterionSignature(criterion),
-                    (criterion) => criterion.title || undefined,
-                );
-            }
-        }
 
-        let movedInstruction = false;
-        const plan: ReconciliationPlan = criterionEntries.map(({ parsedCriterion, previousCriterion }) => {
-            // An instruction identity only exists within its criterion: the server maps the criterion's
-            // instructions with orphan removal, so one that leaves its criterion is deleted rather than
-            // re-parented, and `GradingInstruction.preRemove()` detaches its existing feedback.
+        return criterionEntries.map(({ parsedCriterion, previousCriterion }) => {
             const unusedInstructions = [...(previousCriterion?.structuredGradingInstructions ?? [])];
-            const instructionEntries = (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => {
-                // An ambiguous id is governed by the duplicate rules below, not read as a move.
-                if (parsedInstruction.id != undefined && !ambiguousInstructionIds.has(parsedInstruction.id)) {
-                    const owner = previousOwners.get(parsedInstruction.id);
-                    movedInstruction ||= owner != undefined && owner !== previousCriterion;
-                }
-                return {
-                    parsedInstruction,
-                    previousInstruction: this.takeUniqueMarker(unusedInstructions, parsedInstruction, ambiguousInstructionIds),
-                };
-            });
+            const instructionEntries = (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => ({
+                parsedInstruction,
+                previousInstruction: this.takeContentMatch(unusedInstructions, parsedInstruction, (instruction) => this.instructionFingerprint(instruction)),
+            }));
             for (const entry of instructionEntries) {
-                if (!entry.previousInstruction) {
-                    entry.previousInstruction = this.takeContentMatch(unusedInstructions, entry.parsedInstruction, ambiguousInstructionIds, (instruction) =>
-                        this.instructionFingerprint(instruction),
-                    );
+                if (!entry.previousInstruction && unusedInstructions.length > 0) {
+                    entry.previousInstruction = unusedInstructions.shift();
                 }
             }
             return { parsedCriterion, previousCriterion, instructions: instructionEntries };
         });
-
-        // Deleting a row is legitimate, but a persisted entity whose marker was copied is never meant
-        // to be deleted: no copy could reclaim it, so applying the parse would drop it silently.
-        const claimedInstructions = new Set(plan.flatMap((entry) => entry.instructions.map(({ previousInstruction }) => previousInstruction)));
-        const lostCriterion = unusedCriteria.some((criterion) => criterion.id != undefined && ambiguousCriterionIds.has(criterion.id));
-        const lostInstruction = previousInstructions.some(
-            (instruction) => instruction.id != undefined && ambiguousInstructionIds.has(instruction.id) && !claimedInstructions.has(instruction),
-        );
-        if (movedInstruction || lostCriterion || lostInstruction) {
-            return undefined;
-        }
-        return plan;
-    }
-
-    /** Removes and returns the unused entity whose id equals a unique, non-ambiguous parsed marker. */
-    private takeUniqueMarker<T extends { id?: number }>(unused: T[], parsed: T, ambiguousIds: Set<number>): T | undefined {
-        if (parsed.id == undefined || ambiguousIds.has(parsed.id)) {
-            return undefined;
-        }
-        const matchIndex = unused.findIndex((entity) => entity.id === parsed.id);
-        return matchIndex < 0 ? undefined : unused.splice(matchIndex, 1)[0];
     }
 
     /**
-     * Removes and returns the persisted entity the parsed row reclaims by content after markers ran.
-     * A marker repeated across rows (copied block) must not be resolved by a weaker key such as the
-     * criterion title, which the copy shares — only the row that still carries the whole content,
-     * nested instructions included, may reclaim it. Otherwise row order would decide which content
-     * inherits the identity and its feedback.
+     * Removes and returns the persisted entity the parsed row reclaims by content.
      */
-    private takeContentMatch<T extends { id?: number }>(
-        unused: T[],
-        parsed: T,
-        ambiguousIds: Set<number>,
-        signature: (entity: T) => string,
-        weakKey?: (entity: T) => string | undefined,
-    ): T | undefined {
-        const isAmbiguous = parsed.id != undefined && ambiguousIds.has(parsed.id);
+    private takeContentMatch<T>(unused: T[], parsed: T, signature: (entity: T) => string, weakKey?: (entity: T) => string | undefined): T | undefined {
         let matchIndex = unused.findIndex((entity) => signature(entity) === signature(parsed));
-        if (matchIndex < 0 && !isAmbiguous) {
+        if (matchIndex < 0) {
             const key = weakKey?.(parsed);
             matchIndex = key != undefined ? unused.findIndex((entity) => weakKey!(entity) === key) : -1;
         }
@@ -662,26 +586,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     /** Identifies a criterion by its own title plus the content of its instructions. */
     private criterionSignature(criterion: GradingCriterion): string {
         return [criterion.title ?? '', ...(criterion.structuredGradingInstructions ?? []).map((instruction) => this.instructionFingerprint(instruction))].join('\u0001');
-    }
-
-    /**
-     * Ids repeated across parsed rows (copied marked blocks). Such a marker never claims the persisted
-     * entity by id: only the row whose content still matches may reclaim it, and when no row does the
-     * parse is rejected rather than letting row order decide which content inherits the identity.
-     */
-    private duplicateParsedIds(parsed: { id?: number }[]): Set<number> {
-        const seenIds = new Set<number>();
-        const duplicateIds = new Set<number>();
-        for (const { id } of parsed) {
-            if (id == undefined) {
-                continue;
-            }
-            if (seenIds.has(id)) {
-                duplicateIds.add(id);
-            }
-            seenIds.add(id);
-        }
-        return duplicateIds;
     }
 
     private applyInstructionFields(existingInstruction: GradingInstruction, parsedInstruction: GradingInstruction): GradingInstruction {
@@ -860,11 +764,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return;
         }
         // Flush Monaco before destroying it when leaving text mode — textChanged is debounced (~200ms).
-        // A rejected parse keeps the user in text mode: the structured view would show the previous
-        // criteria and regenerating the markdown from them would discard what they typed.
-        if (next && !this.prepareForSave()) {
-            this.editModeValue.set('text');
-            return;
+        if (next) {
+            this.prepareForSave();
         }
         this.showEditMode.set(next);
         this.markdownEditorText.set(this.generateMarkdown());
