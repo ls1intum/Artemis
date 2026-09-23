@@ -29,7 +29,7 @@ public class WorkerBrokerConfiguration {
         if (broker.getRawQuery() != null) {
             for (String option : broker.getRawQuery().split("[&;]")) {
                 String[] pair = option.split("=", 2);
-                if (pair.length != 2 || options.putIfAbsent(pair[0], pair[1]) != null) {
+                if (pair.length != 2 || pair[0].indexOf('%') >= 0 || pair[0].indexOf('+') >= 0 || options.putIfAbsent(pair[0], pair[1]) != null) {
                     throw new IllegalArgumentException("Configure unambiguous AI worker broker TLS options");
                 }
             }
