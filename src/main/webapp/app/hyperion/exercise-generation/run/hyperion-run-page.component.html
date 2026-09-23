@@ -85,7 +85,13 @@
         @if (outcomeView(); as view) {
             <tum-ui-card>
                 <jhi-hyperion-run-outcome [view]="view" />
-                <tum-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="stageStripHeader()" data-testid="hyperion-run-stage-strip">
+                <tum-ui-panel
+                    class="mt-3 block"
+                    toggleable
+                    [collapsed]="true"
+                    [header]="stageStripHeaderKey() | artemisTranslate: stageStripHeaderParams()"
+                    data-testid="hyperion-run-stage-strip"
+                >
                     <jhi-hyperion-run-progress
                         [stages]="stages()"
                         [adapting]="adapting()"

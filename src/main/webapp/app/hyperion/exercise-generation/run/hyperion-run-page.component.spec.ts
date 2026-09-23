@@ -18,6 +18,8 @@ import exerciseEn from 'src/main/webapp/i18n/en/exercise.json';
 import exerciseDe from 'src/main/webapp/i18n/de/exercise.json';
 import difficultyEn from 'src/main/webapp/i18n/en/difficultyLevel.json';
 import difficultyDe from 'src/main/webapp/i18n/de/difficultyLevel.json';
+import hyperionGenerationEn from 'src/main/webapp/i18n/en/hyperionExerciseGeneration.json';
+import hyperionGenerationDe from 'src/main/webapp/i18n/de/hyperionExerciseGeneration.json';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
@@ -1100,6 +1102,19 @@ describe('HyperionRunPageComponent', () => {
             // The stages are still real information about what the run did; they are simply no longer the answer.
             expect(strip.querySelector('[data-testid="hyperion-run-progress"]')).not.toBeNull();
             expect(testId('hyperion-run-outcome')).not.toBeNull();
+        });
+
+        it('updates the folded stage header when the language changes', () => {
+            const translate = TestBed.inject(TranslateService);
+            translate.setTranslation('en', hyperionGenerationEn, true);
+            translate.setTranslation('de', hyperionGenerationDe, true);
+            translate.use('en');
+            renderFinished();
+
+            expect(testId('hyperion-run-stage-strip')!.textContent).toContain('All 5 stages');
+            translate.use('de');
+            fixture.detectChanges();
+            expect(testId('hyperion-run-stage-strip')!.textContent).toContain('Alle 5 Phasen');
         });
 
         it('puts the verdict above the spend, not below it', () => {

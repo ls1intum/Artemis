@@ -315,12 +315,7 @@ public class HyperionExerciseGenerationResource {
         };
     }
 
-    /**
-     * Hyperion writes directly to the exercise repositories, so it must only run on exercises no student has started. An exercise whose release date lies in the past is
-     * rejected; one without a release date is accepted, because instructors leave the date empty while authoring and {@link ProgrammingExercise#isReleased()} would treat that as
-     * released. An exercise that is visible but has no participations stays eligible: the participation endpoints refuse to start one while a run holds the exercise, so a
-     * student cannot copy a template that is about to change.
-     */
+    /** Rejects released exercises and exercises with student participations before repository mutation. */
     private void validateDraftExercise(ProgrammingExercise exercise) {
         capabilities.requireMutable(exercise);
     }

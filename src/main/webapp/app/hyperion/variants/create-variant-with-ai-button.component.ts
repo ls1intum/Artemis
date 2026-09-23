@@ -9,34 +9,16 @@ import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-vari
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
-/**
- * "Create Variant with AI" button plus the wizard it opens, packaged for hosts that lay out their action buttons
- * as markup rather than as `ActionItem` data — currently the programming and quiz exercise detail pages.
- *
- * The exercise table rows keep pushing their own `ActionItem` (their whole action bar is data-driven); this
- * component exists so the detail pages do not each repeat the visibility rule, the modal wiring and the exam /
- * course id resolution.
- *
- * Stays on Bootstrap `.btn` deliberately: both host rows are still all-Bootstrap, and a lone kit button among
- * them looks misplaced. Migrate it together with its hosts.
- */
+/** Adds the AI variant action to existing Bootstrap detail-page button rows. */
 @Component({
     selector: 'jhi-create-variant-with-ai-button',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ExerciseVariantAiModalWizardComponent],
-    // display: contents lets the button sit in the host's flex row / .btn-group as if it were written there
-    // inline. Without it the component element becomes an extra flex item that stretches to the row height and
-    // sizes the button differently from its siblings. Spacing utilities therefore go on `styleClass`, not on
-    // the host element, which no longer generates a box.
     styles: `
         :host {
             display: contents;
         }
 
-        // The wizard is a mount point only: tum-ui-dialog portals its panel into the CDK overlay container at
-        // body level, so this element never renders anything inline. Left visible it would become a SECOND flex
-        // item in the host's button row (display: contents promotes every child) and consume another \`gap\`
-        // slot, doubling the space between this button and the next one.
         jhi-exercise-variant-ai-modal-wizard {
             display: none;
         }
@@ -62,7 +44,7 @@ export class CreateVariantWithAiButtonComponent {
 
     private readonly hyperionEnabled = inject(ProfileService).isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
-    /** Spacing utilities of the surrounding button row, applied to the button itself (see the :host note). */
+    /** Spacing utilities from the surrounding button row. */
     readonly styleClass = input<string>('');
 
     /** Only editors may generate variants, and only for exercise types the generator supports. */

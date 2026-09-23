@@ -4,8 +4,8 @@ import DOMPurify from 'dompurify';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
-/** Generated documents may contain prose and code, but not stylesheets or interactive controls. */
-const FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'label', 'fieldset', 'legend'];
+/** Generated documents cannot load remote media or contain interactive controls. */
+const FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'label', 'fieldset', 'legend', 'img', 'video', 'audio', 'source', 'track'];
 
 /** Uses Artemis markdown rendering and feature-scoped typography, with stricter sanitisation for generated content. */
 @Component({
@@ -29,5 +29,5 @@ export class HyperionMarkdownComponent {
     /** `compact` tightens the block spacing for prose inside a docked panel. */
     readonly density = input<'comfortable' | 'compact'>('comfortable');
 
-    protected readonly rendered = computed(() => DOMPurify.sanitize(htmlForMarkdown(this.markdown()), { FORBID_TAGS: FORBIDDEN_TAGS }));
+    protected readonly rendered = computed(() => DOMPurify.sanitize(htmlForMarkdown(this.markdown(), [], undefined, undefined, false, false), { FORBID_TAGS: FORBIDDEN_TAGS }));
 }

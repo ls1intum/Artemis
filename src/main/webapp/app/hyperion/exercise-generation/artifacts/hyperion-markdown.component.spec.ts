@@ -112,10 +112,7 @@ describe('HyperionMarkdownComponent', () => {
     });
 
     describe('sanitisation of untrusted model output', () => {
-        /**
-         * markdown-it runs with `html: true`, so raw HTML in the source is passed straight through to the sanitiser.
-         * These payloads therefore reach DOMPurify exactly as written, which is what makes the assertions meaningful.
-         */
+        /** Raw HTML is escaped before DOMPurify sees it; Markdown links and generated markup still need sanitisation. */
         const PAYLOADS: [name: string, markdown: string][] = [
             ['a script element', '<script>window.__xss = true;</script>'],
             ['a script element after prose', 'Normal text.\n\n<script>window.__xss = true;</script>'],
@@ -159,8 +156,6 @@ describe('HyperionMarkdownComponent', () => {
         });
 
         it('strips the form controls the shared sanitiser would otherwise permit, keeping their text', () => {
-            // Verified against `htmlForMarkdown()` directly: DOMPurify's default profile permits these, which for a
-            // human-authored post is defensible and for a document a model wrote is a credential prompt.
             expect(htmlForMarkdown('<form action="https://evil.example/"><input name="password"><button>Sign in</button></form>')).toContain('<form');
 
             const host = render('<form action="https://evil.example/"><input name="password"><button>Sign in</button></form>');
@@ -169,6 +164,20 @@ describe('HyperionMarkdownComponent', () => {
             expect(host.querySelector('input')).toBeNull();
             expect(host.querySelector('button')).toBeNull();
             expect(host.textContent).toContain('Sign in');
+        });
+
+        it('does not load passive remote resources from generated markdown or raw HTML', () => {
+            const host = render('![tracking pixel](https://example.invalid/pixel)\n\n<video src="https://example.invalid/video"></video>');
+
+            expect(host.querySelector('img, video, audio, source, track')).toBeNull();
+            expect(host.querySelector('[src], [srcset], [poster]')).toBeNull();
+        });
+
+        it('does not apply raw HTML or CSS from a generated document', () => {
+            const host = render('<div style="background-image:url(https://example.invalid/pixel)">Text</div>');
+
+            expect(host.querySelector('div[style]')).toBeNull();
+            expect(host.textContent).toContain('Text');
         });
 
         it('removes nested stylesheets that could change the surrounding application', () => {

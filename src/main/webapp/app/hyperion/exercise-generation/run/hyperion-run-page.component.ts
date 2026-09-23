@@ -264,19 +264,10 @@ export class HyperionRunPageComponent {
         return Number.isFinite(seconds) ? formatElapsed(seconds) : undefined;
     });
 
-    /**
-     * The header of the folded stage ladder on a finished run.
-     *
-     * The ladder collapses to a strip rather than disappearing, because the stages are still real information about
-     * what the run did - they are simply no longer the answer.
-     */
-    protected readonly stageStripHeader = computed(() => {
-        const duration = this.runDuration();
-        const total = this.stepTotal;
-        return duration
-            ? this.translateService.instant('artemisApp.hyperion.generation.run.stageStripWithDuration', { total, duration })
-            : this.translateService.instant('artemisApp.hyperion.generation.run.stageStrip', { total });
-    });
+    protected readonly stageStripHeaderKey = computed(() =>
+        this.runDuration() ? 'artemisApp.hyperion.generation.run.stageStripWithDuration' : 'artemisApp.hyperion.generation.run.stageStrip',
+    );
+    protected readonly stageStripHeaderParams = computed(() => ({ total: this.stepTotal, duration: this.runDuration() }));
 
     /** When the page last heard anything at all, so stale data on screen is marked as stale rather than passed off as current. */
     protected readonly lastUpdateTime = computed(() => formatClockTime(this.events().at(-1)?.timestamp));

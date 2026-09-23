@@ -75,7 +75,7 @@ const markdownItHighlightjs: MarkdownItPlugin = (md) => {
  * Only caches the default instance (no custom extensions) since custom extensions
  * may have different identities across test runs or component instances.
  */
-let defaultMarkdownItCache: { lineBreaks: boolean; instance: MarkdownItInstance } | undefined;
+let defaultMarkdownItCache: { lineBreaks: boolean; allowHtml: boolean; instance: MarkdownItInstance } | undefined;
 
 /**
  * Gets or creates a cached MarkdownIt instance with the specified configuration.
@@ -85,16 +85,16 @@ let defaultMarkdownItCache: { lineBreaks: boolean; instance: MarkdownItInstance 
  * Note: Only caches when no custom extensions are provided, since custom extensions
  * may hold state or have different identities in test environments.
  */
-function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boolean): MarkdownItInstance {
+function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boolean, allowHtml: boolean): MarkdownItInstance {
     // Only use caching when no custom extensions are provided
     // Custom extensions may have different instance identities (e.g., in tests)
     if (extensions.length === 0) {
-        if (defaultMarkdownItCache && defaultMarkdownItCache.lineBreaks === lineBreaks) {
+        if (defaultMarkdownItCache && defaultMarkdownItCache.lineBreaks === lineBreaks && defaultMarkdownItCache.allowHtml === allowHtml) {
             return defaultMarkdownItCache.instance;
         }
 
         const markdownIt = MarkdownIt({
-            html: true,
+            html: allowHtml,
             linkify: true,
             breaks: lineBreaks,
         });
@@ -111,14 +111,14 @@ function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boole
                 table: 'table',
             });
 
-        defaultMarkdownItCache = { lineBreaks, instance: markdownIt };
+        defaultMarkdownItCache = { lineBreaks, allowHtml, instance: markdownIt };
         return markdownIt;
     }
 
     // For custom extensions, create a fresh instance each time
     // This ensures the correct extension instances are used (important for tests)
     const markdownIt = MarkdownIt({
-        html: true,
+        html: allowHtml,
         linkify: true,
         breaks: lineBreaks,
     });
@@ -156,7 +156,8 @@ function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boole
  * @param {string[]} allowedHtmlTags to allow during sanitization
  * @param {string[]} allowedHtmlAttributes to allow during sanitization
  * @param {boolean} lineBreaks to indicate if line breaks should be added
- * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
+ * @param {boolean} allowHtml whether raw HTML in the markdown source is rendered
+ * @returns {string} sanitised HTML; callers must use a safe binding when inserting it into the template
  */
 export function htmlForMarkdown(
     markdownText?: string,
@@ -164,13 +165,14 @@ export function htmlForMarkdown(
     allowedHtmlTags: string[] | undefined = undefined,
     allowedHtmlAttributes: string[] | undefined = undefined,
     lineBreaks: boolean = false,
+    allowHtml: boolean = true,
 ): string {
     if (!markdownText || markdownText === '') {
         return '';
     }
 
     // Use cached MarkdownIt instance for better performance
-    const markdownIt = getOrCreateMarkdownIt(extensions, lineBreaks);
+    const markdownIt = getOrCreateMarkdownIt(extensions, lineBreaks, allowHtml);
 
     let markdownRender = markdownIt.render(markdownText);
     if (markdownRender.endsWith('\n')) {
