@@ -26,8 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -161,15 +159,6 @@ public class ParticipantScoreScheduleService {
     }
 
     /**
-     * Stops scheduling new tasks as soon as the application context closes. The task scheduler shuts down on the same event, before the beans are
-     * destroyed, so waiting for {@link #shutdown()} would let the cron job hand it tasks it rejects.
-     */
-    @EventListener(ContextClosedEvent.class)
-    void onContextClosed() {
-        isRunning.set(false);
-    }
-
-    /**
      * Before shutdown, cancel all running or scheduled tasks.
      */
     @PreDestroy
@@ -197,7 +186,8 @@ public class ParticipantScoreScheduleService {
                 executeScheduledTasks();
             }
             catch (TaskRejectedException e) {
-                // The scheduler only rejects tasks once it is shut down, i.e. the application is shutting down; the tasks are scheduled again on the next startup
+                // The scheduler only rejects tasks once it is shut down: it stops when the application context closes, before this bean is destroyed and
+                // isRunning is reset. The tasks are scheduled again on the next startup
                 log.debug("Skipped scheduling participant score updates because the task scheduler is shut down: {}", e.getMessage());
             }
         }
