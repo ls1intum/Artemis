@@ -517,8 +517,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases);
 
-        // the exercise timeout has to cover the slowest container; a container can bound its own job more tightly
-        final int timeoutSeconds = container != null && container.timeoutSeconds() != null ? container.timeoutSeconds() : buildConfig.getTimeoutSeconds();
+        // the exercise timeout has to cover the slowest container; a container can bound its own job more tightly, never
+        // more loosely. The validator rejects a larger container timeout on save; the cap here covers a plan stored before
+        // that rule (an exercise timeout of 0 means the instance default, which the agent applies as the bound anyway).
+        final int exerciseTimeoutSeconds = buildConfig.getTimeoutSeconds();
+        final int timeoutSeconds = container != null && container.timeoutSeconds() != null
+                ? (exerciseTimeoutSeconds > 0 ? Math.min(container.timeoutSeconds(), exerciseTimeoutSeconds) : container.timeoutSeconds())
+                : exerciseTimeoutSeconds;
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, timeoutSeconds, buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(),

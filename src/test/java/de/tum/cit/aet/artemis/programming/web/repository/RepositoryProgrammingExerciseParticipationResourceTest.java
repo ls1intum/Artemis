@@ -506,6 +506,21 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     }
 
     @Test
+    void getBuildLogs_forAResultWithAttributedLogs_returnsThemAlthoughTheSubmissionIsNotFlaggedAsFailed() {
+        // Two builds of the same commit can overlap and share the submission's build-failed flag: a later build that
+        // succeeded reset it, but the failed build's logs are attributed to its result and stay visible for it.
+        var submission = submissionWithResult(50L, 90L, false);
+        participation.setSubmissions(Set.of(submission));
+        var log = new BuildLogEntry(java.time.ZonedDateTime.now(), "the failed build's line");
+        log.setResultId(90L);
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(buildLogService.getBuildLogsOfResult(submission, 90L)).thenReturn(List.of(log));
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(90L)).getBody()).containsExactly(BuildLogEntryDTO.of(log));
+        verify(buildLogService, never()).getLatestBuildLogs(any());
+    }
+
+    @Test
     void getBuildLogs_forAResultOfAnotherParticipation_isRefused() {
         // The result id is a request parameter, so without this check a student could read the build log of any submission.
         participation.setSubmissions(Set.of(submissionWithResult(50L, 90L, true)));

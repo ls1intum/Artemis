@@ -54,6 +54,19 @@ public final class BuildPlanConfigurationValidator {
      * @throws BadRequestAlertException if the build plan violates any of the rules above
      */
     public static void validate(BuildPlanPhasesDTO buildPlan) {
+        validate(buildPlan, 0);
+    }
+
+    /**
+     * Validates a build plan as {@link #validate(BuildPlanPhasesDTO)} does and, in addition, that no container sets a
+     * timeout above the exercise's: a container timeout tightens the exercise timeout, which has to cover the slowest
+     * container, and must not extend it.
+     *
+     * @param buildPlan              the build plan to validate
+     * @param exerciseTimeoutSeconds the timeout of the exercise in seconds, or 0 if the exercise uses the instance default
+     * @throws BadRequestAlertException if the build plan violates any of the rules
+     */
+    public static void validate(BuildPlanPhasesDTO buildPlan, int exerciseTimeoutSeconds) {
         final List<BuildContainerDTO> containers = buildPlan.effectiveContainers();
         // an empty build plan would leave the exercise without any way to build a submission
         if (containers.isEmpty()) {
@@ -64,7 +77,7 @@ public final class BuildPlanConfigurationValidator {
         for (final BuildContainerDTO container : containers) {
             validateContainerName(container, containerNames);
             validateDockerImageOf(container);
-            validateTimeoutOf(container);
+            validateTimeoutOf(container, exerciseTimeoutSeconds);
             validatePhasesOf(container);
         }
     }
@@ -90,11 +103,22 @@ public final class BuildPlanConfigurationValidator {
         }
     }
 
-    private static void validateTimeoutOf(BuildContainerDTO container) {
-        // null means the container uses the exercise's timeout; the agent would replace a non-positive timeout by its
-        // instance maximum, which is not what an instructor who typed it intended
-        if (container.timeoutSeconds() != null && container.timeoutSeconds() <= 0) {
+    private static void validateTimeoutOf(BuildContainerDTO container, int exerciseTimeoutSeconds) {
+        if (container.timeoutSeconds() == null) {
+            // the container uses the exercise's timeout
+            return;
+        }
+        // the agent would replace a non-positive timeout by its instance maximum, which is not what an instructor who
+        // typed it intended
+        if (container.timeoutSeconds() <= 0) {
             throw badRequest("The timeout of a build container must be positive", "invalidBuildContainerTimeout", Map.of("container", container.name()));
+        }
+        // a container timeout tightens the exercise timeout, which has to cover the slowest container; one above it
+        // would extend the exercise's budget instead. An exercise timeout of 0 means the instance default, which the
+        // agent applies as the upper bound of every job anyway.
+        if (exerciseTimeoutSeconds > 0 && container.timeoutSeconds() > exerciseTimeoutSeconds) {
+            throw badRequest("The timeout of a build container must not exceed the timeout of the exercise", "buildContainerTimeoutExceedsExerciseTimeout",
+                    Map.of("container", container.name(), "timeout", exerciseTimeoutSeconds));
         }
     }
 

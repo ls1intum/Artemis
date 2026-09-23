@@ -427,14 +427,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     /**
-     * GET /participations/:participationId/buildlogs : get the build log for the "participationId" repository.
-     *
-     * @param participationId to identify the repository with.
-     * @param resultId        an optional result ID to get the build logs for the submission that the result belongs to. If the result ID is not specified, the latest submission is
-     *                            used.
-     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
-     */
-    /**
      * @param submission a submission whose results are loaded
      * @return the id of its latest result, or null if it has none
      */
@@ -442,6 +434,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         return submission.getResults() == null ? null : submission.getResults().stream().map(Result::getId).filter(Objects::nonNull).max(Long::compare).orElse(null);
     }
 
+    /**
+     * GET /participations/:participationId/buildlogs : get the build log for the "participationId" repository.
+     *
+     * @param participationId to identify the repository with.
+     * @param resultId        an optional result ID to get the build logs for the submission that the result belongs to. If the result ID is not specified, the latest submission is
+     *                            used.
+     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
+     */
     @GetMapping(value = "participations/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -468,16 +468,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(List.of());
         }
 
-        // Empty build logs are returned if the submission is not build failed
-        if (!programmingSubmission.isBuildFailed()) {
-            return ResponseEntity.ok(List.of());
-        }
-
-        // The logs of a multi-container build are attributed to its result, so the logs shown are the ones of the result
-        // shown: an overlapping build of the same commit, which shares the submission, cannot mix its lines in.
+        // The logs of a multi-container build are attributed to its result and stored only for a container that failed,
+        // so the logs shown are the ones of the result shown, and their presence alone decides: an overlapping build of
+        // the same commit shares the submission and its build-failed flag, so neither the flag nor the other build's
+        // lines may hide them.
         Long shownResultId = resultId.isPresent() ? resultId.get() : latestResultIdOf(programmingSubmission);
-        List<BuildLogEntry> buildLogs = shownResultId == null ? buildLogService.getLatestBuildLogs(programmingSubmission)
-                : buildLogService.getBuildLogsOfResult(programmingSubmission, shownResultId);
+        List<BuildLogEntry> buildLogs = shownResultId == null ? List.of() : buildLogService.getBuildLogsOfResult(programmingSubmission, shownResultId);
+        if (buildLogs.isEmpty()) {
+            // A single-container build attributes its logs to the submission alone and keeps them only while the latest
+            // build failed, which the flag records; empty build logs are returned otherwise.
+            if (!programmingSubmission.isBuildFailed()) {
+                return ResponseEntity.ok(List.of());
+            }
+            buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
+        }
         return ResponseEntity.ok(buildLogs.stream().map(BuildLogEntryDTO::of).toList());
     }
 }

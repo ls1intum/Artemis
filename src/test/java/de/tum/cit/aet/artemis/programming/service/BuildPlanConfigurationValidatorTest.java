@@ -95,6 +95,17 @@ class BuildPlanConfigurationValidatorTest {
     }
 
     @Test
+    void testRejectsContainerTimeoutAboveTheExerciseTimeout() {
+        var plan = planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, null, List.of(phase("compile")), 120));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> BuildPlanConfigurationValidator.validate(plan, 60))
+                .extracting(BadRequestAlertException::getErrorKey).isEqualTo("buildContainerTimeoutExceedsExerciseTimeout");
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(plan, 120)).as("a container may use the whole exercise timeout").doesNotThrowAnyException();
+        // an exercise timeout of 0 means the instance default, which bounds every job on the agent
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(plan, 0)).doesNotThrowAnyException();
+    }
+
+    @Test
     void testAcceptsContainerWithoutImage() {
         // null selects the default image of the exercise
         assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(new BuildContainerDTO("tests", null, List.of(phase("compile")))))).doesNotThrowAnyException();

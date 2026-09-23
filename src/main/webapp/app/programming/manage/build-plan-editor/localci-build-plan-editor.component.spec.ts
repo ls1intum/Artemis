@@ -814,6 +814,24 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.canSubmit()).toBe(true);
     });
 
+    it('should cap a container timeout at the exercise timeout', () => {
+        // a container timeout tightens the exercise timeout; one above it would extend the exercise's budget instead
+        comp.timeout.set(60);
+        comp.containers.set([{ ...container('student_tests'), timeoutSeconds: 90 }]);
+
+        expect(comp.containerTimeoutMaxValue()).toBe(60);
+        expect(comp.areContainerTimeoutsValid()).toBe(false);
+        expect(comp.canSubmit()).toBe(false);
+
+        comp.containers.set([{ ...container('student_tests'), timeoutSeconds: 60 }]);
+        expect(comp.areContainerTimeoutsValid()).toBe(true);
+
+        // an exercise timeout of 0 means the instance default, so only the instance bound applies
+        comp.timeout.set(0);
+        comp.containers.set([{ ...container('student_tests'), timeoutSeconds: 90 }]);
+        expect(comp.areContainerTimeoutsValid()).toBe(true);
+    });
+
     it('should add and remove containers', () => {
         comp.containers.set([container('student_tests')]);
 

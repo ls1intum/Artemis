@@ -104,6 +104,20 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     readonly timeoutMinValue = computed(() => this.buildConfigurationComponent()?.timeoutMinValue());
     readonly timeoutMaxValue = computed(() => this.buildConfigurationComponent()?.timeoutMaxValue());
 
+    /**
+     * The largest timeout a container may set: a container timeout tightens the exercise timeout, which has to cover the
+     * slowest container, so it is capped at the exercise timeout within the instance bounds. An exercise timeout of 0
+     * means the instance default, which bounds every job on the agent anyway.
+     */
+    readonly containerTimeoutMaxValue = computed(() => {
+        const instanceMax = this.timeoutMaxValue();
+        const exerciseTimeout = this.timeout();
+        if (!exerciseTimeout || exerciseTimeout <= 0) {
+            return instanceMax;
+        }
+        return instanceMax === undefined ? exerciseTimeout : Math.min(instanceMax, exerciseTimeout);
+    });
+
     readonly hasPhases = computed(() => this.containers().every((container) => container.phases.length > 0));
 
     readonly isTimeoutValid = computed(() => {
@@ -125,10 +139,10 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     // the Docker flags are assembled by the build configuration child, so the size check lives there and is delegated here
     readonly areDockerFlagsWithinSizeLimit = computed(() => this.buildConfigurationComponent()?.areDockerFlagsWithinSizeLimit() ?? true);
 
-    /** a container timeout is optional; a set one has to lie within the same bounds as the exercise timeout */
+    /** a container timeout is optional; a set one has to lie within the instance bounds and must not exceed the exercise timeout */
     readonly areContainerTimeoutsValid = computed(() => {
         const min = this.timeoutMinValue();
-        const max = this.timeoutMaxValue();
+        const max = this.containerTimeoutMaxValue();
         return this.containers().every((container) => {
             const timeout = container.timeoutSeconds;
             return timeout === undefined || (Number.isInteger(timeout) && timeout > 0 && (min === undefined || timeout >= min) && (max === undefined || timeout <= max));

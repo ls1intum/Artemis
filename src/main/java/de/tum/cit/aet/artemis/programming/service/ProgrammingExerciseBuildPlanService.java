@@ -168,7 +168,7 @@ public class ProgrammingExerciseBuildPlanService {
      */
     public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig,
             UpdateBuildPlanConfigurationDTO buildPlanConfiguration) {
-        BuildPlanConfigurationValidator.validate(buildPlanConfiguration.buildPlan());
+        BuildPlanConfigurationValidator.validate(buildPlanConfiguration.buildPlan(), buildPlanConfiguration.timeoutSeconds());
         // a blank top-level image would be persisted verbatim and leave a legacy configuration with an unusable image
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
         // the same rule holds per container: null inherits the language default at build time, but a blank image would be

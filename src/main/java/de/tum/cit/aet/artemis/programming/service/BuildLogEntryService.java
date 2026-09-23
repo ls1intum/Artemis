@@ -140,16 +140,16 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Retrieves the build logs of a submission that belong to the given result: the logs of the multi-container build
-     * that produced the result, and the logs of a single-container build, which carry no result. The logs of another
-     * multi-container build of the same submission, such as an overlapping re-run of the same commit, are left out.
+     * Retrieves the build logs a multi-container build attributed to the given result. The logs of a single-container
+     * build carry no result and are not among them, nor are the logs of another multi-container build of the same
+     * submission, such as an overlapping re-run of the same commit.
      *
      * @param programmingSubmission the submission the logs belong to
      * @param resultId              the id of the result whose logs are shown
-     * @return the build log entries of that result
+     * @return the build log entries attributed to that result, empty if the result has none
      */
     public List<BuildLogEntry> getBuildLogsOfResult(ProgrammingSubmission programmingSubmission, long resultId) {
-        return getLatestBuildLogs(programmingSubmission).stream().filter(entry -> entry.getResultId() == null || entry.getResultId() == resultId).toList();
+        return getLatestBuildLogs(programmingSubmission).stream().filter(entry -> entry.getResultId() != null && entry.getResultId() == resultId).toList();
     }
 
     private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",

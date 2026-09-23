@@ -53,7 +53,7 @@
             [dockerImagePlaceholder]="defaultDockerImage()"
             [timeoutPlaceholder]="timeout()"
             [timeoutMinValue]="timeoutMinValue()"
-            [timeoutMaxValue]="timeoutMaxValue()"
+            [timeoutMaxValue]="containerTimeoutMaxValue()"
         />
     }
     <tum-ui-button id="add_container_button" variant="outlined" [icon]="faPlus" (clicked)="addContainer()">
