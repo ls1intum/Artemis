@@ -2,13 +2,18 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
@@ -33,6 +38,8 @@ public class GenerationRunStoreService {
 
     private final DistributedMap<Long, Mutation> latest;
 
+    private final DistributedMap<Long, List<RunReference>> ownerRuns;
+
     private final DistributedMap<String, Long> sequence;
 
     public GenerationRunStoreService(DistributedDataProvider data, @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration retention) {
@@ -42,11 +49,12 @@ public class GenerationRunStoreService {
         this.retention = retention;
         runs = data.getExpiringMap("hyperion-authoring-activity", retention);
         latest = data.getExpiringMap("hyperion-authoring-latest-mutation", retention);
+        ownerRuns = data.getExpiringMap("hyperion-authoring-owner-runs", retention);
         sequence = data.getMap("hyperion-authoring-activity-sequence");
     }
 
     /**
-     * Records a detached identity once. Expiry is fixed at admission, not extended by delayed callbacks.
+     * Records a detached identity once. Unsuccessful runs expire from admission; a saved run gets a new undo window when it completes.
      *
      * @param run admitted identity
      * @return detached stored identity with its pagination cursor
@@ -57,7 +65,40 @@ public class GenerationRunStoreService {
         if (runs.putIfAbsent(value.getJobId(), value) != null) {
             throw new IllegalStateException("The authoring run is already recorded");
         }
+        try {
+            indexRun(value);
+        }
+        catch (RuntimeException exception) {
+            runs.remove(value.getJobId(), value);
+            throw exception;
+        }
         return new AuthoringRun(value);
+    }
+
+    private void indexRun(AuthoringRun run) {
+        long ownerId = run.getOwnerId();
+        ownerRuns.lock(ownerId);
+        try {
+            List<RunReference> references = ownerRuns.get(ownerId);
+            if (references == null) {
+                references = retainedReferences(ownerId);
+            }
+            Map<String, AuthoringRun> retained = runs.getAll(references.stream().map(RunReference::jobId).collect(Collectors.toSet()));
+            List<RunReference> updated = new ArrayList<>(references.stream().filter(reference -> retained.containsKey(reference.jobId())).toList());
+            if (updated.stream().noneMatch(reference -> reference.jobId().equals(run.getJobId()))) {
+                updated.add(new RunReference(run.getId(), run.getJobId()));
+            }
+            updated.sort(Comparator.comparingLong(RunReference::id).reversed());
+            ownerRuns.put(ownerId, List.copyOf(updated), retention);
+        }
+        finally {
+            ownerRuns.unlock(ownerId);
+        }
+    }
+
+    private List<RunReference> retainedReferences(long ownerId) {
+        return runs.values().stream().filter(run -> Objects.equals(run.getOwnerId(), ownerId)).map(run -> new RunReference(run.getId(), run.getJobId()))
+                .sorted(Comparator.comparingLong(RunReference::id).reversed()).toList();
     }
 
     private long nextId() {
@@ -79,9 +120,46 @@ public class GenerationRunStoreService {
         return jobIds.stream().distinct().map(this::findByJobId).flatMap(Optional::stream).filter(run -> Objects.equals(run.getOwnerId(), ownerId)).toList();
     }
 
+    /**
+     * Reads one owner page from its index, with a one-time backfill when that index is absent.
+     *
+     * @param ownerId  author whose runs are requested
+     * @param beforeId exclusive cursor, or null for the newest page
+     * @param page     requested page size
+     * @return detached retained runs, newest first
+     */
     public List<AuthoringRun> findOwnedBefore(long ownerId, Long beforeId, Pageable page) {
-        return runs.values().stream().filter(run -> Objects.equals(run.getOwnerId(), ownerId) && (beforeId == null || run.getId() < beforeId))
-                .sorted(Comparator.comparing(AuthoringRun::getId).reversed()).limit(page.getPageSize()).map(AuthoringRun::new).toList();
+        List<RunReference> references = ownerRuns.get(ownerId);
+        if (references == null) {
+            ownerRuns.lock(ownerId);
+            try {
+                references = ownerRuns.get(ownerId);
+                if (references == null) {
+                    references = retainedReferences(ownerId);
+                    ownerRuns.put(ownerId, references, retention);
+                }
+            }
+            finally {
+                ownerRuns.unlock(ownerId);
+            }
+        }
+        List<AuthoringRun> pageRuns = new ArrayList<>(page.getPageSize());
+        List<RunReference> candidates = references.stream().filter(reference -> beforeId == null || reference.id() < beforeId).toList();
+        for (int offset = 0; offset < candidates.size() && pageRuns.size() < page.getPageSize(); offset += page.getPageSize()) {
+            List<RunReference> batch = candidates.subList(offset, Math.min(offset + page.getPageSize(), candidates.size()));
+            Set<String> jobIds = batch.stream().map(RunReference::jobId).collect(Collectors.toCollection(LinkedHashSet::new));
+            Map<String, AuthoringRun> found = runs.getAll(jobIds);
+            for (RunReference reference : batch) {
+                AuthoringRun run = found.get(reference.jobId());
+                if (run != null && Objects.equals(run.getOwnerId(), ownerId) && Objects.equals(run.getId(), reference.id())) {
+                    pageRuns.add(new AuthoringRun(run));
+                    if (pageRuns.size() == page.getPageSize()) {
+                        return pageRuns;
+                    }
+                }
+            }
+        }
+        return pageRuns;
     }
 
     /**
@@ -142,11 +220,22 @@ public class GenerationRunStoreService {
      * @return one if accepted, zero otherwise
      */
     public int complete(String jobId, AuthoringRun.Status status, Instant finishedAt, Boolean changed) {
-        return update(jobId, run -> run.getFinishedAt() == null, run -> {
+        int updated = update(jobId, run -> run.getFinishedAt() == null, run -> {
             run.setStatus(status);
             run.setFinishedAt(finishedAt);
             run.setLiveExerciseChanged(changed);
         });
+        if (updated == 1 && (status == AuthoringRun.Status.SAVED || status == AuthoringRun.Status.NEEDS_REVIEW)) {
+            AuthoringRun run = runs.get(jobId);
+            if (run != null) {
+                runs.refreshTimeToLive(jobId, retention);
+                Mutation mutation = latest.get(run.getExerciseId());
+                if (mutation != null && mutation.jobId().equals(jobId)) {
+                    latest.refreshTimeToLive(run.getExerciseId(), retention);
+                }
+            }
+        }
+        return updated;
     }
 
     public int markReverted(String jobId, long expectedVersionId, Instant revertedAt) {
@@ -185,5 +274,8 @@ public class GenerationRunStoreService {
     }
 
     public record Mutation(String jobId, long sequence) implements java.io.Serializable {
+    }
+
+    public record RunReference(long id, String jobId) implements java.io.Serializable {
     }
 }

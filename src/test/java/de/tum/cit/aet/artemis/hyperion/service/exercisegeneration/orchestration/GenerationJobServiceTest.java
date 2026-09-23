@@ -1293,6 +1293,14 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void initRejectsAnEffortProfileDeadlineThatOutlastsRetainedRunIdentity() {
+        GenerationJobService invalid = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofHours(6), Duration.ofMinutes(45), Runnable::run, 1, Duration.ofHours(4), true, Duration.ofHours(5));
+
+        assertThatThrownBy(invalid::init).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("terminal-replay-ttl");
+    }
+
+    @Test
     void requestCancellation_publishesCancelToOtherServiceInstances() {
         GenerationJobService ownerNode = jobService;
         GenerationJobService apiNode = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {

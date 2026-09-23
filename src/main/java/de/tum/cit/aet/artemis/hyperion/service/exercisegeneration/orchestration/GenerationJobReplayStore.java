@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,6 +14,9 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
@@ -75,17 +76,26 @@ final class GenerationJobReplayStore {
 
     private DistributedMap<String, GenerationJobService.JobArtifacts> artifactMap;
 
-    private final Set<String> usageWriteFailures = ConcurrentHashMap.newKeySet();
+    private final Cache<String, Boolean> usageWriteFailures;
 
     private final DistributedDataProvider distributedDataProvider;
 
     GenerationJobReplayStore(DistributedDataProvider distributedDataProvider, Duration terminalReplayTtl) {
+        this(distributedDataProvider, terminalReplayTtl, terminalReplayTtl);
+    }
+
+    GenerationJobReplayStore(DistributedDataProvider distributedDataProvider, Duration terminalReplayTtl, Duration maxJobDuration) {
         if (terminalReplayTtl == null || terminalReplayTtl.isZero() || terminalReplayTtl.isNegative()) {
             throw new IllegalArgumentException("artemis.hyperion.generation.terminal-replay-ttl must be positive");
+        }
+        if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
+            throw new IllegalArgumentException("The maximum generation duration must be positive");
         }
         // Resolve maps lazily: the distributed provider need not be ready during bean construction.
         this.distributedDataProvider = distributedDataProvider;
         this.terminalReplayTtlSeconds = terminalReplayTtl.toSeconds();
+        // Keep a failed write visible through the longest run and its retained usage lifetime; never evict it while that account can still be sealed as complete.
+        usageWriteFailures = Caffeine.newBuilder().expireAfterWrite(maxJobDuration.plus(terminalReplayTtl).plus(terminalReplayTtl)).build();
     }
 
     private DistributedMap<String, GenerationJobService.JobInfo> jobMap() {
@@ -171,7 +181,7 @@ final class GenerationJobReplayStore {
         try {
             String jobId = replay.currentTranscript().jobId();
             usageMap().remove(jobId);
-            usageWriteFailures.remove(jobId);
+            usageWriteFailures.invalidate(jobId);
             restoreReplayIfStillCurrent(key, replay);
         }
         finally {
@@ -202,13 +212,13 @@ final class GenerationJobReplayStore {
     /** Marks this run's accounting permanently incomplete after an admitted provider attempt whose usage could not be proved. Sticky: no later seal can undo it. */
     void markUsageIncomplete(String jobId) {
         if (transitionUsage(jobId, JobUsage::markIncomplete)) {
-            usageWriteFailures.remove(jobId);
+            usageWriteFailures.invalidate(jobId);
         }
     }
 
     /** Seals a pending account only after the caller can prove that no further provider call can add usage. */
     void sealUsage(String jobId) {
-        if (usageWriteFailures.contains(jobId)) {
+        if (usageWriteFailures.getIfPresent(jobId) != null) {
             markUsageIncomplete(jobId);
         }
         else {
@@ -228,7 +238,7 @@ final class GenerationJobReplayStore {
             if (usage == null) {
                 return UsageSnapshot.EVIDENCE_GONE;
             }
-            ExerciseGenerationAccountingState state = usageWriteFailures.contains(jobId) ? ExerciseGenerationAccountingState.INCOMPLETE : usage.accountingState();
+            ExerciseGenerationAccountingState state = usageWriteFailures.getIfPresent(jobId) != null ? ExerciseGenerationAccountingState.INCOMPLETE : usage.accountingState();
             return new UsageSnapshot(usage.toDTO(), state);
         }
         catch (RuntimeException exception) {
@@ -253,7 +263,7 @@ final class GenerationJobReplayStore {
             map.put(jobId, record.apply(current), Duration.ofSeconds(terminalReplayTtlSeconds));
         }
         catch (RuntimeException exception) {
-            usageWriteFailures.add(jobId);
+            usageWriteFailures.put(jobId, true);
             log.warn("Could not update transient exercise generation usage for job {}; the durable per-call usage record is unaffected", jobId, exception);
         }
         finally {
@@ -598,7 +608,7 @@ final class GenerationJobReplayStore {
                 artifactMap().remove(key, retainedArtifacts);
             }
             usageMap().remove(jobId);
-            usageWriteFailures.remove(jobId);
+            usageWriteFailures.invalidate(jobId);
         }
         finally {
             jobMap().unlock(key);

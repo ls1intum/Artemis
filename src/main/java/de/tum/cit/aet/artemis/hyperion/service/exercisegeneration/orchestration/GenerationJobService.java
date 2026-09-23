@@ -250,9 +250,10 @@ public class GenerationJobService {
         Duration longestJobDuration = longestConfiguredJobDuration == null || longestConfiguredJobDuration.compareTo(maxJobDuration) < 0 ? maxJobDuration
                 : longestConfiguredJobDuration;
         HyperionGenerationTimeouts.validateStaleJobTimeout(staleJobTimeout, longestJobDuration);
+        HyperionGenerationTimeouts.validateTerminalReplayTtl(terminalReplayTtl, longestJobDuration);
         jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
         cancellationMap = distributedDataProvider.getExpiringMap(CANCEL_MAP_NAME, longestJobDuration);
-        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl);
+        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl, longestJobDuration);
         cancelHooks.subscribe();
         localNodeId = distributedDataProvider.getLocalNodeId();
         reaper = new GenerationJobReaper(this, distributedDataProvider, jobMap, cancellationMap, replayStore, generationBudgetService, staleJobTimeout, maxJobDuration);

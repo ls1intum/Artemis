@@ -112,8 +112,9 @@ class DistributedDataSurfaceTest {
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, GenerationJobService.JobInfo.class,
             GenerationJobService.JobTranscript.class, GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class,
             de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun.class, de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.Mutation.class,
-            OIDCExchangeCodeService.ExchangeCodeEntry.class, AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class,
-            PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class, MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
+            de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.RunReference.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
+            AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class,
+            MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 
     /**
      * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the

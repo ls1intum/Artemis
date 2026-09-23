@@ -43,4 +43,10 @@ describe('SafeHtmlPipe', () => {
         expect(unwrap(pipe.transform(undefined))).toBe('');
         expect(unwrap(pipe.transform(null))).toBe('');
     });
+
+    it('applies a stricter forbidden-tag policy when a caller needs it', () => {
+        const result = unwrap(pipe.transform('<p>Keep this</p><img src="https://example.invalid/pixel">', ['img']));
+        expect(result).toContain('<p>Keep this</p>');
+        expect(result).not.toContain('<img');
+    });
 });

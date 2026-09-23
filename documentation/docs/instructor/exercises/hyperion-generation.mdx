@@ -148,8 +148,8 @@ goes through the same verification and guarded persistence checks as generation.
 its complete before/after exercise versions, including repositories, grading,
 and placement metadata. It targets the specific save you confirmed; it cannot
 silently undo a newer run. Availability does not depend on the browser. The undo
-reference expires four hours after the run starts by default, even if the run
-takes time to finish. Undo is unavailable when later edits conflict, required
+reference expires four hours after the save completes by default. Undo is
+unavailable when later edits conflict, required
 versions are missing, the exercise is no longer mutable, or a newer uncertain
 mutation prevents safe recovery. Preserve local edits before refreshing.
 The previous draft does not need to compile or pass its tests for undo to restore

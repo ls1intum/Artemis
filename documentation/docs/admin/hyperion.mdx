@@ -346,8 +346,9 @@ before/after snapshots use the existing exercise version history. Existing
 account-deletion rules remain unchanged; missing versions disable automatic undo.
 
 Owner-scoped activity and version references live in the configured distributed
-provider for `artemis.hyperion.generation.terminal-replay-ttl` (default four hours
-from admission). The paged `GET /api/hyperion/authoring-runs` endpoint lists only
+provider for `artemis.hyperion.generation.terminal-replay-ttl` (default four hours).
+Runs without a complete save expire from admission; a saved run's undo reference expires from
+completion. The paged `GET /api/hyperion/authoring-runs` endpoint lists only
 retained runs and rechecks current course authorization. Exact run inspection and
 restoration use
 `/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}`
