@@ -2,7 +2,12 @@ package de.tum.cit.aet.artemis.account.authentication;
 
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.util.List;
 import java.util.Optional;
@@ -191,6 +196,27 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationWithEmailAliasSendsLoginEmail() throws Exception {
+        // The directory also finds the user by an alias of the email address, which is not the email address Artemis stores
+        String emailAlias = TEST_PREFIX + "student1@alias.test.de";
+        var ldapUserDTO = new LdapUserDto().login(LOGIN).firstName("Test").lastName("User").email(EMAIL).registrationNumber("12345678");
+        ldapUserDTO.setUid(new LdapName("cn=student1,ou=test,o=lab"));
+        doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByAnyEmail(emailAlias);
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(emailAlias);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(true);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+
+        verify(mailSendingService, timeout(5000)).buildAndSendSync(argThat(recipient -> LOGIN.equals(recipient.login())), eq("email.notification.login.title"),
+                eq("mail/notification/newLoginEmail"), any());
     }
 
     @Test
