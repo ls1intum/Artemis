@@ -244,7 +244,9 @@ public class ParticipantScoreScheduleService {
         var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
         scheduledTasks.compute(participantScoreId, (key, existingTask) -> {
             if (existingTask != null) {
-                existingTask.cancel(true);
+                // Do not interrupt a task that is already running: the interrupt closes the socket of the JDBC connection it is using.
+                // A running task finishes, and the new task waits for it on the lock stripe and then recomputes the score.
+                existingTask.cancel(false);
             }
             // Capture this task's own future so executeTask() can remove exactly this map entry when it finishes
             // (see the compare-and-remove in executeTask's finally block). The reference is populated synchronously
@@ -270,7 +272,7 @@ public class ParticipantScoreScheduleService {
     private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted, ScheduledFuture<?> thisTask) {
         final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
         // Synchronize per exercise+participant to prevent concurrent tasks from creating duplicate participant scores.
-        // This can happen when a task is already running and cancel(true) fails to stop it before a new task is scheduled.
+        // This can happen when a task is already running while a new one is scheduled, as a running task is not interrupted.
         synchronized (lockStripes[Math.floorMod(participantScoreId.hashCode(), NUM_LOCK_STRIPES)]) {
             long start = System.currentTimeMillis();
             log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
@@ -372,7 +374,7 @@ public class ParticipantScoreScheduleService {
             }
             finally {
                 // Compare-and-remove: if scheduleTask() replaced this entry with a newer task while this one was
-                // running (cancel(true) cannot interrupt a task already past its interruptible point), only that
+                // running (a running task is not interrupted, see scheduleTask()), only that
                 // newer task's own invocation may remove the entry. Removing unconditionally here would let a
                 // superseded task evict a newer, not-yet-run task from the map, making isIdle() report true while
                 // the corresponding participant score is still stale.
