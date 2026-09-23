@@ -18,6 +18,9 @@ import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { QuizQuestionWithSolution } from 'app/openapi/model/quiz-question-with-solution';
 import { SubmittedAnswerFromLiveClient } from 'app/openapi/model/submitted-answer-from-live-client';
 import { SubmittedAnswerAfterEvaluation } from 'app/openapi/model/submitted-answer-after-evaluation';
+import { SubmittedAnswerBeforeEvaluation } from 'app/openapi/model/submitted-answer-before-evaluation';
+import { SubmittedAnswerFromStudent } from 'app/openapi/model/submitted-answer-from-student';
+import { QuizQuestionWithoutSolution } from 'app/openapi/model/quiz-question-without-solution';
 import type { DragAndDropMapping as GeneratedDragAndDropMapping } from 'app/openapi/model/drag-and-drop-mapping';
 import type { ShortAnswerMapping as GeneratedShortAnswerMapping } from 'app/openapi/model/short-answer-mapping';
 
@@ -49,10 +52,13 @@ function toShortAnswerMapping(mapping: GeneratedShortAnswerMapping): ShortAnswer
 /**
  * Converts a generated question into the matching {@link QuizQuestion} subclass.
  *
+ * Both the solution-bearing and the solution-free variant are accepted: they differ only in the fields the server
+ * withholds while a quiz is running, and the class graph is the same either way.
+ *
  * @param question the generated question, discriminated on its `type` property
  * @returns a class instance carrying the same data
  */
-export function toQuizQuestion(question: QuizQuestionWithSolution): QuizQuestion {
+export function toQuizQuestion(question: QuizQuestionWithSolution | QuizQuestionWithoutSolution): QuizQuestion {
     switch (question.type) {
         case 'multiple-choice': {
             // The class types `type` as the enum and the generated model as a string literal, so the intersection
@@ -65,14 +71,14 @@ export function toQuizQuestion(question: QuizQuestionWithSolution): QuizQuestion
             const dragAndDropQuestion: DragAndDropQuestion = hydrate(new DragAndDropQuestion(), question);
             dragAndDropQuestion.dropLocations = hydrateEach(() => new DropLocation(), question.dropLocations);
             dragAndDropQuestion.dragItems = hydrateEach(() => new DragItem(), question.dragItems);
-            dragAndDropQuestion.correctMappings = question.correctMappings?.map(toDragAndDropMapping);
+            dragAndDropQuestion.correctMappings = 'correctMappings' in question ? question.correctMappings?.map(toDragAndDropMapping) : undefined;
             return dragAndDropQuestion;
         }
         case 'short-answer': {
             const shortAnswerQuestion: ShortAnswerQuestion = hydrate(new ShortAnswerQuestion(), question);
             shortAnswerQuestion.spots = hydrateEach(() => new ShortAnswerSpot(), question.spots);
             shortAnswerQuestion.solutions = hydrateEach(() => new ShortAnswerSolution(), question.solutions);
-            shortAnswerQuestion.correctMappings = question.correctMappings?.map(toShortAnswerMapping);
+            shortAnswerQuestion.correctMappings = 'correctMappings' in question ? question.correctMappings?.map(toShortAnswerMapping) : undefined;
             return shortAnswerQuestion;
         }
     }
@@ -121,27 +127,83 @@ export function toSubmittedAnswerFromLiveClient(submittedAnswer: SubmittedAnswer
 }
 
 /**
- * Converts an evaluated answer into the matching {@link SubmittedAnswer} subclass, so the question components can
- * render the server's verdict with the same objects they rendered the student's selection with.
+ * Converts a submitted answer into the generated request model of the practice and preview endpoints.
  *
- * @param evaluatedAnswer the generated answer returned after evaluation
+ * These endpoints take a narrower payload than the live one: plain ids instead of nested objects.
+ *
+ * @param submittedAnswer the answer the student assembled in the UI
+ * @returns the generated request model for the practice and preview submission endpoints
+ * @throws Error if the answer carries no recognised question type
+ */
+export function toSubmittedAnswerFromStudent(submittedAnswer: SubmittedAnswer): SubmittedAnswerFromStudent {
+    const questionId = submittedAnswer.quizQuestion!.id!;
+    switch (submittedAnswer.type) {
+        case QuizQuestionType.MULTIPLE_CHOICE:
+            return {
+                type: 'multiple-choice',
+                questionId,
+                selectedOptions: (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions?.map((option) => option.id!) ?? [],
+            };
+        case QuizQuestionType.DRAG_AND_DROP:
+            return {
+                type: 'drag-and-drop',
+                questionId,
+                mappings:
+                    (submittedAnswer as DragAndDropSubmittedAnswer).mappings?.flatMap((mapping) => {
+                        const dragItemId = mapping.dragItem?.id;
+                        const dropLocationId = mapping.dropLocation?.id;
+                        return dragItemId !== undefined && dropLocationId !== undefined ? [{ dragItemId, dropLocationId }] : [];
+                    }) ?? [],
+            };
+        case QuizQuestionType.SHORT_ANSWER:
+            return {
+                type: 'short-answer',
+                questionId,
+                submittedTexts:
+                    (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts?.flatMap((submittedText) => {
+                        const text = submittedText.text;
+                        const spotId = submittedText.spot?.id;
+                        // Unanswered spots are omitted: the practice and preview payloads require submitted texts to be nonblank.
+                        return text?.trim() && spotId !== undefined ? [{ text, spotId }] : [];
+                    }) ?? [],
+            };
+        default:
+            throw new Error('Unknown submitted answer type: ' + submittedAnswer.type);
+    }
+}
+
+/**
+ * Converts a submitted answer the server returned into the matching {@link SubmittedAnswer} subclass, so the question
+ * components can render the stored selection with the same objects they rendered the student's input with.
+ *
+ * Answers returned before evaluation carry no score and a solution-free question; answers returned after evaluation
+ * carry both. The class graph is the same, so one mapper serves the live, practice and preview flows.
+ *
+ * @param answer the generated answer, discriminated on its `type` property
  * @returns a class instance carrying the same data
  */
-export function toSubmittedAnswer(evaluatedAnswer: SubmittedAnswerAfterEvaluation): SubmittedAnswer {
-    switch (evaluatedAnswer.type) {
+export function toSubmittedAnswer(answer: SubmittedAnswerAfterEvaluation | SubmittedAnswerBeforeEvaluation): SubmittedAnswer {
+    // The scored variants add this field; the pre-evaluation variants omit it entirely.
+    const scalars = { id: answer.id, scoreInPoints: 'scoreInPoints' in answer ? answer.scoreInPoints : undefined };
+    // Call sites look the answer up by its question id, so the link has to survive the conversion.
+    const quizQuestion = answer.quizQuestion ? toQuizQuestion(answer.quizQuestion) : undefined;
+    switch (answer.type) {
         case 'multiple-choice': {
-            const multipleChoiceAnswer = hydrate(new MultipleChoiceSubmittedAnswer(), { id: evaluatedAnswer.id, scoreInPoints: evaluatedAnswer.scoreInPoints });
-            multipleChoiceAnswer.selectedOptions = hydrateEach(() => new AnswerOption(), evaluatedAnswer.selectedOptions);
+            const multipleChoiceAnswer = hydrate(new MultipleChoiceSubmittedAnswer(), scalars);
+            multipleChoiceAnswer.quizQuestion = quizQuestion;
+            multipleChoiceAnswer.selectedOptions = hydrateEach(() => new AnswerOption(), answer.selectedOptions);
             return multipleChoiceAnswer;
         }
         case 'drag-and-drop': {
-            const dragAndDropAnswer = hydrate(new DragAndDropSubmittedAnswer(), { id: evaluatedAnswer.id, scoreInPoints: evaluatedAnswer.scoreInPoints });
-            dragAndDropAnswer.mappings = evaluatedAnswer.mappings?.map(toDragAndDropMapping);
+            const dragAndDropAnswer = hydrate(new DragAndDropSubmittedAnswer(), scalars);
+            dragAndDropAnswer.quizQuestion = quizQuestion;
+            dragAndDropAnswer.mappings = answer.mappings?.map(toDragAndDropMapping);
             return dragAndDropAnswer;
         }
         case 'short-answer': {
-            const shortAnswerAnswer = hydrate(new ShortAnswerSubmittedAnswer(), { id: evaluatedAnswer.id, scoreInPoints: evaluatedAnswer.scoreInPoints });
-            shortAnswerAnswer.submittedTexts = evaluatedAnswer.submittedTexts?.map((submittedText) => {
+            const shortAnswerAnswer = hydrate(new ShortAnswerSubmittedAnswer(), scalars);
+            shortAnswerAnswer.quizQuestion = quizQuestion;
+            shortAnswerAnswer.submittedTexts = answer.submittedTexts?.map((submittedText) => {
                 const submittedTextInstance = hydrate(new ShortAnswerSubmittedText(), submittedText);
                 submittedTextInstance.spot = submittedText.spot ? hydrate(new ShortAnswerSpot(), submittedText.spot) : undefined;
                 return submittedTextInstance;
