@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,14 @@ class WorkerBrokerConfigurationTest {
             "tcp://broker.invalid:61617?sslEnabled=true&sslEnabled=true", "tcp://broker.invalid:61617?sslEnabled=true#ignored" })
     void unsafeTransportFailsBeforeWorkerAdmission(String url) {
         runner.withPropertyValues("spring.artemis.broker-url=" + url).run(context -> assertThat(context).hasFailed());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "tcp://broker.invalid:61617?sslEnabled=true&ssl%45nabled=false", "tcp://broker.invalid:61617?sslEnabled=true&trust%41ll=true",
+            "tcp://broker.invalid:61617?sslEnabled=true&verify+Host=false" })
+    void encodedTlsOptionFailsBeforeConnectionFactoryConstruction(String url) {
+        assertThatIllegalArgumentException().isThrownBy(() -> new WorkerBrokerConfiguration().workerConnectionFactory(url, "worker", "test-only"))
+                .withMessage("Configure unambiguous AI worker broker TLS options");
     }
 
     @Test
