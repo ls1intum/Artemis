@@ -40,8 +40,8 @@ export interface Channel {
     subTypeReferenceId?: number;
     subTypeReferenceStartDate?: string;
     subTypeReferenceEndDate?: string;
-    subTypeReferenceDates?: ChannelSubTypeReferenceDates;
     subTypeWithReferenceFromChannel?: Channel;
+    subTypeReferenceDates?: ChannelSubTypeReferenceDates;
 }
 
 export type ChannelSubTypeEnum = 'general' | 'exercise' | 'lecture' | 'exam' | 'feedbackDiscussion';

@@ -6,7 +6,6 @@ api/hyperion-exercise-variant-api.ts
 api/hyperion-faq-api.ts
 api/hyperion-problem-statement-api.ts
 api/hyperion-quiz-question-generation-api.ts
-api/legacy-calendar-api.ts
 api/quiz-exercise-api.ts
 api/quiz-exercise-batch-api.ts
 api/quiz-exercise-creation-update-api.ts
@@ -205,9 +204,11 @@ model/tutorial-group-configuration.ts
 model/tutorial-group-detail-data.ts
 model/tutorial-group-export-data.ts
 model/tutorial-group-free-period-request.ts
+model/tutorial-group-free-period-session-count.ts
 model/tutorial-group-free-period.ts
 model/tutorial-group-import-data.ts
 model/tutorial-group-schedule.ts
+model/tutorial-group-session-count.ts
 model/tutorial-group-session.ts
 model/tutorial-group-student-import-data.ts
 model/tutorial-group-student.ts

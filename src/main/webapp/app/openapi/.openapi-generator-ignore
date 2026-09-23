@@ -42,7 +42,6 @@ api/quiz-exercise-evaluation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
 api/quiz-exercise-retrieval-resources.ts
-api/legacy-calendar-resources.ts
 api/global-search-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/tutorial-group-free-period-resources.ts

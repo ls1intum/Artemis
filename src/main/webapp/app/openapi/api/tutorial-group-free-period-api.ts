@@ -17,6 +17,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TutorialGroupFreePeriod } from '../model/tutorial-group-free-period';
 import { TutorialGroupFreePeriodRequest } from '../model/tutorial-group-free-period-request';
+import { TutorialGroupSessionCount } from '../model/tutorial-group-session-count';
+import { TutorialGroupFreePeriodSessionCount } from '../model/tutorial-group-free-period-session-count';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupFreePeriodApi {
@@ -93,6 +95,60 @@ export class TutorialGroupFreePeriodApi {
     getOneOfConfiguration_(courseId: number, tutorialGroupsConfigurationId: number, tutorialFreePeriodId: number): Observable<TutorialGroupFreePeriod> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialFreePeriodId}`;
         return this.http.get<TutorialGroupFreePeriod>(url);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param from
+     * @param to
+     * @param editedFreePeriodId
+     */
+    getOverlappingSessionCount(courseId: number, from: string, to: string, editedFreePeriodId?: number): Observable<number> {
+        const queryParams = new URLSearchParams();
+        if (from !== undefined && from !== null) {
+            queryParams.set('from', String(from));
+        }
+        if (to !== undefined && to !== null) {
+            queryParams.set('to', String(to));
+        }
+        if (editedFreePeriodId !== undefined && editedFreePeriodId !== null) {
+            queryParams.set('editedFreePeriodId', String(editedFreePeriodId));
+        }
+        const queryString = queryParams.toString();
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-free-periods/overlapping-session-count${queryString ? `?${queryString}` : ''}`;
+        return this.http.get<number>(url);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param from
+     * @param to
+     */
+    getSessionCounts(courseId: number, from: string, to: string): Observable<Array<TutorialGroupSessionCount>> {
+        const queryParams = new URLSearchParams();
+        if (from !== undefined && from !== null) {
+            queryParams.set('from', String(from));
+        }
+        if (to !== undefined && to !== null) {
+            queryParams.set('to', String(to));
+        }
+        const queryString = queryParams.toString();
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-free-periods/session-counts${queryString ? `?${queryString}` : ''}`;
+        return this.http.get<Array<TutorialGroupSessionCount>>(url);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     */
+    getSessionCountsPerFreePeriod(courseId: number): Observable<Array<TutorialGroupFreePeriodSessionCount>> {
+        const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-free-periods/session-counts-per-period`;
+        return this.http.get<Array<TutorialGroupFreePeriodSessionCount>>(url);
     }
 
     /**

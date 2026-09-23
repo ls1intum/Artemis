@@ -26,5 +26,5 @@ export interface GlobalSearchResult {
     /** Stable badge key the web client resolves to a localised label, e.g. \'programming\', \'quiz\', \'lecture\' */
     badgeKey?: string;
     /** Additional type-specific metadata such as courseId, dueDate, or points */
-    metadata?: { [key: string]: any; };
+    metadata?: { [key: string]: any | null; };
 }
