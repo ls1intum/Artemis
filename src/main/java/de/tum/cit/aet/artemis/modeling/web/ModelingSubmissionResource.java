@@ -273,7 +273,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         modelingSubmissionService.checkThatAssessmentIsPossibleElseThrow(modelingExercise, studentParticipation);
-        modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(modelingExercise, correctionRound);
+        modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(modelingExercise, submissionId, correctionRound);
 
         // now we can assume the user is at least a tutor for the underlying exercise
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());

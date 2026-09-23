@@ -228,7 +228,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(fileUploadExercise, user, resultId);
         fileUploadSubmissionService.checkThatAssessmentIsPossibleElseThrow(fileUploadExercise, studentParticipation);
-        fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, correctionRound);
+        fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, submissionId, correctionRound);
 
         // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
