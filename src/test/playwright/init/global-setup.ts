@@ -151,13 +151,13 @@ async function prewarmServer(adminJwt: string): Promise<void> {
         extraHTTPHeaders: { cookie: `jwt=${adminJwt}` },
     });
     try {
-        // Strict health gate
+        // Strict readiness gate
         const healthStart = Date.now();
         const healthResp = await ctx.get('/management/health/readiness', { timeout: 30_000 });
         if (!healthResp.ok()) {
-            throw new Error(`[prewarm] server health check failed: HTTP ${healthResp.status()}`);
+            throw new Error(`[prewarm] server readiness check failed: HTTP ${healthResp.status()}`);
         }
-        console.log(`[prewarm] health OK (${Date.now() - healthStart} ms)`);
+        console.log(`[prewarm] readiness OK (${Date.now() - healthStart} ms)`);
 
         // Soft warm pass — read endpoints against seed entities, no side effects
         const atlas = SEED_COURSES.atlas1.id;
