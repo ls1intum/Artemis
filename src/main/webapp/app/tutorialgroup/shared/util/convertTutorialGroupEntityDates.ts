@@ -3,7 +3,6 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LegacyTutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
-import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { Channel as TutorialGroupSummaryChannel } from 'app/openapi/model/channel';
 import { TutorialGroupSummarySchedule } from 'app/openapi/model/tutorial-group-summary-schedule';
@@ -17,53 +16,6 @@ export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreeP
     tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
     tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
     return tutorialGroupFreePeriod;
-}
-
-export function convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: LegacyTutorialGroupSession): LegacyTutorialGroupSession {
-    tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start);
-    tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end);
-    if (tutorialGroupSession.tutorialGroupFreePeriod) {
-        tutorialGroupSession.tutorialGroupFreePeriod = convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupSession.tutorialGroupFreePeriod);
-    }
-    return tutorialGroupSession;
-}
-
-export function convertTutorialGroupsConfigurationDatesFromServer(tutorialGroupsConfiguration: TutorialGroupsConfiguration): TutorialGroupsConfiguration {
-    tutorialGroupsConfiguration.tutorialPeriodStartInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodStartInclusive);
-    tutorialGroupsConfiguration.tutorialPeriodEndInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodEndInclusive);
-    if (tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
-        tutorialGroupsConfiguration.tutorialGroupFreePeriods.forEach((tutorialGroupFreePeriod) => {
-            tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
-            tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
-        });
-    }
-    return tutorialGroupsConfiguration;
-}
-
-export function convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup): TutorialGroup {
-    if (tutorialGroup.tutorialGroupSchedule) {
-        tutorialGroup.tutorialGroupSchedule.validFromInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validFromInclusive);
-        tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive);
-    }
-    if (tutorialGroup.tutorialGroupSessions) {
-        tutorialGroup.tutorialGroupSessions.map((tutorialGroupSession: LegacyTutorialGroupSession) => convertTutorialGroupSessionDatesFromServer(tutorialGroupSession));
-    }
-    if (tutorialGroup.nextSession) {
-        tutorialGroup.nextSession = convertTutorialGroupSessionDatesFromServer(tutorialGroup.nextSession);
-    }
-    if (tutorialGroup.course?.tutorialGroupsConfiguration) {
-        tutorialGroup.course.tutorialGroupsConfiguration = convertTutorialGroupsConfigurationDatesFromServer(tutorialGroup.course?.tutorialGroupsConfiguration);
-    }
-    return tutorialGroup;
-}
-
-export function convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
-    if (tutorialGroups) {
-        tutorialGroups.forEach((tutorialGroup: TutorialGroup) => {
-            convertTutorialGroupDatesFromServer(tutorialGroup);
-        });
-    }
-    return tutorialGroups;
 }
 
 function convertTutorialGroupSummaryFreePeriod(freePeriodSummary: TutorialGroupSummaryFreePeriod): TutorialGroupFreePeriod {
