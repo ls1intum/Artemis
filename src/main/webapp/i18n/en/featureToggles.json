@@ -54,12 +54,12 @@
                     "description": "Enables the Atlas course chat agent and the autonomous competency orchestrator. Requires a configured chat model. Competencies, learning paths and analytics work without it."
                 },
                 "hyperion": {
-                    "name": "Hyperion (Exercise Creation)",
-                    "description": "Enables Hyperion's AI authoring tools. Whole-exercise generation has a separate switch."
+                    "name": "Hyperion AI authoring",
+                    "description": "AI help for problem statements, quizzes, FAQs, and quiz variants."
                 },
                 "hyperion-exercise-generation": {
-                    "name": "Hyperion Exercise Generation",
-                    "description": "Enables whole-exercise generation on a core node with LocalCI and LocalVC. Requires Hyperion and an available AI Worker."
+                    "name": "Programming exercise generation",
+                    "description": "Creates complete exercises and variants with an AI Worker. Needs Hyperion, LocalCI, and LocalVC. Active does not mean a worker is ready. Enable this setting on every repository writer to protect edits."
                 },
                 "deimos": {
                     "name": "Deimos (Malicious Participation Analysis)",

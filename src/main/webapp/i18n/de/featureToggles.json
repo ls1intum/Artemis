@@ -54,12 +54,12 @@
                     "description": "Aktiviert den Atlas-Kurs-Chat-Agenten und den autonomen Kompetenz-Orchestrator. Erfordert ein konfiguriertes Sprachmodell. Kompetenzen, Lernpfade und Analysen funktionieren auch ohne."
                 },
                 "hyperion": {
-                    "name": "Hyperion (Aufgabenerstellung)",
-                    "description": "Aktiviert die KI-gestützten Autorenwerkzeuge von Hyperion. Die Erzeugung ganzer Aufgaben hat einen eigenen Schalter."
+                    "name": "Hyperion-KI-Autorenwerkzeuge",
+                    "description": "KI-Hilfe für Aufgabenstellungen, Quizfragen, FAQs und Quizvarianten."
                 },
                 "hyperion-exercise-generation": {
-                    "name": "Hyperion-Aufgabengenerierung",
-                    "description": "Aktiviert die Generierung ganzer Aufgaben auf einem Core-Knoten mit LocalCI und LocalVC. Erfordert Hyperion und einen verfügbaren AI Worker."
+                    "name": "Generierung von Programmieraufgaben",
+                    "description": "Erstellt vollständige Aufgaben und Varianten mit einem AI Worker. Erfordert Hyperion, LocalCI und LocalVC. Aktiv bedeutet nicht, dass ein Worker bereit ist. Diese Einstellung muss auf jedem Repository-Schreibknoten aktiv sein, um Änderungen zu schützen."
                 },
                 "deimos": {
                     "name": "Deimos (Analyse bösartiger Teilnahmen)",

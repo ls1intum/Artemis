@@ -21,7 +21,7 @@ Hyperion extends Artemis with AI-assisted authoring features. For programming ex
 
 ## Enable the Hyperion module
 
-Hyperion is disabled by default. Activate it by overriding the `artemis.hyperion.enabled` property in the configuration that the server reads on startup (for example `application-prod.yml`).
+Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. The generation setting protects repository writes across the deployment, so every writer node needs it even if that node does not run Hyperion.
 
 ```yaml
 artemis:
@@ -245,7 +245,6 @@ artemis:
         exercise-generation:
             enabled: true
     aiworker:
-        enabled: true
         broker-url: tcp://worker-broker.example:61617?sslEnabled=true&verifyHost=true
         user: ${AI_WORKER_CORE_BROKER_USER}
         password: ${AI_WORKER_CORE_BROKER_PASSWORD}
@@ -271,6 +270,16 @@ keep `artemis.hyperion.enabled=false` and `artemis.aiworker.enabled=false`: thei
 mutation guard does not load a model or connect to the worker broker. All writers
 must run this version and use the same distributed provider. Do not mix guarded
 and unguarded nodes while generation is enabled.
+
+On a writer-only node, use only the generation setting:
+
+```yaml
+artemis:
+    hyperion:
+        enabled: false
+        exercise-generation:
+            enabled: true
+```
 
 On an eligible generation core, these two Hyperion settings also start AI Worker
 coordination. Do not set `artemis.aiworker.enabled=true` just for Hyperion. That
@@ -533,13 +542,20 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Control                                                                          | Effect                                                                                                            |
-| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `artemis.hyperion.enabled=false`                                                 | Disables Hyperion, including generation.                                                                          |
-| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans or worker credentials are required.          |
-| Both properties true and profiles `core,localci,localvc`                         | Enables generation coordination and advertises its module feature. Valid worker broker configuration is required. |
-| Missing any required profile                                                     | Generation remains disabled even when both properties are true.                                                   |
-| No ready worker or no free slot                                                  | Enabled but unavailable; capacity errors do not turn off the module flag.                                         |
+| Node and settings | What happens |
+| ----------------- | ------------ |
+| Core with both settings false | No Hyperion tools or generation. |
+| Core with only `artemis.hyperion.enabled=true` | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation or worker connection. |
+| Core with both settings true and profiles `core,localci,localvc` | All Hyperion tools plus programming exercise generation and AI Worker coordination. Broker configuration is required. |
+| Writer with only `artemis.hyperion.exercise-generation.enabled=true` | Protects repository writes against generation. It does not load Hyperion tools or connect to AI Workers. |
+| Core with both settings true but a required profile missing | Generation stays off. The generation setting still protects writes if this node is a repository writer. |
+
+The Administration > Features page shows these as one Hyperion card with a
+nested programming exercise generation status. The status reports whether this
+core can offer generation; it does not report worker capacity. A missing ready
+worker or a full worker returns `503 generationCapacityUnavailable` without
+changing the status. On a writer-only node, the mutation guard can be active
+even though the generation status is inactive.
 
 The standalone worker is a separate application artifact, not an additional core
 profile. Its component scan contains only worker code, and it starts without an
