@@ -425,15 +425,13 @@ public abstract class AbstractGitService {
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again
         // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
         repository.closeBeforeDelete();
-        if (!Files.exists(repoPath)) {
+        if (Files.notExists(repoPath)) {
             return;
         }
         Path renamedPath = repoPath.resolveSibling(repoPath.getFileName() + ".deleted-" + UUID.randomUUID());
-        try {
-            Files.move(repoPath, renamedPath);
-        }
-        catch (IOException e) {
-            log.warn("Could not rename the repository folder {} before deleting it, deleting it in place: {}", repoPath, e.getMessage());
+        // A plain rename within the same folder: unlike a move, it never falls back to copying and deleting
+        if (!repoPath.toFile().renameTo(renamedPath.toFile())) {
+            log.warn("Could not rename the repository folder {} before deleting it, deleting it in place", repoPath);
             FileUtils.deleteDirectory(repoPath.toFile());
             log.debug("Deleted Repository at {}", repoPath);
             return;
