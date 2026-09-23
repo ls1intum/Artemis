@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
@@ -175,6 +176,27 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
         var result = resultRepository.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentRejectsMissingGradingInstruction(boolean submit) throws Exception {
+        var submission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var result = submission.getLatestResult();
+        var originalFeedback = new Feedback().credits(2.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("original assessment");
+        participationUtilService.addFeedbackToResult(originalFeedback, result);
+        var instruction = new GradingInstruction();
+        instruction.setId(Long.MAX_VALUE);
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("invalid instruction");
+        feedback.setGradingInstruction(instruction);
+
+        saveOrSubmitTextAssessment(submission.getParticipation().getId(), result.getId(), new TextAssessmentDTO(List.of(FeedbackDTO.of(feedback)), null, null), submit,
+                HttpStatus.BAD_REQUEST);
+
+        assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId()).getFeedbacks()).singleElement()
+                .satisfies(item -> assertThat(item.getId()).isEqualTo(originalFeedback.getId()));
     }
 
     @Test

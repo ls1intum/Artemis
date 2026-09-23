@@ -29,8 +29,9 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
@@ -795,5 +796,27 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1/settings', '')));
         await component.ngOnInit();
         expect(component.isSettingsPage()).toBe(true);
+    });
+
+    it('should not subscribe to auto orchestration notifications when AtlasLLM is inactive', async () => {
+        // Atlas is active in the default profile of this spec, AtlasLLM is not, and the runtime toggle returns true.
+        // Nothing publishes to the orchestrator topic on such a server, so the subscription must not be opened.
+        const subscribeSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
+
+        await component.ngOnInit();
+
+        expect(subscribeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should subscribe to auto orchestration notifications when AtlasLLM is active', async () => {
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM],
+            activeProfiles: [PROFILE_PROD],
+        } as unknown as ProfileInfo);
+        const subscribeSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
+
+        await component.ngOnInit();
+
+        expect(subscribeSpy).toHaveBeenCalled();
     });
 });

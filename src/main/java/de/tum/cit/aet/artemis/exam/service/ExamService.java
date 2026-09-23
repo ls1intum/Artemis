@@ -1582,15 +1582,15 @@ public class ExamService {
 
     /**
      * Updates the working times for student exams based on a given change in working time and reschedules exercises accordingly.
-     * This method considers any existing time extensions for individual students and adjusts their working times relative to the original exam duration and the specified change.
+     * This method considers any existing time extensions for individual students and adjusts their working times relative to the original regular working time and the specified
+     * change.
      * After updating the working times, it saves the changes and, if the exam is already visible, notifies both the students and relevant instances about the update.
      *
-     * @param exam                 The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
-     * @param originalExamDuration The original duration of the exam, in seconds, before any changes.
-     * @param workingTimeChange    The amount of time, in seconds, to add or subtract from the exam's original duration and the student's working time. This value can be positive
-     *                                 (to extend time) or negative (to reduce time).
+     * @param exam                       The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
+     * @param originalRegularWorkingTime The regular working time before the change: the duration for real exams, or the configured working time for test exams.
+     * @param workingTimeChange          The change to the regular working time, in seconds; positive extends and negative reduces it.
      */
-    public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
+    public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalRegularWorkingTime, int workingTimeChange) {
         if (workingTimeChange == 0) {
             return;
         }
@@ -1603,7 +1603,7 @@ public class ExamService {
         for (var studentExam : studentExams) {
             int originalStudentWorkingTime = studentExam.getWorkingTime();
             originalWorkingTimes.put(studentExam.getId(), originalStudentWorkingTime);
-            studentExam.setWorkingTime(ExamDateService.projectWorkingTimeAfterDurationChange(originalStudentWorkingTime, originalExamDuration, workingTimeChange));
+            studentExam.setWorkingTime(ExamDateService.projectWorkingTimeAfterDurationChange(originalStudentWorkingTime, originalRegularWorkingTime, workingTimeChange));
         }
         // Important: persist all student exams BEFORE sending WebSocket notifications.
         // The client uses a REST fallback (GET /student-exams/live-events) to recover missed events.
