@@ -207,6 +207,12 @@ describe('ExamParticipationComponent', () => {
         expect(ExamParticipationComponent).toBeTruthy();
     });
 
+    it('should stop handling live events when the exam is left', () => {
+        const resetSpy = vi.spyOn(examParticipationLiveEventsService, 'reset');
+        comp.ngOnDestroy();
+        expect(resetSpy).toHaveBeenCalledOnce();
+    });
+
     describe('ExamParticipationSummaryComponent for TestRuns', () => {
         it('should initialize and display test run ribbon', () => {
             fixture.changeDetectorRef.detectChanges();
