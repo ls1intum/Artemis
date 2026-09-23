@@ -9,6 +9,9 @@ import { Alert, AlertService, AlertType } from 'app/foundation/service/alert.ser
 
 export const WINDOW_INJECTOR_TOKEN = new InjectionToken<Window>('Window');
 
+/** How long the update action waits for the service worker before reloading anyway. */
+const ACTIVATE_UPDATE_TIMEOUT_MS = 3000;
+
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
     private appRef = inject(ApplicationRef);
@@ -79,38 +82,51 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
      * @param hasUpdate if it is known that there is an update, independent of what the service worker reports
      */
     private checkForUpdates(hasUpdate: boolean) {
+        if (hasUpdate) {
+            // Known without the service worker, so show it right away: a worker that does not control the page never answers the check.
+            // The check still runs, so that a working service worker can already download the new version.
+            this.showOutdatedAlert();
+            if (this.updates.isEnabled) {
+                void this.updates.checkForUpdate().catch(() => false);
+            }
+            return;
+        }
         // don't spam errors when service workers are not available, instead rely on the Content-Version header of responses
-        // a failing check (e.g. a broken service worker) must not suppress an update that is known from the header
         const update = this.updates.isEnabled ? this.updates.checkForUpdate().catch(() => false) : Promise.resolve(false);
 
         // first update the service worker
         void update.then((updateAvailable: boolean) => {
-            if (this.hasSeenOutdatedInThisSession || updateAvailable || hasUpdate) {
-                this.hasSeenOutdatedInThisSession = true;
-
-                // If we haven't shown an alert yet or the alert has been closed: Spawn new alert
-                if (!this.alert?.isOpen) {
-                    this.alert = this.alertService.addAlert({
-                        type: AlertType.INFO,
-                        message: 'artemisApp.outdatedAlert',
-                        timeout: 0,
-                        action: {
-                            label: 'artemisApp.outdatedAction',
-                            callback: () =>
-                                // Apply the update
-                                this.updates
-                                    .activateUpdate()
-                                    // Ignore any error. Any error happening here doesn't matter
-                                    // If we reach this point, we want to load an update
-                                    // so in any case, we should reload
-                                    .catch(() => {})
-                                    // Reload the page with the new version
-                                    .then(() => this.injectedWindow.location.reload()),
-                        },
-                    });
-                }
+            if (this.hasSeenOutdatedInThisSession || updateAvailable) {
+                this.showOutdatedAlert();
             }
         });
+    }
+
+    /**
+     * Shows the alert that a new version is available, unless it is already open, and remembers that this client is outdated.
+     */
+    private showOutdatedAlert() {
+        this.hasSeenOutdatedInThisSession = true;
+        // If we haven't shown an alert yet or the alert has been closed: Spawn new alert
+        if (!this.alert?.isOpen) {
+            this.alert = this.alertService.addAlert({
+                type: AlertType.INFO,
+                message: 'artemisApp.outdatedAlert',
+                timeout: 0,
+                action: {
+                    label: 'artemisApp.outdatedAction',
+                    callback: () =>
+                        // Apply the update. A service worker that does not control the page never answers, so reload after a short wait in any case.
+                        Promise.race([
+                            // Ignore any error: if we reach this point, we want to load the update, so we reload in any case
+                            this.updates.activateUpdate().catch(() => {}),
+                            new Promise((resolve) => setTimeout(resolve, ACTIVATE_UPDATE_TIMEOUT_MS)),
+                        ])
+                            // Reload the page with the new version
+                            .then(() => this.injectedWindow.location.reload()),
+                },
+            });
+        }
     }
 }
 

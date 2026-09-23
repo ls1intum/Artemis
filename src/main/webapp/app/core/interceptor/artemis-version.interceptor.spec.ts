@@ -174,6 +174,32 @@ describe(`ArtemisVersionInterceptor`, () => {
             vi.clearAllTimers();
         });
 
+        it('should show the update alert right away if the service worker never answers the check', async () => {
+            checkForUpdateSpy.mockReturnValue(new Promise<boolean>(() => {}));
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            const intercept = TestBed.inject(ArtemisVersionInterceptor);
+
+            await firstValueFrom(intercept.intercept(requestMock, responseWithVersion('10.2.0')));
+
+            expect(addAlertSpy).toHaveBeenCalledOnce();
+            vi.clearAllTimers();
+        });
+
+        it('should reload even if the service worker never activates the update', async () => {
+            checkForUpdateSpy.mockReturnValue(new Promise<boolean>(() => {}));
+            activateUpdateSpy.mockReturnValue(new Promise<boolean>(() => {}));
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            const intercept = TestBed.inject(ArtemisVersionInterceptor);
+            await firstValueFrom(intercept.intercept(requestMock, responseWithVersion('10.2.0')));
+            const reloadSpy = TestBed.inject(WINDOW_INJECTOR_TOKEN).location.reload;
+
+            addAlertSpy.mock.calls[0][0].action!.callback!(undefined as any);
+            await vi.advanceTimersByTimeAsync(3000);
+
+            expect(reloadSpy).toHaveBeenCalledOnce();
+            vi.clearAllTimers();
+        });
+
         it('should show the update alert if the service worker reaches an unrecoverable state', async () => {
             checkForUpdateSpy.mockResolvedValue(false);
             const addAlertSpy = vi.spyOn(alertService, 'addAlert');
