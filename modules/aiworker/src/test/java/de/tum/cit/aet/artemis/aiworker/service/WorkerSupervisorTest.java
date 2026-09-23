@@ -29,6 +29,22 @@ class WorkerSupervisorTest {
     private static final String IMAGE = "sha256:" + "a".repeat(64);
 
     @Test
+    void invalidWorkloadOutputRetainsAnErrorTerminal() throws InterruptedException {
+        for (String output : new String[] { null, "", "x".repeat(WorkerEventDTO.MAX_PAYLOAD_LENGTH + 1) }) {
+            var events = new LinkedBlockingQueue<WorkerEventDTO>();
+            try (var worker = worker(events, (assignment, cancelled, observer, checkpoint) -> output, () -> {
+            }, new AtomicLong())) {
+                WorkerCommandDTO command = start(worker, events);
+                worker.accept(command);
+                WorkerEventDTO terminal = take(events, WorkerEventType.ERROR);
+                assertThat(terminal.identity()).isEqualTo(command.identity());
+                assertThat(terminal.payload()).isNull();
+                assertThat(terminal.ready()).isTrue();
+            }
+        }
+    }
+
+    @Test
     void blockedRejectionPublicationDoesNotHoldTheCommandListener() throws Exception {
         var events = new LinkedBlockingQueue<WorkerEventDTO>();
         var publishing = new CountDownLatch(1);

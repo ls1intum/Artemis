@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import java.net.URI;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -15,13 +17,10 @@ import org.springframework.context.annotation.Lazy;
 public record AiWorkerProperties(String brokerUrl, String user, String password, List<String> ids, @DefaultValue("PT30S") Duration presenceTtl,
         @DefaultValue("PT45S") Duration leaseTtl) {
 
-    private static final Pattern SSL_ENABLED = Pattern.compile(".*[?&;]sslEnabled=true(?:[&;].*)?$");
-
     private static final Pattern WORKER_ID = Pattern.compile("[a-zA-Z0-9_-]{1,64}");
 
     public AiWorkerProperties {
-        if (brokerUrl == null || !brokerUrl.startsWith("tcp://") || !SSL_ENABLED.matcher(brokerUrl).matches() || brokerUrl.toLowerCase(Locale.ROOT).contains("trustall=true")
-                || brokerUrl.toLowerCase(Locale.ROOT).contains("verifyhost=false")) {
+        if (!verifiedBrokerUrl(brokerUrl)) {
             throw new IllegalArgumentException("Configure a TLS AI worker broker URL with certificate verification");
         }
         if (user == null || user.isBlank() || password == null || password.isBlank() || ids == null || ids.isEmpty() || ids.size() > 64
@@ -32,5 +31,23 @@ public record AiWorkerProperties(String brokerUrl, String user, String password,
         if (presenceTtl == null || presenceTtl.compareTo(Duration.ofSeconds(10)) <= 0 || leaseTtl == null || leaseTtl.compareTo(presenceTtl) <= 0) {
             throw new IllegalArgumentException("Worker presence and ownership timeouts are invalid");
         }
+    }
+
+    private static boolean verifiedBrokerUrl(String url) {
+        if (url == null) {
+            return false;
+        }
+        URI broker = URI.create(url);
+        if (!"tcp".equals(broker.getScheme()) || broker.getHost() == null || broker.getUserInfo() != null || broker.getFragment() != null || broker.getRawQuery() == null) {
+            return false;
+        }
+        Map<String, String> options = new HashMap<>();
+        for (String option : broker.getRawQuery().split("[&;]", -1)) {
+            String[] pair = option.split("=", 2);
+            if (pair.length != 2 || pair[0].isBlank() || options.putIfAbsent(pair[0], pair[1]) != null) {
+                return false;
+            }
+        }
+        return "true".equals(options.get("sslEnabled")) && "false".equals(options.getOrDefault("trustAll", "false")) && "true".equals(options.getOrDefault("verifyHost", "true"));
     }
 }

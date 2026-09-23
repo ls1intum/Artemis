@@ -242,6 +242,9 @@ public class WorkerSupervisorService implements AutoCloseable {
             };
             String result = policy.execute(execution.assignment, () -> execution.cancelled.get() || execution.finishRequested.get(), progress,
                     checkpoint -> retainCheckpoint(identity, checkpoint));
+            if (result == null || result.isBlank() || result.length() > WorkerEventDTO.MAX_PAYLOAD_LENGTH) {
+                throw new IllegalArgumentException("Workload returned invalid terminal output");
+            }
             terminal = new TerminalResult(WorkerEventType.FINISHED, null, result);
         }
         catch (RuntimeException failure) {
@@ -271,7 +274,7 @@ public class WorkerSupervisorService implements AutoCloseable {
             active.remove(identity.executionId());
             // Retain this slot until cleanup and delivery both finish, without blocking other slots.
             pendingTerminals.put(identity.executionId(), event(execution.cancelled.get() ? WorkerEventType.CANCELLED : terminal.type(), identity,
-                    execution.cancelled.get() ? "Execution cancelled." : terminal.message(), terminal.output()));
+                    execution.cancelled.get() ? "Execution cancelled." : terminal.message(), execution.cancelled.get() ? null : terminal.output()));
         }
         flushTerminal();
     }
