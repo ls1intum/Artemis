@@ -597,6 +597,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
+                        // Normalize the course id to a number so instructor-role checks (numeric course-role ids) match on every route (course, exam, import).
+                        if (params['courseId'] !== undefined) {
+                            this.courseId.set(Number(params['courseId']));
+                        }
                         if (this.isImportFromFile) {
                             this.createProgrammingExerciseForImportFromFile();
                         }
@@ -621,11 +625,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 });
                                 // we need the course id  to make the request to the server if it's an import from file
                                 if (this.isImportFromFile || this.isImportFromSharing) {
-                                    this.courseId.set(params['courseId']);
+                                    this.courseId.set(Number(params['courseId']));
                                     this.loadCourseExerciseCategories(params['courseId']);
                                 }
                             } else if (params['courseId']) {
-                                this.courseId.set(params['courseId']);
+                                this.courseId.set(Number(params['courseId']));
                                 this.isExamMode.set(false);
                                 this.courseService.find(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
