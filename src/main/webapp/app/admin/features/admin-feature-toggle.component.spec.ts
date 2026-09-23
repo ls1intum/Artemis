@@ -14,16 +14,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import {
-    MODULE_FEATURE_ATHENA,
-    MODULE_FEATURE_ATLAS,
-    MODULE_FEATURE_EXAM,
-    MODULE_FEATURE_HYPERION,
-    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
-    MODULE_FEATURE_IRIS,
-    MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
-    PROFILE_JENKINS,
-} from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_JENKINS } from 'app/app.constants';
 
 describe('AdminFeatureToggleComponentTest', () => {
     let fixture: ComponentFixture<AdminFeatureToggleComponent>;
@@ -210,31 +201,6 @@ describe('AdminFeatureToggleComponentTest', () => {
     });
 
     describe('Module Features', () => {
-        it.each([true, false])('shows generation status inside the Hyperion card when generation is %s', async (generationActive) => {
-            TestBed.resetTestingModule();
-            const profiles = new MockProfileService();
-            vi.spyOn(profiles, 'isModuleFeatureActive').mockImplementation(
-                (feature) => feature === MODULE_FEATURE_HYPERION || (generationActive && feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION),
-            );
-            await TestBed.configureTestingModule({
-                imports: [AdminFeatureToggleComponent],
-                providers: [
-                    { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                    { provide: TranslateService, useClass: MockTranslateService },
-                    { provide: ProfileService, useValue: profiles },
-                ],
-            }).compileComponents();
-            const view = TestBed.createComponent(AdminFeatureToggleComponent);
-            view.detectChanges();
-
-            expect(view.nativeElement.querySelectorAll('[data-testid="module-feature-card"]')).toHaveLength(21);
-            const generationStatus = view.nativeElement.querySelector('[data-testid="hyperion-generation-status"]');
-            expect(generationStatus).not.toBeNull();
-            expect(generationStatus.closest('[data-testid="module-feature-card"]')).not.toBeNull();
-            expect(generationStatus.querySelector(`[data-testid="hyperion-generation-${generationActive ? 'active' : 'inactive'}"]`)).not.toBeNull();
-            expect(generationStatus.textContent).toContain('artemis.hyperion.exercise-generation.enabled');
-        });
-
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();

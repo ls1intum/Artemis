@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -98,12 +98,6 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Module features with their current state */
     readonly moduleFeatures = signal<ModuleFeatureInfo[]>([]);
-
-    protected readonly hyperionFeature = MODULE_FEATURE_HYPERION;
-    protected readonly hyperionGenerationFeature = MODULE_FEATURE_HYPERION_EXERCISE_GENERATION;
-    protected readonly hyperionGenerationActive = computed(() =>
-        this.moduleFeatures().some((module) => module.feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION && module.isActive),
-    );
 
     /** Icons */
     protected readonly faExternalLinkAlt = faExternalLinkAlt;

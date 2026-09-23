@@ -64,54 +64,37 @@
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             @for (moduleInfo of moduleFeatures(); track moduleInfo.feature) {
-                @if (moduleInfo.feature !== hyperionGenerationFeature) {
-                    <div
-                        class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
-                        [class]="featureCardClasses(moduleInfo.isActive)"
-                        data-testid="module-feature-card"
-                    >
-                        <div class="mb-3 flex items-start justify-between">
-                            <div class="flex items-center gap-2">
-                                <h5 class="m-0 text-base font-semibold">{{ getModuleFeatureNameKey(moduleInfo.feature) | artemisTranslate }}</h5>
-                                @if (moduleInfo.documentationLink) {
-                                    <a
-                                        [href]="moduleInfo.documentationLink"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="text-sm text-primary hover:underline"
-                                        [tumUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
-                                        data-testid="module-doc-link"
-                                    >
-                                        <fa-icon [icon]="faExternalLinkAlt" />
-                                    </a>
-                                }
-                            </div>
-                            <div class="flex items-center">
-                                @if (moduleInfo.isActive) {
-                                    <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
-                                } @else {
-                                    <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
-                                }
-                            </div>
+                <div
+                    class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
+                    [class]="featureCardClasses(moduleInfo.isActive)"
+                    data-testid="module-feature-card"
+                >
+                    <div class="mb-3 flex items-start justify-between">
+                        <div class="flex items-center gap-2">
+                            <h5 class="m-0 text-base font-semibold">{{ getModuleFeatureNameKey(moduleInfo.feature) | artemisTranslate }}</h5>
+                            @if (moduleInfo.documentationLink) {
+                                <a
+                                    [href]="moduleInfo.documentationLink"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="text-sm text-primary hover:underline"
+                                    [tumUiTooltip]="'artemisApp.features.viewDocumentation' | artemisTranslate"
+                                    data-testid="module-doc-link"
+                                >
+                                    <fa-icon [icon]="faExternalLinkAlt" />
+                                </a>
+                            }
                         </div>
-                        <p class="mb-2 text-sm leading-snug text-muted-color">{{ getModuleFeatureDescriptionKey(moduleInfo.feature) | artemisTranslate }}</p>
-                        @if (moduleInfo.feature === hyperionFeature) {
-                            <code class="text-xs text-muted-color">artemis.hyperion.enabled</code>
-                            <div class="mt-3 border-t border-surface-300 pt-3 dark:border-surface-600" data-testid="hyperion-generation-status">
-                                <div class="mb-2 flex items-center justify-between gap-2">
-                                    <h6 class="m-0 text-sm font-semibold">{{ getModuleFeatureNameKey(hyperionGenerationFeature) | artemisTranslate }}</h6>
-                                    @if (hyperionGenerationActive()) {
-                                        <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="hyperion-generation-active" />
-                                    } @else {
-                                        <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="hyperion-generation-inactive" />
-                                    }
-                                </div>
-                                <p class="m-0 text-sm leading-snug text-muted-color">{{ getModuleFeatureDescriptionKey(hyperionGenerationFeature) | artemisTranslate }}</p>
-                                <code class="text-xs text-muted-color">artemis.hyperion.exercise-generation.enabled</code>
-                            </div>
-                        }
+                        <div class="flex items-center">
+                            @if (moduleInfo.isActive) {
+                                <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
+                            } @else {
+                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
+                            }
+                        </div>
                     </div>
-                }
+                    <p class="mb-2 text-sm leading-snug text-muted-color">{{ getModuleFeatureDescriptionKey(moduleInfo.feature) | artemisTranslate }}</p>
+                </div>
             }
         </div>
     </section>
