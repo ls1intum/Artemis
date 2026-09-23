@@ -231,4 +231,21 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
         expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
+
+    it('resets a staged create-mode activation when the parent clears it on a non-Java switch', () => {
+        initCreate();
+        comp.onToggleChanged(true);
+        // The parent mirrors the emitted staged activation back into the input.
+        fixture.componentRef.setInput('stagedActivation', { frameworkVersion: '3.4.1' });
+        fixture.detectChanges();
+        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+
+        // Switching to a non-Java language clears the staged activation in the parent; the card must not
+        // keep a stale ACTIVE that would never be committed when the language returns to Java.
+        fixture.componentRef.setInput('stagedActivation', undefined);
+        fixture.detectChanges();
+
+        expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
+        expect(comp.isToggleOn()).toBe(false);
+    });
 });

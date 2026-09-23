@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TumUiMessageComponent, TumUiSelectComponent, TumUiToggleSwitchComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -136,6 +136,23 @@ export class ProgrammingExerciseSecurityComponent {
                     this.lastSettledActive.set(true);
                 }
             }
+        });
+
+        // Create mode only: the parent owns the staged activation. When it clears the staged value (e.g. the
+        // instructor switches the exercise to a non-Java language, which hides but does not destroy this card),
+        // reset the local state so switching back to Java cannot resurrect a staged ACTIVE that the parent will
+        // not commit - otherwise the exercise would be created without the sandbox and with no warning.
+        effect(() => {
+            const staged = this.stagedActivation();
+            if (this.programmingExercise().id !== undefined || staged) {
+                return;
+            }
+            untracked(() => {
+                if (this.config().status === SecurityActivationStatus.ACTIVE) {
+                    this.patchConfig({ status: SecurityActivationStatus.INACTIVE });
+                    this.lastSettledActive.set(false);
+                }
+            });
         });
     }
 
