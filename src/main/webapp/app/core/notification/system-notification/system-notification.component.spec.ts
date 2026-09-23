@@ -66,6 +66,8 @@ describe('System Notification Component', () => {
         systemNotificationComponent = systemNotificationComponentFixture.componentInstance;
         systemNotificationService = TestBed.inject(SystemNotificationService);
         websocketService = TestBed.inject(WebsocketService);
+        // connected for the first time after the login
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, false));
         localStorageService = TestBed.inject(LocalStorageService);
     });
 
@@ -136,6 +138,37 @@ describe('System Notification Component', () => {
 
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('should reload the notifications if the connection was re-established before subscribing', () => {
+        vi.useFakeTimers();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+        systemNotificationComponent.ngOnInit();
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, true));
+        vi.advanceTimersByTime(500);
+
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('should ignore a reloaded notification list that is older than one received over the websocket', () => {
+        vi.useFakeTimers();
+        const restResponse = new Subject<SystemNotification[]>();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValueOnce(of([])).mockReturnValue(restResponse);
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        const newerNotifications = [createActiveNotification(SystemNotificationType.WARNING, 5)];
+        mockWebsocketService.emit(WEBSOCKET_CHANNEL, newerNotifications);
+        restResponse.next([]);
+
+        expect(systemNotificationComponent.notifications).toEqual(newerNotifications);
         vi.useRealTimers();
     });
 

@@ -6,7 +6,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { User } from 'app/account/user/user.model';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass } from '@angular/common';
-import { Subscription, filter, skip } from 'rxjs';
+import { Subscription, filter } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { updateHeaderHeight } from 'app/foundation/util/navbar.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -51,6 +51,9 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
 
     private authSubscription?: Subscription;
 
+    /** Counts the notification lists received over the websocket, so that an older REST response does not replace a newer one. */
+    private websocketUpdateCount = 0;
+
     ngOnInit() {
         this.closedIds = this.localStorageService.retrieve<number[]>(CLOSED_NOTIFICATION_IDS_STORAGE_KEY) ?? [];
         this.loadActiveNotification();
@@ -62,13 +65,11 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
                     // The websocket service restores the subscription itself after a reconnect. Subscribing again on every reconnect
                     // would only send redundant UNSUBSCRIBE and SUBSCRIBE frames, so just reload what may have changed meanwhile.
                     this.websocketStatusSubscription?.unsubscribe();
-                    // Skip the current state: every later connected state is a reconnect. A short interruption does not emit a disconnected state
-                    // in between, as the websocket service hides it from consumers.
+                    // Every connected state after the current one is a reconnect: a short interruption does not emit a disconnected state in between,
+                    // as the websocket service hides it from consumers. The current state is a reconnect only if a connection existed before, e.g. when
+                    // the connection was re-established during the delay above.
                     this.websocketStatusSubscription = this.websocketService.connectionState
-                        .pipe(
-                            skip(1),
-                            filter((status) => status.connected),
-                        )
+                        .pipe(filter((status, index) => status.connected && (index > 0 || status.wasEverConnectedBefore)))
                         .subscribe(() => this.loadActiveNotification());
                 }, 500);
             } else {
@@ -95,7 +96,12 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     }
 
     private loadActiveNotification() {
+        const websocketUpdateCountAtRequest = this.websocketUpdateCount;
         this.systemNotificationService.getActiveNotifications().subscribe((notifications: SystemNotification[]) => {
+            if (this.websocketUpdateCount !== websocketUpdateCountAtRequest) {
+                // A newer list arrived over the websocket while the request was in flight
+                return;
+            }
             this.notifications = notifications;
             this.selectVisibleNotificationsAndScheduleUpdate();
         });
@@ -108,6 +114,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     private subscribeSocket() {
         this.systemNotificationSubscription?.unsubscribe();
         this.systemNotificationSubscription = this.websocketService.subscribe<SystemNotification[]>(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
+            this.websocketUpdateCount++;
             notifications.forEach((notification) => {
                 notification.notificationDate = convertDateFromServer(notification.notificationDate);
                 notification.expireDate = convertDateFromServer(notification.expireDate);
