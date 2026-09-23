@@ -208,7 +208,7 @@ export class ExerciseActionsComponent {
         }
         // Sits between the info/success-colored buttons above and the warning-colored edit buttons below, matching its
         // own warning color. Only offered when Hyperion is enabled and for exercise types the generator supports; the
-        // server rejects the rest.
+        // server rejects other types.
         if (this.hyperionEnabled && ex.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
             items.push({
                 id: 'create-variant-ai',

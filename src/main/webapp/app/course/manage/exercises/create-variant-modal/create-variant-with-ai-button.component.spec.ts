@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, input, model } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -12,7 +12,8 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 
 @Component({ selector: 'jhi-exercise-variant-ai-modal-wizard', template: '' })
 class ExerciseVariantAiModalWizardStubComponent {
-    readonly visible = model(false);
+    readonly visible = input(false);
+    readonly visibleChange = output<boolean>();
     readonly sourceExercise = input<Exercise>();
     readonly courseId = input<number>();
     readonly examExercise = input(false);
