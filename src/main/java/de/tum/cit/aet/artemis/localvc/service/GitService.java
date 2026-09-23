@@ -377,10 +377,7 @@ public class GitService extends AbstractGitService {
      * @param localPath the path of the working copy
      */
     private void deleteIncompleteWorkingCopy(Path localPath) {
-        if (cloneInProgressOperations.containsKey(localPath)) {
-            // A clone in progress writes HEAD and config last, so its git directory looks incomplete until it is done
-            return;
-        }
+        // Called while checkoutLocks holds this path, so an active clone cannot be mistaken for an incomplete copy.
         Path gitDirectory = localPath.resolve(".git");
         if (Files.isDirectory(gitDirectory) && (Files.notExists(gitDirectory.resolve(Constants.HEAD)) || Files.notExists(gitDirectory.resolve(Constants.CONFIG)))) {
             log.warn("Deleting the incomplete working copy {} so that it is cloned again", localPath);

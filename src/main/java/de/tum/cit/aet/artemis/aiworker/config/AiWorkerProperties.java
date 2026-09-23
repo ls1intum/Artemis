@@ -44,7 +44,8 @@ public record AiWorkerProperties(String brokerUrl, String user, String password,
         Map<String, String> options = new HashMap<>();
         for (String option : broker.getRawQuery().split("[&;]", -1)) {
             String[] pair = option.split("=", 2);
-            if (pair.length != 2 || pair[0].isBlank() || options.putIfAbsent(pair[0], pair[1]) != null) {
+            // ActiveMQ decodes query keys. Reject encoded keys so its interpretation cannot add or override a TLS option after this check.
+            if (pair.length != 2 || pair[0].isBlank() || pair[0].indexOf('%') >= 0 || pair[0].indexOf('+') >= 0 || options.putIfAbsent(pair[0], pair[1]) != null) {
                 return false;
             }
         }

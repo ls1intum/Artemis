@@ -192,22 +192,6 @@ class GitServiceRepositoryStateTest {
     }
 
     @Test
-    void getOrCheckoutRepository_whileTheWorkingCopyIsBeingCloned_doesNotDeleteIt() throws Exception {
-        // A clone in progress writes HEAD and config last, so its git directory looks incomplete until the clone is done
-        Path workingCopy = baseDir.resolve("working-copy-being-cloned");
-        Path packFile = workingCopy.resolve(".git").resolve("objects").resolve("pack").resolve("pack-in-progress.pack");
-        FileUtils.write(packFile.toFile(), "being written", StandardCharsets.UTF_8);
-        Map<Path, Path> cloneInProgress = (Map<Path, Path>) ReflectionTestUtils.getField(gitService, "cloneInProgressOperations");
-        cloneInProgress.put(workingCopy, workingCopy);
-        try (Repository ignored = gitService.getOrCheckoutRepositoryWithLocalPath(uriFor("abc-being-cloned"), workingCopy, false, false)) {
-            assertThat(packFile).as("the files of the clone in progress are left alone").exists();
-        }
-        finally {
-            cloneInProgress.remove(workingCopy);
-        }
-    }
-
-    @Test
     void listFilesAndFolders_reportsFilesAndFoldersAndNeverTheGitDirectory() throws Exception {
         try (Repository repository = checkoutOf("abc-listing")) {
             ReflectionTestUtils.setField(repository, "localPath", repository.getWorkTree().toPath());
