@@ -576,9 +576,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 },
             } as ModelingSubmission;
             vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
-            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(
-                throwError(() => ({ error: { errorKey: 'llmSelectionRequired' } }) as HttpErrorResponse),
-            );
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(throwError(() => ({ error: { errorKey: 'llmSelectionRequired' } }) as HttpErrorResponse));
             const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
 
             component.ngOnInit();

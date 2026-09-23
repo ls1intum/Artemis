@@ -257,6 +257,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
         // Athena active by default; the "module inactive" case is covered explicitly below.
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+        // AccountService is not mocked in this spec (individual methods are spied as needed), so without this,
+        // refreshAiExperience()'s real HTTP call would hang forever waiting for a response nothing ever flushes.
+        vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(of(undefined));
     });
 
     afterEach(() => {
