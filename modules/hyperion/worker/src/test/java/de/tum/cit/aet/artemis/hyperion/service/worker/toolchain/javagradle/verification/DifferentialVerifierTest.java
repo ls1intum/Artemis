@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
 
 /**
  * Deterministic unit test for the differential oracle: a fake sandbox serves the {@code copyOut} of the verifier-owned reports dir as a tar of real JUnit (and, where exercised,
- * SCA) reports for the solution and template builds, parsed by the production parsers ({@code TestResultXmlParser}, {@code ReportParser}) exactly as against a live container. Live
+ * SCA) reports for the solution and template builds, parsed by Hyperion's JUnit and SCA parsers exactly as against a live container. Live
  * build behaviour is covered by the gated end-to-end test.
  */
 class DifferentialVerifierTest {
@@ -98,7 +98,7 @@ class DifferentialVerifierTest {
             return new BuildReportSpec(allNames, failedNames, scaReports, exitCode, false, null);
         }
 
-        /** A spec whose JUnit report is the given verbatim XML (for the skipped/multi-suite shapes the production parser must interpret); names/fails are unused. */
+        /** A spec whose JUnit report is the given verbatim XML (for the skipped/multi-suite shapes the Hyperion parser must interpret); names/fails are unused. */
         static BuildReportSpec withJunitXml(String junitXml, int exitCode) {
             return new BuildReportSpec(List.of(), List.of(), Map.of(), exitCode, false, junitXml);
         }
@@ -1106,7 +1106,7 @@ class DifferentialVerifierTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("bound more than once") && r.contains("push_grows"));
     }
 
-    // Skipped-test parity: production's TestResultXmlParser drops a <testcase><skipped/></testcase> from both lists, and the verifier uses that same parser.
+    // Skipped-test parity: both LocalCI and Hyperion drop a <testcase><skipped/></testcase> from both lists.
 
     @Test
     void shouldRejectWhenATestSkippedOnSolutionFailsOnTemplate() {
@@ -1116,12 +1116,12 @@ class DifferentialVerifierTest {
                 List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"));
         String ps = "# Stack\n[task][Push/Pop](push_then_pop)\n[task][Size](size_tracks_elements)\n";
         VerificationResult result = verify(solution, template, ps);
-        assertThat(result.testCount()).as("the skipped solution test is not counted by the production parser").isEqualTo(2);
+        assertThat(result.testCount()).as("the skipped solution test is not counted by the Hyperion parser").isEqualTo(2);
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("different number of tests"));
     }
 
-    /** A solution build whose report has two passing tests and one {@code <skipped/>} test; the production parser drops the skipped case from both lists. */
+    /** A solution build whose report has two passing tests and one {@code <skipped/>} test; the Hyperion parser drops the skipped case from both lists. */
     private static BuildReportSpec skippedSolution() {
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>

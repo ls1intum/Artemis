@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.junitreport;
+package de.tum.cit.aet.artemis.hyperion.runtime.verification;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,7 +14,7 @@ import tools.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import tools.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import tools.jackson.dataformat.xml.annotation.JacksonXmlText;
 
-/** Production JUnit XML semantics shared by ordinary grading and isolated generation verification. */
+/** Parses JUnit XML for isolated generation verification; parity tests keep its results aligned with LocalCI. */
 public final class JUnitReportParser {
 
     /** One non-skipped test and its failure messages. */

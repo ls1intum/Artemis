@@ -25,9 +25,8 @@ rootProject.name = "Artemis"
 DirectoryScanner.removeDefaultExclude "**/.gitattributes"
 DirectoryScanner.removeDefaultExclude "**/.gitignore"
 
-include 'hyperion', 'aiworker', 'aiworker:api', 'junit-report'
+include 'hyperion', 'aiworker', 'aiworker:api'
 project(':hyperion').projectDir = file('modules/hyperion')
-project(':junit-report').projectDir = file('modules/junit-report')
 project(':aiworker').projectDir = file('modules/aiworker')
 project(':aiworker:api').projectDir = file('modules/aiworker/api')
 

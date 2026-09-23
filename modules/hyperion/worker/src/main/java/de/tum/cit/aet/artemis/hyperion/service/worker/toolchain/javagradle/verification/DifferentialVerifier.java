@@ -566,7 +566,7 @@ public class DifferentialVerifier {
 
     /**
      * Runs one pristine build, then copies out its reports from the verifier-owned reports directory — a constant path, never derived from agent output — and parses them with
-     * the production parsers. The tar is validated by {@link CollectedReports} before any byte is parsed.
+     * Hyperion's JUnit and SCA parsers. The tar is validated by {@link CollectedReports} before any byte is parsed.
      *
      * @param assignmentName the assignment directory name ({@code solution}/{@code template}); also the reports subdirectory name and the copyOut prefix
      */

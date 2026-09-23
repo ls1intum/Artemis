@@ -44,7 +44,7 @@ public class SandboxBuildCommands {
 
     /**
      * Canonical token the collect step appends to every collected JUnit report ({@code 0001__junit.xml}); the verifier routes a file carrying it through
-     * the shared production JUnit parser.
+     * the Hyperion JUnit parser.
      */
     public static final String COLLECTED_JUNIT_TOKEN = "junit.xml";
 
