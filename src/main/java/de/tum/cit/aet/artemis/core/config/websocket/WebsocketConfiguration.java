@@ -235,6 +235,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             .setTransportHandlers(webSocketTransportHandler)
             .setInterceptors(httpSessionHandshakeInterceptor());
         // @formatter:on
+        // The inbound channel is backed by a thread pool, so without this frames of one session can overtake each other. A client that
+        // re-subscribes a destination sends SUBSCRIBE, UNSUBSCRIBE and SUBSCRIBE for the same id in quick succession; processed out of
+        // order, the broker answers with an ERROR frame, which closes the whole websocket session.
+        registry.setPreserveReceiveOrder(true);
     }
 
     @Override
