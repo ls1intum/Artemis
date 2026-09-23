@@ -3,7 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
+import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
+import { toQuizQuestion, toSubmittedAnswer, toSubmittedAnswerFromLiveClient } from 'app/quiz/shared/util/generated-quiz-question.util';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -18,9 +19,9 @@ import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-dr
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training/course-training-quiz/submitted-answer-after-evaluation';
+import { SubmittedAnswerAfterEvaluation } from 'app/openapi/model/submitted-answer-after-evaluation';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { QuizQuestionTraining } from 'app/quiz/overview/course-training/course-training-quiz/quiz-question-training.model';
+import { QuizQuestionTraining } from 'app/openapi/model/quiz-question-training';
 import { DialogModule } from 'primeng/dialog';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 import { ButtonModule } from 'primeng/button';
@@ -33,7 +34,7 @@ import { ButtonModule } from 'primeng/button';
 export class CourseTrainingQuizComponent {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
-    private quizService = inject(CourseTrainingQuizService);
+    private quizTrainingApi = inject(QuizTrainingApi);
     private alertService = inject(AlertService);
     private courseService = inject(CourseManagementService);
 
@@ -98,7 +99,7 @@ export class CourseTrainingQuizComponent {
         if (questions.length === 0) {
             return undefined;
         }
-        return questions[this.currentIndex()].quizQuestionWithSolutionDTO;
+        return toQuizQuestion(questions[this.currentIndex()].quizQuestionWithSolutionDTO);
     });
 
     isRated = computed(() => {
@@ -139,13 +140,13 @@ export class CourseTrainingQuizComponent {
             return;
         }
 
-        this.quizService.getQuizQuestionsPage(this.courseId(), this.page(), this.size, this.questionIds, this.isNewSession).subscribe({
+        this.quizTrainingApi.getQuizQuestionsForPractice(this.courseId(), this.isNewSession, this.questionIds, this.page(), this.size).subscribe({
             next: (res: HttpResponse<QuizQuestionTraining[]>) => {
                 this.hasNext.set(res.headers.get('X-Has-Next') === 'true');
 
-                if (this.page() === 0 && res.body) {
-                    this.questionIds = res.body[0].questionIds ? res.body[0].questionIds : [];
-                    this.isNewSession = res.body[0].isNewSession;
+                if (this.page() === 0 && res.body?.length) {
+                    this.questionIds = res.body[0].questionIds ?? [];
+                    this.isNewSession = res.body[0].isNewSession ?? false;
                 }
 
                 if (this.page() === 0) {
@@ -193,7 +194,7 @@ export class CourseTrainingQuizComponent {
             this.showUnratedConfirmation.set(true);
         }
 
-        this.previousRatedStatus = currentIsRated;
+        this.previousRatedStatus = currentIsRated ?? false;
     }
 
     /**
@@ -269,12 +270,8 @@ export class CourseTrainingQuizComponent {
             return;
         }
         this.applySelection();
-        this.quizService.submitForTraining(this.submittedAnswer, questionId, this.courseId(), this.isRated()).subscribe({
-            next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
-                if (response.body) {
-                    this.onSubmitSuccess(response.body);
-                }
-            },
+        this.quizTrainingApi.submitForTraining(this.courseId(), questionId, this.isRated() ?? false, toSubmittedAnswerFromLiveClient(this.submittedAnswer)).subscribe({
+            next: (evaluatedAnswer: SubmittedAnswerAfterEvaluation) => this.onSubmitSuccess(evaluatedAnswer),
             error: (error: HttpErrorResponse) => this.onSubmitError(error),
         });
     }
@@ -308,15 +305,16 @@ export class CourseTrainingQuizComponent {
         const question = this.currentQuestion();
         if (!question) return;
 
+        const answer = toSubmittedAnswer(evaluatedAnswer);
         switch (question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE:
-                this.selectedAnswerOptions.set(evaluatedAnswer.selectedOptions || []);
+                this.selectedAnswerOptions.set((answer as MultipleChoiceSubmittedAnswer).selectedOptions ?? []);
                 break;
             case QuizQuestionType.DRAG_AND_DROP:
-                this.dragAndDropMappings.set(evaluatedAnswer.mappings || []);
+                this.dragAndDropMappings.set((answer as DragAndDropSubmittedAnswer).mappings ?? []);
                 break;
             case QuizQuestionType.SHORT_ANSWER:
-                this.shortAnswerSubmittedTexts.set(evaluatedAnswer.submittedTexts || []);
+                this.shortAnswerSubmittedTexts.set((answer as ShortAnswerSubmittedAnswer).submittedTexts ?? []);
                 break;
         }
     }

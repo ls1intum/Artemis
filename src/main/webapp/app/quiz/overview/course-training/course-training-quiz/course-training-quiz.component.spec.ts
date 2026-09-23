@@ -2,52 +2,54 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTrainingQuizComponent } from './course-training-quiz.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { QuizQuestion, QuizQuestionType } from '../../../shared/entities/quiz-question.model';
+import { toQuizQuestion } from 'app/quiz/shared/util/generated-quiz-question.util';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseTrainingQuizService } from '../../service/course-training-quiz.service';
+import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { SubmittedAnswerAfterEvaluation } from './submitted-answer-after-evaluation';
-import { QuizQuestionTraining } from './quiz-question-training.model';
+import { SubmittedAnswerAfterEvaluation } from 'app/openapi/model/submitted-answer-after-evaluation';
+import { QuizQuestionTraining } from 'app/openapi/model/quiz-question-training';
+import { QuizQuestionWithSolution } from 'app/openapi/model/quiz-question-with-solution';
 
-const question1: QuizQuestion = {
+const question1: QuizQuestionWithSolution = {
     id: 1,
-    type: QuizQuestionType.DRAG_AND_DROP,
+    type: 'drag-and-drop',
     points: 1,
     invalid: false,
-    exportQuiz: false,
     randomizeOrder: true,
 };
-const question2: QuizQuestion = {
+const question2: QuizQuestionWithSolution = {
     id: 2,
-    type: QuizQuestionType.MULTIPLE_CHOICE,
+    type: 'multiple-choice',
     points: 2,
     invalid: false,
-    exportQuiz: false,
     randomizeOrder: true,
 };
-const question3: QuizQuestion = {
+const question3: QuizQuestionWithSolution = {
     id: 3,
-    type: QuizQuestionType.SHORT_ANSWER,
+    type: 'short-answer',
     points: 3,
     randomizeOrder: false,
     invalid: false,
-    exportQuiz: false,
 };
+
+const classQuestion1 = toQuizQuestion(question1);
+const classQuestion2 = toQuizQuestion(question2);
+const classQuestion3 = toQuizQuestion(question3);
 
 const course = { id: 1, title: 'Test Course' };
 
-const answer = { selectedOptions: [{ scoreInPoints: 2 }] } as unknown as SubmittedAnswerAfterEvaluation;
+const answer = { type: 'multiple-choice', scoreInPoints: 2, selectedOptions: [{ id: 1, isCorrect: true }] } as SubmittedAnswerAfterEvaluation;
 
 describe('CourseTrainingQuizComponent', () => {
     let component: CourseTrainingQuizComponent;
     let fixture: ComponentFixture<CourseTrainingQuizComponent>;
-    let quizService: CourseTrainingQuizService;
+    let quizTrainingApi: QuizTrainingApi;
 
     const mockQuestions = [
         { quizQuestionWithSolutionDTO: question1, isRated: false, questionIds: [1], isNewSession: true },
@@ -64,7 +66,7 @@ describe('CourseTrainingQuizComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 Router,
                 SessionStorageService,
-                CourseTrainingQuizService,
+                QuizTrainingApi,
                 CourseManagementService,
                 AlertService,
                 {
@@ -80,8 +82,8 @@ describe('CourseTrainingQuizComponent', () => {
             .overrideTemplate(CourseTrainingQuizComponent, '')
             .compileComponents()
             .then(() => {
-                quizService = TestBed.inject(CourseTrainingQuizService);
-                vi.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(
+                quizTrainingApi = TestBed.inject(QuizTrainingApi);
+                vi.spyOn(quizTrainingApi, 'getQuizQuestionsForPractice').mockReturnValue(
                     of(
                         new HttpResponse<QuizQuestionTraining[]>({
                             body: mockQuestions,
@@ -115,7 +117,7 @@ describe('CourseTrainingQuizComponent', () => {
             body: mockQuestions,
             headers: { get: () => '3' } as any,
         });
-        vi.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
+        vi.spyOn(quizTrainingApi, 'getQuizQuestionsForPractice').mockReturnValue(of(mockResponse));
         component.page.set(0);
         component.loadQuestions();
         expect(component.allLoadedQuestions()).toHaveLength(3);
@@ -141,7 +143,7 @@ describe('CourseTrainingQuizComponent', () => {
     it('should return the current question based on currentIndex', () => {
         component.allLoadedQuestions.set(mockQuestions);
         component.currentIndex.set(0);
-        expect(component.currentQuestion()).toBe(question1);
+        expect(component.currentQuestion()).toEqual(classQuestion1);
     });
 
     it('should go to the next question and call initQuestion', () => {
@@ -151,7 +153,7 @@ describe('CourseTrainingQuizComponent', () => {
         component.nextQuestion();
         expect(component.currentIndex()).toBe(1);
         expect(initQuestionSpy).toHaveBeenCalledOnce();
-        expect(initQuestionSpy).toHaveBeenCalledWith(question2);
+        expect(initQuestionSpy).toHaveBeenCalledWith(classQuestion2);
     });
 
     it('should increment page and call loadQuestions when hasNext is true', () => {
@@ -181,7 +183,7 @@ describe('CourseTrainingQuizComponent', () => {
             body: [],
             headers: { get: () => '0' } as any,
         });
-        vi.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
+        vi.spyOn(quizTrainingApi, 'getQuizQuestionsForPractice').mockReturnValue(of(mockResponse));
 
         // Set page to 1 to avoid triggering the page 0 code path that accesses body[0]
         component.page.set(1);
@@ -190,22 +192,22 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should init the current question', () => {
-        component.initQuestion(question1);
+        component.initQuestion(classQuestion1);
         expect(component.showingResult()).toBeFalsy();
         expect(component.dragAndDropMappings()).toEqual([]);
-        component.initQuestion(question2);
+        component.initQuestion(classQuestion2);
         expect(component.showingResult()).toBeFalsy();
         expect(component.selectedAnswerOptions()).toEqual([]);
-        component.initQuestion(question3);
+        component.initQuestion(classQuestion3);
         expect(component.showingResult()).toBeFalsy();
         expect(component.shortAnswerSubmittedTexts()).toEqual([]);
     });
 
     it('should submit quiz and handle success', () => {
-        const submitSpy = vi.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: answer })));
+        const submitSpy = vi.spyOn(TestBed.inject(QuizTrainingApi), 'submitForTraining').mockReturnValue(of(answer));
         const showResultSpy = vi.spyOn(component, 'applyEvaluatedAnswer');
         // Drag and Drop
-        vi.spyOn(component, 'currentQuestion').mockReturnValue(question1);
+        vi.spyOn(component, 'currentQuestion').mockReturnValue(classQuestion1);
         component.currentIndex.set(0);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -213,7 +215,7 @@ describe('CourseTrainingQuizComponent', () => {
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         vi.clearAllMocks();
         // Multiple Choice
-        vi.spyOn(component, 'currentQuestion').mockReturnValue(question2);
+        vi.spyOn(component, 'currentQuestion').mockReturnValue(classQuestion2);
         component.currentIndex.set(1);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -221,7 +223,7 @@ describe('CourseTrainingQuizComponent', () => {
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         vi.clearAllMocks();
         // Short Answer
-        vi.spyOn(component, 'currentQuestion').mockReturnValue(question3);
+        vi.spyOn(component, 'currentQuestion').mockReturnValue(classQuestion3);
         component.currentIndex.set(2);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -248,7 +250,7 @@ describe('CourseTrainingQuizComponent', () => {
             status: 400,
             statusText: 'Bad Request',
         });
-        vi.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(throwError(() => error));
+        vi.spyOn(TestBed.inject(QuizTrainingApi), 'submitForTraining').mockReturnValue(throwError(() => error));
         component.currentIndex.set(2);
         component.onSubmit();
         expect(alertSpy).toHaveBeenCalled();
