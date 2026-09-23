@@ -8,6 +8,8 @@ import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-va
 import { VariantJob } from 'app/openapi/model/variant-job';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
 /**
  * Vitest specs for ExerciseVariantGenerationService.
@@ -27,6 +29,7 @@ describe('ExerciseVariantGenerationService', () => {
     let eventSubjects: Map<string, Subject<VariantGenerationEvent>>;
     let userIdentity: ReturnType<typeof signal<User | undefined>>;
     let isEditor: boolean;
+    let hyperionEnabled: boolean;
 
     beforeEach(() => {
         eventSubjects = new Map();
@@ -49,12 +52,14 @@ describe('ExerciseVariantGenerationService', () => {
         };
         userIdentity = signal<User | undefined>(undefined);
         isEditor = true;
+        hyperionEnabled = true;
         TestBed.configureTestingModule({
             providers: [
                 ExerciseVariantGenerationService,
                 { provide: HyperionExerciseVariantApi, useValue: apiMock },
                 { provide: ExerciseVariantWebsocketService, useValue: websocketMock },
                 { provide: AccountService, useValue: { userIdentity, hasAnyAuthorityDirect: () => isEditor } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: (feature: string) => feature === MODULE_FEATURE_HYPERION && hyperionEnabled } },
             ],
         });
         service = TestBed.inject(ExerciseVariantGenerationService);
@@ -88,6 +93,16 @@ describe('ExerciseVariantGenerationService', () => {
 
         expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
         expect(service.jobs()).toEqual([]);
+    });
+
+    it('does not load persisted jobs when Hyperion is disabled', () => {
+        hyperionEnabled = false;
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
+        expect(service.jobs()).toEqual([]);
+        expect(service.hasJobs()).toBe(false);
     });
 
     it('startGeneration posts the request, adds a running entry, and subscribes to the per-job topic', () => {
