@@ -3,7 +3,7 @@ import { computed } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { of } from 'rxjs';
+import { lastValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -768,6 +768,52 @@ describe('AccountService', () => {
 
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
             expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+        });
+
+        describe('refreshSelectedLLMUsage', () => {
+            it('should patch selectedLLMUsage and timestamp from a freshly fetched account', async () => {
+                accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+
+                const resultPromise = lastValueFrom(accountService.refreshSelectedLLMUsage());
+
+                const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+                req.flush({ id: 1, selectedLLMUsage: LLMSelectionDecision.NO_AI, selectedLLMUsageTimestamp: '2025-11-27' } as unknown as User);
+
+                expect(await resultPromise).toBe(LLMSelectionDecision.NO_AI);
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+                expect(accountService.userIdentity()?.selectedLLMUsageTimestamp?.format('YYYY-MM-DD')).toBe('2025-11-27');
+            });
+
+            it('should preserve unrelated user properties while patching', async () => {
+                accountService.userIdentity.set({ id: 1, login: 'testuser', selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+
+                const resultPromise = lastValueFrom(accountService.refreshSelectedLLMUsage());
+                httpMock.expectOne({ method: 'GET', url: getUserUrl }).flush({ id: 1, selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as User);
+                await resultPromise;
+
+                expect(accountService.userIdentity()?.id).toBe(1);
+                expect(accountService.userIdentity()?.login).toBe('testuser');
+            });
+
+            it('should not create an identity when there was none cached, but still resolve with the fetched selection', async () => {
+                accountService.userIdentity.set(undefined);
+
+                const resultPromise = lastValueFrom(accountService.refreshSelectedLLMUsage());
+                httpMock.expectOne({ method: 'GET', url: getUserUrl }).flush({ id: 1, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+
+                expect(await resultPromise).toBe(LLMSelectionDecision.CLOUD_AI);
+                expect(accountService.userIdentity()).toBeUndefined();
+            });
+
+            it('should fall back to the cached selection when the refresh request fails', async () => {
+                accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as User);
+
+                const resultPromise = lastValueFrom(accountService.refreshSelectedLLMUsage());
+                httpMock.expectOne({ method: 'GET', url: getUserUrl }).error(new ProgressEvent('network error'));
+
+                expect(await resultPromise).toBe(LLMSelectionDecision.LOCAL_AI);
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+            });
         });
     });
 

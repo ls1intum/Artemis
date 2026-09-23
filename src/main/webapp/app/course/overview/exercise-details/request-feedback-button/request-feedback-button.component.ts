@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Subscription, filter, skip } from 'rxjs';
+import { Subscription, filter, firstValueFrom, skip } from 'rxjs';
 import { TumUiButtonComponent } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
@@ -224,6 +224,10 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (this.isFeedbackLimitReached()) {
             return;
         }
+        // Another tab may have changed the AI Experience choice since this tab cached it (or since this component was
+        // created); re-check right before an actual request goes out, so a No AI choice made elsewhere is still honored.
+        await firstValueFrom(this.accountService.refreshSelectedLLMUsage());
+        this.setUserAcceptedLLMUsage();
         if (!this.hasUserAcceptedLLMUsage()) {
             await this.showLLMSelectionModal();
             return;

@@ -132,6 +132,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, true, participation);
         setupComponentInputs(exercise);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
         component.hasUserAcceptedLLMUsage.set(true);
 
         vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
@@ -141,7 +142,7 @@ describe('RequestFeedbackButtonComponent', () => {
         );
         vi.spyOn(alertService, 'error');
 
-        component.requestAIFeedback();
+        await component.requestAIFeedback();
         await vi.advanceTimersByTimeAsync(0);
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
@@ -323,6 +324,32 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(modalSpy).not.toHaveBeenCalled();
             expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id, participation.id);
         });
+    });
+
+    it('should re-check the AI Experience choice before sending, so a No AI choice made in another tab is honored without a reload', async () => {
+        // Regression test for the bug where requestAIFeedback() relied only on the snapshot cached in ngOnInit(),
+        // so a decision change made in another tab (or another component instance) was invisible until reload.
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+
+        await initAndTick();
+        expect(component.hasUserAcceptedLLMUsage()).toBe(true);
+
+        // Simulate the other tab switching the account to No AI, without this tab reloading or re-running ngOnInit().
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as any);
+        const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+        const requestFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+        await component.requestAIFeedback();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(component.hasUserAcceptedLLMUsage()).toBe(false);
+        expect(modalSpy).toHaveBeenCalled();
+        expect(requestFeedbackSpy).not.toHaveBeenCalled();
     });
 
     it('should unsubscribe from listeners on destroy', async () => {

@@ -55,6 +55,10 @@ export class MockAccountService implements IAccountService {
 
     restoreUserLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined) => this.applyLLMSelectionDecision(accepted, timestamp);
 
+    // Reads back whatever the spec has set on `userIdentity`, mirroring the real service reading a fresh value
+    // from the server. A spec that wants to simulate a choice made in another tab sets `userIdentity` beforehand.
+    refreshSelectedLLMUsage = () => of(this.userIdentity()?.selectedLLMUsage);
+
     private applyLLMSelectionDecision = (accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined) => {
         this.userIdentity.update((currentUserIdentity) => {
             if (!currentUserIdentity) {
