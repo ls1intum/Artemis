@@ -305,6 +305,9 @@ public class WorkerSupervisorService implements AutoCloseable {
     }
 
     private void retainCheckpoint(ExecutionIdentityDTO identity, String checkpoint) {
+        if (checkpoint == null || checkpoint.isBlank() || checkpoint.length() > WorkerEventDTO.MAX_PAYLOAD_LENGTH) {
+            throw new IllegalArgumentException("Workload returned invalid checkpoint output");
+        }
         synchronized (this) {
             pendingCheckpoints.put(identity.executionId(), event(WorkerEventType.CHECKPOINT, identity, null, checkpoint));
         }
