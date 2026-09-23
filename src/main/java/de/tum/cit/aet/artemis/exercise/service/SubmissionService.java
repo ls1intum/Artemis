@@ -806,7 +806,8 @@ public class SubmissionService {
      *                                      existing result of the submission
      */
     public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, long submissionId, int correctionRound) {
-        if (correctionRound >= 0 && resultRepository.existsBySubmissionIdAndCorrectionRound(submissionId, correctionRound)) {
+        boolean isRoundOfTheExercise = correctionRound >= 0 && correctionRound < exercise.getNumberOfCorrectionRounds();
+        if (isRoundOfTheExercise || (correctionRound >= 0 && resultRepository.existsManualResultBySubmissionIdAndCorrectionRound(submissionId, correctionRound))) {
             return;
         }
         checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
