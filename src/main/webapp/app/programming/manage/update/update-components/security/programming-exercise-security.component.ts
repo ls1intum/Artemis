@@ -98,6 +98,13 @@ export class ProgrammingExerciseSecurityComponent {
     readonly isActive = computed(() => isSecurityActive(this.config()));
     /** In progress (activating/deactivating): spinner on, controls locked to prevent double-submit. */
     readonly isBusy = computed(() => TRANSIENT_SECURITY_STATUSES.has(this.status()));
+    /**
+     * The version selector is locked while a sync is in flight and while the card is in ERROR. A version picked in
+     * ERROR would only change local state (no request is made unless the exercise is active), while Retry still
+     * re-runs the previously failed operation for the old version - so the shown selection could silently diverge
+     * from what Retry actually does.
+     */
+    readonly isVersionSelectDisabled = computed(() => this.isBusy() || this.status() === SecurityActivationStatus.ERROR);
     /** The toggle sits "on" whenever the sandbox is on or being turned on (or errored while on). */
     readonly isToggleOn = computed(() => {
         const status = this.status();

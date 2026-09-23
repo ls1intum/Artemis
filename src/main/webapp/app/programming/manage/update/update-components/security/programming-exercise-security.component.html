@@ -83,7 +83,7 @@
                             optionValue="version"
                             [ngModel]="config().frameworkVersion"
                             [ngModelOptions]="{ standalone: true }"
-                            [disabled]="isBusy()"
+                            [disabled]="isVersionSelectDisabled()"
                             (selectionChange)="onFrameworkVersionChanged($event)"
                             size="small"
                             data-testid="security-framework-version-select"

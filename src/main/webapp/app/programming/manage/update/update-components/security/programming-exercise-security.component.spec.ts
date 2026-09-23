@@ -150,6 +150,15 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(service.activate).toHaveBeenCalledTimes(2);
     });
 
+    it('disables the version selector in ERROR so the shown version cannot diverge from the retried operation', () => {
+        initEdit(inactiveConfig());
+        expect(comp.isVersionSelectDisabled()).toBe(false);
+        service.activate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+        comp.onToggleChanged(true);
+        expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+        expect(comp.isVersionSelectDisabled()).toBe(true);
+    });
+
     it('retry re-runs the operation that actually failed (deactivation, not activation)', () => {
         initEdit(activeConfig());
         service.deactivate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
