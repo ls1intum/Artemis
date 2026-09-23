@@ -38,6 +38,14 @@ class WorkerBrokerConfigurationTest {
                 .withMessage("Configure unambiguous AI worker broker TLS options");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "tcp://broker.invalid:61617?sslEnabled=true&", "tcp://broker.invalid:61617?sslEnabled=true&&verifyHost=true",
+            "tcp://broker.invalid:61617?sslEnabled=true&=false" })
+    void emptyTlsOptionFailsBeforeConnectionFactoryConstruction(String url) {
+        assertThatIllegalArgumentException().isThrownBy(() -> new WorkerBrokerConfiguration().workerConnectionFactory(url, "worker", "test-only"))
+                .withMessage("Configure unambiguous AI worker broker TLS options");
+    }
+
     @Test
     void missingCredentialsFailClosed() {
         runner.withPropertyValues("spring.artemis.broker-url=tcp://broker.invalid:61617?sslEnabled=true", "spring.artemis.password=")
