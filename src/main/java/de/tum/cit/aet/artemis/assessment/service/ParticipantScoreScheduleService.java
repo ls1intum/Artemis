@@ -246,13 +246,19 @@ public class ParticipantScoreScheduleService {
             // Do not interrupt a task that is already running: the interrupt closes the socket of the JDBC connection it is using.
             // A running task finishes, and the new task waits for it on the lock stripe. As the running task may have read the results
             // before the one that triggered the new task, the new task then has to recompute even if the score looks up-to-date.
-            boolean supersedesRunningTask = existingTask != null && !existingTask.cancel(false) && !existingTask.isDone();
+            // Whether the task was still pending or already running cannot be told apart afterwards (cancel(false) also succeeds for a
+            // running task), so the new task recomputes whenever it replaces a task that had not finished.
+            boolean supersedesUnfinishedTask = existingTask != null && !existingTask.isDone();
+            if (existingTask != null) {
+                existingTask.cancel(false);
+            }
             // Capture this task's own future so executeTask() can remove exactly this map entry when it finishes
             // (see the compare-and-remove in executeTask's finally block). The reference is populated synchronously
             // right after scheduling, well before DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS elapses.
             AtomicReference<ScheduledFuture<?>> ownFuture = new AtomicReference<>();
             ScheduledFuture<?> future = scheduler.schedule(
-                    () -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted, supersedesRunningTask, ownFuture.get()), schedulingTime.toInstant());
+                    () -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted, supersedesUnfinishedTask, ownFuture.get()),
+                    schedulingTime.toInstant());
             ownFuture.set(future);
             return future;
         });
@@ -266,7 +272,7 @@ public class ParticipantScoreScheduleService {
      * @param participantId       the id of the participant (user or team, determined by the exercise)
      * @param resultLastModified  the last modified date of the result that triggered the update
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (optional)
-     * @param forceRecompute      whether to recompute even if the score was updated after the result, because this task superseded a running one
+     * @param forceRecompute      whether to recompute even if the score was updated after the result, because this task superseded an unfinished one
      * @param thisTask            this invocation's own scheduled future, used to remove exactly this map entry when done
      */
     private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted, boolean forceRecompute, ScheduledFuture<?> thisTask) {
