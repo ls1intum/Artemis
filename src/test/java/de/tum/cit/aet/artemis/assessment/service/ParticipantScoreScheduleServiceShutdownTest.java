@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.TaskScheduler;
 
@@ -51,6 +53,24 @@ class ParticipantScoreScheduleServiceShutdownTest {
         when(scheduler.schedule(any(Runnable.class), any(Instant.class))).thenThrow(new TaskRejectedException("ExecutorService in shutdown state did not accept task"));
 
         assertThatCode(service::scheduleTasks).doesNotThrowAnyException();
+        verify(scheduler).schedule(any(Runnable.class), any(Instant.class));
+    }
+
+    @Test
+    void startup_whenTheDelayedTaskRunsAfterShutdown_doesNotReactivateTheService() {
+        TaskScheduler scheduler = mock(TaskScheduler.class);
+        var service = new ParticipantScoreScheduleService(scheduler, Optional.empty(), mock(ParticipantScoreRepository.class), mock(StudentScoreRepository.class),
+                mock(TeamScoreRepository.class), mock(ExerciseRepository.class), mock(ResultTestRepository.class), mock(UserRepository.class), mock(TeamRepository.class));
+        service.startup();
+        ArgumentCaptor<Runnable> delayedStartup = ArgumentCaptor.forClass(Runnable.class);
+        verify(scheduler).schedule(delayedStartup.capture(), any(Instant.class));
+
+        service.shutdown();
+        delayedStartup.getValue().run();
+
+        // an inactive service reports itself as idle
+        assertThat(service.isIdle()).isTrue();
+        service.scheduleTask(1L, 2L, null);
         verify(scheduler).schedule(any(Runnable.class), any(Instant.class));
     }
 }
