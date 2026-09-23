@@ -63,6 +63,8 @@
             "viewTeam": "Team",
             "sshKeyTip": "To use SSH, you need to add an SSH key to your account {link:here}.",
             "sshKeyExpiredTip": "Some of your SSH keys are expired. You might need to add a new SSH key to your account {link:here}.",
+            "passwordWarningTip": "Tip: Use",
+            "passwordWarningTipSuffix": "option and improve your working time",
             "vcsTokenTip": "To access the repository with a VCS access token, you need to add a new one to your account {link:here}.",
             "vcsTokenExpiredTip": "Your VCS access token has expired. Renew it {link:here}.",
             "repositoryAccessTokenForbidden": "You are not allowed to access this repository.",
