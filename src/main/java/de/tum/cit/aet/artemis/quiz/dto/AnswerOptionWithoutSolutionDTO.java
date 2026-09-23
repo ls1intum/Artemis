@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.quiz.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record AnswerOptionWithoutSolutionDTO(Long id, String text, String hint, Boolean invalid) {
 
     public static AnswerOptionWithoutSolutionDTO of(AnswerOption answerOption) {

@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, ou
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { EMPTY, Observable, Subscription, firstValueFrom, of } from 'rxjs';
+import { EMPTY, Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
@@ -24,7 +24,7 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -39,15 +39,12 @@ import { breakCircularResultBackReferences } from 'app/exercise/result/result.ut
 import { faCircleInfo, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
-import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
-import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -87,7 +84,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
     private datePipe = inject(ArtemisDatePipe);
@@ -108,7 +104,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
     readonly exercise = signal<ProgrammingExercise>(undefined!);
     readonly submission = signal<ProgrammingSubmission | undefined>(undefined);
-    readonly manualResult = signal<Result | undefined>(undefined);
+    // `equal: () => false` so re-setting the same reference after an in-place mutation still notifies (see
+    // setAttributesForManualResult below) — CourseUpdateComponent.commitCourse uses the identical pattern. A
+    // clone-and-replace here would detach this object from the one reachable via participation().submissions[0].results[0],
+    // which is what feeds the code editor's inline feedback widgets; the two must stay the same object.
+    readonly manualResult = signal<Result | undefined>(undefined, { equal: () => false });
     userId!: number; // set async in ngOnInit() from accountService.identity()
     // for assessment-layout
     readonly isTestRun = signal(false);
@@ -153,16 +153,25 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly isAtLeastEditor = signal(false);
 
     readonly unreferencedFeedback = signal<Feedback[]>([]);
-    // Not template-read — only used in component code, may stay plain.
-    referencedFeedback: Feedback[] = [];
+    // Signal-backed (not plain) so CodeEditorContainerComponent's badge-update effect reacts to it: Athena
+    // suggestions are merged by mutating the existing manualResult/participation object in place, which would
+    // not otherwise notify anything depending on participation()'s reference.
+    readonly referencedFeedback = signal<Feedback[]>([]);
     readonly automaticFeedback = signal<Feedback[]>([]);
-    // all pending Athena feedback suggestions (neither accepted nor rejected yet)
-    readonly feedbackSuggestions = signal<Feedback[]>([]);
+    // whether Athena feedback suggestions were auto-accepted into the feedback lists for this submission
+    readonly hasAcceptedFeedbackSuggestions = signal(false);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
+
+    /**
+     * Referenced (manual + automatic) feedback bound to CodeEditorContainerComponent's `referencedFeedback` input
+     * for its file badges: manual on its own would omit automatic feedback (e.g. static analysis findings) that
+     * the file badges counted before this feedback list was split into per-type signals.
+     */
+    readonly referencedFeedbackForBadges = computed(() => [...this.referencedFeedback(), ...this.automaticFeedback()]);
 
     /** Full assessment feedback for the unreferenced-feedback score summary. */
     allAssessmentFeedbacks(): Feedback[] {
-        return [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        return [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
     }
 
     readonly getTotalMaxPoints = getTotalMaxPoints;
@@ -186,11 +195,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     faCircleInfo = faCircleInfo;
 
     /**
-     * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
+     * True whenever automatic or AI-suggested feedback is present: freshly generated automatic feedback, suggestions
+     * accepted during this session ({@link hasAcceptedFeedbackSuggestions}), or - on reload - accepted/adapted
+     * suggestions already persisted as manual feedback, which the two checks above cannot see.
      */
-    readonly unreferencedFeedbackSuggestions = computed(() => this.feedbackSuggestions().filter((feedback) => !feedback.reference));
-
-    readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.feedbackSuggestions().length > 0);
+    readonly hasAutomaticFeedback = computed(
+        () =>
+            this.automaticFeedback().length > 0 ||
+            this.hasAcceptedFeedbackSuggestions() ||
+            [...this.referencedFeedback(), ...this.unreferencedFeedback()].some(
+                (feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+    );
 
     readonly isFeedbackSuggestionsEnabled = computed(
         () => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA),
@@ -346,15 +362,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private async handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
         this.loadingInitialSubmission.set(false);
+        // Reset for the new submission so a stale automatic-feedback banner from the previous one doesn't linger.
+        this.hasAcceptedFeedbackSuggestions.set(false);
+        // Reset so a still-pending request for the previous submission can't leave this one's banner spinning
+        // forever if this submission doesn't need suggestions and never starts its own request.
+        this.loadingFeedbackSuggestions.set(false);
 
         // Set domain to correctly fetch data
         this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
         this.submission.set(submission);
-        // Suggestions and the loading flag belong to the previous submission; without this, a component reused for
-        // a new submission that is ineligible for its own load either renders stale suggestions or keeps spinning
-        // forever waiting for a response that will never update it.
-        this.feedbackSuggestions.set([]);
-        this.loadingFeedbackSuggestions.set(false);
         const manualResult = getLatestSubmissionResult(submission);
         if (!manualResult?.submission) {
             manualResult!.submission = submission;
@@ -412,27 +428,42 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        const submission = this.submission();
-        if (!submission) {
+        // The component is reused across submissions on param-only navigation, so a response for an earlier
+        // submission can arrive after a later one has loaded. Pin the identities here and re-check them below
+        // before mutating anything, mirroring the guard in ModelingAssessmentEditorComponent.fetchAndApplyFeedbackSuggestions.
+        const submissionAtStart = this.submission();
+        const manualResultAtStart = this.manualResult();
+        if (!submissionAtStart) {
             return;
         }
         this.loadingFeedbackSuggestions.set(true);
         try {
-            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submission.id!))) ?? [];
-            // The router can reuse this component for the next submission while this request is still in flight.
-            // Discard the response if the active submission has since been replaced, so a stale suggestion cannot
-            // cross an assessment boundary.
-            if (this.submission()?.id !== submission.id) {
+            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submissionAtStart.id!))) ?? [];
+            if (this.submission() !== submissionAtStart || this.manualResult() !== manualResultAtStart) {
                 return;
             }
-            const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback()];
-            this.feedbackSuggestions.set(
-                feedbackSuggestions.filter((suggestion) =>
-                    allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+            const allFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
+            const newSuggestions = feedbackSuggestions.filter((suggestion) =>
+                allFeedback.every(
+                    (feedback) =>
+                        Feedback.stripSuggestionPrefix(feedback.text ?? '') !== Feedback.stripSuggestionPrefix(suggestion.text ?? '') ||
+                        feedback.detailText !== suggestion.detailText ||
+                        feedback.reference !== suggestion.reference,
                 ),
             );
+            // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
+            if (newSuggestions.length > 0) {
+                const manualResult = this.manualResult();
+                if (manualResult) {
+                    manualResult.feedbacks = [...(manualResult.feedbacks ?? []), ...newSuggestions];
+                }
+                this.hasAcceptedFeedbackSuggestions.set(true);
+                // Auto-accepted suggestions are unsaved changes: warn on navigation away like any other edit.
+                this.hasPendingChanges = true;
+                this.handleFeedback();
+            }
         } finally {
-            if (this.submission()?.id === submission.id) {
+            if (this.submission() === submissionAtStart) {
                 this.loadingFeedbackSuggestions.set(false);
             }
         }
@@ -493,35 +524,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Show confirmation dialog for discarding suggestions before submitting (if there are any)
-     * @return true if the user confirmed the discard (=> continue to submit), false otherwise
-     */
-    async discardPendingSubmissionsWithConfirmation(): Promise<boolean> {
-        if (this.feedbackSuggestions().length > 0) {
-            const dialogRef = this.dialogService.open(FeedbackSuggestionsPendingConfirmationDialogComponent, {
-                showHeader: false,
-                width: '50rem',
-                modal: true,
-                closable: true,
-                closeOnEscape: true,
-                dismissableMask: false,
-            });
-            const suggestionsDiscardConfirmed: boolean | undefined = await firstValueFrom(dialogRef?.onClose ?? of(undefined));
-            if (!suggestionsDiscardConfirmed) {
-                return false;
-            }
-            this.feedbackSuggestions.set([]); // Discard all pending suggestions
-        }
-        return true;
-    }
-
-    /**
      * Submit the assessment
      */
     async submit(): Promise<void> {
-        if (!(await this.discardPendingSubmissionsWithConfirmation())) {
-            return;
-        }
         this.submitBusy.set(true);
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
     }
@@ -575,7 +580,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.manualResult.set(undefined);
                     this.isAssessor.set(false);
                     this.automaticFeedback.set([]);
-                    this.feedbackSuggestions.set([]);
+                    this.hasAcceptedFeedbackSuggestions.set(false);
                     return;
                 }
 
@@ -700,18 +705,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
         // Filter out other feedback than manual feedback
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL));
+        // Re-derive automatic feedback from the same emitted array: editing an inline automatic/static-analysis
+        // feedback retags it to MANUAL (see CodeEditorTutorAssessmentInlineFeedbackComponent.commitFeedback), and
+        // without this it would remain in this signal's previous, now-stale value and be counted twice.
+        this.automaticFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.type === FeedbackType.AUTOMATIC));
         this.validateFeedback();
-        this.hasPendingChanges = true;
-    }
-
-    /**
-     * Remove a feedback suggestion because it was accepted or discarded.
-     * The actual feedback creation when accepting happens in code-editor-monaco-component/unreferenced-feedback because they have full control over the suggestion cards.
-     * @param feedback Feedback suggestion that is removed
-     */
-    removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((feedbackSuggestion) => !Feedback.areIdentical(feedbackSuggestion, feedback)));
         this.hasPendingChanges = true;
     }
 
@@ -749,7 +748,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.assessmentsAreValid.set(true);
             return;
         }
-        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
+        const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback());
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
@@ -816,7 +815,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
 
         this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
-        this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
+        this.referencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL));
         this.onFeedbackLoaded.emit();
     }
 
@@ -824,7 +823,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!assessmentAfterComplaint.complaintResponse.complaint?.accepted) {
             return true;
         }
-        const allNewFeedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        const allNewFeedbacks = [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
         const newTotalScore = this.calculateTotalScoreOfFeedbacks(allNewFeedbacks);
         if (this.totalScoreBeforeAssessment >= newTotalScore) {
             return window.confirm(this.acceptComplaintWithoutMoreScoreText);
@@ -833,7 +832,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private setFeedbacksForManualResult() {
-        this.manualResult()!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        this.manualResult()!.feedbacks = [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
     }
 
     private setAttributesForManualResult(totalScore: number) {
@@ -844,8 +843,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.isFirstAssessment = false;
 
         manualResult.score = (totalScore / this.exercise().maxPoints!) * 100;
-        // This is done to update the result string in result.component.ts (the clone also gives the signal a new reference)
-        this.manualResult.set(deepClone(manualResult));
+        // Re-set the same reference to update the result string in result.component.ts: `manualResult` has
+        // `equal: () => false`, so this still notifies without cloning (see the signal's declaration for why a
+        // clone would break the code editor's inline feedback rendering).
+        this.manualResult.set(manualResult);
     }
 
     private avoidCircularStructure() {
@@ -856,7 +857,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScore() {
-        const feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+        const feedbacks = [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()];
         const totalScore = this.calculateTotalScoreOfFeedbacks(feedbacks);
         // Set attributes of manual result
         this.setAttributesForManualResult(totalScore);
