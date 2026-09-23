@@ -289,6 +289,7 @@ public class GitService extends AbstractGitService {
             boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
+        deleteIncompleteWorkingCopy(localPath);
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch, writeAccess);
 
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
@@ -366,6 +367,27 @@ public class GitService extends AbstractGitService {
             throw new IllegalArgumentException("Invalid path: " + resolvedPath);
         }
         return resolvedPath;
+    }
+
+    /**
+     * Deletes a working copy whose git directory has no HEAD or no config, so that it is cloned again. A clone always writes both, but a deletion that failed half-way
+     * (e.g. on a network file system, where files that are still open cannot be removed) can leave such a directory behind. It still opens as a repository, yet every
+     * git operation on it fails, e.g. with "Cannot check out from unborn branch".
+     *
+     * @param localPath the path of the working copy
+     */
+    private void deleteIncompleteWorkingCopy(Path localPath) {
+        if (cloneInProgressOperations.containsKey(localPath)) {
+            // A clone in progress writes HEAD and config last, so its git directory looks incomplete until it is done
+            return;
+        }
+        Path gitDirectory = localPath.resolve(".git");
+        if (Files.isDirectory(gitDirectory) && (Files.notExists(gitDirectory.resolve(Constants.HEAD)) || Files.notExists(gitDirectory.resolve(Constants.CONFIG)))) {
+            log.warn("Deleting the incomplete working copy {} so that it is cloned again", localPath);
+            if (!FileUtils.deleteQuietly(localPath.toFile()) && Files.exists(localPath)) {
+                log.error("Could not delete the incomplete working copy {}", localPath.toAbsolutePath());
+            }
+        }
     }
 
     /**

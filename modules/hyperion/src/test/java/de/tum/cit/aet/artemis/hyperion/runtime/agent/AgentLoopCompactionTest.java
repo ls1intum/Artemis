@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -198,6 +200,19 @@ class AgentLoopCompactionTest {
         assertThat(compacted.get(2).getText()).contains("SESSION SUMMARY").contains("omitted to fit the context window");
         assertThat(compacted).hasSizeLessThan(conversation.size());
         assertThatNoException().isThrownBy(() -> AgentConversationContext.assertValidPairing(compacted));
+    }
+
+    @Test
+    void compact_onUsageAccountingFailure_stopsInsteadOfContinuingWithAMarker() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("summary"));
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        Consumer<ChatResponse> usageSink = ignored -> {
+            throw new IllegalStateException("spend guard failed");
+        };
+
+        assertThatThrownBy(() -> runner.compact(conversationWithTurns(12, 24_000), usageSink)).hasRootCauseMessage("spend guard failed");
+        verify(chatModel).call(any(Prompt.class));
     }
 
     @Test
