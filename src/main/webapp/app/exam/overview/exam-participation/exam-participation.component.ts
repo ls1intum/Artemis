@@ -352,6 +352,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private resetForNewRoute(): void {
         this.resetForNewLoad();
         this.stopConductionOfPreviousExam();
+        // Right away rather than when the next exam is loaded: if that load stalls or fails, the live events of the previous exam would keep being fetched
+        this.liveEventsService.reset();
         this.exam.set(undefined!);
         this.studentExam.set(undefined!);
         this.examStartConfirmed.set(false);
