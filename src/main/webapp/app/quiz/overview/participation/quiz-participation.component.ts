@@ -6,7 +6,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -20,7 +19,9 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
-import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { QuizParticipationApi } from 'app/openapi/api/quiz-participation-api';
+import { toQuizSubmission, toQuizSubmissionFromLiveClient, toQuizSubmissionFromStudent, toResult, toStudentParticipation } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { LiveQuizParticipationStatus, QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
@@ -55,7 +56,7 @@ import { QuizParticipationBase } from './quiz-participation.base';
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz-participation.component.html',
-    providers: [ParticipationService, ArtemisDurationFromSecondsPipe],
+    providers: [ArtemisDurationFromSecondsPipe],
     styleUrls: ['./quiz-participation.component.scss'],
     imports: [
         NgClass,
@@ -77,11 +78,11 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     private websocketService = inject(WebsocketService);
     private durationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private quizExerciseService = inject(QuizExerciseService);
-    private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
-    private quizParticipationService = inject(QuizParticipationService);
+    private quizSubmissionApi = inject(QuizSubmissionApi);
+    private quizParticipationApi = inject(QuizParticipationApi);
     private translateService = inject(TranslateService);
     private quizService = inject(ArtemisQuizService);
     private serverDateService = inject(ArtemisServerDateService);
@@ -319,9 +320,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         this.setupAutoSave();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.startQuizParticipation(this.quizId).subscribe({
-            next: (response: HttpResponse<StudentParticipation>) => {
-                this.updateParticipationFromServer(response.body!);
+        this.quizParticipationApi.startParticipation(this.quizId).subscribe({
+            next: (participation) => {
+                this.updateParticipationFromServer(toStudentParticipation(participation));
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -369,9 +370,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads an existing practice participation result
      */
     private loadExistingPracticeResult(participationId: number, submissionId?: number) {
-        this.practiceLoadSubscription = this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
-            next: (response: HttpResponse<StudentParticipation>) => {
-                this.updateParticipationFromServer(response.body!);
+        this.practiceLoadSubscription = this.quizParticipationApi.getParticipationResult(this.quizId, participationId, submissionId).subscribe({
+            next: (participation) => {
+                this.updateParticipationFromServer(toStudentParticipation(participation));
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
@@ -933,8 +934,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         if (this.unsavedChanges() && !this.isSubmitting()) {
             this.applySelection();
             this.submission().submissionDate = this.serverDateService.now();
-            this.quizParticipationService
-                .saveOrSubmitForLiveMode(this.submission(), this.quizId, false)
+            this.quizSubmissionApi
+                .saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(this.submission()), false)
                 .pipe(take(1))
                 .subscribe({
                     next: () => {
@@ -1031,9 +1032,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
             switch (this.mode()) {
                 case 'practice':
                     if (!this.submission().id) {
-                        this.quizParticipationService.submitForPractice(this.submission(), this.quizId).subscribe({
-                            next: (response: HttpResponse<Result>) => {
-                                this.onSubmitPracticeOrPreviewSuccess(response.body!);
+                        this.quizSubmissionApi.submitForPractice(this.quizId, toQuizSubmissionFromStudent(this.submission())).subscribe({
+                            next: (result) => {
+                                this.onSubmitPracticeOrPreviewSuccess(toResult(result));
                             },
                             error: (error: HttpErrorResponse) => this.onSubmitError(error),
                         });
@@ -1041,9 +1042,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                     break;
                 case 'preview':
                     if (!this.submission().id) {
-                        this.quizParticipationService.submitForPreview(this.submission(), this.quizId).subscribe({
-                            next: (response: HttpResponse<Result>) => {
-                                this.onSubmitPracticeOrPreviewSuccess(response.body!);
+                        this.quizSubmissionApi.submitForPreview(this.quizId, toQuizSubmissionFromStudent(this.submission())).subscribe({
+                            next: (result) => {
+                                this.onSubmitPracticeOrPreviewSuccess(toResult(result));
                             },
                             error: (error: HttpErrorResponse) => this.onSubmitError(error),
                         });
@@ -1053,9 +1054,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                     // copy submission and send it through websocket with 'submitted = true'
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission().submittedAnswers;
-                    this.quizParticipationService.saveOrSubmitForLiveMode(quizSubmission, this.quizId, true).subscribe({
-                        next: (response: HttpResponse<QuizSubmission>) => {
-                            this.submission.set(response.body!);
+                    this.quizSubmissionApi.saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(quizSubmission), true).subscribe({
+                        next: (savedSubmission) => {
+                            this.submission.set(toQuizSubmission(savedSubmission));
                             this.isSubmitting.set(false);
                             this.unsavedChanges.set(false);
                             this.updateSubmissionTime();
