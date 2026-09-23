@@ -19,14 +19,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
@@ -34,16 +34,16 @@ class ConversationServiceMarkAllAsReadUnitTest {
 
     private static final long COURSE_ID = 1L;
 
-    private ConversationParticipantRepository conversationParticipantRepository;
+    private ConversationParticipantTestRepository conversationParticipantRepository;
 
-    private ConversationRepository conversationRepository;
+    private ConversationTestRepository conversationRepository;
 
     private ConversationService conversationService;
 
     @BeforeEach
     void setUp() {
-        conversationParticipantRepository = mock(ConversationParticipantRepository.class);
-        conversationRepository = mock(ConversationRepository.class);
+        conversationParticipantRepository = mock(ConversationParticipantTestRepository.class);
+        conversationRepository = mock(ConversationTestRepository.class);
         conversationService = new ConversationService(mock(ConversationDTOService.class), mock(UserRepository.class), mock(ChannelRepository.class),
                 conversationParticipantRepository, conversationRepository, mock(WebsocketMessagingService.class), mock(OneToOneChatRepository.class), mock(PostRepository.class),
                 mock(GroupChatRepository.class), mock(AuthorizationCheckService.class), mock(CourseRepository.class));
