@@ -6,6 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.HexFormat;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -40,6 +42,10 @@ public class WorkerTransport {
 
     private volatile Maps cachedMaps;
 
+    private final Map<String, DistributedMap<String, String>> commandMaps = new ConcurrentHashMap<>();
+
+    private final Map<String, DistributedMap<String, String>> eventMaps = new ConcurrentHashMap<>();
+
     public WorkerTransport(DistributedDataProvider provider, WorkerMessageCodecApi codec) {
         this.provider = provider;
         this.codec = codec;
@@ -51,8 +57,7 @@ public class WorkerTransport {
             synchronized (this) {
                 current = cachedMaps;
                 if (current == null) {
-                    current = new Maps(provider.getExpiringMap("aiworker-commands", COMMAND_TTL), provider.getExpiringMap("aiworker-events", EVENT_TTL),
-                            provider.getExpiringMap("aiworker-event-chunks", EVENT_TTL), provider.getExpiringMap("aiworker-heartbeats", HEARTBEAT_TTL),
+                    current = new Maps(provider.getExpiringMap("aiworker-event-chunks", EVENT_TTL), provider.getExpiringMap("aiworker-heartbeats", HEARTBEAT_TTL),
                             provider.getExpiringMap("aiworker-dead-commands", Duration.ofHours(24)), provider.getExpiringMap("aiworker-command-failures", COMMAND_TTL));
                     cachedMaps = current;
                 }
@@ -61,10 +66,17 @@ public class WorkerTransport {
         return current;
     }
 
+    private DistributedMap<String, String> commands(String workerId) {
+        return commandMaps.computeIfAbsent(workerId, id -> provider.getExpiringMap("aiworker-commands-" + id, COMMAND_TTL));
+    }
+
+    private DistributedMap<String, String> events(String workerId) {
+        return eventMaps.computeIfAbsent(workerId, id -> provider.getExpiringMap("aiworker-events-" + id, EVENT_TTL));
+    }
+
     public void send(WorkerCommandDTO command) {
-        Maps maps = maps();
         String key = command.identity().workerId() + ":" + command.identity().executionId() + ":" + command.type();
-        maps.commands().put(key, codec.encode(command));
+        commands(command.identity().workerId()).put(key, codec.encode(command));
     }
 
     /**
@@ -76,9 +88,10 @@ public class WorkerTransport {
      */
     public void receiveCommands(String workerId, Predicate<WorkerCommandDTO> currentIncarnation, Consumer<WorkerCommandDTO> accept) {
         Maps maps = maps();
+        DistributedMap<String, String> commands = commands(workerId);
         String prefix = workerId + ":";
-        maps.commands().keySet().stream().filter(key -> key.startsWith(prefix)).sorted(Comparator.comparingInt(WorkerTransport::commandOrder)).forEach(key -> {
-            String body = maps.commands().get(key);
+        commands.keySet().stream().filter(key -> key.startsWith(prefix)).sorted(Comparator.comparingInt(WorkerTransport::commandOrder)).forEach(key -> {
+            String body = commands.get(key);
             if (body == null) {
                 return;
             }
@@ -91,7 +104,7 @@ public class WorkerTransport {
                     return;
                 }
                 accept.accept(command);
-                maps.commands().remove(key, body);
+                commands.remove(key, body);
                 maps.commandFailures().remove(key);
             }
             catch (RuntimeException failure) {
@@ -100,7 +113,7 @@ public class WorkerTransport {
                 maps.commandFailures().put(key, next);
                 if (next >= MAX_DELIVERY_FAILURES) {
                     maps.deadCommands().put(key, body);
-                    maps.commands().remove(key, body);
+                    commands.remove(key, body);
                     maps.commandFailures().remove(key);
                 }
                 else {
@@ -131,26 +144,27 @@ public class WorkerTransport {
             throw new IllegalArgumentException("Execution event has no identity");
         }
         String key = eventKey(event);
+        DistributedMap<String, String> events = events(event.workerId());
         int bytes = body.getBytes(StandardCharsets.UTF_8).length;
         String descriptor = body.length() + ":" + ((body.length() + CHUNK_CHARS - 1) / CHUNK_CHARS) + ":" + sha256(body) + ":" + bytes;
         String writing = "W:" + descriptor;
         String ready = "R:" + descriptor;
         String acknowledged = "A:" + descriptor;
-        maps.events().lock(event.workerId());
+        events.lock(event.workerId());
         String existing;
         try {
-            existing = maps.events().get(key);
+            existing = events.get(key);
             if (existing == null) {
-                long outstanding = maps.events().entrySet().stream().filter(entry -> entry.getKey().startsWith(event.workerId() + ":") && !entry.getValue().startsWith("A:"))
+                long outstanding = events.entrySet().stream().filter(entry -> !entry.getValue().startsWith("A:"))
                         .mapToLong(entry -> Long.parseLong(entry.getValue().substring(entry.getValue().lastIndexOf(':') + 1))).sum();
                 if (outstanding + bytes > MAX_OUTSTANDING_BYTES_PER_WORKER) {
                     throw new IllegalStateException("Worker event storage is full");
                 }
-                existing = maps.events().putIfAbsent(key, writing);
+                existing = events.putIfAbsent(key, writing);
             }
         }
         finally {
-            maps.events().unlock(event.workerId());
+            events.unlock(event.workerId());
         }
         if (ready.equals(existing) || acknowledged.equals(existing)) {
             return;
@@ -163,19 +177,19 @@ public class WorkerTransport {
             int start = index * CHUNK_CHARS;
             maps.chunks().put(key + ":" + index, body.substring(start, Math.min(start + CHUNK_CHARS, body.length())));
         }
-        maps.events().lock(key);
+        events.lock(key);
         try {
-            String current = maps.events().get(key);
+            String current = events.get(key);
             if (acknowledged.equals(current)) {
                 return;
             }
             if (!writing.equals(current) && !ready.equals(current)) {
                 throw new IllegalStateException("Worker event reservation changed during publication");
             }
-            maps.events().put(key, ready);
+            events.put(key, ready);
         }
         finally {
-            maps.events().unlock(key);
+            events.unlock(key);
         }
     }
 
@@ -188,16 +202,17 @@ public class WorkerTransport {
      */
     public boolean receive(ExecutionIdentityDTO identity, Consumer<WorkerEventDTO> apply) {
         Maps maps = maps();
+        DistributedMap<String, String> events = events(identity.workerId());
         String prefix = identity.workerId() + ":" + identity.executionId() + ":";
-        String key = maps.events().keySet().stream().filter(candidate -> candidate.startsWith(prefix) && !String.valueOf(maps.events().get(candidate)).startsWith("A:"))
-                .min(String::compareTo).orElse(null);
+        String key = events.keySet().stream().filter(candidate -> candidate.startsWith(prefix) && !String.valueOf(events.get(candidate)).startsWith("A:")).min(String::compareTo)
+                .orElse(null);
         if (key == null) {
             return false;
         }
         int count;
-        maps.events().lock(key);
+        events.lock(key);
         try {
-            String manifest = maps.events().get(key);
+            String manifest = events.get(key);
             if (manifest == null || !manifest.startsWith("R:")) {
                 return false;
             }
@@ -223,10 +238,10 @@ public class WorkerTransport {
                 throw new IllegalArgumentException("Worker event does not match its execution");
             }
             apply.accept(event);
-            maps.events().put(key, "A:" + manifest.substring(2));
+            events.put(key, "A:" + manifest.substring(2));
         }
         finally {
-            maps.events().unlock(key);
+            events.unlock(key);
         }
         for (int index = 0; index < count; index++) {
             maps.chunks().remove(key + ":" + index);
@@ -254,8 +269,8 @@ public class WorkerTransport {
         }
     }
 
-    private record Maps(DistributedMap<String, String> commands, DistributedMap<String, String> events, DistributedMap<String, String> chunks,
-            DistributedMap<String, String> heartbeats, DistributedMap<String, String> deadCommands, DistributedMap<String, Integer> commandFailures) {
+    private record Maps(DistributedMap<String, String> chunks, DistributedMap<String, String> heartbeats, DistributedMap<String, String> deadCommands,
+            DistributedMap<String, Integer> commandFailures) {
     }
 
 }

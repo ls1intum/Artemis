@@ -3,10 +3,13 @@ package de.tum.cit.aet.artemis.aiworker.service.messaging;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -25,9 +28,32 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
 class WorkerTransportTest {
+
+    @Test
+    void pollingOnlyOpensTheSelectedWorkersMaps() {
+        DistributedDataProvider scopedProvider = mock(DistributedDataProvider.class);
+        DistributedMap<String, String> commands = mock(DistributedMap.class);
+        DistributedMap<String, String> events = mock(DistributedMap.class);
+        when(scopedProvider.<String, String>getExpiringMap("aiworker-commands-worker-1", java.time.Duration.ofMinutes(2))).thenReturn(commands);
+        when(scopedProvider.<String, String>getExpiringMap("aiworker-events-worker-1", java.time.Duration.ofHours(4))).thenReturn(events);
+        when(commands.keySet()).thenReturn(Set.of());
+        when(events.keySet()).thenReturn(Set.of());
+        WorkerTransport scoped = new WorkerTransport(scopedProvider, new WorkerMessageCodecApi());
+
+        scoped.receiveCommands("worker-1", _ -> true, _ -> {
+        });
+        scoped.receive(identity, _ -> {
+        });
+
+        verify(commands).keySet();
+        verify(events).keySet();
+        verify(scopedProvider).getExpiringMap("aiworker-commands-worker-1", java.time.Duration.ofMinutes(2));
+        verify(scopedProvider).getExpiringMap("aiworker-events-worker-1", java.time.Duration.ofHours(4));
+    }
 
     @Test
     void constructionDoesNotRequireAnAvailableDistributedProvider() {
@@ -87,7 +113,7 @@ class WorkerTransportTest {
         worker.receiveCommands("worker-1", _ -> true, _ -> {
             throw new IllegalStateException("not ready");
         });
-        assertThat(provider.<String, String>getExpiringMap("aiworker-commands", java.time.Duration.ofMinutes(2)).isEmpty()).isTrue();
+        assertThat(provider.<String, String>getExpiringMap("aiworker-commands-worker-1", java.time.Duration.ofMinutes(2)).isEmpty()).isTrue();
         assertThat(provider.<String, String>getExpiringMap("aiworker-dead-commands", java.time.Duration.ofHours(24)).size()).isEqualTo(1);
     }
 
