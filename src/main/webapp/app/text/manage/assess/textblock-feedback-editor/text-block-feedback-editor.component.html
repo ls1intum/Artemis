@@ -8,7 +8,15 @@
              including the confirm-icon's two-step click, from reaching it. -->
         <div class="close" (click)="$event.stopPropagation()">
             @if (canDismiss) {
-                <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()" id="dismiss-icon" />
+                <button
+                    type="button"
+                    id="dismiss-icon"
+                    [attr.aria-label]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
+                    [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
+                    (click)="dismiss()"
+                >
+                    <fa-icon [icon]="faTimes" />
+                </button>
             } @else {
                 <jhi-confirm-icon
                     [initialIcon]="faTimes"
@@ -56,9 +64,14 @@
                         <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
                     </button>
                 }
-                @if (criteria()) {
+                @if (criteria()?.length) {
                     <div class="dropdown" ngbDropdown>
-                        <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
+                        <button
+                            class="btn btn-primary dropdown-toggle"
+                            ngbDropdownToggle
+                            type="button"
+                            [attr.aria-label]="'artemisApp.textAssessment.feedbackEditor.connectToInstruction' | artemisTranslate"
+                        ></button>
                         <!--if there is only one criterion, dropdown-menu contains its instructions-->
                         @if (criteria()!.length === 1) {
                             <ul ngbDropdownMenu>
@@ -91,6 +104,7 @@
             </div>
             <div class="form-group col-md-10">
                 <textarea
+                    id="detailText-{{ textBlock().id }}"
                     class="form-control"
                     rows="1"
                     [placeholder]="
@@ -111,6 +125,7 @@
             </div>
             <div class="form-group col-md-1 text-end">
                 <input
+                    id="score-{{ textBlock().id }}"
                     class="form-control"
                     type="number"
                     step="0.5"
