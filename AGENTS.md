@@ -15,43 +15,58 @@ see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native ski
 | Write or debug JUnit or Vitest tests                        | [write-tests](skills/write-tests/SKILL.md)                 |
 | Set up, build, or troubleshoot the local application        | [local-setup](skills/local-setup/SKILL.md)                 |
 
-Read the linked guideline before work in a rule-governed area. Keep procedures in the relevant skill.
+Read the relevant guideline for a rule-governed change. Keep procedures in the matching skill.
 When changing a convention, update its skill and supporting documentation in the same change.
 
 ## Non-negotiables
 
-Most of these are enforced by a build check; the rest are policy that review enforces. None is a style preference.
+These are Artemis-specific rules. The linked guidelines give reasons and exceptions; the skills give procedures.
 
 ### Server
 
-- No `@Transactional`, `TransactionTemplate`, or `PlatformTransactionManager` in services or controllers. Transaction boundaries belong in repositories only. [server-development](documentation/docs/developer/guidelines/server-development.mdx)
-- No `EntityManager` or `EntityManagerFactory` fields anywhere in production code, and no `JdbcClient`, `JdbcTemplate`, or `DataSource` outside `core.config`. Everything else goes through Spring Data repositories; use `@Query(nativeQuery = true)` where there is no entity to name. [server-development](documentation/docs/developer/guidelines/server-development.mdx)
-- No `FetchType.EAGER` on `@OneToOne`, `@OneToMany`, `@ManyToMany`. A `@OneToOne` must spell out `fetch = FetchType.LAZY`, since its default is eager. `@ManyToOne` is out of scope. The allowlist `FIELDS_ALLOWED_TO_FETCH_EAGERLY` may only shrink. [database](documentation/docs/developer/guidelines/database.mdx)
-- Do not fetch a lazy configuration through the entity that owns it, including via `@EntityGraph` or `JOIN FETCH`. Give it its own repository and read it at the decision point — `CourseConfigurationRepository` and `CourseAthenaConfigRepository` are the pattern. [database](documentation/docs/developer/guidelines/database.mdx)
-- A configuration that must not outlive its parent holds the parent's key, and the parent carries no field for it at all: an inverse `@OneToOne` cannot be proxied, so mapping it costs a select on every parent read. Read it through its own repository at the point of use, or pass it alongside the parent; the API carries it in the request and response records. `ProgrammingExerciseBuildConfig` is the pattern. [database](documentation/docs/developer/guidelines/database.mdx)
-- No `@Lob`. A CLOB on PostgreSQL is a large object, so Hibernate stores the value in `pg_largeobject` and the column keeps only its id, while the long text columns here are Liquibase `longtext` or `clob` - both `text` on PostgreSQL - holding the text itself. A `String` or a converted attribute needs no annotation; use `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column for structured values. [database](documentation/docs/developer/guidelines/database.mdx)
-- No `@Cache` (Hibernate L2) on entities or associations. For DTO or projection caching use Spring `@Cacheable`, always paired with explicit eviction: `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService`, and `PerNodeCacheEvictionService` for propagating a per-node eviction across the cluster. The default answer is: do not cache. [caching](documentation/docs/developer/guidelines/caching.mdx)
-- Never use Hazelcast or Redis directly. All cross-node state goes through `DistributedDataProvider`. Request entry lifetimes at the call site with `getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL. Missing capability? Add it to the provider, implement it for all three, extend `AbstractDistributedDataTest`. [distributed-data](documentation/docs/developer/guidelines/distributed-data.mdx)
-- No `String.toLowerCase()` / `toUpperCase()` without a locale, in production **and** test code. `Locale.ROOT` for machine-facing values; `Locale.ENGLISH` only where surrounding code already does for the same kind of value (logins); `equalsIgnoreCase` where only the comparison matters. [server-development](documentation/docs/developer/guidelines/server-development.mdx)
-- Jackson 3: import `tools.jackson`, never `com.fasterxml.jackson.{databind,core,dataformat,datatype}`. **Annotations are the exception** and stay on `com.fasterxml.jackson.annotation` — do not "fix" those imports. Inject the auto-configured `JsonMapper` in Spring beans, use `JsonObjectMapper.get()` outside them, and build with `JsonMapper.builder()` since mappers are immutable. [rest-api](documentation/docs/developer/guidelines/rest-api.mdx)
+- Transactions belong in repositories, not services or controllers. Do not use `@Transactional`,
+  `TransactionTemplate` or `PlatformTransactionManager` there. [server development](documentation/docs/developer/guidelines/server-development.mdx)
+- Do not keep `EntityManager` or `EntityManagerFactory` fields in production code. Use Spring Data
+  repositories; raw JDBC access is limited to `core.config`. [server development](documentation/docs/developer/guidelines/server-development.mdx)
+- Do not use `FetchType.EAGER` for `@OneToOne`, `@OneToMany` or `@ManyToMany`. Explicitly set
+  `@OneToOne` to LAZY; do not grow `FIELDS_ALLOWED_TO_FETCH_EAGERLY`. [database](documentation/docs/developer/guidelines/database.mdx)
+- Do not fetch a lazy configuration through its parent entity, even with `@EntityGraph` or
+  `JOIN FETCH`. A dependent configuration keeps the parent's key; the parent has no inverse
+  `@OneToOne` field. Read it through its own repository. [database](documentation/docs/developer/guidelines/database.mdx)
+- Do not add `@Lob` or Hibernate second-level `@Cache`. Use Spring caching only with explicit
+  eviction. [database](documentation/docs/developer/guidelines/database.mdx) · [caching](documentation/docs/developer/guidelines/caching.mdx)
+- Cross-node state goes through `DistributedDataProvider`, never direct Hazelcast or Redis access.
+  Use `getExpiringMap(name, ttl)` for entries with a lifetime. [distributed data](documentation/docs/developer/guidelines/distributed-data.mdx)
+- Specify a locale for Java case conversion, including in tests. Use `Locale.ROOT` for machine
+  values; keep `Locale.ENGLISH` only where the same login convention already applies.
+  [server development](documentation/docs/developer/guidelines/server-development.mdx)
+- Jackson 3 uses `tools.jackson`; annotations remain `com.fasterxml.jackson.annotation`. Inject
+  the configured `JsonMapper` in Spring beans; see the [REST API guideline](documentation/docs/developer/guidelines/rest-api.mdx)
+  for other contexts.
 
 ### Client
 
-- Signal APIs are mandatory in client code: `input()`, `input.required()`, `output()`, `viewChild()`, `viewChild.required()`, `viewChildren()`, `signal()`, `computed()`, `effect()`, `inject()`. All six legacy decorators are banned in the application and test support code: `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`. [client-development](documentation/docs/developer/guidelines/client-development.mdx)
-- `ngOnChanges` is banned; use `computed()` / `effect()`. `ngOnInit` and `ngOnDestroy` are unaffected.
-- Use `@if` / `@for` / `@switch`. Never `*ngIf` / `*ngFor` / `*ngSwitch`.
-- Never object spread, `Object.assign`, or `structuredClone` in production client TypeScript — `localRules/prefer-deep-clone` is error-level over all of it, not just entity graphs (specs are exempt). Use `deepClone` from `app/foundation/util/deep-clone.util`, or its companions `cloneWith(x, {…})` and `hydrate(new Course(), dto)`. Importing `cloneDeep` from `lodash-es` is blocked, so all copying goes through the wrappers. Array spread and object rest in destructuring stay fine. [client-development](documentation/docs/developer/guidelines/client-development.mdx)
-- Use TUM UI (`@tumaet/ui-angular`) and Tailwind v4; no new Bootstrap or ng-bootstrap. If TUM UI lacks a reusable capability, **add or evolve a package component** around native HTML or stable Angular CDK primitives, keeping Artemis-specific composition in the application. PrimeNG is a fallback only when the gap cannot reasonably be closed in the same change, and the pull request says so. [tum-ui-kit](documentation/docs/developer/guidelines/tum-ui-kit.mdx)
-- Colours use semantic tokens (`text-state-danger`, component variants), never primitives (`--p-<color>-N`, `text-red-500`) or Bootstrap classes. Never hand-write PrimeNG root classes (`class="p-button"`). [client-theming](documentation/docs/developer/guidelines/client-theming.mdx)
+- Use signal APIs. `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild` and
+  `@ContentChildren` are banned in application and test support code; `ngOnChanges` is banned.
+  [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- Use `@if`, `@for` and `@switch`, not structural directives. [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- In production client TypeScript, do not copy objects with spread, `Object.assign` or
+  `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
+  allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- Use TUM UI and Tailwind. Do not add Bootstrap or ng-bootstrap. If TUM UI lacks a reusable
+  feature, extend it; use PrimeNG only if that cannot reasonably be done in the same change,
+  and explain the fallback in the PR. [TUM UI](documentation/docs/developer/guidelines/tum-ui-kit.mdx)
+- Use semantic colour tokens, not primitive colours, Bootstrap classes or hand-written PrimeNG
+  root classes. [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
 
 ### Everywhere
 
-- **A class or file nothing can reach is deleted, not left behind**, including one whose only user is its own test. Two required CI checks enforce it on every pull request, even ones touching neither language: `check_dead_code.py` for Java and `knip` for the client. Run
-  `python3 supporting_scripts/check_dead_code.py` and `pnpm run dead-code:client`. [dead-code](documentation/docs/developer/guidelines/dead-code.mdx)
-- Never write "frontend" or "backend". <!-- terminology-check: allow --> Say **client** (Angular) and **server** (Spring Boot), **provider** for a swappable distributed data implementation and **adapter** for the glue binding one, or name the concrete system. Applies to code, comments, commit messages, **pull request descriptions**, and documentation. Do not label people either: prefer `client developer` / `server developer`. `supporting_scripts/check_terminology.py` fails CI on new occurrences. [terminology](documentation/docs/developer/guidelines/terminology.mdx)
-
-Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchitectureTest`), ESLint local rules
-(`rules/*.mjs`), the dead-code and terminology scripts. One ArchUnit violation fails two CI jobs.
+- Remove unreachable code, even when its only user is its own test. Required checks run on every
+  PR: `python3 supporting_scripts/check_dead_code.py` and `pnpm run dead-code:client`.
+  [dead code](documentation/docs/developer/guidelines/dead-code.mdx)
+- Use **client** and **server**, not "frontend" or "backend". <!-- terminology-check: allow -->
+  Use **provider** for a swappable distributed-data implementation and **adapter** for its glue.
+  This also applies to commit messages and PR text. [terminology](documentation/docs/developer/guidelines/terminology.mdx)
 
 ## Repository boundaries
 
@@ -62,17 +77,8 @@ Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchi
   under `src/main/webapp/app/`. Keep reusable TUM UI components in `packages/tum-ui`, with no
   imports from the Artemis application. Client tests are co-located; server tests are in
   `src/test/java`, Playwright tests in `src/test/playwright`.
-- `core/` holds shared configuration, security and base entities; `atlas/` holds competencies
-  and learning analytics; `localvc/` is the embedded Git server; `localci/` queues build jobs;
-  `athena/` is ML assessment; `hyperion/` creates exercises with AI; `globalsearch/` integrates
-  Weaviate; `videosource/` integrates TUM Live.
 - `src/main/webapp/app/openapi/` is generated client code. Change the API source/generation input
   rather than hand-editing generated output.
-- Use constructor injection in server beans. Server DTOs are records with `@JsonInclude(NON_EMPTY)`.
-  See [server development](documentation/docs/developer/guidelines/server-development.mdx).
-- New client components are standalone; prefer `undefined` over `null`. See
-  [client development](documentation/docs/developer/guidelines/client-development.mdx).
-- Follow `.editorconfig`: UTF-8, LF, final newlines and two-space YAML indentation.
 - Before starting or stopping local services, identify the environment and who owns it. The E2E
   runners can kill processes on ports 8080, 9000 and 7921. Reuse a suitable running environment;
   do not stop unrelated services or run mutating tests against production.
@@ -81,11 +87,8 @@ Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchi
 
 - User-facing documentation belongs in `documentation/docs/`, grouped by audience. Tool-local
   READMEs stay beside their tools. Do not create a top-level `docs/` directory.
-- Use Docusaurus `.mdx` pages with `id`, `title` and `sidebar_label` frontmatter and no H1 in
-  the body. Register new pages in the matching `documentation/sidebar-*.ts` and link them from
-  related pages. Write in the present tense for the audience, without PR/issue history or
-  release-relative prose. Read the
-  [documentation guideline](documentation/docs/developer/guidelines/documentation.mdx) before editing a page.
+- When writing documentation, follow the [documentation guideline](documentation/docs/developer/guidelines/documentation.mdx).
+  Register new pages in the matching sidebar and link them from related pages.
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 
@@ -107,4 +110,3 @@ Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchi
   Allowed modules and the exact pattern are in `.github/workflows/validate-pr-title.yml`.
   Do not infer the format from squash-merge subjects, which omit the backticks.
 - Commit subjects are concise and imperative, without backticks; wrap bodies near 72 characters.
-- Run lint and tests before submitting; report the commands run and any verification gaps.
