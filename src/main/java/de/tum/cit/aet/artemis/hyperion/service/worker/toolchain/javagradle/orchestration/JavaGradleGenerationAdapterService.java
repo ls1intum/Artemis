@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -57,7 +59,7 @@ import io.micrometer.observation.ObservationRegistry;
 /** Worker-local generation policy. Each assignment gets fresh verification, specification and repair state. */
 @Service
 @Lazy
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @ConditionalOnProperty(name = "artemis.aiworker.workload", havingValue = "hyperion-generation")
 public class JavaGradleGenerationAdapterService implements ToolchainGenerationAdapter {
 

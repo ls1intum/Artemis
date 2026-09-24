@@ -1,18 +1,22 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jms.connection.CachingConnectionFactory;
 
 import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 
 /** The AI Worker broker is independent of the browser STOMP relay and its credentials. */
 @Lazy
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Conditional(AiWorkerEnabled.class)
 @EnableConfigurationProperties(AiWorkerProperties.class)
 public class AiWorkerMessagingConfiguration {
@@ -35,9 +39,8 @@ public class AiWorkerMessagingConfiguration {
 
     @Bean(name = "aiWorkerConnectionFactory", destroyMethod = "destroy")
     @Lazy
-    public org.springframework.jms.connection.CachingConnectionFactory aiWorkerConnectionFactory(
-            @org.springframework.beans.factory.annotation.Qualifier("aiWorkerNativeConnectionFactory") ActiveMQConnectionFactory nativeFactory) {
-        var factory = new org.springframework.jms.connection.CachingConnectionFactory(nativeFactory);
+    public CachingConnectionFactory aiWorkerConnectionFactory(@Qualifier("aiWorkerNativeConnectionFactory") ActiveMQConnectionFactory nativeFactory) {
+        var factory = new CachingConnectionFactory(nativeFactory);
         factory.setSessionCacheSize(8);
         factory.setCacheConsumers(false);
         return factory;
@@ -45,7 +48,7 @@ public class AiWorkerMessagingConfiguration {
 
     @Bean
     @Lazy
-    @Profile("!aiworker")
+    @Profile("!" + PROFILE_AIWORKER)
     public WorkerMessageCodecApi aiWorkerMessageCodecApi() {
         return new WorkerMessageCodecApi();
     }

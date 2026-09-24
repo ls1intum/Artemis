@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,7 +10,7 @@ import org.springframework.context.annotation.Profile;
 
 /** Starts the isolated AI Worker from the same Artemis distribution without scanning server services. */
 @SpringBootApplication(scanBasePackages = "de.tum.cit.aet.artemis.aiworker")
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 public class AiWorkerApplication {
 
     /**
@@ -18,7 +20,7 @@ public class AiWorkerApplication {
      */
     public static void main(String[] args) {
         SpringApplication application = new SpringApplication(AiWorkerApplication.class);
-        application.setAdditionalProfiles("aiworker", "aiworker-standalone");
+        application.setAdditionalProfiles(PROFILE_AIWORKER, "aiworker-standalone");
         application.setWebApplicationType(WebApplicationType.NONE);
         application.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
             if (event.getEnvironment().matchesProfiles("core | buildagent | localci | localvc")) {
