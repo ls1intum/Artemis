@@ -54,6 +54,6 @@ final class AgentPromptSafety {
     }
 
     static void requireTextSafe(String logicalPath, @Nullable String text) {
-        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, text == null ? new byte[0] : text.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT);
+        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, text == null ? new byte[0] : text.getBytes(StandardCharsets.UTF_8));
     }
 }
