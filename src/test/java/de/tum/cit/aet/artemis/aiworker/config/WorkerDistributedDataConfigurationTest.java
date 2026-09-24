@@ -14,6 +14,8 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.configuration.TlsProperties;
+import org.springframework.cloud.netflix.eureka.http.RestClientTransportClientFactories;
 import org.testcontainers.DockerClientFactory;
 
 import com.hazelcast.client.config.RoutingMode;
@@ -44,8 +46,9 @@ class WorkerDistributedDataConfigurationTest {
             when(discovery.getInstances("Artemis")).thenReturn(List.of(core));
             new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker", "aiworker-standalone"))
                     .withPropertyValues("artemis.distributed-data.provider=hazelcast", "spring.hazelcast.localInstances=false").withBean(DiscoveryClient.class, () -> discovery)
-                    .withUserConfiguration(WorkerDistributedDataConfiguration.class).run(context -> {
+                    .withBean(TlsProperties.class, TlsProperties::new).withUserConfiguration(WorkerDistributedDataConfiguration.class).run(context -> {
                         assertThat(context).hasNotFailed().hasSingleBean(DistributedDataProvider.class).hasSingleBean(HazelcastDistributedDataProviderService.class);
+                        assertThat(context).hasSingleBean(RestClientTransportClientFactories.class);
                         var client = (HazelcastClientProxy) context.getBean("hazelcastInstance");
                         assertThat(client.getClientConfig().getNetworkConfig().getClusterRoutingConfig().getRoutingMode()).isEqualTo(RoutingMode.ALL_MEMBERS);
                         await().atMost(Duration.ofSeconds(20)).ignoreExceptions().untilAsserted(() -> {

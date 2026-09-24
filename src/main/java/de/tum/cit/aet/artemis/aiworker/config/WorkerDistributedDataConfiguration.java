@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.core.config.EurekaClientConfiguration;
 import de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper;
 import de.tum.cit.aet.artemis.core.config.HazelcastConfiguration;
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
@@ -21,7 +22,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistribu
 @Lazy
 @Profile("aiworker-standalone")
 @EnableConfigurationProperties({ ArtemisProperties.class, ServerProperties.class })
-@Import({ EurekaInstanceHelper.class, HazelcastConfiguration.class, HazelcastDistributedDataProviderService.class, RedissonCodecConfiguration.class, RedisNodeIdentity.class,
-        RedisClientListResolver.class, RedissonDistributedDataProviderService.class })
+@Import({ EurekaClientConfiguration.class, EurekaInstanceHelper.class, HazelcastConfiguration.class, HazelcastDistributedDataProviderService.class,
+        RedissonCodecConfiguration.class, RedisNodeIdentity.class, RedisClientListResolver.class, RedissonDistributedDataProviderService.class })
 public class WorkerDistributedDataConfiguration {
 }
