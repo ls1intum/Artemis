@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.aiworker.service.WorkerClientService;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
 
-/** Public coordinator boundary. Workloads never access distributed worker state or broker sessions directly. */
+/** Public coordinator boundary. Workloads never access distributed worker state or provider transport directly. */
 @Lazy
 @Controller
 @Conditional(AiWorkerEnabled.class)

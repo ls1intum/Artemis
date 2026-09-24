@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
@@ -378,7 +379,8 @@ public class HazelcastConfiguration {
      */
     private boolean shouldRunAsHazelcastClient() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        return activeProfiles.contains(PROFILE_BUILDAGENT) && !activeProfiles.contains(PROFILE_CORE) && !activeProfiles.contains(PROFILE_TEST_BUILDAGENT);
+        return (activeProfiles.contains(PROFILE_BUILDAGENT) || activeProfiles.contains(PROFILE_AIWORKER)) && !activeProfiles.contains(PROFILE_CORE)
+                && !activeProfiles.contains(PROFILE_TEST_BUILDAGENT);
     }
 
     // ==================== Test Instance Configuration ====================
@@ -1111,6 +1113,16 @@ public class HazelcastConfiguration {
      * @param clientConfig the client configuration to modify
      */
     private void configureClientDiscovery(ClientConfig clientConfig) {
+        if (env.acceptsProfiles(Profiles.of(PROFILE_AIWORKER))) {
+            String addresses = env.getProperty("artemis.aiworker.hazelcast-addresses");
+            if (addresses == null || addresses.isBlank()) {
+                throw new IllegalArgumentException("Configure artemis.aiworker.hazelcast-addresses for the isolated worker");
+            }
+            for (String address : addresses.split(",")) {
+                clientConfig.getNetworkConfig().addAddress(address.trim());
+            }
+            return;
+        }
         var discoveryStrategyFactory = new EurekaHazelcastDiscoveryStrategyFactory(eurekaInstanceHelper);
         DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(discoveryStrategyFactory);
         DiscoveryConfig discoveryConfig = clientConfig.getNetworkConfig().getDiscoveryConfig();

@@ -26,11 +26,12 @@ class HyperionWorkerActivationTest {
     @ParameterizedTest
     @CsvSource({ "false,true,core|localci|localvc", "true,false,core|localci|localvc", "true,true,localci|localvc", "true,true,core|localvc", "true,true,core|localci",
             "true,true,core|jenkins", "false,false,core", "true,true,buildagent", "true,true,buildagent|localci|localvc" })
-    void disabledOrIneligibleNodeNeedsNoBrokerConfiguration(boolean hyperion, boolean generation, String profiles) {
+    void disabledOrIneligibleNodeNeedsNoWorkerTransport(boolean hyperion, boolean generation, String profiles) {
         runner.withPropertyValues("artemis.hyperion.enabled=" + hyperion, "artemis.hyperion.exercise-generation.enabled=" + generation)
                 .withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.split("\\|"))).run(context -> {
                     assertThat(context).hasNotFailed().doesNotHaveBean(HyperionWorkerMessagingConfiguration.class).doesNotHaveBean(AiWorkerProperties.class)
-                            .doesNotHaveBean(GenerationWorkerClientService.class).doesNotHaveBean(WorkerMessageCodec.class).doesNotHaveBean("aiWorkerConnectionFactory");
+                            .doesNotHaveBean(GenerationWorkerClientService.class).doesNotHaveBean(WorkerMessageCodec.class)
+                            .doesNotHaveBean(de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport.class);
                 });
     }
 
@@ -38,7 +39,6 @@ class HyperionWorkerActivationTest {
     @ValueSource(strings = { "core,localci,localvc", "buildagent,core,localci,localvc" })
     void eligibleCoreRegistersScopedTransportWithoutConnecting(String profiles) {
         runner.withPropertyValues("artemis.aiworker.enabled=true", "artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=true",
-                "artemis.aiworker.broker-url=tcp://broker.invalid:61617?sslEnabled=true", "artemis.aiworker.user=core", "artemis.aiworker.password=test-only",
                 "artemis.aiworker.ids=worker-1").withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.split(","))).run(context -> {
                     assertThat(context).hasNotFailed().hasSingleBean(WorkerMessageCodec.class).hasSingleBean(GenerationWorkerClientService.class);
                     assertThat(context.getBean(AiWorkerProperties.class).ids()).containsExactly("worker-1");
@@ -52,7 +52,8 @@ class HyperionWorkerActivationTest {
         runner.withInitializer(new ConfigDataApplicationContextInitializer())
                 .withPropertyValues("spring.config.location=" + locations, "spring.profiles.active=" + (combined ? "buildagent,core,localci,localvc" : "buildagent"))
                 .run(context -> {
-                    assertThat(context).hasNotFailed().doesNotHaveBean(GenerationWorkerClientService.class).doesNotHaveBean("aiWorkerConnectionFactory");
+                    assertThat(context).hasNotFailed().doesNotHaveBean(GenerationWorkerClientService.class)
+                            .doesNotHaveBean(de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport.class);
                     assertThat(context.getEnvironment().getProperty("artemis.hyperion.enabled", Boolean.class)).isFalse();
                     String[] exclusions = org.springframework.boot.context.properties.bind.Binder.get(context.getEnvironment()).bind("spring.autoconfigure.exclude", String[].class)
                             .orElseThrow(IllegalStateException::new);

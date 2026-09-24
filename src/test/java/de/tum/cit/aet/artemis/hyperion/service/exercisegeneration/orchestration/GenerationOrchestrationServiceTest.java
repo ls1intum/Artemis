@@ -196,7 +196,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void failedStartStillReleasesClaimEvenWhenCleanupDeliveryFails() {
-        doThrow(new IllegalStateException("broker unavailable")).when(client).send(any());
+        doThrow(new IllegalStateException("provider unavailable")).when(client).send(any());
         assertThat(run(() -> false).isMechanicallyVerified()).isFalse();
         verify(workers).release(claim);
     }

@@ -136,9 +136,6 @@ artemis:
       test-case-sync-timeout: PT10M
   aiworker:
     enabled: false # Optional standalone coordination; Hyperion generation enables this automatically on eligible core nodes.
-    # broker-url: tcp://generation-broker:61617?sslEnabled=true&verifyHost=true
-    # user: ${AI_WORKER_CORE_BROKER_USER}
-    # password: ${AI_WORKER_CORE_BROKER_PASSWORD}
     # ids: [worker-1]
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
     # Shared services retain their default prices. Generation uses only explicitly supplied EUR rates; missing rates remain unknown.

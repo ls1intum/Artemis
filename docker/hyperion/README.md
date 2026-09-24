@@ -2,10 +2,10 @@
 
 The generic execution supervisor is the **AI Worker**, not a Hyperion-specific
 transport. Its profile-gated code uses the Artemis WAR. The
-[AI Worker transport](../aiworker/README.md) owns the protocol-4 TLS CORE broker
-configuration. Hyperion feature settings are separate.
+[AI Worker operations](../../documentation/docs/admin/aiworker.mdx) describe the
+shared distributed-data provider transport. Hyperion feature settings are separate.
 
-This directory owns Hyperion's language/toolchain sandbox recipes, not broker
+This directory owns Hyperion's language/toolchain sandbox recipes, not provider
 credentials, worker identity or generic execution policy. A supervisor without an
 installed workload advertises no useful generation capacity. A process starting
 successfully is not a generation qualification test.
@@ -13,14 +13,14 @@ successfully is not a generation qualification test.
 Use a dedicated worker VM for staging and production. The supervisor's Docker socket
 is host-level authority; never share core's, the database's or an exam build agent's
 daemon. Generated code runs with a read-only root filesystem and without networking.
-Pin the Artemis and sandbox images by digest and coordinate core, worker and broker
+Pin the Artemis and sandbox images by digest and coordinate core and worker
 upgrades after draining active work. Worker process loss is not a durable local-outbox
 guarantee: core must fence the lost incarnation using the evidence it already holds.
 
 ## Hyperion workload
 
 The normal Artemis WAR contains the generic AI Worker and Hyperion's workload.
-Build the WAR and the [AI Worker image](../aiworker/README.md) once. Set the
+Build the WAR and the [AI Worker image](../aiworker/worker.Dockerfile) once. Set the
 worker's workload to `hyperion-generation`; the Hyperion adapter stays inactive
 for other workloads. Keep the worker process in an isolated VM.
 

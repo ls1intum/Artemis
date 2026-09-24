@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.aiworker.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -11,8 +10,6 @@ import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import jakarta.jms.ConnectionFactory;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -29,6 +26,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerCapacityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
+import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
@@ -56,9 +54,9 @@ class WorkerRegistryRedisTest {
             try {
                 var firstData = new RedissonDistributedDataProviderService(firstClient, new RedisClientListResolver(new RedissonConnectionFactory(firstClient)), firstIdentity);
                 var secondData = new RedissonDistributedDataProviderService(secondClient, new RedisClientListResolver(new RedissonConnectionFactory(secondClient)), secondIdentity);
-                var properties = new AiWorkerProperties("tcp://broker:61617?sslEnabled=true", "core", "test", List.of("worker"), Duration.ofSeconds(30), Duration.ofSeconds(45));
-                var first = new WorkerRegistryService(properties, mock(ConnectionFactory.class), new WorkerMessageCodecApi(), firstData);
-                var second = new WorkerRegistryService(properties, mock(ConnectionFactory.class), new WorkerMessageCodecApi(), secondData);
+                var properties = new AiWorkerProperties(List.of("worker"), Duration.ofSeconds(30), Duration.ofSeconds(45));
+                var first = new WorkerRegistryService(properties, new WorkerTransport(firstData, new WorkerMessageCodecApi()), firstData);
+                var second = new WorkerRegistryService(properties, new WorkerTransport(secondData, new WorkerMessageCodecApi()), secondData);
                 var capability = new WorkloadCapabilityDTO("document-check", 1, "text");
                 UUID incarnation = UUID.randomUUID();
                 String digest = "sha256:" + "a".repeat(64);
