@@ -14,10 +14,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -34,14 +32,16 @@ import de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerCommandListener;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
 /** Boots and executes a second workload without Hyperion beans. */
 class WorkerIsolationTest {
 
     @Test
     void doesNotStartWorkerBeansWithoutTheAiworkerProfile() {
-        new ApplicationContextRunner().withUserConfiguration(WorkerMessaging.class, WorkerSandboxConfiguration.class, DockerConfiguration.class, WorkerBrokerConfiguration.class,
-                WorkerSupervisorService.class, WorkerCommandListener.class, DockerSandboxService.class).run(context -> {
+        new ApplicationContextRunner().withUserConfiguration(WorkerMessaging.class, WorkerSandboxConfiguration.class, DockerConfiguration.class, WorkerSupervisorService.class,
+                WorkerCommandListener.class, DockerSandboxService.class).run(context -> {
                     assertThat(context).hasNotFailed().doesNotHaveBean(WorkerSupervisorService.class).doesNotHaveBean(DockerClient.class);
                 });
     }
@@ -56,20 +56,12 @@ class WorkerIsolationTest {
         when(docker.inspectImageCmd(image).exec().getId()).thenReturn(image);
         new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
-                .withUserConfiguration(WorkerMessaging.class, WorkerSandboxConfiguration.class, DockerConfiguration.class, WorkerBrokerConfiguration.class,
-                        WorkerSupervisorService.class, WorkerCommandListener.class, DockerSandboxService.class)
+                .withUserConfiguration(WorkerMessaging.class, WorkerSandboxConfiguration.class, DockerConfiguration.class, WorkerSupervisorService.class,
+                        WorkerCommandListener.class, DockerSandboxService.class)
+                .withBean(DistributedDataProvider.class, LocalDataProviderService::new)
                 .withBean("testDocker", DockerClient.class, () -> docker, definition -> definition.setPrimary(true))
                 .withBean("testPublisher", WorkerEventPublisher.class, () -> events::add, definition -> definition.setPrimary(true))
-                .withBean(BeanPostProcessor.class, () -> new BeanPostProcessor() {
-
-                    @Override
-                    public Object postProcessBeforeInitialization(Object bean, String name) {
-                        if (bean instanceof DefaultJmsListenerContainerFactory factory) {
-                            factory.setAutoStartup(false);
-                        }
-                        return bean;
-                    }
-                }).withBean(WorkloadApi.class, () -> new WorkloadApi() {
+                .withBean(WorkloadApi.class, () -> new WorkloadApi() {
 
                     @Override
                     public WorkloadCapabilityDTO capability() {
@@ -82,10 +74,8 @@ class WorkerIsolationTest {
                         checkpoint.accept("checked");
                         return "checked";
                     }
-                })
-                .withPropertyValues("artemis.aiworker.id=document-worker", "artemis.aiworker.image=" + image, "artemis.aiworker.workload=document-check",
-                        "artemis.aiworker.profile=plain-text", "spring.ai.model.chat=none", "spring.artemis.broker-url=tcp://broker.invalid:61617?sslEnabled=true",
-                        "spring.artemis.user=test", "spring.artemis.password=test")
+                }).withPropertyValues("artemis.aiworker.id=document-worker", "artemis.aiworker.image=" + image, "artemis.aiworker.workload=document-check",
+                        "artemis.aiworker.profile=plain-text", "spring.ai.model.chat=none")
                 .run(context -> {
                     assertThat(context).hasNotFailed().hasSingleBean(WorkerSupervisorService.class);
                     assertThat(context).doesNotHaveBean("openAiChatModel").doesNotHaveBean("hyperionWorkloadService");

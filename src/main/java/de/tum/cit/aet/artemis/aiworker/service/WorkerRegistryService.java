@@ -2,23 +2,15 @@ package de.tum.cit.aet.artemis.aiworker.service;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import jakarta.jms.ConnectionFactory;
-import jakarta.jms.TextMessage;
-
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.jms.listener.DefaultMessageListenerContainer;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerEnabled;
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerProperties;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerEventType;
@@ -28,11 +20,12 @@ import de.tum.cit.aet.artemis.aiworker.dto.ExecutionIdentityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerStatusDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
+import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
-/** Discovers worker capacity through authenticated queues; only core nodes participate in the application grid. */
+/** Discovers worker capacity through the application distributed-data provider. */
 @Lazy
 @Service
 @Conditional(AiWorkerEnabled.class)
@@ -40,48 +33,27 @@ public class WorkerRegistryService {
 
     private final AiWorkerProperties properties;
 
-    private final ConnectionFactory connections;
-
-    private final WorkerMessageCodecApi codec;
+    private final WorkerTransport transport;
 
     private final DistributedMap<String, Presence> presence;
 
     private final DistributedMap<String, UUID> leases;
 
-    private final List<DefaultMessageListenerContainer> listeners = new ArrayList<>();
-
-    public WorkerRegistryService(AiWorkerProperties properties, @Qualifier("aiWorkerConnectionFactory") ConnectionFactory connections, WorkerMessageCodecApi codec,
-            DistributedDataProvider data) {
+    public WorkerRegistryService(AiWorkerProperties properties, WorkerTransport transport, DistributedDataProvider data) {
         this.properties = properties;
-        this.connections = connections;
-        this.codec = codec;
+        this.transport = transport;
         presence = data.getExpiringMap("aiworker-presence", properties.presenceTtl());
         leases = data.getExpiringMap("aiworker-leases", properties.leaseTtl());
     }
 
-    /** Heartbeats are load-balanced across core nodes; job events are consumed only by the owning task. */
-    @PostConstruct
-    public void start() {
+    /** Copies current worker heartbeats into the shared capacity view. */
+    @Scheduled(fixedDelay = 5_000)
+    public void refreshPresence() {
         for (String workerId : properties.ids()) {
-            var listener = new DefaultMessageListenerContainer();
-            listener.setConnectionFactory(connections);
-            listener.setDestinationName(eventDestination(workerId));
-            listener.setMessageSelector("eventType = 'HEARTBEAT'");
-            listener.setSessionTransacted(true);
-            listener.setMessageListener((jakarta.jms.MessageListener) message -> {
-                try {
-                    if (!(message instanceof TextMessage text)) {
-                        throw new IllegalArgumentException("Worker events must use JSON text messages");
-                    }
-                    recordPresence(workerId, codec.decodeEvent(text.getText()));
-                }
-                catch (jakarta.jms.JMSException e) {
-                    throw new IllegalStateException("Could not read worker heartbeat", e);
-                }
-            });
-            listener.initialize();
-            listener.start();
-            listeners.add(listener);
+            WorkerEventDTO event = transport.heartbeat(workerId);
+            if (event != null) {
+                recordPresence(workerId, event);
+            }
         }
     }
 
@@ -277,16 +249,6 @@ public class WorkerRegistryService {
 
     private static String slotKey(String worker, int slot) {
         return slot == 0 ? worker : worker + ":" + slot;
-    }
-
-    public static String eventDestination(String worker) {
-        return "aiworker." + worker + ".events";
-    }
-
-    /** Stops only listeners created by this registry. */
-    @PreDestroy
-    public void stop() {
-        listeners.forEach(DefaultMessageListenerContainer::destroy);
     }
 
     private record Presence(UUID incarnation, long sequence, Instant receivedAt, String imageDigest, boolean ready, int slots, List<SlotExecution> executions,

@@ -173,6 +173,16 @@ public class WorkerSupervisorService implements AutoCloseable {
         }
     }
 
+    /**
+     * A previous worker process must leave a replacement process's commands in the inbox.
+     *
+     * @param command the pending command
+     * @return whether it targets this process
+     */
+    public boolean isCurrentIncarnation(WorkerCommandDTO command) {
+        return incarnation.equals(command.identity().workerIncarnation());
+    }
+
     private void deliverRejections() {
         while (true) {
             synchronized (this) {
