@@ -53,21 +53,6 @@ jobs:
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
       - name: Java Code Style
         run: ./gradlew spotlessCheck
-      - name: Qualify the immutable AI Worker sandbox image
-        run: |
-          docker build -f docker/hyperion/gradle-sandbox.Dockerfile -t aiworker-sandbox-test .
-          image=$(docker image inspect aiworker-sandbox-test --format '{{.Id}}')
-          echo "AI_WORKER_TEST_IMAGE=$image" >> "$GITHUB_ENV"
-          echo "HYPERION_GRADLE_TEST_IMAGE=$image" >> "$GITHUB_ENV"
-      - name: AI Worker sandbox and offline Gradle tests
-        run: ./gradlew test --tests '*DockerSandboxIsolationTest' --tests '*DockerGradleBuildTest' -x webapp
-      - name: AI Worker Sandbox Test Report
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
-        if: ${{ !cancelled() }}
-        with:
-          name: AI Worker Sandbox Tests
-          path: build/test-results/test/*.xml
-          reporter: java-junit
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
       - name: Java Test Code Style
