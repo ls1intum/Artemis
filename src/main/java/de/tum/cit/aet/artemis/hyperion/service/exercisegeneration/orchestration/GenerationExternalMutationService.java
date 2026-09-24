@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,6 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Lazy
 @Service
 @Profile(PROFILE_CORE + " | " + PROFILE_LOCALVC)
-@ConditionalOnProperty(name = "artemis.hyperion.exercise-generation.enabled", havingValue = "true")
 public class GenerationExternalMutationService {
 
     private static final String PARTICIPATION_PREFIX = GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + "participation:";

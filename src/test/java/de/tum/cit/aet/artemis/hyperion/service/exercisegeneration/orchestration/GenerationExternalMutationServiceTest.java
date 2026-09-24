@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import java.time.Instant;
@@ -20,6 +21,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationTaskService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobInfo;
 
 class GenerationExternalMutationServiceTest {
@@ -27,6 +30,25 @@ class GenerationExternalMutationServiceTest {
     private static LocalDataProviderService initializedProvider() {
         var provider = new LocalDataProviderService();
         return provider;
+    }
+
+    @Test
+    void baseHyperionRegistersCodeGenerationDependenciesWithoutExerciseGeneration() {
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().setActiveProfiles("core");
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context, "artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=false");
+            context.registerBean(DistributedDataProvider.class, GenerationExternalMutationServiceTest::initializedProvider);
+            context.registerBean(HyperionCodeGenerationTaskService.class, () -> mock(HyperionCodeGenerationTaskService.class));
+            context.register(GenerationExternalMutationService.class, HyperionCodeGenerationJobService.class);
+            context.refresh();
+
+            assertThat(context.getBean(HyperionCodeGenerationJobService.class)).isNotNull();
+            var service = context.getBean(GenerationExternalMutationService.class);
+            String token = service.claimExternalMutationSlot(42);
+            assertThat(service.isGenerationActive(42)).isTrue();
+            service.clearExternalMutationSlot(42, token);
+            assertThat(service.isGenerationActive(42)).isFalse();
+        }
     }
 
     @Test
