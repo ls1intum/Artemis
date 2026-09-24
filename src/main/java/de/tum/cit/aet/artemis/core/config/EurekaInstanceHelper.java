@@ -115,12 +115,9 @@ public class EurekaInstanceHelper {
      * @return list of core node addresses in "host:port" format, empty if no core nodes found
      */
     public List<String> discoverCoreNodeAddresses() {
-        if (registration.isEmpty()) {
-            log.warn("Service registry not available for auto-discovery of core nodes.");
-            return List.of();
-        }
-
-        String serviceId = registration.get().getServiceId();
+        // A standalone client can fetch the registry without registering itself. Use the same
+        // Artemis service name that core nodes register under in that case.
+        String serviceId = registration.map(Registration::getServiceId).orElseGet(() -> env.getProperty("eureka.instance.appname", "Artemis"));
         log.info("Auto-discovering core nodes from service registry for serviceId '{}'", serviceId);
         List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
 

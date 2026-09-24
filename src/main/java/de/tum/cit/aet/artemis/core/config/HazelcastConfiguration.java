@@ -1088,16 +1088,6 @@ public class HazelcastConfiguration {
      * @param clientConfig the client configuration to modify
      */
     private void configureClientDiscovery(ClientConfig clientConfig) {
-        if (env.acceptsProfiles(Profiles.of(PROFILE_AIWORKER))) {
-            String addresses = env.getProperty("artemis.aiworker.hazelcast-addresses");
-            if (addresses == null || addresses.isBlank()) {
-                throw new IllegalArgumentException("Configure artemis.aiworker.hazelcast-addresses for the isolated worker");
-            }
-            for (String address : addresses.split(",")) {
-                clientConfig.getNetworkConfig().addAddress(address.trim());
-            }
-            return;
-        }
         var discoveryStrategyFactory = new EurekaHazelcastDiscoveryStrategyFactory(eurekaInstanceHelper);
         DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(discoveryStrategyFactory);
         DiscoveryConfig discoveryConfig = clientConfig.getNetworkConfig().getDiscoveryConfig();
@@ -1197,8 +1187,7 @@ public class HazelcastConfiguration {
      * @param clientConfig the client configuration to modify
      */
     private void configureClientNetworking(ClientConfig clientConfig) {
-        RoutingMode routing = env.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) ? RoutingMode.SINGLE_MEMBER : RoutingMode.ALL_MEMBERS;
-        clientConfig.getNetworkConfig().setConnectionTimeout(10000).getClusterRoutingConfig().setRoutingMode(routing);
+        clientConfig.getNetworkConfig().setConnectionTimeout(10000).getClusterRoutingConfig().setRoutingMode(RoutingMode.ALL_MEMBERS);
     }
 
     // ==================== Cache Map Configuration ====================
