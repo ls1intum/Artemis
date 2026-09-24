@@ -342,7 +342,7 @@ SELF_TEST_FRONTMATTER = [
 
 
 def self_test() -> int:
-    """Regression cases for the two parsers, run in CI in place of a test framework.
+    """Regression cases for parsers and manifest checks, run in CI without a test framework.
 
     A fence-state mistake inverts the inside/outside state for the rest of a file and stops
     the path check silently. A frontmatter mistake records the wrong description just as

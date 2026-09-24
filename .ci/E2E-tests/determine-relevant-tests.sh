@@ -103,13 +103,13 @@ fi
 if ! jq -es '
     length == 1 and
     (.[0] | type == "object" and
-        (.allTestPaths | type == "array") and
-        (.mappings | type == "object") and
-        (.alwaysRunTests | type == "array") and
-        (.runAllTestsPatterns | type == "array") and
-        (.mappings | all(.[]; type == "object" and
-            (.sourcePaths | type == "array") and
-            (.testPaths | type == "array"))))
+        (.allTestPaths | type == "array" and all(.[]; type == "string" and length > 0)) and
+        (.alwaysRunTests | type == "array" and all(.[]; type == "string" and length > 0)) and
+        (.runAllTestsPatterns | type == "array" and all(.[]; type == "string" and length > 0)) and
+        (.mappings | type == "object" and all(.[];
+            type == "object" and
+            (.sourcePaths | type == "array" and all(.[]; type == "string" and length > 0)) and
+            (.testPaths | type == "array" and all(.[]; type == "string" and length > 0)))))
 ' "$MAPPING_FILE" >/dev/null; then
     echo "ERROR: Invalid JSON mapping in $MAPPING_FILE. Expected one mapping object with required fields; fix the mapping before selecting tests." >&2
     exit 1

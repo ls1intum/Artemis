@@ -58,10 +58,8 @@ setup() {
     [ ! -s "$GITHUB_OUTPUT" ]
 }
 
-# `jq empty`, the obvious guard, accepts all of these and would select tests from a mapping that
-# carries no rules at all.
-@test "requires the mapping to be exactly one JSON object" {
-    for mapping in '{' '' '{} {}' 'null' '[]' '"mapping"' '1' 'true' '{"allTestPaths":[],"mappings":{"x":{"sourcePaths":null,"testPaths":[]}},"alwaysRunTests":[],"runAllTestsPatterns":[]}'; do
+@test "requires one well-formed mapping object" {
+    for mapping in '{' '' '{} {}' 'null' '[]' '"mapping"' '1' 'true' '{"allTestPaths":[null],"mappings":{},"alwaysRunTests":[],"runAllTestsPatterns":[]}' '{"allTestPaths":[],"mappings":{"x":{"sourcePaths":null,"testPaths":[]}},"alwaysRunTests":[],"runAllTestsPatterns":[]}'; do
         printf '%s' "$mapping" > .ci/E2E-tests/e2e-test-mapping.json
         run bash .ci/E2E-tests/determine-relevant-tests.sh base
         [ "$status" -ne 0 ]
