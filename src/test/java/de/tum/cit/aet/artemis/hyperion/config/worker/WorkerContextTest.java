@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerCommandListener;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
+import de.tum.cit.aet.artemis.hyperion.service.worker.HyperionWorkloadService;
 
 /** Boots the real worker scan and auto-configuration, replacing only external I/O. */
 class WorkerContextTest {
@@ -45,7 +46,7 @@ class WorkerContextTest {
                         "management.logging.export.otlp.enabled=false", "management.otlp.metrics.export.enabled=false")
                 .run(context -> {
                     assertThat(context).hasNotFailed().hasSingleBean(WorkerSupervisorService.class).hasSingleBean(DockerSandboxService.class)
-                            .hasSingleBean(WorkerCommandListener.class);
+                            .hasSingleBean(WorkerCommandListener.class).hasSingleBean(HyperionWorkloadService.class);
                     assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
                             .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel");
                     assertThat(context.getBean(WorkerSettings.class).maxConcurrentExecutions()).isEqualTo(4);

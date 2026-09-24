@@ -7,7 +7,7 @@ import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEven
 import org.springframework.context.annotation.Profile;
 
 /** Starts the isolated AI Worker from the same Artemis distribution without scanning server services. */
-@SpringBootApplication(scanBasePackages = { "de.tum.cit.aet.artemis.aiworker", "de.tum.cit.aet.artemis.hyperion.config.worker" })
+@SpringBootApplication(scanBasePackages = "de.tum.cit.aet.artemis.aiworker")
 @Profile("aiworker")
 public class AiWorkerApplication {
 
