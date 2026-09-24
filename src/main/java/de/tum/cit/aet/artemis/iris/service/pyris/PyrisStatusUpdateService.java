@@ -172,7 +172,10 @@ public class PyrisStatusUpdateService {
         var runState = resolveRunState(statusUpdate.runState(), job);
         var normalizedStatusUpdate = withRunState(statusUpdate, runState);
         if (statusUpdate.partialResult() != null && runState == PyrisRunState.RUNNING) {
-            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+            if (!irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate)) {
+                // The session no longer exists, so no later callback of this job can be delivered either.
+                pyrisJobService.removeJob(job);
+            }
             return;
         }
         if (statusUpdate.partialResult() != null) {

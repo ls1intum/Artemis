@@ -717,6 +717,20 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void partialStatusUpdateForDeletedSession_isDroppedAndRemovesJob() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        irisChatSessionRepository.deleteById(session.getId());
+
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, headers);
+
+        assertThat(pyrisJobService.getJob(jobId)).isNull();
+    }
+
     // =========================================================================
     // Citation service — only invoked for lecture and text exercise chats
     // =========================================================================

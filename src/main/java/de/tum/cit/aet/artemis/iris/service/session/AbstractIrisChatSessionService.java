@@ -310,11 +310,18 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      *
      * @param job          The job that is currently executed
      * @param statusUpdate The partial status update of the job
+     * @return {@code false} if the session no longer exists and the update was dropped, {@code true} otherwise
      */
-    public void handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+    public boolean handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         // noinspection unchecked
-        var session = (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
+        var session = (S) irisSessionRepository.findById(job.sessionId()).orElse(null);
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping partial status update for Iris job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return false;
+        }
         irisChatWebsocketService.sendPartialUpdate(session, statusUpdate.partialResult(), statusUpdate.partialSeq(), job.jobId());
+        return true;
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";
