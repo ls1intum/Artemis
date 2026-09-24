@@ -26,7 +26,7 @@ public class WorkerTransport {
 
     private static final Duration EVENT_TTL = Duration.ofHours(4);
 
-    private static final Duration HEARTBEAT_TTL = Duration.ofSeconds(10);
+    private static final Duration HEARTBEAT_TTL = Duration.ofSeconds(30);
 
     private static final int CHUNK_CHARS = 512 * 1024;
 

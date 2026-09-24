@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.aiworker.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -12,8 +11,6 @@ import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import jakarta.jms.ConnectionFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +26,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerCapacityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
+import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 
@@ -43,11 +41,10 @@ class WorkerRegistryClusterTest {
             var second = Hazelcast.newHazelcastInstance(config(cluster, List.of("127.0.0.1:" + port)));
             try {
                 await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(first.getCluster().getMembers()).hasSize(2));
-                var properties = new AiWorkerProperties("tcp://broker:61617?sslEnabled=true", "core", "test-password", List.of("worker"), Duration.ofSeconds(30),
-                        Duration.ofSeconds(45));
-                var firstCore = new WorkerRegistryService(properties, mock(ConnectionFactory.class), new WorkerMessageCodecApi(),
+                var properties = new AiWorkerProperties(List.of("worker"), Duration.ofSeconds(30), Duration.ofSeconds(45));
+                var firstCore = new WorkerRegistryService(properties, new WorkerTransport(new HazelcastDistributedDataProviderService(first), new WorkerMessageCodecApi()),
                         new HazelcastDistributedDataProviderService(first));
-                var secondCore = new WorkerRegistryService(properties, mock(ConnectionFactory.class), new WorkerMessageCodecApi(),
+                var secondCore = new WorkerRegistryService(properties, new WorkerTransport(new HazelcastDistributedDataProviderService(second), new WorkerMessageCodecApi()),
                         new HazelcastDistributedDataProviderService(second));
                 firstCore.recordPresence("worker", event(WorkerCommandDTO.PROTOCOL_VERSION, "worker", UUID.randomUUID(), 1, Instant.now(), WorkerEventType.HEARTBEAT, null, true,
                         "sha256:" + "a".repeat(64), null, null, null).withCapacity(new WorkerCapacityDTO(4, List.of())));
