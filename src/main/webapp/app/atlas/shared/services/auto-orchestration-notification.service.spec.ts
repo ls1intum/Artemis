@@ -57,6 +57,15 @@ describe('AutoOrchestrationNotificationService', () => {
         expect(alertWarningSpy).toHaveBeenCalledWith('artemisApp.atlasOrchestrator.autoToast.partial', { count: 3, success: 2, failure: 1 });
     });
 
+    it('emits a warning alert when a run stopped after committing some changes', () => {
+        service.subscribeToCourse(42);
+
+        websocketSubject.next(summary({ exerciseCount: 2, successCount: 0, failureCount: 2, outcome: 'PARTIAL' }));
+
+        expect(alertWarningSpy).toHaveBeenCalledWith('artemisApp.atlasOrchestrator.autoToast.incomplete', { count: 2, success: 0, failure: 2 });
+        expect(alertErrorSpy).not.toHaveBeenCalled();
+    });
+
     it('emits an error alert when every exercise failed', () => {
         service.subscribeToCourse(42);
 

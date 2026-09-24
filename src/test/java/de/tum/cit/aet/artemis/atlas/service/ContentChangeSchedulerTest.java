@@ -151,6 +151,7 @@ class ContentChangeSchedulerTest {
         assertThat(summary.exerciseCount()).isEqualTo(2);
         assertThat(summary.successCount()).isEqualTo(2);
         assertThat(summary.failureCount()).isEqualTo(0);
+        assertThat(summary.outcome()).isEqualTo(AutoOrchestrationSummaryDTO.Outcome.SUCCESS);
     }
 
     @Test
@@ -214,10 +215,11 @@ class ContentChangeSchedulerTest {
         assertThat(summary.exerciseCount()).isEqualTo(2);
         assertThat(summary.successCount()).isEqualTo(0);
         assertThat(summary.failureCount()).isEqualTo(2);
+        assertThat(summary.outcome()).isEqualTo(AutoOrchestrationSummaryDTO.Outcome.FAILED);
     }
 
     @Test
-    void tick_partialResult_broadcastsFailureButDoesNotRequeue() {
+    void tick_partialResult_broadcastsPartialButDoesNotRequeue() {
         Set<Long> exerciseIds = Set.of(10L, 11L);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
@@ -229,12 +231,31 @@ class ContentChangeSchedulerTest {
         scheduler.tick();
 
         // Some mutations were already committed — requeueing would re-apply them, so the batch is not
-        // requeued; the failure is still surfaced.
+        // requeued; the run is surfaced as partial rather than as a complete failure.
         verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
         verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().failureCount()).isEqualTo(2);
+        assertThat(payload.getValue().outcome()).isEqualTo(AutoOrchestrationSummaryDTO.Outcome.PARTIAL);
+    }
+
+    @Test
+    void tick_toolLimitAfterCommittedChanges_broadcastsPartial() {
+        Set<Long> exerciseIds = Set.of(10L, 11L);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds, Set.of())));
+        when(orchestrationService.runBatch(COURSE_ID, exerciseIds, Set.of()))
+                .thenReturn(CompetencyOrchestrationResultDTO.partial("Tool budget exhausted", List.of(), CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED));
+
+        scheduler.tick();
+
+        verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        assertThat(payload.getValue().outcome()).isEqualTo(AutoOrchestrationSummaryDTO.Outcome.PARTIAL);
     }
 
     @Test

@@ -13,6 +13,8 @@ export interface AutoOrchestrationSummary {
     exerciseCount: number;
     successCount: number;
     failureCount: number;
+    /** Batch-level outcome; `PARTIAL` means some changes were committed before the run stopped. */
+    outcome?: 'SUCCESS' | 'PARTIAL' | 'FAILED';
     completedAt: string;
 }
 
@@ -55,7 +57,9 @@ export class AutoOrchestrationNotificationService implements OnDestroy {
             return;
         }
         const params = { count: summary.exerciseCount, success: summary.successCount, failure: summary.failureCount };
-        if (summary.failureCount === 0) {
+        if (summary.outcome === 'PARTIAL') {
+            this.alertService.warning('artemisApp.atlasOrchestrator.autoToast.incomplete', params);
+        } else if (summary.failureCount === 0) {
             this.alertService.success('artemisApp.atlasOrchestrator.autoToast.success', params);
         } else if (summary.successCount === 0) {
             this.alertService.error('artemisApp.atlasOrchestrator.autoToast.failure', params);

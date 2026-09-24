@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO.Outcome;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
@@ -148,14 +149,14 @@ public class ContentChangeScheduler {
             // cannot throw here — so the changes are safe to requeue rather than discard.
             log.warn("atlas.automatic batch run failed for course {} (run {}): {}", courseId, runId, ex.getMessage(), ex);
             accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
-            broadcastSummary(courseId, runId, changeCount, false);
+            broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
             return;
         }
 
         CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
         if (result != null && (result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
                 || result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)) {
-            broadcastSummary(courseId, runId, changeCount, false);
+            broadcastSummary(courseId, runId, changeCount, status == CompetencyOrchestrationResultDTO.Status.PARTIAL ? Outcome.PARTIAL : Outcome.FAILED);
             return;
         }
         switch (status) {
@@ -178,17 +179,20 @@ public class ContentChangeScheduler {
                 // bounds how many failed retries a day can burn.
                 log.debug("atlas.automatic course {} run {} failed; requeueing {} change(s) for retry", courseId, runId, changeCount);
                 accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
-                broadcastSummary(courseId, runId, changeCount, false);
+                broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
             }
-            case SUCCESS -> broadcastSummary(courseId, runId, changeCount, true);
-            // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply). null:
-            // unknown state, do not requeue. Both surface as a failure toast.
-            case null, default -> broadcastSummary(courseId, runId, changeCount, false);
+            case SUCCESS -> broadcastSummary(courseId, runId, changeCount, Outcome.SUCCESS);
+            // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply), and the
+            // toast must not claim that the whole batch failed.
+            case PARTIAL -> broadcastSummary(courseId, runId, changeCount, Outcome.PARTIAL);
+            // null: unknown state, do not requeue.
+            case null, default -> broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
         }
     }
 
-    private void broadcastSummary(long courseId, String runId, int changeCount, boolean success) {
-        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, changeCount, success ? changeCount : 0, success ? 0 : changeCount,
+    private void broadcastSummary(long courseId, String runId, int changeCount, Outcome outcome) {
+        boolean success = outcome == Outcome.SUCCESS;
+        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, changeCount, success ? changeCount : 0, success ? 0 : changeCount, outcome,
                 Instant.now(clock));
         websocketMessagingService.sendMessage(TOPIC_TEMPLATE.formatted(courseId), summary);
     }
