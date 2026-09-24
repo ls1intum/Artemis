@@ -30,7 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -586,6 +586,29 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionForTheResultOfAComplaintResponse() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(50), submission);
+        // The response to a complaint is stored as an additional manual result with the next correction round
+        Result complaintResponseResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(10), submission);
+        complaintResponseResult.setCorrectionRound(1);
+        resultRepository.save(complaintResponseResult);
+        long numberOfResults = resultRepository.countBySubmissionId(submission.getId());
+
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        // the course exercise has one correction round, but the result of the complaint response exists and can be opened
+        paramMap.add("correction-round", "1");
+        request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
+
+        assertThat(resultRepository.countBySubmissionId(submission.getId())).as("opening the existing result creates no further result").isEqualTo(numberOfResults);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionKeepsAutomaticFeedback() throws Exception {
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
@@ -754,13 +777,13 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         JsonNode body = objectMapper.readTree(rawResponse);
 
         assertThat(body.get("id").asLong()).isEqualTo(submission.getId());
-        assertThat(body.get("submissionExerciseType").asText()).isEqualTo("programming");
+        assertThat(body.get("submissionExerciseType").asString()).isEqualTo("programming");
         // The automatic results are filtered out, but the array itself must survive: the dashboard indexes it by
         // correction round.
         assertThat(body.get("results").isArray()).isTrue();
         assertThat(body.get("results")).isEmpty();
         assertThat(body.get("participation").get("id").asLong()).isEqualTo(submission.getParticipation().getId());
-        assertThat(body.get("participation").get("type").asText()).isEqualTo("programming");
+        assertThat(body.get("participation").get("type").asString()).isEqualTo("programming");
         assertThat(body.get("participation").get("exercise").get("id").asLong()).isEqualTo(exercise.getId());
         assertThat(rawResponse).doesNotContain("\"feedbacks\"").doesNotContain("\"testCase\"");
     }
@@ -833,9 +856,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(lockedResult.get("assessor").get("id").asLong()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId());
         assertThat(lockedResult.get("feedbacks")).hasSize(1);
         JsonNode copiedFeedback = lockedResult.get("feedbacks").get(0);
-        assertThat(copiedFeedback.get("type").asText()).isEqualTo("AUTOMATIC");
+        assertThat(copiedFeedback.get("type").asString()).isEqualTo("AUTOMATIC");
         assertThat(copiedFeedback.get("testCase").get("id").asLong()).isEqualTo(testCase.getId());
-        assertThat(copiedFeedback.get("testCase").get("testName").asText()).isEqualTo("lockedTestCase");
+        assertThat(copiedFeedback.get("testCase").get("testName").asString()).isEqualTo("lockedTestCase");
     }
 
     @Test

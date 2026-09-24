@@ -9,7 +9,12 @@
                 "reject": "Reject FAQ",
                 "filterLabel": "Filter",
                 "createOrEditLabel": "Create or edit FAQ",
-                "ingestLabel": "Send FAQs to Iris"
+                "ingestLabel": "Send FAQs to Iris",
+                "empty": {
+                    "title": "No FAQs yet",
+                    "noMatchingTitle": "No matching FAQs",
+                    "documentation": "Learn about FAQs"
+                }
             },
             "faqDisabled": {
                 "title": "Welcome to the FAQ!",

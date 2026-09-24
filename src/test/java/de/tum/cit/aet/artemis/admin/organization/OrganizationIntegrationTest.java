@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationRequestDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForEnrollmentDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -79,6 +81,16 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         return buildSearch(searchTerm, 0, 100, "id", SortingOrder.ASCENDING);
     }
 
+    private OrganizationRequestDTO toInputDTO(Organization organization) {
+        return new OrganizationRequestDTO(organization.getId(), organization.getName(), organization.getShortName(), organization.getUrl(), organization.getDescription(),
+                organization.getLogoUrl(), organization.getEmailPattern());
+    }
+
+    private OrganizationRequestDTO toCreateInputDTO(Organization organization) {
+        return new OrganizationRequestDTO(null, organization.getName(), organization.getShortName(), organization.getUrl(), organization.getDescription(),
+                organization.getLogoUrl(), organization.getEmailPattern());
+    }
+
     /**
      * Test if getting courses a user can enroll in works with multi organization
      * and
@@ -111,8 +123,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         course1 = courseRepository.save(course1);
         course2 = courseRepository.save(course2);
 
-        List<Course> coursesToEnroll = request.getList("/api/course/courses/for-enrollment", HttpStatus.OK, Course.class);
-        assertThat(coursesToEnroll).contains(course1).contains(course2);
+        List<CourseForEnrollmentDTO> coursesToEnroll = request.getList("/api/course/courses/for-enrollment", HttpStatus.OK, CourseForEnrollmentDTO.class);
+        assertThat(coursesToEnroll).extracting(CourseForEnrollmentDTO::id).contains(course1.getId(), course2.getId());
     }
 
     @Test
@@ -173,9 +185,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
-        request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
 
-        List<OrganizationCourseDTO> courses = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
+        List<OrganizationCourseDTO> courses = request.getList("/api/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
         Long addedCourseId = course1.getId();
         assertThat(courses).hasSize(1);
@@ -195,14 +207,14 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
         Long removedCourseId = course1.getId();
-        List<OrganizationCourseDTO> coursesBeforeRemoval = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK,
+        List<OrganizationCourseDTO> coursesBeforeRemoval = request.getList("/api/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK,
                 OrganizationCourseDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
         assertThat(coursesBeforeRemoval).hasSize(1);
         assertThat(coursesBeforeRemoval.get(0).id()).isEqualTo(removedCourseId);
 
-        request.delete("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
+        request.delete("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
 
-        List<OrganizationCourseDTO> coursesAfterRemoval = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK,
+        List<OrganizationCourseDTO> coursesAfterRemoval = request.getList("/api/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK,
                 OrganizationCourseDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
         assertThat(coursesAfterRemoval).isEmpty();
     }
@@ -217,8 +229,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testAddUserToOrganization");
 
-        request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
-        List<OrganizationMemberDTO> members = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
+        List<OrganizationMemberDTO> members = request.getList("/api/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
         assertThat(members).hasSize(1);
         assertThat(members.get(0).id()).isEqualTo(student.getId());
@@ -240,9 +252,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         assertThat(student.getOrganizations()).contains(organization);
 
-        request.delete("/api/core/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
-        List<OrganizationMemberDTO> remainingMembers = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK,
-                OrganizationMemberDTO.class, pageableSearchUtilService.searchMapping(buildSearch("")));
+        request.delete("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
+        List<OrganizationMemberDTO> remainingMembers = request.getList("/api/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch("")));
 
         assertThat(remainingMembers).isEmpty();
     }
@@ -257,10 +269,24 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         Organization organization = organizationUtilService.createOrganization();
 
-        Organization updatedOrganization = request.postWithResponseBody("/api/core/admin/organizations", organization, Organization.class, HttpStatus.OK);
-        Organization updatedOrganization2 = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
-        assertThat(updatedOrganization2).isNotNull();
-        assertThat(updatedOrganization.getId()).isNotNull();
+        OrganizationDTO createdOrganization = request.postWithResponseBody("/api/admin/organizations", toCreateInputDTO(organization), OrganizationDTO.class, HttpStatus.OK);
+        OrganizationDTO persistedOrganization = request.get("/api/admin/organizations/" + createdOrganization.id(), HttpStatus.OK, OrganizationDTO.class);
+        assertThat(persistedOrganization).isNotNull();
+        assertThat(createdOrganization.id()).isNotNull();
+        assertThat(createdOrganization).isEqualTo(persistedOrganization);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAddOrganizationWithId() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        String originalName = organization.getName();
+        OrganizationRequestDTO inputDTO = new OrganizationRequestDTO(organization.getId(), "ChangedName", organization.getShortName(), organization.getUrl(),
+                organization.getDescription(), organization.getLogoUrl(), organization.getEmailPattern());
+
+        request.postWithResponseBody("/api/admin/organizations", inputDTO, OrganizationDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(organizationRepo.findByIdElseThrow(organization.getId()).getName()).isEqualTo(originalName);
     }
 
     /**
@@ -272,8 +298,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         Organization organization = organizationUtilService.createOrganization();
         organization.setName("UpdatedName");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
-        assertThat(updatedOrganization.getName()).isEqualTo("UpdatedName");
+        OrganizationDTO updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + organization.getId(), toInputDTO(organization), OrganizationDTO.class,
+                HttpStatus.OK);
+        assertThat(updatedOrganization.name()).isEqualTo("UpdatedName");
+        assertThat(updatedOrganization.url()).isEqualTo(organization.getUrl());
+        assertThat(updatedOrganization.description()).isEqualTo(organization.getDescription());
     }
 
     /**
@@ -287,8 +316,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organizationRepo.save(initialOrganization);
         initialOrganization.setId(null);
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + initialOrganizationId, initialOrganization, Organization.class,
-                HttpStatus.BAD_REQUEST);
+        OrganizationDTO updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + initialOrganizationId, toInputDTO(initialOrganization),
+                OrganizationDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedOrganization).isNull();
     }
 
@@ -304,7 +333,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organization.setName("UpdatedName");
         long wrongId = 1337420;
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + wrongId, organization, Organization.class, HttpStatus.BAD_REQUEST);
+        OrganizationDTO updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + wrongId, toInputDTO(organization), OrganizationDTO.class,
+                HttpStatus.BAD_REQUEST);
         organization.setName(initialName);
         assertThat(updatedOrganization).isNull();
     }
@@ -323,8 +353,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
-        request.delete("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK);
-        request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, Organization.class);
+        request.delete("/api/admin/organizations/" + organization.getId(), HttpStatus.OK);
+        request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, OrganizationDTO.class);
     }
 
     /**
@@ -341,14 +371,14 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         // Page 0 with size 2 returns orgs A and B; page 1 with size 2 returns org C
         SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch(prefix, 0, 2, "name", SortingOrder.ASCENDING);
         MvcResult firstPageResult = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations").params(pageableSearchUtilService.searchMapping(firstPageSearch)))
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/admin/organizations").params(pageableSearchUtilService.searchMapping(firstPageSearch)))
                 .andExpect(status().isOk()).andReturn();
         List<OrganizationDTO> firstPage = request.getObjectMapper().readValue(firstPageResult.getResponse().getContentAsString(),
                 request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationDTO.class));
 
         SearchTermPageableSearchDTO<String> secondPageSearch = buildSearch(prefix, 1, 2, "name", SortingOrder.ASCENDING);
         MvcResult secondPageResult = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations").params(pageableSearchUtilService.searchMapping(secondPageSearch)))
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/admin/organizations").params(pageableSearchUtilService.searchMapping(secondPageSearch)))
                 .andExpect(status().isOk()).andReturn();
         List<OrganizationDTO> secondPage = request.getObjectMapper().readValue(secondPageResult.getResponse().getContentAsString(),
                 request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationDTO.class));
@@ -385,7 +415,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organizationUtilService.createOrganization("name5", "shortname5", "url5", "desc5", null, "pattern5");
 
         SearchTermPageableSearchDTO<String> search = buildSearch(searchTerm);
-        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
+        List<OrganizationDTO> result = request.getList("/api/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
 
         assertThat(result).hasSize(3);
         List<Long> resultIds = result.stream().map(OrganizationDTO::id).toList();
@@ -401,7 +431,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organizationUtilService.createOrganization();
 
         SearchTermPageableSearchDTO<String> search = buildSearch("nonExistentSearchTerm");
-        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
+        List<OrganizationDTO> result = request.getList("/api/admin/organizations", HttpStatus.OK, OrganizationDTO.class, pageableSearchUtilService.searchMapping(search));
 
         assertThat(result).isEmpty();
     }
@@ -425,7 +455,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         SearchTermPageableSearchDTO<String> search = buildSearch(prefix, 0, 10, "numberOfUsers", SortingOrder.DESCENDING);
         var params = pageableSearchUtilService.searchMapping(search);
         params.add("withCounts", "true");
-        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class, params);
+        List<OrganizationDTO> result = request.getList("/api/admin/organizations", HttpStatus.OK, OrganizationDTO.class, params);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo(orgWithUsers.getId());
@@ -455,7 +485,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         SearchTermPageableSearchDTO<String> search = buildSearch(uniqueName);
         var params = pageableSearchUtilService.searchMapping(search);
         params.add("withCounts", "true");
-        MvcResult countResult = request.performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations").params(params)).andExpect(status().isOk()).andReturn();
+        MvcResult countResult = request.performMvcRequest(MockMvcRequestBuilders.get("/api/admin/organizations").params(params)).andExpect(status().isOk()).andReturn();
         List<OrganizationDTO> result = request.getObjectMapper().readValue(countResult.getResponse().getContentAsString(),
                 request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, OrganizationDTO.class));
 
@@ -480,7 +510,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
         // No withCounts param — verifies the default is false
-        List<OrganizationDTO> result = request.getList("/api/core/admin/organizations", HttpStatus.OK, OrganizationDTO.class,
+        List<OrganizationDTO> result = request.getList("/api/admin/organizations", HttpStatus.OK, OrganizationDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch(uniqueName)));
 
         assertThat(result).hasSize(1);
@@ -507,7 +537,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         userTestRepository.addOrganizationToUser(member2.getId(), organization);
         userTestRepository.addOrganizationToUser(member3.getId(), organization);
 
-        String usersUrl = "/api/core/admin/organizations/" + organization.getId() + "/users";
+        String usersUrl = "/api/admin/organizations/" + organization.getId() + "/users";
         SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch("", 0, 2, "id", SortingOrder.ASCENDING);
         MvcResult firstPageResult = request.performMvcRequest(MockMvcRequestBuilders.get(usersUrl).params(pageableSearchUtilService.searchMapping(firstPageSearch)))
                 .andExpect(status().isOk()).andReturn();
@@ -543,7 +573,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         userTestRepository.addOrganizationToUser(matchingMember.getId(), organization);
         userTestRepository.addOrganizationToUser(nonMatchingMember.getId(), organization);
 
-        List<OrganizationMemberDTO> result = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+        List<OrganizationMemberDTO> result = request.getList("/api/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch(uniqueLogin)));
 
         assertThat(result).hasSize(1);
@@ -565,7 +595,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         courseRepository.addOrganizationToCourse(course2.getId(), organization);
         courseRepository.addOrganizationToCourse(course3.getId(), organization);
 
-        String coursesUrl = "/api/core/admin/organizations/" + organization.getId() + "/courses";
+        String coursesUrl = "/api/admin/organizations/" + organization.getId() + "/courses";
         SearchTermPageableSearchDTO<String> firstPageSearch = buildSearch("", 0, 2, "id", SortingOrder.ASCENDING);
         MvcResult firstPageResult = request.performMvcRequest(MockMvcRequestBuilders.get(coursesUrl).params(pageableSearchUtilService.searchMapping(firstPageSearch)))
                 .andExpect(status().isOk()).andReturn();
@@ -603,7 +633,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         courseRepository.addOrganizationToCourse(matchingCourse.getId(), organization);
         courseRepository.addOrganizationToCourse(nonMatchingCourse.getId(), organization);
 
-        List<OrganizationCourseDTO> result = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
+        List<OrganizationCourseDTO> result = request.getList("/api/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch(uniqueTitle)));
 
         assertThat(result).hasSize(1);
@@ -630,15 +660,14 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         userTestRepository.removeOrganizationFromUser(student.getId(), organization);
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        Organization result = request.get("/api/core/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
-        List<OrganizationCourseDTO> courses = request.getList("/api/core/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
+        OrganizationDTO result = request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.OK, OrganizationDTO.class);
+        List<OrganizationCourseDTO> courses = request.getList("/api/admin/organizations/" + organization.getId() + "/courses", HttpStatus.OK, OrganizationCourseDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
-        List<OrganizationMemberDTO> users = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+        List<OrganizationMemberDTO> users = request.getList("/api/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
 
         Long expectedCourseId = course1.getId();
-        assertThat(result.getId()).isEqualTo(organization.getId());
-        assertThat(result.getName()).isEqualTo(organization.getName());
+        assertThat(result).isEqualTo(OrganizationDTO.of(organization));
 
         assertThat(courses).hasSize(1);
         assertThat(courses.get(0).id()).isEqualTo(expectedCourseId);
@@ -661,8 +690,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
-        List<Organization> result = request.getList("/api/core/organizations/courses/" + course1.getId(), HttpStatus.OK, Organization.class);
-        assertThat(result).contains(organization);
+        List<OrganizationDTO> result = request.getList("/api/account/organizations/courses/" + course1.getId(), HttpStatus.OK, OrganizationDTO.class);
+        assertThat(result).contains(OrganizationDTO.of(organization));
     }
 
     /**
@@ -677,9 +706,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         userTestRepository.addOrganizationToUser(student.getId(), organization);
 
-        List<Organization> result = request.getList("/api/core/admin/organizations/users/" + student.getId(), HttpStatus.OK, Organization.class);
+        List<OrganizationDTO> result = request.getList("/api/admin/organizations/users/" + student.getId(), HttpStatus.OK, OrganizationDTO.class);
 
-        assertThat(result).contains(organization);
+        assertThat(result).contains(OrganizationDTO.of(organization));
     }
 
     /**
@@ -698,8 +727,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         organization.setEmailPattern("^" + student.getEmail() + "$");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/core/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
-        List<OrganizationMemberDTO> members = request.getList("/api/core/admin/organizations/" + updatedOrganization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+        OrganizationDTO updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + organization.getId(), toInputDTO(organization), OrganizationDTO.class,
+                HttpStatus.OK);
+        List<OrganizationMemberDTO> members = request.getList("/api/admin/organizations/" + updatedOrganization.id() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
                 pageableSearchUtilService.searchMapping(buildSearch("")));
 
         assertThat(members).hasSize(1);
@@ -731,8 +761,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         params.add("pageIndex", "0");
         params.add("pageSize", "10");
 
-        List<UserForRegistrationDTO> result = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.OK,
-                UserForRegistrationDTO.class, params);
+        List<UserForRegistrationDTO> result = request.getList("/api/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
 
         assertThat(result).hasSize(2);
         UserForRegistrationDTO memberDTO = result.stream().filter(u -> u.id().equals(member.getId())).findFirst().orElseThrow();
@@ -761,7 +791,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         firstPageParams.add("pageSize", "2");
 
         MvcResult firstPageResult = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(firstPageParams))
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/admin/organizations/" + organization.getId() + "/users/search").params(firstPageParams))
                 .andExpect(status().isOk()).andReturn();
         List<UserForRegistrationDTO> firstPage = request.getObjectMapper().readValue(firstPageResult.getResponse().getContentAsString(),
                 request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
@@ -772,7 +802,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         secondPageParams.add("pageSize", "2");
 
         MvcResult secondPageResult = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(secondPageParams))
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/admin/organizations/" + organization.getId() + "/users/search").params(secondPageParams))
                 .andExpect(status().isOk()).andReturn();
         List<UserForRegistrationDTO> secondPage = request.getObjectMapper().readValue(secondPageResult.getResponse().getContentAsString(),
                 request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
@@ -797,7 +827,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         params.add("pageIndex", "0");
         params.add("pageSize", "10");
 
-        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/core/admin/organizations/" + organization.getId() + "/users/search").params(params))
+        MvcResult result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/admin/organizations/" + organization.getId() + "/users/search").params(params))
                 .andExpect(status().isOk()).andReturn();
         List<UserForRegistrationDTO> body = request.getObjectMapper().readValue(result.getResponse().getContentAsString(),
                 request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, UserForRegistrationDTO.class));
@@ -819,7 +849,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         params.add("pageIndex", "0");
         params.add("pageSize", "10");
 
-        request.getList("/api/core/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, params);
+        request.getList("/api/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, params);
     }
 
     @Test
@@ -829,7 +859,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         organization.setName("Test Organization");
         organization = organizationRepo.save(organization);
 
-        final var title = request.get("/api/core/admin/organizations/" + organization.getId() + "/title", HttpStatus.OK, String.class);
+        final var title = request.get("/api/admin/organizations/" + organization.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(organization.getName());
     }
 }

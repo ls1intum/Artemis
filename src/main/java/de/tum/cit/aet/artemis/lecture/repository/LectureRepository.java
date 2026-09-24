@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -164,7 +163,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
             WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = lecture.course.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR))
-                AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
+                AND (LOWER(lecture.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%') OR LOWER(lecture.course.title) LIKE CONCAT('%', LOWER(CAST(:partialCourseTitle AS string)), '%'))
             """)
     Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("userId") long userId, Pageable pageable);
@@ -180,7 +179,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             FROM Lecture lecture
             WHERE lecture.id = :lectureId
             """)
-    @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NonNull

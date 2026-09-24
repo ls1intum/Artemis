@@ -324,8 +324,10 @@ export class ProgrammingExerciseService {
 
         // important: sort to get the latest submission (the order of the server can be random)
         this.sortService.sortByProperty(submissions, 'submissionDate', true);
+        // No second sort here: sortByProperty above established the order, and calling sort() without a comparator
+        // on the submissions would compare them as strings, where every element is equal and nothing is reordered.
         // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-        return getNewestResult(submissions.sort().last()?.results);
+        return getNewestResult(submissions.last()?.results);
     }
 
     /**
@@ -368,10 +370,10 @@ export class ProgrammingExerciseService {
     /**
      * Deletes the programming exercise with the corresponding programming exercise Id
      * @param programmingExerciseId of the programming exercise to delete
-     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
-     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
+     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
+     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not; omit both flags to use the server defaults
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans?: boolean, deleteBaseReposBuildPlans?: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
             params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());

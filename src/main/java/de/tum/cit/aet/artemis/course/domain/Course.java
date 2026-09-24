@@ -30,9 +30,12 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
+import de.tum.cit.aet.artemis.core.util.ServedFileUrl;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
@@ -48,11 +51,14 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 @Entity
 @Table(name = "course")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("The main aggregate root.")
 public class Course extends DomainObject {
 
     public static final String ENTITY_NAME = "course";
 
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
+
+    public static final int SEMESTER_MAX_LENGTH = 25;
 
     @Column(name = "title")
     private String title;
@@ -63,10 +69,10 @@ public class Course extends DomainObject {
     @Column(name = "short_name", unique = true)
     private String shortName;
 
-    @Column(name = "start_date")
+    @Column(name = "start_date", nullable = false)
     private ZonedDateTime startDate;
 
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private ZonedDateTime endDate;
 
     @Column(name = "enrollment_start_date")
@@ -78,7 +84,7 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_end_date")
     private ZonedDateTime unenrollmentEndDate;
 
-    @Column(name = "semester")
+    @Column(name = "semester", nullable = false)
     private String semester;
 
     @Column(name = "test_course", nullable = false)
@@ -165,8 +171,12 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
+    /**
+     * Lazy, like every other configuration on a course. Read it through {@code CourseAthenaConfigRepository} where it
+     * is needed rather than dragging it along with the course.
+     */
     @JsonIgnore
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "athena_config_id")
     private CourseAthenaConfig athenaConfig;
 
@@ -180,10 +190,10 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
-    // Unidirectional Course -> ExerciseVariantGroup: the course owns its variant groups (FK course_id lives on
-    // exercise_variant_group), which lets empty groups exist in exercise management before any exercise is added.
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id")
+    // The group holds the key, so it can never exist without a course. Empty groups are still fine: a group is created
+    // in exercise management before any exercise is added to it.
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<ExerciseVariantGroup> exerciseVariantGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
@@ -386,8 +396,7 @@ public class Course extends DomainObject {
     public boolean unenrollmentIsActive() {
         ZonedDateTime now = ZonedDateTime.now();
         final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
-        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
-                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
+        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate().isAfter(now)) || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
         return startCondition && endCondition;
     }
 
@@ -557,12 +566,22 @@ public class Course extends DomainObject {
         this.color = color;
     }
 
+    /**
+     * The path the course icon is served under, relative to {@code api/core/files/}. The column stores only the filename.
+     *
+     * @return the served path of the icon, or its filename while the course has no id yet
+     */
     public String getCourseIcon() {
-        return courseIcon;
+        return ServedFileUrl.courseIcon(getId(), courseIcon);
     }
 
+    /**
+     * Stores the filename of the given value. See {@link FileSystemLocation#storedFilename} for why a served URL sent back by a client cannot end up in the column.
+     *
+     * @param courseIcon the filename of the icon, or the URL it is served under
+     */
     public void setCourseIcon(String courseIcon) {
-        this.courseIcon = courseIcon;
+        this.courseIcon = FileSystemLocation.storedFilename(courseIcon);
     }
 
     public Boolean isEnrollmentEnabled() {

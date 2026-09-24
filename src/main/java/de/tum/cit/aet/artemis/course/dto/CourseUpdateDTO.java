@@ -8,15 +8,17 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -43,38 +45,40 @@ public record CourseUpdateDTO(
         @NotNull Long id,
 
         // Basic info
-        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, String semester,
+        @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Nullable @Size(max = 2000) String description,
+        @NotBlank @Size(max = 25) String semester,
 
         // Dates
-        ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
+        @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime enrollmentStartDate, @Nullable ZonedDateTime enrollmentEndDate,
+        @Nullable ZonedDateTime unenrollmentEndDate,
 
         // Configuration flags
-        boolean testCourse, Boolean onlineCourse, Language language, ProgrammingLanguage defaultProgrammingLanguage,
+        boolean testCourse, @Nullable Boolean onlineCourse, @Nullable Language language, @Nullable ProgrammingLanguage defaultProgrammingLanguage,
 
         // Complaint settings
-        Integer maxComplaints, Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
+        @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
         int maxComplaintResponseTextLimit,
 
         // UI settings
-        String color, String courseIcon, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
-        String courseInformationSharingMessagingCodeOfConduct,
+        @Nullable String color, @Nullable String courseIcon, @Nullable Boolean enrollmentEnabled, @Nullable @Size(max = 2000) String enrollmentConfirmationMessage,
+        boolean unenrollmentEnabled, @Nullable String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
-        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean athenaGradingFeedbackEnabled,
-        boolean athenaFormativeFeedbackEnabled, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
+        boolean learningPathsEnabled, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Nullable @Min(0) @Max(5) Integer accuracyOfScores, @Nullable String timeZone,
+        @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
-        Boolean gradeRelevant,
+        @Nullable Boolean gradeRelevant,
 
         // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course.
         // Boxed so an omitted value fails safe to keeping an existing hold rather than silently lifting it.
-        Boolean dataRetentionHold,
+        @Nullable Boolean dataRetentionHold,
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
-        boolean autoOrchestratorEnabled, @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
+        boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -126,17 +130,12 @@ public record CourseUpdateDTO(
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
-        if (course.getAthenaConfig() == null) {
-            course.setAthenaConfig(new CourseAthenaConfig());
-        }
-        course.getAthenaConfig().setGradingFeedbackEnabled(athenaGradingFeedbackEnabled);
-        course.getAthenaConfig().setFormativeFeedbackEnabled(athenaFormativeFeedbackEnabled);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        // Enforce the auto-orchestration override bounds server-side: the @Min(1) bean-validation annotations are not
-        // active here (the multipart update endpoint does not run @Valid), so a crafted request could otherwise persist
-        // zero/negative overrides that the scheduler would treat as invalid configuration.
+        // Enforce the auto-orchestration override bounds again here: the @Min(1) bean-validation annotations on this DTO
+        // already reject a non-positive override via the validated update endpoint (@Valid on CourseUpdateResource#updateCourse).
+        // This check is defense-in-depth against any caller that builds and applies this DTO directly, bypassing bean validation.
         if ((debounceWindowSecondsOverride != null && debounceWindowSecondsOverride < 1) || (maxDailyOrchestrationOverride != null && maxDailyOrchestrationOverride < 1)) {
             throw new BadRequestAlertException("Auto-orchestration overrides must be positive", Course.ENTITY_NAME, "invalidAutoOrchestrationOverride", true);
         }
@@ -165,24 +164,5 @@ public record CourseUpdateDTO(
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
 
         return course;
-    }
-
-    /**
-     * Creates a CourseUpdateDTO from an existing Course entity.
-     *
-     * @param course the course entity to convert
-     * @return a new CourseUpdateDTO with values from the course
-     */
-    public static CourseUpdateDTO of(Course course) {
-        return new CourseUpdateDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(),
-                course.getEndDate(), course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(),
-                course.isOnlineCourse(), course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(),
-                course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(),
-                course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
-                course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getAthenaConfig() != null && course.getAthenaConfig().isGradingFeedbackEnabled(),
-                course.getAthenaConfig() != null && course.getAthenaConfig().isFormativeFeedbackEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
-                course.getMaxDailyOrchestrationOverride());
     }
 }

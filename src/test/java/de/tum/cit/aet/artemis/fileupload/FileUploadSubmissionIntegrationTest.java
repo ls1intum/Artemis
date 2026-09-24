@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -29,10 +28,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.PublicFileUrl;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -135,9 +134,18 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(TEST_PREFIX + "student3")
     void submitFileSpecialExtensions() throws Exception {
-        releasedFileUploadExercise.setFilePattern("ipynb");
-        exerciseRepository.save(releasedFileUploadExercise);
+        fileUploadExerciseUtilService.updateFilePattern(releasedFileUploadExercise.getId(), "ipynb");
         submitFile("test.ipynb", false, MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    @Test
+    @WithMockUser(TEST_PREFIX + "student3")
+    void submitFileWithAFilePatternThatRepeatsAnEnding() throws Exception {
+        // The exercise validation accepts a pattern that names the same ending twice, so the check on submission has
+        // to tolerate the duplicate rather than reject an upload that the pattern allows.
+        fileUploadExerciseUtilService.updateFilePattern(releasedFileUploadExercise.getId(), "png,png");
+
+        submitFile("file.png", false);
     }
 
     private void submitFile(String filename, boolean differentFilePath) throws Exception {
@@ -169,15 +177,16 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
             }
         }
 
-        URI publicFilePath = FilePathConverter.externalUriForFileSystemPath(actualFilePath, FilePathType.FILE_UPLOAD_SUBMISSION, returnedSubmission.id());
+        String publicFilePath = new PublicFileUrl.FileUploadSubmission(releasedFileUploadExercise.getId(), returnedSubmission.id(), actualFilePath.getFileName().toString())
+                .clientPath();
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-        assertThat(returnedSubmission.filePath()).isEqualTo(publicFilePath.toString());
+        assertThat(returnedSubmission.filePath()).isEqualTo(publicFilePath);
         assertThat(returnedSubmission.participation().isOwner()).isTrue();
         assertThat(returnedSubmission.results()).isNullOrEmpty();
         var fileBytes = Files.readAllBytes(actualFilePath);
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
 
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
         MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType)).andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }

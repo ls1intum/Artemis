@@ -18,7 +18,6 @@
     "assessmentDueDateError": false,
     "dueDateError": false,
     "exampleSolutionPublicationDateError": false,
-    "exampleSolutionPublicationDateWarning": false,
     "presentationScoreEnabled": false,
     "diagramType": "ClassDiagram",
     "assessmentType": "MANUAL",

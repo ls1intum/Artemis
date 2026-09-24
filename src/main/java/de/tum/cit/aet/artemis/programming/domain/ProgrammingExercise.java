@@ -1,15 +1,19 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
@@ -22,12 +26,13 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.SecondaryTable;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,13 +73,28 @@ public class ProgrammingExercise extends Exercise {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
+    /** A run of whitespace, which a project key may not contain. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+
     @Column(name = "test_repository_url")
     private String testRepositoryUri;
 
+    /**
+     * The auxiliary repositories of this exercise, oldest first.
+     * <p>
+     * Ordered by id rather than by an index column: on an indexed collection Hibernate takes the row's foreign key for
+     * its own, so removing one repository first writes {@code exercise_id = NULL} and only then deletes the row -
+     * which a repository that must always name its exercise cannot allow. Nothing reorders auxiliary repositories,
+     * they are identified by name and checkout directory, so creation order is the order.
+     * <p>
+     * A Set rather than a List, for the reason {@code Lecture.lectureUnits} gives: a List without an index column is a
+     * Hibernate bag, {@link #tasks} is already one, and a single query cannot fetch two bags - which a query that
+     * loads the whole exercise has to.
+     */
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
-    @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
-    private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
+    @OrderBy("id ASC")
+    private Set<AuxiliaryRepository> auxiliaryRepositories = new LinkedHashSet<>();
 
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
@@ -153,11 +173,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
-    @JsonIgnoreProperties("programmingExercise")
-    private ProgrammingExerciseBuildConfig buildConfig;
-
     /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
@@ -204,11 +219,13 @@ public class ProgrammingExercise extends Exercise {
         return testRepositoryUri;
     }
 
-    public List<AuxiliaryRepository> getAuxiliaryRepositories() {
+    @NonNull
+    public Set<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
     }
 
-    public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
+    public void setAuxiliaryRepositories(Set<AuxiliaryRepository> auxiliaryRepositories) {
+        // Assigned rather than copied, so that a lazy collection stays the uninitialized one the caller passed in.
         this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
@@ -355,9 +372,22 @@ public class ProgrammingExercise extends Exercise {
         forceNewProjectKey();
     }
 
+    /**
+     * Generates a project key from the course and exercise short names and sets it, replacing any key already there.
+     * <p>
+     * {@link #generateAndSetProjectKey()} is the entry point that keeps an existing key; this one is for the callers that deliberately want a new one.
+     *
+     * @throws IllegalStateException if no course is reachable from this exercise, which leaves no short name to build a key from
+     */
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
-        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT).replaceAll("\\s+", "");
+        if (course == null) {
+            // Reachable only on a masked exam graph: student-facing exam payloads clear exerciseGroup.exam before serialization, which leaves no course to take a short
+            // name from. There is nothing to fall back on, so name the exercise that cannot be keyed instead of dereferencing null for a NullPointerException that says
+            // nothing about which one it was.
+            throw new IllegalStateException("Cannot generate a project key for exercise " + getId() + ": no course is reachable from it.");
+        }
+        this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
     @Override
@@ -414,14 +444,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         this.submissionPolicy = submissionPolicy;
-    }
-
-    public ProgrammingExerciseBuildConfig getBuildConfig() {
-        return buildConfig;
-    }
-
-    public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
     }
 
     /**
@@ -598,9 +620,6 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
-            buildConfig.filterSensitiveInformation();
-        }
         super.filterSensitiveInformation();
     }
 
@@ -674,8 +693,10 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Validates general programming exercise settings
      * 1. Validates the programming language
+     *
+     * @param buildConfig the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateProgrammingSettings() {
+    public void validateProgrammingSettings(ProgrammingExerciseBuildConfig buildConfig) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
@@ -708,15 +729,16 @@ public class ProgrammingExercise extends Exercise {
      * 5. Static code analysis max penalty must be positive
      *
      * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
+     * @param buildConfig                the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature) {
+    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature, ProgrammingExerciseBuildConfig buildConfig) {
         // Check if the static code analysis flag was set
         if (isStaticCodeAnalysisEnabled() == null) {
             throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && getBuildConfig().hasSequentialTestRuns()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
         }
 
@@ -740,6 +762,24 @@ public class ProgrammingExercise extends Exercise {
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
+    }
+
+    @Override
+    public void validateDates() {
+        super.validateDates();
+
+        if (!validateBuildAndTestStudentSubmissionsAfterDueDate()) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
+    }
+
+    private boolean validateBuildAndTestStudentSubmissionsAfterDueDate() {
+        ZonedDateTime buildAndTestDate = getBuildAndTestStudentSubmissionsAfterDueDate();
+        if (buildAndTestDate == null || isExamExercise()) {
+            return true;
+        }
+        return getDueDate() != null && validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), buildAndTestDate,
+                Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
     }
 
     /**

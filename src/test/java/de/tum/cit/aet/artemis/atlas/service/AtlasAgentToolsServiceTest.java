@@ -19,7 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -50,7 +50,7 @@ class AtlasAgentToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService,
+        toolsService = new AtlasAgentToolsService(new JsonMapper(), courseRepository, exerciseRepository, delegationService,
                 new AtlasToolSurface(competencyExpertToolCallbackProvider), new AtlasToolSurface(competencyMapperToolCallbackProvider),
                 new AtlasToolSurface(exerciseMapperToolCallbackProvider));
     }

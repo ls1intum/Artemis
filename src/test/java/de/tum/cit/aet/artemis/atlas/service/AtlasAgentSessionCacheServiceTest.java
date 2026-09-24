@@ -115,7 +115,7 @@ class AtlasAgentSessionCacheServiceTest {
     @Test
     void shouldNotLoseEntriesUnderConcurrentStoreCalls() throws Exception {
         // Use a real provider so the per-key locking that guards the read-modify-write is actually exercised. The local
-        // provider is enough for that: the cross-backend lock contract itself is covered by AbstractDistributedDataTest.
+        // provider is enough for that: the cross-provider lock contract itself is covered by AbstractDistributedDataTest.
         LocalDataProviderService provider = new LocalDataProviderService();
         {
             AtlasAgentSessionCacheService realService = new AtlasAgentSessionCacheService(cacheManager, provider);

@@ -8,6 +8,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "learner_profile")
@@ -42,8 +44,15 @@ public class LearnerProfile extends DomainObject {
      */
     public static final int MAX_PROFILE_VALUE = 3;
 
+    /**
+     * The account the profile describes. The key lives here rather than on the account so that a profile cannot
+     * outlive it: a profile nothing points at holds per-course preferences for a named person and is reachable from
+     * nowhere, which puts it outside account deletion and the data privacy cleanup alike.
+     */
     @JsonIgnoreProperties("learnerProfile")
-    @OneToOne(mappedBy = "learnerProfile")
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @Parent
     private User user;
 
     @OneToMany(mappedBy = "learnerProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

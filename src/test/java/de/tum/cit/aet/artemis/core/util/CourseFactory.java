@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.util;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,6 +16,31 @@ import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
  * Factory for creating Courses and related objects.
  */
 public class CourseFactory {
+
+    /**
+     * Semester used by every generated course. The three fields are mandatory, so the factory always sets them,
+     * which keeps the many call sites that pass null dates working.
+     */
+    public static final String DEFAULT_SEMESTER = "SS24";
+
+    /**
+     * Generates a course that carries nothing but the three values the database insists on. Use it where a test needs
+     * a persisted course it does not otherwise care about; {@link #generateCourse} is the richer alternative that also
+     * fills a title, a short name and the complaint settings.
+     *
+     * @return A course with a start date, an end date and a semester, and no other value set.
+     */
+    public static Course generateMinimalCourse() {
+        Course course = new Course();
+        // TimeUtil.now() rather than ZonedDateTime.now(): a test that fixed the clock would otherwise get course
+        // dates from the wall clock, which no longer agree with its own notion of now. Both bounds come from the
+        // same reading so they cannot drift apart.
+        ZonedDateTime now = TimeUtil.now();
+        course.setStartDate(now.minusMonths(3));
+        course.setEndDate(now.plusMonths(3));
+        course.setSemester(DEFAULT_SEMESTER);
+        return course;
+    }
 
     /**
      * Generates a course with the passed id, start and end date, and exercises.
@@ -130,8 +156,14 @@ public class CourseFactory {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
-        course.setStartDate(startDate);
-        course.setEndDate(endDate);
+        // Derive a missing bound from the one that was supplied, so a caller that passes only a start or only an end
+        // never ends up with the two in the wrong order. CourseValidator.validateStartAndEndDate rejects that, and the
+        // columns are NOT NULL, so an inverted default would surface as a confusing failure far from its cause.
+        // TimeUtil.now() rather than ZonedDateTime.now(), so a test that fixed the clock gets dates that agree with it.
+        ZonedDateTime now = TimeUtil.now();
+        course.setStartDate(startDate != null ? startDate : Objects.requireNonNullElse(endDate, now).minusMonths(3));
+        course.setEndDate(endDate != null ? endDate : Objects.requireNonNullElse(startDate, now).plusMonths(3));
+        course.setSemester(DEFAULT_SEMESTER);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setEnrollmentEnabled(false);

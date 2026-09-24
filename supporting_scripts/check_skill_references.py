@@ -33,6 +33,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 BACKTICK = re.compile(r"`([^`\n]+)`")
@@ -213,6 +214,19 @@ def plugin_errors(root: Path) -> list[str]:
     for field in ("name", "description", "version"):
         if not plugin.get(field):
             errors.append(f"{PLUGIN_MANIFEST}: '{field}' is required")
+    marketplace = manifests.get(MARKETPLACE_MANIFEST)
+    if isinstance(marketplace, dict):
+        entries = marketplace.get("plugins")
+        if not isinstance(marketplace.get("name"), str) or not marketplace["name"]:
+            errors.append(f"{MARKETPLACE_MANIFEST}: 'name' is required")
+        if not isinstance(marketplace.get("owner"), dict) or not marketplace["owner"].get("name"):
+            errors.append(f"{MARKETPLACE_MANIFEST}: 'owner.name' is required")
+        if not isinstance(entries, list):
+            errors.append(f"{MARKETPLACE_MANIFEST}: 'plugins' must be an array")
+        elif not any(isinstance(entry, dict) and entry.get("name") == plugin.get("name") and entry.get("source") == "./" for entry in entries):
+            errors.append(f"{MARKETPLACE_MANIFEST}: no local '{plugin.get('name')}' plugin entry")
+    elif marketplace is not None:
+        errors.append(f"{MARKETPLACE_MANIFEST}: expected an object")
     version = plugin.get("version", "")
     if version and not SEMANTIC_VERSION.match(str(version)):
         errors.append(f"{PLUGIN_MANIFEST}: version '{version}' is not a semantic version")
@@ -348,9 +362,26 @@ def self_test() -> int:
                 file=sys.stderr,
             )
             failures += 1
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        manifest_dir = root / ".claude-plugin"
+        manifest_dir.mkdir()
+        (manifest_dir / "plugin.json").write_text(
+            json.dumps({"name": "artemis", "description": "Test", "version": "1.0.0"}),
+            encoding="utf-8",
+        )
+        marketplace = manifest_dir / "marketplace.json"
+        for value, expected in (
+            ({"name": "artemis", "owner": {"name": "Team"}}, "'plugins' must be an array"),
+            ({"name": "artemis", "owner": {"name": "Team"}, "plugins": []}, "no local 'artemis' plugin entry"),
+        ):
+            marketplace.write_text(json.dumps(value), encoding="utf-8")
+            if not any(expected in error for error in plugin_errors(root)):
+                print(f"FAIL: marketplace check missed {expected}", file=sys.stderr)
+                failures += 1
     if failures:
         return 1
-    cases = len(SELF_TEST_EXPECTED) + len(SELF_TEST_FRONTMATTER)
+    cases = len(SELF_TEST_EXPECTED) + len(SELF_TEST_FRONTMATTER) + 2
     print(f"OK: parser self-test passed ({cases} cases).")
     return 0
 

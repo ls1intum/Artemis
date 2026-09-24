@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 // both mapping and Jackson deserialization. The entity path never collapses them (DomainObject.equals is false when an
 // id is null), so a Set here would silently drop rubric rows. A List preserves every instruction.
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record GradingCriterionDTO(Long id, String title, List<GradingInstructionDTO> structuredGradingInstructions) {
 
     /**
@@ -30,6 +32,18 @@ public record GradingCriterionDTO(Long id, String title, List<GradingInstruction
         List<GradingInstructionDTO> instructions = gradingCriterion.getStructuredGradingInstructions() == null ? List.of()
                 : gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).toList();
         return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(), instructions);
+    }
+
+    /**
+     * Returns the same criterion without the row ids, its own and those of its instructions, for payloads that are
+     * written to a file and read back by another instance, whose import copies them onto the rubric it creates.
+     *
+     * @return a copy of this DTO with {@code null} ids
+     */
+    public GradingCriterionDTO withoutIds() {
+        List<GradingInstructionDTO> instructions = structuredGradingInstructions == null ? null
+                : structuredGradingInstructions.stream().map(GradingInstructionDTO::withoutId).toList();
+        return new GradingCriterionDTO(null, title, instructions);
     }
 
     /**

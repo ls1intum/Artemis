@@ -1,31 +1,37 @@
-@if (exam(); as exam) {
+@if (exam()) {
     @if (course()?.isAtLeastInstructor) {
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap justify-end gap-1">
             <button
                 tumUiButton
                 severity="primary"
                 size="small"
                 id="evaluateQuizExercisesButton"
+                type="button"
                 (click)="evaluateQuizExercises()"
                 [disabled]="isLoading() || isAssessingUnsubmittedExams() || isEvaluatingQuizExercises() || !isExamOver()"
             >
                 @if (isEvaluatingQuizExercises()) {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <fa-icon [icon]="faSpinner" animation="spin" aria-hidden="true" />
+                } @else {
+                    <fa-icon [icon]="faClipboardCheck" aria-hidden="true" />
                 }
-                <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.studentExams.evaluateQuizExercises"></span>
             </button>
             <button
                 tumUiButton
                 severity="primary"
                 size="small"
+                type="button"
                 id="assessUnsubmittedExamModelingAndTextParticipationsButton"
                 (click)="assessUnsubmittedExamModelingAndTextParticipations()"
                 [disabled]="isLoading() || isAssessingUnsubmittedExams() || isEvaluatingQuizExercises() || !isExamOver()"
             >
                 @if (isAssessingUnsubmittedExams()) {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <fa-icon [icon]="faSpinner" animation="spin" aria-hidden="true" />
+                } @else {
+                    <fa-icon [icon]="faUserCheck" aria-hidden="true" />
                 }
-                <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams"></span>
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams"></span>
             </button>
         </div>
     }

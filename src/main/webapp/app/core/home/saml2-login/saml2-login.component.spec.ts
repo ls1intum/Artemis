@@ -18,10 +18,7 @@ describe('Saml2LoginComponent', () => {
     let alertService: AlertService;
 
     const mockSaml2Config: Saml2Config = {
-        identityProviderName: 'Test IDP',
         buttonLabel: 'Login with SAML2',
-        passwordLoginDisabled: false,
-        enablePassword: true,
     };
 
     beforeEach(async () => {

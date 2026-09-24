@@ -1,18 +1,16 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { CoursesForDashboardDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
+import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashboardFromDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
@@ -31,9 +29,33 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import {
+    CourseForEnrollmentDTO,
+    CourseForQuizSelectionDTO,
+    CourseManagementDTO,
+    CourseManagementOverviewDTO,
+    CourseMemberDTO,
+    CourseWithIdDTO,
+    CourseWithOrganizationsDTO,
+    courseFromEnrollmentDTO,
+    courseFromManagementDTO,
+    courseFromManagementOverviewDTO,
+    courseFromOrganizationsDTO,
+    courseFromQuizSelectionDTO,
+    courseMemberFromDTO,
+    courseWithIdFromDTO,
+} from 'app/course/shared/entities/course-management-response.dto';
+import {
+    CourseAssessmentDashboardDTO,
+    CourseWithContentDTO,
+    CourseWithExercisesDTO,
+    courseFromAssessmentDashboardDTO,
+    courseFromWithContentDTO,
+    courseFromWithExercisesDTO,
+} from 'app/course/shared/entities/course-content-response.dto';
+import { LockedCourseSubmissionDTO, lockedCourseSubmissionFromDTO } from 'app/course/shared/entities/locked-course-submission.dto';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -70,7 +92,6 @@ export class GradeScoreDTO {
 export class CourseManagementService implements OnDestroy {
     private http = inject(HttpClient);
     private courseStorageService = inject(CourseStorageService);
-    private lectureService = inject(LectureService);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
     private scoresStorageService = inject(ScoresStorageService);
@@ -126,9 +147,10 @@ export class CourseManagementService implements OnDestroy {
             // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
             formData.append('file', courseImage, 'placeholderName.png');
         }
-        return this.http
-            .put<Course>(`${this.resourceUrl}/${courseId}`, formData, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+        return this.http.put<CourseManagementDTO>(`${this.resourceUrl}/${courseId}`, formData, { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOResponse(res, courseFromManagementDTO)),
+            map((res) => this.applyCourseResponseSideEffects(res)),
+        );
     }
 
     /**
@@ -150,7 +172,10 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId - the id of the course to be found
      */
     find(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+        return this.http.get<CourseManagementDTO>(`${this.resourceUrl}/${courseId}`, { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOResponse(res, courseFromManagementDTO)),
+            map((res) => this.applyCourseResponseSideEffects(res)),
+        );
     }
 
     /**
@@ -191,8 +216,9 @@ export class CourseManagementService implements OnDestroy {
      */
     findWithExercises(courseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+            .get<CourseWithExercisesDTO>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })
+            .pipe(map((res) => this.mapCourseDTOResponse(res, courseFromWithExercisesDTO)))
+            .pipe(map((res: EntityResponseType) => this.applyCourseResponseSideEffects(res)));
     }
 
     /**
@@ -201,8 +227,9 @@ export class CourseManagementService implements OnDestroy {
      */
     findWithExercisesAndLecturesAndCompetencies(courseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-lectures-competencies`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+            .get<CourseWithContentDTO>(`${this.resourceUrl}/${courseId}/with-exercises-lectures-competencies`, { observe: 'response' })
+            .pipe(map((res) => this.mapCourseDTOResponse(res, courseFromWithContentDTO)))
+            .pipe(map((res: EntityResponseType) => this.applyCourseResponseSideEffects(res)));
     }
 
     /**
@@ -210,9 +237,10 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId the id of the course to be found
      */
     findWithOrganizations(courseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+        return this.http.get<CourseWithOrganizationsDTO>(`${this.resourceUrl}/${courseId}/with-organizations`, { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOResponse(res, courseFromOrganizationsDTO)),
+            map((res) => this.applyCourseResponseSideEffects(res)),
+        );
     }
 
     findAllForDropdown(): Observable<HttpResponse<Course[]>> {
@@ -225,7 +253,8 @@ export class CourseManagementService implements OnDestroy {
     findAllForDashboard(): Observable<HttpResponse<CoursesForDashboardDTO>> {
         this.fetchingCoursesForNotifications = true;
         const generation = this.stateGeneration;
-        return this.http.get<CoursesForDashboardDTO>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+        return this.http.get<CoursesForDashboardResponseDTO>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+            map((res): HttpResponse<CoursesForDashboardDTO> => res.clone({ body: res.body ? coursesForDashboardFromDTO(res.body) : null })),
             map((res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (this.stateGeneration !== generation) return res;
                 if (res.body) {
@@ -233,16 +262,13 @@ export class CourseManagementService implements OnDestroy {
                     res.body.courses?.forEach((courseForDashboardDTO) => {
                         if (courseForDashboardDTO.course.id) {
                             this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
-
-                            // Setting the helper attribute in the course so we can use it in the course overview guard.
-                            courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                         }
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
                     });
                     // Replace the CourseForDashboardDTOs in the response body with the normal courses to enable further processing.
                     const courseResponse = res.clone({ body: courses });
-                    this.processCourseEntityArrayResponseType(courseResponse);
+                    this.applyCourseArrayResponseSideEffects(courseResponse);
                     this.setCoursesForNotifications(courseResponse, generation);
                     this.courseStorageService.setCourses(courseResponse.body !== null ? courseResponse.body : undefined);
                 }
@@ -265,40 +291,9 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Finds one course with all of its content using a GET request.
-     *
-     * @deprecated The web client no longer uses this: the course overview loads {@link findCourseForOverview} and each
-     * tab loads what it needs. The endpoint stays for the iOS, Android and VS Code clients. Do not add new callers.
-     * @param courseId the course to fetch
-     */
-    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
-        const params = new HttpParams();
-        return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
-            map((res: HttpResponse<CourseForDashboardDTO>) => {
-                if (res.body) {
-                    const courseForDashboardDTO: CourseForDashboardDTO = res.body;
-                    if (courseForDashboardDTO.course.id) {
-                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
-
-                        // Expose the per-course Iris enablement on the cached course object for the overview UI (the guard uses the dedicated access endpoint instead).
-                        courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
-                    }
-                    this.saveScoresInStorage(courseForDashboardDTO);
-
-                    // Replace the CourseForDashboardDTO in the response body with the normal course to enable further processing.
-                    return res.clone({ body: courseForDashboardDTO.course });
-                }
-                return res;
-            }),
-            map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
-        );
-    }
-
-    /**
      * Fetches the course itself for the course overview container, without any of its content.
      *
-     * This replaces {@link findOneForDashboard} for the web client: exercises, lectures, exams, participations and
+     * This is what the web client uses: exercises, lectures, exams, participations and
      * scores are loaded by the tab that needs them, so entering a course no longer pays for content the user may never
      * open. The result is stored in the {@link CourseStorageService} exactly as before, so everything reading the course
      * from there keeps working.
@@ -319,7 +314,7 @@ export class CourseManagementService implements OnDestroy {
             }),
             // Still the shared post-processing: it derives the course icon path, the access-right flags and the title
             // service entries that consumers of the stored course read
-            map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
+            map((res: EntityResponseType) => this.applyCourseResponseSideEffects(res)),
             tap((res: EntityResponseType) => this.storeCoursePreservingLoadedContent(courseId, res.body ?? undefined)),
         );
     }
@@ -384,7 +379,7 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Stores the score parts of a course payload. Shared by the (deprecated) for-dashboard response, the courses list
+     * Stores the score parts of a course payload. Shared by the for-dashboard response, the courses list
      * and the exercises-for-overview response, which all carry the same score fields.
      *
      * @param courseId the course the scores belong to
@@ -442,7 +437,10 @@ export class CourseManagementService implements OnDestroy {
      */
     getCourseWithInterestingExercisesForTutors(courseId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/${courseId}/for-assessment-dashboard`;
-        return this.http.get<Course>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+        return this.http.get<CourseAssessmentDashboardDTO>(url, { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOResponse(res, courseFromAssessmentDashboardDTO)),
+            map((res: EntityResponseType) => this.applyCourseResponseSideEffects(res)),
+        );
     }
 
     /**
@@ -457,18 +455,20 @@ export class CourseManagementService implements OnDestroy {
      * finds all courses that can be registered to
      */
     findAllForRegistration(): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-enrollment`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
+        return this.http.get<CourseForEnrollmentDTO[]>(`${this.resourceUrl}/for-enrollment`, { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOArrayResponse(res, courseFromEnrollmentDTO)),
+            map((res) => this.applyCourseArrayResponseSideEffects(res)),
+        );
     }
 
     /**
      * finds a single course that can be registered to (with limited information)
      */
     findOneForRegistration(courseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/for-enrollment`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+        return this.http.get<CourseForEnrollmentDTO>(`${this.resourceUrl}/${courseId}/for-enrollment`, { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOResponse(res, courseFromEnrollmentDTO)),
+            map((res) => this.applyCourseResponseSideEffects(res)),
+        );
     }
 
     /**
@@ -495,8 +495,9 @@ export class CourseManagementService implements OnDestroy {
     getAllCoursesWithQuizExercises(): Observable<EntityArrayResponseType> {
         this.fetchingCoursesForNotifications = true;
         const generation = this.stateGeneration;
-        return this.http.get<Course[]>(this.resourceUrl + '/courses-with-quiz', { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
+        return this.http.get<CourseForQuizSelectionDTO[]>(this.resourceUrl + '/courses-with-quiz', { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOArrayResponse(res, courseFromQuizSelectionDTO)),
+            map((res) => this.applyCourseArrayResponseSideEffects(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res, generation)),
         );
     }
@@ -508,8 +509,9 @@ export class CourseManagementService implements OnDestroy {
     getCourseOverview(req?: Record<string, string | number | boolean>): Observable<HttpResponse<Course[]>> {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
-        return this.http.get<Course[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' }).pipe(
-            tap((res: HttpResponse<Course[]>) => {
+        return this.http.get<CourseManagementOverviewDTO[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOArrayResponse(res, courseFromManagementOverviewDTO)),
+            tap((res) => {
                 if (res.body) {
                     res.body.forEach((course) => this.accountService.setAccessRightsForCourse(course));
                 }
@@ -538,7 +540,7 @@ export class CourseManagementService implements OnDestroy {
      * @param courseRoleSlug - the role path segment ('students', 'tutors', 'editors', 'instructors')
      */
     getAllUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug): Observable<HttpResponse<User[]>> {
-        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}`, { observe: 'response' });
+        return this.http.get<CourseMemberDTO[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}`, { observe: 'response' }).pipe(map((res) => this.mapUserDTOArrayResponse(res)));
     }
 
     /**
@@ -549,7 +551,9 @@ export class CourseManagementService implements OnDestroy {
     searchOtherUsersInCourse(courseId: number, name: string): Observable<HttpResponse<User[]>> {
         let httpParams = new HttpParams();
         httpParams = httpParams.append('nameOfUser', name);
-        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' });
+        return this.http
+            .get<CourseMemberDTO[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' })
+            .pipe(map((res) => this.mapUserDTOArrayResponse(res)));
     }
 
     searchUsers(courseId: number, loginOrName: string, roles: RoleGroup[]): Observable<HttpResponse<UserPublicInfoDTO[]>> {
@@ -604,9 +608,9 @@ export class CourseManagementService implements OnDestroy {
      * @param {number} courseId - The id of the course to be searched for
      */
     findAllLockedSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
-        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/locked-submissions`, { observe: 'response' }).pipe(
+        return this.http.get<LockedCourseSubmissionDTO[]>(`${this.resourceUrl}/${courseId}/locked-submissions`, { observe: 'response' }).pipe(
+            map((res): HttpResponse<Submission[]> => res.clone({ body: res.body?.map(lockedCourseSubmissionFromDTO) ?? null })),
             filter((res) => !!res.body),
-            tap((res) => reconnectSubmissions(res.body!)),
         );
     }
 
@@ -665,18 +669,28 @@ export class CourseManagementService implements OnDestroy {
         return this.coursesForNotifications;
     }
 
+    private mapCourseDTOResponse<T extends object>(response: HttpResponse<T>, mapper: (dto: T) => Course): EntityResponseType {
+        return response.clone({ body: response.body ? mapper(response.body) : null });
+    }
+
+    private mapCourseDTOArrayResponse<T extends object>(response: HttpResponse<T[]>, mapper: (dto: T) => Course): EntityArrayResponseType {
+        return response.clone({ body: response.body?.map(mapper) ?? null });
+    }
+
+    private mapUserDTOArrayResponse(response: HttpResponse<CourseMemberDTO[]>): HttpResponse<User[]> {
+        return response.clone({ body: response.body?.map(courseMemberFromDTO) ?? null });
+    }
+
     /**
-     * This method bundles recurring conversion steps for Course EntityResponses.
+     * Everything a converted course response still needs, on top of the model its adapter built: the derived icon
+     * path, the competency defaults, the access-right flags and the title-service entries. Dates and categories are
+     * the adapter's job, so nothing here touches them.
      * @param courseRes
      */
-    processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
+    private applyCourseResponseSideEffects(courseRes: EntityResponseType): EntityResponseType {
         this.processCourseIcon(courseRes);
-        this.convertTutorialGroupDatesFromServer(courseRes);
-        this.convertTutorialGroupConfigurationDateFromServer(courseRes);
-        this.convertCourseResponseDateFromServer(courseRes);
         this.setCompetenciesIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
-        this.convertExerciseCategoriesFromServer(courseRes);
         this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
         return courseRes;
     }
@@ -692,15 +706,8 @@ export class CourseManagementService implements OnDestroy {
         return courseRes;
     }
 
-    /**
-     * This method bundles recurring conversion steps for Course processCourseEntityArrayResponseType.
-     * @param courseRes
-     */
-    private processCourseEntityArrayResponseType(courseRes: EntityArrayResponseType): EntityArrayResponseType {
-        this.convertTutorialGroupsDatesFromServer(courseRes);
-        this.convertTutorialGroupConfigurationsDateFromServer(courseRes);
-        this.convertCourseArrayResponseDatesFromServer(courseRes);
-        this.convertExerciseCategoryArrayFromServer(courseRes);
+    /** The array counterpart of {@link applyCourseResponseSideEffects}. */
+    private applyCourseArrayResponseSideEffects(courseRes: EntityArrayResponseType): EntityArrayResponseType {
         this.setAccessRightsCourseEntityArrayResponseType(courseRes);
         courseRes?.body?.forEach(this.sendCourseTitleAndExerciseTitlesToTitleService.bind(this));
         return courseRes;
@@ -726,92 +733,6 @@ export class CourseManagementService implements OnDestroy {
             enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
             unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
         });
-    }
-
-    private convertTutorialGroupDatesFromServer(courseRes: EntityResponseType): EntityResponseType {
-        if (courseRes.body?.tutorialGroups) {
-            courseRes.body.tutorialGroups = convertTutorialGroupArrayDatesFromServer(courseRes.body.tutorialGroups);
-        }
-        return courseRes;
-    }
-
-    private convertTutorialGroupsDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => {
-                if (course.tutorialGroups) {
-                    course.tutorialGroups = convertTutorialGroupArrayDatesFromServer(course.tutorialGroups);
-                }
-            });
-        }
-        return res;
-    }
-
-    private convertTutorialGroupConfigurationDateFromServer(courseRes: EntityResponseType): EntityResponseType {
-        if (courseRes.body?.tutorialGroupsConfiguration) {
-            courseRes.body.tutorialGroupsConfiguration = convertTutorialGroupsConfigurationDatesFromServer(courseRes.body.tutorialGroupsConfiguration);
-        }
-        return courseRes;
-    }
-
-    private convertTutorialGroupConfigurationsDateFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => {
-                if (course.tutorialGroupsConfiguration) {
-                    course.tutorialGroupsConfiguration = convertTutorialGroupsConfigurationDatesFromServer(course.tutorialGroupsConfiguration);
-                }
-            });
-        }
-        return res;
-    }
-
-    private convertCourseResponseDateFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.setCourseDates(res.body);
-        }
-        return res;
-    }
-
-    private convertCourseArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => this.setCourseDates(course));
-        }
-        return res;
-    }
-
-    /**
-     * Converts the exercise category json string into ExerciseCategory objects (if it exists).
-     * @param res the response
-     */
-    private convertExerciseCategoriesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body && res.body.exercises) {
-            res.body.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
-        }
-        return res;
-    }
-
-    /**
-     * Converts an array of exercise category json strings into ExerciseCategory objects (if it exists).
-     * @param res the response
-     */
-    private convertExerciseCategoryArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
-            res.body.forEach((course: Course) => {
-                if (course.exercises) {
-                    course.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
-                }
-            });
-        }
-        return res;
-    }
-
-    private setCourseDates(course: Course) {
-        course.startDate = course.startDate ? dayjs(course.startDate) : undefined;
-        course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
-        course.enrollmentStartDate = course.enrollmentStartDate ? dayjs(course.enrollmentStartDate) : undefined;
-        course.enrollmentEndDate = course.enrollmentEndDate ? dayjs(course.enrollmentEndDate) : undefined;
-        course.unenrollmentEndDate = course.unenrollmentEndDate ? dayjs(course.unenrollmentEndDate) : undefined;
-        course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
-        course.lectures = this.lectureService.convertLectureArrayDatesFromServer(course.lectures);
     }
 
     /**
@@ -846,8 +767,8 @@ export class CourseManagementService implements OnDestroy {
     public findAllForNotifications(): Observable<EntityArrayResponseType> {
         this.fetchingCoursesForNotifications = true;
         const generation = this.stateGeneration;
-        return this.http.get<Course[]>(`${this.resourceUrl}/for-notifications`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
+        return this.http.get<CourseWithIdDTO[]>(`${this.resourceUrl}/for-notifications`, { observe: 'response' }).pipe(
+            map((res) => this.mapCourseDTOArrayResponse(res, courseWithIdFromDTO)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res, generation)),
         );
     }

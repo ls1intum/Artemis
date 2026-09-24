@@ -11,10 +11,11 @@
     }
     @if (operation().ageBased) {
         <p
-            [jhiTranslate]="'cleanupService.execute.questionWithoutDates'"
+            [jhiTranslate]="'cleanupService.execute.questionWithoutDates.' + operation().action"
             [translateValues]="{
                 operationName: 'cleanupService.operation.' + operation().name | artemisTranslate,
             }"
+            data-testid="cleanup-confirmation-question"
         ></p>
     } @else {
         <p
@@ -24,15 +25,16 @@
                 deleteFrom: operation().deleteFrom | artemisDate,
                 deleteTo: operation().deleteTo | artemisDate,
             }"
+            data-testid="cleanup-confirmation-question"
         ></p>
     }
     <div>
-        <p jhiTranslate="cleanupService.modal.affectedEntities"></p>
-        <ul>
+        <p [jhiTranslate]="'cleanupService.modal.affectedEntities.' + operation().action"></p>
+        <ul data-testid="cleanup-affected-entities">
             @for (key of cleanupKeys(); track key) {
-                <li>
-                    <span [jhiTranslate]="'cleanupService.entities.' + key"></span>
-                    : {{ counts()[key] }}
+                <li [attr.data-testid]="'cleanup-count-' + key">
+                    <!-- prettier-ignore -->
+                    <span [jhiTranslate]="'cleanupService.entities.' + key"></span>: {{ counts()[key] }}
                     @if (operationExecuted()) {
                         @if (counts()[key] > 0) {
                             <fa-icon [icon]="faTimes" class="text-state-danger" />
@@ -43,8 +45,8 @@
                 </li>
             }
         </ul>
-        @if (!hasEntriesToDelete()) {
-            <p class="text-muted-color" jhiTranslate="cleanupService.modal.noEntriesToDelete"></p>
+        @if (!hasAffectedEntities()) {
+            <p class="text-muted-color" jhiTranslate="cleanupService.modal.noAffectedEntities"></p>
         }
     </div>
     <ng-template #footer>
@@ -55,14 +57,14 @@
             <button
                 tumUiButton
                 type="button"
-                severity="danger"
+                [severity]="actionPresentation[operation().action].severity"
                 size="small"
-                [disabled]="operationExecuting() || !hasEntriesToDelete()"
+                [disabled]="operationExecuting() || !hasAffectedEntities()"
                 (click)="executeCleanupOperation()"
                 data-testid="execute-button"
             >
-                <fa-icon [icon]="faTrash" />
-                <span jhiTranslate="cleanupService.button.execute"></span>
+                <fa-icon [icon]="actionPresentation[operation().action].icon" />
+                <span [jhiTranslate]="actionPresentation[operation().action].labelKey"></span>
             </button>
         </div>
     </ng-template>

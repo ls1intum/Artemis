@@ -12,6 +12,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -72,7 +73,7 @@ describe('Exam Import Component', () => {
             ],
             providers: [
                 MockProvider(SortService),
-                MockProvider(ExamImportPagingService),
+                MockProvider(ExamImportPagingService, { search: () => of({ resultsOnPage: [], numberOfPages: 0 }) }),
                 { provide: DynamicDialogRef, useValue: dialogRef },
                 MockProvider(ExamManagementService),
                 MockProvider(AlertService),
@@ -209,6 +210,95 @@ describe('Exam Import Component', () => {
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(dialogRefCloseSpy).not.toHaveBeenCalled();
     });
+
+    it.each(['invalidKey', 'duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle'])(
+        'keeps multiple rejected groups editable and supports retry after %s',
+        async (errorKey) => {
+            const originalGroups: ExerciseGroup[] = [
+                { id: 10, title: 'First group', exercises: [createProgrammingExercise(101, 'First program', 'firstProg')] },
+                { id: 20, title: 'Second group', exercises: [createProgrammingExercise(102, 'Second program', 'secondProg')] },
+            ];
+            component.exam.set({ id: 1, exerciseGroups: originalGroups });
+            component.subsequentExerciseGroupSelection.set(true);
+            component.targetCourseId.set(1);
+            component.targetExamId.set(2);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+            const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(of(new HttpResponse({ body: { exerciseGroups: [] } })));
+            const progressSpy = vi.spyOn(component.examImportProgressDialog(), 'runImport');
+            const alertSpy = vi.spyOn(alertService, 'error');
+            const warnSpy = vi.spyOn(console, 'warn');
+            const child = component.examExerciseImportComponent();
+
+            for (let attempt = 0; attempt < 2; attempt++) {
+                // Every rejection contains fresh, idless groups, as returned by the server.
+                const rejectedGroups: ExerciseGroup[] = [
+                    { title: 'First group', exercises: [createProgrammingExercise(101)] },
+                    { title: 'Second group', exercises: [createProgrammingExercise(102)] },
+                ];
+                const rejection = new HttpErrorResponse({ status: 400, error: { errorKey, numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: rejectedGroups } } });
+                progressSpy.mockRejectedValueOnce(rejection);
+                component.performImportOfExerciseGroups();
+                await Promise.resolve();
+                await Promise.resolve();
+                fixture.detectChanges();
+                await fixture.whenStable();
+
+                expect(component.isImportingExercises()).toBe(false);
+                expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+                expect(child.mapSelectedExercisesToExerciseGroups()).toEqual(rejectedGroups);
+                expect(child.selectedExercises.has(originalGroups[0])).toBe(false);
+                const rows: NodeListOf<HTMLTableRowElement> = fixture.nativeElement.querySelectorAll('jhi-exam-exercise-import > table > tbody > tr');
+                expect(rows).toHaveLength(2);
+                const groupTitles: HTMLInputElement[] = Array.from(fixture.nativeElement.querySelectorAll('input[id^="exerciseGroup-"][id$="-title"]'));
+                expect(new Set(groupTitles.map((input) => input.id)).size).toBe(2);
+                expect(warnSpy.mock.calls.flat().join(' ')).not.toContain('NG0955');
+                for (const [index, group] of rejectedGroups.entries()) {
+                    const exercise = group.exercises![0];
+                    expect(child.exerciseIsSelected(exercise, group)).toBe(true);
+                    const title: HTMLInputElement = fixture.nativeElement.querySelector(`#exercise-${exercise.id}-title`);
+                    const shortName: HTMLInputElement = fixture.nativeElement.querySelector(`#programming-exercise-${exercise.id}-shortName`);
+                    expect(title.value).toBe('');
+                    expect(shortName.value).toBe('');
+                    if (errorKey === 'invalidKey' && attempt === 0) {
+                        expect(title.placeholder).toBe(originalGroups[index].exercises![0].title);
+                        expect(shortName.placeholder).toBe(originalGroups[index].exercises![0].shortName);
+                    }
+                    for (const [input, value] of [
+                        [groupTitles[index], `Renamed group ${index}`],
+                        [title, `Retry program ${attempt} ${index}`],
+                        [shortName, `retry${attempt}${index}`],
+                    ] as const) {
+                        input.value = value;
+                        input.dispatchEvent(new Event('input'));
+                        input.dispatchEvent(new Event('change'));
+                    }
+                }
+                await fixture.whenStable();
+                expect(rejectedGroups.map((group) => group.title)).toEqual(['Renamed group 0', 'Renamed group 1']);
+                expect(child.validateUserInput()).toBe(true);
+            }
+
+            const correctedGroups = child.mapSelectedExercisesToExerciseGroups();
+            progressSpy.mockResolvedValueOnce(new HttpResponse({ body: { exerciseGroups: correctedGroups } }));
+            component.performImportOfExerciseGroups();
+            await Promise.resolve();
+            await Promise.resolve();
+            expect(importSpy).toHaveBeenCalledTimes(3);
+            expect(importSpy).toHaveBeenLastCalledWith(1, 2, correctedGroups, 'test-import-id');
+            expect(alertSpy).toHaveBeenCalledTimes(2);
+            expect(dialogRefCloseSpy).toHaveBeenCalledWith(correctedGroups);
+        },
+    );
+
+    function createProgrammingExercise(id: number, title?: string, shortName?: string): ProgrammingExercise {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = id;
+        exercise.title = title;
+        exercise.shortName = shortName;
+        return exercise;
+    }
 
     /**
      * Drives a group import: sets up the selection state, stubs the import id, and mocks the progress dialog's runImport

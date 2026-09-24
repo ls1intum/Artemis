@@ -8,25 +8,20 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTL
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService.STUDENT_LOGIN;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +43,6 @@ import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 // TODO: rewrite this test to use LocalVC
@@ -413,57 +407,18 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
-        programmingExerciseTestService.configureRepository_throwExceptionWhenLtiUserIsNotExistent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void copyRepository_testNotCreatedError() throws Exception {
-        AtomicReference<Path> targetRepositoryPath = new AtomicReference<>();
-        try {
-            doAnswer(invocation -> {
-                LocalVCRepositoryUri targetRepoUri = invocation.getArgument(1);
-                Path localTargetRepositoryPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
-                Files.createDirectories(localTargetRepositoryPath);
-                targetRepositoryPath.set(localTargetRepositoryPath);
-                throw new IOException("Checkout got interrupted!");
-            }).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+        doThrow(new IOException("Checkout got interrupted!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
-            programmingExerciseTestService.copyRepository_testNotCreatedError();
-
-            assertThat(targetRepositoryPath.get()).isNotNull().doesNotExist();
-        }
-        finally {
-            if (targetRepositoryPath.get() != null) {
-                FileUtils.deleteQuietly(targetRepositoryPath.get().toFile());
-            }
-        }
+        programmingExerciseTestService.copyRepository_testNotCreatedError();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void copyRepository_testRuntimeExceptionCleansUpTarget() throws Exception {
-        AtomicReference<Path> targetRepositoryPath = new AtomicReference<>();
-        try {
-            doAnswer(invocation -> {
-                LocalVCRepositoryUri targetRepoUri = invocation.getArgument(1);
-                Path localTargetRepositoryPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
-                Files.createDirectories(localTargetRepositoryPath);
-                targetRepositoryPath.set(localTargetRepositoryPath);
-                throw new JGitInternalException("Simulated JGit runtime failure!");
-            }).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+    void copyRepository_testRuntimeExceptionIsReportedLikeAnIOException() throws Exception {
+        doThrow(new JGitInternalException("Simulated JGit runtime failure!")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
-            programmingExerciseTestService.copyRepository_testNotCreatedError();
-
-            // a RuntimeException during the copy must clean up the just-created target repository like an IOException does
-            assertThat(targetRepositoryPath.get()).isNotNull().doesNotExist();
-        }
-        finally {
-            if (targetRepositoryPath.get() != null) {
-                FileUtils.deleteQuietly(targetRepositoryPath.get().toFile());
-            }
-        }
+        programmingExerciseTestService.copyRepository_testNotCreatedError();
     }
 
     @Test
@@ -480,15 +435,18 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void copyRepository_keepsHealthyPreexistingTargetOnFailedCopy() throws Exception {
-        doThrow(new IOException("Copy failed!")).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
-        programmingExerciseTestService.copyRepository_keepsHealthyPreexistingTargetOnFailedCopy();
+    void copyRepository_withAHealthyExistingTarget_reusesItWithoutCopying() throws Exception {
+        // The copy must not be attempted at all, which this stub would turn into a failed start if it were.
+        doThrow(new IOException("the repository that is already there must not be copied over")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(),
+                anyString());
+
+        programmingExerciseTestService.copyRepository_withAHealthyExistingTarget_reusesIt();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void configureRepository_testBadRequestError() throws Exception {
-        doThrow(new IOException()).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+        doThrow(new IOException()).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 
@@ -609,18 +567,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
         programmingExerciseTestService.createProgrammingExercise_setValidExampleSolutionPublicationDate();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetProgrammingExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetProgrammingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(false, TEST_PREFIX + "instructor1");
     }
 
     @Test

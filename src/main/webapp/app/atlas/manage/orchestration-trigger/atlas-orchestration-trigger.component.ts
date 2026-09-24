@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM } from 'app/app.constants';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AppliedActionDTO, CompetencyOrchestrationResultDTO, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
@@ -22,7 +22,7 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
  * Encapsulates the orchestrator button, the run lifecycle (calling {@link CompetencyOrchestrationApiService})
  * and the result dialog so that host components (e.g. the exercise detail pages) stay decoupled
  * from Atlas-specific logic. Works for any supported exercise type (programming, text, modeling,
- * file-upload, quiz); the backend resolves the exercise generically.
+ * file-upload, quiz); the server resolves the exercise generically.
  */
 @Component({
     selector: 'jhi-atlas-orchestration-trigger',
@@ -43,11 +43,16 @@ export class AtlasOrchestrationTriggerComponent {
     readonly buttonClass = input<string>('btn btn-primary btn-sm');
 
     /**
-     * Whether the Atlas module is enabled on this instance. Owned here so host pages stay free of Atlas
-     * knowledge: a host only decides instructor / non-exam visibility, and this component self-hides when
-     * the module is off (the {@code AtlasAgent} feature toggle is a separate, finer runtime gate on the button).
+     * Whether this instance can run competency orchestration at all. Owned here so host pages stay free of Atlas
+     * knowledge: a host only decides instructor / non-exam visibility, and this component self-hides otherwise (the
+     * {@code AtlasAgent} feature toggle is a separate, finer runtime gate on the button).
+     * <p>
+     * Deliberately not named after the Atlas module, because the two are independent: Atlas can be active on its own
+     * and carries competencies and learning paths either way. Orchestration additionally needs AtlasLLM, which is off
+     * unless the instance configured a chat model, and without that the endpoint this button calls is not registered.
      */
-    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+    protected readonly orchestrationAvailable =
+        this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
 
     protected readonly orchestrationDialogVisible = signal(false);
     protected readonly orchestrationDialogMessage = signal('');
@@ -64,7 +69,7 @@ export class AtlasOrchestrationTriggerComponent {
         }
         this.orchestrationRunning.set(true);
         try {
-            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/500/502/503)
+            // The server returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/500/502/503)
             // surface as HttpErrorResponse and are handled in the catch block below.
             const result = await this.competencyOrchestrationApiService.runForExercise(exerciseId);
             // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.

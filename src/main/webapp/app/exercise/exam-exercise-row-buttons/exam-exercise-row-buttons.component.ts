@@ -15,15 +15,17 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
-import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
 
 /** setTimeout truncates delays beyond a signed 32-bit millisecond value. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
@@ -37,7 +39,7 @@ const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
-    imports: [ExerciseActionBarComponent, FaIconComponent, TumUiTooltipDirective, ArtemisTranslatePipe],
+    imports: [ExerciseActionBarComponent, FaIconComponent, TumUiTooltipDirective, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
 })
 export class ExamExerciseRowButtonsComponent {
     private textExerciseService = inject(TextExerciseService);
@@ -68,7 +70,13 @@ export class ExamExerciseRowButtonsComponent {
 
     protected readonly faExclamationTriangle = faExclamationTriangle;
 
+    /** Controls the AI variant generation wizard opened via the "Create Variant with AI" action. */
+    readonly aiVariantModalVisible = signal(false);
+
     private readonly localCIEnabled = signal(this.profileService.isProfileActive(PROFILE_LOCALCI));
+
+    /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
+    private readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     /**
      * The wall clock as a signal. The action set depends on the exam's start and end having passed, and nothing
@@ -193,6 +201,19 @@ export class ExamExerciseRowButtonsComponent {
                 severity: 'primary',
                 kind: 'link',
                 link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
+            });
+        }
+        // Sits between the info/success-colored actions above and the warning-colored edit actions below, matching its
+        // own warning color. Only offered when Hyperion is enabled and for exercise types the generator supports; the
+        // server rejects other types.
+        if (this.hyperionEnabled && course.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
+            items.push({
+                id: 'create-variant-ai',
+                labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
+                icon: faRobot,
+                severity: 'warn',
+                kind: 'button',
+                onClick: () => this.aiVariantModalVisible.set(true),
             });
         }
         if (course.isAtLeastEditor && ex.type === ExerciseType.PROGRAMMING) {

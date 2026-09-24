@@ -61,13 +61,6 @@ public class ConversationService {
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
 
-    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
-    // Deployed mobile and external clients may still be subscribed here.
-    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
-    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
-    @Deprecated(forRemoval = true, since = "9.3")
-    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
-
     private final ConversationDTOService conversationDTOService;
 
     private final UserRepository userRepository;
@@ -361,12 +354,9 @@ public class ConversationService {
      * @param recipients      the users to be messaged
      */
     // TODO: this should be Async
-    @SuppressWarnings("deprecation")
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
         String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
-        String legacyConversationParticipantTopicName = getLegacyConversationParticipantTopicName(course.getId());
-        recipients.forEach(
-                user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName, legacyConversationParticipantTopicName));
+        recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
     }
 
     @NonNull
@@ -374,20 +364,7 @@ public class ConversationService {
         return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
     }
 
-    /**
-     * Legacy variant of {@link #getConversationParticipantTopicName(Long)} kept for the deprecation window.
-     *
-     * @param courseId the id of the course
-     * @return the legacy STOMP destination prefix that the server still mirrors notifications onto
-     */
-    @Deprecated(forRemoval = true, since = "9.3")
-    @NonNull
-    public static String getLegacyConversationParticipantTopicName(Long courseId) {
-        return LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
-    }
-
-    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName,
-            String legacyConversationParticipantTopicName) {
+    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
         ConversationDTO dto;
         if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
@@ -401,8 +378,6 @@ public class ConversationService {
 
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
         websocketMessagingService.sendMessageToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
-        // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
-        websocketMessagingService.sendMessageToUser(user.getLogin(), legacyConversationParticipantTopicName + user.getId(), websocketDTO);
     }
 
     /**
@@ -513,16 +488,43 @@ public class ConversationService {
         List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
         List<ConversationParticipant> participants = new ArrayList<>();
         for (Channel channel : courseWideChannelsWithoutParticipants) {
-            var newParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-            newParticipant.setUnreadMessagesCount(0L);
-            newParticipant.setLastRead(now);
-            participants.add(newParticipant);
+            participants.add(createReadParticipant(requestingUser, channel, now));
         }
         // save all new conversation participants (i.e. for course-wide channels that the user has not yet accessed)
         if (!participants.isEmpty()) {
-            conversationParticipantRepository.saveAll(participants);
+            try {
+                conversationParticipantRepository.saveAll(participants);
+            }
+            catch (DataIntegrityViolationException e) {
+                // A concurrent request (e.g. opening one of these channels) created a participant in the meantime, which rolled back the whole batch.
+                // Save them one by one instead, with new instances as the batch may have assigned ids that were rolled back, and mark the participants
+                // created concurrently as read as well.
+                List<Long> concurrentlyCreatedConversationIds = new ArrayList<>();
+                for (Channel channel : courseWideChannelsWithoutParticipants) {
+                    try {
+                        conversationParticipantRepository.save(createReadParticipant(requestingUser, channel, now));
+                    }
+                    catch (DataIntegrityViolationException saveFailed) {
+                        // Only a participant that exists by now was created concurrently; any other integrity violation is a real error
+                        if (!conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), userId)) {
+                            throw saveFailed;
+                        }
+                        concurrentlyCreatedConversationIds.add(channel.getId());
+                    }
+                }
+                if (!concurrentlyCreatedConversationIds.isEmpty()) {
+                    conversationParticipantRepository.updateMultipleLastReadAsync(userId, concurrentlyCreatedConversationIds, now);
+                }
+            }
         }
         log.debug("Marking all conversations without participants (i.e. creating new ones) as read took {} ms", TimeLogUtil.formatDurationFrom(start));
+    }
+
+    private static ConversationParticipant createReadParticipant(User user, Channel channel, ZonedDateTime lastRead) {
+        var participant = ConversationParticipant.createWithDefaultValues(user, channel);
+        participant.setUnreadMessagesCount(0L);
+        participant.setLastRead(lastRead);
+        return participant;
     }
 
     /**

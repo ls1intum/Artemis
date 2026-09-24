@@ -1,72 +1,127 @@
 # Liquibase migration patterns
 
+Worked patterns with the reasoning. Real examples from this repository are cited so you can read
+the full changeset rather than a fragment.
+
 ## Adding a NOT NULL constraint to an existing column
 
-`addNotNullConstraint` fails while existing rows contain nulls. Check the data and entity mapping
-before choosing a backfill, deletion, or deferred constraint.
+The problem: `addNotNullConstraint` fails if a single row still holds a null, and a failing
+changeset stops the application from starting. On a production database you cannot know in advance
+that no such row exists.
 
-Repository example: `src/main/resources/config/liquibase/changelog/20260827090000_changelog.xml`
-separates orphan cleanup from guarded constraint changesets. Read the complete dependency order;
-its cleanup is specific to those relationships, not a deletion template. Delete data only under
-a reviewed policy for the affected records and their dependants. A missing parent alone does not
-establish that the remaining data is disposable.
+For a required invariant, backfill or remove invalid rows in a reviewed changeset, then verify
+that no `NULL` values remain before adding the constraint. Use `onFail="HALT"` so an unresolved
+violation cannot leave the application running with a weaker schema. If the application can
+correctly operate with a nullable column, a guarded `onFail="CONTINUE"` changeset can defer the
+constraint; state that choice and its follow-up in the changeset comment. The example below
+shows this optional case, not a default for required constraints.
 
-Use the repository's guarded pattern: one cleanup changeset and one constraint changeset per
-column, with `onFail="CONTINUE"` on the null-count precondition. This keeps the application
-starting if rows still prevent the constraint. `CONTINUE` leaves the changeset unrecorded and
-retries it on a later update; `MARK_RAN` would record it as executed and prevent that retry.
-Verify whether the constraint actually ran; startup success alone does not establish it.
+The snippet below is **abridged to show the shape**. Do not copy it as a template: the real
+changeset also clears `long_feedback_text`, `text_block`, `result_rating`, `assessment_note`,
+`complaint_response` and `complaint`, and nulls three foreign key columns, in that order. Deleting
+a parent before its dependants dies on a foreign key constraint, which is exactly the
+application-will-not-start failure this skill opens with. Work out the full dependency order for
+your own table, and read the complete changeset cited below.
 
-Keep unrelated constraint changes separate. Leave a column nullable when its data or write paths
-are not ready, and explain the specific prerequisite in the changelog. If cleanup requires
-application deletion semantics, use the relevant service rather than duplicating partial cleanup
-in SQL. Do not make application correctness depend on a constraint that can still be deferred.
+```xml
+<changeSet id="20260827090000-01-delete-results-without-submission" author="krusche">
+    <comment>Remove results that belong to no submission, along with everything that hangs off them.</comment>
+    <sql>
+        <!-- abridged: the real changeset clears six more tables and nulls three FK columns first -->
+        DELETE FROM feedback WHERE result_id IN (SELECT id FROM result WHERE submission_id IS NULL);
+        DELETE FROM result WHERE submission_id IS NULL;
+    </sql>
+</changeSet>
+<changeSet id="20260827090000-02-result-submission-not-null" author="krusche">
+    <preConditions onFail="CONTINUE">
+        <sqlCheck expectedResult="0">SELECT COUNT(*) FROM result WHERE submission_id IS NULL</sqlCheck>
+    </preConditions>
+    <addNotNullConstraint tableName="result" columnName="submission_id" columnDataType="bigint"/>
+</changeSet>
+```
+
+Three things about this are deliberate and easy to get wrong.
+
+**For an optional constraint, `CONTINUE`, never `MARK_RAN`.** `CONTINUE` skips the changeset without recording it in
+`databasechangelog`, so the server starts, a warning is logged, and the constraint is attempted
+again on the next startup. Once the offending rows are gone the column constrains itself. Do not rely on that future
+constraint for current application correctness.
+`MARK_RAN` would record the changeset as done, and that installation would keep a nullable column
+for good, fixable only by a new changelog.
+
+**One pair of changesets per column.** Keeping them separate means a single column can be dropped
+from the migration without disturbing the others.
+
+**Only delete rows whose own dependants you can clear.** Where a row is reachable through several
+other tables, deleting it in a changelog is the wrong place; that belongs in the relevant deletion
+service. Leave the column nullable and say why in the comment.
+
+Full example, including the reasoning for each column that was deliberately left out:
+`src/main/resources/config/liquibase/history/v10/20260827090000_changelog.xml`.
 
 ### When the entity mapping blocks it
 
-For a bidirectional association, updating only a parent's `mappedBy` collection does not set the
-child's owning-side foreign key. Cascading persistence can then attempt an insert with a null key.
-Check the `add*` helpers and every creation path; set the child's back reference before persistence
-and verify the insert against the proposed constraint.
+Some columns cannot be made NOT NULL without an application change first. If the column is the
+owning side of an association held by the parent in a `mappedBy` collection that cascades,
+Hibernate inserts the child before it writes the key and fills it in with a later update. That is
+invisible while the column allows null and fails immediately once it does not.
+
+Making such a column NOT NULL means giving every place that adds to the collection the back
+reference first, in the `add*` helper on the parent. Roughly fifty owning associations in this
+codebase sit behind a cascading collection, so check the mapping before assuming a column is a
+simple case.
 
 ## Expand and contract
 
-During a rolling deployment, old and new nodes share the database. Keep the schema compatible
-with both versions until old readers and writers are retired.
+For dropping or renaming a column that code still references, split the work across two releases. Not
+because both versions run at once — the cluster is stopped for a migration, see the deployment model
+in `SKILL.md` — but because a release that drops a column cannot be rolled back: the previous version
+would reference a column that is no longer there. Reads are the obvious case and not the only one. A
+column the previous version never selects can still appear in the `INSERT` and `UPDATE` statements it
+issues, so check writers as well as readers before deciding a column is free to drop.
 
-1. **Expand.** Add the new structure and backfill it. Migrate readers and writers while keeping
-   the old representation populated for old nodes, including writes during the rollout.
-2. **Contract.** Stop mapping the old structure. Drop it only after every version that accesses
-   it is retired and the rollback window permits removal.
+1. **Expand.** Create the new structure, backfill it, and move every reader and writer across.
+   Leave the old column in place, still populated.
+2. **Contract.** Once the expand release is fully deployed, stop mapping the old column, then drop
+   it in a later release.
 
-Document deployment prerequisites in the contract changelog. Re-creating a dropped column does
-not restore its data; do not present a structure-only rollback as data recovery. Verify the data
-restoration and application-version requirements before offering a rollback procedure.
+The contract changelog must state that it must not be deployed before its predecessor.
 
-Worked example: `src/main/resources/config/liquibase/changelog/20260826080000_changelog.xml`.
+Rollback deserves thought here. Re-creating a dropped column without its values is often worse than
+having no rollback, because code would silently read empty columns. Where the data now lives
+elsewhere, say so in the rollback comment and rely on rolling the predecessor back instead.
+
+Worked example: `src/main/resources/config/liquibase/history/v10/20260826080000_changelog.xml`.
 
 ## Rollbacks
 
-Check whether Liquibase supports automatic rollback for the chosen change type. Supply an explicit
-rollback for raw SQL or unsupported changes when reversal is possible. For destructive changes,
-document the recovery prerequisite instead of inventing a rollback that silently loses data.
+Liquibase infers a rollback for most of its own change types. Write an explicit `<rollback>` when:
+
+- the change is raw `<sql>`
+- the change drops something, so the inferred rollback would be wrong or impossible
+- the inferred rollback would restore structure without data
 
 ## Validating against MySQL locally
 
-CI runs PostgreSQL and does not validate MySQL-specific SQL. Validate raw SQL and database-specific
-types against MySQL as well.
+CI runs PostgreSQL. A MySQL-only break therefore reaches production undetected. Validate locally
+whenever a changeset contains raw SQL or a type whose spelling differs between the two.
 
-Use a disposable MySQL database seeded from the branch's base revision, with representative data.
-Start the changed branch against it and inspect the migrated schema and data. Compare the schema
-with a fresh installation of the changed branch and investigate differences. Never run this check
-against a production database.
+The approach that works: seed a MySQL database using a checkout of develop, so it has the schema as
+it exists before your change, then start your branch against that same database and let Liquibase
+migrate it. Compare the resulting schema against one built from scratch. A migration that produces
+a different schema than a fresh install is a bug, and it is the class of bug this check exists to
+find.
 
-A MySQL deployment needs `spring.jpa.database` overridden because production configuration selects
-the PostgreSQL dialect.
+Remember that a MySQL deployment needs `spring.jpa.database` overridden, since the production
+configuration hardcodes the PostgreSQL dialect.
 
-## Constraints
+## Things that are not allowed
 
-- Keep behaviour in entity design or application code, not triggers or stored routines.
-- Do not edit merged changesets; Liquibase validates their stored checksums. Add a new changeset.
-- Exercise affected rows and precondition outcomes; an empty-database startup does not test
-  backfills or migration of existing data.
+**Triggers and stored routines.** The last trigger was removed when PostgreSQL support arrived, and
+proposals to add new ones have been rejected. Express it in the entity design instead.
+
+**Editing a merged changeset.** Liquibase stores a checksum. Changing the file makes every existing
+installation refuse to start. Add a new changeset.
+
+**Assuming an empty database.** Test against data. Every precondition and backfill passes trivially
+on an empty schema, which is the one case that never matters.

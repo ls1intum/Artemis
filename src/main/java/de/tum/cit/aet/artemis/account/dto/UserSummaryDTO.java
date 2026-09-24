@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * declared as {@code @JsonIncludeProperties({"id","name","imageUrl","bot"})}. Keeping the DTO at the
  * same set of fields preserves the data-minimization guarantee the existing tests assert on (no
  * {@code login}, {@code email}, or {@code registrationNumber}) and avoids broadening the wire
- * payload beyond what the frontend already consumes.
+ * payload beyond what the client already consumes.
  * <p>
  * Exists primarily to keep the cyclic JPA relations between {@code User}, {@code Reaction},
  * {@code Post}, {@code AnswerPost}, and {@code TutorialGroupRegistration} out of the JSON shape

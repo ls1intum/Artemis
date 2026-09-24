@@ -54,6 +54,50 @@ export interface CourseSummary {
 }
 
 test.describe('Course management', { tag: '@fast' }, () => {
+    test('keeps the course chart values inside the doughnut rings', async ({ page, login, courseManagementAPIRequests }) => {
+        await login(admin);
+        const course = await courseManagementAPIRequests.createCourse();
+        try {
+            await page.setViewportSize({ width: 1400, height: 1800 });
+            await page.goto(`/course-management/${course.id}`);
+            const charts = page.locator('jhi-course-detail-doughnut-chart');
+            await expect(charts.first().getByTestId('course-chart-values')).toContainText('0%');
+            for (const width of [1400, 800]) {
+                await page.setViewportSize({ width, height: 1800 });
+                for (const chart of await charts.all()) {
+                    await expect
+                        .poll(() =>
+                            chart.evaluate((element) => {
+                                const svg = element.querySelector<SVGSVGElement>('svg[role="img"]')!;
+                                const canvas = svg.getBoundingClientRect();
+                                const label = element.querySelector('[data-testid="course-chart-values"]')!.getBoundingClientRect();
+                                const centerX = canvas.width / 2;
+                                const centerY = canvas.height / 2;
+                                // Measure the inner edge of the rendered ring, independently of its configured size.
+                                const radii = Array.from(svg.querySelectorAll<SVGPathElement>('path[d]:not([d=""])')).flatMap((path) => {
+                                    const length = path.getTotalLength();
+                                    return Array.from({ length: 101 }, (_, index) => {
+                                        const point = path.getPointAtLength((length * index) / 100).matrixTransform(path.getScreenCTM()!);
+                                        return Math.hypot(point.x - canvas.x - centerX, point.y - canvas.y - centerY);
+                                    });
+                                });
+                                if (!radii.length) {
+                                    return false;
+                                }
+                                const innerRadius = Math.min(...radii);
+                                return [label.left, label.right].every((x) =>
+                                    [label.top, label.bottom].every((y) => Math.hypot(x - canvas.x - centerX, y - canvas.y - centerY) < innerRadius),
+                                );
+                            }),
+                        )
+                        .toBe(true);
+                }
+            }
+        } finally {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+        }
+    });
+
     test.describe('Manual student selection', () => {
         let course: Course;
 
@@ -128,35 +172,41 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             await courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
 
-            const courseBody = await courseCreation.submit();
-            course = courseBody;
+            // The creation endpoint answers with the new course's id only, so the stored course is read back to
+            // check that every field the form submitted arrived. The id is recorded first, so that a failing
+            // assertion below still leaves the course for afterEach to delete.
+            const { id: courseId } = await courseCreation.submit();
+            course = new Course();
+            course.id = courseId;
 
-            expect(courseBody.title).toBe(courseData.title);
-            expect(courseBody.shortName).toBe(courseData.shortName);
-            expect(courseBody.description).toBe(courseData.description);
-            expect(courseBody.testCourse).toBe(courseData.testCourse);
-            expect(trimDate(courseBody.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
-            expect(trimDate(courseBody.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
-            expect(courseBody.semester).toBe(courseData.semester);
-            expect(courseBody.maxPoints).toBe(courseData.maxPoints);
-            expect(courseBody.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
-            expect(courseBody.complaintsEnabled).toBe(courseData.enableComplaints);
-            expect(courseBody.maxComplaints).toBe(courseData.maxComplaints);
-            expect(courseBody.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
-            expect(courseBody.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
-            expect(courseBody.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
+            const storedCourse = await (await page.request.get(`api/course/courses/${courseId}`)).json();
+
+            expect(storedCourse.title).toBe(courseData.title);
+            expect(storedCourse.shortName).toBe(courseData.shortName);
+            expect(storedCourse.description).toBe(courseData.description);
+            expect(storedCourse.testCourse).toBe(courseData.testCourse);
+            expect(trimDate(storedCourse.startDate)).toBe(trimDate(dayjsToString(courseData.startDate)));
+            expect(trimDate(storedCourse.endDate)).toBe(trimDate(dayjsToString(courseData.endDate)));
+            expect(storedCourse.semester).toBe(courseData.semester);
+            expect(storedCourse.maxPoints).toBe(courseData.maxPoints);
+            expect(storedCourse.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
+            expect(storedCourse.complaintsEnabled).toBe(courseData.enableComplaints);
+            expect(storedCourse.maxComplaints).toBe(courseData.maxComplaints);
+            expect(storedCourse.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
+            expect(storedCourse.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
+            expect(storedCourse.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
 
             // After a successful create the app auto-navigates to the new course's detail page, but
             // under heavy multi-node load that client-side navigation occasionally does not fire (the
             // create form stays mounted). Wait for the expected URL and fall back to an explicit goto
             // so the detail assertions below test the rendered course instead of racing the navigation.
-            const courseDetailUrl = new RegExp(`/course-management/${courseBody.id}(/|$)`);
+            const courseDetailUrl = new RegExp(`/course-management/${courseId}(/|$)`);
             const navigated = await page
                 .waitForURL(courseDetailUrl, { timeout: 15_000 })
                 .then(() => true)
                 .catch(() => false);
             if (!navigated) {
-                await page.goto(`/course-management/${courseBody.id}`);
+                await page.goto(`/course-management/${courseId}`);
                 await page.waitForURL(courseDetailUrl, { timeout: 30_000 });
             }
 

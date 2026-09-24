@@ -6,7 +6,6 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.jsoup.Jsoup;
@@ -42,7 +41,9 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        Objects.requireNonNull(cacheManager.getCache("linkPreview")).clear();
+        var linkPreviewCache = cacheManager.getCache("linkPreview");
+        assertThat(linkPreviewCache).isNotNull();
+        linkPreviewCache.clear();
     }
 
     @ParameterizedTest
@@ -72,7 +73,9 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
                 assertThat(linkPreviewData.title()).isNull();
 
                 // check that the cache is available
-                assertThat(Objects.requireNonNull(cacheManager.getCache("linkPreview")).get(url)).isNotNull();
+                var cache = cacheManager.getCache("linkPreview");
+                assertThat(cache).isNotNull();
+                assertThat(cache.get(url)).isNotNull();
             }
             else {
                 assertThat(linkPreviewData.url()).isNotNull();
@@ -82,7 +85,9 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
                 assertThat(linkPreviewData.url()).isEqualTo(url);
 
                 // check that the cache is available
-                assertThat(Objects.requireNonNull(cacheManager.getCache("linkPreview")).get(url)).isNotNull();
+                var cache = cacheManager.getCache("linkPreview");
+                assertThat(cache).isNotNull();
+                assertThat(cache.get(url)).isNotNull();
             }
         }
     }

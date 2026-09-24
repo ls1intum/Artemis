@@ -1,10 +1,9 @@
 ---
 id: work-with-ai
 title: Work with AI
+sidebar_label: Work with AI
 description: Install and use the Artemis agent skills, which teach an AI coding agent how this repository actually works.
 ---
-
-# Work with AI
 
 Artemis [agent skills](https://github.com/ls1intum/Artemis/tree/develop/skills) provide
 repository-specific procedures for testing, CI, migrations and development.
@@ -12,14 +11,16 @@ repository-specific procedures for testing, CI, migrations and development.
 ## Shared instructions and task-specific skills
 
 [`AGENTS.md`](https://github.com/ls1intum/Artemis/blob/develop/AGENTS.md) contains shared rules
-and links to skills. [`CLAUDE.md`](https://github.com/ls1intum/Artemis/blob/develop/CLAUDE.md)
-contains `@AGENTS.md`, using Claude Code's [file import](https://code.claude.com/docs/en/memory#agents-md).
-[Codex reads `AGENTS.md` directly](https://developers.openai.com/codex/guides/agents-md).
+and links to skills. [Claude Code](https://code.claude.com/docs/en/memory#agents-md) and
+[Codex](https://developers.openai.com/codex/guides/agents-md) read `AGENTS.md` directly.
+In Claude Code, use version 2.1.281 or later and keep the default **Project instructions**
+setting. A `CLAUDE.md` or `CLAUDE.local.md` in the project path takes precedence by default;
+use `/memory` to check which file Claude loaded.
 
 Skill discovery exposes names and descriptions; the agent reads a selected `SKILL.md` and its
 references as needed. Ordinary Markdown links do not install skills or import their contents.
-They let an agent read the checked-in procedures without installation. Do not `@`-import skills
-into `CLAUDE.md`: imports load at startup rather than on demand. See the
+They let an agent read the checked-in procedures without installation. Do not `@`-import
+skills into an instruction file: imports load at startup rather than on demand. See the
 [Agent Skills specification](https://agentskills.io/specification) and
 [Codex skill documentation](https://developers.openai.com/codex/skills) for discovery behavior.
 
@@ -45,7 +46,7 @@ For Claude Code, prefer the namespaced plugin over the Skills CLI:
 
 The local scope enables the plugin only in this checkout, without shared settings changes.
 The plugin distributes skills, not repository memory files. Installing it in another repository
-does not load Artemis's `AGENTS.md` or `CLAUDE.md`.
+does not load Artemis's `AGENTS.md`.
 
 The skills then appear as `/artemis:e2e-pr-check`, `/artemis:ci-triage`, and so on. Claude can also
 select them automatically from their descriptions; selection is not guaranteed.
@@ -86,8 +87,8 @@ Agents can also select skills automatically from their descriptions.
 
 ## Checking skill behavior
 
-Use a fresh agent session after changing shared instructions. In Claude Code, inspect `/context`
-to confirm the memory file is loaded. In Codex, ask which repository instructions and skills are
+Use a fresh agent session after changing shared instructions. In Claude Code, inspect `/memory`
+to confirm `AGENTS.md` is loaded. In Codex, ask which repository instructions and skills are
 available. When testing edits to a skill, confirm the agent reads this checkout rather than an
 older installed copy; `claude --plugin-dir .` loads the working plugin directly.
 
@@ -100,7 +101,7 @@ settings and repository state. Include both matching tasks and tasks that should
 | Migrate an Angular component to signal inputs   | Use `client-conventions`; load migration examples when needed                                              |
 | Add a Vitest regression test                    | Use `write-tests` and its client reference, not the server reference                                       |
 | Explain why a CI check never started            | Use `ci-triage`, not a speculative code fix                                                                |
-| Add a NOT NULL database constraint              | Use `liquibase-migration` and preserve rolling-deploy safeguards                                           |
+| Add a NOT NULL database constraint              | Use `liquibase-migration` and check data and rollback requirements                                         |
 | Run affected E2E tests with uncommitted changes | Use `e2e-pr-check`; disclose the resolver's committed-diff limitation without making an unsolicited commit |
 
 Record which files were loaded, whether the task succeeded, the checks run and unnecessary work.

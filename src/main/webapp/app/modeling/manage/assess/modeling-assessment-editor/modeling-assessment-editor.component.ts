@@ -16,7 +16,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackHighlightColor, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
@@ -102,7 +102,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     referencedFeedback: Feedback[] = [];
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     automaticFeedback: Feedback[] = [];
-    feedbackSuggestions: Feedback[] = [];
     readonly highlightedElements = signal<Map<string, string>>(undefined!);
     readonly highlightMissingFeedback = signal(false);
 
@@ -170,10 +169,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (result) {
             result.assessmentNote = assessmentNote;
         }
-    }
-
-    get unreferencedFeedbackSuggestions(): Feedback[] {
-        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {
@@ -257,7 +252,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
 
-                const newUrl = this.location.path().replace('/submissions/new/', `/submissions/${this.submission()!.id}/`);
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                // Build the path through the router. Artemis uses path-based routing, so window.location.hash is empty
+                // and using it here rewrites the address to the application root once the submission has loaded.
+                const newUrl = this.router
+                    .createUrlTree(
+                        getLinkToSubmissionAssessment(
+                            ExerciseType.MODELING,
+                            this.courseId,
+                            this.exerciseId,
+                            submission.participation?.id,
+                            submission.id!,
+                            this.examId,
+                            this.exerciseGroupId,
+                        ),
+                        { queryParams: this.route.snapshot.queryParams },
+                    )
+                    .toString();
                 this.location.go(newUrl);
             },
             error: (error: HttpErrorResponse) => {
@@ -270,7 +281,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.loadingInitialSubmission.set(false);
         this.referencedFeedback = [];
         this.unreferencedFeedback.set([]);
-        this.feedbackSuggestions = [];
         this.hasAutomaticFeedback.set(false);
         this.loadingFeedbackSuggestions.set(false);
         this.highlightedElements.set(undefined!);
@@ -323,8 +333,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.isLoading.set(false);
 
-        const automaticFeedbackCount = this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
-        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
+        const feedbacks = this.result()?.feedbacks ?? [];
+        const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;
+        // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL), so an
+        // adapted suggestion still counts toward automaticFeedbackCount above even though it is no longer a fresh
+        // assessment. Excluding any feedback that already carries a suggestion marker keeps this a genuine
+        // "nothing assessed yet" check instead of re-fetching (and re-appending) suggestions on every reload.
+        const hasPersistedSuggestions = feedbacks.some((feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION);
+        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && !hasPersistedSuggestions && feedbacks.length === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
         }
     }
@@ -338,9 +354,22 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             if (this.submission() !== submissionAtStart || this.result() !== resultAtStart) {
                 return;
             }
-            this.feedbackSuggestions = suggestions;
+            // Feedback suggestions are automatically accepted: add them directly to the editable feedback list.
             if (this.result()) {
-                this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+                // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL),
+                // so an assessment containing only already-persisted suggestions still satisfies the "automatic
+                // feedback only" reload gate above and fetches Athena again. Skip anything already present so a
+                // reload cannot append the same suggestion twice.
+                const existingFeedback = this.result()?.feedbacks ?? [];
+                const newSuggestions = suggestions.filter((suggestion) =>
+                    existingFeedback.every(
+                        (feedback) =>
+                            feedback.reference !== suggestion.reference ||
+                            Feedback.stripSuggestionPrefix(feedback.text ?? '') !== Feedback.stripSuggestionPrefix(suggestion.text ?? '') ||
+                            feedback.detailText !== suggestion.detailText,
+                    ),
+                );
+                this.result()!.feedbacks = [...existingFeedback, ...newSuggestions];
                 this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);
@@ -388,7 +417,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
         this.unreferencedFeedback.set(feedback.filter((feedbackElement) => !feedbackElement.reference));
 
-        this.hasAutomaticFeedback.set(feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC));
+        // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
+        // AUTOMATIC type check alone misses them on reload - it only ever sees suggestions merged in this session.
+        this.hasAutomaticFeedback.set(
+            feedback.some(
+                (feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC || Feedback.getFeedbackSuggestionType(feedbackItem) !== FeedbackSuggestionType.NO_SUGGESTION,
+            ),
+        );
         this.highlightAutomaticFeedback();
 
         if (this.highlightMissingFeedback()) {
@@ -417,10 +452,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
-    }
-
-    removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
     }
 
     get readOnly(): boolean {

@@ -11,16 +11,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.LockModeType;
-
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -285,8 +281,19 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "examUsers", "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExamUsersAndExerciseGroupsAndExercisesById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
-    Optional<Exam> findWithStudentExamsExercisesById(long id);
+    /**
+     * Reads the single flag the exam preparation needs off the exam, rather than the whole row: the exam texts are
+     * unbounded in length and none of them is read there.
+     *
+     * @param examId the id of the exam
+     * @return whether the exam is a test exam, empty if no exam with that id exists
+     */
+    @Query("""
+            SELECT exam.testExam
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<Boolean> findIsTestExamById(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT e
@@ -321,8 +328,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
                 )
             """)
     Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("userId") long userId, Pageable pageable);
@@ -342,8 +349,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND e.exerciseGroups IS NOT EMPTY
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
                 )
             """)
     Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("userId") long userId, Pageable pageable);
@@ -360,8 +367,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam e
             WHERE (
                 CONCAT(e.id, '') = :searchTerm
-                OR e.title LIKE %:searchTerm%
-                OR e.course.title LIKE %:searchTerm%
+                OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
             )
             """)
     Page<Exam> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
@@ -379,8 +386,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE e.exerciseGroups IS NOT EMPTY
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(e.course.title) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
                 )
             """)
     Page<Exam> queryNonEmptyBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
@@ -445,7 +452,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam e
             WHERE e.id = :examId
             """)
-    @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
     String getExamTitle(@Param("examId") long examId);
 
     @Query("""
@@ -499,22 +505,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @NonNull
     default Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {
         return getValueElseThrow(findWithExamUsersAndExerciseGroupsAndExercisesById(examId), examId);
-    }
-
-    /**
-     * Locks the exam row for the transaction, so an exercise-group move and a student exam generation cannot
-     * interleave (both read and write the same exercise-group/exercise data).
-     *
-     * @param examId the id of the exam
-     * @return the locked exam
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT exam FROM Exam exam WHERE exam.id = :examId")
-    Optional<Exam> findByIdWithPessimisticWriteLock(@Param("examId") long examId);
-
-    @NonNull
-    default Exam findByIdWithPessimisticWriteLockElseThrow(long examId) {
-        return getValueElseThrow(findByIdWithPessimisticWriteLock(examId), examId);
     }
 
     /**

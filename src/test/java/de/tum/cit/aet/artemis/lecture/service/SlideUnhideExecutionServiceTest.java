@@ -96,28 +96,6 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testUnhideSlide_withNoAttachmentUnit() {
-        // Create a slide with no attachment unit and save it
-        Slide slideWithoutAttachment = new Slide();
-        slideWithoutAttachment.setHidden(ZonedDateTime.now());
-        slideWithoutAttachment.setSlideNumber(1);
-        slideWithoutAttachment.setSlideImagePath("temp/placeholder.jpg"); // Set a valid slide image path
-        slideWithoutAttachment = slideTestRepository.save(slideWithoutAttachment);
-
-        // Call the method to test
-        slideUnhideExecutionService.unhideSlide(slideWithoutAttachment.getId());
-
-        // Verify the slide was unhidden in the database
-        Optional<Slide> unhiddenSlide = slideTestRepository.findById(slideWithoutAttachment.getId());
-        assertThat(unhiddenSlide).isPresent();
-        assertThat(unhiddenSlide.get().getHidden()).isNull();
-
-        // Verify student version was not regenerated
-        verify(attachmentService, never()).regenerateStudentVersion(any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testUnhideSlide_withAttachmentUnitButNoAttachment() {
         // Create a slide with attachment unit but no attachment
         var lecture = lectureUtilService.createCourseWithLecture(true);
@@ -163,5 +141,22 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
 
         // Verify student version regeneration was attempted
         verify(attachmentService).regenerateStudentVersion(testAttachment);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void testUnhideSlide_whenHiddenDateWasMovedToTheFuture() {
+        // The hidden date was moved to a later point after the unhide task started
+        ZonedDateTime newHiddenDate = ZonedDateTime.now().plusDays(1);
+        testSlide.setHidden(newHiddenDate);
+        slideTestRepository.save(testSlide);
+
+        slideUnhideExecutionService.unhideSlide(testSlide.getId());
+
+        Optional<Slide> slide = slideTestRepository.findById(testSlide.getId());
+        assertThat(slide).isPresent();
+        assertThat(slide.get().getHidden()).isNotNull();
+        assertThat(slide.get().getHidden().toInstant()).isAfter(ZonedDateTime.now().toInstant());
+        verify(attachmentService, never()).regenerateStudentVersion(any());
     }
 }

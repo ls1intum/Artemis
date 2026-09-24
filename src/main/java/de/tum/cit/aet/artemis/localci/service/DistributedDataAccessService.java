@@ -228,10 +228,12 @@ public class DistributedDataAccessService {
         // Get current processing jobs to enrich agent information with accurate running jobs data
         List<BuildJobQueueItem> currentProcessingJobs = getProcessingJobs();
 
-        // The identifiers of the clients and of the cluster members the provider currently sees. Only core nodes can
-        // answer the first one.
-        Set<String> connectedClientIdentifiers = distributedDataProvider.getConnectedClientNames();
-        Set<String> liveNodeIdentifiers = distributedDataProvider.getClusterMemberAddresses();
+        // The identifiers of the clients and of the cluster members the provider currently sees, read as one snapshot.
+        // Only core nodes can answer the first one. Asking for the two separately made Redis answer the same
+        // CLIENT LIST twice per call, on a method that runs on every build agent update.
+        var membership = distributedDataProvider.getClusterMembership();
+        Set<String> connectedClientIdentifiers = membership.connectedClientNames();
+        Set<String> liveNodeIdentifiers = membership.clusterMemberAddresses();
 
         // Enrich and filter agents
         return allAgents.stream()
@@ -261,7 +263,7 @@ public class DistributedDataAccessService {
      * which is the node identity and therefore exactly what the agent stored as its {@code memberAddress}; its short
      * name never appears.</li>
      * </ul>
-     * Accepting any of the three avoids asking the provider which shape it uses, which is the backend-specific knowledge
+     * Accepting any of the three avoids asking the provider which shape it uses, which is the provider-specific knowledge
      * this abstraction exists to keep out of the call sites.
      *
      * @param agent                      the stored build agent entry

@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRe
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -101,6 +102,25 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ParticipationUtilService {
+
+    @Autowired
+    private ParticipationService participationServiceForEagerResults;
+
+    /**
+     * Finds a student's participation with its results, and fails the test if there is none.
+     * <p>
+     * Lives here rather than in {@code ParticipationService} because only tests want the throwing variant: production
+     * code handles the empty case itself.
+     *
+     * @param exercise the exercise the participation belongs to
+     * @param student  the student whose participation to find
+     * @return the participation, with submissions and results
+     * @throws EntityNotFoundException if the student has no participation in that exercise
+     */
+    public StudentParticipation findOneByExerciseAndStudentWithEagerResultsElseThrow(Exercise exercise, User student) {
+        return participationServiceForEagerResults.findOneByExerciseAndStudentAnyStateWithEagerResults(exercise, student)
+                .orElseThrow(() -> new EntityNotFoundException("Could not find a participation to exercise " + exercise.getId() + " and user " + student.getLogin() + "!"));
+    }
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
@@ -162,7 +182,7 @@ public class ParticipationUtilService {
     private UserUtilService userUtilService;
 
     @Autowired
-    private ObjectMapper mapper;
+    private JsonMapper mapper;
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -284,7 +304,8 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                userUtilService.getUserByLogin(login).getId(), false);
         if (storedParticipation.isEmpty()) {
             User user = userUtilService.getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -292,7 +313,8 @@ public class ParticipationUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+            storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                    userUtilService.getUserByLogin(login).getId(), false);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
@@ -306,7 +328,8 @@ public class ParticipationUtilService {
      * @return The created StudentParticipation with eagerly loaded submissions, results and assessors
      */
     public StudentParticipation createAndSaveParticipationForExerciseInTheFuture(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
+                userUtilService.getUserByLogin(login).getId(), false);
         storedParticipation.ifPresent(studentParticipation -> studentParticipationRepo.delete(studentParticipation));
         User user = userUtilService.getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
@@ -314,7 +337,8 @@ public class ParticipationUtilService {
         participation.setParticipant(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
-        storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
+        storedParticipation = studentParticipationRepo.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), userUtilService.getUserByLogin(login).getId(),
+                false);
         assertThat(storedParticipation).isPresent();
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
     }
@@ -489,12 +513,11 @@ public class ParticipationUtilService {
      * @return The updated Result
      */
     public Result addSampleFeedbackToResults(Result result) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(feedback1);
-        feedbacks.add(feedback2);
+        feedbacks.add(new Feedback().detailText("detail1"));
+        feedbacks.add(new Feedback().detailText("detail2"));
         result.addFeedbacks(feedbacks);
+        feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(withCorrectionRound(result));
     }
 
@@ -508,14 +531,15 @@ public class ParticipationUtilService {
     // @formatter:off
     public Result addVariousFeedbackTypeFeedbacksToResult(Result result) {
         // The order of declaration here should be the same order as in FeedbackType for each enum type
-        List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
+        List<Feedback> feedbacks = Arrays.asList(
             new Feedback().detailText("manual").type(FeedbackType.MANUAL),
             new Feedback().detailText("manual_unreferenced").type(FeedbackType.MANUAL_UNREFERENCED),
             new Feedback().detailText("automatic_adapted").type(FeedbackType.AUTOMATIC_ADAPTED),
             new Feedback().detailText("automatic").type(FeedbackType.AUTOMATIC)
-        ));
+        );
 
         result.addFeedbacks(feedbacks);
+        feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(withCorrectionRound(result));
     }
 
@@ -527,13 +551,14 @@ public class ParticipationUtilService {
      * @return The updated Result
      */
     public Result addVariousVisibilityFeedbackToResult(Result result) {
-        List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
+        List<Feedback> feedbacks = Arrays.asList(
             new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE),
             new Feedback().detailText("never1").visibility(Visibility.NEVER),
             new Feedback().detailText("always1").visibility(Visibility.ALWAYS)
-        ));
+        );
 
         result.addFeedbacks(feedbacks);
+        feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(withCorrectionRound(result));
     }
     // @formatter:on
@@ -546,8 +571,8 @@ public class ParticipationUtilService {
      * @return The updated Result
      */
     public Result addFeedbackToResult(Feedback feedback, Result result) {
-        feedbackRepo.save(feedback);
         result.addFeedback(feedback);
+        feedbackRepo.save(feedback);
         return resultRepo.save(withCorrectionRound(result));
     }
 
@@ -603,8 +628,8 @@ public class ParticipationUtilService {
     public Result addFeedbackToResults(Result result) {
         List<Feedback> feedback = ParticipationFactory.generateStaticCodeAnalysisFeedbackList(5);
         feedback.addAll(ParticipationFactory.generateFeedback());
-        feedback = feedbackRepo.saveAll(feedback);
         result.addFeedbacks(feedback);
+        feedbackRepo.saveAll(feedback);
         return resultRepo.save(withCorrectionRound(result));
     }
 

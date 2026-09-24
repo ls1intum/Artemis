@@ -240,13 +240,8 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     }
 
     @Test
-    void getFilesAtCommit_withoutACommitId_isABadRequest() {
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.getFilesAtCommit(null, null, PARTICIPATION_ID, null));
-    }
-
-    @Test
     void getFilesAtCommit_withoutAParticipationId_isABadRequest() {
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", null, null, null));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", null, null));
     }
 
     @Test
@@ -256,7 +251,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(user);
         when(repositoryService.getFilesContentAtCommit(exercise, "abc123", null, participation, null)).thenReturn(java.util.Map.of("Main.java", "content"));
 
-        var response = resource.getFilesAtCommit("abc123", null, PARTICIPATION_ID, null);
+        var response = resource.getFilesAtCommit("abc123", PARTICIPATION_ID, null);
 
         assertThat(response.getBody()).containsEntry("Main.java", "content");
         // Reading the own participation is a student level operation, so no editor check is made.
@@ -271,19 +266,9 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(user);
         doThrow(new AccessForbiddenException("not an editor")).when(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", null, PARTICIPATION_ID, RepositoryType.SOLUTION));
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", PARTICIPATION_ID, RepositoryType.SOLUTION));
 
         verify(repositoryService, never()).getFilesContentAtCommit(any(), any(), any(), any(), any());
-    }
-
-    @Test
-    void getFilesAtCommit_acceptsTheCommitIdFromTheLegacyPath() throws Exception {
-        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
-        when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
-        when(userRepository.getUserWithAuthorities()).thenReturn(user);
-        when(repositoryService.getFilesContentAtCommit(exercise, "abc123", null, participation, null)).thenReturn(java.util.Map.of());
-
-        assertThat(resource.getFilesAtCommit(null, "abc123", PARTICIPATION_ID, null).getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     // --- the editor endpoints --------------------------------------------------------------------------------------
@@ -441,7 +426,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     @Test
     void updateParticipationFiles_withoutPermission_isRefused() throws Exception {
         withAccessibleParticipation();
-        doThrow(new AccessForbiddenException("not yours")).when(repositoryAccessService).checkAccessRepositoryElseThrow(any(), any(), any(), any());
+        doThrow(new AccessForbiddenException("not yours")).when(repositoryAccessService).checkAccessRepositoryElseThrow(any(), any(), any(ProgrammingExercise.class), any());
 
         assertThatExceptionOfType(ResponseStatusException.class).isThrownBy(() -> resource.updateParticipationFiles(PARTICIPATION_ID, List.of(), false))
                 .satisfies(exception -> assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
@@ -528,7 +513,35 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "an older failure"));
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(earlier);
-        when(buildLogService.getLatestBuildLogs(earlier)).thenReturn(logs);
+        when(buildLogService.getBuildLogs(earlier, 80L)).thenReturn(logs);
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
+    }
+
+    @Test
+    void getBuildLogs_forAFailedResultAfterASuccessfulRebuild_returnsTheFailedResultLogs() {
+        // A successful rebuild changes the submission's current flag, but an explicit result request still addresses the retained failed-result log.
+        participation.setSubmissions(Set.of(submissionWithResult(50L, 90L, false)));
+        var submissionWithFailedResult = submissionWithResult(50L, 80L, false);
+        submissionWithFailedResult.setParticipation(participation);
+        var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.parse("2026-09-19T10:15:30+02:00"), "the earlier build failed"));
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(submissionWithFailedResult);
+        when(buildLogService.getBuildLogs(submissionWithFailedResult, 80L)).thenReturn(logs);
+
+        assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
+    }
+
+    @Test
+    void getBuildLogs_forAnEarlierResultOfTheLatestSubmission_returnsThatResultsLogs() {
+        var submission = submissionWithResult(50L, 90L, true);
+        var earlierResult = new Result();
+        earlierResult.setId(80L);
+        submission.setResults(Set.of(earlierResult, submission.getLatestResult()));
+        participation.setSubmissions(Set.of(submission));
+        var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "the earlier failure of the same submission"));
+        when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
+        when(buildLogService.getBuildLogs(submission, 80L)).thenReturn(logs);
 
         assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }

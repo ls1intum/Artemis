@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.core.service.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -140,5 +143,24 @@ class WebsocketBrokerReconnectionServiceTest {
         websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
 
         verify(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), eq(WebsocketBrokerReconnectionService.RECONNECT_INTERVAL));
+    }
+
+    @Test
+    void shouldIgnoreBrokerLossDuringShutdown() {
+        websocketBrokerReconnectionService.onContextClosed();
+
+        websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
+
+        // only the initial status is published, and no reconnect is attempted
+        verify(brokerStatusMap, times(1)).put(any(), any());
+        verify(taskScheduler, never()).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), eq(WebsocketBrokerReconnectionService.RECONNECT_INTERVAL));
+        verifyNoInteractions(tcpClientSupplier);
+    }
+
+    @Test
+    void shouldNotFailOnDestroyWhenTheDistributedDataProviderIsShutDown() {
+        doThrow(new IllegalStateException("the distributed data provider is shut down")).when(brokerStatusMap).remove(any());
+
+        assertThatCode(() -> websocketBrokerReconnectionService.destroy()).doesNotThrowAnyException();
     }
 }

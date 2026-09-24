@@ -21,9 +21,9 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -66,10 +66,10 @@ class ProgrammingExerciseParticipationServiceTest {
     private ParticipationTestRepository participationRepository;
 
     @Mock
-    private TeamRepository teamRepository;
+    private GitService gitService;
 
     @Mock
-    private GitService gitService;
+    private BareGitRepositoryService bareGitRepositoryService;
 
     @Mock
     private VersionControlService versionControlService;
@@ -90,7 +90,7 @@ class ProgrammingExerciseParticipationServiceTest {
     @BeforeEach
     void setUp() {
         participationService = new ProgrammingExerciseParticipationService(solutionParticipationRepository, templateParticipationRepository, studentParticipationRepository,
-                participationRepository, teamRepository, gitService, Optional.of(versionControlService), resultRepository, submissionRepository, userRepository);
+                participationRepository, gitService, bareGitRepositoryService, Optional.of(versionControlService), resultRepository, submissionRepository, userRepository);
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
     }
@@ -153,7 +153,7 @@ class ProgrammingExerciseParticipationServiceTest {
     void getCommitInfos_whenTheRepositoryCannotBeRead_reportsNoCommitsRatherThanFailing() throws Exception {
         // The commit list is shown next to a participation; failing to read it must not take down the page around it.
         var uri = new LocalVCRepositoryUri(java.net.URI.create("https://artemis.example.com"), "ABC", "abc-student");
-        when(gitService.getCommitInfos(uri)).thenThrow(new CanceledException("the repository is locked"));
+        when(bareGitRepositoryService.getCommitInfos(uri)).thenThrow(new CanceledException("the repository is locked"));
 
         assertThat(participationService.getCommitInfos(uri)).isEmpty();
     }
@@ -296,56 +296,6 @@ class ProgrammingExerciseParticipationServiceTest {
     }
 
     @Test
-    void findStudentParticipation_forAnIndividualExercise_looksTheStudentUpByTheirLogin() {
-        var studentParticipation = new ProgrammingExerciseStudentParticipation();
-        exercise.setMode(de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL);
-        when(studentParticipationRepository.findByExerciseIdAndStudentLogin(EXERCISE_ID, "ge12abc")).thenReturn(Optional.of(studentParticipation));
-
-        assertThat(participationService.findStudentParticipationByExerciseAndStudentId(exercise, "ge12abc")).isSameAs(studentParticipation);
-    }
-
-    @Test
-    void findStudentParticipation_forATeamExercise_looksUpTheTeamTheStudentBelongsTo() {
-        // In team mode the repository belongs to the team, not to the student; looking it up by login would find nothing at all.
-        var team = new de.tum.cit.aet.artemis.exercise.domain.Team();
-        team.setId(4L);
-        var teamParticipation = new ProgrammingExerciseStudentParticipation();
-        exercise.setMode(de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM);
-        when(teamRepository.findOneByExerciseIdAndUserLogin(EXERCISE_ID, "ge12abc")).thenReturn(Optional.of(team));
-        when(studentParticipationRepository.findByExerciseIdAndTeamId(EXERCISE_ID, 4L)).thenReturn(Optional.of(teamParticipation));
-
-        assertThat(participationService.findStudentParticipationByExerciseAndStudentId(exercise, "ge12abc")).isSameAs(teamParticipation);
-    }
-
-    @Test
-    void findStudentParticipation_forAStudentWhoIsInNoTeam_isReported() {
-        exercise.setMode(de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM);
-        when(teamRepository.findOneByExerciseIdAndUserLogin(EXERCISE_ID, "ge12abc")).thenReturn(Optional.empty());
-
-        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class)
-                .isThrownBy(() -> participationService.findStudentParticipationByExerciseAndStudentId(exercise, "ge12abc"));
-    }
-
-    @Test
-    void findStudentParticipation_forAStudentWhoNeverParticipated_isReported() {
-        exercise.setMode(de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.INDIVIDUAL);
-        when(studentParticipationRepository.findByExerciseIdAndStudentLogin(EXERCISE_ID, "ge12abc")).thenReturn(Optional.empty());
-
-        assertThatExceptionOfType(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class)
-                .isThrownBy(() -> participationService.findStudentParticipationByExerciseAndStudentId(exercise, "ge12abc"));
-    }
-
-    @Test
-    void findStudentParticipations_returnsEveryParticipationTheStudentHasInTheExercise() {
-        // A practice run after the due date is a second participation, and an exercise reset creates further ones.
-        var first = new ProgrammingExerciseStudentParticipation();
-        var second = new ProgrammingExerciseStudentParticipation();
-        when(studentParticipationRepository.findAllByExerciseIdAndStudentLogin(EXERCISE_ID, "ge12abc")).thenReturn(List.of(first, second));
-
-        assertThat(participationService.findStudentParticipationsByExerciseAndStudentId(exercise, "ge12abc")).containsExactly(first, second);
-    }
-
-    @Test
     void findTeamParticipation_returnsWhateverTheRepositoryFinds() {
         var teamParticipation = new ProgrammingExerciseStudentParticipation();
         var user = new de.tum.cit.aet.artemis.account.domain.User();
@@ -386,7 +336,7 @@ class ProgrammingExerciseParticipationServiceTest {
     void getCommitInfos_returnsWhatTheRepositoryHolds() throws Exception {
         var uri = new LocalVCRepositoryUri(java.net.URI.create("https://artemis.example.com"), "ABC", "abc-student");
         var commit = new de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO("hash", "message", ZonedDateTime.now(), "Anna", "anna@example.com");
-        when(gitService.getCommitInfos(uri)).thenReturn(List.of(commit));
+        when(bareGitRepositoryService.getCommitInfos(uri)).thenReturn(List.of(commit));
 
         assertThat(participationService.getCommitInfos(uri)).containsExactly(commit);
     }

@@ -127,7 +127,7 @@ services:
       EXPECTED_CLUSTER_NODE_COUNT: '2'
       # node-2 and node-3 both run a build agent, each with its own short name (see node2.env / node3.env).
       EXPECTED_MIN_BUILD_AGENTS: '2'
-      # Which distributed data backend the stack runs on. ClusterFormation.spec.ts uses it to decide which node-identity
+      # Which distributed data provider the stack runs on. ClusterFormation.spec.ts uses it to decide which node-identity
       # shape it may assert: Hazelcast publishes `[host]:port`, the Redis provider publishes a client name with no port.
       DISTRIBUTED_DATA_PROVIDER: '${DISTRIBUTED_DATA_PROVIDER:-hazelcast}'
       # Direct per-core-node URLs, so the cross-node specs can address one specific node instead of whichever

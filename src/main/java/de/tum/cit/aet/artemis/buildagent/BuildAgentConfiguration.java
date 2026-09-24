@@ -10,6 +10,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 
@@ -56,6 +57,9 @@ public class BuildAgentConfiguration {
     private volatile boolean dockerAvailable = false;
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
+
+    /** Everything that is not a digit, removed to read the number out of a Docker flag value such as {@code 2g}. */
+    private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
@@ -137,10 +141,10 @@ public class BuildAgentConfiguration {
             String value = defaultDockerFlags.get(i + 1);
 
             switch (flag) {
-                case "--cpus" -> cpuCount = Long.parseLong(value.replaceAll("[^0-9]", ""));
+                case "--cpus" -> cpuCount = Long.parseLong(NON_DIGIT.matcher(value).replaceAll(""));
                 case "--memory" -> memory = parseMemoryString(value);
                 case "--memory-swap" -> memorySwap = parseMemoryString(value);
-                case "--pids-limit" -> pidsLimit = Long.parseLong(value.replaceAll("[^0-9]", ""));
+                case "--pids-limit" -> pidsLimit = Long.parseLong(NON_DIGIT.matcher(value).replaceAll(""));
                 default -> throw new LocalCIException("Unknown docker flag: " + flag);
             }
         }
@@ -242,13 +246,13 @@ public class BuildAgentConfiguration {
 
     private static long parseMemoryString(String memoryString) {
         if (memoryString.endsWith("g\"")) {
-            return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) * 1024L * 1024L * 1024L;
+            return Long.parseLong(NON_DIGIT.matcher(memoryString).replaceAll("")) * 1024L * 1024L * 1024L;
         }
         else if (memoryString.endsWith("m\"")) {
-            return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) * 1024L * 1024L;
+            return Long.parseLong(NON_DIGIT.matcher(memoryString).replaceAll("")) * 1024L * 1024L;
         }
         else if (memoryString.endsWith("k\"")) {
-            return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) * 1024L;
+            return Long.parseLong(NON_DIGIT.matcher(memoryString).replaceAll("")) * 1024L;
         }
         else {
             return Long.parseLong(memoryString);
