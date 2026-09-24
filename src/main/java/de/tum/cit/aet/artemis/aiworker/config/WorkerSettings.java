@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
 import java.time.Duration;
+import java.util.regex.Pattern;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.ConstructorBinding;
@@ -15,9 +16,9 @@ public record WorkerSettings(String id, String image, @DefaultValue("runc") Stri
         @DefaultValue("256") long pids, @DefaultValue("PT10S") Duration heartbeatInterval, @DefaultValue("PT45S") Duration connectionGrace,
         @DefaultValue("PT2M") Duration shutdownTimeout, @DefaultValue("1") int maxConcurrentExecutions, String workload, String profile, @DefaultValue("1") int workloadVersion) {
 
-    private static final java.util.regex.Pattern WORKER_ID_PATTERN = java.util.regex.Pattern.compile("[a-zA-Z0-9_-]{1,64}");
+    private static final Pattern WORKER_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{1,64}");
 
-    private static final java.util.regex.Pattern IMAGE_PATTERN = java.util.regex.Pattern.compile("(?:[^\\s]+@)?sha256:[a-f0-9]{64}");
+    private static final Pattern IMAGE_PATTERN = Pattern.compile("(?:[^\\s]+@)?sha256:[a-f0-9]{64}");
 
     public WorkerSettings(String id, String image, String runtime, long memoryBytes, long cpuQuota, long pids, Duration heartbeatInterval, Duration connectionGrace,
             Duration shutdownTimeout, int maxConcurrentExecutions, String workload, String profile) {

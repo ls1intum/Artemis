@@ -337,6 +337,10 @@ public class AgentLoopRunner {
             }
 
             if (!response.hasToolCalls()) {
+                if (isTruncatedByTokenLimit(response)) {
+                    emit(stepListener, "The AI response was cut off before it could finish.");
+                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                }
                 // Append this closing turn before returning so a caller carrying the conversation forward does not lose it.
                 emit(stepListener, "Preparing the exercise for verification.");
                 List<Message> completedConversation = new ArrayList<>(conversation);
@@ -435,8 +439,7 @@ public class AgentLoopRunner {
                 // Unknown tool or malformed arguments surface here: feed the error back so the model can self-correct rather than failing the run on one bad call.
                 consecutiveToolFailures++;
                 log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}, type: {})", turn, consecutiveToolFailures, e.getClass().getSimpleName());
-                // Tool names are model-chosen identifiers, not user content, so naming them here is safe; arguments and paths are not (see AgentToolProgress).
-                emit(stepListener, "The agent tried an unavailable action (" + AgentToolProgress.attemptedNames(response) + ") and is correcting it.");
+                emit(stepListener, "The agent tried an unavailable action and is correcting it.");
                 AssistantMessage failedTurn = response.getResult().getOutput();
                 conversation.add(failedTurn);
                 // Every requested call id must be answered, or the chat-completions tool-pairing contract is violated on the next request.
