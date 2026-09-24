@@ -1,13 +1,11 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { map } from 'rxjs/operators';
-import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { convertTutorialGroupFreePeriodDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
-
-type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
+import { TutorialGroupFreePeriodApi } from 'app/openapi/api/tutorial-group-free-period-api';
+import { TutorialGroupFreePeriod } from 'app/openapi/model/tutorial-group-free-period';
+import { TutorialGroupFreePeriodRequest } from 'app/openapi/model/tutorial-group-free-period-request';
+import { TutorialGroupFreePeriodSessionCount } from 'app/openapi/model/tutorial-group-free-period-session-count';
+import { TutorialGroupSessionCount } from 'app/openapi/model/tutorial-group-session-count';
 
 /** The server reads and writes the day of a holiday as a plain calendar date, without a zone. */
 const SERVER_DATE_FORMAT = 'YYYY-MM-DD';
@@ -19,48 +17,20 @@ const SERVER_DATE_FORMAT = 'YYYY-MM-DD';
  */
 const SERVER_DATE_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
-export class TutorialGroupFreePeriodDTO {
+/** A holiday as the dialog submits it. */
+export interface TutorialGroupFreePeriodDTO {
     /** Carried as Dayjs rather than Date so the value keeps the zone it was chosen in until it is written out. */
-    public startDate?: dayjs.Dayjs;
-    public endDate?: dayjs.Dayjs;
-    public reason?: string;
-}
-
-/** How many sessions one free period covers, counted by overlap rather than by whole days. */
-export interface TutorialGroupFreePeriodSessionCount {
-    freePeriodId: number;
-    count: number;
-}
-
-/** How many sessions a course holds on one day, as counted in the time zone of the tutorial groups configuration. */
-export interface TutorialGroupSessionCount {
-    /** `YYYY-MM-DD`, so it can be used as a map key without a zone conversion on the client. */
-    date: string;
-    count: number;
+    startDate: dayjs.Dayjs;
+    endDate: dayjs.Dayjs;
+    reason?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupFreePeriodService {
-    private httpClient = inject(HttpClient);
+    private readonly api = inject(TutorialGroupFreePeriodApi);
 
-    private resourceURL = 'api/tutorialgroup';
-
-    getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<EntityResponseType> {
-        return this.httpClient
-            .get<TutorialGroupFreePeriod>(
-                `${this.resourceURL}/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
-                { observe: 'response' },
-            )
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
-    }
-
-    create(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): Observable<EntityResponseType> {
-        const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
-        return this.httpClient
-            .post<TutorialGroupFreePeriod>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupConfigurationId}/tutorial-free-periods`, copy, {
-                observe: 'response',
-            })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
+    create(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): Observable<TutorialGroupFreePeriod> {
+        return this.api.create(courseId, tutorialGroupConfigurationId, toRequest(tutorialGroupFreePeriodDTO));
     }
 
     update(
@@ -68,24 +38,12 @@ export class TutorialGroupFreePeriodService {
         tutorialGroupConfigurationId: number,
         tutorialGroupFreePeriodId: number,
         tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO,
-    ): Observable<EntityResponseType> {
-        const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
-        return this.httpClient
-            .put<TutorialGroupFreePeriod>(
-                `${this.resourceURL}/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
-                copy,
-                {
-                    observe: 'response',
-                },
-            )
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
+    ): Observable<TutorialGroupFreePeriod> {
+        return this.api.update(courseId, tutorialGroupConfigurationId, tutorialGroupFreePeriodId, toRequest(tutorialGroupFreePeriodDTO));
     }
 
-    delete(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(
-            `${this.resourceURL}/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
-            { observe: 'response' },
-        );
+    delete(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<void> {
+        return this.api.delete(courseId, tutorialGroupConfigurationId, tutorialGroupFreePeriodId);
     }
 
     /**
@@ -95,8 +53,7 @@ export class TutorialGroupFreePeriodService {
      * holiday in the list. Days without a session are omitted by the server rather than returned as zero.
      */
     getSessionCounts(courseId: number, from: dayjs.Dayjs, to: dayjs.Dayjs): Observable<TutorialGroupSessionCount[]> {
-        const params = new HttpParams().set('from', from.format(SERVER_DATE_FORMAT)).set('to', to.format(SERVER_DATE_FORMAT));
-        return this.httpClient.get<TutorialGroupSessionCount[]>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/session-counts`, { params });
+        return this.api.getSessionCounts(courseId, from.format(SERVER_DATE_FORMAT), to.format(SERVER_DATE_FORMAT));
     }
 
     /**
@@ -109,39 +66,25 @@ export class TutorialGroupFreePeriodService {
      * again; without it, reopening a saved holiday unchanged would report that it cancels nothing.
      */
     getOverlappingSessionCount(courseId: number, from: dayjs.Dayjs, to: dayjs.Dayjs, editedFreePeriodId?: number): Observable<number> {
-        let params = new HttpParams().set('from', from.format(SERVER_DATE_TIME_FORMAT)).set('to', to.format(SERVER_DATE_TIME_FORMAT));
-        if (editedFreePeriodId !== undefined) {
-            params = params.set('editedFreePeriodId', editedFreePeriodId);
-        }
-        return this.httpClient.get<number>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/overlapping-session-count`, { params });
+        return this.api.getOverlappingSessionCount(courseId, from.format(SERVER_DATE_TIME_FORMAT), to.format(SERVER_DATE_TIME_FORMAT), editedFreePeriodId);
     }
 
     /** Counts the sessions every free period of the course covers, in one request rather than one per holiday. */
     getSessionCountsPerFreePeriod(courseId: number): Observable<TutorialGroupFreePeriodSessionCount[]> {
-        return this.httpClient.get<TutorialGroupFreePeriodSessionCount[]>(`${this.resourceURL}/courses/${courseId}/tutorial-free-periods/session-counts-per-period`);
+        return this.api.getSessionCountsPerFreePeriod(courseId);
     }
+}
 
-    private convertTutorialGroupFreePeriodResponseDatesFromServer(res: HttpResponse<TutorialGroupFreePeriod>): HttpResponse<TutorialGroupFreePeriod> {
-        if (res.body) {
-            convertTutorialGroupFreePeriodDatesFromServer(res.body);
-        }
-        return res;
-    }
-
-    /**
-     * Writes the bounds as the wall clock of the zone they were chosen in.
-     *
-     * Dayjs formats in its own zone, so a value read in the course's zone stays that way. Going through a Date first
-     * would hand the formatting to the browser's zone and shift the holiday for anyone not sitting in the course's.
-     */
-    private convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriodDTO {
-        if (tutorialGroupFreePeriodDTO) {
-            return cloneWith(tutorialGroupFreePeriodDTO, {
-                startDate: tutorialGroupFreePeriodDTO.startDate?.format(SERVER_DATE_TIME_FORMAT),
-                endDate: tutorialGroupFreePeriodDTO.endDate?.format(SERVER_DATE_TIME_FORMAT),
-            });
-        } else {
-            return tutorialGroupFreePeriodDTO;
-        }
-    }
+/**
+ * Writes the bounds as the wall clock of the zone they were chosen in.
+ *
+ * Dayjs formats in its own zone, so a value read in the course's zone stays that way. Going through a Date first
+ * would hand the formatting to the browser's zone and shift the holiday for anyone not sitting in the course's.
+ */
+function toRequest(tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriodRequest {
+    return {
+        startDate: tutorialGroupFreePeriodDTO.startDate.format(SERVER_DATE_TIME_FORMAT),
+        endDate: tutorialGroupFreePeriodDTO.endDate.format(SERVER_DATE_TIME_FORMAT),
+        reason: tutorialGroupFreePeriodDTO.reason,
+    };
 }

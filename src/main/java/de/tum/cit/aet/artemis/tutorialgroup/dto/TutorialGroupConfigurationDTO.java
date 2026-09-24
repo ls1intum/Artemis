@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing the {@link TutorialGroupsConfiguration}.
@@ -67,6 +68,9 @@ public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPe
      * @param end    end date-time in ISO-8601 format
      * @param reason optional reason for the free period
      */
+    // Named apart from the top-level TutorialGroupFreePeriodDTO, which the free period endpoints return: the spec names schemas
+    // by simple class name, so the two records would otherwise share one schema and one of them would be documented wrongly.
+    @Schema(name = "TutorialGroupConfigurationFreePeriodDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupFreePeriodDTO(Long id, @NotNull String start, @NotNull String end, String reason) {
 

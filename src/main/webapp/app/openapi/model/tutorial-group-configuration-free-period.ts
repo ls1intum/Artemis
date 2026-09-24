@@ -9,7 +9,9 @@
  */
 
 
-export interface TutorialGroupSessionCount {
-    date: string;
-    count: number;
+export interface TutorialGroupConfigurationFreePeriod {
+    id?: number;
+    start: string;
+    end: string;
+    reason?: string;
 }

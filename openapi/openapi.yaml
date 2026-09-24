@@ -2105,7 +2105,7 @@ components:
         usePublicTutorialGroupChannels: {type: boolean}
         tutorialGroupFreePeriods:
           type: array
-          items: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+          items: {$ref: '#/components/schemas/TutorialGroupConfigurationFreePeriod'}
           uniqueItems: true
       required: [tutorialPeriodEndInclusive, tutorialPeriodStartInclusive, usePublicTutorialGroupChannels,
         useTutorialGroupChannels]
@@ -2370,6 +2370,14 @@ components:
           type: array
           items: {$ref: '#/components/schemas/AnswerOptionWithoutSolution'}
         singleChoice: {type: boolean}
+    TutorialGroupConfigurationFreePeriod:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        start: {type: string}
+        end: {type: string}
+        reason: {type: string}
+      required: [end, start]
     QuizQuestionTraining:
       type: object
       properties:
@@ -2505,7 +2513,7 @@ components:
       properties:
         date: {type: string, format: date}
         count: {type: integer, format: int64}
-      required: [count]
+      required: [count, date]
     ChecklistActionRequest:
       type: object
       description: Request to apply an AI-powered checklist action to the problem
@@ -3032,7 +3040,7 @@ components:
       properties:
         freePeriodId: {type: integer, format: int64}
         count: {type: integer, format: int64}
-      required: [count]
+      required: [count, freePeriodId]
     SubmittedAnswerAfterEvaluation:
       discriminator:
         propertyName: type

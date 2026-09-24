@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -12,7 +12,8 @@ import { CourseTitleBarService } from 'app/course/shared/services/course-title-b
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
+import { TutorialGroupFreePeriod as TutorialGroupFreePeriodResponse } from 'app/openapi/model/tutorial-group-free-period';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
 import { TutorialGroupHolidaysComponent } from 'app/tutorialgroup/manage/holidays/tutorial-group-holidays.component';
@@ -31,11 +32,12 @@ const course = { id: 42, title: 'Introduction to Programming', timeZone: TIME_ZO
  * What the configuration service answers with. Read in the course's zone the first holiday is 17 December 00:00 to
  * 23:59 and the second is 1 December, which is past and so hidden by the filter the list opens on.
  */
-const configurationDto = {
+const configurationDto: TutorialGroupConfiguration = {
     id: 7,
-    course: { id: 42 },
     tutorialPeriodStartInclusive: '2025-10-01T00:00:00Z',
     tutorialPeriodEndInclusive: '2026-02-01T00:00:00Z',
+    useTutorialGroupChannels: false,
+    usePublicTutorialGroupChannels: false,
     tutorialGroupFreePeriods: [
         { id: 11, start: '2025-12-16T23:00:00Z', end: '2025-12-17T22:59:00Z', reason: 'Christmas holidays' },
         { id: 12, start: '2025-11-30T23:00:00Z', end: '2025-12-01T22:59:00Z', reason: 'Past holiday' },
@@ -68,7 +70,7 @@ describe('TutorialGroupHolidaysComponent', () => {
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         freePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
 
-        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configurationDto as never })));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(configurationDto));
         vi.spyOn(freePeriodService, 'getSessionCounts').mockReturnValue(of([{ date: '2025-12-17', count: 7 }]));
         vi.spyOn(freePeriodService, 'getOverlappingSessionCount').mockReturnValue(of(7));
         vi.spyOn(freePeriodService, 'getSessionCountsPerFreePeriod').mockReturnValue(of([{ freePeriodId: 11, count: 7 }]));
@@ -113,7 +115,7 @@ describe('TutorialGroupHolidaysComponent', () => {
     });
 
     it('should create the holiday the reader filled in when an empty day is clicked', async () => {
-        const create = vi.spyOn(freePeriodService, 'create').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
+        const create = vi.spyOn(freePeriodService, 'create').mockReturnValue(of({}));
 
         fixture.debugElement.query(By.css('[data-day="2025-12-04"]')).nativeElement.click();
         await settle();
@@ -151,7 +153,7 @@ describe('TutorialGroupHolidaysComponent', () => {
 
     it('should not close a dialog opened after the save it is still waiting on', async () => {
         // Cancelling stays available while saving, so the reader can dismiss one dialog and start another meanwhile.
-        const pending = new Subject<HttpResponse<TutorialGroupFreePeriod>>();
+        const pending = new Subject<TutorialGroupFreePeriodResponse>();
         vi.spyOn(freePeriodService, 'create').mockReturnValue(pending);
 
         fixture.debugElement.query(By.css('[data-day="2025-12-04"]')).nativeElement.click();
@@ -172,7 +174,7 @@ describe('TutorialGroupHolidaysComponent', () => {
         secondReason.dispatchEvent(new Event('input'));
         await settle();
 
-        pending.next(new HttpResponse({ body: new TutorialGroupFreePeriod() }));
+        pending.next({});
         await settle();
 
         // The first save must not shut a dialog it never saw, nor take what has been typed into it.
@@ -181,7 +183,7 @@ describe('TutorialGroupHolidaysComponent', () => {
     });
 
     it('should close the dialog when its own save completes', async () => {
-        const pending = new Subject<HttpResponse<TutorialGroupFreePeriod>>();
+        const pending = new Subject<TutorialGroupFreePeriodResponse>();
         vi.spyOn(freePeriodService, 'create').mockReturnValue(pending);
 
         fixture.debugElement.query(By.css('[data-day="2025-12-04"]')).nativeElement.click();
@@ -192,14 +194,14 @@ describe('TutorialGroupHolidaysComponent', () => {
         await settle();
         query('holiday-submit').nativeElement.click();
 
-        pending.next(new HttpResponse({ body: new TutorialGroupFreePeriod() }));
+        pending.next({});
         await settle();
 
         expect(component['dialogVisible']()).toBe(false);
     });
 
     it('should update the holiday being edited instead of creating another', async () => {
-        const update = vi.spyOn(freePeriodService, 'update').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
+        const update = vi.spyOn(freePeriodService, 'update').mockReturnValue(of({}));
         const create = vi.spyOn(freePeriodService, 'create');
 
         query('holiday-edit').nativeElement.click();
@@ -213,7 +215,7 @@ describe('TutorialGroupHolidaysComponent', () => {
 
     it('should confirm before deleting, and then delete the holiday the reader chose', () => {
         const confirm = vi.spyOn(confirmationService, 'confirm');
-        const remove = vi.spyOn(freePeriodService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const remove = vi.spyOn(freePeriodService, 'delete').mockReturnValue(of(undefined));
 
         query('holiday-delete').nativeElement.click();
 
@@ -313,7 +315,7 @@ describe('TutorialGroupHolidaysComponent', () => {
         it('should stop previewing the new run once the save that created it succeeds', async () => {
             // The save closes the form by setting the page's own signal, which never reaches the child's
             // visibleChange - so the preview of the holiday just created sat on the calendar beside the saved one.
-            vi.spyOn(freePeriodService, 'create').mockReturnValue(of(new HttpResponse({ body: new TutorialGroupFreePeriod() })));
+            vi.spyOn(freePeriodService, 'create').mockReturnValue(of({}));
             component['openCreateDialogForRange'](dayjs('2025-12-22'), dayjs('2025-12-24'), document.createElement('button'));
 
             component['onSave']({ start: dayjs('2025-12-22T00:00'), end: dayjs('2025-12-24T23:59'), reason: 'Winter break' });
@@ -430,7 +432,7 @@ describe('TutorialGroupHolidaysComponent', () => {
         it('should read again when the retry is pressed, and take the page back to normal', async () => {
             await failTheLoad();
 
-            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(new HttpResponse({ body: configurationDto as never })));
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(configurationDto));
             query('holiday-load-retry').nativeElement.click();
             await settle();
 
@@ -442,7 +444,7 @@ describe('TutorialGroupHolidaysComponent', () => {
         it('should not mistake a course with no configuration for a failed read', async () => {
             // A 200 with no body is a course that simply has no tutorial groups configuration. There is nothing to
             // retry there, so it must not be offered - but a holiday still cannot be added.
-            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(new HttpResponse({ body: null as never })));
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(undefined));
             component['loadConfiguration']();
             await settle();
 
@@ -482,7 +484,7 @@ describe('TutorialGroupHolidaysComponent', () => {
             component['loadSessionCounts']();
             component['loadSessionCountsPerHoliday']();
 
-            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(new HttpResponse({ body: null as never })));
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(undefined));
             component['loadConfiguration']();
             await settle();
 
@@ -500,7 +502,7 @@ describe('TutorialGroupHolidaysComponent', () => {
             vi.mocked(freePeriodService.getSessionCounts).mockClear();
             vi.mocked(freePeriodService.getSessionCountsPerFreePeriod).mockClear();
 
-            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(new HttpResponse({ body: null as never })));
+            vi.mocked(configurationService.getOneOfCourse).mockReturnValue(of(undefined));
             component['loadConfiguration']();
             await settle();
 
@@ -515,16 +517,14 @@ describe('TutorialGroupHolidaysComponent', () => {
     it('should keep the newest configuration when an older reload answers last', () => {
         // Deleting and saving in quick succession leaves two reloads in flight; the earlier one still holds the
         // holiday that has just gone, and letting it land last would put it back on the page.
-        const first = new Subject<HttpResponse<unknown>>();
-        const second = new Subject<HttpResponse<unknown>>();
-        vi.mocked(configurationService.getOneOfCourse)
-            .mockReturnValueOnce(first as never)
-            .mockReturnValueOnce(second as never);
+        const first = new Subject<TutorialGroupConfiguration>();
+        const second = new Subject<TutorialGroupConfiguration>();
+        vi.mocked(configurationService.getOneOfCourse).mockReturnValueOnce(first).mockReturnValueOnce(second);
 
         component['loadConfiguration']();
         component['loadConfiguration']();
-        second.next(new HttpResponse({ body: { ...configurationDto, tutorialGroupFreePeriods: [] } as never }));
-        first.next(new HttpResponse({ body: configurationDto as never }));
+        second.next({ ...configurationDto, tutorialGroupFreePeriods: [] });
+        first.next(configurationDto);
 
         expect(component['holidays']()).toHaveLength(0);
     });

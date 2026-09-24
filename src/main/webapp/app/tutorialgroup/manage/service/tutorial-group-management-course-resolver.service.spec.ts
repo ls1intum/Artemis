@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
-import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 
 describe('TutorialGroupManagementResolve', () => {
     let resolver: TutorialGroupManagementCourseResolver;
@@ -45,7 +45,7 @@ describe('TutorialGroupManagementResolve', () => {
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         router = TestBed.inject(Router);
         alertService = TestBed.inject(AlertService);
-        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse<TutorialGroupConfigurationDTO>({})));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(undefined));
     });
 
     it('should navigate instructors to tutorial-groups-checklist if course has no tutorialGroupsConfiguration', () => {
@@ -126,7 +126,7 @@ describe('TutorialGroupManagementResolve', () => {
         course.isAtLeastInstructor = false;
         course.timeZone = 'Europe/Berlin';
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(generateExampleTutorialGroupsConfigurationDTO({ id: 5 })));
         vi.spyOn(router, 'navigate');
         vi.spyOn(alertService, 'warning');
         let resolvedCourse: Course | undefined;
@@ -146,7 +146,7 @@ describe('TutorialGroupManagementResolve', () => {
         course.isAtLeastTutor = false;
         course.timeZone = 'Europe/Berlin';
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(generateExampleTutorialGroupsConfigurationDTO({ id: 5 })));
         vi.spyOn(router, 'navigate');
         vi.spyOn(alertService, 'error');
         const next = vi.fn();
@@ -161,7 +161,7 @@ describe('TutorialGroupManagementResolve', () => {
 
     it('should show an error and navigate to the course overview if the course request is forbidden', () => {
         vi.spyOn(service, 'find').mockReturnValue(throwError(() => new HttpErrorResponse({ status: HttpStatusCode.Forbidden })));
-        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(generateExampleTutorialGroupsConfigurationDTO({ id: 5 })));
         vi.spyOn(router, 'navigate');
         vi.spyOn(alertService, 'error');
         const next = vi.fn();

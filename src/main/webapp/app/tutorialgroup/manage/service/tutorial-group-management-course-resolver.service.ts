@@ -7,7 +7,8 @@ import { HttpErrorResponse, HttpResponse, HttpStatusCode } from '@angular/common
 import { catchError, switchMap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
-import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
@@ -26,9 +27,9 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
         const configuration$ = this.tutorialGroupsConfigurationService.getOneOfCourse(courseId);
 
         return combineLatest([course$, configuration$]).pipe(
-            map(([course, configurationResponse]: [Course, HttpResponse<TutorialGroupConfigurationDTO>]) => {
-                if (configurationResponse.body) {
-                    course.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configurationResponse.body);
+            map(([course, configuration]: [Course, TutorialGroupConfiguration | undefined]) => {
+                if (configuration) {
+                    course.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
                 }
                 return course;
             }),
