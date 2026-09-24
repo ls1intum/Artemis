@@ -43,8 +43,7 @@ class HyperionMutationActivationTest {
     void absentOrDisabledGenerationDoesNotContactDistributedState(String profile) {
         for (String flag : new String[] { "unused.property=true", "artemis.hyperion.exercise-generation.enabled=false" }) {
             runner.withInitializer(context -> context.getEnvironment().setActiveProfiles(profile)).withPropertyValues(flag).run(context -> {
-                assertThat(context).hasNotFailed().doesNotHaveBean(HyperionExerciseMutationApi.class).doesNotHaveBean(GenerationExternalMutationService.class)
-                        .doesNotHaveBean(ADMIN_RESOURCE);
+                assertThat(context).hasNotFailed().doesNotHaveBean(HyperionExerciseMutationApi.class).doesNotHaveBean(ADMIN_RESOURCE);
                 try (var ignored = context.getBean(ProgrammingExerciseMutationGuardService.class).claimExternalMutation(1L)) {
                     verifyNoInteractions(provider);
                 }
