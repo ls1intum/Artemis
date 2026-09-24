@@ -31,7 +31,7 @@ export enum FeatureToggle {
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
-const defaultActiveFeatureState: ActiveFeatureToggles = Object.values(FeatureToggle).filter((feature) => feature !== FeatureToggle.PresentationAssessments);
+const defaultActiveFeatureState: ActiveFeatureToggles = Object.values(FeatureToggle);
 
 @Injectable({ providedIn: 'root' })
 export class FeatureToggleService {
