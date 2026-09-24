@@ -42,6 +42,13 @@ public class SecurityFrameworkService {
     /** In-memory activation state per exercise id. No database table is used. */
     private final Map<Long, SecurityFrameworkConfigDTO> configByExerciseId = new ConcurrentHashMap<>();
 
+    /**
+     * One lock per exercise id, so the state check, the Ares2 policy call and the map update of a single transition run
+     * atomically. Without it, concurrent activate/deactivate/updateFrameworkVersion requests for the same exercise could
+     * interleave and leave the stored state out of step with the last completed policy operation.
+     */
+    private final Map<Long, Object> locksByExerciseId = new ConcurrentHashMap<>();
+
     private final Ares2SecurityPolicyService ares2SecurityPolicyService;
 
     private final Ares2FrameworkCompatibilityService ares2FrameworkCompatibilityService;
@@ -77,11 +84,13 @@ public class SecurityFrameworkService {
     public SecurityFrameworkConfigDTO activate(ProgrammingExercise exercise, String frameworkVersion) {
         validateJavaExercise(exercise);
         validateFrameworkVersion(frameworkVersion);
-        String commitHash = ares2SecurityPolicyService.createAndCommitPolicy(exercise, frameworkVersion);
-        SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion, commitHash, Instant.now().toString());
-        configByExerciseId.put(exercise.getId(), config);
-        log.debug("Activated the Security Framework for exercise {} (framework {}, commit {})", exercise.getId(), frameworkVersion, commitHash);
-        return config;
+        synchronized (lockFor(exercise)) {
+            String commitHash = ares2SecurityPolicyService.createAndCommitPolicy(exercise, frameworkVersion);
+            SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion, commitHash, Instant.now().toString());
+            configByExerciseId.put(exercise.getId(), config);
+            log.debug("Activated the Security Framework for exercise {} (framework {}, commit {})", exercise.getId(), frameworkVersion, commitHash);
+            return config;
+        }
     }
 
     /**
@@ -92,11 +101,13 @@ public class SecurityFrameworkService {
      * @return the resulting INACTIVE config
      */
     public SecurityFrameworkConfigDTO deactivate(ProgrammingExercise exercise) {
-        ares2SecurityPolicyService.removePolicy(exercise);
-        SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.INACTIVE.name(), defaultFrameworkVersion(), null, null);
-        configByExerciseId.put(exercise.getId(), config);
-        log.debug("Deactivated the Security Framework for exercise {}", exercise.getId());
-        return config;
+        synchronized (lockFor(exercise)) {
+            ares2SecurityPolicyService.removePolicy(exercise);
+            SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.INACTIVE.name(), defaultFrameworkVersion(), null, null);
+            configByExerciseId.put(exercise.getId(), config);
+            log.debug("Deactivated the Security Framework for exercise {}", exercise.getId());
+            return config;
+        }
     }
 
     /**
@@ -109,16 +120,26 @@ public class SecurityFrameworkService {
     public SecurityFrameworkConfigDTO updateFrameworkVersion(ProgrammingExercise exercise, String frameworkVersion) {
         validateJavaExercise(exercise);
         validateFrameworkVersion(frameworkVersion);
-        SecurityFrameworkConfigDTO current = configByExerciseId.get(exercise.getId());
-        if (current == null || !SecurityActivationStatus.ACTIVE.name().equals(current.status())) {
-            throw new BadRequestAlertException("The framework version cannot be changed because the Security Framework is not active for this exercise.", ENTITY_NAME,
-                    "securityFrameworkNotActive");
+        synchronized (lockFor(exercise)) {
+            SecurityFrameworkConfigDTO current = configByExerciseId.get(exercise.getId());
+            if (current == null || !SecurityActivationStatus.ACTIVE.name().equals(current.status())) {
+                throw new BadRequestAlertException("The framework version cannot be changed because the Security Framework is not active for this exercise.", ENTITY_NAME,
+                        "securityFrameworkNotActive");
+            }
+            String commitHash = ares2SecurityPolicyService.createAndCommitPolicy(exercise, frameworkVersion);
+            SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion, commitHash, Instant.now().toString());
+            configByExerciseId.put(exercise.getId(), config);
+            log.debug("Re-synced the Security Framework of exercise {} to framework {} (commit {})", exercise.getId(), frameworkVersion, commitHash);
+            return config;
         }
-        String commitHash = ares2SecurityPolicyService.createAndCommitPolicy(exercise, frameworkVersion);
-        SecurityFrameworkConfigDTO config = new SecurityFrameworkConfigDTO(SecurityActivationStatus.ACTIVE.name(), frameworkVersion, commitHash, Instant.now().toString());
-        configByExerciseId.put(exercise.getId(), config);
-        log.debug("Re-synced the Security Framework of exercise {} to framework {} (commit {})", exercise.getId(), frameworkVersion, commitHash);
-        return config;
+    }
+
+    /**
+     * @param exercise the programming exercise
+     * @return the per-exercise lock guarding that exercise's Security Framework transitions
+     */
+    private Object lockFor(ProgrammingExercise exercise) {
+        return locksByExerciseId.computeIfAbsent(exercise.getId(), id -> new Object());
     }
 
     /**
