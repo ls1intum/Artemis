@@ -25,9 +25,10 @@ import de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerCommandListener;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.hyperion.service.worker.HyperionWorkloadService;
 
-/** Boots the real worker scan and auto-configuration, replacing only external I/O. */
+/** Checks the worker scan boundary with external services replaced by test beans. */
 class WorkerContextTest {
 
     @ParameterizedTest
@@ -62,6 +63,12 @@ class WorkerContextTest {
 
     @TestConfiguration(proxyBeanMethods = false)
     static class ExternalServices {
+
+        @Bean
+        @Primary
+        DistributedDataProvider testProvider() {
+            return mock(DistributedDataProvider.class);
+        }
 
         @Bean
         @Primary
