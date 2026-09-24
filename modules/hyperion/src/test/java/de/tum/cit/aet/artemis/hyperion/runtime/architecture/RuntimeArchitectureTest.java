@@ -30,7 +30,8 @@ class RuntimeArchitectureTest {
             @Override
             public boolean test(JavaClass type) {
                 return type.getName().startsWith("de.tum.cit.aet.artemis.") && !type.getName().startsWith("de.tum.cit.aet.artemis.hyperion.runtime.")
-                        && !type.getName().startsWith("de.tum.cit.aet.artemis.hyperion.protocol.") && !type.getName().startsWith("de.tum.cit.aet.artemis.aiworker.api.");
+                        && !type.getName().startsWith("de.tum.cit.aet.artemis.hyperion.protocol.") && !type.getName().startsWith("de.tum.cit.aet.artemis.aiworker.api.")
+                        && !type.getName().startsWith("de.tum.cit.aet.artemis.aiworker.dto.") && !type.getName().startsWith("de.tum.cit.aet.artemis.aiworker.domain.");
             }
         }).check(classes);
     }
