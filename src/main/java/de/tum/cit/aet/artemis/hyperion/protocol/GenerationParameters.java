@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
 import java.time.Duration;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
@@ -17,7 +18,7 @@ public record GenerationParameters(String effortProfile, int maxTurns, long maxT
         effortProfile = effortProfile == null ? "" : effortProfile;
         if (effortProfile.length() > 64 || maxTurns <= 0 || maxTokens <= 0 || maxDuration == null || !maxDuration.isPositive() || contextWindowTokens <= 0
                 || !Double.isFinite(cachedInputTokenWeight) || cachedInputTokenWeight <= 0 || cachedInputTokenWeight > 1
-                || !java.util.Set.of("CONTINUOUS", "FRESH").contains(stagedContext)) {
+                || !Set.of("CONTINUOUS", "FRESH").contains(stagedContext)) {
             throw new IllegalArgumentException("Invalid resolved generation parameters");
         }
     }
