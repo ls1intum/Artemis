@@ -212,8 +212,8 @@
                         "description": "Setting up, updating and deleting programming exercises."
                     },
                     "PROGRAMMING_REPOSITORY_EDITING": {
-                        "name": "Edit test and auxiliary repositories",
-                        "description": "Editing the test and auxiliary repositories of an exercise."
+                        "name": "Edit exercise repositories",
+                        "description": "Editing the test and auxiliary repositories in the editor, and the template, solution and test repositories over Git."
                     },
                     "PROGRAMMING_BUILD_CONFIGURATION": {
                         "name": "Build plan and configuration",

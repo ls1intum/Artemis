@@ -212,8 +212,8 @@
                         "description": "Programmieraufgaben anlegen, aktualisieren und löschen."
                     },
                     "PROGRAMMING_REPOSITORY_EDITING": {
-                        "name": "Test- und Hilfsrepositories bearbeiten",
-                        "description": "Die Test- und Hilfsrepositories einer Aufgabe bearbeiten."
+                        "name": "Aufgabenrepositories bearbeiten",
+                        "description": "Test- und Hilfsrepositories im Editor sowie Vorlagen-, Lösungs- und Testrepositories über Git bearbeiten."
                     },
                     "PROGRAMMING_BUILD_CONFIGURATION": {
                         "name": "Build-Plan und Konfiguration",
