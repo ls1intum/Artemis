@@ -381,6 +381,9 @@ dependencies {
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
     // the former spring-ai-starter-model-azure-openai module was removed upstream.
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
+    implementation "org.springframework:spring-jms"
+    implementation "org.apache.activemq:artemis-jakarta-client"
+    implementation "org.springframework.boot:spring-boot-starter-opentelemetry"
     // Jackson 3 core modules — versions supplied by the tools.jackson jackson-bom import above. Declared
     // explicitly because webauthn4j / spring-ai only request them transitively, at an older patch.
     implementation "tools.jackson.core:jackson-core"
@@ -714,6 +717,8 @@ dependencies {
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
     testImplementation "com.icegreen:greenmail-junit5:2.1.13"
     testImplementation "com.tngtech.archunit:archunit:1.5.0"
+    testImplementation "org.apache.artemis:artemis-server"
+    testImplementation "org.apache.artemis:artemis-jakarta-server"
 
     // we only need the database present at runtime
     runtimeOnly "com.h2database:h2:2.5.250"
@@ -735,6 +740,12 @@ dependencies {
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
 apply from: "gradle/test.gradle"
 apply from: "gradle/openapi.gradle"
+
+tasks.named("processTestResources") {
+    from(file("docker/aiworker/broker.xml")) {
+        rename "broker.xml", "aiworker-broker.xml"
+    }
+}
 
 
 dependencyManagement {
@@ -874,9 +885,3 @@ tasks.named("dependencyUpdates").configure {
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp
-
-// Isolated modules have their own classpaths; root server tests cannot cover them.
-tasks.register('isolatedModuleCheck') {
-    group = 'verification'
-    description = 'Runs checks for all isolated modules.'
-}

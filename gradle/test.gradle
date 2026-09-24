@@ -36,6 +36,8 @@ tasks.withType(Test).configureEach {
     // timezone (SET TIME ZONE 'UTC'), this ensures consistent timestamp handling across H2
     // and PostgreSQL.
     jvmArgs += "-Duser.timezone=UTC"
+    // The embedded Artemis broker reloads its journal in worker transport tests on Java 25.
+    systemProperty 'io.netty.noUnsafe', 'false'
 
     // Pass weaviate server version to integration tests
     systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
