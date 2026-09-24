@@ -1,5 +1,14 @@
 <div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-    <button type="button" tumUiButton severity="success" size="small" class="self-start" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+    <button
+        type="button"
+        tumUiButton
+        severity="success"
+        size="small"
+        class="self-start"
+        data-testid="add-unreferenced-feedback-button"
+        (click)="addUnreferencedFeedback()"
+        [disabled]="readOnly()"
+    >
         <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
     </button>
 
