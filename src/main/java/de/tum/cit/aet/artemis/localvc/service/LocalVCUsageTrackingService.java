@@ -14,9 +14,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
@@ -106,7 +108,12 @@ public class LocalVCUsageTrackingService {
             // The role of a git caller is not available here: LocalVC authenticates the request itself and never populates
             // the security context, so it is recorded as ANONYMOUS and the admin page shows no role for git features. The
             // interesting distinction, staff repository against student repository, is in the identifier instead.
-            featureUsageCollector.get().recordUsage(FeatureKind.GIT, MODULE, operation + '/' + repositoryKind(request), Role.ANONYMOUS, failed, durationMs);
+            String repositoryKind = repositoryKind(request);
+            // A fetch reads, a push changes something. Work in the students' own repositories is how they use a local IDE;
+            // work in the template, solution and test repositories is how instructors maintain an exercise.
+            FeatureInteraction interaction = PUSH_OPERATION.equals(operation) ? FeatureInteraction.ACTION : FeatureInteraction.VIEW;
+            UserFeature feature = STAFF_REPOSITORY_KINDS.containsValue(repositoryKind) ? UserFeature.PROGRAMMING_REPOSITORY_EDITING : UserFeature.PROGRAMMING_LOCAL_IDE;
+            featureUsageCollector.get().recordUsage(FeatureKind.GIT, MODULE, operation + '/' + repositoryKind, feature, interaction, Role.ANONYMOUS, failed, durationMs);
         }
         catch (Exception e) {
             log.warn("Failed to record git {} usage for {}", operation, request.getRequestURI(), e);

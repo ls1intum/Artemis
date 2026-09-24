@@ -24,10 +24,12 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -100,7 +102,8 @@ class AthenaFeedbackSuggestionsUsageTest {
 
         assertThatExceptionOfType(NetworkingException.class).isThrownBy(() -> service.getTextFeedbackSuggestions(exercise, submission, true, null));
 
-        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("athena"), eq("feedback-suggestions/text/graded"), eq(Role.ANONYMOUS), eq(true), anyLong());
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("athena"), eq("feedback-suggestions/text/graded"), eq(UserFeature.ATHENA_FEEDBACK_SUGGESTIONS),
+                eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(true), anyLong());
     }
 
     /**
@@ -113,6 +116,7 @@ class AthenaFeedbackSuggestionsUsageTest {
 
         assertThat(service.getTextFeedbackSuggestions(exercise, submission, true, null)).isEmpty();
 
-        verify(featureUsageCollector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(Role.class), anyBoolean(), anyLong());
+        verify(featureUsageCollector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(UserFeature.class), any(FeatureInteraction.class), any(Role.class),
+                anyBoolean(), anyLong());
     }
 }

@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.admin.dto.FeatureUsageActiveDaysDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageEntryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageOverviewDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageTrendPointDTO;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.domain.FeatureUsageDaily;
 import de.tum.cit.aet.artemis.core.domain.TrackedFeature;
@@ -62,12 +63,13 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         Instant registeredNow = Instant.now();
-        usedFeature = trackedFeatureRepository
-                .save(new TrackedFeature(FeatureKind.REST, "programming", "GET api/programming/used-in-test", "configuration/used-in-test", registeredNow));
-        unusedFeature = trackedFeatureRepository.save(new TrackedFeature(FeatureKind.REST, "programming", "GET api/programming/unused-in-test", null, registeredNow));
+        usedFeature = trackedFeatureRepository.save(new TrackedFeature(FeatureKind.REST, "programming", "GET api/programming/used-in-test", "configuration/used-in-test",
+                FeatureInteraction.VIEW, null, registeredNow));
+        unusedFeature = trackedFeatureRepository
+                .save(new TrackedFeature(FeatureKind.REST, "programming", "GET api/programming/unused-in-test", null, FeatureInteraction.VIEW, null, registeredNow));
         // no node has reported this endpoint for a month, so this version no longer has it
-        retiredFeature = trackedFeatureRepository
-                .save(new TrackedFeature(FeatureKind.REST, "programming", "GET api/programming/retired-in-test", null, registeredNow.minus(30, ChronoUnit.DAYS)));
+        retiredFeature = trackedFeatureRepository.save(new TrackedFeature(FeatureKind.REST, "programming", "GET api/programming/retired-in-test", null, FeatureInteraction.VIEW,
+                null, registeredNow.minus(30, ChronoUnit.DAYS)));
 
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         featureUsageDailyRepository.save(new FeatureUsageDaily(usedFeature.getId(), today, Role.STUDENT, 10, 2, 500, 120));
@@ -198,8 +200,8 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
     void shouldNotLetALateFirstUsedGitFeatureRetireEveryRestEndpoint() throws Exception {
         Instant restRegisteredAt = trackedFeatureRepository.findById(usedFeature.getId()).orElseThrow().getLastRegisteredAt();
         // A git feature used for the first time long after startup, which is ordinary rather than exceptional
-        TrackedFeature lateGitFeature = trackedFeatureRepository
-                .save(new TrackedFeature(FeatureKind.GIT, "programming", "git clone late-in-test", null, restRegisteredAt.plus(30, ChronoUnit.DAYS)));
+        TrackedFeature lateGitFeature = trackedFeatureRepository.save(
+                new TrackedFeature(FeatureKind.GIT, "programming", "git clone late-in-test", null, FeatureInteraction.ACTION, null, restRegisteredAt.plus(30, ChronoUnit.DAYS)));
         try {
             var overview = getOverview(7);
 

@@ -28,9 +28,11 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import de.tum.cit.aet.artemis.core.config.FeatureUsageProperties;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.domain.TrackedFeature;
 import de.tum.cit.aet.artemis.core.repository.TrackedFeatureRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 
 /**
  * Tests how an endpoint is turned into an inventory identifier.
@@ -56,7 +58,7 @@ class FeatureUsageRegistryTest {
     void shouldRegisterAFirstSightingOnlyOnceWhenTwoThreadsSeeItTogether() throws Exception {
         var repository = mock(TrackedFeatureRepository.class);
         when(repository.findByFeatureKindAndIdentifier(any(), any())).thenReturn(Optional.empty());
-        var stored = new TrackedFeature(FeatureKind.GIT, "localvc", "push/assignment", null, Instant.now());
+        var stored = new TrackedFeature(FeatureKind.GIT, "localvc", "push/assignment", UserFeature.PROGRAMMING_LOCAL_IDE.name(), FeatureInteraction.ACTION, null, Instant.now());
         stored.setId(7L);
         when(repository.save(any())).thenReturn(stored);
         var registry = new FeatureUsageRegistry(repository, enabledProperties(), mock(ApplicationContext.class));
@@ -68,7 +70,7 @@ class FeatureUsageRegistryTest {
             for (int thread = 0; thread < 2; thread++) {
                 results.add(executor.submit(() -> {
                     start.await();
-                    return registry.featureId(FeatureKind.GIT, "localvc", "push/assignment");
+                    return registry.featureId(FeatureKind.GIT, "localvc", "push/assignment", UserFeature.PROGRAMMING_LOCAL_IDE, FeatureInteraction.ACTION);
                 }));
             }
             start.countDown();
@@ -145,19 +147,84 @@ class FeatureUsageRegistryTest {
     }
 
     @Test
-    void shouldReadTheFeatureLabelFromTheMethod() {
+    void shouldReadTheFeatureFromTheMethod() {
         var descriptor = describe(LabelledResource.class, "labelledOnMethod", RequestMethod.GET, "/api/course/courses");
 
         assertThat(descriptor).isNotNull();
-        assertThat(descriptor.label()).isEqualTo("configuration/method-label");
+        assertThat(descriptor.label()).isEqualTo(UserFeature.HYPERION_CONSISTENCY_CHECK.name());
     }
 
     @Test
-    void shouldFallBackToTheFeatureLabelOfTheController() {
+    void shouldFallBackToTheFeatureOfTheController() {
         var descriptor = describe(LabelledResource.class, "unlabelled", RequestMethod.GET, "/api/course/courses");
 
         assertThat(descriptor).isNotNull();
-        assertThat(descriptor.label()).isEqualTo("configuration/class-label");
+        assertThat(descriptor.label()).isEqualTo(UserFeature.HYPERION_PROBLEM_STATEMENT.name());
+    }
+
+    @Test
+    void shouldRecordTheControllerAsTheResource() {
+        var descriptor = describe(LabelledResource.class, "unlabelled", RequestMethod.GET, "/api/course/courses");
+
+        assertThat(descriptor).isNotNull();
+        assertThat(descriptor.resource()).isEqualTo("LabelledResource");
+    }
+
+    @Test
+    void shouldCountAReadingVerbAsAView() {
+        assertThat(describe(LabelledResource.class, "unlabelled", RequestMethod.GET, "/api/course/courses").interaction()).isEqualTo(FeatureInteraction.VIEW);
+        assertThat(describe(LabelledResource.class, "unlabelled", RequestMethod.HEAD, "/api/course/courses").interaction()).isEqualTo(FeatureInteraction.VIEW);
+    }
+
+    @Test
+    void shouldCountEveryOtherVerbAsAnAction() {
+        for (RequestMethod verb : List.of(RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE)) {
+            assertThat(describe(LabelledResource.class, "unlabelled", verb, "/api/course/courses").interaction()).as(verb.name()).isEqualTo(FeatureInteraction.ACTION);
+        }
+    }
+
+    @Test
+    void shouldCountAMappingWithoutAVerbAsAnAction() {
+        // a mapping without a verb accepts every verb, including the ones that change something
+        var mappingInfo = RequestMappingInfo.paths("/api/course/courses").build();
+
+        var descriptor = FeatureUsageRegistry.describe(mappingInfo, handlerMethod(LabelledResource.class, "unlabelled"));
+
+        assertThat(descriptor).isNotNull();
+        assertThat(descriptor.interaction()).isEqualTo(FeatureInteraction.ACTION);
+    }
+
+    @Test
+    void shouldCountAnInternalEndpointAsASystemCall() {
+        assertThat(describe(InternalResource.class, "callback", RequestMethod.POST, "/api/iris/internal/callback").interaction()).isEqualTo(FeatureInteraction.SYSTEM);
+    }
+
+    @Test
+    void shouldLetAnExplicitInteractionWinOverVerbAndInternal() {
+        assertThat(describe(LabelledResource.class, "polled", RequestMethod.GET, "/api/course/courses").interaction()).isEqualTo(FeatureInteraction.AUTOMATIC);
+        assertThat(describe(InternalResource.class, "overridden", RequestMethod.GET, "/api/iris/internal/status").interaction()).isEqualTo(FeatureInteraction.VIEW);
+    }
+
+    /**
+     * A row written by an earlier version, before git and background features carried a feature and an interaction, must
+     * regroup under the classification the caller reports now, like an endpoint does on every startup. Otherwise its
+     * history would stay invisible on a page grouped by feature.
+     */
+    @Test
+    void shouldReclassifyAnExistingLazyRowOnItsFirstSighting() {
+        var repository = mock(TrackedFeatureRepository.class);
+        var stored = new TrackedFeature(FeatureKind.GIT, "localvc", "fetch/tests", null, FeatureInteraction.ACTION, null, Instant.now());
+        stored.setId(9L);
+        when(repository.findByFeatureKindAndIdentifier(FeatureKind.GIT, "fetch/tests")).thenReturn(Optional.of(stored));
+        var registry = new FeatureUsageRegistry(repository, enabledProperties(), mock(ApplicationContext.class));
+
+        Long first = registry.featureId(FeatureKind.GIT, "localvc", "fetch/tests", UserFeature.PROGRAMMING_REPOSITORY_EDITING, FeatureInteraction.VIEW);
+        Long second = registry.featureId(FeatureKind.GIT, "localvc", "fetch/tests", UserFeature.PROGRAMMING_REPOSITORY_EDITING, FeatureInteraction.VIEW);
+
+        assertThat(first).isEqualTo(9L);
+        assertThat(second).isEqualTo(9L);
+        verify(repository).updateClassification(9L, UserFeature.PROGRAMMING_REPOSITORY_EDITING.name(), FeatureInteraction.VIEW, null);
+        verify(repository, never()).save(any(TrackedFeature.class));
     }
 
     @Test
@@ -214,16 +281,36 @@ class FeatureUsageRegistryTest {
         }
     }
 
-    @FeatureUsage("configuration/class-label")
+    @FeatureUsage(UserFeature.HYPERION_PROBLEM_STATEMENT)
     @RequestMapping("api/course/")
     static class LabelledResource {
 
-        @FeatureUsage("configuration/method-label")
+        @FeatureUsage(UserFeature.HYPERION_CONSISTENCY_CHECK)
         public void labelledOnMethod() {
             // only its signature and annotations matter
         }
 
         public void unlabelled() {
+            // only its signature and annotations matter
+        }
+
+        @UsageInteraction(FeatureInteraction.AUTOMATIC)
+        public void polled() {
+            // only its signature and annotations matter
+        }
+    }
+
+    @Internal
+    @FeatureUsage(UserFeature.IRIS_CHAT)
+    @RequestMapping("api/iris/internal/")
+    static class InternalResource {
+
+        public void callback() {
+            // only its signature and annotations matter
+        }
+
+        @UsageInteraction(FeatureInteraction.VIEW)
+        public void overridden() {
             // only its signature and annotations matter
         }
     }

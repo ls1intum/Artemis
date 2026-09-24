@@ -39,12 +39,14 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -363,7 +365,10 @@ public class AthenaFeedbackSuggestionsService {
      */
     private void recordFeedbackSuggestionUsage(Exercise exercise, boolean isGraded, long durationMs, boolean failed) {
         String identifier = "feedback-suggestions/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT) + (isGraded ? "/graded" : "/non-graded");
-        featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, Role.ANONYMOUS, failed, durationMs));
+        // Graded suggestions help a tutor assess; non-graded ones are the formative feedback a student asked for.
+        UserFeature feature = isGraded ? UserFeature.ATHENA_FEEDBACK_SUGGESTIONS : UserFeature.AI_FEEDBACK_REQUEST;
+        featureUsageCollector.ifPresent(
+                collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, feature, FeatureInteraction.ACTION, Role.ANONYMOUS, failed, durationMs));
     }
 
     /**

@@ -21,9 +21,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * Tests what the git path records, and above all that it cannot break the git operation it measures.
@@ -53,7 +55,8 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordPush(postRequest(), 12, false);
 
-        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("push/tests"), eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("push/tests"), eq(UserFeature.PROGRAMMING_REPOSITORY_EDITING), eq(FeatureInteraction.ACTION),
+                eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     /**
@@ -67,7 +70,8 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(postRequest(), 5, false);
 
-        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/assignment"), eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/assignment"), eq(UserFeature.PROGRAMMING_LOCAL_IDE), eq(FeatureInteraction.VIEW),
+                eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     @Test
@@ -76,7 +80,8 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(postRequest(), 5, true);
 
-        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/assignment"), eq(Role.ANONYMOUS), eq(true), anyLong());
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/assignment"), eq(UserFeature.PROGRAMMING_LOCAL_IDE), eq(FeatureInteraction.VIEW),
+                eq(Role.ANONYMOUS), eq(true), anyLong());
     }
 
     /**
@@ -89,7 +94,8 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(handshake, 3, false);
 
-        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(Role.class), anyBoolean(), anyLong());
+        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(UserFeature.class), any(FeatureInteraction.class), any(Role.class),
+                anyBoolean(), anyLong());
     }
 
     @Test
@@ -98,7 +104,8 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(postRequest(), 5, false);
 
-        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/unknown"), eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("fetch/unknown"), eq(UserFeature.PROGRAMMING_LOCAL_IDE), eq(FeatureInteraction.VIEW),
+                eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     /**
@@ -118,7 +125,7 @@ class LocalVCUsageTrackingServiceTest {
     @Test
     void shouldNotLetAFailingRecordingBreakTheGitOperation() {
         givenRepositoryPath("/git/COURSE1EX1/course1ex1-ge12abc.git");
-        doThrow(new IllegalStateException("boom")).when(collector).recordUsage(any(), anyString(), anyString(), any(), anyBoolean(), anyLong());
+        doThrow(new IllegalStateException("boom")).when(collector).recordUsage(any(), anyString(), anyString(), any(), any(), any(), anyBoolean(), anyLong());
 
         assertThatCode(() -> service.recordFetch(postRequest(), 5, false)).doesNotThrowAnyException();
     }
@@ -129,7 +136,8 @@ class LocalVCUsageTrackingServiceTest {
 
         service.recordFetch(postRequest(), 5, false);
 
-        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(Role.class), anyBoolean(), anyLong());
+        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), anyString(), any(UserFeature.class), any(FeatureInteraction.class), any(Role.class),
+                anyBoolean(), anyLong());
     }
 
     @Test

@@ -64,7 +64,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void generateCode_withValidRequest_returnsJobId() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION);
 
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
@@ -80,7 +80,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void generateCode_withTemplateType_returnsJobId() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.TEMPLATE, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.TEMPLATE);
 
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
@@ -96,7 +96,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void generateCode_withTestsType_returnsJobId() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.TESTS, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.TESTS);
 
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
@@ -112,7 +112,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void generateCode_withNonJavaExercise_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION);
         testExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
 
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
@@ -124,7 +124,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withNegativeExerciseId_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION);
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", -1L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Exercise ID must be positive");
@@ -132,7 +132,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withZeroExerciseId_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION);
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 0L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Exercise ID must be positive");
@@ -140,7 +140,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withNullRepositoryType_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(null, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(null);
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Repository type is required");
@@ -148,7 +148,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withUnsupportedRepositoryType_throwsException() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.AUXILIARY, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.AUXILIARY);
 
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Repository type not supported for code generation");
@@ -156,7 +156,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void validateGenerationRequest_withValidInput_passesValidation() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION);
 
         // Should not throw any exception
         ReflectionTestUtils.invokeMethod(resource, "validateGenerationRequest", 1L, request);
@@ -209,7 +209,7 @@ class HyperionCodeGenerationResourceTest {
     void generateCode_withValidExamExercise_returnsJobId() {
         de.tum.cit.aet.artemis.exam.domain.ExerciseGroup mockExerciseGroup = mock(de.tum.cit.aet.artemis.exam.domain.ExerciseGroup.class);
         testExercise.setExerciseGroup(mockExerciseGroup);
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION);
 
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
@@ -223,8 +223,7 @@ class HyperionCodeGenerationResourceTest {
     }
 
     @Test
-    void generateCode_withCheckOnly_returnsExistingJob() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, true);
+    void getActiveCodeGenerationJob_withRunningJob_returnsIt() {
         HyperionCodeGenerationJobService.JobInfo jobInfo = new HyperionCodeGenerationJobService.JobInfo("job-check-1", testUser.getLogin(), 1L, RepositoryType.SOLUTION,
                 Instant.now());
 
@@ -232,7 +231,7 @@ class HyperionCodeGenerationResourceTest {
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
         when(codeGenerationJobService.getActiveJob(testUser, testExercise)).thenReturn(Optional.of(jobInfo));
 
-        ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
+        ResponseEntity<CodeGenerationJobStartDTO> response = resource.getActiveCodeGenerationJob(1L);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-check-1");
@@ -242,14 +241,13 @@ class HyperionCodeGenerationResourceTest {
     }
 
     @Test
-    void generateCode_withCheckOnlyAndNoActiveJob_returnsNoContent() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, true);
+    void getActiveCodeGenerationJob_withoutRunningJob_returnsNoContent() {
 
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
         when(codeGenerationJobService.getActiveJob(testUser, testExercise)).thenReturn(Optional.empty());
 
-        ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
+        ResponseEntity<CodeGenerationJobStartDTO> response = resource.getActiveCodeGenerationJob(1L);
 
         assertThat(response.getStatusCode().value()).isEqualTo(204);
         assertThat(response.getBody()).isNull();
@@ -259,7 +257,7 @@ class HyperionCodeGenerationResourceTest {
 
     @Test
     void generateCode_withInitialAutoGeneration_forwardsFlagToJobService() {
-        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false, true);
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, true);
 
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);

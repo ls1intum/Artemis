@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAccessStateDTO;
@@ -65,7 +66,7 @@ import de.tum.cit.aet.artemis.course.service.CourseSearchService;
  * REST controller for managing access to courses and searching members in courses.
  */
 @Profile(PROFILE_CORE)
-@FeatureUsage("student-view/enrollment")
+@FeatureUsage(UserFeature.COURSE_MEMBERS)
 @RestController
 @RequestMapping("api/course/")
 @Lazy
@@ -102,6 +103,7 @@ public class CourseAccessResource {
      * @param courseId to find the course
      * @return 200 OK on success
      */
+    @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> enrollInCourse(@PathVariable Long courseId) {
@@ -119,6 +121,7 @@ public class CourseAccessResource {
      * @param courseId to find the course
      * @return 200 OK on success
      */
+    @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @PostMapping("courses/{courseId}/unenroll")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unenrollFromCourse(@PathVariable Long courseId) {
@@ -135,6 +138,7 @@ public class CourseAccessResource {
      * @param courseId the id of the course to retrieve
      * @return the active course
      */
+    @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @GetMapping("courses/{courseId}/for-enrollment")
     @EnforceAtLeastStudent
     public ResponseEntity<CourseForEnrollmentDTO> getCourseForEnrollment(@PathVariable long courseId) {
@@ -161,6 +165,7 @@ public class CourseAccessResource {
      * @param courseId the id of the course to check
      * @return whether the user is at least a student in the course
      */
+    @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @GetMapping("courses/{courseId}/access-state")
     @EnforceAtLeastStudent
     public ResponseEntity<CourseAccessStateDTO> getCourseAccessState(@PathVariable long courseId) {
@@ -174,6 +179,7 @@ public class CourseAccessResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the list of courses which are active
      */
+    @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @GetMapping("courses/for-enrollment")
     @EnforceAtLeastStudent
     public ResponseEntity<List<CourseForEnrollmentDTO>> getCoursesForEnrollment() {
@@ -229,6 +235,7 @@ public class CourseAccessResource {
      * @param roles       the roles which should be searched in
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
+    @FeatureUsage(UserFeature.DIRECT_MESSAGES)
     @GetMapping("courses/{courseId}/users/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
@@ -324,6 +331,7 @@ public class CourseAccessResource {
      * @param nameOfUser the name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
+    @FeatureUsage(UserFeature.DIRECT_MESSAGES)
     @GetMapping("courses/{courseId}/search-other-users")
     @EnforceAtLeastStudent
     public ResponseEntity<List<CourseMemberDTO>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
@@ -345,6 +353,7 @@ public class CourseAccessResource {
      * @param loginOrName the search term to search login and names by
      * @return the ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
      */
+    @FeatureUsage(UserFeature.DIRECT_MESSAGES)
     @GetMapping("courses/{courseId}/members/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserNameAndLoginDTO>> searchMembersOfCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {

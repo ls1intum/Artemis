@@ -3,93 +3,83 @@ package de.tum.cit.aet.artemis.core.service.featureusage;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaFieldAccess;
 
+import tools.jackson.databind.JsonNode;
+
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 /**
- * Enforces that every REST controller declares which feature it belongs to, and keeps the generated catalogue in the
- * documentation in step with the annotations.
+ * Enforces that every REST controller declares which user-facing feature it serves, that the {@link UserFeature}
+ * catalogue stays complete and free of dead entries, and keeps the generated catalogue document in the documentation in
+ * step with the annotations.
  * <p>
  * The annotation is the single source of truth: it sits next to the controller, so whoever adds or changes one decides the
- * label, and a rename cannot leave a dangling reference behind. This mirrors how Artemis already handles authorization,
+ * feature, and a rename cannot leave a dangling reference behind. This mirrors how Artemis already handles authorization,
  * where {@code everyRestEndpointMustBeAuthorized} requires an annotation on every endpoint rather than keeping a central
  * list.
  * <p>
- * What an annotation cannot do on its own is show the taxonomy as a whole: whether one module has twenty features and
- * another has two, or whether two modules named the same area differently. So the second test renders the taxonomy from the
- * annotations into a checked-in document. Reviewing that file is how the shape of the taxonomy stays under control, and the
- * test failing on a stale file is what stops the document quietly becoming fiction.
+ * What an annotation cannot do on its own is show the catalogue as a whole: which features one area has, which modules
+ * and controllers implement a feature, and how its calls count. So one test renders all of that into a checked-in
+ * document. Reviewing that file is how the mapping stays under control, and the test failing on a stale file is what stops
+ * the document quietly becoming fiction.
  * <p>
- * Uses ArchUnit's class scanning rather than reflection, because
- * {@code ArchitectureTest.testNoRestControllersImported} forbids importing a {@code @RestController}.
+ * The interaction of every endpoint is derived with {@link FeatureUsageClassification}, the same code the startup
+ * inventory uses, so the document shows exactly what the admin page will count.
+ * <p>
+ * Uses ArchUnit's class scanning to find the controllers, because {@code ArchitectureTest.testNoRestControllersImported}
+ * forbids importing a {@code @RestController}; the handler methods are then read reflectively.
  */
 class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
 
     private static final Path CATALOGUE_DOCUMENT = Path.of("documentation", "docs", "developer", "feature-usage-catalogue.mdx");
 
-    /**
-     * Separator for the flattened {@code module/area/feature} map key. A control character rather than a space or a
-     * slash, because all three parts may contain either, and it is written as an escape so it stays visible in source.
-     */
-    private static final String KEY_SEPARATOR = "\u001F";
+    private static final Path TRANSLATIONS = Path.of("src", "main", "webapp", "i18n");
+
+    private static final List<String> LANGUAGES = List.of("en", "de");
 
     /** The path prefixes WebConfigurer registers the feature usage interceptor for. Keep in step with that method. */
     private static final Set<String> INTERCEPTED_PREFIXES = Set.of("/api/", "/.well-known/");
 
-    /** Set to true to rewrite the document after a deliberate taxonomy change. */
+    /** Set to true to rewrite the document after a deliberate catalogue change. */
     private static final String UPDATE_FLAG = "updateFeatureUsageCatalogue";
 
     @Test
     void everyRestControllerShouldDeclareItsFeature() {
-        Set<String> undeclared = controllers().stream().filter(controller -> labelOf(controller) == null).map(JavaClass::getName).collect(Collectors.toCollection(TreeSet::new));
-
-        assertThat(undeclared).as("""
-                These REST controllers carry no @FeatureUsage, so their usage would be reported by raw path under "other" \
-                instead of a named feature. Annotate each one with the "area/feature" it belongs to.""").isEmpty();
-    }
-
-    /**
-     * Covers method-level overrides as well as controller-level labels. The interceptor resolves the annotation on the
-     * handler method before falling back to the class, so a malformed override would reach the inventory; validating only
-     * the class level would let it through.
-     */
-    @Test
-    void everyFeatureLabelShouldBeAnAreaAndAFeatureInKebabCase() {
-        Set<String> malformed = effectiveLabels().stream().filter(label -> !label.matches("[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*"))
+        Set<String> undeclared = controllers().stream().filter(controller -> !controller.isAnnotatedWith(FeatureUsage.class)).map(JavaClass::getName)
                 .collect(Collectors.toCollection(TreeSet::new));
 
-        // the admin page splits the label on the slash to build the tree, so exactly one level of nesting is expected
-        assertThat(malformed).as("@FeatureUsage values must be \"area/feature\" in kebab-case").isEmpty();
-    }
-
-    /**
-     * A method-level override names a feature of its own, so it belongs in the catalogue: that document is the review
-     * surface for the taxonomy, and a feature tracked at runtime but missing from it cannot be reviewed.
-     */
-    @Test
-    void theCatalogueShouldContainMethodLevelOverrides() {
-        assertThat(effectiveLabels()).as("method-level @FeatureUsage overrides are part of the taxonomy").contains("configuration/re-evaluate-results");
-
-        Set<String> configurationFeatures = taxonomy().getOrDefault("programming", Map.of()).getOrDefault("configuration", Set.of());
-        assertThat(configurationFeatures).as("the catalogue lists the method-level override configuration/re-evaluate-results")
-                .anyMatch(entry -> entry.contains("re-evaluate-results"));
+        assertThat(undeclared).as("""
+                These REST controllers carry no @FeatureUsage, so their usage would be reported by raw path instead of under a \
+                feature. Annotate each one with the UserFeature it serves.""").isEmpty();
     }
 
     /**
@@ -103,13 +93,98 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
      */
     @Test
     void everyAnnotatedControllerShouldBeMappedWhereTheInterceptorObserves() {
-        Set<String> unobserved = controllers().stream().filter(controller -> labelOf(controller) != null)
+        Set<String> unobserved = controllers().stream().filter(controller -> controller.isAnnotatedWith(FeatureUsage.class))
                 .filter(controller -> mappingsOf(controller).stream().anyMatch(mapping -> INTERCEPTED_PREFIXES.stream().noneMatch(mapping::startsWith))).map(JavaClass::getName)
                 .collect(Collectors.toCollection(TreeSet::new));
 
         assertThat(unobserved).as("These controllers carry @FeatureUsage but are mapped outside the paths the feature usage interceptor is registered "
                 + "for in WebConfigurer.addInterceptors, so their usage can never be recorded and they would be reported as permanently unused. "
                 + "Either map them under an intercepted prefix or add their prefix there (currently %s).".formatted(INTERCEPTED_PREFIXES)).isEmpty();
+    }
+
+    /**
+     * A catalogue entry that nothing records is a feature the page reports as unused forever. That is the same lie as an
+     * unobserved controller, from the other side, and it would accumulate silently as endpoints move between features.
+     */
+    @Test
+    void everyUserFeatureShouldBeServedOrRecorded() {
+        Set<UserFeature> tracked = EnumSet.noneOf(UserFeature.class);
+        endpoints().forEach(endpoint -> tracked.add(endpoint.feature()));
+        tracked.addAll(recordersByFeature().keySet());
+
+        Set<UserFeature> dead = EnumSet.complementOf(EnumSet.copyOf(tracked));
+        assertThat(dead).as("""
+                These catalogue entries are neither assigned to an endpoint with @FeatureUsage nor recorded through \
+                FeatureUsageCollector.recordUsage, so the admin page would report them as unused forever. Assign an endpoint, \
+                record them where they happen, or remove them from UserFeature.""").isEmpty();
+    }
+
+    /**
+     * The page and the catalogue document show a feature by its translated name, so a constant without one would appear
+     * as its raw enum name, and only in the language nobody checked.
+     */
+    @Test
+    void everyUserFeatureAndProductAreaShouldBeTranslated() throws IOException {
+        for (String language : LANGUAGES) {
+            JsonNode catalogue = catalogueTranslations(language);
+            Set<String> missing = new TreeSet<>();
+            for (ProductArea area : ProductArea.values()) {
+                if (catalogue.path("area").path(area.name()).asString("").isBlank()) {
+                    missing.add("area." + area.name());
+                }
+            }
+            for (UserFeature feature : UserFeature.values()) {
+                for (String field : List.of("name", "description")) {
+                    if (catalogue.path("feature").path(feature.name()).path(field).asString("").isBlank()) {
+                        missing.add("feature." + feature.name() + "." + field);
+                    }
+                }
+            }
+            assertThat(missing).as("artemisApp.featureUsage.catalog keys missing in %s/featureUsage.json", language).isEmpty();
+        }
+    }
+
+    /**
+     * An override that repeats what would be derived anyway says nothing, and it hides the ones that matter: every
+     * {@code @UsageInteraction} should be an exception somebody decided on.
+     */
+    @Test
+    void noUsageInteractionShouldRepeatTheDerivedInteraction() {
+        Set<String> redundant = endpoints().stream().filter(endpoint -> endpoint.override() != null && endpoint.override() == endpoint.derivedInteraction()).map(Endpoint::describe)
+                .collect(Collectors.toCollection(TreeSet::new));
+
+        assertThat(redundant).as("These @UsageInteraction overrides repeat the interaction the verb already implies; remove them").isEmpty();
+    }
+
+    /**
+     * Several handler methods can share one verb and path and differ only in their request parameters. The inventory
+     * keys on verb and path, so they share one row, and the classification of whichever handler it sees first wins. If
+     * they disagreed, the report would depend on the order Spring enumerates handlers.
+     */
+    @Test
+    void endpointsSharingAPathShouldShareTheirClassification() {
+        Map<String, Set<String>> classificationsByIdentifier = new TreeMap<>();
+        for (Endpoint endpoint : endpoints()) {
+            classificationsByIdentifier.computeIfAbsent(endpoint.identifier(), identifier -> new TreeSet<>()).add(endpoint.feature() + " " + endpoint.interaction());
+        }
+        Map<String, Set<String>> conflicting = classificationsByIdentifier.entrySet().stream().filter(entry -> entry.getValue().size() > 1)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first, TreeMap::new));
+
+        assertThat(conflicting).as("handler methods sharing a verb and path must declare the same feature and interaction").isEmpty();
+    }
+
+    /**
+     * A method level assignment is the only way to split a controller that serves several features, so the catalogue has
+     * to show it: that document is the review surface for the mapping.
+     */
+    @Test
+    void theCatalogueShouldResolveMethodLevelAssignments() {
+        Map<UserFeature, Set<String>> resourcesByFeature = new EnumMap<>(UserFeature.class);
+        endpoints().forEach(endpoint -> resourcesByFeature.computeIfAbsent(endpoint.feature(), feature -> new TreeSet<>()).add(endpoint.resource()));
+
+        assertThat(resourcesByFeature.get(UserFeature.HYPERION_CONSISTENCY_CHECK)).as("a method-level @FeatureUsage splits a controller")
+                .contains("HyperionProblemStatementResource");
+        assertThat(resourcesByFeature.get(UserFeature.HYPERION_PROBLEM_STATEMENT)).as("the controller keeps its class-level feature").contains("HyperionProblemStatementResource");
     }
 
     @Test
@@ -125,26 +200,32 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
         assertThat(Files.exists(path)).as("%s is missing; regenerate it with -D%s=true", CATALOGUE_DOCUMENT, UPDATE_FLAG).isTrue();
         assertThat(Files.readString(path)).as("""
                 %s no longer matches the @FeatureUsage annotations. Read the diff first: it is the review surface for the \
-                whole taxonomy, so an unexpected change there usually means a label went to the wrong area. Regenerate with \
-                ./gradlew test --tests FeatureUsageAnnotationTest -D%s=true""".formatted(CATALOGUE_DOCUMENT, UPDATE_FLAG)).isEqualTo(expected);
+                whole catalogue, so an unexpected change there usually means an endpoint went to the wrong feature. Regenerate \
+                with ./gradlew test --tests FeatureUsageAnnotationTest -D%s=true""".formatted(CATALOGUE_DOCUMENT, UPDATE_FLAG)).isEqualTo(expected);
     }
 
     @Test
-    void shouldKeepTheTaxonomyAtAReadableSize() {
-        Map<String, Map<String, Set<String>>> taxonomy = taxonomy();
-        long features = taxonomy.values().stream().flatMap(areas -> areas.values().stream()).mapToLong(Set::size).sum();
+    void shouldKeepTheCatalogueAtAReadableSize() {
+        Map<ProductArea, Long> featuresPerArea = Arrays.stream(UserFeature.values()).collect(Collectors.groupingBy(UserFeature::getArea, Collectors.counting()));
 
-        // Deliberately loose bounds. The point is not an exact number but that the tree stays navigable: a handful of
-        // features would stop answering the sub-feature question, and one per endpoint would just be the raw endpoint list.
-        assertThat(features).as("features across the whole taxonomy").isBetween(100L, 260L);
-        assertThat(taxonomy.keySet()).as("modules").hasSizeGreaterThan(20);
+        // Deliberately loose bounds. The point is not an exact number but that the page stays navigable: a handful of
+        // features would stop answering which part of an area is used, and one per endpoint would just be the raw list.
+        assertThat(UserFeature.values().length).as("features in the catalogue").isBetween(80, 200);
+        assertThat(featuresPerArea.keySet()).as("every product area lists at least one feature").containsExactlyInAnyOrder(ProductArea.values());
+        assertThat(featuresPerArea.values()).as("features per product area").allMatch(count -> count <= 20);
     }
 
     /**
-     * Renders module, area and feature with the controllers behind each, which is what makes grouped features visible: five
-     * programming exercise controllers collapsing into one feature is a deliberate decision and has to be reviewable.
+     * Renders area, feature, the modules and controllers behind it and how their endpoints count, followed by every
+     * interaction override. Grouped features and split controllers are deliberate decisions and have to be reviewable.
      */
-    private String renderCatalogue() {
+    private String renderCatalogue() throws IOException {
+        JsonNode names = catalogueTranslations("en");
+        List<Endpoint> endpoints = endpoints();
+        Map<UserFeature, List<Endpoint>> endpointsByFeature = endpoints.stream()
+                .collect(Collectors.groupingBy(Endpoint::feature, () -> new EnumMap<>(UserFeature.class), Collectors.toCollection(ArrayList::new)));
+        Map<UserFeature, Set<String>> recorders = recordersByFeature();
+
         StringBuilder document = new StringBuilder("""
                 ---
                 id: feature-usage-catalogue
@@ -152,9 +233,11 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
                 sidebar_label: Feature Usage Catalogue
                 ---
 
-                The features whose usage Artemis tracks, as declared by `@FeatureUsage` on each REST controller.
+                The features whose usage Artemis tracks, as users know them, and the modules and REST resources that implement
+                each one. The catalogue is the `UserFeature` enum; `@FeatureUsage` on each controller or handler method assigns
+                an endpoint to one of its entries.
 
-                **This file is generated.** Do not edit it by hand. It is checked in so that the taxonomy as a whole can be
+                **This file is generated.** Do not edit it by hand. It is checked in so that the catalogue as a whole can be
                 reviewed in one place and so that a change to it shows up in a pull request diff.
                 `FeatureUsageAnnotationTest` fails when it drifts from the annotations; regenerate it with:
 
@@ -162,51 +245,137 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
                 ./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
                 ```
 
-                A feature is usually one controller. Where several controllers are one thing to a user they share a label,
-                which is why the controllers are listed. See
+                For every resource, the columns count its endpoints by how their calls are reported: **Actions** and **Views**
+                are use of the feature, **Automatic** calls are made by the client on its own and **System** calls by another
+                system, and neither of the last two counts as use. The interaction follows from the HTTP verb unless
+                `@UsageInteraction` overrides it; every override is listed at the end. See
                 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
                 """);
+        long modules = endpoints.stream().map(Endpoint::module).distinct().count();
+        document.append("Currently %d product areas, %d features, %d REST endpoints in %d modules, and %d interaction overrides.%n%n".formatted(ProductArea.values().length,
+                UserFeature.values().length, endpoints.size(), modules, endpoints.stream().filter(endpoint -> endpoint.override() != null).count()));
 
-        Map<String, Map<String, Set<String>>> taxonomy = taxonomy();
-        long features = taxonomy.values().stream().flatMap(areas -> areas.values().stream()).mapToLong(Set::size).sum();
-        long areas = taxonomy.values().stream().mapToLong(Map::size).sum();
-        document.append("Currently %d modules, %d areas and %d features.%n%n".formatted(taxonomy.size(), areas, features));
-
-        taxonomy.forEach((module, areasOfModule) -> {
-            document.append("## %s%n%n".formatted(module));
-            areasOfModule.forEach((area, featuresOfArea) -> {
-                document.append("### %s%n%n".formatted(area));
-                featuresOfArea.forEach(feature -> document.append("* %s%n".formatted(feature)));
-                document.append('\n');
-            });
-        });
-        return document.toString();
-    }
-
-    /** Module to area to the {@code feature (Controller, Controller)} lines below it, all sorted for a stable document. */
-    private Map<String, Map<String, Set<String>>> taxonomy() {
-        Map<String, Map<String, Set<String>>> taxonomy = new TreeMap<>();
-        Map<String, Set<String>> controllersByModuleAreaFeature = new TreeMap<>();
-        for (JavaClass controller : controllers()) {
-            String module = moduleOf(controller);
-            // A method-level override is a separate feature at runtime, so it is listed beside the controller's own label
-            // rather than folded into it.
-            for (String label : labelsOf(controller)) {
-                if (!label.contains("/")) {
+        for (ProductArea area : ProductArea.values()) {
+            document.append("## %s%n%n".formatted(names.path("area").path(area.name()).asString(area.name())));
+            for (UserFeature feature : UserFeature.values()) {
+                if (feature.getArea() != area) {
                     continue;
                 }
-                String area = label.substring(0, label.indexOf('/'));
-                String feature = label.substring(label.indexOf('/') + 1);
-                controllersByModuleAreaFeature.computeIfAbsent(module + KEY_SEPARATOR + area + KEY_SEPARATOR + feature, key -> new TreeSet<>()).add(controller.getSimpleName());
+                JsonNode featureNames = names.path("feature").path(feature.name());
+                document.append("### %s%n%n".formatted(featureNames.path("name").asString(feature.name())));
+                document.append("`%s`: %s%n%n".formatted(feature.name(), featureNames.path("description").asString("")));
+                List<Endpoint> featureEndpoints = endpointsByFeature.getOrDefault(feature, List.of());
+                if (!featureEndpoints.isEmpty()) {
+                    document.append("| Module | Resource | Actions | Views | Automatic | System |\n");
+                    document.append("|--------|----------|--------:|------:|----------:|-------:|\n");
+                    Map<String, List<Endpoint>> byResource = featureEndpoints.stream()
+                            .collect(Collectors.groupingBy(endpoint -> endpoint.module() + " " + endpoint.resource(), TreeMap::new, Collectors.toCollection(ArrayList::new)));
+                    byResource.forEach((key,
+                            resourceEndpoints) -> document.append("| %s | `%s` | %d | %d | %d | %d |%n".formatted(resourceEndpoints.getFirst().module(),
+                                    resourceEndpoints.getFirst().resource(), count(resourceEndpoints, FeatureInteraction.ACTION), count(resourceEndpoints, FeatureInteraction.VIEW),
+                                    count(resourceEndpoints, FeatureInteraction.AUTOMATIC), count(resourceEndpoints, FeatureInteraction.SYSTEM))));
+                    document.append('\n');
+                }
+                Set<String> recordedBy = recorders.getOrDefault(feature, Set.of());
+                if (!recordedBy.isEmpty()) {
+                    document.append("Also recorded outside REST by %s.%n%n".formatted(recordedBy.stream().map(name -> '`' + name + '`').collect(Collectors.joining(", "))));
+                }
             }
         }
-        controllersByModuleAreaFeature.forEach((key, controllerNames) -> {
-            String[] parts = key.split(KEY_SEPARATOR);
-            taxonomy.computeIfAbsent(parts[0], module -> new TreeMap<>()).computeIfAbsent(parts[1], area -> new TreeSet<>())
-                    .add("**%s** (%s)".formatted(parts[2], controllerNames.stream().map(name -> '`' + name + '`').collect(Collectors.joining(", "))));
-        });
-        return taxonomy;
+
+        document.append("## Interaction overrides\n\n");
+        document.append("The endpoints whose calls do not count the way their HTTP verb suggests, grouped by how they count instead.\n\n");
+        for (FeatureInteraction interaction : FeatureInteraction.values()) {
+            List<Endpoint> overridden = endpoints.stream().filter(endpoint -> endpoint.override() == interaction).sorted(Comparator.comparing(Endpoint::identifier)).toList();
+            if (overridden.isEmpty()) {
+                continue;
+            }
+            document.append("### %s%n%n".formatted(switch (interaction) {
+                case ACTION -> "Counted as actions";
+                case VIEW -> "Counted as views";
+                case AUTOMATIC -> "Counted as automatic calls";
+                case SYSTEM -> "Counted as system calls";
+            }));
+            overridden.forEach(endpoint -> document.append("* `%s` (`%s`)%n".formatted(endpoint.identifier(), endpoint.feature().name())));
+            document.append('\n');
+        }
+        return document.toString().stripTrailing() + "\n";
+    }
+
+    private static long count(List<Endpoint> endpoints, FeatureInteraction interaction) {
+        return endpoints.stream().filter(endpoint -> endpoint.interaction() == interaction).count();
+    }
+
+    /**
+     * The features recorded explicitly, by the classes that record them: the ones that pass a {@link UserFeature}
+     * constant to {@link FeatureUsageCollector}. Restricted to classes that call the collector, because referencing a
+     * constant for another reason does not make a feature measured.
+     */
+    private Map<UserFeature, Set<String>> recordersByFeature() {
+        JavaClass catalogue = productionClasses.get(UserFeature.class);
+        Map<UserFeature, Set<String>> recorders = new EnumMap<>(UserFeature.class);
+        for (JavaFieldAccess access : catalogue.getFieldAccessesToSelf()) {
+            JavaClass origin = access.getOriginOwner();
+            if (origin.isEquivalentTo(UserFeature.class) || !callsTheCollector(origin)) {
+                continue;
+            }
+            UserFeature feature = Arrays.stream(UserFeature.values()).filter(constant -> constant.name().equals(access.getName())).findFirst().orElse(null);
+            if (feature != null) {
+                recorders.computeIfAbsent(feature, key -> new TreeSet<>()).add(topLevelSimpleName(origin));
+            }
+        }
+        return recorders;
+    }
+
+    private static boolean callsTheCollector(JavaClass origin) {
+        return origin.getMethodCallsFromSelf().stream()
+                .anyMatch(call -> call.getTargetOwner().isEquivalentTo(FeatureUsageCollector.class) && "recordUsage".equals(call.getTarget().getName()));
+    }
+
+    private static String topLevelSimpleName(JavaClass javaClass) {
+        String name = javaClass.getName();
+        String simple = name.substring(name.lastIndexOf('.') + 1);
+        int nested = simple.indexOf('$');
+        return nested < 0 ? simple : simple.substring(0, nested);
+    }
+
+    private static JsonNode catalogueTranslations(String language) throws IOException {
+        Path file = Path.of(System.getProperty("user.dir")).resolve(TRANSLATIONS).resolve(language).resolve("featureUsage.json");
+        return JsonObjectMapper.get().readTree(Files.readString(file)).path("artemisApp").path("featureUsage").path("catalog");
+    }
+
+    /**
+     * Every endpoint of every controller, classified the way the startup inventory classifies it.
+     */
+    private List<Endpoint> endpoints() {
+        List<Endpoint> endpoints = new ArrayList<>();
+        for (JavaClass controller : controllers()) {
+            Class<?> beanType = controller.reflect();
+            String prefix = mappingsOf(controller).stream().findFirst().orElse("/");
+            for (Method method : beanType.getDeclaredMethods()) {
+                RequestMapping mapping = AnnotatedElementUtils.findMergedAnnotation(method, RequestMapping.class);
+                UserFeature feature = FeatureUsageClassification.featureOf(method, beanType);
+                if (mapping == null || feature == null) {
+                    continue;
+                }
+                Set<RequestMethod> verbs = EnumSet.noneOf(RequestMethod.class);
+                verbs.addAll(Arrays.asList(mapping.method()));
+                String path = mapping.path().length > 0 ? mapping.path()[0] : "";
+                String identifier = verbs.stream().map(RequestMethod::name).sorted().collect(Collectors.joining(",")) + " " + joinPath(prefix, path);
+                UsageInteraction override = method.getAnnotation(UsageInteraction.class);
+                endpoints.add(new Endpoint(identifier, moduleOf(controller), controller.getSimpleName(), method.getName(), feature,
+                        FeatureUsageClassification.interactionOf(method, beanType, verbs), FeatureUsageClassification.derivedInteractionOf(method, beanType, verbs),
+                        override == null ? null : override.value()));
+            }
+        }
+        endpoints.sort(Comparator.comparing(Endpoint::identifier).thenComparing(Endpoint::handler));
+        return endpoints;
+    }
+
+    private static String joinPath(String prefix, String path) {
+        String joined = (prefix.endsWith("/") ? prefix : prefix + "/") + (path.startsWith("/") ? path.substring(1) : path);
+        return joined.startsWith("/") ? joined.substring(1) : joined;
     }
 
     private static String moduleOf(JavaClass controller) {
@@ -220,42 +389,32 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
      * a mapping declared without one compares alike to one declared with it.
      */
     private static Set<String> mappingsOf(JavaClass controller) {
-        return controller.tryGetAnnotationOfType(RequestMapping.class)
-                .<Set<String>>map(
-                        mapping -> Arrays.stream(mapping.value()).map(value -> value.startsWith("/") ? value : "/" + value).collect(Collectors.toCollection(TreeSet<String>::new)))
+        return controller.tryGetAnnotationOfType(RequestMapping.class).<Set<String>>map(
+                mapping -> Arrays.stream(mapping.value()).map(value -> value.startsWith("/") ? value : "/" + value).collect(Collectors.toCollection(LinkedHashSet<String>::new)))
                 .orElseGet(Set::of);
-    }
-
-    private static String labelOf(JavaClass controller) {
-        return controller.tryGetAnnotationOfType(FeatureUsage.class).map(FeatureUsage::value).orElse(null);
-    }
-
-    /**
-     * The {@code @FeatureUsage} values declared on a controller's handler methods. The interceptor prefers the method
-     * annotation over the class one, so each of these is a feature in its own right rather than a variant of the
-     * controller's label.
-     */
-    private static Set<String> methodLabelsOf(JavaClass controller) {
-        return controller.getMethods().stream().map(method -> method.tryGetAnnotationOfType(FeatureUsage.class).map(FeatureUsage::value).orElse(null)).filter(Objects::nonNull)
-                .collect(Collectors.toCollection(TreeSet::new));
-    }
-
-    /** Every label the interceptor can record: the controller labels plus the method-level overrides. */
-    private Set<String> effectiveLabels() {
-        return controllers().stream().flatMap(controller -> labelsOf(controller).stream()).collect(Collectors.toCollection(TreeSet::new));
-    }
-
-    /** The labels one controller contributes: its own, when annotated, and every method-level override it declares. */
-    private static Set<String> labelsOf(JavaClass controller) {
-        Set<String> labels = new TreeSet<>(methodLabelsOf(controller));
-        String classLabel = labelOf(controller);
-        if (classLabel != null) {
-            labels.add(classLabel);
-        }
-        return labels;
     }
 
     private Set<JavaClass> controllers() {
         return productionClasses.stream().filter(javaClass -> javaClass.isAnnotatedWith(RestController.class)).collect(Collectors.toSet());
+    }
+
+    /**
+     * One endpoint as the startup inventory sees it.
+     *
+     * @param identifier         the verb and path, as the inventory keys it
+     * @param module             the module derived from the controller's package
+     * @param resource           the controller's simple name
+     * @param handler            the handler method's name
+     * @param feature            the feature the endpoint serves
+     * @param interaction        how its calls count
+     * @param derivedInteraction how its calls would count without an override
+     * @param override           the explicit {@link UsageInteraction}, if any
+     */
+    private record Endpoint(String identifier, String module, String resource, String handler, UserFeature feature, FeatureInteraction interaction,
+            FeatureInteraction derivedInteraction, @Nullable FeatureInteraction override) {
+
+        String describe() {
+            return "%s (%s.%s)".formatted(identifier, resource, handler);
+        }
     }
 }

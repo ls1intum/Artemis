@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.CoreLegacyFileRestPaths;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
@@ -59,6 +60,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.file.FileDownloadService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.core.util.FileHttpRequestValidator;
@@ -95,7 +98,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("files/file-access")
+@FeatureUsage(UserFeature.LECTURE_UNITS)
 @RestController
 @RequestMapping("api/core/")
 public class FileResource {
@@ -177,6 +180,7 @@ public class FileResource {
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
      */
+    @FeatureUsage(UserFeature.MARKDOWN_UPLOADS)
     @PostMapping("markdown-file-upload")
     @EnforceAtLeastTutor
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
@@ -200,6 +204,7 @@ public class FileResource {
      * @return The path of the file.
      * @throws URISyntaxException If the response path can't be converted into a URI.
      */
+    @FeatureUsage(UserFeature.MESSAGING)
     @PostMapping("files/courses/{courseId}/conversations/{conversationId}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<String> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId, @PathVariable Long conversationId)
@@ -229,6 +234,7 @@ public class FileResource {
      * @param filename       The filename of the file to get.
      * @return The requested file, or 404 if the file doesn't exist. The response will enable caching.
      */
+    @FeatureUsage(UserFeature.MESSAGING)
     @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
@@ -253,6 +259,8 @@ public class FileResource {
      * @param filename The filename of the file to get
      * @return The requested file, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.MARKDOWN_UPLOADS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("files/markdown/{filename}")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
@@ -271,6 +279,7 @@ public class FileResource {
      * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
     @GetMapping({ "files/templates/{language}/{projectType}", "files/templates/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
@@ -310,6 +319,8 @@ public class FileResource {
      * @param questionId ID of the drag and drop question, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.QUIZ_LIVE)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping({ "files/drag-and-drop/questions/{questionId}/backgrounds/*", CoreLegacyFileRestPaths.DRAG_AND_DROP_BACKGROUND })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId) {
@@ -333,6 +344,8 @@ public class FileResource {
      * @param dragItemId question-scoped ID of the drag item, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.QUIZ_LIVE)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/*")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long questionId, @PathVariable Long dragItemId) {
@@ -354,6 +367,7 @@ public class FileResource {
      * @param exerciseId   id of the exercise, the file belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.FILE_UPLOAD_EXERCISES)
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/*")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
@@ -388,6 +402,8 @@ public class FileResource {
      * @param courseId ID of the course, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.COURSE_DASHBOARD)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping({ "files/courses/{courseId}/icons/*", CoreLegacyFileRestPaths.COURSE_ICON })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getCourseIcon(@PathVariable Long courseId) {
@@ -403,6 +419,8 @@ public class FileResource {
      * @param userId ID of the user the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping({ "files/users/{userId}/profile-pictures/*", CoreLegacyFileRestPaths.PROFILE_PICTURE })
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getProfilePicture(@PathVariable Long userId) {
@@ -416,6 +434,7 @@ public class FileResource {
      *
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.CONVERSATION_ORGANIZATION)
     @GetMapping("files/templates/code-of-conduct")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getCourseCodeOfConduct() throws IOException {
@@ -432,6 +451,7 @@ public class FileResource {
      * @param examUserId ID of the exam user, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping({ "files/exam-users/{examUserId}/signatures/*", CoreLegacyFileRestPaths.EXAM_USER_SIGNATURE })
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
@@ -450,6 +470,7 @@ public class FileResource {
      * @param examUserId ID of the exam user, the image belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
+    @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping({ "files/exam-users/{examUserId}/*", CoreLegacyFileRestPaths.EXAM_USER_IMAGE })
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable long examUserId) {
@@ -583,6 +604,7 @@ public class FileResource {
      * @param requestHeaders        request headers, used for optional HTTP range requests
      * @return ResponseEntity containing the file as a resource
      */
+    @FeatureUsage(UserFeature.LECTURE_AUTHORING)
     @GetMapping("files/courses/{courseId}/attachment-video-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId, @RequestHeader HttpHeaders requestHeaders) {

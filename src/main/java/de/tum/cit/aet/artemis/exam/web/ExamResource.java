@@ -65,6 +65,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -82,6 +83,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -151,7 +154,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
-@FeatureUsage("authoring/exam-management")
+@FeatureUsage(UserFeature.EXAM_AUTHORING)
 @RestController
 @RequestMapping("api/exam/")
 public class ExamResource {
@@ -400,6 +403,7 @@ public class ExamResource {
      * @param workingTimeChange the working time change in seconds (can be positive or negative, but must not be 0)
      * @return the ResponseEntity with status 200 (OK) and with the updated exam as body
      */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PatchMapping("courses/{courseId}/exams/{examId}/working-time")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamDTO> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody int workingTimeChange) {
@@ -478,6 +482,7 @@ public class ExamResource {
      * @param message  the message of the announcement
      * @return the ResponseEntity with status 200 (OK) and with the new announcement as body
      */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PostMapping("courses/{courseId}/exams/{examId}/announcements")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamWideAnnouncementEventDTO> createExamAnnouncement(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody String message) {
@@ -856,6 +861,7 @@ public class ExamResource {
      * @param examId the id of the exam
      * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("exams/{examId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
@@ -870,6 +876,7 @@ public class ExamResource {
      * @param examId   the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
+    @FeatureUsage(UserFeature.EXAM_SCORES)
     @GetMapping("courses/{courseId}/exams/{examId}/statistics")
     @EnforceAtLeastTutor
     public ResponseEntity<ExamChecklistDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -893,6 +900,7 @@ public class ExamResource {
      * @param examId   the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
      */
+    @FeatureUsage(UserFeature.EXAM_SCORES)
     @GetMapping("courses/{courseId}/exams/{examId}/scores")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -911,6 +919,7 @@ public class ExamResource {
      * @param examId   the id of the exam that contains the exercises
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
     @EnforceAtLeastTutor
     public ResponseEntity<ExamForAssessmentDashboardDTO> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
@@ -948,6 +957,7 @@ public class ExamResource {
      * @param examId   the id of the exam that contains the exercises
      * @return data about an exam test run including all exercises, plus some data for the tutor as tutor status for assessment
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamForAssessmentDashboardDTO> getExamForTestRunAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
@@ -974,6 +984,7 @@ public class ExamResource {
      * @param examId   - the id of the exam to retrieve stats from
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
     @EnforceAtLeastTutor
     public ResponseEntity<StatsForDashboardDTO> getStatsForExamAssessmentDashboard(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1033,6 +1044,7 @@ public class ExamResource {
      * @param principal the user that wants to cleanup the exam
      * @return ResponseEntity with status
      */
+    @FeatureUsage(UserFeature.EXAM_ARCHIVE)
     @DeleteMapping("courses/{courseId}/exams/{examId}/cleanup")
     @EnforceAtLeastInstructor
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, @PathVariable Long examId, Principal principal) {
@@ -1055,6 +1067,7 @@ public class ExamResource {
      * @param examId   the id of the exam to delete
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.EXAM_ARCHIVE)
     @DeleteMapping("courses/{courseId}/exams/{examId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1079,6 +1092,7 @@ public class ExamResource {
      * @param examId   the id of the exam to reset
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.EXAM_ARCHIVE)
     @DeleteMapping("courses/{courseId}/exams/{examId}/reset")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamWithExerciseGroupsDTO> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1101,6 +1115,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the list of student exams with their corresponding users
      */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PostMapping("courses/{courseId}/exams/{examId}/generate-student-exams")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<StudentExamDTO>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1149,6 +1164,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the list of student exams with their corresponding users
      */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PostMapping("courses/{courseId}/exams/{examId}/generate-missing-student-exams")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<StudentExamDTO>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1170,6 +1186,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return ResponseEntity the number of evaluated quiz exercises
      */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
     @EnforceAtLeastInstructor
     public ResponseEntity<Integer> evaluateQuizExercises(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1203,6 +1220,7 @@ public class ExamResource {
      * @param studentDtos the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
+    @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/students")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamRegistrationResultDTO> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExamUserDTO> studentDtos) {
@@ -1221,6 +1239,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/register-course-students")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> registerCourseStudents(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1248,6 +1267,7 @@ public class ExamResource {
      * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @DeleteMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> removeStudentFromExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
@@ -1281,6 +1301,7 @@ public class ExamResource {
      * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @DeleteMapping("courses/{courseId}/exams/{examId}/students")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> removeAllStudentsFromExam(@PathVariable Long courseId, @PathVariable Long examId,
@@ -1309,6 +1330,8 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
+    @FeatureUsage(UserFeature.EXAM_TAKE)
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("courses/{courseId}/exams/{examId}/own-student-exam")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamForConductionDTO> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1327,6 +1350,7 @@ public class ExamResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the exams visible to the user as body
      */
+    @FeatureUsage(UserFeature.EXAM_TAKE)
     @GetMapping("courses/{courseId}/exams-for-overview")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<ExamForOverviewDTO>> getExamsForCourseOverview(@PathVariable long courseId) {
@@ -1342,6 +1366,7 @@ public class ExamResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with the found sidebar data as body
      */
+    @FeatureUsage(UserFeature.EXAM_TAKE)
     @GetMapping("courses/{courseId}/real-exams-sidebar-data")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<ExamSidebarDataDTO>> getSidebarDataForRealExams(@PathVariable long courseId) {
@@ -1414,6 +1439,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it could not be
      *         determined
      */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @GetMapping("courses/{courseId}/exams/{examId}/latest-end-date")
     @EnforceAtLeastTutor
     public ResponseEntity<ExamInformationDTO> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1432,6 +1458,7 @@ public class ExamResource {
      * @param examId   - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/exams/{examId}/locked-submissions")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LockedExamSubmissionDTO>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1463,6 +1490,7 @@ public class ExamResource {
      * @param examId   the id of the exam to archive
      * @return the ResponseEntity with status 200 (OK) if the archiving process has been started successfully
      */
+    @FeatureUsage(UserFeature.EXAM_ARCHIVE)
     @PutMapping("courses/{courseId}/exams/{examId}/archive")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
@@ -1492,6 +1520,7 @@ public class ExamResource {
      * @param examId   The id of the archived exam
      * @return ResponseEntity with status
      */
+    @FeatureUsage(UserFeature.EXAM_ARCHIVE)
     @GetMapping("courses/{courseId}/exams/{examId}/download-archive")
     @EnforceAtLeastInstructor
     public ResponseEntity<Resource> downloadExamArchive(@PathVariable Long courseId, @PathVariable Long examId) throws IOException {
@@ -1525,6 +1554,7 @@ public class ExamResource {
      * @param examId   the id of the exam for which to find exercises with potential plagiarism
      * @return the ResponseEntity with status 200 (OK) and with body the list of exercises with potential plagiarism
      */
+    @FeatureUsage(UserFeature.EXAM_SUSPICIOUS_BEHAVIOR)
     @GetMapping("courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ExerciseForPlagiarismCasesOverviewDTO>> getAllExercisesWithPotentialPlagiarismForExam(@PathVariable long courseId, @PathVariable long examId) {
@@ -1559,6 +1589,7 @@ public class ExamResource {
      * @param ipSubnet                                                             the subnet to use for analyzing sessions with IP addresses outside the subnet (optional)
      * @return the ResponseEntity with status 200 (OK) and with body a set containing all tuples of exam sessions that are suspicious.
      */
+    @FeatureUsage(UserFeature.EXAM_SUSPICIOUS_BEHAVIOR)
     @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
     @EnforceAtLeastInstructor
     public ResponseEntity<Set<SuspiciousExamSessionsDTO>> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId,
@@ -1589,6 +1620,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exam
      */
+    @FeatureUsage(UserFeature.EXAM_ARCHIVE)
     @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {

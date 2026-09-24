@@ -14,14 +14,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationStatusUpdateRequestDTO;
 import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusService;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("course-notifications/read-status")
+@FeatureUsage(UserFeature.COURSE_NOTIFICATIONS)
 @RestController
 @RequestMapping("api/notification/courses/")
 public class UserCourseNotificationStatusResource {
@@ -45,6 +48,7 @@ public class UserCourseNotificationStatusResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @PutMapping("{courseId}/status")
     public ResponseEntity<Void> updateNotificationStatus(@PathVariable Long courseId, @RequestBody UserCourseNotificationStatusUpdateRequestDTO requestDTO) {
         log.debug("REST request to update notification status to {} for notifications {} in course {}", requestDTO.statusType(), requestDTO.notificationIds(), courseId);

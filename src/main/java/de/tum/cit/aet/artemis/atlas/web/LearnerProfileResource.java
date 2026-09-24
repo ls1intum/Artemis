@@ -29,10 +29,11 @@ import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
-@FeatureUsage("learner-profile/learner-profile")
+@FeatureUsage(UserFeature.LEARNER_PROFILE)
 @RestController
 @RequestMapping("api/atlas/")
 public class LearnerProfileResource {

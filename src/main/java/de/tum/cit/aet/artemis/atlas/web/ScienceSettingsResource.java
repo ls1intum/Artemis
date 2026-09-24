@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 /**
@@ -34,7 +35,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
-@FeatureUsage("research/science-settings")
+@FeatureUsage(UserFeature.SCIENCE)
 @RestController
 @RequestMapping("api/atlas/")
 public class ScienceSettingsResource {

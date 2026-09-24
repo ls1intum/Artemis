@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -61,7 +62,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
  */
 @Conditional(IrisEnabled.class)
 @Lazy
-@FeatureUsage("chat/messages")
+@FeatureUsage(UserFeature.IRIS_CHAT)
 @RestController
 @RequestMapping("api/iris/")
 public class IrisMessageResource {
@@ -166,6 +167,7 @@ public class IrisMessageResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body true, or with status
      * @throws URISyntaxException if the URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
     @PostMapping("sessions/{sessionId}/tutor-suggestion")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {

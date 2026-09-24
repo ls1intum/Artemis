@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -35,6 +36,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -66,7 +69,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("submission/submissions")
+@FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingSubmissionResource {
@@ -222,6 +225,7 @@ public class ProgrammingSubmissionResource {
      * @param exerciseId to identify the programming exercise.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build-all")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
@@ -246,6 +250,7 @@ public class ProgrammingSubmissionResource {
      * @param participationIds list of participation ids.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
@@ -281,6 +286,7 @@ public class ProgrammingSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor.
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/programming-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingSubmissionForAssessmentDTO>> getAllProgrammingSubmissions(@PathVariable Long exerciseId,
@@ -324,6 +330,8 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("programming-submissions/{submissionId}/lock")
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
@@ -400,6 +408,8 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound the correction round for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
