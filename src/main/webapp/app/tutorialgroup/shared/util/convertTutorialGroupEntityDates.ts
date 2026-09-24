@@ -3,6 +3,8 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LegacyTutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 export function convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
     tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
@@ -48,11 +50,7 @@ export function convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup
     return tutorialGroup;
 }
 
-export function convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
-    if (tutorialGroups) {
-        tutorialGroups.forEach((tutorialGroup: TutorialGroup) => {
-            convertTutorialGroupDatesFromServer(tutorialGroup);
-        });
-    }
-    return tutorialGroups;
+/** Reads the summaries of the tutorial group list endpoint as entities, with their dates converted. */
+export function convertTutorialGroupSummariesFromServer(summaries: TutorialGroupSummary[]): TutorialGroup[] {
+    return summaries.map((summary) => convertTutorialGroupDatesFromServer(hydrate(new TutorialGroup(), summary)));
 }
