@@ -28,12 +28,13 @@
                     <span>
                         {{ 'artemisApp.exerciseActions.passwordWarningText' | artemisTranslate }}
                         <a
-                            href="javascript:void(0)"
-                            (click)="$event.preventDefault()"
-                            class="text-decoration-none fw-bold"
-                            tabindex="0"
+                            (click)="useHttpsToken()"
+                            (keydown.enter)="useHttpsToken()"
+                            (keydown.space)="$event.preventDefault(); useHttpsToken()"
                             role="button"
-                            style="cursor: help"
+                            tabindex="0"
+                            class="text-decoration-none fw-bold"
+                            style="cursor: pointer"
                             [ngbTooltip]="'artemisApp.exerciseActions.passwordWarningHelp' | artemisTranslate"
                             container="body"
                             >Token</a
