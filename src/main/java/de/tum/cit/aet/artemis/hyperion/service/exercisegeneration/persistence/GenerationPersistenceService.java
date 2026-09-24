@@ -304,7 +304,7 @@ public class GenerationPersistenceService {
     private static void requirePersistenceInputsSafe(GenerationOutcome outcome) {
         String producedProblemStatement = outcome.producedProblemStatement();
         SECRET_MATERIAL_POLICY.requireSafe("persistence/problem-statement.md",
-                producedProblemStatement == null ? new byte[0] : producedProblemStatement.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.PERSISTENCE);
+                producedProblemStatement == null ? new byte[0] : producedProblemStatement.getBytes(StandardCharsets.UTF_8));
         for (RepositoryType repositoryType : PERSIST_ORDER) {
             Map<String, String> producedFiles = outcome.producedFiles(repositoryType);
             if (producedFiles == null) {
@@ -313,7 +313,7 @@ public class GenerationPersistenceService {
             for (Map.Entry<String, String> file : producedFiles.entrySet()) {
                 String content = file.getValue();
                 SECRET_MATERIAL_POLICY.requireSafe("persistence/" + repositoryType.name().toLowerCase(Locale.ROOT) + "/" + file.getKey(),
-                        content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.PERSISTENCE);
+                        content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8));
             }
         }
     }

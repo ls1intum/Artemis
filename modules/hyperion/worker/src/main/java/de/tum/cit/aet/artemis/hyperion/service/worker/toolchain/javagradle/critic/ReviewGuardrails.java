@@ -36,8 +36,7 @@ final class ReviewGuardrails {
 
     /** Fails closed when text about to be sent to the provider carries secret material, so a leaked credential never leaves the server in a review prompt. */
     static void requireReviewTextSafe(String logicalPath, @Nullable String content) {
-        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8),
-                HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE);
+        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
