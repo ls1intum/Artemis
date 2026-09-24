@@ -56,6 +56,9 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Use TUM UI and Tailwind. Do not add Bootstrap or ng-bootstrap. If TUM UI lacks a reusable
   feature, extend it; use PrimeNG only if that cannot reasonably be done in the same change,
   and explain the fallback in the PR. [TUM UI](documentation/docs/developer/guidelines/tum-ui-kit.mdx)
+- Do not restyle TUM UI controls or target their private classes in application code. Use public
+  inputs and host layout; extend the package for missing capabilities. The design-system lint rules
+  check templates and stylesheets. [TUM UI](documentation/docs/developer/guidelines/tum-ui-kit.mdx)
 - Use semantic colour tokens, not primitive colours, Bootstrap classes or hand-written PrimeNG
   root classes. [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
 
