@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.aiworker.dto;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
@@ -17,14 +18,18 @@ public record WorkerEventDTO(int protocolVersion, String workerId, UUID incarnat
 
     public static final int MAX_PAYLOAD_LENGTH = 48 * 1024 * 1024;
 
-    private static final java.util.regex.Pattern WORKER_ID_PATTERN = java.util.regex.Pattern.compile("[a-zA-Z0-9_-]{1,64}");
+    /** Accounting carries usage evidence, not exercise artifacts; keep a broker outage from filling worker memory. */
+    public static final int MAX_ACCOUNTING_PAYLOAD_LENGTH = 8 * 1024;
 
-    private static final java.util.regex.Pattern IMAGE_PATTERN = java.util.regex.Pattern.compile("sha256:[a-f0-9]{64}");
+    private static final Pattern WORKER_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{1,64}");
+
+    private static final Pattern IMAGE_PATTERN = Pattern.compile("sha256:[a-f0-9]{64}");
 
     public WorkerEventDTO {
         if (protocolVersion != WorkerCommandDTO.PROTOCOL_VERSION || workerId == null || !WORKER_ID_PATTERN.matcher(workerId).matches() || incarnation == null || sequence < 1
                 || timestamp == null || type == null || imageDigest == null || !IMAGE_PATTERN.matcher(imageDigest).matches() || capacity == null || capability == null
-                || message != null && message.length() > 8192 || payload != null && payload.length() > MAX_PAYLOAD_LENGTH) {
+                || message != null && message.length() > 8192 || payload != null && payload.length() > MAX_PAYLOAD_LENGTH
+                || type == WorkerEventType.ACCOUNTING && payload != null && payload.length() > MAX_ACCOUNTING_PAYLOAD_LENGTH) {
             throw new IllegalArgumentException("Invalid worker event");
         }
         if (identity != null && (!workerId.equals(identity.workerId()) || !incarnation.equals(identity.workerIncarnation()))

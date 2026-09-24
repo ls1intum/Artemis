@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.util.Map;
 
 import org.springframework.context.annotation.Bean;
@@ -11,7 +13,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.SandboxPolicyDTO;
 
 /** Trusted sandbox policy; the sandbox implementation knows neither exercises nor toolchains. */
 @Configuration(proxyBeanMethods = false)
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @Lazy
 public class WorkerSandboxConfiguration {
 

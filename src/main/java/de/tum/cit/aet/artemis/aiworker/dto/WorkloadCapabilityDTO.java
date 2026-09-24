@@ -1,12 +1,15 @@
 package de.tum.cit.aet.artemis.aiworker.dto;
 
+import java.io.Serializable;
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /** Explicit workload schema and qualified execution profile; never a caller-selected implementation class. */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record WorkloadCapabilityDTO(String workload, int version, String profile) implements java.io.Serializable {
+public record WorkloadCapabilityDTO(String workload, int version, String profile) implements Serializable {
 
-    private static final java.util.regex.Pattern CAPABILITY_PATTERN = java.util.regex.Pattern.compile("[a-z][a-z0-9-]{0,63}");
+    private static final Pattern CAPABILITY_PATTERN = Pattern.compile("[a-z][a-z0-9-]{0,63}");
 
     public WorkloadCapabilityDTO {
         if (workload == null || !CAPABILITY_PATTERN.matcher(workload).matches() || version < 1 || profile == null || !CAPABILITY_PATTERN.matcher(profile).matches()) {

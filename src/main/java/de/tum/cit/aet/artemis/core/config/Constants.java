@@ -399,6 +399,11 @@ public final class Constants {
      */
     public static final String PROFILE_BUILDAGENT = "buildagent";
 
+    /**
+     * The name of the Spring profile used to run isolated AI Worker jobs.
+     */
+    public static final String PROFILE_AIWORKER = "aiworker";
+
     public static final String PROFILE_TEST_BUILDAGENT = "buildagent-test";
 
     /**
