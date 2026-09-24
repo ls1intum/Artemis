@@ -2,14 +2,11 @@ package de.tum.cit.aet.artemis.aiworker.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
-import jakarta.jms.ConnectionFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +20,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerCapacityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
+import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
@@ -30,10 +28,9 @@ class WorkerRegistryServiceTest {
 
     private final LocalDataProviderService data = new LocalDataProviderService();
 
-    private final AiWorkerProperties properties = new AiWorkerProperties("tcp://broker:61617?sslEnabled=true", "core", "test-password", List.of("worker"), Duration.ofSeconds(30),
-            Duration.ofSeconds(45));
+    private final AiWorkerProperties properties = new AiWorkerProperties(List.of("worker"), Duration.ofSeconds(30), Duration.ofSeconds(45));
 
-    private final WorkerRegistryService registry = new WorkerRegistryService(properties, mock(ConnectionFactory.class), new WorkerMessageCodecApi(), data);
+    private final WorkerRegistryService registry = new WorkerRegistryService(properties, new WorkerTransport(data, new WorkerMessageCodecApi()), data);
 
     private final UUID incarnation = UUID.randomUUID();
 
@@ -155,7 +152,7 @@ class WorkerRegistryServiceTest {
 
     @Test
     void coordinatorsShareFourAtomicSlotsAndCancellationReleasesOnlyOne() throws Exception {
-        var otherCore = new WorkerRegistryService(properties, mock(ConnectionFactory.class), new WorkerMessageCodecApi(), data);
+        var otherCore = new WorkerRegistryService(properties, new WorkerTransport(data, new WorkerMessageCodecApi()), data);
         registry.recordPresence("worker", heartbeat(incarnation, 1, true).withCapacity(new WorkerCapacityDTO(4, List.of())));
         var barrier = new java.util.concurrent.CyclicBarrier(8);
         try (var executor = java.util.concurrent.Executors.newFixedThreadPool(8)) {
