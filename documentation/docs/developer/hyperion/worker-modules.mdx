@@ -114,7 +114,7 @@ All cross-node state goes through `DistributedDataProvider`, with explicit expir
 lifetimes and value-guarded replacement/removal.
 
 ```bash
-./gradlew aiWorkerCheck -x webapp
+./gradlew isolatedModuleCheck -x webapp
 ./gradlew test --tests '*ArchitectureTest' --tests '*WorkerRegistry*Test' -x webapp
 ./gradlew :aiworker:verifyRuntimeBoundary :aiworker:verifySourceSize :aiworker:verifyJacksonBoundary
 ```
