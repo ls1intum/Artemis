@@ -1,10 +1,9 @@
 # Hyperion workload images
 
 The generic execution supervisor is the **AI Worker**, not a Hyperion-specific
-transport. Build and configure it through [docker/aiworker](../aiworker/README.md).
-That directory owns the worker Dockerfile and protocol-4 TLS CORE broker configuration.
-Use `AI_WORKER_*` environment variables and `artemis.aiworker.*` transport properties;
-Hyperion feature settings are separate.
+transport. Its profile-gated code uses the Artemis WAR. The
+[AI Worker transport](../aiworker/README.md) owns the protocol-4 TLS CORE broker
+configuration. Hyperion feature settings are separate.
 
 This directory owns Hyperion's language/toolchain sandbox recipes, not broker
 credentials, worker identity or generic execution policy. A supervisor without an
@@ -14,25 +13,16 @@ successfully is not a generation qualification test.
 Use a dedicated worker VM for staging and production. The supervisor's Docker socket
 is host-level authority; never share core's, the database's or an exam build agent's
 daemon. Generated code runs with a read-only root filesystem and without networking.
-Pin supervisor and sandbox images by digest and coordinate core, worker and broker
+Pin the Artemis and sandbox images by digest and coordinate core, worker and broker
 upgrades after draining active work. Worker process loss is not a durable local-outbox
 guarantee: core must fence the lost incarnation using the evidence it already holds.
 
-## Hyperion worker distribution
+## Hyperion workload
 
-The generic `:aiworker:bootJar` contains no Hyperion runtime, model provider or Java
-teaching templates. Install the Hyperion workload through its separate distribution:
-
-```sh
-./gradlew :hyperion:worker:bootJar :hyperion:worker:cyclonedxDirectBom -x webapp
-docker build -f docker/hyperion/worker.Dockerfile -t hyperion-worker:local .
-```
-
-This nested module composes the unchanged AI Worker supervisor with Hyperion's
-adapter and model provider. There are still only two top-level modules, `aiworker`
-and `hyperion`. Other workloads can compose their own distribution without
-packaging Hyperion. Deploy the Hyperion image for `hyperion-generation`, not the
-bare generic image; both use the same protocol-4 transport configuration.
+The normal Artemis WAR contains the generic AI Worker and Hyperion's workload.
+Build the WAR and the [AI Worker image](../aiworker/README.md) once. Set the
+worker's workload to `hyperion-generation`; the Hyperion adapter stays inactive
+for other workloads. Keep the worker process in an isolated VM.
 
 ## Offline Java Gradle build image
 
@@ -65,7 +55,7 @@ Qualify the image against actual isolated builds:
 
 ```sh
 HYPERION_GRADLE_TEST_IMAGE=$(docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}') \
-  ./gradlew :hyperion:worker:test --tests '*DockerGradleBuildTest' -x webapp
+  ./gradlew test --tests '*DockerGradleBuildTest' -x webapp
 ```
 
 This test builds a solution and incomplete template, parses their real reports,

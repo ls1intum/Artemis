@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -108,6 +109,17 @@ public class ParticipantScoreScheduleService {
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
+    /**
+     * Set when the service is shut down, so that the delayed startup task cannot reactivate it: the scheduler still runs delayed tasks after its shutdown.
+     * Guarded by {@link #lifecycleLock}.
+     */
+    private boolean shutDown = false;
+
+    /**
+     * Makes the shutdown check and the activation in the delayed startup task atomic with respect to {@link #shutdown()}.
+     */
+    private final Object lifecycleLock = new Object();
+
     public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, Optional<CompetencyProgressApi> competencyProgressApi,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
@@ -142,7 +154,12 @@ public class ParticipantScoreScheduleService {
     @PostConstruct
     public void startup() {
         scheduler.schedule(() -> {
-            isRunning.set(true);
+            synchronized (lifecycleLock) {
+                if (shutDown) {
+                    return;
+                }
+                isRunning.set(true);
+            }
             try {
                 // this should never prevent the application start of Artemis
                 scheduleTasks();
@@ -162,7 +179,10 @@ public class ParticipantScoreScheduleService {
      */
     @PreDestroy
     public void shutdown() {
-        isRunning.set(false);
+        synchronized (lifecycleLock) {
+            shutDown = true;
+            isRunning.set(false);
+        }
         // Stop all running tasks, we will reschedule them on startup again
         scheduledTasks.values().forEach(future -> future.cancel(true));
         scheduledTasks.clear();
@@ -181,7 +201,14 @@ public class ParticipantScoreScheduleService {
         // Entry point on a pooled scheduler thread: install the system principal rather than inherit a leftover.
         SecurityUtils.setSystemAuthorizationObject();
         if (isRunning.get()) {
-            executeScheduledTasks();
+            try {
+                executeScheduledTasks();
+            }
+            catch (TaskRejectedException e) {
+                // The scheduler only rejects tasks once it is shut down: it stops when the application context closes, before this bean is destroyed and
+                // isRunning is reset. The tasks are scheduled again on the next startup
+                log.debug("Skipped scheduling participant score updates because the task scheduler is shut down: {}", e.getMessage());
+            }
         }
     }
 
@@ -243,14 +270,21 @@ public class ParticipantScoreScheduleService {
         final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
         var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
         scheduledTasks.compute(participantScoreId, (key, existingTask) -> {
+            // Do not interrupt a task that is already running: the interrupt closes the socket of the JDBC connection it is using.
+            // A running task finishes, and the new task waits for it on the lock stripe. As the running task may have read the results
+            // before the one that triggered the new task, the new task then has to recompute even if the score looks up-to-date.
+            // Whether the task was still pending or already running cannot be told apart afterwards (cancel(false) also succeeds for a
+            // running task), so the new task recomputes whenever it replaces a task that had not finished.
+            boolean supersedesUnfinishedTask = existingTask != null && !existingTask.isDone();
             if (existingTask != null) {
-                existingTask.cancel(true);
+                existingTask.cancel(false);
             }
             // Capture this task's own future so executeTask() can remove exactly this map entry when it finishes
             // (see the compare-and-remove in executeTask's finally block). The reference is populated synchronously
             // right after scheduling, well before DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS elapses.
             AtomicReference<ScheduledFuture<?>> ownFuture = new AtomicReference<>();
-            ScheduledFuture<?> future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted, ownFuture.get()),
+            ScheduledFuture<?> future = scheduler.schedule(
+                    () -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted, supersedesUnfinishedTask, ownFuture.get()),
                     schedulingTime.toInstant());
             ownFuture.set(future);
             return future;
@@ -265,12 +299,13 @@ public class ParticipantScoreScheduleService {
      * @param participantId       the id of the participant (user or team, determined by the exercise)
      * @param resultLastModified  the last modified date of the result that triggered the update
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (optional)
+     * @param forceRecompute      whether to recompute even if the score was updated after the result, because this task superseded an unfinished one
      * @param thisTask            this invocation's own scheduled future, used to remove exactly this map entry when done
      */
-    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted, ScheduledFuture<?> thisTask) {
+    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted, boolean forceRecompute, ScheduledFuture<?> thisTask) {
         final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
         // Synchronize per exercise+participant to prevent concurrent tasks from creating duplicate participant scores.
-        // This can happen when a task is already running and cancel(true) fails to stop it before a new task is scheduled.
+        // This can happen when a task is already running while a new one is scheduled, as a running task is not interrupted.
         synchronized (lockStripes[Math.floorMod(participantScoreId.hashCode(), NUM_LOCK_STRIPES)]) {
             long start = System.currentTimeMillis();
             log.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
@@ -314,7 +349,7 @@ public class ParticipantScoreScheduleService {
 
                 if (participantScore.isPresent()) {
                     var lastModified = participantScore.get().getLastModifiedDate();
-                    if (lastModified != null && lastModified.isAfter(resultLastModified)) {
+                    if (!forceRecompute && lastModified != null && lastModified.isAfter(resultLastModified)) {
                         // The participant score was already updated after the last modified date of the result that initiated this task
                         // We assume we already processed the result with the last task that ran and therefore skip the processing
                         log.debug("Participant score {} is already up-to-date, skipping.", participantScore.get().getId());
@@ -372,7 +407,7 @@ public class ParticipantScoreScheduleService {
             }
             finally {
                 // Compare-and-remove: if scheduleTask() replaced this entry with a newer task while this one was
-                // running (cancel(true) cannot interrupt a task already past its interruptible point), only that
+                // running (a running task is not interrupted, see scheduleTask()), only that
                 // newer task's own invocation may remove the entry. Removing unconditionally here would let a
                 // superseded task evict a newer, not-yet-run task from the map, making isIdle() report true while
                 // the corresponding participant score is still stale.

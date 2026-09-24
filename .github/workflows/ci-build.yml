@@ -38,38 +38,6 @@ env:
   java: 25
 
 jobs:
-  build-aiworker:
-    name: Build AI Worker
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-      - uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '${{ env.java }}'
-      - uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
-      - name: Build worker executable and SBOM
-        run: ./gradlew :aiworker:bootJar :aiworker:cyclonedxDirectBom :hyperion:worker:bootJar :hyperion:worker:cyclonedxDirectBom -x webapp
-      - name: Build worker container
-        run: |
-          docker build -f docker/aiworker/worker.Dockerfile -t aiworker:ci .
-          docker build -f docker/hyperion/worker.Dockerfile -t hyperion-worker:ci .
-      - uses: actions/upload-artifact@v7
-        with:
-          name: aiworker
-          path: |
-            modules/hyperion/worker/build/libs/hyperion-worker.jar
-            modules/hyperion/worker/build/reports/cyclonedx-direct/bom.json
-            modules/aiworker/build/libs/aiworker.jar
-            modules/aiworker/build/reports/cyclonedx-direct/bom.json
-          if-no-files-found: error
-          retention-days: 7
-
   build-war:
     name: Build .war artifact
     runs-on: ubuntu-latest
@@ -164,6 +132,12 @@ jobs:
             echo "::error::${wars[0]} does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."
             exit 1
           fi
+      - name: Build AI Worker image from the same WAR
+        run: |
+          shopt -s nullglob
+          wars=(build/libs/Artemis-*.war)
+          test "${#wars[@]}" -eq 1
+          docker build -f docker/aiworker/worker.Dockerfile --build-arg "ARTEMIS_WAR=${wars[0]}" -t artemis-aiworker:ci .
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:

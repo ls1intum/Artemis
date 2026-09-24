@@ -59,9 +59,6 @@ jobs:
           image=$(docker image inspect aiworker-sandbox-test --format '{{.Id}}')
           echo "AI_WORKER_TEST_IMAGE=$image" >> "$GITHUB_ENV"
           echo "HYPERION_GRADLE_TEST_IMAGE=$image" >> "$GITHUB_ENV"
-      - name: Isolated module checks
-        run: ./gradlew isolatedModuleCheck -x webapp
-        if: ${{ !cancelled() }}
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
       - name: Java Test Code Style
@@ -81,7 +78,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: Java Architecture Tests
-          path: build/test-results/test/*.xml,modules/**/build/test-results/test/*.xml
+          path: build/test-results/test/*.xml
           reporter: java-junit
 
   client-style:

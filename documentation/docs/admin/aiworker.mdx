@@ -80,9 +80,15 @@ Never flush or replace the store under running writers.
 
 ## Worker configuration
 
-Build `:aiworker:bootJar`; the executable is `modules/aiworker/build/libs/aiworker.jar`.
+Build the normal Artemis WAR with `./gradlew -Pprod -Pwar bootWar -x webapp`.
 The [worker image recipe](https://github.com/ls1intum/Artemis/blob/develop/docker/aiworker/worker.Dockerfile)
-runs as UID 1000. Preload a qualified, digest-pinned sandbox image on the isolated daemon.
+uses that exact WAR and runs as UID 1000. Its entry point loads only AI Worker and
+selected workload services; it does not start the Artemis HTTP server. The
+`aiworker-standalone` profile excludes database and distributed-store auto-configuration.
+Do not pass `core`, `localci`, `localvc`, or `buildagent` to this entry point.
+For a combined test node, use the normal Artemis entry point with `aiworker`; keep
+the core container away from the host Docker socket.
+Preload a qualified, digest-pinned sandbox image on the isolated daemon.
 Configuration files containing secrets must be readable only by the deployment account
 and worker UID, and mounted read-only.
 
