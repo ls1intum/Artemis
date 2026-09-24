@@ -14,9 +14,9 @@
  */
 export interface Tokens {
     /** Prompt token length */
-    prompt?: number;
+    prompt: number;
     /** Completion token length */
-    completion?: number;
+    completion: number;
     /** Total token length */
-    total?: number;
+    total: number;
 }

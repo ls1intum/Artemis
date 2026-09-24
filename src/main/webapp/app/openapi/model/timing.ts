@@ -18,5 +18,5 @@ export interface Timing {
     /** Ending time */
     endTime?: string;
     /** Duration of consistency check */
-    durationS?: number;
+    durationS: number;
 }

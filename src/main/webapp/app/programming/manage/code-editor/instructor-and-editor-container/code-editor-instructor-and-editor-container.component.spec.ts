@@ -478,7 +478,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve(); // resolve modal
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false, initialAutoGeneration: false });
 
             // Emit DONE success event
             job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS' });
@@ -505,7 +505,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false, initialAutoGeneration: false });
 
             job$.next({ type: 'DONE', success: false, completionStatus: 'PARTIAL', message: 'Generation completed, but the build failed' });
 
@@ -565,7 +565,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS, checkOnly: false, initialAutoGeneration: false });
             expect(comp.isGeneratingCode()).toBe(false);
             expect(addAlertSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -779,7 +779,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             await Promise.resolve();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false, initialAutoGeneration: false });
             expect(comp.isGeneratingCode()).toBe(false);
             expect(openSpy).toHaveBeenCalledOnce();
             expect(addAlertSpy).not.toHaveBeenCalledWith(
@@ -982,17 +982,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false, initialAutoGeneration: false });
 
             solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true, initialAutoGeneration: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false, initialAutoGeneration: false });
 
             templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(5, 42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { checkOnly: true, initialAutoGeneration: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(5, 42, { repositoryType: RepositoryType.TESTS, checkOnly: false, initialAutoGeneration: false });
 
             testsJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
@@ -1100,13 +1100,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
                 await vi.advanceTimersByTimeAsync(0);
 
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
+                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true, initialAutoGeneration: false });
                 expect(codeGenerationApi.generateCode).toHaveBeenCalledTimes(2);
 
                 await vi.advanceTimersByTimeAsync(1000);
 
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { checkOnly: true });
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { checkOnly: true, initialAutoGeneration: false });
+                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false, initialAutoGeneration: false });
 
                 templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
                 await vi.advanceTimersByTimeAsync(0);
@@ -1164,7 +1164,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             internals(comp).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true, initialAutoGeneration: false });
             expect(clearSpy).toHaveBeenCalledWith(true);
         });
 
@@ -1186,7 +1186,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             internals(comp).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true, initialAutoGeneration: false });
             expect(internals(comp).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
             expect(subscribeSpy).toHaveBeenCalledWith('job-1', RepositoryType.TEMPLATE);
             expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)?.state).toBe('running');
@@ -1324,7 +1324,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true, initialAutoGeneration: false });
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, {
                 repositoryType: RepositoryType.TEMPLATE,
                 checkOnly: false,
@@ -1366,7 +1366,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             internals(comp).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { checkOnly: true, initialAutoGeneration: false });
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, {
                 repositoryType: RepositoryType.TEMPLATE,
                 checkOnly: false,
@@ -1384,7 +1384,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             internals(comp).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true, initialAutoGeneration: false });
             expect(clearSpy).toHaveBeenCalledWith(true);
             expect(subscribeSpy).not.toHaveBeenCalled();
         });

@@ -1626,6 +1626,7 @@ components:
         applied: {type: boolean, description: Whether the action was successfully
             applied}
         summary: {type: string, description: Short summary of what was changed}
+      required: [applied]
     ShortAnswerSubmittedAnswerFromStudent:
       required: [questionId, submittedTexts, type]
       type: object
@@ -1744,6 +1745,7 @@ components:
         completion: {type: integer, format: int64, description: Completion token length,
           example: 3753}
         total: {type: integer, format: int64, description: Total token length, example: 13957}
+      required: [completion, prompt, total]
     DragAndDropQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -1836,6 +1838,7 @@ components:
         channelId: {type: integer, format: int64}
         startDate: {type: string, format: date-time}
         endDate: {type: string, format: date-time}
+      required: [channelId]
     DragAndDropQuizQuestionWithoutSolution:
       required: [type]
       type: object
@@ -2005,6 +2008,7 @@ components:
         endTime: {type: string, description: Ending time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
         durationS: {type: number, format: double, description: Duration of consistency
             check, example: 27.765}
+      required: [durationS]
     RewriteFaqRequest:
       type: object
       description: Request to rewrite a FAQ
@@ -2129,7 +2133,7 @@ components:
         hasUserSetSettings: {type: boolean}
         currentUserEntry: {$ref: '#/components/schemas/LeaderboardEntry'}
         currentTime: {type: string, format: date-time}
-      required: [currentTime, currentUserEntry, leaderboardEntries]
+      required: [currentTime, currentUserEntry, hasUserSetSettings, leaderboardEntries]
     QuizQuestionGenerationRequest:
       type: object
       description: Request to generate quiz questions. Either topic or competencyIds
@@ -2294,7 +2298,8 @@ components:
         totalQuestions: {type: integer, format: int64}
         dueDate: {type: string, format: date-time}
         streak: {type: integer, format: int32}
-      required: [dueDate, userName]
+      required: [answeredCorrectly, answeredWrong, dueDate, rank, score, selectedLeague,
+        streak, totalQuestions, userId, userName]
     QuizQuestionGenerationResponse:
       type: object
       description: Response containing generated quiz questions
@@ -2321,7 +2326,7 @@ components:
         feedback: {type: string, description: Suggested feedback, minLength: 1}
         usageCount: {type: integer, format: int32, description: Maximum number of
             uses, minimum: 0}
-      required: [feedback, gradingScale, instructionDescription]
+      required: [credits, feedback, gradingScale, instructionDescription, usageCount]
     TutorialGroupFreePeriod:
       type: object
       properties:
@@ -2376,7 +2381,7 @@ components:
           uniqueItems: true
         isNewSession: {type: boolean}
         id: {type: integer, format: int64}
-      required: [quizQuestionWithSolutionDTO]
+      required: [isNewSession, isRated, quizQuestionWithSolutionDTO]
     TutorialGroupSchedule:
       type: object
       properties:
@@ -2500,6 +2505,7 @@ components:
       properties:
         date: {type: string, format: date}
         count: {type: integer, format: int64}
+      required: [count]
     ChecklistActionRequest:
       type: object
       description: Request to apply an AI-powered checklist action to the problem
@@ -2537,7 +2543,7 @@ components:
         capacity: {type: integer, format: int32}
         additionalInformation: {type: string, maxLength: 255, minLength: 1}
         tutorialGroupSchedule: {$ref: '#/components/schemas/TutorialGroupSchedule'}
-      required: [language, title]
+      required: [isOnline, language, title, tutorId]
     ShortAnswerMapping:
       type: object
       properties:
@@ -2773,6 +2779,9 @@ components:
         accuracyOfScores: {type: integer, format: int32}
         athenaGradingFeedbackEnabled: {type: boolean}
         athenaFormativeFeedbackEnabled: {type: boolean}
+      required: [athenaFormativeFeedbackEnabled, athenaGradingFeedbackEnabled, complaintsEnabled,
+        maxComplaintResponseTextLimit, maxComplaintTextLimit, maxComplaintTimeDays,
+        maxRequestMoreFeedbackTimeDays, requestMoreFeedbackEnabled, testCourse]
     GeneratedAssessmentCriterion:
       type: object
       description: Generated structured assessment criterion
@@ -2786,7 +2795,7 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentInstruction'}
           maxItems: 3
           minItems: 3
-      required: [title]
+      required: [bonus, title]
     QualityIssueLocation:
       type: object
       description: Location of a quality issue within the problem statement
@@ -2870,6 +2879,7 @@ components:
             in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: 0.027738}
+      required: [completionEur, promptEur, totalEur]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -2927,6 +2937,7 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+      required: [quizEnded, quizStarted, visibleToStudents]
     VariantPlacement:
       type: object
       properties:
@@ -2980,6 +2991,7 @@ components:
         selectedFeedbackThreadIds:
           type: array
           items: {type: integer, format: int64}
+      required: [checkOnly, initialAutoGeneration]
     StepOutput:
       type: object
       properties:
@@ -3020,6 +3032,7 @@ components:
       properties:
         freePeriodId: {type: integer, format: int64}
         count: {type: integer, format: int64}
+      required: [count]
     SubmittedAnswerAfterEvaluation:
       discriminator:
         propertyName: type

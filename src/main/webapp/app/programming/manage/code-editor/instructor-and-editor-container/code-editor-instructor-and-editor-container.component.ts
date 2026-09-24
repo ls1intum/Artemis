@@ -624,10 +624,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false, initialAutoGeneration = false): CodeGenerationRequest {
         // Built with the client RepositoryType enum so the whole construction is type-checked; see CodeGenerationRequestPayload.
-        const request: CodeGenerationRequestPayload = { repositoryType, checkOnly };
-        if (initialAutoGeneration) {
-            request.initialAutoGeneration = true;
-        }
+        const request: CodeGenerationRequestPayload = { repositoryType, checkOnly, initialAutoGeneration };
         if (!checkOnly) {
             const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
                 repositoryType,
@@ -646,7 +643,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns check-only request payload for the Hyperion endpoint
      */
     private createCheckOnlyCodeGenerationRequest(): CodeGenerationRequest {
-        return { checkOnly: true };
+        return { checkOnly: true, initialAutoGeneration: false };
     }
 
     /**
