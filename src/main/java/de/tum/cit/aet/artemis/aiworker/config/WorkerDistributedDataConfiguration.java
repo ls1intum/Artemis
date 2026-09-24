@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistribu
 
 /** Loads only the shared distributed-data client and its required support on a standalone worker. */
 @Configuration(proxyBeanMethods = false)
+@Lazy
 @Profile("aiworker-standalone")
 @EnableConfigurationProperties({ ArtemisProperties.class, ServerProperties.class })
 @Import({ EurekaInstanceHelper.class, HazelcastConfiguration.class, HazelcastDistributedDataProviderService.class, RedissonCodecConfiguration.class, RedisNodeIdentity.class,
