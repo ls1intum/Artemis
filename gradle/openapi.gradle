@@ -32,6 +32,10 @@
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
                 "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.openapi",
+                // Legacy path aliases (the second path of a multi-path mapping, see LegacyApiPathDeprecationInterceptor)
+                // would each become a second operation with a numbered operationId. Document only the canonical path.
+                // Remove once the aliases are gone after their sunset.
+                "-Dspringdoc.paths-to-exclude=/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
