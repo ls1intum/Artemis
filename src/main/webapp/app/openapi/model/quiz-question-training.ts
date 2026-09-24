@@ -12,8 +12,8 @@ import type { QuizQuestionWithSolution } from './quiz-question-with-solution';
 
 export interface QuizQuestionTraining {
     quizQuestionWithSolutionDTO: QuizQuestionWithSolution;
-    isRated?: boolean;
+    isRated: boolean;
     questionIds?: Array<number>;
-    isNewSession?: boolean;
+    isNewSession: boolean;
     id?: number;
 }

@@ -21,7 +21,7 @@ export interface QuizExerciseWithoutQuestions {
     dueDate?: string;
     assessmentDueDate?: string;
     difficulty?: QuizExerciseWithoutQuestionsDifficultyEnum;
-    visibleToStudents?: boolean;
+    visibleToStudents: boolean;
     course?: CourseForQuizExercise;
     type?: string;
     randomizeQuestionOrder?: boolean;
@@ -30,8 +30,8 @@ export interface QuizExerciseWithoutQuestions {
     quizMode?: QuizExerciseWithoutQuestionsQuizModeEnum;
     duration?: number;
     quizBatches?: Array<QuizBatch>;
-    quizStarted?: boolean;
-    quizEnded?: boolean;
+    quizStarted: boolean;
+    quizEnded: boolean;
     includedInOverallScore?: QuizExerciseWithoutQuestionsIncludedInOverallScoreEnum;
     mode?: QuizExerciseWithoutQuestionsModeEnum;
     maxPoints?: number;

@@ -20,22 +20,22 @@ export interface CourseForQuizExercise {
     enrollmentEndDate?: string;
     unenrollmentEndDate?: string;
     semester?: string;
-    testCourse?: boolean;
+    testCourse: boolean;
     language?: CourseForQuizExerciseLanguageEnum;
     defaultProgrammingLanguage?: CourseForQuizExerciseDefaultProgrammingLanguageEnum;
     onlineCourse?: boolean;
     courseInformationSharingConfiguration?: CourseForQuizExerciseCourseInformationSharingConfigurationEnum;
     maxComplaints?: number;
     maxTeamComplaints?: number;
-    maxComplaintTimeDays?: number;
-    maxRequestMoreFeedbackTimeDays?: number;
-    maxComplaintTextLimit?: number;
-    maxComplaintResponseTextLimit?: number;
-    complaintsEnabled?: boolean;
-    requestMoreFeedbackEnabled?: boolean;
+    maxComplaintTimeDays: number;
+    maxRequestMoreFeedbackTimeDays: number;
+    maxComplaintTextLimit: number;
+    maxComplaintResponseTextLimit: number;
+    complaintsEnabled: boolean;
+    requestMoreFeedbackEnabled: boolean;
     accuracyOfScores?: number;
-    athenaGradingFeedbackEnabled?: boolean;
-    athenaFormativeFeedbackEnabled?: boolean;
+    athenaGradingFeedbackEnabled: boolean;
+    athenaFormativeFeedbackEnabled: boolean;
 }
 
 export type CourseForQuizExerciseLanguageEnum = 'ENGLISH' | 'GERMAN';

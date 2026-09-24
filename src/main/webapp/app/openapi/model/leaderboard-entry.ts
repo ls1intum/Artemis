@@ -10,15 +10,15 @@
 
 
 export interface LeaderboardEntry {
-    rank?: number;
-    selectedLeague?: number;
-    userId?: number;
+    rank: number;
+    selectedLeague: number;
+    userId: number;
     userName: string;
     imageURL?: string;
-    score?: number;
-    answeredCorrectly?: number;
-    answeredWrong?: number;
-    totalQuestions?: number;
+    score: number;
+    answeredCorrectly: number;
+    answeredWrong: number;
+    totalQuestions: number;
     dueDate: string;
-    streak?: number;
+    streak: number;
 }

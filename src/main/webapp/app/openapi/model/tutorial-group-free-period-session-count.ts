@@ -11,5 +11,5 @@
 
 export interface TutorialGroupFreePeriodSessionCount {
     freePeriodId?: number;
-    count?: number;
+    count: number;
 }

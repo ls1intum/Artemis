@@ -16,7 +16,7 @@ export interface ChecklistActionResponse {
     /** The updated problem statement markdown */
     updatedProblemStatement?: string;
     /** Whether the action was successfully applied */
-    applied?: boolean;
+    applied: boolean;
     /** Short summary of what was changed */
     summary?: string;
 }

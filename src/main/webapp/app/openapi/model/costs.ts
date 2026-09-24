@@ -14,9 +14,9 @@
  */
 export interface Costs {
     /** Prompt costs in EUR */
-    promptEur?: number;
+    promptEur: number;
     /** Completion costs in EUR */
-    completionEur?: number;
+    completionEur: number;
     /** Total costs in EUR */
-    totalEur?: number;
+    totalEur: number;
 }
