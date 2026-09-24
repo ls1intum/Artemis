@@ -6,7 +6,7 @@ import { CourseOperationProgressDTO, CourseOperationStatus, CourseOperationType 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faExclamationTriangle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { DialogModule } from 'primeng/dialog';
-import { ProgressBarModule } from 'primeng/progressbar';
+import { TumUiProgressBarComponent, type TumUiProgressBarSeverity } from '@tumaet/ui-angular';
 
 // Minimum interval between UI updates to prevent flickering (in milliseconds)
 const UPDATE_BUFFER_MS = 150;
@@ -14,7 +14,7 @@ const UPDATE_BUFFER_MS = 150;
 @Component({
     selector: 'jhi-course-operation-progress',
     standalone: true,
-    imports: [CommonModule, FaIconComponent, DialogModule, ProgressBarModule],
+    imports: [CommonModule, FaIconComponent, DialogModule, TumUiProgressBarComponent],
     templateUrl: './course-operation-progress.component.html',
     styleUrls: ['./course-operation-progress.component.scss'],
 })
@@ -101,13 +101,10 @@ export class CourseOperationProgressComponent {
         return Math.round(p.weightedProgressPercent);
     });
 
-    /**
-     * Returns the CSS class for the PrimeNG progress bar based on status.
-     */
-    progressStyleClass = computed(() => {
-        if (this.isFailed()) return 'progress-danger';
-        if (this.isCompleted()) return 'progress-success';
-        return '';
+    progressSeverity = computed<TumUiProgressBarSeverity>(() => {
+        if (this.isFailed()) return 'danger';
+        if (this.isCompleted()) return 'success';
+        return 'primary';
     });
 
     operationTitle = computed(() => {

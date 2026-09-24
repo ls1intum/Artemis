@@ -23,6 +23,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 import { TumUiChipComponent } from '../chip/tum-ui-chip.component';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
+import { tumUiCn } from '../tum-ui-cn';
 
 export interface TumUiAutoCompleteSearchEvent {
     originalEvent?: Event;
@@ -328,12 +329,14 @@ export class TumUiAutoCompleteComponent implements ControlValueAccessor {
     protected optionClasses(option: unknown, index: number): string {
         const base = 'tum-ui-autocomplete-option tum:flex tum:cursor-pointer tum:items-center tum:px-3 tum:py-2';
         const active = this.activeIndex() === index;
-        if (this.isAlreadySelected(option)) {
-            const background = active ? 'tum:bg-highlight-focus-background' : 'tum:bg-highlight-background';
-            return `${base} tum:text-highlight ${background}`;
-        }
-        const activeState = active ? ' tum:bg-highlight-focus-background tum:text-highlight' : '';
-        return `${base} tum:text-text tum:hover:bg-hover-background tum:hover:text-text-hover${activeState}`;
+        const selected = this.isAlreadySelected(option);
+        return tumUiCn(
+            base,
+            'tum:text-text',
+            !selected && !active && 'tum:hover:bg-hover-background tum:hover:text-text-hover',
+            selected && 'tum:bg-highlight-background tum:text-highlight',
+            active && 'tum:bg-highlight-focus-background tum:text-highlight',
+        );
     }
     protected containerClasses(): string {
         const padding = this.multiple() && this.selectedValues().length > 0 ? 'tum:p-1' : 'tum:py-1 tum:px-3';

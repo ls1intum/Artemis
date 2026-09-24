@@ -16,7 +16,7 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async addNewFeedback(points: number, feedback?: string) {
-        await this.page.locator('.add-unreferenced-feedback').click();
+        await this.page.getByTestId('add-unreferenced-feedback-button').click();
         await this.fillFeedback(points, feedback);
     }
 

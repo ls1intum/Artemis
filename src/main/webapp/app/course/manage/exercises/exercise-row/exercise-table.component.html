@@ -21,7 +21,7 @@
                         <th class="col-icon"></th>
                     }
                     <th tumUiSortableColumn="title"><span jhiTranslate="artemisApp.exercise.title"></span></th>
-                    <th tumUiSortableColumn="dueDate" class="col-dates"><span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span></th>
+                    <th tumUiSortableColumn="dueDate" class="min-w-64"><span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span></th>
                     <th tumUiSortableColumn="points"><span jhiTranslate="artemisApp.exercise.points"></span></th>
                     @if (!showGroupSelector()) {
                         <th tumUiSortableColumn="difficulty"><span jhiTranslate="artemisApp.exercise.difficulty"></span></th>
@@ -130,7 +130,7 @@
                                         optionLabel="label"
                                         optionValue="value"
                                         size="small"
-                                        class="col-group-select"
+                                        class="w-[10rem]"
                                         [disabled]="row.isQuizNonIndividual"
                                     />
                                 </span>

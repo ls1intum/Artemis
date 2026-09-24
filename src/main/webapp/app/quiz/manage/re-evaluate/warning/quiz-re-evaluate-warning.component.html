@@ -33,7 +33,7 @@
                     <ul style="padding-left: 15px">
                         <li style="margin-bottom: -10px">
                             <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
-                            <p style="margin-left: 10px; color: red" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p>
+                            <p class="text-state-danger" style="margin-left: 10px" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p>
                         </li>
                     </ul>
                 </li>
@@ -68,7 +68,7 @@
                     <ul style="padding-left: 15px">
                         <li style="margin-bottom: -10px">
                             <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
-                            <p style="color: red; margin-left: 10px" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p>
+                            <p class="text-state-danger" style="margin-left: 10px" jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p>
                         </li>
                     </ul>
                 </li>
@@ -86,13 +86,15 @@
                 <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
             }
             @if (successful() && !busy()) {
-                <span style="color: green"><fa-icon [icon]="faCheck" />&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span></span>
+                <span class="text-state-success"
+                    ><fa-icon [icon]="faCheck" />&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span
+                ></span>
             }
             @if (failed() && !busy()) {
-                <span style="color: red"><fa-icon [icon]="faTimes" />&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
+                <span class="text-state-danger"><fa-icon [icon]="faTimes" />&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
             }
             @if (busy()) {
-                <span style="color: grey"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span>Please wait, conducting changes!</span></span>
+                <span class="text-muted-color"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span>Please wait, conducting changes!</span></span>
             }
         </h4>
         &nbsp;

@@ -5,13 +5,14 @@
 .tum-ui-sort-button {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     width: 100%;
     padding: 0;
     border: 0;
     background: transparent;
     color: inherit;
     font: inherit;
-    text-align: inherit;
+    text-align: start;
     cursor: pointer;
 }
 
@@ -20,10 +21,17 @@
 }
 
 .tum-ui-sort-icon {
-    display: inline-block;
-    width: calc(var(--tumaet-ui-spacing) * 3.5);
-    height: calc(var(--tumaet-ui-spacing) * 3.5);
+    display: inline-flex;
     margin-inline-start: calc(var(--tumaet-ui-spacing) * 2);
-    vertical-align: middle;
     flex-shrink: 0;
+}
+
+:host([data-content-align='center']) .tum-ui-sort-button {
+    justify-content: center;
+    text-align: center;
+}
+
+:host([data-content-align='end']) .tum-ui-sort-button {
+    justify-content: flex-end;
+    text-align: end;
 }

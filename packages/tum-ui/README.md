@@ -78,6 +78,10 @@ components do not contain light/dark palette branches. Responsive component thre
 package-owned compile-time values at 40rem, 48rem, 64rem, 80rem, and 96rem; they do not follow a
 host's Tailwind breakpoints.
 
+When composing conditional classes inside the package, use the internal `tumUiCn` helper. It
+merges `tum:` utilities without treating host classes as package utilities; the default `cn`
+export is not configured for this prefix.
+
 Apply host-owned layout classes with the native `class` attribute on a package component. Those
 classes style the component host; they do not cause the package Tailwind build to generate
 utilities. Use component inputs and theme tokens for supported internal customization instead of
@@ -106,3 +110,9 @@ the ownership boundary, supported workflow, testing expectations, and Storybook 
 ## License
 
 MIT
+
+### Compact control regions
+
+Import `TumUiDensityDirective` and put `tumUiDensity="compact"` on a toolbar region to give its buttons, selects, segmented controls, and single-line inputs a 28px height (at the default root font size). This includes projected controls and keeps each control's typography and horizontal size variant. Compact density takes precedence over the size input's height and vertical padding; size still controls typography and horizontal spacing. Apply `tumUiDensity="default"` to restore the normal size geometry within a compact region, and nest another compact region when needed. The directive also works directly on a control. Textareas and controls outside the region are unchanged.
+
+Within an enclosing CSS inline-size container narrower than 40rem, compact segmented controls reduce horizontal option padding to 8px. The application owns that layout container; TUM UI owns the control measurements. No private component classes or `::ng-deep` overrides are needed.

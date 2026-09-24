@@ -32,6 +32,15 @@ describe('TumUiTagComponent', () => {
         expect(tag().getAttribute('data-severity')).toBe('success');
     });
 
+    it('keeps the selected shape and semantic color classes', () => {
+        fixture.componentRef.setInput('rounded', true);
+        fixture.componentRef.setInput('severity', 'contrast');
+        fixture.detectChanges();
+        expect(tag().classList.contains('tum:rounded-full')).toBe(true);
+        expect(tag().classList.contains('tum:rounded-md')).toBe(false);
+        expect(tag().classList.contains('tum:bg-contrast-background')).toBe(true);
+    });
+
     it('renders the value input', () => {
         fixture.componentRef.setInput('value', 'Active');
         fixture.detectChanges();

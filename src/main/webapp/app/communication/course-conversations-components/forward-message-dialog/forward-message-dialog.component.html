@@ -81,7 +81,7 @@
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
     />
     <div class="col mt-1 text-end">
-        <p class="small my-0 ms-2" [style.color]="isMessageValid() ? 'inherit' : 'red'">{{ newPost.content?.length ?? 0 }} / {{ maxContentLength }}</p>
+        <p class="small my-0 ms-2" [class.text-state-danger]="!isMessageValid()" data-testid="message-length">{{ newPost.content?.length ?? 0 }} / {{ maxContentLength }}</p>
     </div>
 
     @if (postToForward()) {

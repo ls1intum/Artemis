@@ -30,8 +30,9 @@
                         [title]="'artemisApp.examManagement.testRun.assess' | artemisTranslate"
                         tumUiButton
                         size="small"
-                        [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
-                        [class.disabled]="isLoading() || !testRunCanBeAssessed()"
+                        [routerLink]="isLoading() || !testRunCanBeAssessed() ? undefined : ['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
+                        [attr.aria-disabled]="isLoading() || !testRunCanBeAssessed() ? true : null"
+                        [attr.tabindex]="isLoading() || !testRunCanBeAssessed() ? -1 : null"
                     >
                         <fa-icon [icon]="faCheck" />
                         <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.testRun.assess"></span>

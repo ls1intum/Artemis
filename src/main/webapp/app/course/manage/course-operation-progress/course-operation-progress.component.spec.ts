@@ -9,7 +9,7 @@ import { MockComponent, MockModule } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
-import { ProgressBarModule } from 'primeng/progressbar';
+import { TumUiProgressBarComponent } from '@tumaet/ui-angular';
 
 describe('CourseOperationProgressComponent', () => {
     let component: CourseOperationProgressComponent;
@@ -40,7 +40,7 @@ describe('CourseOperationProgressComponent', () => {
         })
             .overrideComponent(CourseOperationProgressComponent, {
                 set: {
-                    imports: [CommonModule, MockModule(DialogModule), MockModule(ProgressBarModule), MockComponent(FaIconComponent)],
+                    imports: [CommonModule, MockModule(DialogModule), TumUiProgressBarComponent, MockComponent(FaIconComponent)],
                 },
             })
             .compileComponents();
@@ -145,32 +145,35 @@ describe('CourseOperationProgressComponent', () => {
         });
     });
 
-    describe('progress style class', () => {
-        it('should return empty string when in progress', async () => {
+    describe('progress severity', () => {
+        it('should use primary while in progress', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.IN_PROGRESS }));
             fixture.detectChanges();
             await flushBuffer();
             fixture.detectChanges();
 
-            expect(component.progressStyleClass()).toBe('');
+            expect(component.progressSeverity()).toBe('primary');
         });
 
-        it('should return progress-success when completed', async () => {
+        it('should use success when completed', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.COMPLETED }));
             fixture.detectChanges();
             await flushBuffer();
             fixture.detectChanges();
 
-            expect(component.progressStyleClass()).toBe('progress-success');
+            expect(component.progressSeverity()).toBe('success');
         });
 
-        it('should return progress-danger when failed', async () => {
+        it('should use danger when failed', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.FAILED }));
             fixture.detectChanges();
             await flushBuffer();
             fixture.detectChanges();
 
-            expect(component.progressStyleClass()).toBe('progress-danger');
+            expect(component.progressSeverity()).toBe('danger');
+            const bar = fixture.nativeElement.querySelector('tum-ui-progress-bar');
+            expect(bar?.getAttribute('aria-valuenow')).toBe('20');
+            expect(bar?.querySelector('[data-severity]')?.getAttribute('data-severity')).toBe('danger');
         });
     });
 

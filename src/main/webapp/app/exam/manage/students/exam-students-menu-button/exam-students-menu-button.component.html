@@ -14,7 +14,7 @@
     type="button"
     tumUiButton
     [disabled]="disabled()"
-    [class]="buttonClass()"
+    [size]="size()"
     (click)="toggleMenu($event)"
     [title]="label() | artemisTranslate"
     [attr.aria-label]="label() | artemisTranslate"

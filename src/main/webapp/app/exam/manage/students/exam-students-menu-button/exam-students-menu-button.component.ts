@@ -1,6 +1,6 @@
 import { Component, input, viewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { TumUiButtonDirective, TumUiButtonSeverity } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiButtonSeverity, TumUiButtonSize } from '@tumaet/ui-angular';
 import { Menu } from 'primeng/menu';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -16,7 +16,7 @@ export class ExamStudentsMenuButtonComponent {
     readonly label = input.required<string>();
     readonly buttonIconClass = input.required<string>();
     readonly disabled = input(false);
-    readonly buttonClass = input('');
+    readonly size = input<TumUiButtonSize>('default');
     readonly severity = input<TumUiButtonSeverity>('primary');
 
     readonly menu = viewChild<Menu>('menu');

@@ -125,6 +125,11 @@
     padding: 0;
     color: var(--bs-body-color);
 
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 2px;
+    }
+
     &.op-active {
         color: transparent;
         caret-color: var(--bs-body-color);
@@ -205,4 +210,11 @@
 
 .op-exclude {
     color: var(--bs-danger);
+}
+
+@media (forced-colors: active) {
+    // Forced colors restores native input text; the decorative mirror would paint it twice.
+    .search-highlight {
+        display: none;
+    }
 }

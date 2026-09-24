@@ -11,10 +11,10 @@ const INPUT_BORDER = 'tum:border-control-border tum:enabled:hover:border-control
 const INPUT_BORDER_INVALID = 'tum:border-state-danger';
 
 const INPUT_SIZE: Record<TumUiInputSize, string> = {
-    small: 'tum:text-sm tum:px-2.5 tum:py-1.5',
-    large: 'tum:text-lg tum:px-3.5 tum:py-2.5',
+    small: 'tum:text-sm tum:px-2.5 tum:py-[var(--tum-ui-input-density-padding-block,calc(var(--tumaet-ui-spacing)*1.5))]',
+    large: 'tum:text-lg tum:px-3.5 tum:py-[var(--tum-ui-input-density-padding-block,calc(var(--tumaet-ui-spacing)*2.5))]',
 };
-const INPUT_SIZE_NORMAL = 'tum:text-base tum:px-3 tum:py-2';
+const INPUT_SIZE_NORMAL = 'tum:text-base tum:px-3 tum:py-[var(--tum-ui-input-density-padding-block,calc(var(--tumaet-ui-spacing)*2))]';
 
 export interface TumUiInputClassOptions {
     size?: TumUiInputSize;

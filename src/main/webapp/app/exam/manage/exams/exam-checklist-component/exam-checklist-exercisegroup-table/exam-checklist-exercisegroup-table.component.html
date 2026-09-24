@@ -54,17 +54,11 @@
                                 <fa-icon
                                     ngbTooltip="Exercises within this group do not have the same number of maximum points!"
                                     [icon]="faExclamationTriangle"
-                                    style="color: rgba(255, 193, 7, 0.6)"
-                                    class="warning"
+                                    class="warning text-state-warning"
                                 />
                             }
                             @if (column.noExercises) {
-                                <fa-icon
-                                    ngbTooltip="This exercise group does not contain any exercises!"
-                                    [icon]="faExclamationTriangle"
-                                    style="color: rgba(255, 193, 7, 0.6)"
-                                    class="warning"
-                                />
+                                <fa-icon ngbTooltip="This exercise group does not contain any exercises!" [icon]="faExclamationTriangle" class="warning text-state-warning" />
                             }
                         </div>
                     }

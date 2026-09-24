@@ -1,3 +1,4 @@
+import { tumUiDesignSystem, tumUiDesignSystemRules } from './rules/tum-ui-design-system.mjs';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
@@ -532,6 +533,14 @@ export default tseslint.config(
                             name: 'lodash',
                             message: "Please import from 'lodash-es' instead.",
                         },
+                        {
+                            name: 'cn',
+                            message: "Use the package's tumUiCn helper so prefixed TUM UI utilities merge correctly.",
+                        },
+                        {
+                            name: 'cn/config',
+                            message: "Use the package's tumUiCn helper instead of compiling Tailwind configuration at runtime.",
+                        },
                         noNgZoneImport,
                     ],
                     patterns: [
@@ -610,6 +619,19 @@ export default tseslint.config(
             '@angular-eslint/template/click-events-have-key-events': 'off',
             '@angular-eslint/template/interactive-supports-focus': 'off',
         },
+    },
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        processor: angular.processInlineTemplates,
+        plugins: { 'design-system': tumUiDesignSystem },
+        rules: { ...tumUiDesignSystemRules, 'localRules/tum-ui-private-classes': 'error' },
+    },
+    {
+        files: ['src/main/webapp/app/**/*.html'],
+        languageOptions: { parser: angularTemplateParser },
+        plugins: { localRules: localRulesPlugin, 'design-system': tumUiDesignSystem },
+        rules: { ...tumUiDesignSystemRules, 'localRules/tum-ui-private-classes': 'error' },
     },
     {
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root

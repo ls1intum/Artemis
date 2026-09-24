@@ -23,7 +23,7 @@
                         id="defineDateForRunningTestsAfterDueDate"
                     />
                     <label
-                        [ngStyle]="!isEnablingToRunTestsAfterDueDateToggleEnabled() ? { color: 'grey' } : {}"
+                        [class.text-muted-color]="!isEnablingToRunTestsAfterDueDateToggleEnabled()"
                         class="form-control-label"
                         for="defineDateForRunningTestsAfterDueDate"
                         jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate"
@@ -45,7 +45,7 @@
                         id="manualAssessmentEnabled"
                     />
                     <label
-                        [ngStyle]="!isSemiAutomaticAssessmentToggleEnabled() ? { color: 'grey' } : {}"
+                        [class.text-muted-color]="!isSemiAutomaticAssessmentToggleEnabled()"
                         class="form-control-label"
                         for="manualAssessmentEnabled"
                         jhiTranslate="artemisApp.programmingExercise.timeline.enableManualAssessment"
@@ -92,7 +92,7 @@
                             id="allowComplaintsForAutomaticAssessment"
                         />
                         <label
-                            [ngStyle]="assessmentType() !== AssessmentType.AUTOMATIC || (!isExamMode() && !dueDate()) ? { color: 'grey' } : {}"
+                            [class.text-muted-color]="assessmentType() !== AssessmentType.AUTOMATIC || (!isExamMode() && !dueDate())"
                             class="form-control-label"
                             for="allowComplaintsForAutomaticAssessment"
                             jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
@@ -147,7 +147,7 @@
                             id="releaseTestsWithExampleSolution"
                         />
                         <label
-                            [ngStyle]="!exampleSolutionPublicationDateSet() ? { color: 'grey' } : {}"
+                            [class.text-muted-color]="!exampleSolutionPublicationDateSet()"
                             class="form-control-label"
                             for="releaseTestsWithExampleSolution"
                             jhiTranslate="artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolution"

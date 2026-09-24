@@ -20,7 +20,7 @@ Navbar
  * the account menu the stray underline is especially visible: the avatar covers the stretch behind it, so all that
  * surfaces is a short blue dash next to the image.
  */
-a:not(.btn, .tum-ui-btn, .tab-link):hover {
+a:not(.btn, [tumUiButton], .tab-link):hover {
     text-decoration: none !important;
 }
 

@@ -14,7 +14,7 @@
 // Tailwind's global `hidden` loses to the scoped `.inline-item` rule above and only ties with the kit button's
 // `inline-flex`, so restate the collapse scoped. Bootstrap's `.d-none` won on `!important` alone.
 .inline-item.hidden,
-button.action-more.hidden {
+.action-more.hidden {
     display: none;
 }
 
@@ -25,14 +25,12 @@ a {
 }
 
 // Fixed width so the overflow calculation can reserve an exact amount for the ellipsis trigger (ELLIPSIS_WIDTH_PX).
-// Qualified with the element so it outranks the kit button's padding utilities on the same host element.
-button.action-more {
+// The wrapper reserves space without overriding the native button's package padding.
+.action-more {
     flex: none;
-    justify-content: center;
     width: 40px;
     min-width: 40px;
     max-width: 40px;
-    padding-inline: 0;
 }
 
 // The popover renders its panel in the overlay container, so this host shows nothing inline — but as a flex child it

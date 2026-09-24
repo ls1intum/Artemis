@@ -197,33 +197,24 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         expect(expandSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should toggle exam on header click in onPanelClick', () => {
-        const toggleSpy = vi.spyOn(component, 'toggleExam');
-        const headerElement = document.createElement('div');
-        const mockEvent = { target: headerElement } as unknown as MouseEvent;
+    it('toggles from the projected native header button without coupling to panel markup', () => {
+        fixture.detectChanges();
+        const header = fixture.nativeElement.querySelector('button[tumUiPanelHeader]') as HTMLButtonElement;
+        expect(header.type).toBe('button');
+        expect(header.getAttribute('aria-expanded')).toBe('false');
 
-        component.onPanelClick(1, mockEvent);
+        header.click();
+        fixture.detectChanges();
 
-        expect(toggleSpy).toHaveBeenCalledWith(1);
-    });
+        expect(header.getAttribute('aria-expanded')).toBe('true');
+        const content = fixture.nativeElement.querySelector('#' + header.getAttribute('aria-controls')) as HTMLElement;
+        content.click();
+        expect(component.expandedExams().has(1)).toBe(true);
 
-    it('should not toggle exam when clicking panel content container or toggler in onPanelClick', () => {
-        const toggleSpy = vi.spyOn(component, 'toggleExam');
-
-        const contentElement = document.createElement('div');
-        contentElement.className = 'tum-ui-panel-content-container';
-        const innerChild = document.createElement('span');
-        contentElement.appendChild(innerChild);
-
-        const contentEvent = { target: innerChild } as unknown as MouseEvent;
-        component.onPanelClick(1, contentEvent);
-        expect(toggleSpy).not.toHaveBeenCalled();
-
-        const togglerElement = document.createElement('div');
-        togglerElement.className = 'tum-ui-panel-toggler';
-        const togglerEvent = { target: togglerElement } as unknown as MouseEvent;
-        component.onPanelClick(1, togglerEvent);
-        expect(toggleSpy).not.toHaveBeenCalled();
+        const disclosure = fixture.nativeElement.querySelector('tum-ui-panel button:not([tumUiPanelHeader])') as HTMLButtonElement;
+        disclosure.click();
+        fixture.detectChanges();
+        expect(header.getAttribute('aria-expanded')).toBe('false');
     });
 
     describe('subpage items', () => {

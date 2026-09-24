@@ -7,7 +7,7 @@ import { LoadingNotificationService } from 'app/core/loading-notification/loadin
     selector: 'jhi-loading-notification',
     template: `
         @if (isLoading()) {
-            <div class="spinner-border" role="status" style="width: 18px; height: 18px; color: white"></div>
+            <div class="spinner-border" role="status" style="width: 18px; height: 18px; color: var(--navbar-light-active-color)"></div>
         }
     `,
 })

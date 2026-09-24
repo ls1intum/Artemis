@@ -1,5 +1,14 @@
 <div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-    <button type="button" tumUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+    <button
+        type="button"
+        tumUiButton
+        severity="success"
+        size="small"
+        class="self-start"
+        data-testid="add-unreferenced-feedback-button"
+        (click)="addUnreferencedFeedback()"
+        [disabled]="readOnly()"
+    >
         <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
     </button>
 
@@ -36,7 +45,7 @@
     </div>
 
     @if (unreferencedFeedback.length === 0) {
-        <tum-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
+        <tum-ui-message severity="secondary" class="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
     @for (group of feedbackGroups(); track $index) {

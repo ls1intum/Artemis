@@ -201,3 +201,29 @@
         transition: none;
     }
 }
+
+/* Density roots only supply inherited tokens; each control owns how it consumes them. */
+[data-tum-ui-density='compact'] {
+    --tum-ui-density-height: 1.75rem;
+    --tum-ui-density-padding-block: 0;
+    --tum-ui-density-option-padding-inline: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+[data-tum-ui-density='default'] {
+    --tum-ui-density-height: initial;
+    --tum-ui-density-padding-block: initial;
+    --tum-ui-density-option-padding-inline: initial;
+}
+
+/* Match the consumer utility layer; zero specificity preserves explicit host layout utilities. */
+@layer utilities {
+    :where(.tum-ui-btn, .tum-ui-select-trigger, input.tum-ui-input) {
+        box-sizing: border-box;
+        height: var(--tum-ui-density-height, auto);
+        min-height: var(--tum-ui-density-height, auto);
+    }
+}
+
+input.tum-ui-input {
+    --tum-ui-input-density-padding-block: var(--tum-ui-density-padding-block);
+}

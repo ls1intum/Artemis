@@ -1,6 +1,6 @@
 import { argsToTemplate, moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { fn } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 import { TumUiButtonDirective } from '../button/tum-ui-button.directive';
 import { TumUiTableComponent } from './tum-ui-table.component';
 import { ColumnDef } from './tum-ui-table.types';
@@ -52,7 +52,24 @@ export default meta;
 
 type Story = StoryObj<TumUiTableComponent<Participant>>;
 
-export const Default: Story = {};
+export const Default: Story = {
+    play: async ({ canvasElement }) => {
+        // Bootstrap Reboot is unlayered; the package must own borders without application overrides.
+        const reset = document.createElement('style');
+        reset.textContent = 'th, td { border-width: 0; }';
+        document.head.append(reset);
+        try {
+            const header = canvasElement.querySelector('thead th')!;
+            const firstCell = canvasElement.querySelector('tbody tr:first-child td')!;
+            const lastCell = canvasElement.querySelector('tbody tr:last-child td')!;
+            await expect(getComputedStyle(header).borderBottomWidth).toBe('1px');
+            await expect(getComputedStyle(firstCell).borderBottomWidth).toBe('1px');
+            await expect(getComputedStyle(lastCell).borderBottomWidth).toBe('0px');
+        } finally {
+            reset.remove();
+        }
+    },
+};
 
 export const RowActions: Story = {
     decorators: [

@@ -2,7 +2,7 @@ import { argsToTemplate } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import type { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { fn } from 'storybook/test';
+import { expect, fn } from 'storybook/test';
 import { TumUiButtonComponent } from './tum-ui-button.component';
 import { TumUiButtonSeverity, TumUiButtonSize, TumUiButtonVariant } from './tum-ui-button.variants';
 
@@ -104,5 +104,28 @@ export const IconOnly: Story = {
         icon: faDownload,
         label: '',
         rounded: true,
+    },
+};
+
+export const FullWidth: Story = {
+    render: (args) => ({
+        props: args,
+        template: `
+            <div data-testid="button-container" style="width: 20rem; max-width: 100%;">
+                <tum-ui-button style="display: block; width: 100%;" (clicked)="clicked($event)">Full width</tum-ui-button>
+                <tum-ui-button>Intrinsic width</tum-ui-button>
+            </div>
+        `,
+    }),
+    play: async ({ args, canvas, userEvent }) => {
+        const container = canvas.getByTestId('button-container');
+        const button = canvas.getByRole('button', { name: 'Full width' });
+        const intrinsic = canvas.getByRole('button', { name: 'Intrinsic width' });
+        await expect(button.getBoundingClientRect().width).toBeCloseTo(container.getBoundingClientRect().width, 0);
+        await expect(intrinsic.getBoundingClientRect().width).toBeLessThan(container.getBoundingClientRect().width);
+        await userEvent.tab();
+        await expect(button).toHaveFocus();
+        await userEvent.keyboard('{Enter}');
+        await expect(args.clicked).toHaveBeenCalledTimes(1);
     },
 };

@@ -300,7 +300,7 @@
                                                 (ngModelChange)="newGroupMaxPoints.set($event !== '' ? +$event : undefined)"
                                                 tumUiInput
                                                 tumUiInputSize="small"
-                                                class="new-group-settings__pts"
+                                                class="w-20"
                                             />
                                         </div>
                                     </div>
@@ -316,7 +316,7 @@
                                                 (ngModelChange)="newGroupReleaseDate.set($event)"
                                                 tumUiInput
                                                 tumUiInputSize="small"
-                                                class="new-group-settings__date"
+                                                class="w-[160px]"
                                             />
                                         </div>
                                         <div>
@@ -330,7 +330,7 @@
                                                 (ngModelChange)="newGroupStartDate.set($event)"
                                                 tumUiInput
                                                 tumUiInputSize="small"
-                                                class="new-group-settings__date"
+                                                class="w-[160px]"
                                             />
                                         </div>
                                         <div>
@@ -344,7 +344,7 @@
                                                 (ngModelChange)="newGroupDueDate.set($event)"
                                                 tumUiInput
                                                 tumUiInputSize="small"
-                                                class="new-group-settings__date"
+                                                class="w-[160px]"
                                             />
                                         </div>
                                         <div>
@@ -358,7 +358,7 @@
                                                 (ngModelChange)="newGroupAssessmentDueDate.set($event)"
                                                 tumUiInput
                                                 tumUiInputSize="small"
-                                                class="new-group-settings__date"
+                                                class="w-[160px]"
                                             />
                                         </div>
                                     </div>
@@ -457,7 +457,7 @@
                     </li>
                 }
             </ol>
-            <tum-ui-message severity="info" styleClass="mt-4 mb-0 text-sm" data-testid="variant-wizard-background-hint">
+            <tum-ui-message severity="info" class="mt-4 mb-0" data-testid="variant-wizard-background-hint">
                 <fa-icon [icon]="faInfoCircle" class="mr-1" />
                 <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.backgroundHint' | artemisTranslate }}</span>
             </tum-ui-message>

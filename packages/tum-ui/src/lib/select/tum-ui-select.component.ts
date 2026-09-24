@@ -27,12 +27,14 @@ import { faCheck, faChevronDown, faXmark } from '@fortawesome/free-solid-svg-ico
 import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
 import { TUM_UI_FORM_FIELD } from '../form-field/tum-ui-form-field.token';
+import { tumUiCn } from '../tum-ui-cn';
 
 export type TumUiSelectSize = 'small' | 'large';
 const TRIGGER_SIZE: Record<'small' | 'default' | 'large', string> = {
-    small: 'tum:min-h-8 tum:py-1.5 tum:ps-2.5 tum:text-sm',
-    default: 'tum:min-h-10 tum:py-2 tum:ps-3 tum:text-base',
-    large: 'tum:min-h-12 tum:py-2.5 tum:ps-3.5 tum:text-lg',
+    small: 'tum:min-h-[var(--tum-ui-density-height,calc(var(--tumaet-ui-spacing)*8))] tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*1.5))] tum:ps-2.5 tum:text-sm',
+    default:
+        'tum:min-h-[var(--tum-ui-density-height,calc(var(--tumaet-ui-spacing)*10))] tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*2))] tum:ps-3 tum:text-base',
+    large: 'tum:min-h-[var(--tum-ui-density-height,calc(var(--tumaet-ui-spacing)*12))] tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*2.5))] tum:ps-3.5 tum:text-lg',
 };
 
 let nextSelectId = 0;
@@ -476,11 +478,13 @@ export class TumUiSelectComponent implements ControlValueAccessor {
     protected optionClasses(option: unknown, index: number): string {
         const base = 'tum-ui-select-option tum:flex tum:cursor-pointer tum:items-center tum:px-3 tum:py-2';
         const active = this.activeIndex() === index;
-        if (this.isSelected(option)) {
-            const background = active ? 'tum:bg-highlight-focus-background' : 'tum:bg-highlight-background';
-            return `${base} tum:text-highlight ${background}`;
-        }
-        const activeState = active ? ' tum:bg-highlight-focus-background tum:text-highlight' : '';
-        return `${base} tum:text-text tum:hover:bg-hover-background tum:hover:text-text-hover${activeState}`;
+        const selected = this.isSelected(option);
+        return tumUiCn(
+            base,
+            'tum:text-text',
+            !selected && !active && 'tum:hover:bg-hover-background tum:hover:text-text-hover',
+            selected && 'tum:bg-highlight-background tum:text-highlight',
+            active && 'tum:bg-highlight-focus-background tum:text-highlight',
+        );
     }
 }

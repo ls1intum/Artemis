@@ -7,13 +7,19 @@
 }
 
 .tum-ui-select-button-option {
+    --tum-ui-option-padding-block: calc(var(--tumaet-ui-spacing) * 2);
+    --tum-ui-option-padding-inline: calc(var(--tumaet-ui-spacing) * 4);
+
+    box-sizing: border-box;
+    height: var(--tum-ui-density-height, auto);
+    min-height: var(--tum-ui-density-height, auto);
     position: relative;
     appearance: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: calc(var(--tumaet-ui-spacing) * 2);
-    padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 4);
+    padding: var(--tum-ui-density-padding-block, var(--tum-ui-option-padding-block)) var(--tum-ui-option-padding-inline);
     font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
@@ -71,5 +77,21 @@
         color: HighlightText;
         background: Highlight;
         border-color: Highlight;
+    }
+}
+
+:host([data-size='small']) .tum-ui-select-button-option {
+    --tum-ui-option-padding-block: calc(var(--tumaet-ui-spacing) * 1.5);
+    --tum-ui-option-padding-inline: calc(var(--tumaet-ui-spacing) * 2.5);
+}
+
+:host([data-size='large']) .tum-ui-select-button-option {
+    --tum-ui-option-padding-block: calc(var(--tumaet-ui-spacing) * 2.5);
+    --tum-ui-option-padding-inline: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+@container (max-width: 40rem) {
+    .tum-ui-select-button-option {
+        padding-inline: var(--tum-ui-density-option-padding-inline, var(--tum-ui-option-padding-inline));
     }
 }

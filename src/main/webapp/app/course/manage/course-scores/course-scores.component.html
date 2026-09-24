@@ -18,7 +18,7 @@
             }
         </div>
         @if (!exportReady()) {
-            <span style="color: grey">
+            <span class="text-muted-color">
                 <fa-icon [icon]="faSpinner" animation="spin" />&nbsp;
                 <span jhiTranslate="artemisApp.instructorDashboard.loadingStudents"> Loading the results of all students... </span>
             </span>

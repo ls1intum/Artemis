@@ -1,0 +1,145 @@
+import * as path from 'node:path';
+import process from 'node:process';
+import { editDistance } from '../grammar/similar.mjs';
+import { memoize } from '../project/fs.mjs';
+import { warnOnce } from '../project/warn.mjs';
+const LISTED = 12;
+const listed = new WeakMap();
+const PLACEHOLDER = /\{\{\s*([^{}|]+?)\s*(?:\|([^{}]*))?\}\}/g;
+// The slots every finding offers, whatever the rule.
+const UNIVERSAL_KEYS = ['className', 'property', 'component', 'suggestions', 'file'];
+const MESSAGE_KEYS = new Set([
+    ...UNIVERSAL_KEYS,
+    'category',
+    'variants',
+    'sizes',
+    'entries',
+    'tokens',
+    'suggestion',
+    'replacement',
+    'attribute',
+    'value',
+    'around',
+    'where',
+    'variantsSuffix',
+]);
+// `physicalFilename` is what both linters set; the getter is older.
+export function fileOf(context) {
+    return context.physicalFilename ?? context.getFilename?.() ?? '';
+}
+export function displayPath(file, context) {
+    const cwd = context.cwd ?? process.cwd();
+    return memoize(`display-path:${cwd}\u0000${file}`, () => {
+        const relative = path.relative(cwd, file);
+        return (relative.startsWith('..') ? file : relative).replace(/\\/g, '/');
+    });
+}
+export function listTokens(declared) {
+    const cached = listed.get(declared);
+    if (cached !== undefined) return cached;
+    const text = formatTokens(declared);
+    listed.set(declared, text);
+    return text;
+}
+function formatTokens(declared) {
+    const sorted = [...declared].sort((a, b) => {
+        const fa = a.endsWith('-foreground') ? 1 : 0;
+        const fb = b.endsWith('-foreground') ? 1 : 0;
+        return fa - fb || a.localeCompare(b);
+    });
+    const shown = sorted.slice(0, LISTED);
+    const rest = sorted.length - shown.length;
+    return rest > 0 ? `${shown.join(', ')} (+${rest} more)` : shown.join(', ');
+}
+function noteFor(context) {
+    const note = context.settings?.designSystem?.note;
+    if (note == null) return '';
+    if (typeof note !== 'string') {
+        warnOnce('settings:note', 'settings.designSystem.note must be a string; it is ignored.');
+        return '';
+    }
+    return note.trim();
+}
+// Literal braces stay valid: warn only on a near-miss, and change neither
+// the rendering nor the verdict.
+export function checkMessage(message, label) {
+    for (const [, key] of message.matchAll(PLACEHOLDER)) {
+        if (MESSAGE_KEYS.has(key) || !/^[A-Za-z_$][\w$]*$/.test(key)) {
+            continue;
+        }
+        let nearest = null;
+        let closest = 3;
+        for (const candidate of MESSAGE_KEYS) {
+            const d = editDistance(key.toLowerCase(), candidate.toLowerCase());
+            if (d < closest) {
+                nearest = candidate;
+                closest = d;
+            } else if (d === closest) {
+                nearest = null;
+            }
+        }
+        if (nearest) {
+            warnOnce(
+                `placeholder:${JSON.stringify([label, key])}`,
+                `Unknown message placeholder "{{${key}}}" in ${label.startsWith('design-system/') ? label : `contract "${label}"`}. Did you mean "{{${nearest}}}"? It will remain literal.`,
+            );
+        }
+    }
+}
+// {{key|fallback}} covers an empty slot, so a message reads well for a
+// component with no variants. An unknown key is left as written.
+function interpolate(text, data) {
+    return text.replace(PLACEHOLDER, (match, key, fallback) => {
+        if (!Object.hasOwn(data, key)) {
+            return match;
+        }
+        const value = data[key] == null ? '' : String(data[key]);
+        return value !== '' ? value : (fallback?.trim() ?? '');
+    });
+}
+function ruleMessageFor(rule, option) {
+    if (option == null) return '';
+    if (typeof option !== 'string') {
+        warnOnce(`${rule}:message`, `${rule}: the message option must be a string; it is ignored.`);
+        return '';
+    }
+    checkMessage(option, rule);
+    return option.trim();
+}
+// The data a rule reports stays in place for its own templates.
+function withUniversalSlots(data) {
+    const first = (...keys) => {
+        for (const key of keys) {
+            const value = data[key];
+            if (value != null && String(value) !== '') return String(value);
+        }
+        return '';
+    };
+    return {
+        ...data,
+        className: first('className') || (data.attribute ? `${data.attribute}="${data.value ?? ''}"` : ''),
+        property: first('property'),
+        component: first('component'),
+        suggestions: first('suggestions', 'replacement', 'suggestion'),
+        file: first('file'),
+    };
+}
+// `override` is the project's own text for this finding: a contract's
+// message, per call. With no words of the project's, the descriptor is
+// reported as it is, by message id.
+export function reporter(context, messages, options = {}) {
+    const note = noteFor(context);
+    const ruleMessage = ruleMessageFor(options.rule ?? 'design-system', options.message);
+    return (descriptor, override) => {
+        const text = typeof override === 'string' && override.trim() !== '' ? override.trim() : ruleMessage;
+        if (!text && !note) {
+            context.report(descriptor);
+            return;
+        }
+        const data = withUniversalSlots(descriptor.data ?? {});
+        const { messageId, ...rest } = descriptor;
+        const base = interpolate(text || (messages[messageId] ?? ''), data);
+        const parts = [base, note].filter((p) => p !== '');
+        context.report({ ...rest, message: parts.join(' ') });
+    };
+}

@@ -1,8 +1,6 @@
-<!-- Height, vertical padding and action-control sizing come from `title-bar-frame` /
-     `title-bar-compact-controls` in the component stylesheet, so this bar stays identical to the course title
-     bar. Only the surface, the horizontal padding and the divider below it are set here. -->
+<!-- Shared frame sizing and legacy controls live in the stylesheet; tumUiDensity owns TUM UI control sizing. -->
 <div id="admin-title-bar" class="module-bg rounded-lg px-3">
-    <div class="self-center">
+    <div class="self-center" tumUiDensity="compact">
         @if (customTitleTemplate()) {
             <ng-container *ngTemplateOutlet="customTitleTemplate()!" />
         } @else {
@@ -10,7 +8,7 @@
         }
     </div>
 
-    <div class="flex min-w-0 items-center gap-2" data-testid="admin-title-bar-actions">
+    <div class="flex min-w-0 items-center gap-2" data-testid="admin-title-bar-actions" tumUiDensity="compact">
         @if (customActionsTemplate()) {
             <ng-container *ngTemplateOutlet="customActionsTemplate()!" />
         }

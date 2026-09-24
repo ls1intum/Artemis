@@ -74,6 +74,32 @@ describe('TumUiPanelComponent', () => {
         expect(content.hasAttribute('inert')).toBe(true);
     });
 
+    it('configures body padding independently of density and preserves boolean attribute semantics', () => {
+        fixture.componentRef.setInput('density', 'compact');
+        fixture.componentRef.setInput('contentPadding', 'false');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.getAttribute('data-density')).toBe('compact');
+        expect(fixture.nativeElement.getAttribute('data-content-padding')).toBe('false');
+
+        fixture.componentRef.setInput('contentPadding', '');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.getAttribute('data-content-padding')).toBe('true');
+    });
+
+    it('hides an unused header and restores it when disclosure is enabled', () => {
+        fixture.componentRef.setInput('showHeader', false);
+        fixture.detectChanges();
+        const header = fixture.nativeElement.querySelector('.tum-ui-panel-header') as HTMLElement;
+        expect(header.hidden).toBe(true);
+        expect(fixture.nativeElement.querySelector('button')).toBeNull();
+
+        fixture.componentRef.setInput('toggleable', true);
+        fixture.detectChanges();
+        expect(header.hidden).toBe(false);
+        expect(header.textContent).toContain('Configuration');
+        expect(toggler()!.getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('toggles collapsed on click and emits the two-way change', () => {
         fixture.componentRef.setInput('toggleable', true);
         fixture.detectChanges();
@@ -104,7 +130,7 @@ class PanelHostComponent {}
 
 @Component({
     template: `<tum-ui-panel [toggleable]="true" toggleAriaLabel="Quiz exercises">
-        <span tumUiPanelHeader class="projected-header">Quiz exercises (2)</span>
+        <div tumUiPanelHeader data-testid="projected-header"><h3>Quiz exercises (2)</h3></div>
         <pre>body</pre>
     </tum-ui-panel>`,
     imports: [TumUiPanelComponent],
@@ -132,9 +158,10 @@ describe('TumUiPanelComponent (projection)', () => {
         }).compileComponents();
         const fixture = TestBed.createComponent(PanelHeaderSlotHostComponent);
         fixture.detectChanges();
-        const projected = fixture.debugElement.query(By.css('.tum-ui-panel-title .projected-header'));
+        const projected = fixture.debugElement.query(By.css('[data-testid="projected-header"]'));
         expect(projected).not.toBeNull();
         expect(projected.nativeElement.textContent.trim()).toBe('Quiz exercises (2)');
+        expect(projected.nativeElement.closest('span')).toBeNull();
         expect(fixture.debugElement.query(By.css('.tum-ui-panel-toggler')).nativeElement.getAttribute('aria-label')).toBe('Quiz exercises');
     });
 });

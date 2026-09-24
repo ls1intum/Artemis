@@ -124,6 +124,71 @@ Apply application layout classes directly to the component host with the native 
 Do not add `styleClass`-style compatibility inputs or expose internal element classes. Add a
 semantic input or theme token only when the customization is a supported component contract.
 
+### Consumer style checks
+
+Application HTML and inline templates use an Angular-native source port of all six policies from
+[shadcn lint](https://github.com/shadcn-ui/lint). The linter lives in `rules/design-system`;
+there is no `@shadcn/lint` dependency or package patch.
+`design-system/no-restyle`, `no-raw-colors`, `no-arbitrary-values`, `no-inline-styles`,
+`require-static-classes`, and `no-unknown-classes` share the local policy engine and Tailwind analysis.
+Selectors and inherited input values are discovered from the package's Angular metadata, not a
+manually maintained list of components. Package implementations are outside the consumer scope.
+
+- Use public inputs for appearance. The policy engine classifies spacing, typography, colours, motion,
+  and other appearance utilities using the application's theme. Unknown and custom classes on
+  component hosts are rejected rather than assumed harmless.
+- Host layout remains allowed through the policy's `layout` category and explicit CSS-property
+  policy in `rules/tum-ui-design-system.mjs`. Put application-specific composition on ordinary
+  wrappers; do not move appearance overrides there just to bypass checks.
+- Use complete class alternatives in conditions, arrays, maps, interpolation, or `[class.name]`.
+  Conditions may call signals. Opaque class-producing calls are rejected. Statically owned readonly
+  fields and one same-file constant hop are supported; imported or mutable values are not trusted.
+- `localRules/tum-ui-private-classes` protects the reserved implementation namespace even on
+  ordinary ancestors. Do not target package internals or use unsupported `styleClass` attributes.
+- Stylelint checks all application CSS/SCSS, including global styles outside `app/`. It parses
+  nested selectors and matches their subject against
+  the same component metadata. Declaration checks reuse the shared inline-style policy; they do not
+  maintain another appearance-property regex. Nested Sass properties and `@at-root` are supported.
+  Unreadable composition such as mixins or interpolation on protected controls is an error. Private
+  CSS selectors are parsed and decoded, so CSS escapes do not bypass the namespace guard.
+- TypeScript host metadata and `@HostBinding` are checked when the directive selector identifies a
+  protected control. Inline `@Component.styles` runs through the same CSS/SCSS checks as external
+  stylesheets, including on ordinary application components. `require-lintable-templates` rejects inline
+  metadata forms the standard Angular ESLint processor cannot extract. Use literal `@Component`
+  metadata or an external template rather than leaving those templates unchecked.
+
+Artemis scopes the six upstream template rules to design-system hosts while legacy application
+classes remain elsewhere. The additional `no-literal-inline-colors` rule checks ordinary elements too,
+including Angular style bindings and host metadata. Use semantic status classes or theme tokens
+instead of literal UI colors. Runtime domain colors, such as user-selected category colors, remain
+valid bindings. The generic adapter also supports all-element checking. This is not
+whole-program CSS or Angular analysis: arbitrary behavioral directives, transitive wrapper forwarding,
+Angular import-scope disambiguation, and imported/computed class values are not fully resolved.
+Generic ancestor selectors can still affect controls. Passing lint is not proof of visual consistency;
+CSS and theme changes still need browser tests. See `rules/README.md` for adapter maintenance and
+parity-test instructions.
+
+Use `size`, `variant`, and `severity` on buttons; the native button directive also supports
+`rounded`. Panels support `density="compact"` for reduced spacing and `[contentPadding]="false"`
+when projected content, such as a table, owns its spacing. These options can be combined. Projected
+headers support flow content, including layout containers and native actions. Set `[showHeader]="false"` for an unused panel header;
+toggleable panels retain their disclosure control regardless of that input. Native sortable headers
+accept `contentAlign` values `start` (default), `center`, and `end` to align the label and sort indicator together.
+Use `contentAlign="end"` for numeric headers; alignment respects writing direction without
+requiring flexbox classes or private selectors.
+
+Use `TumUiDensityDirective` with `tumUiDensity="compact"` on a toolbar region for compact single-line
+controls, including projected controls, or apply it directly to a control. Compact density owns
+the 1.75rem height and vertical padding; size inputs still control typography and horizontal spacing.
+A nested `tumUiDensity="default"` region restores each control’s normal size, and a further compact
+region can opt in again. Textareas retain their normal sizing. Segmented controls reduce horizontal
+padding in compact regions when their nearest inline-size container is at most 40rem wide. The
+application owns that container; the package owns the responsive control styling.
+
+Run `pnpm run test:rules` for the rule fixtures and configuration integration tests, and
+`pnpm run lint` plus `pnpm run stylelint` before submitting changes. Run the package's
+browser stories when a supported appearance or layout contract changes.
+
 ### Translation contract
 
 Package-owned text uses `tumUi.*` keys and has English defaults. A host can implement

@@ -192,12 +192,11 @@ describe('AssessmentNoteComponent', () => {
             expect(textarea.name).toBe('assessment_note');
         });
 
-        it('should apply the TUM UI textarea directive and the component styling hook', () => {
+        it('should apply the TUM UI textarea directive to the native textarea', () => {
             fixture.detectChanges();
 
             const textarea = fixture.debugElement.query(By.directive(TumUiInputDirective));
             expect(textarea.nativeElement).toBeInstanceOf(HTMLTextAreaElement);
-            expect(textarea.nativeElement.classList).toContain('assessment-note__textarea');
         });
     });
 });

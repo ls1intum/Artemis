@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { NgStyle } from '@angular/common';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -133,7 +132,7 @@ describe('PostingsMarkdownEditor', () => {
         mockOverlayRef.attach.mockReturnValue(mockComponentRef);
 
         TestBed.configureTestingModule({
-            imports: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent), NgStyle],
+            imports: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: FileService, useClass: MockFileService },
@@ -217,16 +216,16 @@ describe('PostingsMarkdownEditor', () => {
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength()!.toString());
         expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
-        expect(charCounter.style.color).not.toBe('red');
+        expect(charCounter.classList.contains('text-state-danger')).toBe(false);
     });
 
-    it('should show the correct amount of characters in red if max length exceeded', () => {
+    it('should show the correct amount of characters with semantic danger styling if max length exceeded', () => {
         fixture.componentRef.setInput('maxContentLength', 5);
         fixture.changeDetectorRef.detectChanges();
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength()!.toString());
         expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
-        expect(charCounter.style.color).toBe('red');
+        expect(charCounter.classList.contains('text-state-danger')).toBe(true);
     });
 
     it('should initialize markdown correctly with post content', () => {

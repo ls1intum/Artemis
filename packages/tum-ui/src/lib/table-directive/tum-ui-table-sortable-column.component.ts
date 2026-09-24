@@ -13,11 +13,15 @@ type TumUiSortDirection = 'asc' | 'desc' | 'none';
     host: {
         '[class]': 'hostClasses()',
         '[attr.aria-sort]': 'ariaSort()',
+        '[attr.data-content-align]': 'contentAlign()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTableSortableColumnComponent {
     readonly field = input.required<string>({ alias: 'tumUiSortableColumn' });
+
+    /** Aligns the label and sort indicator together, respecting writing direction. */
+    readonly contentAlign = input<'start' | 'center' | 'end'>('start');
 
     readonly disabled = input(false, { transform: booleanAttribute });
 

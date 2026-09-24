@@ -12,7 +12,7 @@ import { SidebarSubpageItem } from 'app/exam/manage/exam-management/exam-managem
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-management-navigation-sidebar',
@@ -24,6 +24,7 @@ import { TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
         CourseSidebarToggleButtonComponent,
         DocumentationButtonComponent,
         TumUiPanelComponent,
+        TumUiButtonDirective,
         FaIconComponent,
         RouterModule,
         SidebarSubpageItem,
@@ -118,15 +119,5 @@ export class ExamManagementNavigationSidebarComponent {
             }
             return newSet;
         });
-    }
-
-    onPanelClick(examId: number, event: MouseEvent) {
-        // prevent collapse when clicking inside content
-        const target = event.target as HTMLElement | null;
-        if (target?.closest('.tum-ui-panel-content-container') || target?.closest('.tum-ui-panel-toggler')) {
-            return;
-        }
-
-        this.toggleExam(examId);
     }
 }

@@ -1,5 +1,5 @@
 {
-    "plugins": ["stylelint-scss"],
+    "plugins": ["stylelint-scss", "./rules/tum-ui-stylelint.mjs", "./rules/design-system-private-classes-stylelint.mjs"],
     "extends": ["stylelint-config-standard-scss", "stylelint-config-html"],
     "overrides": [
         {
@@ -68,6 +68,13 @@
                 "declaration-property-value-disallowed-list": {
                     "/.+/": ["/--bs-/", "/(?:rgb|hsl)a?\\(/"]
                 }
+            }
+        },
+        {
+            "files": ["src/main/webapp/**/*.scss", "src/main/webapp/**/*.css"],
+            "rules": {
+                "design-system/no-restyle": true,
+                "design-system/no-private-classes": "tum-ui-"
             }
         }
     ],

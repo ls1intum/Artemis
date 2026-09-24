@@ -4,7 +4,7 @@
         <fa-icon [icon]="faSearch" class="search-icon me-2" aria-hidden="true" />
         <div class="search-field">
             <!-- Overlay that colours the typed `facet:` operator; the real input text is transparent while active. -->
-            <div class="search-highlight" aria-hidden="true">
+            <div class="search-highlight" data-testid="global-search-highlight" aria-hidden="true">
                 @if (operator(); as op) {
                     <span class="search-highlight-text"
                         >{{ leadingText()
@@ -29,7 +29,6 @@
                 [placeholder]="'global.search.placeholder' | artemisTranslate"
                 class="search-input border-0 bg-transparent"
                 [class.op-active]="operatorActive()"
-                style="outline: none"
                 [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
                 autocomplete="off"
                 role="combobox"

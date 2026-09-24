@@ -1,0 +1,86 @@
+{
+    "reference": {
+        "package": "@shadcn/lint",
+        "version": "0.1.5",
+        "sourceCommit": "093ae9db214772afe0de40299d224c7b5e24bdeb",
+        "source": "https://github.com/shadcn-ui/lint/tree/093ae9db214772afe0de40299d224c7b5e24bdeb",
+        "capture": "Actual installed upstream JSX rule verdicts captured before removing the dependency. Theme and component setup are in angular-design-system.spec.mjs. Findings intentionally compare message and severity, not framework-specific source positions."
+    },
+    "cases": [
+        {
+            "rule": "no-restyle",
+            "htmlAttribute": "class=\"italic\"",
+            "jsxAttribute": "className=\"italic\"",
+            "options": {
+                "allow": ["layout"],
+                "message": "Rejected {{className}}"
+            },
+            "messages": [
+                {
+                    "message": "Rejected italic",
+                    "severity": 2
+                }
+            ]
+        },
+        {
+            "rule": "no-raw-colors",
+            "htmlAttribute": "class=\"bg-red-500\"",
+            "jsxAttribute": "className=\"bg-red-500\"",
+            "options": {},
+            "messages": [
+                {
+                    "message": "\"bg-red-500\" uses the raw Tailwind palette and no declared theme color is close to it. Use one of: brand, or declare --color-<name> in theme.css for a new color.",
+                    "severity": 2
+                }
+            ]
+        },
+        {
+            "rule": "no-arbitrary-values",
+            "htmlAttribute": "class=\"p-[13px]\"",
+            "jsxAttribute": "className=\"p-[13px]\"",
+            "options": {},
+            "messages": [
+                {
+                    "message": "\"p-[13px]\" hardcodes an off-token value. Use \"p-3.25\" instead (same value, on the scale).",
+                    "severity": 2
+                }
+            ]
+        },
+        {
+            "rule": "no-unknown-classes",
+            "htmlAttribute": "class=\"flex-cols\"",
+            "jsxAttribute": "className=\"flex-cols\"",
+            "options": {},
+            "messages": [
+                {
+                    "message": "\"flex-cols\" is not a class this project's Tailwind knows, so no CSS is generated for it. Did you mean \"flex-col\"?",
+                    "severity": 2
+                }
+            ]
+        },
+        {
+            "rule": "require-static-classes",
+            "htmlAttribute": "[class]=\"getClasses()\"",
+            "jsxAttribute": "className={getClasses()}",
+            "options": {},
+            "messages": [
+                {
+                    "message": "Dynamically built className on <DsButton> cannot be checked. Use static class strings.",
+                    "severity": 2
+                }
+            ]
+        },
+        {
+            "rule": "no-inline-styles",
+            "htmlAttribute": "style=\"padding: 1rem\"",
+            "jsxAttribute": "style={{ padding: \"1rem\" }}",
+            "options": {},
+            "messages": [
+                {
+                    "message": "Inline style sets padding. Style through classes; use CSS custom properties for dynamic values.",
+                    "severity": 2
+                }
+            ]
+        }
+    ]
+}

@@ -1,16 +1,17 @@
 <div class="frame">
     <div class="controls">
-        <tum-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
-            <input
-                tumUiInput
-                tumUiInputSize="small"
-                class="search-input"
-                type="text"
-                [placeholder]="searchFieldPlaceholder()"
-                [attr.aria-label]="searchFieldPlaceholder()"
-                [(ngModel)]="searchString"
-            />
-        </tum-ui-icon-field>
+        <div class="search-field">
+            <tum-ui-icon-field [icon]="faMagnifyingGlass">
+                <input
+                    tumUiInput
+                    tumUiInputSize="small"
+                    type="text"
+                    [placeholder]="searchFieldPlaceholder()"
+                    [attr.aria-label]="searchFieldPlaceholder()"
+                    [(ngModel)]="searchString"
+                />
+            </tum-ui-icon-field>
+        </div>
         @if (loggedInUserIsAtLeastInstructorInCourse()) {
             <button
                 type="button"

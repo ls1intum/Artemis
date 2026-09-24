@@ -1,3 +1,4 @@
+import { TumUiDensityDirective } from '@tumaet/ui-angular';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,6 +27,7 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
     imports: [
+        TumUiDensityDirective,
         ExamManagementNavigationSidebarComponent,
         CourseSidebarToggleButtonComponent,
         RouterOutlet,

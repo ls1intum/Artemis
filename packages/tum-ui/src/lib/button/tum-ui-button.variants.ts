@@ -43,9 +43,9 @@ const TEXT: Record<TumUiButtonSeverity, string> = {
 };
 
 const SIZE: Record<TumUiButtonSize, string> = {
-    small: 'tum:text-sm tum:px-2.5 tum:py-1.5',
-    default: 'tum:text-base tum:px-3 tum:py-2',
-    large: 'tum:text-lg tum:px-4 tum:py-2.5',
+    small: 'tum:text-sm tum:px-2.5 tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*1.5))]',
+    default: 'tum:text-base tum:px-3 tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*2))]',
+    large: 'tum:text-lg tum:px-4 tum:py-[var(--tum-ui-density-padding-block,calc(var(--tumaet-ui-spacing)*2.5))]',
 };
 
 const VARIANTS: Record<TumUiButtonVariant, Record<TumUiButtonSeverity, string>> = { solid: SOLID, outlined: OUTLINED, text: TEXT };

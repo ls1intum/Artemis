@@ -74,6 +74,10 @@ in `eslint.config.mjs`.
 The convention applies throughout the client even where lint does not enforce it. Add newly
 migrated directories to that list.
 
+`design-system/no-literal-inline-colors` also checks literal inline UI colors on ordinary application
+elements, including Angular style bindings and host metadata. Use semantic classes or theme tokens;
+runtime domain colors such as user-selected category colors remain valid bindings.
+
 Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
 the real PrimeNG component so its styles load deterministically. Enforced by
 `localRules/no-primeng-component-classes`.
@@ -84,6 +88,24 @@ in the same change. Explain the contained fallback in the pull request.
 If TUM UI lacks a reusable capability, add or evolve a package component around native HTML or
 stable Angular CDK primitives, and keep Artemis-specific composition in the application. See
 `documentation/docs/developer/guidelines/tum-ui-kit.mdx`.
+
+### TUM UI consumer contracts
+
+The six design-system policies are ported from shadcn lint into `rules/design-system` and run on application TUM UI hosts,
+including inline templates. Selectors and inputs are discovered from package metadata. Use public
+inputs for appearance and complete Tailwind classes for host layout; custom host classes and opaque
+class-producing expressions are rejected. Signal conditions such as `[class.w-full]="wide()"` work.
+Package implementations are outside the consumer scope. Inline template metadata that Angular ESLint
+cannot extract is rejected; use literal `@Component` metadata or an external template.
+
+Stylelint checks all application CSS/SCSS, including global styles, resolves nested selectors,
+and matches their subject against the same component metadata,
+then applies the shared CSS-property policy. Protected TypeScript host bindings and inline component
+CSS/SCSS are checked too. Unknown Sass composition on a protected host must be made explicit, not
+silenced. Private package classes remain forbidden in templates
+and stylesheets. Do not move overrides to wrappers or inline styles merely to pass lint. Extend the
+package when a reusable capability is missing and verify its browser stories. See the consumer style
+checks in the TUM UI guideline for scope and analysis limits. Run `pnpm run test:rules`.
 
 ## Other rules worth knowing
 

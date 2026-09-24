@@ -10,13 +10,13 @@
     <div [hidden]="loadingState() === 'success'">
         @if (loadingState() !== 'error') {
             <h2>
-                <span style="color: grey"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.loading"></span></span>
+                <span class="text-muted-color"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.loading"></span></span>
             </h2>
         }
         @if (loadingState() === 'error') {
             <div>
                 <h2>
-                    <span style="color: grey"><fa-icon [icon]="faExclamationCircle" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.failed"></span></span>
+                    <span class="text-muted-color"><fa-icon [icon]="faExclamationCircle" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.failed"></span></span>
                 </h2>
                 <p>
                     <button class="btn btn-default" (click)="secureImageComponent().retryLoadImage()" jhiTranslate="artemisApp.quizQuestion.retry"></button>
@@ -30,7 +30,7 @@
         </h4>
         <p [innerHTML]="renderedQuestion().text"></p>
         @if (dragAndDropQuestion().invalid) {
-            <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
+            <span class="text-state-danger" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
         }
         @if (dragAndDropQuestion().hint || (dragAndDropQuestion().explanation && showResult())) {
             <div class="hint">
@@ -184,8 +184,8 @@
                                             }
                                             @if (dropLocation.invalid || dragAndDropQuestion().invalid || invalidDragItemForDropLocation(dropLocation)) {
                                                 <fa-icon
+                                                    class="text-color"
                                                     ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
-                                                    style="color: black"
                                                     [icon]="faQuestionCircle"
                                                 />
                                             }
@@ -249,8 +249,8 @@
                                             }
                                             @if (dropLocation.invalid || dragAndDropQuestion().invalid) {
                                                 <fa-icon
+                                                    class="text-color"
                                                     ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
-                                                    style="color: black"
                                                     [icon]="faQuestionCircle"
                                                 />
                                             }

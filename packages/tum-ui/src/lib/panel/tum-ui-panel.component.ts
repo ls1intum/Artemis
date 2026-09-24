@@ -12,6 +12,8 @@ let nextPanelId = 0;
     imports: [FaIconComponent],
     host: {
         class: 'tum-ui-panel tum:border tum:border-border tum:rounded-md tum:bg-content-background tum:text-text',
+        '[attr.data-density]': 'density()',
+        '[attr.data-content-padding]': 'contentPadding()',
         '[attr.data-collapsed]': 'toggleable() && collapsed()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +26,15 @@ export class TumUiPanelComponent {
      * alongside it — projected markup does not label the toggle.
      */
     readonly header = input<string>('');
+
+    /** Controls header and body spacing without changing the content layout. */
+    readonly density = input<'default' | 'compact'>('default');
+
+    /** Disable when projected content, such as a table, owns its spacing. */
+    readonly contentPadding = input(true, { transform: booleanAttribute });
+
+    /** Hide an unused header. Toggleable panels always retain their disclosure control. */
+    readonly showHeader = input(true, { transform: booleanAttribute });
 
     /** Enables disclosure behavior for the projected content. */
     readonly toggleable = input(false, { transform: booleanAttribute });

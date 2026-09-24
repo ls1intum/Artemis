@@ -33,7 +33,7 @@
     <jhi-exam-students-menu-button
         [model]="manageStudentsMenuActions()"
         label="artemisApp.examManagement.examStudents.menu.manageStudents"
-        buttonClass="p-button-sm"
+        size="small"
         buttonIconClass="pi pi-user-edit"
         [disabled]="isTestExam()"
         severity="secondary"
@@ -41,7 +41,7 @@
     <jhi-exam-students-menu-button
         [model]="examLogisticsMenuActions()"
         label="artemisApp.examManagement.examStudents.menu.examLogistics"
-        buttonClass="p-button-sm"
+        size="small"
         buttonIconClass="pi pi-th-large"
         [disabled]="isTestExam() || !hasRegisteredUsers()"
         severity="secondary"
@@ -49,7 +49,7 @@
     <jhi-exam-students-menu-button
         [model]="studentExamsMenuActions()"
         label="artemisApp.examManagement.examStudents.menu.manageStudentExams"
-        buttonClass="p-button-sm"
+        size="small"
         buttonIconClass="pi pi-file-edit"
         [disabled]="isTestExam() || hasExamStarted() || !hasRegisteredUsers()"
         severity="secondary"
@@ -275,11 +275,11 @@
     @let dto = cell.data;
     @if (attendanceCheckFailed(dto)) {
         <div [title]="'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate">
-            <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
+            <fa-icon [icon]="faTimes" class="fa-2x text-state-danger" />
         </div>
     } @else if (attendanceCheckPassed(dto)) {
         <div [title]="'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate">
-            <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
+            <fa-icon [icon]="faCheck" class="fa-2x text-state-success" />
         </div>
     } @else if (didNotAttendExam(dto)) {
         <div [title]="'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate">

@@ -81,24 +81,33 @@ describe('SearchInputComponent', () => {
         });
     });
 
-    it('should focus input', () => {
+    it('focuses the real combobox without changing its operator text or selection', () => {
+        fixture.componentRef.setInput('searchQuery', 'type:lec');
+        fixture.componentRef.setInput('operator', { facet: 'type', negate: false, query: 'lec', prefix: 'type:', start: 0, text: '' });
+        fixture.detectChanges();
+        const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('[role="combobox"]')!;
+        input.setSelectionRange(5, 8);
         vi.useFakeTimers();
-        const inputElement = document.createElement('input');
-        vi.spyOn(component['searchInputElement']()!, 'nativeElement', 'get').mockReturnValue(inputElement);
-        const spy = vi.spyOn(inputElement, 'focus');
-
-        component.focusInput();
-        vi.runAllTimers();
-
-        expect(spy).toHaveBeenCalled();
-        vi.useRealTimers();
+        try {
+            component.focusInput();
+            vi.runAllTimers();
+            expect(document.activeElement).toBe(input);
+            expect(input.value).toBe('type:lec');
+            expect([input.selectionStart, input.selectionEnd]).toEqual([5, 8]);
+            expect(fixture.nativeElement.querySelector('[data-testid="global-search-highlight"]').getAttribute('aria-hidden')).toBe('true');
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
-    it('should emit searchInput on input', () => {
+    it('emits text entered through the focused combobox', () => {
         const spy = vi.spyOn(component.searchInput, 'emit');
-        const event = { target: { value: 'test' } } as any as Event;
-        component['onInput'](event);
-        expect(spy).toHaveBeenCalledWith('test');
+        const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('[role="combobox"]')!;
+        input.focus();
+        input.value = 'type:lecture';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        expect(spy).toHaveBeenCalledWith('type:lecture');
+        expect(document.activeElement).toBe(input);
     });
 
     it('should emit searchKeyDown on keydown', () => {
