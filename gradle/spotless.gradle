@@ -6,8 +6,6 @@ spotless {
                 include (
                     "src/main/java/**/*.java",
                     "src/test/java/**/*.java",
-                    "modules/**/src/main/java/**/*.java",
-                    "modules/**/src/test/java/**/*.java",
                 )
                 exclude(
                     "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
@@ -91,5 +89,4 @@ spotless {
         endWithNewline()
     }
 }
-
 

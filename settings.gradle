@@ -24,11 +24,3 @@ rootProject.name = "Artemis"
 // needed for programming exercise templates
 DirectoryScanner.removeDefaultExclude "**/.gitattributes"
 DirectoryScanner.removeDefaultExclude "**/.gitignore"
-
-include 'hyperion', 'aiworker', 'aiworker:api'
-project(':hyperion').projectDir = file('modules/hyperion')
-project(':aiworker').projectDir = file('modules/aiworker')
-project(':aiworker:api').projectDir = file('modules/aiworker/api')
-
-include 'hyperion:worker'
-project(':hyperion:worker').projectDir = file('modules/hyperion/worker')
