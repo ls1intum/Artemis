@@ -23,8 +23,8 @@
             <span class="current-step">{{ bufferedProgress()?.currentStep || (isCompleted() ? completedMessage() : failedMessage()) }}</span>
         </div>
 
-        <div class="progress-container mb-3">
-            <p-progressbar [value]="progressPercentage()" [showValue]="true" [style]="{ height: '1.5rem' }" [class]="progressStyleClass()" />
+        <div class="mb-3">
+            <tum-ui-progress-bar [value]="progressPercentage()" [severity]="progressSeverity()" [ariaLabel]="operationTitle()" />
         </div>
 
         <div class="d-flex justify-content-between text-muted small">

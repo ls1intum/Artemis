@@ -36,7 +36,7 @@ beforeAll(() => {
     writeFileSync(path.join(root, 'package.json'), '{"type":"module"}');
     writeFileSync(
         path.join(root, 'theme.css'),
-        '@import "tailwindcss";\n@theme { --color-brand: #123456; }\n.custom-control { color: var(--color-brand); }\n@utility fixture-layout { display: grid; }\n@custom-variant fixture-active (&[data-active]);',
+        '@import "tailwindcss";\n@theme { --color-brand: #123456; --spacing-divider: 6px; }\n.custom-control { color: var(--color-brand); }\n@utility fixture-layout { display: grid; }\n@custom-variant fixture-active (&[data-active]);',
     );
     writeFileSync(
         path.join(root, 'components', 'button.ts'),
@@ -129,6 +129,13 @@ describe('upstream design-system rules through Angular', () => {
 
     it('keeps behavioral directives and ordinary content outside no-restyle contracts', () => {
         expect(messages('<div dsBehavior class="p-4"></div><div class="p-4"></div>', 'no-restyle')).toEqual([]);
+    });
+
+    it('treats named theme spacing like other spacing on a design-system component', () => {
+        expect(messages('<button dsButton class="pr-divider"></button>', 'no-restyle', { allow: ['layout'] })).toEqual([
+            expect.objectContaining({ messageId: 'spacingClassWithSizes' }),
+        ]);
+        expect(messages('<button dsButton class="pr-divider"></button>', 'no-unknown-classes')).toEqual([]);
     });
 
     it('derives selector and size metadata from newly added component source', () => {

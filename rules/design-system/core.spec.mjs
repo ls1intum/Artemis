@@ -29,13 +29,14 @@ beforeAll(() => {
     --color-removed: #000;
     --background-color-panel: #abcdef;
     --text-stat-label: 1.125rem;
+    --spacing-removed: 10px;
     --shadow-card-glow: 0 0 2px #000;
 }
 @utility tap-target { min-width: 3rem; }
 @custom-variant pressed (&[data-pressed]);`,
     );
     theme = join(root, 'theme.css');
-    writeFileSync(theme, `@import './base.css'; @theme { --color-removed: initial; --color-local: #fff; --spacing: 0.5rem; }`);
+    writeFileSync(theme, `@import './base.css'; @theme { --color-removed: initial; --color-local: #fff; --spacing: 0.5rem; --spacing-removed: initial; --spacing-divider: 6px; }`);
     consumer = join(root, 'consumer.html');
     registerProject(root, theme);
 });
@@ -91,14 +92,20 @@ describe('native design-system classification and actual project Tailwind', () =
         const classifier = projectClassifierFor(consumer);
         expect(classifier.groupOf('text-stat-label')).toBe('font-size');
         expect(classifier.groupOf('shadow-card-glow')).toBe('shadow');
+        expect(classifier.groupOf('pr-divider')).toBe('pr');
+        expect(categoryOf(classifier.groupOf('pr-divider'))).toBe('spacing');
+        expect(classifier.groupOf('gap-divider')).toBe('gap');
+        expect(classifier.groupOf('ms-divider')).toBe('ms');
+        expect(classifier.groupOf('pr-unknown')).toBeNull();
+        expect(classifier.groupOf('pr-removed')).toBeNull();
     });
 
     it('checks imported utilities, author namespaces and custom variants with real Tailwind, not the grammar alone', async () => {
         const answer = await query(theme, ['pressed:tap-target', 'bg-brand', 'bg-panel', 'text-stat-label', 'shadow-card-glow', 'data-[state=open]:flex']);
         expect(answer).toMatchObject({ ok: true, unknown: [] });
-        const removed = await query(theme, ['bg-removed', 'text-panel']);
+        const removed = await query(theme, ['bg-removed', 'text-panel', 'pr-removed']);
         expect(removed.ok).toBe(true);
-        expect(removed.unknown.map(({ token }) => token)).toEqual(['bg-removed', 'text-panel']);
+        expect(removed.unknown.map(({ token }) => token)).toEqual(['bg-removed', 'text-panel', 'pr-removed']);
     });
 
     it('gets real utility and variant suggestions through the synchronous worker', () => {

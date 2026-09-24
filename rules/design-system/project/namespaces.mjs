@@ -1,11 +1,9 @@
-// cn's grammar reads a class by its shape, so every text-* and shadow-*
-// with a name it does not know is a color. Tailwind reads the same class
-// against the project's theme, where a declared --text-stat-label makes
-// it a font-size and --shadow-card-glow a box-shadow. This is the theme's
-// half of that answer: the grammar with the project's namespaces applied.
+// cn's grammar needs the project's theme to classify named spacing and to
+// distinguish text/shadow scale tokens from colors.
 import { categoryOf } from '../grammar/categories.mjs';
 import { normalizeClass, OPACITY_MODIFIER } from '../grammar/classes.mjs';
-import { classifierFor } from '../grammar/classifier.mjs';
+import { mergeConfigs } from 'cn/config';
+import { classifierFor, createClassifier, resolveCnConfig } from '../grammar/classifier.mjs';
 import { declaresClass, themeVocabularyFor } from './theme.mjs';
 // Longest prefix first: text-shadow-crisp is a text-shadow, not text
 // "shadow-crisp".
@@ -39,6 +37,17 @@ const NAMESPACES = [
 ];
 const ANIMATE_PREFIX = 'animate-';
 const memos = new WeakMap();
+const classifiers = new WeakMap();
+function classifierForProject(fromFile) {
+    const vocabulary = themeVocabularyFor(fromFile);
+    if (!vocabulary) return classifierFor();
+    let classifier = classifiers.get(vocabulary);
+    if (!classifier) {
+        classifier = vocabulary.spacing.length ? createClassifier(mergeConfigs(resolveCnConfig(), { extend: { theme: { spacing: vocabulary.spacing } } })) : classifierFor();
+        classifiers.set(vocabulary, classifier);
+    }
+    return classifier;
+}
 function memoFor(vocabulary) {
     let memo = memos.get(vocabulary);
     if (!memo) {
@@ -92,13 +101,10 @@ export function animationGroupFor(fromFile, token) {
     if (themeVocabularyFor(fromFile)?.names.has(base)) return 'animate';
     return declaresClass(fromFile, token) ? 'animate' : null;
 }
-// The classifier the rules use: cn's grammar, then the project's theme
-// wherever the grammar's answer was a color it could not have known was
-// something else, or no answer for an animation the project declares.
-// Nothing else can be shadowed this way, so the grammar answers first and
-// the theme is read only when it could change the verdict.
+// The classifier the rules use: cn configured with project spacing names,
+// then theme disambiguation for text/shadow colors and custom animations.
 export function projectClassifierFor(fromFile) {
-    const { groupOf: grammarGroupOf } = classifierFor(fromFile);
+    const { groupOf: grammarGroupOf } = classifierForProject(fromFile);
     const groupOf = (token) => {
         const group = grammarGroupOf(token);
         if (!group) return animationGroupFor(fromFile, token);

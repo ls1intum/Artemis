@@ -346,9 +346,24 @@ export function themeVocabularyFor(fromFile) {
     const read = themeAt(cssFile);
     return (read.vocabulary ??= {
         names: read.themeNames,
+        spacing: activeSpacingNames(read.declarations),
         tokens: read.tokens,
         utilities: read.utilities,
     });
+}
+
+function activeSpacingNames(declarations) {
+    const names = new Set();
+    for (const { name, value, theme } of declarations) {
+        if (!theme) continue;
+        if ((name === '*' || name === 'spacing-*') && value.trim() === 'initial') names.clear();
+        else if (name.startsWith('spacing-') && name !== 'spacing-*') {
+            const step = name.slice('spacing-'.length);
+            if (value.trim() === 'initial') names.delete(step);
+            else names.add(step);
+        }
+    }
+    return [...names];
 }
 const utilityPrefixes = new WeakMap();
 // The `tab-` of an `@utility tab-*`, computed once per theme read.
