@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.messaging.simp.user.SimpSubscription;
 import org.springframework.messaging.simp.user.SimpSubscriptionMatcher;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
@@ -28,6 +30,21 @@ class GenerationMonitoringWebsocketServiceTest {
     private final SimpUserRegistry subscribers = mock(SimpUserRegistry.class);
 
     private final GenerationMonitoringWebsocketService service = new GenerationMonitoringWebsocketService(source, messaging, subscribers);
+
+    @Test
+    void startsOnTheSchedulingCoreWithoutAnIncomingRequest() {
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().setActiveProfiles("core", "localci", "localvc", "scheduling");
+            TestPropertyValues.of("artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=true").applyTo(context);
+            context.registerBean(GenerationMonitoringService.class, () -> source);
+            context.registerBean(WebsocketMessagingService.class, () -> messaging);
+            context.registerBean(SimpUserRegistry.class, () -> subscribers);
+            context.register(GenerationMonitoringWebsocketService.class);
+            context.refresh();
+
+            assertThat(context.getBeanFactory().containsSingleton("generationMonitoringWebsocketService")).isTrue();
+        }
+    }
 
     @Test
     void doesNotReadDistributedStateWithoutSubscribers() {
