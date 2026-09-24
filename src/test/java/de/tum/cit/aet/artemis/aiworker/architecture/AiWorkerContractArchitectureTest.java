@@ -17,12 +17,14 @@ import com.tngtech.archunit.core.importer.ImportOption;
 class AiWorkerContractArchitectureTest {
 
     private static final JavaClasses CLASSES = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-            .importPackages("de.tum.cit.aet.artemis.aiworker");
+            .importPackages("de.tum.cit.aet.artemis.aiworker.api", "de.tum.cit.aet.artemis.aiworker.dto", "de.tum.cit.aet.artemis.aiworker.domain");
 
     @Test
     void contractsAreIndependentOfImplementationsAndWorkloads() {
-        noClasses().should().dependOnClassesThat().resideInAnyPackage("..hyperion..", "..aiworker.service..", "..aiworker.config..", "de.tum.cit.aet.artemis.core..",
-                "org.springframework..", "com.github.dockerjava..", "com.hazelcast..", "org.redisson..", "jakarta.persistence..").check(CLASSES);
+        noClasses()
+                .should().dependOnClassesThat().resideInAnyPackage("..hyperion..", "..buildagent..", "..localci..", "..localvc..", "..aiworker.service..", "..aiworker.config..",
+                        "de.tum.cit.aet.artemis.core..", "org.springframework..", "com.github.dockerjava..", "com.hazelcast..", "org.redisson..", "jakarta.persistence..")
+                .check(CLASSES);
     }
 
     @Test

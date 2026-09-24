@@ -95,8 +95,6 @@ jobs:
               - '.github/workflows/ci-quality.yml'
               - 'src/main/java/**'
               - 'src/test/java/**'
-              - 'modules/**'
-              - 'settings.gradle'
               - 'build.gradle'
               - 'gradle/**'
               - 'supporting_scripts/analyze_java_files.py'

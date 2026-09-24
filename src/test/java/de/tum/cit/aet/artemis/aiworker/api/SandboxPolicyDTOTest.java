@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.aiworker.dto;
+package de.tum.cit.aet.artemis.aiworker.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import de.tum.cit.aet.artemis.aiworker.dto.SandboxPolicyDTO;
 
 class SandboxPolicyDTOTest {
 

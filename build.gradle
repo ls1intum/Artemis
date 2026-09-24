@@ -874,9 +874,3 @@ tasks.named("dependencyUpdates").configure {
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp
-
-// Isolated modules have their own classpaths; root server tests cannot cover them.
-tasks.register('isolatedModuleCheck') {
-    group = 'verification'
-    description = 'Runs checks for all isolated modules.'
-}
