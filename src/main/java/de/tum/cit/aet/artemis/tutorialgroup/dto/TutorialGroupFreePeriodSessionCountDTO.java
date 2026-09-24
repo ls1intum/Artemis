@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * How many tutorial group sessions one free period actually covers.
  *
@@ -13,5 +15,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param count        how many of the course's sessions overlap it
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupFreePeriodSessionCountDTO(Long freePeriodId, long count) {
+public record TutorialGroupFreePeriodSessionCountDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long freePeriodId, long count) {
 }

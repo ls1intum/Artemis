@@ -8,7 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { TutorialGroupFreePeriod } from './tutorial-group-free-period';
+import type { TutorialGroupConfigurationFreePeriod } from './tutorial-group-configuration-free-period';
 
 export interface TutorialGroupConfiguration {
     id?: number;
@@ -16,5 +16,5 @@ export interface TutorialGroupConfiguration {
     tutorialPeriodEndInclusive: string;
     useTutorialGroupChannels: boolean;
     usePublicTutorialGroupChannels: boolean;
-    tutorialGroupFreePeriods?: Array<TutorialGroupFreePeriod>;
+    tutorialGroupFreePeriods?: Array<TutorialGroupConfigurationFreePeriod>;
 }

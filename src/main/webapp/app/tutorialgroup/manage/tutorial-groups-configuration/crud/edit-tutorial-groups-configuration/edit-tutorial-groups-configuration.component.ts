@@ -11,7 +11,8 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
-import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -30,7 +31,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
     ngUnsubscribe = new Subject<void>();
 
     readonly isLoading = signal(false);
-    tutorialGroupsConfiguration!: TutorialGroupConfigurationDTO; // set from the server response in ngOnInit before any user-triggered read
+    tutorialGroupsConfiguration!: TutorialGroupConfiguration; // set from the server response in ngOnInit before any user-triggered read
     readonly formData = signal<TutorialGroupsConfigurationFormData>(undefined!);
     readonly course = signal<Course>(undefined!);
     tutorialGroupConfigurationId!: number; // set from the route param in ngOnInit before any user-triggered read
@@ -49,9 +50,9 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (tutorialGroupsConfigurationResult) => {
-                    if (tutorialGroupsConfigurationResult.body) {
-                        this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
+                next: (configuration) => {
+                    if (configuration) {
+                        this.tutorialGroupsConfiguration = configuration;
                         this.formData.set({
                             period: [
                                 dayjs(this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive).toDate(),
@@ -72,13 +73,9 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
     }
 
     updateTutorialGroupsConfiguration(formData: TutorialGroupsConfigurationFormData) {
-        const { period, useTutorialGroupChannels, usePublicTutorialGroupChannels } = formData;
-
         this.isLoading.set(true);
-        this.tutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
-        this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
-            .update(this.course().id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
+            .update(this.course().id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, formData)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
@@ -87,8 +84,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (resp) => {
-                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
+                next: (configuration) => {
+                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
                     this.courseStorageService.updateCourse(this.course());
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

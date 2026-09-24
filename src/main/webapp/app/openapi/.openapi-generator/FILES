@@ -134,6 +134,7 @@ model/submitted-answer-from-live-client.ts
 model/submitted-answer-from-student.ts
 model/timing.ts
 model/tokens.ts
+model/tutorial-group-configuration-free-period.ts
 model/tutorial-group-configuration.ts
 model/tutorial-group-detail-data.ts
 model/tutorial-group-export-data.ts

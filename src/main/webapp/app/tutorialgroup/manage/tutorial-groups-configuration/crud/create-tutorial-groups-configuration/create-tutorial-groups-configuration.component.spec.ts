@@ -22,7 +22,6 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupsConfigurationComponent>;
@@ -72,14 +71,8 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
     it('should send POST request upon form submission and navigate', () => {
         const exampleConfiguration = generateExampleTutorialGroupsConfigurationDTO({});
-        delete exampleConfiguration.id;
 
-        const createResponse: HttpResponse<TutorialGroupConfigurationDTO> = new HttpResponse({
-            body: exampleConfiguration,
-            status: 201,
-        });
-
-        const createStub = vi.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(of(createResponse));
+        const createStub = vi.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(of(exampleConfiguration));
         const navigateSpy = vi.spyOn(router, 'navigate');
         const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse');
 
@@ -89,12 +82,8 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
         sessionForm.formSubmitted.emit(formData);
 
-        // will be taken from period
-        delete exampleConfiguration.tutorialPeriodStartInclusive;
-        delete exampleConfiguration.tutorialPeriodEndInclusive;
-
         expect(createStub).toHaveBeenCalledOnce();
-        expect(createStub).toHaveBeenCalledWith(exampleConfiguration, course.id, formData.period);
+        expect(createStub).toHaveBeenCalledWith(course.id, formData);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-checklist']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();

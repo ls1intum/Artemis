@@ -12,7 +12,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
-import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
@@ -30,7 +30,6 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
     ngUnsubscribe = new Subject<void>();
 
-    newTutorialGroupsConfiguration: TutorialGroupConfigurationDTO = {};
     readonly isLoading = signal<boolean>(false);
     readonly course = signal<Course>(undefined!);
 
@@ -50,7 +49,6 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 next: (courseResult) => {
                     if (courseResult.body) {
                         this.course.set(courseResult.body);
-                        this.newTutorialGroupsConfiguration = {};
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -58,12 +56,9 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
     }
 
     createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationFormData) {
-        const { period, usePublicTutorialGroupChannels, useTutorialGroupChannels } = formData;
         this.isLoading.set(true);
-        this.newTutorialGroupsConfiguration.useTutorialGroupChannels = useTutorialGroupChannels;
-        this.newTutorialGroupsConfiguration.usePublicTutorialGroupChannels = usePublicTutorialGroupChannels;
         this.tutorialGroupsConfigurationService
-            .create(this.newTutorialGroupsConfiguration, this.course().id!, period ?? [])
+            .create(this.course().id!, formData)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
@@ -71,8 +66,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (resp) => {
-                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
+                next: (configuration) => {
+                    this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
                     this.courseStorageService.updateCourse(this.course());
                     void this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups-checklist']);
                 },

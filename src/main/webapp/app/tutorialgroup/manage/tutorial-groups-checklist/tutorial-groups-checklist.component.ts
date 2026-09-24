@@ -57,13 +57,13 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: ([courseResult, configurationResult]) => {
+                next: ([courseResult, configuration]) => {
                     if (courseResult.body) {
                         this.course.set(courseResult.body);
                         this.isTimeZoneConfigured.set(!!this.course().timeZone);
                     }
-                    if (configurationResult.body) {
-                        this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configurationResult.body);
+                    if (configuration) {
+                        this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(configuration);
                         this.isTutorialGroupConfigurationCreated.set(!!this.course().tutorialGroupsConfiguration);
                     }
                 },
