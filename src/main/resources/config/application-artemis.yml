@@ -370,18 +370,15 @@ management:
   tracing:
     sampling:
       probability: 1.0
-  otlp:
+    export:
+      # The custom Langfuse exporter remains available when default OTLP export is off.
+      otlp:
+        enabled: false
+  opentelemetry:
     tracing:
-      # LangFuse accepts OTLP over HTTP at the traces path only
-      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-#     endpoint: https://example.com
-#     transport: http
-#     headers:
-        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-#        Authorization: "Basic <base64(public_key:secret_key)>"
-
-     # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-     # Hyperion uses its own custom exporter to send LLM traces to Langfuse,
-     # so disabling the default exporter will NOT stop LLM trace export.
-     export:
-       enabled: false
+      export:
+        otlp:
+          # Langfuse accepts OTLP over HTTP at the traces path only.
+          # endpoint: https://example.com/api/public/otel/v1/traces
+          # headers:
+          #   Authorization: "Basic <base64(public_key:secret_key)>"
