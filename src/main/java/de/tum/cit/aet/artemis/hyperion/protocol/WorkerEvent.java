@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -19,7 +20,7 @@ public record WorkerEvent(int protocolVersion, String workerId, UUID incarnation
     private static final Pattern IMAGE_DIGEST = Pattern.compile("sha256:[a-f0-9]{64}");
 
     public WorkerEvent {
-        capacity = capacity == null ? new WorkerCapacity(1, type == Type.HEARTBEAT && identity != null ? java.util.List.of(identity) : java.util.List.of()) : capacity;
+        capacity = capacity == null ? new WorkerCapacity(1, type == Type.HEARTBEAT && identity != null ? List.of(identity) : List.of()) : capacity;
         if (incarnation == null || timestamp == null || type == null || toolchain == null) {
             throw new IllegalArgumentException("Worker events require an incarnation, timestamp and type");
         }
