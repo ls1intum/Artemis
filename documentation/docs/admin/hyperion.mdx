@@ -227,10 +227,10 @@ management:
 
 ## Whole-exercise generation workers
 
-Whole-exercise generation uses a separate worker supervisor and a dedicated,
-TLS-authenticated broker. It does not execute generated code in the core JVM or
-on ordinary LocalCI build agents. Provision the worker and its narrowly scoped
-broker permissions following the [AI Worker deployment instructions](/admin/aiworker).
+Whole-exercise generation uses a separate worker supervisor and the application
+DistributedDataProvider. It does not execute generated code in the core JVM or
+on ordinary LocalCI build agents. Provision the worker's access to the selected
+provider following the [AI Worker deployment instructions](/admin/aiworker).
 A reachable worker without a generation engine advertises no capacity.
 
 Enable the core integration only on nodes with the `core`, `localci`, and
@@ -244,16 +244,12 @@ artemis:
             enabled: true
     aiworker:
         enabled: true
-        broker-url: tcp://worker-broker.example:61617?sslEnabled=true&verifyHost=true
-        user: ${AI_WORKER_CORE_BROKER_USER}
-        password: ${AI_WORKER_CORE_BROKER_PASSWORD}
         ids: [worker-1]
 ```
 
-The core account sends assignments and consumes worker events; it must not use a
-worker account or the browser STOMP credentials. Configure the JVM truststore for
-the broker certificate. Worker IDs must match explicitly provisioned broker
-addresses. A missing capable worker returns `503 generationCapacityUnavailable`;
+Core and worker use the same selected distributed-data provider. A standalone
+worker connects as a Hazelcast client or to Redis/Valkey; it does not join the
+core Hazelcast cluster as a member. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
 starting a supervisor process is not evidence that generation is available.
 
 Generation accepts only unreleased Java Gradle exercises (`PLAIN_GRADLE` or
@@ -265,7 +261,7 @@ exercise metadata again before writing.
 
 Use identical generation settings on generation-capable core nodes. The
 exercise-mutation guard also runs on `core` and `localvc` writer nodes where
-Hyperion is disabled; it does not load a model or connect to the worker broker.
+Hyperion is disabled; it does not load a model or connect to a worker.
 Every writer must run this version of Artemis and use the same distributed data
 provider. Do not mix guarded and older, unguarded nodes while generation is enabled.
 
@@ -362,8 +358,8 @@ Budget RAM for all simultaneously active sandboxes plus the worker JVM and host
 services. Sandbox CPU, RAM and PID limits remain per execution. Slots are a bounded
 concurrency setting, not automatic host scaling. Keep generation outside the core
 JVM: a single-host installation can run a separate isolated worker, while a
-multi-host installation uses the same authenticated broker contract. The worker
-requires neither database access nor membership in the application data grid.
+multi-host installation uses the same selected provider. The worker requires
+neither database access nor Hazelcast cluster membership; it connects as a client.
 Deploy matching core and worker protocol versions together after draining runs.
 Protocol version 4 uses the shared AI Worker envelope and explicit workload schema/profile;
 core and worker must be upgraded together after draining.
@@ -511,15 +507,15 @@ administrator-switchable runtime feature toggle. Core configuration and the
 | Control                                                                          | Effect                                                                                                            |
 | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `artemis.hyperion.enabled=false`                                                 | Disables Hyperion, including generation.                                                                          |
-| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans or worker credentials are required.          |
-| Both properties true and profiles `core,localci,localvc`                         | Enables generation coordination and advertises its module feature. Valid worker broker configuration is required. |
+| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans or worker configuration are required.          |
+| Both properties true and profiles `core,localci,localvc`                         | Enables generation coordination and advertises its module feature. Valid worker and provider configuration is required. |
 | Missing any required profile                                                     | Generation remains disabled even when both properties are true.                                                   |
 | No ready worker or no free slot                                                  | Enabled but unavailable; capacity errors do not turn off the module flag.                                         |
 
 The standalone worker is a separate application artifact, not an additional core
 profile. Its component scan contains only worker code, and it starts without an
-HTTP server. Provision its `spring.artemis` connection with verified TLS and scoped
-credentials, an immutable sandbox image and positive resource limits. An
+HTTP server. Provision access to the selected provider, an immutable sandbox image and positive
+resource limits. An
 unconfigured worker fails startup; a transport-only worker without a generation
 engine does not advertise usable capacity. Core module flags do not stop a
 worker process. Drain active runs before changing profiles, disabling

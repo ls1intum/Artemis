@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
@@ -99,7 +100,7 @@ public class EurekaInstanceHelper {
      * @return true if running as a Hazelcast client, false otherwise
      */
     public boolean isRunningAsClient() {
-        return env.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) && !env.acceptsProfiles(Profiles.of(PROFILE_CORE))
+        return (env.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) || env.acceptsProfiles(Profiles.of(PROFILE_AIWORKER))) && !env.acceptsProfiles(Profiles.of(PROFILE_CORE))
                 && !env.acceptsProfiles(Profiles.of(PROFILE_TEST_BUILDAGENT));
     }
 

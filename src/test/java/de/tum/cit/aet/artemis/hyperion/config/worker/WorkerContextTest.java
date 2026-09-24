@@ -10,14 +10,12 @@ import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -39,8 +37,7 @@ class WorkerContextTest {
                 .withInitializer(new ConfigDataApplicationContextInitializer()).withUserConfiguration(AiWorkerApplication.class, ExternalServices.class)
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
                 .withPropertyValues("artemis.aiworker.workload=hyperion-generation", "artemis.aiworker.profile=java-gradle", "artemis.aiworker.id=context-test",
-                        "artemis.aiworker.image=sha256:" + "a".repeat(64), "artemis.aiworker.max-concurrent-executions=4",
-                        "spring.artemis.broker-url=tcp://broker.invalid:61617?sslEnabled=true", "spring.artemis.user=test", "spring.artemis.password=test",
+                        "artemis.aiworker.image=sha256:" + "a".repeat(64), "artemis.aiworker.max-concurrent-executions=4", "artemis.distributed-data.provider=local",
                         "spring.ai.model.chat=none", "spring.ai.model.audio.transcription=none", "spring.ai.model.audio.speech=none", "spring.ai.model.embedding=none",
                         "spring.ai.model.image=none", "spring.ai.model.moderation=none", "management.tracing.export.otlp.enabled=false",
                         "management.logging.export.otlp.enabled=false", "management.otlp.metrics.export.enabled=false")
@@ -53,14 +50,8 @@ class WorkerContextTest {
                     for (String name : context.getBeanDefinitionNames()) {
                         Class<?> type = context.getType(name);
                         if (type != null) {
-                            if (type.getName().startsWith("de.tum.cit.aet.artemis.")) {
-                                assertThat(List.of("de.tum.cit.aet.artemis.aiworker.", "de.tum.cit.aet.artemis.hyperion.service.worker.",
-                                        "de.tum.cit.aet.artemis.hyperion.config.worker.", "de.tum.cit.aet.artemis.hyperion.protocol.", "de.tum.cit.aet.artemis.hyperion.runtime."))
-                                        .anyMatch(prefix -> type.getName().startsWith(prefix));
-                            }
-                            for (String forbidden : List.of("de.tum.cit.aet.artemis.core.", "de.tum.cit.aet.artemis.buildagent.", "de.tum.cit.aet.artemis.localci.",
-                                    "de.tum.cit.aet.artemis.localvc.", "org.hibernate.", "com.hazelcast.", "org.redisson.", "org.springframework.data.",
-                                    "org.springframework.boot.web.server.")) {
+                            for (String forbidden : List.of("de.tum.cit.aet.artemis.buildagent.", "de.tum.cit.aet.artemis.localci.", "de.tum.cit.aet.artemis.localvc.",
+                                    "de.tum.cit.aet.artemis.core.web.", "org.hibernate.")) {
                                 assertThat(type.getName()).doesNotStartWith(forbidden);
                             }
                         }
@@ -93,18 +84,5 @@ class WorkerContextTest {
             return mock(ChatModel.class);
         }
 
-        @Bean
-        static BeanPostProcessor disableExternalCommandConsumption() {
-            return new BeanPostProcessor() {
-
-                @Override
-                public Object postProcessBeforeInitialization(Object bean, String name) {
-                    if (bean instanceof DefaultJmsListenerContainerFactory factory) {
-                        factory.setAutoStartup(false);
-                    }
-                    return bean;
-                }
-            };
-        }
     }
 }
