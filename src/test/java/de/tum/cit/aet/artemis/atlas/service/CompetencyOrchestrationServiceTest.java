@@ -51,6 +51,7 @@ import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
@@ -293,6 +294,32 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.appliedActions()).hasSize(1);
         assertThat(result.appliedActions().getFirst().type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
         verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void run_detailReadReusesPreparedExerciseContent() {
+        ProgrammingExercise exercise = courseExercise(15L);
+        when(exerciseRepository.findByIdElseThrow(15L)).thenReturn(exercise);
+        stubRunMap();
+        ExtractedContentDTO prepared = new ExtractedContentDTO("Test Exercise", "Learn loops", Map.of());
+        when(contentExtractionService.extractContent(exercise)).thenReturn(prepared);
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        AtomicReference<ExtractedContentDTO> detailRead = new AtomicReference<>();
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> ctx = invocation.getArgument(3);
+                    detailRead.set(AtlasToolCallBudget.content(new ToolContext(ctx), "exercise:15", () -> {
+                        throw new AssertionError("detail read must reuse the prepared content");
+                    }));
+                    throw new RuntimeException("stop after detail read");
+                });
+
+        createServiceWithRunMap(mock(ChatClient.class)).run(15L);
+
+        assertThat(detailRead.get()).isSameAs(prepared);
+        verify(contentExtractionService).extractContent(exercise);
     }
 
     @Test
@@ -615,6 +642,41 @@ class CompetencyOrchestrationServiceTest {
         assertThat(renderedChanges).contains("[UPDATE exercise id=10]").contains("[UPDATE lecture-unit id=30]").contains("Unit learning text")
                 .contains("Source metadata: source=https://example.test/unit");
         verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runBatch_detailReadsReusePreparedExerciseAndLectureUnitContent() {
+        ProgrammingExercise exercise = courseExercise(10L);
+        TextUnit lectureUnit = courseTextUnit(30L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(exercise));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(lectureUnit));
+        stubRunMap();
+        ExtractedContentDTO preparedExercise = new ExtractedContentDTO("Exercise Title", "Exercise body", Map.of());
+        ExtractedContentDTO preparedUnit = new ExtractedContentDTO("Unit Title", "Unit learning text", Map.of("lectureUnitType", "text"));
+        when(contentExtractionService.extractContent(exercise)).thenReturn(preparedExercise);
+        when(contentExtractionService.extractContent(lectureUnit)).thenReturn(preparedUnit);
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        AtomicReference<ExtractedContentDTO> exerciseRead = new AtomicReference<>();
+        AtomicReference<ExtractedContentDTO> unitRead = new AtomicReference<>();
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> ctx = invocation.getArgument(3);
+                    ToolContext toolContext = new ToolContext(ctx);
+                    exerciseRead.set(AtlasToolCallBudget.content(toolContext, "exercise:10", () -> {
+                        throw new AssertionError("exercise detail read must reuse the prepared content");
+                    }));
+                    unitRead.set(AtlasToolCallBudget.content(toolContext, "lectureUnit:30", () -> {
+                        throw new AssertionError("lecture-unit detail read must reuse the prepared content");
+                    }));
+                    throw new RuntimeException("stop after detail reads");
+                });
+
+        createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L), Set.of(30L));
+
+        assertThat(exerciseRead.get()).isSameAs(preparedExercise);
+        assertThat(unitRead.get()).isSameAs(preparedUnit);
     }
 
     @Test
