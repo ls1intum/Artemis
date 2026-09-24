@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -21,7 +23,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationToolchain;
 @Service
 @Lazy
 @Primary
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @ConditionalOnProperty(name = "artemis.aiworker.workload", havingValue = "hyperion-generation")
 public class DefaultGenerationEngineService implements GenerationEngine {
 
