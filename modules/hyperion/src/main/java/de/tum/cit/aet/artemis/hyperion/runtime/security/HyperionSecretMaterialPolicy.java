@@ -39,18 +39,13 @@ public final class HyperionSecretMaterialPolicy {
 
     private static final Pattern UNSAFE_PATH_CHARACTER = Pattern.compile("[^A-Za-z0-9._/@+-]");
 
-    /** The boundary at which material is assessed. Origins are diagnostic labels only and never weaken classification. */
-    public enum Origin {
-        WORKSPACE_ARCHIVE, CLASSIC_CONTEXT, PROVIDER_PROMPT, TOOL_OBSERVATION, GENERATED_CANDIDATE, PERSISTENCE
-    }
-
     /** Stable, content-free reason for rejecting material. */
     public enum Category {
         CREDENTIAL_FILE, PRIVATE_KEY_CONTAINER, PEM_PRIVATE_KEY, AWS_ACCESS_KEY_ID, GITHUB_TOKEN, GITLAB_TOKEN
     }
 
     /** A policy decision containing only safe diagnostic metadata. */
-    public record Assessment(String safePath, Origin origin, Optional<Category> category) {
+    public record Assessment(String safePath, Optional<Category> category) {
 
         public boolean isSafe() {
             return category.isEmpty();
@@ -77,10 +72,9 @@ public final class HyperionSecretMaterialPolicy {
      *
      * @param logicalPath the logical source path
      * @param content     the source bytes
-     * @param origin      the boundary performing the assessment
      * @return content-free classification metadata
      */
-    public Assessment assess(@Nullable String logicalPath, byte @Nullable [] content, Origin origin) {
+    public Assessment assess(@Nullable String logicalPath, byte @Nullable [] content) {
         String normalizedPath = normalizePath(logicalPath);
         Category category = classifyPath(normalizedPath);
         if (category == null) {
@@ -89,11 +83,11 @@ public final class HyperionSecretMaterialPolicy {
         if (category == null) {
             category = classifyContent(content == null ? "" : new String(content, StandardCharsets.UTF_8));
         }
-        return new Assessment(safeDiagnosticPath(logicalPath), origin, Optional.ofNullable(category));
+        return new Assessment(safeDiagnosticPath(logicalPath), Optional.ofNullable(category));
     }
 
-    public void requireSafe(@Nullable String logicalPath, byte @Nullable [] content, Origin origin) {
-        Assessment assessment = assess(logicalPath, content, origin);
+    public void requireSafe(@Nullable String logicalPath, byte @Nullable [] content) {
+        Assessment assessment = assess(logicalPath, content);
         if (!assessment.isSafe()) {
             throw new SecretMaterialException(assessment);
         }
