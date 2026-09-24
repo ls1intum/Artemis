@@ -95,6 +95,11 @@ tasks.named('check') {
     dependsOn 'verifyRuntimeBoundary', 'verifySourceSize', 'verifyJacksonBoundary'
 }
 
+def isolatedCheck = tasks.named('check')
+rootProject.tasks.named('isolatedModuleCheck') {
+    dependsOn isolatedCheck
+}
+
 // An unqualified root `test --tests ServerTest` also selects subproject test tasks. Keep the
 // root's strict filter check, but do not fail unrelated modules that contain no matching test.
 // Explicit `:aiworker:test --tests Typo` remains strict when no root test task is selected.

@@ -59,8 +59,8 @@ jobs:
           image=$(docker image inspect aiworker-sandbox-test --format '{{.Id}}')
           echo "AI_WORKER_TEST_IMAGE=$image" >> "$GITHUB_ENV"
           echo "HYPERION_GRADLE_TEST_IMAGE=$image" >> "$GITHUB_ENV"
-      - name: AI Worker and Hyperion module tests and architecture
-        run: ./gradlew aiWorkerCheck -x webapp
+      - name: Isolated module checks
+        run: ./gradlew isolatedModuleCheck -x webapp
         if: ${{ !cancelled() }}
       - name: Java Documentation
         run: ./gradlew checkstyleMain -x webapp
