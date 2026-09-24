@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 
@@ -44,6 +45,7 @@ public class AiWorkerMessagingConfiguration {
 
     @Bean
     @Lazy
+    @Profile("!aiworker")
     public WorkerMessageCodecApi aiWorkerMessageCodecApi() {
         return new WorkerMessageCodecApi();
     }
