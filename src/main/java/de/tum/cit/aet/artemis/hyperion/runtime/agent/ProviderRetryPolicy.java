@@ -41,7 +41,7 @@ public final class ProviderRetryPolicy {
      * budget, or cancellation during a wait. Rethrows the last failure.
      *
      * @param request       the provider request
-     * @param cancelled     polled after each wait
+     * @param cancelled     polled during each wait
      * @param retryListener told once per retry, in user-facing words; may be {@code null}
      * @param what          names the request in the log, e.g. {@code "turn 12"}
      * @param <T>           the response type
@@ -71,7 +71,7 @@ public final class ProviderRetryPolicy {
     }
 
     /**
-     * Sleeps with jitter.
+     * Sleeps with jitter and checks for cancellation during a long wait.
      *
      * @return {@code true} to continue, {@code false} if cancellation or interruption was observed
      */
@@ -81,7 +81,15 @@ public final class ProviderRetryPolicy {
         }
         long backoff = backoffMillis + ThreadLocalRandom.current().nextLong(jitterMillis + 1);
         try {
-            Thread.sleep(backoff);
+            long remaining = backoff;
+            while (remaining > 0) {
+                if (cancelled.getAsBoolean()) {
+                    return false;
+                }
+                long interval = Math.min(remaining, 250);
+                Thread.sleep(interval);
+                remaining -= interval;
+            }
             return !cancelled.getAsBoolean();
         }
         catch (InterruptedException ie) {

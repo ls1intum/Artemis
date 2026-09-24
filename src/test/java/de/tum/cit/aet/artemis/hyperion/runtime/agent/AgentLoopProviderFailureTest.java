@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +31,18 @@ import com.openai.errors.OpenAIIoException;
 import com.openai.errors.RateLimitException;
 
 class AgentLoopProviderFailureTest {
+
+    @Test
+    void cancellationStopsLongProviderRetryWait() {
+        AtomicInteger checks = new AtomicInteger();
+        long started = System.nanoTime();
+
+        boolean shouldRetry = ProviderRetryPolicy.backOff(10_000, 0, () -> checks.incrementAndGet() > 1);
+
+        assertThat(shouldRetry).isFalse();
+        assertThat(checks.get()).isGreaterThan(1);
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(3));
+    }
 
     @Test
     void missingProviderResponseIsTerminalBecauseItsUsageIsUncertain() {
