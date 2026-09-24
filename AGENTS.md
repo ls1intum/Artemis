@@ -15,6 +15,7 @@ see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native ski
 | Write or debug JUnit or Vitest tests                        | [write-tests](skills/write-tests/SKILL.md)                 |
 | Set up, build, or troubleshoot the local application        | [local-setup](skills/local-setup/SKILL.md)                 |
 
+Read the linked guideline before work in a rule-governed area. Keep procedures in the relevant skill.
 When changing a convention, update its skill and supporting documentation in the same change.
 
 ## Non-negotiables
@@ -36,7 +37,7 @@ Most of these are enforced by a build check; the rest are policy that review enf
 
 ### Client
 
-- Signal APIs are mandatory in new code: `input()`, `input.required()`, `output()`, `viewChild()`, `viewChild.required()`, `viewChildren()`, `signal()`, `computed()`, `effect()`, `inject()`. All six legacy decorators are banned: `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`. [client-development](documentation/docs/developer/guidelines/client-development.mdx)
+- Signal APIs are mandatory in client code: `input()`, `input.required()`, `output()`, `viewChild()`, `viewChild.required()`, `viewChildren()`, `signal()`, `computed()`, `effect()`, `inject()`. All six legacy decorators are banned in the application and test support code: `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`. [client-development](documentation/docs/developer/guidelines/client-development.mdx)
 - `ngOnChanges` is banned; use `computed()` / `effect()`. `ngOnInit` and `ngOnDestroy` are unaffected.
 - Use `@if` / `@for` / `@switch`. Never `*ngIf` / `*ngFor` / `*ngSwitch`.
 - Never object spread, `Object.assign`, or `structuredClone` in production client TypeScript — `localRules/prefer-deep-clone` is error-level over all of it, not just entity graphs (specs are exempt). Use `deepClone` from `app/foundation/util/deep-clone.util`, or its companions `cloneWith(x, {…})` and `hydrate(new Course(), dto)`. Importing `cloneDeep` from `lodash-es` is blocked, so all copying goes through the wrappers. Array spread and object rest in destructuring stay fine. [client-development](documentation/docs/developer/guidelines/client-development.mdx)
@@ -45,7 +46,8 @@ Most of these are enforced by a build check; the rest are policy that review enf
 
 ### Everywhere
 
-- **A class or file nothing can reach is deleted, not left behind**, including one whose only user is its own test. Two required CI checks enforce it on every pull request, even ones touching neither language: `check_dead_code.py` for Java and `knip` for the client. [dead-code](documentation/docs/developer/guidelines/dead-code.mdx)
+- **A class or file nothing can reach is deleted, not left behind**, including one whose only user is its own test. Two required CI checks enforce it on every pull request, even ones touching neither language: `check_dead_code.py` for Java and `knip` for the client. Run
+  `python3 supporting_scripts/check_dead_code.py` and `pnpm run dead-code:client`. [dead-code](documentation/docs/developer/guidelines/dead-code.mdx)
 - Never write "frontend" or "backend". <!-- terminology-check: allow --> Say **client** (Angular) and **server** (Spring Boot), **provider** for a swappable distributed data implementation and **adapter** for the glue binding one, or name the concrete system. Applies to code, comments, commit messages, **pull request descriptions**, and documentation. Do not label people either: prefer `client developer` / `server developer`. `supporting_scripts/check_terminology.py` fails CI on new occurrences. [terminology](documentation/docs/developer/guidelines/terminology.mdx)
 
 Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchitectureTest`), ESLint local rules
@@ -53,15 +55,24 @@ Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchi
 
 ## Repository boundaries
 
+- The server uses Spring Boot 4.1 and Java 25; the client uses Angular 22. Use the Gradle wrapper,
+  Node 24, and the pnpm version pinned in `package.json` (`corepack enable`). Exact versions live
+  in `gradle.properties`, `pnpm-workspace.yaml`, and `package.json`.
 - Server features live under `src/main/java/de/tum/cit/aet/artemis/`; the Angular application is
   under `src/main/webapp/app/`. Keep reusable TUM UI components in `packages/tum-ui`, with no
   imports from the Artemis application. Client tests are co-located; server tests are in
   `src/test/java`, Playwright tests in `src/test/playwright`.
+- `core/` holds shared configuration, security and base entities; `atlas/` holds competencies
+  and learning analytics; `localvc/` is the embedded Git server; `localci/` queues build jobs;
+  `athena/` is ML assessment; `hyperion/` creates exercises with AI; `globalsearch/` integrates
+  Weaviate; `videosource/` integrates TUM Live.
 - `src/main/webapp/app/openapi/` is generated client code. Change the API source/generation input
   rather than hand-editing generated output.
+- Use constructor injection in server beans. Server DTOs are records with `@JsonInclude(NON_EMPTY)`.
+  See [server development](documentation/docs/developer/guidelines/server-development.mdx).
+- New client components are standalone; prefer `undefined` over `null`. See
+  [client development](documentation/docs/developer/guidelines/client-development.mdx).
 - Follow `.editorconfig`: UTF-8, LF, final newlines and two-space YAML indentation.
-- Use the Gradle wrapper and the pnpm version pinned by `package.json` (`corepack enable`).
-  Runtime and build versions are maintained in `gradle.properties` and `package.json`.
 - Before starting or stopping local services, identify the environment and who owns it. The E2E
   runners can kill processes on ports 8080, 9000 and 7921. Reuse a suitable running environment;
   do not stop unrelated services or run mutating tests against production.
@@ -70,13 +81,21 @@ Enforcement lives in ArchUnit (`ArchitectureTest`, `DistributedDataProviderArchi
 
 - User-facing documentation belongs in `documentation/docs/`, grouped by audience. Tool-local
   READMEs stay beside their tools. Do not create a top-level `docs/` directory.
-- Use Docusaurus `.mdx` pages with `id`, `title` and `sidebar_label` frontmatter and no H1 in the body. Register new pages in the matching `documentation/sidebar-*.ts` and link them from related pages. Write in the
-  present tense for the audience, without PR/issue history or release-relative prose.
+- Use Docusaurus `.mdx` pages with `id`, `title` and `sidebar_label` frontmatter and no H1 in
+  the body. Register new pages in the matching `documentation/sidebar-*.ts` and link them from
+  related pages. Write in the present tense for the audience, without PR/issue history or
+  release-relative prose. Read the
+  [documentation guideline](documentation/docs/developer/guidelines/documentation.mdx) before editing a page.
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 
-- For Playwright locators, use `data-testid` first; do not use styling classes. See
+## Testing
+
+- For Playwright locators, use `data-testid` first; never use styling classes. See
   [E2E testing](documentation/docs/developer/e2e-testing-playwright.mdx) and `write-tests`.
+- Do not edit `src/main/webapp` during an E2E run; hot reload can invalidate the test.
+- `pnpm run vitest:run -- <path>` runs the whole suite. Use `pnpm exec vitest run <path>` for one
+  file. See [write-tests](skills/write-tests/SKILL.md) for the other test commands.
 
 ## Commits and pull requests
 

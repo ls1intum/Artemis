@@ -14,11 +14,10 @@ Use `input()` / `input.required()`, `output()`, `viewChild()` / `viewChild.requi
 `viewChildren()`, `signal()`, `computed()`, `effect()`, and `inject()` for dependency injection.
 
 The legacy decorators `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, and
-`@ContentChildren` must not appear in new code. Enforced by `localRules/enforce-signal-apis`
-(`rules/enforce-signal-apis.mjs`) in modules that have been migrated.
-
-In a module that is not yet fully migrated, prefer signals for new components but stay consistent
-within an existing component. Do not half-migrate a component.
+`@ContentChildren` are banned throughout the application, including co-located specs and test
+helpers. `localRules/enforce-signal-apis` (`rules/enforce-signal-apis.mjs`) enforces this under
+`src/main/webapp/app/` and `src/test/javascript/`. Use signal APIs when changing an existing
+component; there is no unmigrated-module exception.
 
 ## `ngOnChanges` is banned
 
