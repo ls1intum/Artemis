@@ -541,20 +541,29 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
 
     /**
      * Decides which persisted criterion / instruction each parsed row reclaims, without mutating
-     * anything. Match by content fingerprint (and criterion title), then pair leftovers in order so
-     * field edits still keep ids when the row was not reordered away from its unmatched siblings.
+     * anything. Criteria match by full content, then title, then instruction-set fingerprint (so a
+     * title tweak keeps the id), then a sole leftover pair (so a title-less instruction edit keeps
+     * the id when only one criterion remains unmatched). Never zip multiple leftovers by position —
+     * that would hand an unrelated criterion’s id to an insert/reorder.
+     * honey: two instructions with identical fingerprints that swap order can keep the wrong ids.
      */
     private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan {
         const unusedCriteria = [...previousCriteria];
         const criterionEntries = parsedCriteria.map((parsedCriterion) => ({
             parsedCriterion,
-            previousCriterion: this.takeContentMatch(
-                unusedCriteria,
-                parsedCriterion,
-                (criterion) => this.criterionSignature(criterion),
-                (criterion) => criterion.title || undefined,
-            ),
+            previousCriterion: this.takeCriterionMatch(unusedCriteria, parsedCriterion),
         }));
+        // Sole remainder only when the leftover pair still shares identity affinity — title-less↔title-less
+        // or at least one instruction fingerprint. Otherwise a full replace of the only criterion would
+        // inherit the old id. Never zip multiple leftovers by position.
+        const unmatched = criterionEntries.filter((entry) => !entry.previousCriterion);
+        if (unmatched.length === 1 && unusedCriteria.length === 1) {
+            const previous = unusedCriteria[0];
+            const parsed = unmatched[0].parsedCriterion;
+            if (this.criteriaShareIdentityAffinity(previous, parsed)) {
+                unmatched[0].previousCriterion = unusedCriteria.shift();
+            }
+        }
 
         return criterionEntries.map(({ parsedCriterion, previousCriterion }) => {
             const unusedInstructions = [...(previousCriterion?.structuredGradingInstructions ?? [])];
@@ -572,6 +581,37 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     }
 
     /**
+     * Claims a previous criterion for the parsed row. Order matters: full signature, then title
+     * (instruction edits), then instruction-set fingerprint (title edits).
+     */
+    private takeCriterionMatch(unused: GradingCriterion[], parsed: GradingCriterion): GradingCriterion | undefined {
+        return (
+            this.takeContentMatch(unused, parsed, (criterion) => this.criterionSignature(criterion)) ??
+            this.takeByTitle(unused, parsed) ??
+            this.takeContentMatch(unused, parsed, (criterion) => this.instructionsSignature(criterion))
+        );
+    }
+
+    /** Title-only claim; skips title-less rows so dummy criteria are not equated by empty string. */
+    private takeByTitle(unused: GradingCriterion[], parsed: GradingCriterion): GradingCriterion | undefined {
+        const title = parsed.title;
+        if (!title) {
+            return undefined;
+        }
+        const matchIndex = unused.findIndex((criterion) => criterion.title === title);
+        return matchIndex < 0 ? undefined : unused.splice(matchIndex, 1)[0];
+    }
+
+    /** Title-less pair, or sharing an instruction fingerprint — enough to sole-remainder reclaim. */
+    private criteriaShareIdentityAffinity(previous: GradingCriterion, parsed: GradingCriterion): boolean {
+        if (!previous.title && !parsed.title) {
+            return true;
+        }
+        const previousFingerprints = new Set((previous.structuredGradingInstructions ?? []).map((instruction) => this.instructionFingerprint(instruction)));
+        return (parsed.structuredGradingInstructions ?? []).some((instruction) => previousFingerprints.has(this.instructionFingerprint(instruction)));
+    }
+
+    /**
      * Removes and returns the persisted entity the parsed row reclaims by content.
      */
     private takeContentMatch<T>(unused: T[], parsed: T, signature: (entity: T) => string, weakKey?: (entity: T) => string | undefined): T | undefined {
@@ -585,7 +625,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
 
     /** Identifies a criterion by its own title plus the content of its instructions. */
     private criterionSignature(criterion: GradingCriterion): string {
-        return [criterion.title ?? '', ...(criterion.structuredGradingInstructions ?? []).map((instruction) => this.instructionFingerprint(instruction))].join('\u0001');
+        return [criterion.title ?? '', this.instructionsSignature(criterion)].join('\u0001');
+    }
+
+    /** Title-agnostic instruction multiset — stable across criterion title edits. */
+    private instructionsSignature(criterion: GradingCriterion): string {
+        return (criterion.structuredGradingInstructions ?? []).map((instruction) => this.instructionFingerprint(instruction)).join('\u0001');
     }
 
     private applyInstructionFields(existingInstruction: GradingInstruction, parsedInstruction: GradingInstruction): GradingInstruction {

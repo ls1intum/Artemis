@@ -1058,6 +1058,75 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[1].feedback).toBe('feedback');
     });
 
+    it('should keep criterion and instruction ids across a one-character title edit', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: 'testCriteria!', action: domainActions[0].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].title).toBe('testCriteria!');
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
+    });
+
+    it('should keep title-less criterion identity when an instruction field is edited', () => {
+        const instruction = {
+            id: 11,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'feedback',
+            usageCount: 0,
+        } as GradingInstruction;
+        const dummyCriterion = { id: 7, structuredGradingInstructions: [instruction] } as GradingCriterion;
+        exercise.gradingCriteria = [dummyCriterion];
+
+        const domainActions = getDomainActionArray().slice(1);
+        domainActions[4] = { text: 'edited feedback', action: domainActions[4].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria![0]).toBe(dummyCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(7);
+        expect(exercise.gradingCriteria![0].title).toBeUndefined();
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(instruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(11);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('edited feedback');
+    });
+
+    it('should not assign an unrelated criterion id when a new criterion is inserted before an unchanged one', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const domainActions = getDomainActionArray();
+        const criterionAction = domainActions[0].action;
+        const instructionAction = domainActions[1].action;
+        const creditsAction = domainActions[2].action;
+        const scaleAction = domainActions[3].action;
+        const descriptionAction = domainActions[4].action;
+        const feedbackAction = domainActions[5].action;
+        const usageCountAction = domainActions[6].action;
+        const withInsert = [
+            { text: 'brand new', action: criterionAction },
+            { text: '', action: instructionAction },
+            { text: '9', action: creditsAction },
+            { text: 'new', action: scaleAction },
+            { text: 'new', action: descriptionAction },
+            { text: 'new feedback', action: feedbackAction },
+            { text: '0', action: usageCountAction },
+            ...domainActions,
+        ] as TextWithDomainAction[];
+
+        component.onDomainActionsFound(withInsert);
+
+        expect(exercise.gradingCriteria![0].id).toBeUndefined();
+        expect(exercise.gradingCriteria![0].title).toBe('brand new');
+        expect(exercise.gradingCriteria![1]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![1].id).toBe(1);
+        expect(exercise.gradingCriteria![1].structuredGradingInstructions[0]).toBe(gradingInstruction);
+    });
+
     it('should keep title-less criterion identity across a content-identical text round trip', () => {
         const instruction = {
             id: 11,
@@ -1258,17 +1327,18 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(criteria[1].structuredGradingInstructions[0].id).toBeUndefined();
     });
 
-    it('should treat a moved instruction under a new criterion title as a new instruction', () => {
+    it('should keep criterion identity when renamed but instruction content is unchanged', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const domainActions = getDomainActionArray();
         domainActions[0] = { text: 'brand new criterion', action: domainActions[0].action };
 
         component.onDomainActionsFound(domainActions);
 
-        expect(exercise.gradingCriteria![0]).not.toBe(gradingCriterion);
-        expect(exercise.gradingCriteria![0].id).toBeUndefined();
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
-        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('feedback');
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].id).toBe(1);
+        expect(exercise.gradingCriteria![0].title).toBe('brand new criterion');
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
     });
 
     it('should keep a literal {id:N} criterion title prefix for an unsaved criterion', () => {
