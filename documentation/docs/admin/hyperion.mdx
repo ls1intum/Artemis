@@ -316,9 +316,10 @@ must use `appendonly yes`, `appendfsync always`, `no-appendfsync-on-rewrite no`,
 and `maxmemory-policy noeviction`. Snapshot-only persistence and `everysec` can
 lose acknowledged ownership slots after a store crash while Artemis writers are
 still running. Put the matching `valkey_*` settings on the store and writer hosts
-when using the Ansible collection; the Hyperion opt-in validation rejects weaker
-settings. Verify the actual server with `CONFIG GET` and `INFO persistence` before
-enabling generation: inventory checks alone cannot prove the settings were applied.
+when using the Ansible collection. Artemis does not inspect these Redis server
+settings at startup, so the operator must verify the actual server with
+`CONFIG GET` and `INFO persistence` before enabling generation. Inventory
+checks alone cannot prove the settings were applied.
 Measure synchronous-write latency on staging rather than weakening durability.
 
 Do not flush the store while any writer is running. Redis asynchronous replication
