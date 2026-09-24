@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.ChatResponse;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -39,17 +37,6 @@ final class AgentToolProgress {
             case "submit" -> "Submitting the current work for checking.";
             default -> "Continuing the exercise update.";
         };
-    }
-
-    static String attemptedNames(ChatResponse response) {
-        try {
-            String names = response.getResult().getOutput().getToolCalls().stream().map(AssistantMessage.ToolCall::name)
-                    .map(name -> UNSAFE_CHARACTERS.matcher(name == null ? "" : name).replaceAll("")).filter(name -> !name.isBlank()).distinct().collect(Collectors.joining(", "));
-            return names.isBlank() ? "unknown" : names.length() > 80 ? names.substring(0, 80) : names;
-        }
-        catch (RuntimeException e) {
-            return "unknown";
-        }
     }
 
     @Nullable
