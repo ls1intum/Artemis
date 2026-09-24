@@ -30,12 +30,13 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentWithVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageAreaSummaryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
-import de.tum.cit.aet.artemis.admin.dto.FeatureUsageModuleSummaryDTO;
 import de.tum.cit.aet.artemis.admin.dto.VulnerabilityDTO;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
+import de.tum.cit.aet.artemis.core.service.featureusage.ProductArea;
 import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -517,12 +518,15 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), featureUsageDigest());
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("programming");
+        // areas are named the way users know them, not by module
+        assertThat(body).contains("Programming exercises");
         assertThat(body).contains("1500");
         // the previous window was smaller, so the change has to read as a rise
         assertThat(body).contains("+50%");
-        // a module nobody touched is named rather than shown as a row of zeros
-        assertThat(body).contains("lecture");
+        // an area nobody used is named rather than shown as a row of zeros
+        assertThat(body).contains("Lectures");
+        // features that only received automatic calls are called out, because that is what made them look used
+        assertThat(body).contains("only received automatic calls");
         // the whole point of the mail is to get someone onto the page
         assertThat(body).contains("admin/feature-usage");
     }
@@ -534,28 +538,29 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), featureUsageDigest());
 
         String body = getDeliveredEmailBody();
-        // proves the German message keys exist too; a missing key would render as ??key??
+        // proves the German message keys exist too, including one per product area; a missing key would render as ??key??
         assertThat(body).doesNotContain("??");
-        assertThat(body).contains("Nutzung pro Modul");
+        assertThat(body).contains("Nutzung pro Bereich");
+        assertThat(body).contains("Programmieraufgaben");
         assertThat(body).contains("admin/feature-usage");
     }
 
     @Test
     void featureUsageDigestEmail_shouldSayWhenNothingWasRecorded() throws Exception {
-        var empty = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 0, 0, 0, 0, 0, 0, null, List.of(), List.of());
+        var empty = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 0, 0, 0, 0, 0, 0, 0, null, List.of(), List.of());
 
         testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), empty);
 
         String body = getDeliveredEmailBody();
         // an empty deployment must not receive a table of zeros presented as a finding
         assertThat(body).contains("No usage at all was recorded");
-        assertThat(body).doesNotContain("Usage per module");
+        assertThat(body).doesNotContain("Usage per area");
     }
 
     @Test
     void featureUsageDigestEmail_shouldOmitTheChangeWhenThereIsNoPreviousData() throws Exception {
-        var module = new FeatureUsageModuleSummaryDTO("programming", 1500, 0, 3, 40, 60, 20);
-        var digest = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1500, 0, 60, 40, 20, 2, null, List.of(module), List.of());
+        var area = new FeatureUsageAreaSummaryDTO(ProductArea.PROGRAMMING, 1500, 0, 900, 3, 10, 13, 1);
+        var digest = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1500, 0, 60, 40, 20, 0, 2, null, List.of(area), List.of());
 
         testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), digest);
 
@@ -564,11 +569,29 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).doesNotContain("%</span>");
     }
 
+    /**
+     * Every product area has to render by name in both languages, which a template that looks the name up by a computed
+     * key only proves when each area actually appears.
+     */
+    @Test
+    void featureUsageDigestEmail_shouldNameEveryProductAreaInBothLanguages() throws Exception {
+        for (String language : List.of("en", "de")) {
+            recipient.setLangKey(language);
+            var digest = new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1, 0, 1, 1, 0, 0, 0, null,
+                    List.of(new FeatureUsageAreaSummaryDTO(ProductArea.COURSES, 1, 0, 1, 0, 1, 1, 0)), List.of(ProductArea.values()));
+
+            testMailService.sendFeatureUsageDigestEmail(MailRecipientDTO.from(recipient), digest);
+
+            assertThat(getDeliveredEmailBody()).as("digest in %s", language).doesNotContain("??");
+            greenMail.purgeEmailFromAllMailboxes();
+        }
+    }
+
     private static FeatureUsageDigestDTO featureUsageDigest() {
-        var programming = new FeatureUsageModuleSummaryDTO("programming", 1500, 1000, 3, 40, 60, 20);
-        var exam = new FeatureUsageModuleSummaryDTO("exam", 200, 400, 0, 10, 12, 2);
-        return new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1700, 1400, 72, 50, 22, 2, Instant.parse("2026-01-01T00:00:00Z"),
-                List.of(programming, exam), List.of("lecture", "quiz"));
+        var programming = new FeatureUsageAreaSummaryDTO(ProductArea.PROGRAMMING, 1500, 1000, 900, 3, 10, 13, 1);
+        var exams = new FeatureUsageAreaSummaryDTO(ProductArea.EXAMS, 200, 400, 150, 0, 5, 11, 0);
+        return new FeatureUsageDigestDTO(7, LocalDate.of(2026, 2, 10), LocalDate.of(2026, 2, 16), 1700, 1400, 72, 50, 22, 4, 2, Instant.parse("2026-01-01T00:00:00Z"),
+                List.of(programming, exams), List.of(ProductArea.LECTURES, ProductArea.QUIZ));
     }
 
     private Map<String, Object> createLoginEmailContext(String authMethod, String loginDate, String loginTime, String requestOrigin, String resetLink) {

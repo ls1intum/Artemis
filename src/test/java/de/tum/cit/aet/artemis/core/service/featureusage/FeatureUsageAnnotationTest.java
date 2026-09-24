@@ -15,6 +15,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -63,6 +64,8 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
     private static final Path CATALOGUE_DOCUMENT = Path.of("documentation", "docs", "developer", "feature-usage-catalogue.mdx");
 
     private static final Path TRANSLATIONS = Path.of("src", "main", "webapp", "i18n");
+
+    private static final Path MESSAGES = Path.of("src", "main", "resources", "i18n");
 
     private static final List<String> LANGUAGES = List.of("en", "de");
 
@@ -141,6 +144,24 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
                 }
             }
             assertThat(missing).as("artemisApp.featureUsage.catalog keys missing in %s/featureUsage.json", language).isEmpty();
+        }
+    }
+
+    /**
+     * The weekly email names each product area it lists. The template looks the name up by a key built from the enum
+     * constant, which no compiler checks, so a new area without its message would reach an administrator as
+     * {@code ??email.featureUsageDigest.area.X??}.
+     */
+    @Test
+    void everyProductAreaShouldHaveAnEmailMessage() throws IOException {
+        for (String bundle : List.of("messages.properties", "messages_en.properties", "messages_de.properties")) {
+            Properties messages = new Properties();
+            try (var reader = Files.newBufferedReader(Path.of(System.getProperty("user.dir")).resolve(MESSAGES).resolve(bundle), StandardCharsets.UTF_8)) {
+                messages.load(reader);
+            }
+            Set<String> missing = Arrays.stream(ProductArea.values()).map(area -> "email.featureUsageDigest.area." + area.name())
+                    .filter(key -> messages.getProperty(key, "").isBlank()).collect(Collectors.toCollection(TreeSet::new));
+            assertThat(missing).as("product area names missing in %s", bundle).isEmpty();
         }
     }
 
