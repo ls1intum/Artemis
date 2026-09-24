@@ -70,6 +70,7 @@ public class RedissonCodecConfiguration {
 
     /** Starts the existing Redisson client only in a standalone worker that selected Redis. */
     @Configuration(proxyBeanMethods = false)
+    @Lazy
     @Profile("aiworker-standalone")
     @Conditional(RedisCondition.class)
     @Import(org.redisson.spring.starter.RedissonAutoConfigurationV4.class)
