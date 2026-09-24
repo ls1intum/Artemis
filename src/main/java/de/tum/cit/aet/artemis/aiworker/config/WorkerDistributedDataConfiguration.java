@@ -12,7 +12,6 @@ import de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper;
 import de.tum.cit.aet.artemis.core.config.HazelcastConfiguration;
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
-import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentity;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
@@ -23,6 +22,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistribu
 @Profile("aiworker-standalone")
 @EnableConfigurationProperties({ ArtemisProperties.class, ServerProperties.class })
 @Import({ EurekaInstanceHelper.class, HazelcastConfiguration.class, HazelcastDistributedDataProviderService.class, RedissonCodecConfiguration.class, RedisNodeIdentity.class,
-        RedisClientListResolver.class, RedissonDistributedDataProviderService.class, LocalDataProviderService.class })
+        RedisClientListResolver.class, RedissonDistributedDataProviderService.class })
 public class WorkerDistributedDataConfiguration {
 }

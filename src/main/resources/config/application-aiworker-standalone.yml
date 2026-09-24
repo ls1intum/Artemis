@@ -2,7 +2,7 @@
 # uses the aiworker profile without these server exclusions.
 spring:
     application:
-        name: artemis-aiworker
+        name: Artemis
     main:
         web-application-type: none
     liquibase:
@@ -51,3 +51,7 @@ management:
         metrics:
             export:
                 enabled: false
+eureka:
+    client:
+        enabled: true
+        register-with-eureka: false
