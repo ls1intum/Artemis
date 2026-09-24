@@ -589,6 +589,9 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             expect(markdownEditor.flushLiveMarkdownAndParse).toHaveBeenCalledOnce();
             expect(exercise.gradingCriteria).toEqual([]);
+            component.onDomainActionsFound(getDomainActionArray());
+            expect(exercise.gradingCriteria![0].id).toBeUndefined();
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBeUndefined();
         });
 
         it('should clear grading criteria when switching to structured mode with an empty buffer', () => {
@@ -682,6 +685,37 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(exercise.gradingCriteria![0].id).toBe(1);
             expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(originalInstruction);
             expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
+        });
+
+        it('should reclaim a cut criterion after a debounced partial parse', () => {
+            const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            const cutCriterion = { id: 2, title: 'Other criterion', structuredGradingInstructions: [cutInstruction] } as GradingCriterion;
+            exercise.gradingCriteria = [gradingCriterion, cutCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const fullMarkdown = component.generateMarkdown();
+
+            component.onDomainActionsFound(getDomainActionArray());
+            expect(exercise.gradingCriteria).toHaveLength(1);
+            component.onDomainActionsFound(parseMarkdownForDomainActions(fullMarkdown, component.domainActionsForMainEditor));
+
+            expect(exercise.gradingCriteria![1]).toBe(cutCriterion);
+            expect(exercise.gradingCriteria![1].structuredGradingInstructions[0]).toBe(cutInstruction);
+        });
+
+        it('should reclaim a cut instruction after a debounced partial parse', () => {
+            const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            gradingCriterion.structuredGradingInstructions.push(cutInstruction);
+            exercise.gradingCriteria = [gradingCriterion];
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const fullMarkdown = component.generateMarkdown();
+
+            component.onDomainActionsFound(getDomainActionArray());
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions).toHaveLength(1);
+            component.onDomainActionsFound(parseMarkdownForDomainActions(fullMarkdown, component.domainActionsForMainEditor));
+
+            expect(exercise.gradingCriteria![0].structuredGradingInstructions[1]).toBe(cutInstruction);
         });
 
         it('should flush the live monaco buffer before switching to structured mode', () => {
@@ -1318,13 +1352,12 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         const criteria = exercise.gradingCriteria!;
         expect(criteria).toHaveLength(2);
-        // First copy: title match claims the criterion; edited instruction gets the id positionally.
-        expect(criteria[0]).toBe(gradingCriterion);
-        expect(criteria[0].structuredGradingInstructions[0]).toBe(gradingInstruction);
-        expect(criteria[0].structuredGradingInstructions[0].id).toBe(1);
+        expect(criteria[0].id).toBeUndefined();
+        expect(criteria[0].structuredGradingInstructions[0].id).toBeUndefined();
         expect(criteria[0].structuredGradingInstructions[0].feedback).toBe('copied feedback');
-        expect(criteria[1].id).toBeUndefined();
-        expect(criteria[1].structuredGradingInstructions[0].id).toBeUndefined();
+        expect(criteria[1]).toBe(gradingCriterion);
+        expect(criteria[1].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(criteria[1].structuredGradingInstructions[0].id).toBe(1);
     });
 
     it('should keep criterion identity when renamed but instruction content is unchanged', () => {

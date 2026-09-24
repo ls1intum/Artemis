@@ -98,11 +98,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     private instructions: GradingInstruction[] = [];
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
     /**
-     * Last criteria that successfully carried persisted ids. Survives a live empty-buffer clear so a
-     * cut → paste of the same content can reclaim them. Cleared only when an empty buffer is committed
-     * (host save / mode switch via prepareForSave).
+     * Persisted criteria and instructions remain candidates across partial parses and live clears.
+     * An empty buffer committed by prepareForSave drops both baselines.
      */
     private identityBaseline: GradingCriterion[] = [];
+    private readonly instructionBaseline = new Map<GradingCriterion, GradingInstruction[]>();
 
     backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
@@ -183,6 +183,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     ngOnInit() {
         this.criteria.set(this.exercise().gradingCriteria || []);
         this.identityBaseline = this.exercise().gradingCriteria || [];
+        for (const criterion of this.identityBaseline) {
+            this.instructionBaseline.set(
+                criterion,
+                (criterion.structuredGradingInstructions ?? []).filter((instruction) => instruction.id != undefined),
+            );
+        }
         this.backupExercise = deepClone(this.exercise());
         this.markdownEditorText.set(this.generateMarkdown());
         // Always start in the structured field editor; edit-as-text remains available via the mode toggle.
@@ -345,6 +351,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         this.exercise().gradingCriteria = [];
         if (clearBaseline) {
             this.identityBaseline = [];
+            this.instructionBaseline.clear();
         }
     }
 
@@ -501,14 +508,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return;
         }
         const previousCriteria = this.exercise().gradingCriteria ?? [];
-        // After a live empty clear the exercise model is [], but the same content can still reclaim
-        // ids from the baseline.
-        const forMatch = previousCriteria.length > 0 ? previousCriteria : this.identityBaseline;
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
-        this.reconcileParsedCriteria(forMatch);
+        this.reconcileParsedCriteria(previousCriteria);
     }
 
     /**
@@ -519,6 +523,17 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
         const plan = this.planReconciliation(previousCriteria, parsedCriteria);
+        for (const criterion of previousCriteria) {
+            if (criterion.id != undefined) {
+                const baseline = this.instructionBaseline.get(criterion) ?? [];
+                for (const instruction of criterion.structuredGradingInstructions ?? []) {
+                    if (instruction.id != undefined && !baseline.includes(instruction)) {
+                        baseline.push(instruction);
+                    }
+                }
+                this.instructionBaseline.set(criterion, baseline);
+            }
+        }
         const reconciled = plan.map(({ parsedCriterion, previousCriterion, instructions }) => {
             const criterion = previousCriterion ?? parsedCriterion;
             if (!previousCriterion) {
@@ -536,7 +551,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         });
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
-        this.identityBaseline = reconciled;
+        this.identityBaseline = [...new Set([...this.identityBaseline, ...previousCriteria, ...reconciled].filter((criterion) => criterion.id != undefined))];
     }
 
     /**
@@ -549,10 +564,28 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      */
     private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan {
         const unusedCriteria = [...previousCriteria];
+        const unusedFallbackCriteria = this.identityBaseline.filter((criterion) => criterion.id != undefined && !previousCriteria.includes(criterion));
         const criterionEntries = parsedCriteria.map((parsedCriterion) => ({
             parsedCriterion,
-            previousCriterion: this.takeCriterionMatch(unusedCriteria, parsedCriterion),
+            previousCriterion: undefined as GradingCriterion | undefined,
         }));
+        for (const { match, fallback } of [
+            {
+                match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeContentMatch(unused, parsed, (criterion) => this.criterionSignature(criterion)),
+                fallback: true,
+            },
+            { match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeByTitle(unused, parsed), fallback: false },
+            {
+                match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeContentMatch(unused, parsed, (criterion) => this.instructionsSignature(criterion)),
+                fallback: true,
+            },
+        ]) {
+            for (const entry of criterionEntries) {
+                if (!entry.previousCriterion) {
+                    entry.previousCriterion = match(unusedCriteria, entry.parsedCriterion) ?? (fallback ? match(unusedFallbackCriteria, entry.parsedCriterion) : undefined);
+                }
+            }
+        }
         // Sole remainder only when the leftover pair still shares identity affinity — title-less↔title-less
         // or at least one instruction fingerprint. Otherwise a full replace of the only criterion would
         // inherit the old id. Never zip multiple leftovers by position.
@@ -567,10 +600,18 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
 
         return criterionEntries.map(({ parsedCriterion, previousCriterion }) => {
             const unusedInstructions = [...(previousCriterion?.structuredGradingInstructions ?? [])];
+            const unusedFallbackInstructions = (previousCriterion ? (this.instructionBaseline.get(previousCriterion) ?? []) : []).filter(
+                (instruction) => !unusedInstructions.includes(instruction),
+            );
             const instructionEntries = (parsedCriterion.structuredGradingInstructions ?? []).map((parsedInstruction) => ({
                 parsedInstruction,
-                previousInstruction: this.takeContentMatch(unusedInstructions, parsedInstruction, (instruction) => this.instructionFingerprint(instruction)),
+                previousInstruction: undefined as GradingInstruction | undefined,
             }));
+            for (const entry of instructionEntries) {
+                entry.previousInstruction =
+                    this.takeContentMatch(unusedInstructions, entry.parsedInstruction, (instruction) => this.instructionFingerprint(instruction)) ??
+                    this.takeContentMatch(unusedFallbackInstructions, entry.parsedInstruction, (instruction) => this.instructionFingerprint(instruction));
+            }
             for (const entry of instructionEntries) {
                 if (!entry.previousInstruction && unusedInstructions.length > 0) {
                     entry.previousInstruction = unusedInstructions.shift();
@@ -578,18 +619,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             }
             return { parsedCriterion, previousCriterion, instructions: instructionEntries };
         });
-    }
-
-    /**
-     * Claims a previous criterion for the parsed row. Order matters: full signature, then title
-     * (instruction edits), then instruction-set fingerprint (title edits).
-     */
-    private takeCriterionMatch(unused: GradingCriterion[], parsed: GradingCriterion): GradingCriterion | undefined {
-        return (
-            this.takeContentMatch(unused, parsed, (criterion) => this.criterionSignature(criterion)) ??
-            this.takeByTitle(unused, parsed) ??
-            this.takeContentMatch(unused, parsed, (criterion) => this.instructionsSignature(criterion))
-        );
     }
 
     /** Title-only claim; skips title-less rows so dummy criteria are not equated by empty string. */
