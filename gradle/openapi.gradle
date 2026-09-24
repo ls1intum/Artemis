@@ -92,13 +92,14 @@
                 set: 'Array',
         ]
         languageSpecificPrimitives =['void']
-        // useHttpResource=false: classical HttpClient.get() Observable methods (not the signal-based
-        // httpResource API). useInjectFunction=true: inject() instead of constructor injection.
+        // useHttpResource=true + separateResources=true: every GET also gets a signal-based httpResource
+        // function in api/<tag>-resources.ts; api/<tag>-api.ts keeps an Observable method for every
+        // operation. useInjectFunction=true: inject() instead of constructor injection.
         // readonlyModels=false: keep DTO properties mutable (Artemis builds/edits DTOs in place).
         configOptions = [
-            useHttpResource  : "false",
+            useHttpResource  : "true",
             useInjectFunction: "true",
-            separateResources: "false",
+            separateResources: "true",
             readonlyModels   : "false"
         ]
     }
