@@ -22,15 +22,13 @@ class HyperionSecretMaterialPolicyTest {
     @ValueSource(strings = { ".env", "config/.ENV.Production", ".npmrc", ".pypirc", ".netrc", ".git-credentials", "config/application_default_credentials.json",
             "service-account.json", ".aws/credentials", ".azure/accessTokens.json", ".config/gcloud/credentials.db", ".docker/config.json", ".kube/config" })
     void assessRejectsCanonicalCredentialPathsCaseInsensitively(String path) {
-        assertThat(policy.assess(path, bytes("ordinary"), HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE).category())
-                .contains(HyperionSecretMaterialPolicy.Category.CREDENTIAL_FILE);
+        assertThat(policy.assess(path, bytes("ordinary")).category()).contains(HyperionSecretMaterialPolicy.Category.CREDENTIAL_FILE);
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "id_rsa", "keys/ID_ED25519", "tls/server.key", "tls/server.p12", "tls/server.pfx", "tls/server.jks", "tls/server.keystore" })
     void assessRejectsPrivateKeyAndKeystoreContainers(String path) {
-        assertThat(policy.assess(path, new byte[] { 0, 1, 2 }, HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE).category())
-                .contains(HyperionSecretMaterialPolicy.Category.PRIVATE_KEY_CONTAINER);
+        assertThat(policy.assess(path, new byte[] { 0, 1, 2 }).category()).contains(HyperionSecretMaterialPolicy.Category.PRIVATE_KEY_CONTAINER);
     }
 
     @ParameterizedTest
@@ -39,14 +37,13 @@ class HyperionSecretMaterialPolicyTest {
     void assessRejectsAllPemPrivateKeyArmor(String label) {
         String content = "-----BEGIN " + label + "-----\nsynthetic-fixture\n-----END " + label + "-----";
 
-        assertThat(policy.assess("src/fixture.txt", bytes(content), HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE).category())
-                .contains(HyperionSecretMaterialPolicy.Category.PEM_PRIVATE_KEY);
+        assertThat(policy.assess("src/fixture.txt", bytes(content)).category()).contains(HyperionSecretMaterialPolicy.Category.PEM_PRIVATE_KEY);
     }
 
     @ParameterizedTest
     @MethodSource("supportedProviderTokens")
     void assessRejectsOnlyNamedStructurallyReliableProviderTokens(String content, HyperionSecretMaterialPolicy.Category category) {
-        assertThat(policy.assess("src/fixture.txt", bytes("prefix " + content + " suffix"), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT).category()).contains(category);
+        assertThat(policy.assess("src/fixture.txt", bytes("prefix " + content + " suffix")).category()).contains(category);
     }
 
     @ParameterizedTest
@@ -54,20 +51,17 @@ class HyperionSecretMaterialPolicyTest {
     void assessRejectsEveryGithubTokenPrefix(String prefix) {
         String token = prefix + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
-        assertThat(policy.assess("src/fixture.txt", bytes("prefix " + token + " suffix"), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT).category())
-                .contains(HyperionSecretMaterialPolicy.Category.GITHUB_TOKEN);
+        assertThat(policy.assess("src/fixture.txt", bytes("prefix " + token + " suffix")).category()).contains(HyperionSecretMaterialPolicy.Category.GITHUB_TOKEN);
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "AKIA", "ASIA" })
-    void detectsAccessKeysInOrdinarySourceAtEveryBoundary(String prefix) {
+    void detectsAccessKeysInOrdinarySource(String prefix) {
         String key = prefix + "Q".repeat(16);
-        for (var origin : HyperionSecretMaterialPolicy.Origin.values()) {
-            assertThat(policy.assess("src/Settings.java", bytes("access_id=" + key), origin).category()).contains(HyperionSecretMaterialPolicy.Category.AWS_ACCESS_KEY_ID);
-            assertThat(policy.assess("src/Settings.java", bytes(prefix + "Q".repeat(15)), origin).isSafe()).isTrue();
-            assertThat(policy.assess("src/Settings.java", bytes(prefix + "Q".repeat(17)), origin).isSafe()).isTrue();
-            assertThat(policy.assess("src/Settings.java", bytes("X" + key), origin).isSafe()).isTrue();
-        }
+        assertThat(policy.assess("src/Settings.java", bytes("access_id=" + key)).category()).contains(HyperionSecretMaterialPolicy.Category.AWS_ACCESS_KEY_ID);
+        assertThat(policy.assess("src/Settings.java", bytes(prefix + "Q".repeat(15))).isSafe()).isTrue();
+        assertThat(policy.assess("src/Settings.java", bytes(prefix + "Q".repeat(17))).isSafe()).isTrue();
+        assertThat(policy.assess("src/Settings.java", bytes("X" + key)).isSafe()).isTrue();
     }
 
     private static Stream<Arguments> supportedProviderTokens() {
@@ -94,23 +88,20 @@ class HyperionSecretMaterialPolicyTest {
                 """.formatted("change-" + "me", String.join(".", "eyJhbGciOiJIUzI1NiJ9", "eyJzdWIiOiJmaXh0dXJlIn0", "signature"), "AKIA" + "IOSFODNN7EXAMPL",
                 "glpat-" + "exampletokenvalue");
 
-        assertThat(policy.assess("src/Example.java", bytes(ordinarySource), HyperionSecretMaterialPolicy.Origin.CLASSIC_CONTEXT).isSafe()).isTrue();
+        assertThat(policy.assess("src/Example.java", bytes(ordinarySource)).isSafe()).isTrue();
     }
 
     @Test
     void requireSafeExceptionContainsOnlySafePathAndCategory() {
         assertThatExceptionOfType(HyperionSecretMaterialPolicy.SecretMaterialException.class)
-                .isThrownBy(() -> policy.requireSafe("solution/src/fixture.txt", bytes("before " + GITHUB_SENTINEL + " after"),
-                        HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE))
-                .withMessageContaining("solution/src/fixture.txt").withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(GITHUB_SENTINEL)
-                .withMessageNotContaining("before").withMessageNotContaining("after");
+                .isThrownBy(() -> policy.requireSafe("solution/src/fixture.txt", bytes("before " + GITHUB_SENTINEL + " after"))).withMessageContaining("solution/src/fixture.txt")
+                .withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(GITHUB_SENTINEL).withMessageNotContaining("before").withMessageNotContaining("after");
     }
 
     @ParameterizedTest
     @MethodSource("diagnosticTokens")
     void diagnosticPathIsRedactedWhenItContainsMatchingMaterial(String sentinel) {
-        HyperionSecretMaterialPolicy.Assessment assessment = policy.assess("solution/" + sentinel + ".txt", bytes("ordinary"),
-                HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE);
+        HyperionSecretMaterialPolicy.Assessment assessment = policy.assess("solution/" + sentinel + ".txt", bytes("ordinary"));
 
         assertThat(assessment.safePath()).isEqualTo("<redacted-path>").doesNotContain(sentinel);
     }
@@ -122,11 +113,10 @@ class HyperionSecretMaterialPolicyTest {
     @Test
     void fineGrainedTokensAreBlockedWithoutRejectingNearMisses() {
         String token = "github_pat_" + "A".repeat(22) + "_" + "b".repeat(59);
-        assertThat(policy.assess("fixture.txt", bytes(token), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT).category())
-                .contains(HyperionSecretMaterialPolicy.Category.GITHUB_TOKEN);
-        assertThat(policy.assess(token, bytes("ordinary"), HyperionSecretMaterialPolicy.Origin.PERSISTENCE).safePath()).isEqualTo("<redacted-path>");
+        assertThat(policy.assess("fixture.txt", bytes(token)).category()).contains(HyperionSecretMaterialPolicy.Category.GITHUB_TOKEN);
+        assertThat(policy.assess(token, bytes("ordinary")).safePath()).isEqualTo("<redacted-path>");
         for (String nearMiss : new String[] { token.substring(1), token.substring(0, token.length() - 1), "a" + token, token + "a" }) {
-            assertThat(policy.assess("fixture.txt", bytes(nearMiss), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT).isSafe()).isTrue();
+            assertThat(policy.assess("fixture.txt", bytes(nearMiss)).isSafe()).isTrue();
         }
     }
 
