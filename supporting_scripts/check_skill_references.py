@@ -210,6 +210,8 @@ def plugin_errors(root: Path) -> list[str]:
             errors.append(f"{relative_file}: unreadable ({error})")
     plugin = manifests.get(PLUGIN_MANIFEST)
     if not isinstance(plugin, dict):
+        if PLUGIN_MANIFEST in manifests:
+            errors.append(f"{PLUGIN_MANIFEST}: expected an object")
         return errors
     for field in ("name", "description", "version"):
         if not plugin.get(field):
@@ -379,9 +381,13 @@ def self_test() -> int:
             if not any(expected in error for error in plugin_errors(root)):
                 print(f"FAIL: marketplace check missed {expected}", file=sys.stderr)
                 failures += 1
+        (manifest_dir / "plugin.json").write_text("null", encoding="utf-8")
+        if not any("expected an object" in error for error in plugin_errors(root)):
+            print("FAIL: plugin check accepted null", file=sys.stderr)
+            failures += 1
     if failures:
         return 1
-    cases = len(SELF_TEST_EXPECTED) + len(SELF_TEST_FRONTMATTER) + 2
+    cases = len(SELF_TEST_EXPECTED) + len(SELF_TEST_FRONTMATTER) + 3
     print(f"OK: parser self-test passed ({cases} cases).")
     return 0
 
