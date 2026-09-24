@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -108,6 +109,17 @@ public class ParticipantScoreScheduleService {
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
+    /**
+     * Set when the service is shut down, so that the delayed startup task cannot reactivate it: the scheduler still runs delayed tasks after its shutdown.
+     * Guarded by {@link #lifecycleLock}.
+     */
+    private boolean shutDown = false;
+
+    /**
+     * Makes the shutdown check and the activation in the delayed startup task atomic with respect to {@link #shutdown()}.
+     */
+    private final Object lifecycleLock = new Object();
+
     public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, Optional<CompetencyProgressApi> competencyProgressApi,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
@@ -142,7 +154,12 @@ public class ParticipantScoreScheduleService {
     @PostConstruct
     public void startup() {
         scheduler.schedule(() -> {
-            isRunning.set(true);
+            synchronized (lifecycleLock) {
+                if (shutDown) {
+                    return;
+                }
+                isRunning.set(true);
+            }
             try {
                 // this should never prevent the application start of Artemis
                 scheduleTasks();
@@ -162,7 +179,10 @@ public class ParticipantScoreScheduleService {
      */
     @PreDestroy
     public void shutdown() {
-        isRunning.set(false);
+        synchronized (lifecycleLock) {
+            shutDown = true;
+            isRunning.set(false);
+        }
         // Stop all running tasks, we will reschedule them on startup again
         scheduledTasks.values().forEach(future -> future.cancel(true));
         scheduledTasks.clear();
@@ -181,7 +201,14 @@ public class ParticipantScoreScheduleService {
         // Entry point on a pooled scheduler thread: install the system principal rather than inherit a leftover.
         SecurityUtils.setSystemAuthorizationObject();
         if (isRunning.get()) {
-            executeScheduledTasks();
+            try {
+                executeScheduledTasks();
+            }
+            catch (TaskRejectedException e) {
+                // The scheduler only rejects tasks once it is shut down: it stops when the application context closes, before this bean is destroyed and
+                // isRunning is reset. The tasks are scheduled again on the next startup
+                log.debug("Skipped scheduling participant score updates because the task scheduler is shut down: {}", e.getMessage());
+            }
         }
     }
 
