@@ -28,6 +28,7 @@ data:
   ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH: "/opt/artemis/data/local-vcs-repos"
   ARTEMIS_TEMPPATH: "/opt/artemis/local/tmp"
   ARTEMIS_BUILDLOGSPATH: "/opt/artemis/data/build-logs"
+  ARTEMIS_FAILEDBUILDLOGSPATH: "/opt/artemis/data/failed-build-logs"
 
   # ---- Service discovery (Eureka) + Hazelcast ----
   # EUREKA_CLIENT_SERVICEURL_DEFAULTZONE lives in the Secret because the URL embeds the registry password.

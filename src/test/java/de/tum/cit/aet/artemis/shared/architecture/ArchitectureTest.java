@@ -754,7 +754,14 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // FileUtil.publishAtomically is the one place allowed to call Files.move, because an atomic rename is
                 // exactly what Apache FileUtils cannot promise: it falls back to copying and deleting, which can leave
                 // an incomplete target behind. Callers that need that guarantee go through the helper.
-                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil").should()
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.FileUtil")
+                // FailedBuildLogService publishes a log file by writing a sibling temporary file and renaming it into
+                // place, so that a reader never sees half a file. It needs REPLACE_EXISTING, which publishAtomically
+                // does not offer, and it falls back to a plain rename where the export cannot promise an atomic one,
+                // which Apache FileUtils cannot express either. Its test plants files directly to set up the malformed
+                // content it then asserts the reader survives.
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogService").and()
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.FailedBuildLogServiceTest").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);
