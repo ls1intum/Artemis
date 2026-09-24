@@ -179,8 +179,8 @@ These values can be provided through **active Spring profile YAML** (e.g. `appli
 
 You will need to set the following properties:
 
-- `management.otlp.tracing.endpoint` → `https://<host>/api/public/otel/v1/traces`
-- `management.otlp.tracing.headers.Authorization` → `Basic <base64(public_key:secret_key)>`
+- `management.opentelemetry.tracing.export.otlp.endpoint` → `https://<host>/api/public/otel/v1/traces`
+- `management.opentelemetry.tracing.export.otlp.headers.Authorization` → `Basic <base64(public_key:secret_key)>`
 
 To avoid committing secrets, prefer supplying these values via environment variables and referencing them in YAML.
 
@@ -200,20 +200,18 @@ management:
     tracing:
         sampling:
             probability: 1.0
-    otlp:
-        tracing:
-            # LangFuse accepts OTLP over HTTP at the traces path only
-            # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-            endpoint: https://example.com
-            transport: http
-            headers:
-                # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-                Authorization: 'Basic <base64(public_key:secret_key)>'
-            # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-            # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
-            # so disabling the default exporter will NOT stop LLM trace export.
-            export:
+        export:
+            # Disable the default exporter, not the custom Langfuse exporter.
+            otlp:
                 enabled: false
+    opentelemetry:
+        tracing:
+            export:
+                otlp:
+                    endpoint: https://example.com/api/public/otel/v1/traces
+                    headers:
+                        # Provide this through an environment variable, not a committed secret.
+                        Authorization: 'Basic <base64(public_key:secret_key)>'
 ```
 
 ## Verifying the integration
