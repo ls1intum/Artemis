@@ -499,6 +499,31 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special Cases for Breadcrumbs', () => {
+        it('tutorial group holidays skip the configuration routing layer', () => {
+            router.setUrl('/course-management/1/tutorial-groups/configuration/5/tutorial-free-days');
+
+            fixture.detectChanges();
+
+            const tutorialGroupsCrumb = {
+                label: 'artemisApp.breadcrumb.title',
+                translate: true,
+                uri: '/course-management/1/tutorial-groups/',
+            } as MockBreadcrumb;
+            const holidaysCrumb = {
+                label: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
+                translate: true,
+                uri: '/course-management/1/tutorial-groups/configuration/5/tutorial-free-days/',
+            } as MockBreadcrumb;
+
+            // Course, Tutorial Groups, Holidays - no "Configuration" crumb and no configuration id between them.
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual(tutorialGroupsCrumb);
+            expect(component.breadcrumbs()[3]).toEqual(holidaysCrumb);
+            expect(component.breadcrumbs().some((crumb) => crumb.label === 'global.menu.admin.sidebar.configuration')).toBe(false);
+        });
+
         it('programming exercise import', () => {
             const testUrl = '/course-management/1/programming-exercises/import/2';
             router.setUrl(testUrl);
