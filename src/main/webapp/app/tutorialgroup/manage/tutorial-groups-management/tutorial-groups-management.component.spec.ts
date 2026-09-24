@@ -5,9 +5,8 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-management.component';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
@@ -23,13 +22,10 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 
-interface TutorialGroupApiServiceMock {
-    getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
-}
+const TUTORIAL_GROUPS_URL = '/api/tutorialgroup/courses/1/tutorial-groups';
 
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
@@ -40,7 +36,7 @@ describe('TutorialGroupsManagementComponent', () => {
     let tutorialGroupTwo: TutorialGroup;
     let tutorialGroupOne: TutorialGroup;
 
-    let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
+    let httpTesting: HttpTestingController;
     let configurationService: TutorialGroupsConfigurationService;
     let getOneOfCourseSpy: ReturnType<typeof vi.spyOn>;
 
@@ -90,10 +86,17 @@ describe('TutorialGroupsManagementComponent', () => {
         fixture.detectChanges();
     }
 
+    /** The one request the tutorial groups resource has sent for the course; fails when there is none or more than one. */
+    function expectTutorialGroupsRequest(): TestRequest {
+        fixture.detectChanges();
+        return httpTesting.expectOne(TUTORIAL_GROUPS_URL);
+    }
+
     async function setUp(tutorialGroups: TutorialGroup[]): Promise<void> {
-        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockReturnValue(of(tutorialGroups));
         fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
         component = fixture.componentInstance;
+        fixture.detectChanges();
+        expectTutorialGroupsRequest().flush(tutorialGroups);
         fixture.detectChanges();
         // The table emits its first data request after the initial render, which is what fills the page.
         await fixture.whenStable();
@@ -101,14 +104,10 @@ describe('TutorialGroupsManagementComponent', () => {
     }
 
     beforeEach(async () => {
-        tutorialGroupApiServiceMock = {
-            getTutorialGroupsForCourse: vi.fn(),
-        };
         await TestBed.configureTestingModule({
             imports: [TutorialGroupsManagementComponent],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
-                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
@@ -131,12 +130,14 @@ describe('TutorialGroupsManagementComponent', () => {
         tutorialGroupOne = generateExampleTutorialGroup({ id: 1, title: 'Mon-1', teachingAssistantName: 'Ada Lovelace' });
         tutorialGroupTwo = generateExampleTutorialGroup({ id: 2, title: 'Fri-2', teachingAssistantName: 'Grace Hopper', campus: 'Garching' });
 
+        httpTesting = TestBed.inject(HttpTestingController);
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         getOneOfCourseSpy = vi.spyOn(configurationService, 'getOneOfCourse');
         await setUp([tutorialGroupOne, tutorialGroupTwo]);
     });
 
     afterEach(() => {
+        httpTesting.verify();
         titleBarActionViews.forEach((view) => view.destroy());
         titleBarActionViews = [];
         fixture.destroy();
@@ -145,44 +146,47 @@ describe('TutorialGroupsManagementComponent', () => {
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(component.configuration()).toEqual(configuration);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
     });
 
     it('should get all tutorial groups for course', () => {
         expect(component.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
     });
 
     it('should get all tutorial groups for course if import is done', () => {
-        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockClear();
         getOneOfCourseSpy.mockClear();
         const tutorialGroupImportButtonComponent = renderTitleBarActions().query(By.directive(TutorialGroupsImportButtonComponent)).componentInstance;
         tutorialGroupImportButtonComponent.importFinished.emit();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
+        expectTutorialGroupsRequest();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
     });
 
     it('should complete export when export button is clicked', () => {
-        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockClear();
         getOneOfCourseSpy.mockClear();
         const tutorialGroupExportButtonComponent = renderTitleBarActions().query(By.directive(TutorialGroupsExportButtonComponent)).componentInstance;
         tutorialGroupExportButtonComponent.exportFinished.emit();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
+        expectTutorialGroupsRequest();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
     });
 
     it('should reload the groups after a row was deleted', () => {
-        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockClear();
         const rowButtons = fixture.debugElement.query(By.directive(TutorialGroupRowButtonsComponent)).componentInstance;
         rowButtons.tutorialGroupDeleted.emit();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
+        expectTutorialGroupsRequest();
+    });
+
+    it('should report a failed load and show no groups', async () => {
+        const alertErrorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        component.loadTutorialGroups();
+        expectTutorialGroupsRequest().flush(null, { status: 403, statusText: 'Forbidden' });
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(alertErrorSpy).toHaveBeenCalledWith('error.http.403');
+        expect(component.tutorialGroups()).toEqual([]);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should render one row per tutorial group, sorted by title', () => {
