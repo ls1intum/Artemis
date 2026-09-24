@@ -40,6 +40,7 @@ public class WorkerCommandListener {
         this.provider = provider;
     }
 
+    /** Polls commands only while the shared provider is connected. */
     @Scheduled(fixedDelay = 1000)
     public void receive() {
         try {
