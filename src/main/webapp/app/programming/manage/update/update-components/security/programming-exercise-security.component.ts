@@ -94,10 +94,12 @@ export class ProgrammingExerciseSecurityComponent {
     private readonly lastSettledActive = signal(false);
     /** True when loading the persisted config failed, so the card shows a load-error + retry instead of a misleading INACTIVE state. */
     readonly loadFailed = signal(false);
+    /** True while the persisted config is loading (edit mode). Keeps the toggle and version selector disabled until it settles, so an early toggle cannot be overwritten by a late load. */
+    readonly loading = signal(false);
 
     readonly isActive = computed(() => isSecurityActive(this.config()));
-    /** In progress (activating/deactivating): spinner on, controls locked to prevent double-submit. */
-    readonly isBusy = computed(() => TRANSIENT_SECURITY_STATUSES.has(this.status()));
+    /** In progress - loading the persisted config, or activating/deactivating: spinner on, controls locked to prevent a double-submit or acting on not-yet-loaded state. */
+    readonly isBusy = computed(() => this.loading() || TRANSIENT_SECURITY_STATUSES.has(this.status()));
     /**
      * The version selector is locked while a sync is in flight and while the card is in ERROR. A version picked in
      * ERROR would only change local state (no request is made unless the exercise is active), while Retry still
@@ -166,12 +168,21 @@ export class ProgrammingExerciseSecurityComponent {
     /** Loads the persisted config; a failure surfaces a distinct load-error state instead of a misleading INACTIVE. */
     private loadConfig(exerciseId: number): void {
         this.loadFailed.set(false);
+        this.loading.set(true);
         this.securityService.getConfig(exerciseId).subscribe({
             next: (config) => {
+                this.loading.set(false);
+                // An operation started while the config was still loading owns the state now; a late load must not overwrite its result.
+                if (this.pendingOperation) {
+                    return;
+                }
                 this.config.set(config);
                 this.lastSettledActive.set(isSecurityActive(config));
             },
-            error: () => this.loadFailed.set(true),
+            error: () => {
+                this.loading.set(false);
+                this.loadFailed.set(true);
+            },
         });
     }
 

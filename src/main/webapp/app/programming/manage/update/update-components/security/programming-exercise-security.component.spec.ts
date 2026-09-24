@@ -224,6 +224,47 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
     });
 
+    it('blocks the toggle and version selector while the edit-mode config is loading', () => {
+        const load$ = new Subject<SecurityFrameworkConfig>();
+        service.getConfig.mockReturnValue(load$.asObservable());
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 42;
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+        fixture.detectChanges();
+        expect(comp.isBusy()).toBe(true);
+        expect(comp.isVersionSelectDisabled()).toBe(true);
+
+        load$.next(activeConfig());
+        load$.complete();
+        expect(comp.isBusy()).toBe(false);
+        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+    });
+
+    it('ignores a late config load while an operation is in flight so it cannot overwrite the result', () => {
+        const load$ = new Subject<SecurityFrameworkConfig>();
+        service.getConfig.mockReturnValue(load$.asObservable());
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 42;
+        exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('selectedProgrammingLanguage', ProgrammingLanguage.JAVA);
+        fixture.detectChanges();
+
+        const activate$ = new Subject<SecurityFrameworkConfig>();
+        service.activate.mockReturnValue(activate$.asObservable());
+        comp.onToggleChanged(true);
+
+        load$.next(inactiveConfig());
+        load$.complete();
+        expect(comp.status()).toBe(SecurityActivationStatus.GENERATING);
+
+        activate$.next(activeConfig());
+        activate$.complete();
+        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+    });
+
     it('emits the staged activation to the parent when toggled in create mode', () => {
         initCreate();
         const emitted: (SecurityStagedActivation | undefined)[] = [];
