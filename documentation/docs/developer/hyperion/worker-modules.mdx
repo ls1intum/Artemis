@@ -1,128 +1,70 @@
 ---
 id: worker-modules
-title: AI Worker and Hyperion Module Boundaries
-sidebar_label: Worker Modules
+title: AI Worker and Hyperion Boundaries
+sidebar_label: AI Worker Boundaries
 ---
 
-The worker follows Artemis's package-by-feature conventions. `aiworker` owns execution
-infrastructure; `hyperion` owns exercise authoring. Feature boundaries are enforced by
-architecture tests rather than a separate Gradle project for each layer.
+Artemis builds **one WAR**. AI Worker and Hyperion are feature packages in the main
+source tree, like Build Agent and LocalCI. They are not Gradle subprojects.
 
-## Packaged artifacts
+## Package ownership
 
-Only `aiworker` and `hyperion` are top-level modules. `aiworker/api` is the neutral
-contract library; `aiworker` builds the generic supervisor. `hyperion` supplies the
-feature runtime and `hyperion/worker` composes its workload distribution from that
-runtime and the supervisor library. Hyperion sources, templates and model-provider
-dependencies are not present in the generic worker JAR.
+| Package                                             | Responsibility                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `aiworker.api`, `aiworker.dto`, `aiworker.domain`   | Provider-neutral execution contracts, identities, capabilities and wire messages |
+| `aiworker.config`, `aiworker.service`               | Worker broker, sandbox, supervisor, and core-side coordination                   |
+| `aiworker.web.admin`                                | Infrastructure status for administrators                                         |
+| `hyperion.config.worker`, `hyperion.service.worker` | Conditional Hyperion workload and typed translation                              |
+| `hyperion.service.worker.toolchain.javagradle`      | Java/Gradle authoring and independent verification                               |
+| Other `hyperion` packages                           | Instructor access, exercise state, persistence and review                        |
 
-`verifyWorkerDistribution` inspects the built generic archive. Runtime dependency
-gates and feature-package architecture tests enforce the same dependency direction.
-New features compose their own distribution without adding dependencies to AI Worker.
+`aiworker` must not import Hyperion. Its portable contracts must not import Spring
+services, Docker, the database or distributed state. A workload may use `SandboxApi`
+and `WorkloadApi`; it must not reach into the generic worker supervisor. Core-side
+Hyperion uses the `AiWorkerApi` facade to claim work and receive results.
 
-## Ownership
+## One artifact, two process roles
 
-| Package                                                          | Responsibility                                                                                          |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `aiworker.api`                                                   | Public execution/sandbox contracts and the core-side `AiWorkerApi` facade                               |
-| `aiworker.dto` and transport enums                               | Versioned envelopes, opaque identities, capabilities, capacity and sandbox policy                       |
-| Core `aiworker.config`, `aiworker.service`, `aiworker.web.admin` | Broker connection, provider-neutral presence/reservations and administrative status                     |
-| Standalone `aiworker.config`, `aiworker.service`                 | Process composition, admission, heartbeats, cancellation, reliable event delivery and sandbox lifecycle |
-| `hyperion.config.worker`                                         | Explicit installation of the Hyperion workload                                                          |
-| `hyperion.service.worker`                                        | Typed workload translation and qualified toolchain selection                                            |
-| `hyperion.service.worker.toolchain.javagradle`                   | Java/Gradle authoring, build commands, source inspection and verification                               |
-| Core `hyperion`                                                  | Exercise authorization, acceptance, persistence, retention, review and recovery                         |
+The normal Artemis entry point starts core services. With the `aiworker` profile it
+can also start a worker on the same node. Do not give a core process the host Docker
+socket in production. The separate `AiWorkerApplication` entry point runs the same
+WAR in an isolated worker VM. It adds `aiworker` and `aiworker-standalone`, rejects
+core/LocalCI/LocalVC/Build Agent profiles, starts no HTTP server, and scans only AI
+Worker plus a selected workload. The standalone profile disables database and
+Redis auto-configuration. The VM network policy must also block those services.
 
-There are two top-level module directories: `hyperion` and `aiworker`.
-The small `aiworker/api` subproject packages only neutral execution and sandbox contracts;
-it has no dependency on Hyperion, Spring services, model providers or Docker.
-`hyperion` depends on this API, never the reverse. The `aiworker` executable assembles
-the generic supervisor and explicitly installed workload implementations.
-The core application depends on the contracts and Hyperion runtime, never the executable. Its `AiWorkerApi` follows the existing `AbstractApi`
-facade convention; standalone SPIs do not import core's marker or services.
-
-The standalone application scans only `aiworker`. Hyperion is an explicitly registered
-Boot auto-configuration conditional on `artemis.aiworker.workload=hyperion-generation`.
-No database, application-grid or incoming web-server dependency is permitted in either
-standalone runtime artifact. Model chat auto-configuration is disabled by default.
-
-## Execution contract
-
-Protocol 4 separates execution authority from workload data:
-
-- `ExecutionIdentityDTO` carries an opaque job/resource reference, execution UUID,
-  worker ID, worker incarnation and slot. Infrastructure never parses an exercise ID.
-- `WorkloadCapabilityDTO` identifies workload name, payload schema version and qualified
-  profile. Core routes only matching capacity; worker admission checks the same capability
-  and immutable image digest.
-- `ExecutionAssignmentDTO` carries the deadline and bounded payload. Payloads are JSON
-  strings decoded **once at the workload boundary**, not maps passed through authoring code.
-- `WorkloadApi` executes one assignment, receives a cooperative stop signal, reports progress
-  and checkpoints, and owns cancellation-aware cleanup when necessary.
-- `FINISH` requests a cooperative result without classifying the execution as cancelled;
-  `CANCEL` terminates execution. Neither command exposes a shell, filesystem operation or
-  caller-selected container.
-
-The wire codec rejects incompatible versions, duplicate keys, unknown properties,
-invalid identities and excessive nesting/message sizes. Each workload independently
-validates its typed payload. Hyperion checks that its embedded identity, deadline, image
-and toolchain agree with the outer envelope before invoking its generation engine.
-It interprets its progress, accounting and result schemas; AI Worker does not.
-
-The observer distinguishes best-effort progress from reliable evidence. Accounting,
-checkpoints and completion retain their order; undelivered completion occupies the slot.
-Per-incarnation duplicate admission is bounded and expires only with assignment deadlines.
-No in-memory delivery queue is described as durable across process loss.
+The worker runs a workload only when `artemis.aiworker.workload` selects it. Hyperion
+selects `hyperion-generation`; other values do not activate its authoring services.
+Each worker identity advertises one versioned workload capability and one qualified
+sandbox image. The broker and core use separate credentials. A heartbeat reaches the
+shared `DistributedDataProvider` through a core listener, so any core node can see
+capacity. A job stays fenced to its claimed worker incarnation and execution UUID.
 
 ## Add a workload
 
-1. Define bounded typed input/output records in the owning feature. Specify schema version,
-   cancellation, checkpoint meaning, error handling and resource requirements.
-2. Implement `WorkloadApi` in that feature's service package. Decode and validate once;
-   retain typed objects internally. Never trust envelope metadata copied into a payload.
-3. Register the implementation through an explicit conditional configuration listed in
-   `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
-   One worker process selects one capability. Do not enable arbitrary class loading or
-   discover implementations from untrusted messages.
-4. Supply a qualified immutable image and operator-owned limits. Sandbox creation uses
-   `SandboxApi`; features cannot depend on `aiworker.service` or `aiworker.config` classes.
-5. Use core's `AiWorkerApi` for claims and message delivery. Feature authorization and any
-   durable save remain outside the worker. Define recovery before enabling persistence.
-6. Add codec, cancellation, duplicate-delivery, lost-renewal and stale-result tests. Boot
-   with unrelated features unavailable, and validate an exact-image deployment canary.
+1. Define bounded typed input and output in the owning feature. Set a schema version.
+2. Implement `WorkloadApi` in that feature. Validate the assignment and keep domain
+   data out of the generic worker envelope.
+3. Gate its services on `aiworker` and the selected workload. Register its worker
+   configuration in Spring Boot auto-configuration imports.
+4. Keep authorization and durable writes on core. Use `AiWorkerApi` for claims and
+   results; use `SandboxApi` for isolated execution.
+5. Test codec bounds, cancellation, duplicate delivery, lost renewals, stale results,
+   and startup with core services absent. Qualify the exact sandbox image with a real
+   build before enabling it.
 
-`WorkerIsolationTest` boots the real application with Hyperion absent from its dependencies and executes a
-second, test-only document workload without model credentials. It verifies reliable
-progress, checkpoint and completion through the actual supervisor. It is not a claim
-that document processing is a shipped product feature.
+Only the Java/Gradle Hyperion toolchain is qualified. A fake adapter in tests does
+not establish support for another language.
 
-## Add a Hyperion toolchain
-
-Implement `ToolchainGenerationAdapter` under Hyperion, not AI Worker. Supply the canonical
-harness seed, domain prompts, build/report interpretation, immutable image and differential
-verification tests. Qualify core's exercise-format admission and returned-artifact acceptance
-before enabling the profile. Only `java-gradle` is currently qualified. A fake Python adapter
-tests dispatch isolation; it does not establish production Python support.
-
-## Architecture and lifecycle checks
-
-The module gates enforce repository service/configuration naming, annotated record DTOs,
-public-boundary consumption, no workload imports in AI Worker, no language implementation
-imports in generic supervision, and no database/grid/web dependencies in the standalone
-process. Core uses the same module architecture base classes as other Artemis features.
-All cross-node state goes through `DistributedDataProvider`, with explicit expiring-map
-lifetimes and value-guarded replacement/removal.
+## Checks
 
 ```bash
-./gradlew aiWorkerCheck -x webapp
-./gradlew test --tests '*ArchitectureTest' --tests '*WorkerRegistry*Test' -x webapp
-./gradlew :aiworker:verifyRuntimeBoundary :aiworker:verifySourceSize :aiworker:verifyJacksonBoundary
+./gradlew compileJava compileTestJava spotlessCheck checkstyleMain checkstyleTest -x webapp
+./gradlew test -PincludeArchitectureTests --tests '*ArchitectureTest' -x webapp
+./gradlew test --tests 'de.tum.cit.aet.artemis.aiworker.*' --tests 'de.tum.cit.aet.artemis.hyperion.service.worker.*' -x webapp
 ```
 
-Provider tests use separate Hazelcast members and independent Redis connections with the
-production serialization configuration. They exercise concurrent admission, replacement
-ownership, stale completion and incarnation fences. Docker isolation and real Gradle tests
-require explicitly configured immutable images; skipped tests do not qualify an image.
-
-See [AI Worker operations](/admin/aiworker) for configuration, deployment, administrator
-columns, failure handling and the protocol upgrade procedure.
+The architecture tests enforce package ownership, root-project conventions and
+portable contracts. Docker-backed tests require a qualified immutable image; a
+skipped test does not qualify an image. See [AI Worker operations](/admin/aiworker)
+for deployment and recovery.

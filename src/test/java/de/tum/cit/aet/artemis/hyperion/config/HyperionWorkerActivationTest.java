@@ -9,7 +9,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.util.ClassUtils;
 
 import de.tum.cit.aet.artemis.aiworker.api.AiWorkerApi;
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerMessagingConfiguration;
@@ -43,7 +42,6 @@ class HyperionWorkerActivationTest {
                 "artemis.aiworker.ids=worker-1").withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.split(","))).run(context -> {
                     assertThat(context).hasNotFailed().hasSingleBean(WorkerMessageCodec.class).hasSingleBean(GenerationWorkerClientService.class);
                     assertThat(context.getBean(AiWorkerProperties.class).ids()).containsExactly("worker-1");
-                    assertThat(ClassUtils.isPresent("de.tum.cit.aet.artemis.aiworker.config.AiWorkerApplication", context.getClassLoader())).isFalse();
                 });
     }
 
