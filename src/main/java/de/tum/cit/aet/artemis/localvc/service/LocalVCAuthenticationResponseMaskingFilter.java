@@ -49,9 +49,14 @@ public class LocalVCAuthenticationResponseMaskingFilter extends OncePerRequestFi
 
         @Override
         public void sendError(int statusCode, String message) throws IOException {
-            // The message would end up in the container error page body and could reveal the requested repository, so it
-            // is dropped and the status-only overload decides how to answer.
-            sendError(statusCode);
+            if (statusCode == HttpServletResponse.SC_UNAUTHORIZED) {
+                // Drop the message: it would end up in the container error page body and could reveal the requested
+                // repository. The status-only overload produces the masked 401.
+                sendError(statusCode);
+                return;
+            }
+            // Every other status keeps the container's normal behaviour, including its error message.
+            super.sendError(statusCode, message);
         }
 
         @Override

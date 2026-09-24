@@ -49,8 +49,9 @@ class LocalVCAuthenticationResponseMaskingFilterTest {
                 (request, wrappedResponse) -> ((HttpServletResponse) wrappedResponse).sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "server failure"));
 
         assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        // No masking: the challenge header must not be added to a non-401 response.
+        // No masking: the challenge header must not be added to a non-401 response, and the container keeps the message.
         assertThat(response.getHeader(CHALLENGE_HEADER)).isNull();
+        assertThat(response.getErrorMessage()).isEqualTo("server failure");
     }
 
     @Test
