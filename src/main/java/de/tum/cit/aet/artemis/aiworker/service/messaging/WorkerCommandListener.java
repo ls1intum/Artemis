@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.service.messaging;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jms.annotation.JmsListener;
@@ -10,7 +12,7 @@ import de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService;
 
 /** A short-lived command listener; poison messages use the broker's bounded redelivery/dead-letter policy. */
 @Component
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @Lazy(false)
 public class WorkerCommandListener {
 

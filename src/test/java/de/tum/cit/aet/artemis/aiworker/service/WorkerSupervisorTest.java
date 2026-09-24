@@ -29,6 +29,24 @@ class WorkerSupervisorTest {
     private static final String IMAGE = "sha256:" + "a".repeat(64);
 
     @Test
+    void oversizedAccountingCannotFillTheRetainedDeliveryQueue() throws InterruptedException {
+        var events = new LinkedBlockingQueue<WorkerEventDTO>();
+        try (var worker = worker(events, (assignment, cancelled, observer, checkpoint) -> {
+            observer.progress("Usage recorded", "x".repeat(WorkerEventDTO.MAX_ACCOUNTING_PAYLOAD_LENGTH + 1), true);
+            return result();
+        }, () -> {
+        }, new AtomicLong())) {
+            WorkerCommandDTO command = start(worker, events);
+            worker.accept(command);
+
+            WorkerEventDTO terminal = take(events, WorkerEventType.ERROR);
+            assertThat(terminal.identity()).isEqualTo(command.identity());
+            assertThat(terminal.payload()).isNull();
+            assertThat(events).noneMatch(event -> event.type() == WorkerEventType.ACCOUNTING || event.type() == WorkerEventType.FINISHED);
+        }
+    }
+
+    @Test
     void invalidWorkloadOutputRetainsAnErrorTerminal() throws InterruptedException {
         for (String output : new String[] { null, "", "x".repeat(WorkerEventDTO.MAX_PAYLOAD_LENGTH + 1) }) {
             var events = new LinkedBlockingQueue<WorkerEventDTO>();
