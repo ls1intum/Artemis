@@ -24,7 +24,6 @@ import javax.naming.ldap.LdapName;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
@@ -134,12 +133,13 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             throw exception;
         }
 
-        // Try to fetch from the remote repository.
-        localVCLocalCITestService.testFetchThrowsException(someRepository.workingCopy(), student1Login, USER_PASSWORD, projectKey, repositorySlug, InvalidRemoteException.class,
-                "");
+        // A missing repository must be indistinguishable from an existing but forbidden one, so both fetch and push are
+        // rejected with 401 ("not authorized") rather than 404 ("not found"), which would leak that the repository does
+        // not exist. See LocalVCRepositoryEnumerationMaskingTest for the raw HTTP wire-equivalence of the two cases.
+        localVCLocalCITestService.testFetchReturnsError(someRepository.workingCopy(), student1Login, projectKey, repositorySlug, NOT_AUTHORIZED);
 
         // Try to push to the remote repository.
-        localVCLocalCITestService.testPushReturnsError(someRepository.workingCopy(), student1Login, projectKey, repositorySlug, NOT_FOUND);
+        localVCLocalCITestService.testPushReturnsError(someRepository.workingCopy(), student1Login, projectKey, repositorySlug, NOT_AUTHORIZED);
 
         // Cleanup
         someRepository.deleteWorkingCopy();
