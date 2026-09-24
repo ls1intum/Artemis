@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.time.Duration;
 
 import jakarta.jms.ConnectionFactory;
@@ -21,8 +23,8 @@ import de.tum.cit.aet.artemis.aiworker.domain.WorkerEventType;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
 
 /** Only the worker's own command and event destinations are used; broker ACLs enforce the boundary. */
-@Configuration
-@Profile("aiworker")
+@Configuration(proxyBeanMethods = false)
+@Profile(PROFILE_AIWORKER)
 @Lazy
 @EnableConfigurationProperties(WorkerSettings.class)
 @EnableJms

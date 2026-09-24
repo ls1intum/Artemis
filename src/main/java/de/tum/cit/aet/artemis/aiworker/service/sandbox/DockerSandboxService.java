@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.service.sandbox;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -13,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -51,7 +54,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.SandboxPolicyDTO;
  * Every session runs with network mode {@code none}; model commands cannot choose an image, network or runtime.
  */
 @Service
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @Lazy
 public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
 
@@ -562,7 +565,7 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
         }
     }
 
-    static void validateCopyInDestination(String destinationPath, java.util.Set<String> writableRoots) {
+    static void validateCopyInDestination(String destinationPath, Set<String> writableRoots) {
         // These are Linux container paths, regardless of the operating system hosting the worker process.
         boolean canonical = destinationPath != null && destinationPath.startsWith("/") && destinationPath.indexOf('\0') < 0 && destinationPath.indexOf('\\') < 0
                 && Arrays.stream(destinationPath.split("/")).noneMatch(segment -> segment.equals(".") || segment.equals(".."));
