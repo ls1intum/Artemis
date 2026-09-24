@@ -153,6 +153,17 @@ describe('TumUiAutoCompleteComponent (multiple mode)', () => {
         expect(selectSpy).toHaveBeenCalledWith(expect.objectContaining({ value: 'admin' }));
     });
 
+    it('does not keep idle text or hover colors on an active suggestion', async () => {
+        await search('a', ['admin']);
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        fixture.detectChanges();
+        const active = options()[0].classList;
+        expect(active.contains('tum:text-highlight')).toBe(true);
+        expect(active.contains('tum:text-text')).toBe(false);
+        expect(active.contains('tum:bg-highlight-focus-background')).toBe(true);
+        expect(active.contains('tum:hover:bg-hover-background')).toBe(false);
+    });
+
     it('does not intercept native text-editing or Tab keys', async () => {
         const selectSpy = vi.spyOn(component.optionSelected, 'emit');
         await search('a', ['admin', 'artemis']);

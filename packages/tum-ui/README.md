@@ -78,6 +78,10 @@ components do not contain light/dark palette branches. Responsive component thre
 package-owned compile-time values at 40rem, 48rem, 64rem, 80rem, and 96rem; they do not follow a
 host's Tailwind breakpoints.
 
+When composing conditional classes inside the package, use the internal `tumUiCn` helper. It
+merges `tum:` utilities without treating host classes as package utilities; the default `cn`
+export is not configured for this prefix.
+
 Apply host-owned layout classes with the native `class` attribute on a package component. Those
 classes style the component host; they do not cause the package Tailwind build to generate
 utilities. Use component inputs and theme tokens for supported internal customization instead of

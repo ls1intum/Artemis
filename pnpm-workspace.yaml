@@ -25,7 +25,6 @@ catalog:
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
-  '@compodoc/compodoc': 2.0.0
   '@playwright/test': 1.63.0
   '@storybook/addon-a11y': 10.6.0
   '@storybook/addon-docs': 10.6.0
@@ -41,6 +40,7 @@ catalog:
   '@vitest/coverage-istanbul': 4.1.11
   '@vitest/coverage-v8': 4.1.11
   chokidar: 5.0.0
+  cn: 0.3.2
   concurrently: 10.0.5
   cross-env: 10.1.0
   dayjs: 1.11.23
@@ -52,9 +52,10 @@ catalog:
   postcss: 8.5.28
   publint: 0.3.24
   playwright: 1.63.0
-  # Only here to satisfy Storybook's peer requirement (packages/tum-ui declares it); Artemis itself is Angular.
+  # Only here to satisfy Storybook's peer requirement (packages/tum-ui declares both); Artemis itself is Angular.
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
+  react-dom: 19.2.8
   rxjs: 7.8.2
   sass: 1.104.1
   semver: 7.8.5
@@ -185,18 +186,7 @@ overrides:
   piscina: '5.3.2'
   postcss: '8.5.28'
   punycode: '2.3.1'
-  # React and react-dom must resolve to one version each, and to the same one: react-dom asserts this at import time
-  # and throws "Incompatible React versions" otherwise. Only Storybook renders React here, but that is enough - the
-  # mismatch takes down all 76 tum-ui story tests and the documentation Playwright suite with them.
-  # This is easy to split by accident, because react is a catalog entry while react-dom is never declared at all:
-  # it arrives as an auto-installed peer, and packages asking for `^19` will happily pull a newer react than the
-  # catalog pins. Pinning both here makes the pairing enforced rather than a coincidence of resolution order.
-  # Keep these two and the `react` catalog entry on the same version.
-  # Left at 19.2.8 rather than moved to 19.3.0. Nothing here needs the newer react - it only exists
-  # to satisfy Storybook's peer requirement - and the gate that would qualify the bump cannot: the
-  # forced-colors check in .storybook/tests/accessibility-preferences.spec.ts is flaky, failing
-  # roughly a third of runs on 19.2.8 and on 19.3.0 alike (1 of 6 and 2 of 4 locally). Do not read
-  # a single red AutoDocs run as a verdict on a react bump; re-run it several times first.
+  # Storybook imports react-dom/client; keep it and React on the same version across direct and peer dependencies.
   react: '19.2.8'
   react-dom: '19.2.8'
   # Reached through express / body-parser, which both already sit on their newest release and

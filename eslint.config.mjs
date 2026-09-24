@@ -533,6 +533,14 @@ export default tseslint.config(
                             name: 'lodash',
                             message: "Please import from 'lodash-es' instead.",
                         },
+                        {
+                            name: 'cn',
+                            message: "Use the package's tumUiCn helper so prefixed TUM UI utilities merge correctly.",
+                        },
+                        {
+                            name: 'cn/config',
+                            message: "Use the package's tumUiCn helper instead of compiling Tailwind configuration at runtime.",
+                        },
                         noNgZoneImport,
                     ],
                     patterns: [

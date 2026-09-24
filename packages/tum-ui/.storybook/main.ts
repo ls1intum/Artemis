@@ -6,14 +6,13 @@ export default defineMain({
     framework: {
         name: '@storybook/angular-vite',
         options: {
-            compodoc: false,
+            propsTable: 'api',
         },
     },
     core: {
         disableTelemetry: true,
     },
     features: {
-        angularFilterNonInputControls: true,
         backgrounds: false,
     },
 });

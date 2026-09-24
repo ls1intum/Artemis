@@ -80,6 +80,18 @@ describe('TumUiSelectComponent', () => {
         expect(triggerButton().getAttribute('aria-expanded')).toBe('true');
     });
 
+    it('keeps one text and background class on the active selected option', () => {
+        component.writeValue('b');
+        fixture.detectChanges();
+        openPanel();
+        const selected = optionElements()[1].classList;
+        expect(selected.contains('tum:text-highlight')).toBe(true);
+        expect(selected.contains('tum:text-text')).toBe(false);
+        expect(selected.contains('tum:bg-highlight-focus-background')).toBe(true);
+        expect(selected.contains('tum:bg-highlight-background')).toBe(false);
+        expect(selected.contains('tum:hover:bg-hover-background')).toBe(false);
+    });
+
     it('scrolls the selected option into view when opening', () => {
         const scrollIntoView = vi.fn();
         const original = HTMLElement.prototype.scrollIntoView;
