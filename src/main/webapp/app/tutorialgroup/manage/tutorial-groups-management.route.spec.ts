@@ -21,7 +21,7 @@ import { Authority, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 
 @Component({ template: '' })
 class DummyComponent {}
@@ -78,7 +78,7 @@ describe('tutorialGroupManagementRoutes', () => {
                         find: () => of(new HttpResponse({ body: course })),
                     }),
                     MockProvider(TutorialGroupsConfigurationService, {
-                        getOneOfCourse: () => of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })),
+                        getOneOfCourse: () => of(generateExampleTutorialGroupsConfigurationDTO({ id: 5 })),
                     }),
                     MockProvider(AccountService, {
                         identity: () => Promise.resolve({ id: 1, login: 'student', authorities } as User),
