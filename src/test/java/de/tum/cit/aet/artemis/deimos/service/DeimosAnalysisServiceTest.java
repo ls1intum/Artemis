@@ -585,9 +585,10 @@ class DeimosAnalysisServiceTest {
         var participation = mockParticipation(participationId);
         var repoUri = participation.getVcsRepositoryUri();
 
-        // A submission without a commit hash cannot be diffed. If the payload stayed silent about it, the model would
-        // read the remaining sequence as the complete history of the participation.
-        var unexaminable = createSubmission(300L, null, ZonedDateTime.now().minusHours(3));
+        // A submission whose commit hash cannot be diffed. findByParticipationIdOrderBySubmissionDateAsc already excludes
+        // null hashes, so the reachable unexaminable case is a blank hash. If the payload stayed silent about it, the
+        // model would read the remaining sequence as the complete history of the participation.
+        var unexaminable = createSubmission(300L, " ", ZonedDateTime.now().minusHours(3));
         var examinable = createSubmission(301L, "commit01", ZonedDateTime.now().minusHours(2));
         when(programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateAsc(participationId)).thenReturn(List.of(unexaminable, examinable));
         when(bareGitRepositoryService.getBareRepository(repoUri, false)).thenReturn(bareRepository);

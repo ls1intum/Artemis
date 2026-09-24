@@ -113,6 +113,26 @@ class ConfigurationValidatorTest {
         }
 
         @ParameterizedTest
+        // The completions-path prefix is appended to the base URL, so a query or fragment would produce a malformed
+        // endpoint such as https://llm.example.com?x=1/api. Both are rejected before any request is built.
+        @ValueSource(strings = { "https://llm.example.com?x=1", "https://llm.example.com/v1?token=abc", "https://llm.example.com#frag", "https://llm.example.com/v1#frag" })
+        void testBaseUrlWithQueryOrFragmentShouldFailValidation(String baseUrl) {
+            ConfigurationValidator validator = createDeimosValidator(true, baseUrl, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.base-url");
+        }
+
+        @ParameterizedTest
+        // A path on the base URL is legitimate: the completions-path prefix is appended after it. Only query and fragment
+        // are rejected, so a base URL that merely carries a path must still pass validation.
+        @ValueSource(strings = { "https://llm.example.com/v1", "https://llm.example.com/openai/deployments/gpt" })
+        void testBaseUrlWithPathButNoQueryOrFragmentShouldPass(String baseUrl) {
+            ConfigurationValidator validator = createDeimosValidator(true, baseUrl, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+        }
+
+        @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = { "   " })
         void testBlankModelShouldFailValidation(String model) {

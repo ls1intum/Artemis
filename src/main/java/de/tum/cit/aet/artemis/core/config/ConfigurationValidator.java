@@ -234,13 +234,16 @@ public class ConfigurationValidator {
             try {
                 URI uri = URI.create(deimosLlmBaseUrl);
                 String scheme = uri.getScheme();
-                if (uri.isOpaque() || !uri.isAbsolute() || !HTTPS_SCHEME.equals(scheme) || uri.getHost() == null) {
+                // A query or fragment is rejected because toOpenAiCompatibleBaseUrl appends the completions-path prefix
+                // directly to this value: https://llm.example.com?x=1 would become https://llm.example.com?x=1/api,
+                // silently sending student source code to a malformed or unintended endpoint.
+                if (uri.isOpaque() || !uri.isAbsolute() || !HTTPS_SCHEME.equals(scheme) || uri.getHost() == null || uri.getRawQuery() != null || uri.getRawFragment() != null) {
                     // Deliberately stricter than the Weaviate check above, which also accepts http: Weaviate receives
                     // course content the installation already hosts, whereas Deimos sends student source code and the
                     // API key to a third party. Over http both are readable to anyone on the path, so an operator has
                     // to terminate TLS in front of the endpoint even when it only listens on the local network.
                     missingOrInvalidProperties.add(
-                            "artemis.deimos.llm.base-url (must be an absolute HTTPS URL with a host; http is rejected because student source code and the API key would travel in cleartext, got '%s')"
+                            "artemis.deimos.llm.base-url (must be an absolute HTTPS URL with a host and no query or fragment, since the completions path is appended to it; http is rejected because student source code and the API key would travel in cleartext, got '%s')"
                                     .formatted(deimosLlmBaseUrl));
                 }
             }
