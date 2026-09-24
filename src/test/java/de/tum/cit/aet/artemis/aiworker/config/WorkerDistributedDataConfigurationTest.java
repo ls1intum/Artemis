@@ -12,6 +12,8 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.testcontainers.DockerClientFactory;
 
+import com.hazelcast.client.config.RoutingMode;
+import com.hazelcast.client.impl.clientside.HazelcastClientProxy;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 
@@ -36,6 +38,8 @@ class WorkerDistributedDataConfigurationTest {
                             "artemis.aiworker.hazelcast-addresses=127.0.0.1:" + port)
                     .withBean(DiscoveryClient.class, () -> mock(DiscoveryClient.class)).withUserConfiguration(WorkerDistributedDataConfiguration.class).run(context -> {
                         assertThat(context).hasNotFailed().hasSingleBean(DistributedDataProvider.class).hasSingleBean(HazelcastDistributedDataProviderService.class);
+                        var client = (HazelcastClientProxy) context.getBean("hazelcastInstance");
+                        assertThat(client.getClientConfig().getNetworkConfig().getClusterRoutingConfig().getRoutingMode()).isEqualTo(RoutingMode.SINGLE_MEMBER);
                         await().atMost(Duration.ofSeconds(20)).ignoreExceptions().untilAsserted(() -> {
                             context.getBean(DistributedDataProvider.class).<String, String>getMap("worker-bootstrap-probe").put("ready", "yes");
                             assertThat(member.getMap("worker-bootstrap-probe").get("ready")).isEqualTo("yes");

@@ -1192,7 +1192,8 @@ public class HazelcastConfiguration {
      * @param clientConfig the client configuration to modify
      */
     private void configureClientNetworking(ClientConfig clientConfig) {
-        clientConfig.getNetworkConfig().setConnectionTimeout(10000).getClusterRoutingConfig().setRoutingMode(RoutingMode.ALL_MEMBERS);
+        RoutingMode routing = env.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) ? RoutingMode.SINGLE_MEMBER : RoutingMode.ALL_MEMBERS;
+        clientConfig.getNetworkConfig().setConnectionTimeout(10000).getClusterRoutingConfig().setRoutingMode(routing);
     }
 
     // ==================== Cache Map Configuration ====================
