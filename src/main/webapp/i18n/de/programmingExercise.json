@@ -302,7 +302,7 @@
                     "active": "Sandbox aktiv · Richtlinie wird über die Ares2-Integration verwaltet.",
                     "activeCreate": "Noch nicht synchronisiert – die Richtlinie wird beim Generieren der Aufgabe committet.",
                     "deleting": "Sandbox-Effekte werden im exercise-tests-Repository zurückgenommen …",
-                    "error": "Synchronisierung fehlgeschlagen · exercise-tests-Repository nicht erreichbar."
+                    "error": "Synchronisierung fehlgeschlagen · versuche es erneut."
                 },
                 "retry": "Erneut versuchen",
                 "activationFailedOnCreate": "Die Aufgabe wurde erstellt, aber das Aktivieren des Security Frameworks ist fehlgeschlagen. Du kannst es auf der Bearbeitungsseite der Aufgabe aktivieren.",

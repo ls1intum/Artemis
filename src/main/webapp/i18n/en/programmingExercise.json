@@ -302,7 +302,7 @@
                     "active": "Sandbox active · policy managed by the Ares2 integration.",
                     "activeCreate": "Not synced yet — the policy is committed when you generate the exercise.",
                     "deleting": "Reverting sandbox effects in the exercise-tests repository…",
-                    "error": "Sync failed · couldn't reach the exercise-tests repository."
+                    "error": "Sync failed · retry the operation."
                 },
                 "retry": "Retry",
                 "activationFailedOnCreate": "The exercise was created, but activating the Security Framework failed. You can activate it from the exercise's edit page.",
