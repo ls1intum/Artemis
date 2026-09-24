@@ -23,10 +23,17 @@ public class AiWorkerApplication {
      * @param args Spring Boot arguments
      */
     public static void main(String[] args) {
+        standaloneApplication().run(args);
+    }
+
+    static SpringApplication standaloneApplication() {
         SpringApplication application = new SpringApplication(AiWorkerApplication.class);
         application.setAdditionalProfiles(PROFILE_AIWORKER, "aiworker-standalone");
         application.setWebApplicationType(WebApplicationType.NONE);
         application.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
+            if (event.getEnvironment().getProperty("spring.main.web-application-type", WebApplicationType.class, WebApplicationType.NONE) != WebApplicationType.NONE) {
+                throw new IllegalArgumentException("The standalone AI Worker cannot enable an HTTP server");
+            }
             if (event.getEnvironment().matchesProfiles("core | buildagent | localci | localvc")) {
                 throw new IllegalArgumentException("The standalone AI Worker cannot use Artemis server or build-agent profiles");
             }
@@ -38,6 +45,6 @@ public class AiWorkerApplication {
                 throw new IllegalArgumentException("The standalone AI Worker requires Eureka discovery with Hazelcast");
             }
         });
-        application.run(args);
+        return application;
     }
 }
