@@ -53,14 +53,12 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
@@ -399,7 +397,6 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param resultId        if result already exists, we want to get the submission for this specific result
      * @return a Participation with relevant data for a tutor or instructor to assess the submission
      */
-    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("text-submissions/{submissionId}/for-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<TextParticipationDTO> retrieveParticipationForSubmission(@PathVariable Long submissionId,

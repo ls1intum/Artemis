@@ -354,8 +354,8 @@ public class AthenaFeedbackSuggestionsService {
      * <p>
      * Failures are counted here rather than being left to the REST endpoint that asked for the suggestions. That endpoint
      * does record its own error, but it aggregates every exercise type and both graded and non-graded into one row, so it
-     * cannot say which of these features is failing. Athena being unreachable is exactly what an error rate on this
-     * feature exists to show, and recording only successes made it zero by construction.
+     * cannot say which of these features is failing. Athena being unreachable is exactly what the error rate of this
+     * row exists to show, and recording only successes made it zero by construction.
      *
      * @param exercise   the exercise the suggestions were requested for
      * @param isGraded   whether grade suggestions were requested
@@ -365,10 +365,13 @@ public class AthenaFeedbackSuggestionsService {
      */
     private void recordFeedbackSuggestionUsage(Exercise exercise, boolean isGraded, long durationMs, boolean failed) {
         String identifier = "feedback-suggestions/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT) + (isGraded ? "/graded" : "/non-graded");
-        // Graded suggestions help a tutor assess; non-graded ones are the formative feedback a student asked for.
+        // Graded suggestions help a tutor assess; non-graded ones are the formative feedback a student asked for. Either way
+        // this is the server calling another system on behalf of a request that was already counted as use, the tutor
+        // opening the submission or the student asking for feedback, so it is a system call: counting it as use as well
+        // would count every such request twice.
         UserFeature feature = isGraded ? UserFeature.ATHENA_FEEDBACK_SUGGESTIONS : UserFeature.AI_FEEDBACK_REQUEST;
         featureUsageCollector.ifPresent(
-                collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, feature, FeatureInteraction.ACTION, Role.ANONYMOUS, failed, durationMs));
+                collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, feature, FeatureInteraction.SYSTEM, Role.ANONYMOUS, failed, durationMs));
     }
 
     /**

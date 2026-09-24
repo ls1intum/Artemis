@@ -30,9 +30,10 @@ import de.tum.cit.aet.artemis.core.service.featureusage.ProductArea;
  * @param retiredEndpoints  inventory entries this version no longer offers, reported separately so they cannot be mistaken
  *                              for a backlog
  * @param recordingSince    when this deployment started recording, so a young instance cannot imply a year of evidence
- * @param activeAreas       areas with at least one action or view, busiest first
- * @param quietAreas        areas that offer features but saw no use at all. Listed by name rather than as rows, because the
- *                              interesting thing about them is only that they are on the list.
+ * @param activeAreas       areas with an action or a view in this window or the one before, busiest first, so that a drop to
+ *                              zero shows as a row
+ * @param quietAreas        areas that offer features but saw no use in either window. Listed by name rather than as rows,
+ *                              because the interesting thing about them is only that they are on the list.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FeatureUsageDigestDTO(int days, LocalDate from, LocalDate to, long useCount, long previousUseCount, long availableFeatures, long usedFeatures, long unusedFeatures,

@@ -41,7 +41,13 @@
                                     variant="text"
                                     (click)="toggle(row.key)"
                                     [attr.aria-expanded]="row.expanded"
-                                    [attr.aria-label]="row.name"
+                                    [attr.aria-label]="
+                                        row.kind === 'area'
+                                            ? (areaTranslationKey(row.name) | artemisTranslate)
+                                            : row.kind === 'feature'
+                                              ? (featureTranslationKey(row.name, 'name') | artemisTranslate)
+                                              : row.name
+                                    "
                                     [attr.data-testid]="'toggle-' + row.key"
                                 >
                                     <fa-icon [icon]="row.expanded ? faChevronDown : faChevronRight" />
@@ -117,7 +123,7 @@
                     <td class="text-end">{{ row.viewCount }}</td>
                     <td class="text-end text-muted-color">{{ row.automaticCount }}</td>
                     <td class="text-end">{{ row.activeDays ?? '-' }}</td>
-                    <td>{{ row.lastUsedDay ?? '-' }}</td>
+                    <td class="whitespace-nowrap">{{ row.lastUsedDay ?? '-' }}</td>
                     @let rate = errorRate(row);
                     @let mean = meanDuration(row);
                     <td class="text-end" [class.text-state-danger]="(rate ?? 0) >= 5">{{ rate === undefined ? '-' : (rate | number: '1.0-1') + '%' }}</td>

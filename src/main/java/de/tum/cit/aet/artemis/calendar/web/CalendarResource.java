@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.calendar.service.CalendarSubscriptionService;
 import de.tum.cit.aet.artemis.calendar.util.CalendarSubscriptionFilterOption;
 import de.tum.cit.aet.artemis.calendar.util.CalendarUtil;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -132,7 +130,6 @@ public class CalendarResource {
      * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course exists for the provided courseId
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user associated to the token is not at least student in the course or if no user is associated to the token
      */
-    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(value = "courses/{courseId}/calendar-events-ics", produces = "text/calendar")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarSubscriptionFilterOption> filterOptions, @RequestParam("language") Language language) {

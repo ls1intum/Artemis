@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 146 features, 1035 REST endpoints in 28 modules, and 69 interaction overrides.
+Currently 20 product areas, 146 features, 1035 REST endpoints in 28 modules, and 61 interaction overrides.
 
 ## Courses
 
@@ -67,7 +67,7 @@ Currently 20 product areas, 146 features, 1035 REST endpoints in 28 modules, and
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| calendar | `CalendarResource` | 0 | 2 | 0 | 1 |
+| calendar | `CalendarResource` | 0 | 3 | 0 | 0 |
 
 ### Global search
 
@@ -308,10 +308,12 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | assessment | `ResultResource` | 0 | 1 | 0 | 0 |
 | localci | `BuildJobQueueResource` | 0 | 0 | 1 | 0 |
-| programming | `ProgrammingExerciseParticipationResource` | 0 | 5 | 1 | 0 |
+| programming | `ProgrammingExerciseParticipationResource` | 0 | 4 | 2 | 0 |
 | programming | `ProgrammingSubmissionResource` | 2 | 0 | 0 | 0 |
 | programming | `PublicProgrammingExerciseResultResource` | 0 | 0 | 0 | 1 |
 | programming | `RepositoryProgrammingExerciseParticipationResource` | 0 | 1 | 0 | 0 |
+
+Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 ### Create and edit programming exercises
 
@@ -483,7 +485,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | modeling | `ApollonConversionResource` | 0 | 1 | 0 | 0 |
-| modeling | `ModelingSubmissionResource` | 2 | 3 | 0 | 0 |
+| modeling | `ModelingSubmissionResource` | 2 | 2 | 0 | 0 |
 
 ### Create modeling exercises
 
@@ -531,14 +533,14 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | fileupload | `FileUploadAssessmentResource` | 4 | 0 | 0 | 0 |
-| fileupload | `FileUploadSubmissionResource` | 1 | 2 | 0 | 0 |
+| fileupload | `FileUploadSubmissionResource` | 0 | 3 | 0 | 0 |
 | modeling | `ModelingAssessmentResource` | 4 | 0 | 0 | 0 |
-| modeling | `ModelingSubmissionResource` | 1 | 1 | 0 | 0 |
+| modeling | `ModelingSubmissionResource` | 0 | 3 | 0 | 0 |
 | programming | `ProgrammingAssessmentResource` | 4 | 0 | 0 | 0 |
-| programming | `ProgrammingSubmissionResource` | 2 | 1 | 0 | 0 |
+| programming | `ProgrammingSubmissionResource` | 0 | 3 | 0 | 0 |
 | programming | `RepositoryProgrammingExerciseParticipationResource` | 0 | 1 | 0 | 0 |
-| text | `TextAssessmentResource` | 6 | 0 | 0 | 0 |
-| text | `TextSubmissionResource` | 1 | 1 | 0 | 0 |
+| text | `TextAssessmentResource` | 5 | 1 | 0 | 0 |
+| text | `TextSubmissionResource` | 0 | 2 | 0 | 0 |
 
 ### Complaints and feedback requests
 
@@ -614,7 +616,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| exam | `ExamResource` | 1 | 2 | 0 | 0 |
+| exam | `ExamResource` | 0 | 3 | 0 | 0 |
 | exam | `ExamUserResource` | 0 | 1 | 0 | 0 |
 | exam | `StudentExamResource` | 2 | 1 | 0 | 0 |
 | quiz | `QuizSubmissionResource` | 1 | 0 | 0 | 0 |
@@ -779,7 +781,8 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | communication | `AnswerMessageResource` | 4 | 1 | 0 | 0 |
 | communication | `ConversationMessageResource` | 4 | 2 | 0 | 0 |
-| core | `FileResource` | 1 | 1 | 0 | 0 |
+| core | `FileResource` | 1 | 0 | 1 | 0 |
+| course | `CourseAccessResource` | 0 | 1 | 0 | 0 |
 
 ### Channels
 
@@ -797,7 +800,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | communication | `GroupChatResource` | 4 | 0 | 0 | 0 |
 | communication | `OneToOneChatResource` | 1 | 0 | 0 | 0 |
-| course | `CourseAccessResource` | 0 | 3 | 0 | 0 |
+| course | `CourseAccessResource` | 0 | 2 | 0 | 0 |
 
 ### Conversation list
 
@@ -978,7 +981,7 @@ Also recorded outside REST by `CourseNotificationService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| iris | `IrisChatSessionResource` | 3 | 3 | 1 | 0 |
+| iris | `IrisChatSessionResource` | 3 | 2 | 2 | 0 |
 | iris | `IrisMessageResource` | 5 | 1 | 0 | 0 |
 | iris | `IrisResource` | 0 | 0 | 1 | 0 |
 | iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 2 |
@@ -1112,7 +1115,7 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | athena | `AthenaInternalResource` | 0 | 0 | 0 | 4 |
-| athena | `AthenaResource` | 0 | 0 | 3 | 0 |
+| athena | `AthenaResource` | 0 | 3 | 0 | 0 |
 
 Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 
@@ -1423,19 +1426,12 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 
 * `GET api/admin/sbom/vulnerabilities/refresh` (`DEPENDENCIES`)
 * `GET api/atlas/courses/{courseId}/competencies/relations/suggest` (`AI_COMPETENCY_GENERATION`)
-* `GET api/exam/courses/{courseId}/exams/{examId}/own-student-exam` (`EXAM_TAKE`)
 * `GET api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction` (`EXAM_TAKE`)
 * `GET api/exam/courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction` (`EXAM_CONDUCTION_MANAGEMENT`)
 * `GET api/exercise/programming-exercises/{programmingExerciseId}/consistency-check` (`PROGRAMMING_CONSISTENCY_CHECK`)
-* `GET api/fileupload/exercises/{exerciseId}/file-upload-submission-without-assessment` (`MANUAL_ASSESSMENT`)
-* `GET api/modeling/exercises/{exerciseId}/modeling-submission-without-assessment` (`MANUAL_ASSESSMENT`)
-* `GET api/programming/exercises/{exerciseId}/programming-submission-without-assessment` (`MANUAL_ASSESSMENT`)
 * `GET api/programming/programming-exercises/{exerciseId}/check-plagiarism` (`PLAGIARISM_CHECKS`)
 * `GET api/programming/programming-exercises/{exerciseId}/check-plagiarism-jplag-report` (`PLAGIARISM_CHECKS`)
-* `GET api/programming/programming-submissions/{submissionId}/lock` (`MANUAL_ASSESSMENT`)
-* `GET api/text/exercises/{exerciseId}/text-submission-without-assessment` (`MANUAL_ASSESSMENT`)
 * `GET api/text/text-exercises/{exerciseId}/check-plagiarism` (`PLAGIARISM_CHECKS`)
-* `GET api/text/text-submissions/{submissionId}/for-assessment` (`MANUAL_ASSESSMENT`)
 
 ### Counted as views
 
@@ -1453,11 +1449,9 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 
 * `GET api/admin/organizations/{organizationId}/title` (`ORGANIZATIONS`)
 * `GET api/admin/websocket/nodes` (`MONITORING`)
-* `GET api/athena/modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions` (`ATHENA_FEEDBACK_SUGGESTIONS`)
-* `GET api/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions` (`ATHENA_FEEDBACK_SUGGESTIONS`)
-* `GET api/athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions` (`ATHENA_FEEDBACK_SUGGESTIONS`)
 * `GET api/atlas/course-competencies/{competencyId}/title` (`COMPETENCY_PROGRESS`)
 * `GET api/communication/courses/{courseId}/unread-messages` (`CONVERSATION_ORGANIZATION`)
+* `GET api/core/files/courses/{courseId}/conversations/{conversationId}/{filename}` (`MESSAGING`)
 * `GET api/core/files/courses/{courseId}/icons/*` (`COURSE_DASHBOARD`)
 * `GET api/core/files/drag-and-drop/questions/{questionId}/backgrounds/*` (`QUIZ_LIVE`)
 * `GET api/core/files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/*` (`QUIZ_LIVE`)
@@ -1471,6 +1465,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/hyperion/programming-exercises/{exerciseId}/code-generation/active-job` (`HYPERION_CODE_GENERATION`)
 * `GET api/hyperion/variant-jobs` (`HYPERION_VARIANT_GENERATION`)
 * `GET api/hyperion/variant-jobs/{jobId}` (`HYPERION_VARIANT_GENERATION`)
+* `GET api/iris/chat/courses/{courseId}/sessions/overview` (`IRIS_CHAT`)
 * `GET api/iris/courses/{courseId}/iris-settings` (`IRIS_SETTINGS`)
 * `GET api/iris/courses/{courseId}/status` (`IRIS_CHAT`)
 * `GET api/lecture/lectures/{lectureId}/title` (`LECTURE_PAGES`)
@@ -1481,6 +1476,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/programming/plantuml/png` (`EXERCISE_DETAILS`)
 * `GET api/programming/plantuml/svg` (`EXERCISE_DETAILS`)
 * `GET api/programming/programming-exercise-participations/{participationId}/latest-pending-submission` (`PROGRAMMING_RESULTS`)
+* `GET api/programming/programming-exercises/{exerciseId}/latest-pending-submissions` (`PROGRAMMING_RESULTS`)
 * `GET api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title` (`TUTORIAL_GROUPS`)
 * `PATCH api/communication/courses/{courseId}/conversations/{conversationId}/mark-as-read` (`CONVERSATION_ORGANIZATION`)
 * `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)
@@ -1492,7 +1488,6 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET .well-known/apple-app-site-association` (`MOBILE_APPS`)
 * `GET .well-known/assetlinks.json` (`MOBILE_APPS`)
 * `GET .well-known/jwks.json` (`LTI`)
-* `GET api/calendar/courses/{courseId}/calendar-events-ics` (`CALENDAR`)
 * `GET api/core/sharing/config` (`SHARING_PLATFORM`)
 * `GET api/core/sharing/config/is-enabled` (`SHARING_PLATFORM`)
 * `GET api/localci/public/programming-exercises/{exerciseId}/build-plan` (`PROGRAMMING_BUILD_CONFIGURATION`)

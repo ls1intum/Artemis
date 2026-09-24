@@ -235,6 +235,7 @@ public class FileResource {
      * @return The requested file, or 404 if the file doesn't exist. The response will enable caching.
      */
     @FeatureUsage(UserFeature.MESSAGING)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {

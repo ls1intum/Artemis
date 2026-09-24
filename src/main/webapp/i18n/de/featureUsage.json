@@ -8,7 +8,7 @@
                 "action": "die Person hat etwas getan, etwa abgegeben, erstellt oder erzeugt",
                 "view": "die Person hat sich etwas angesehen, das die Funktion anzeigt",
                 "automatic": "die Seite hat den Server von sich aus aufgerufen, etwa für eine Statusabfrage oder ein Badge; zählt nicht als Nutzung",
-                "system": "ein anderes System hat den Server aufgerufen, etwa ein Build-Agent oder eine Kalender-App; zählt nicht als Nutzung"
+                "system": "ein anderes System hat den Server aufgerufen, etwa ein Build-Agent oder ein KI-Dienst mit einem Ergebnis; zählt nicht als Nutzung"
             },
             "window": {
                 "label": "Zeitraum",

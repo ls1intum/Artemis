@@ -69,7 +69,7 @@ test.describe('Feature usage records git operations', { tag: '@slow' }, () => {
         // student. No amount of concurrent traffic can add an identifier outside this set.
         const identifiers = [...after.keys()].sort();
         expect(identifiers.length).toBeGreaterThan(0);
-        identifiers.forEach((identifier) => expect(identifier).toMatch(/^(fetch|push)\/(template|solution|tests|assignment|unknown)$/));
+        identifiers.forEach((identifier) => expect(identifier).toMatch(/^(build-agent-)?(fetch|push)\/(template|solution|tests|assignment|unknown)$/));
     });
 
     async function gitCallCounts(page: Page): Promise<Map<string, number>> {

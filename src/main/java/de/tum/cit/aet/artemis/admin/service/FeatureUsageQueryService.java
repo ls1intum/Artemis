@@ -25,11 +25,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.admin.domain.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.admin.dto.FeatureAdoptionDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageActiveDaysDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageEntryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageOverviewDTO;
-import de.tum.cit.aet.artemis.admin.dto.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageTrendPointDTO;
 import de.tum.cit.aet.artemis.admin.dto.UserFeatureUsageDTO;
 import de.tum.cit.aet.artemis.admin.repository.FeatureUsageStatisticsRepository;
@@ -117,9 +117,10 @@ public class FeatureUsageQueryService {
                 countFeatures(features, feature -> feature.status() == FeatureUsageStatus.ONLY_AUTOMATIC),
                 countFeatures(features, feature -> feature.status() == FeatureUsageStatus.UNUSED),
                 countFeatures(features, feature -> feature.status() == FeatureUsageStatus.NOT_AVAILABLE), countFeatures(features, UserFeatureUsageDTO::noActions),
-                endpoints.stream().filter(FeatureUsageEntryDTO::retired).count(), sumCalls(endpoints, FeatureInteraction.ACTION), sumCalls(endpoints, FeatureInteraction.VIEW),
-                sumCalls(endpoints, FeatureInteraction.AUTOMATIC), sumCalls(endpoints, FeatureInteraction.SYSTEM), inventoryRefreshedAt,
-                featureUsageStatisticsRepository.findRecordingSince().orElse(null), features, endpoints, featureUsageStatisticsRepository.findRoleDistributionSince(from));
+                endpoints.stream().filter(FeatureUsageEntryDTO::retired).count(), features.stream().mapToLong(UserFeatureUsageDTO::actionCount).sum(),
+                features.stream().mapToLong(UserFeatureUsageDTO::viewCount).sum(), features.stream().mapToLong(UserFeatureUsageDTO::automaticCount).sum(),
+                features.stream().mapToLong(UserFeatureUsageDTO::systemCount).sum(), inventoryRefreshedAt, featureUsageStatisticsRepository.findRecordingSince().orElse(null),
+                features, endpoints, featureUsageStatisticsRepository.findRoleDistributionSince(from));
     }
 
     /**

@@ -353,7 +353,7 @@ public class CourseAccessResource {
      * @param loginOrName the search term to search login and names by
      * @return the ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
      */
-    @FeatureUsage(UserFeature.DIRECT_MESSAGES)
+    @FeatureUsage(UserFeature.MESSAGING)
     @GetMapping("courses/{courseId}/members/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserNameAndLoginDTO>> searchMembersOfCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {

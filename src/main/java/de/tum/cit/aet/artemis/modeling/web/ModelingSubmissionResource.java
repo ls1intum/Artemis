@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -42,7 +41,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
@@ -246,6 +244,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("modeling-submissions/{submissionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmissionResponseDTO> getModelingSubmission(@PathVariable Long submissionId,
@@ -329,7 +328,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
-    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ModelingSubmissionResponseDTO> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,

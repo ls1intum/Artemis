@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
@@ -297,7 +295,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the {@link FileUploadSubmissionDTO} in body
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
-    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("exercises/{exerciseId}/file-upload-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<FileUploadSubmissionDTO> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,

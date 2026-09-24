@@ -8,7 +8,7 @@
                 "action": "the user did something, such as submitting, creating or generating",
                 "view": "the user looked at something the feature shows",
                 "automatic": "the page called the server on its own, such as a status check or a badge; not counted as use",
-                "system": "another system called the server, such as a build agent or a calendar app; not counted as use"
+                "system": "another system called the server, such as a build agent or an AI service reporting back; not counted as use"
             },
             "window": {
                 "label": "Period",

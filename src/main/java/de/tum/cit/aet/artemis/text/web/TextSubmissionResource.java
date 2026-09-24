@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
@@ -296,7 +294,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
-    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("exercises/{exerciseId}/text-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<TextSubmissionWithoutAssessmentDTO> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,

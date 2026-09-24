@@ -89,7 +89,7 @@ forever, which is why `FeatureUsageRegistryTest` pins the resolution.
   carry one, enforced by `FeatureUsageAnnotationTest` in the same way `everyRestEndpointMustBeAuthorized` requires an
   authorization annotation, so a new controller cannot slip in without someone deciding which feature it belongs to.
 * **interaction**, from `@UsageInteraction` if present, else `SYSTEM` for an `@Internal` endpoint, else `VIEW` for a
-  mapping that only reads (`GET`, `HEAD`) and `ACTION` for everything else. The rules live in
+  mapping that only reads (`GET`, `HEAD`, `OPTIONS`) and `ACTION` for everything else. The rules live in
   `FeatureUsageClassification`, which the catalogue test uses as well, so the document shows exactly what gets counted.
 * **resource**, the controller's simple name, so the page can show which code implements a feature.
 
@@ -188,15 +188,22 @@ repositories fall into `assignment`, since telling them from a username needs a 
 the git path.
 
 A fetch counts as a view and a push as an action. Work in a student's repository belongs to "Local IDE and Git", work in a
-template, solution or test repository to "Edit exercise repositories".
+template, solution or test repository to "Edit exercise repositories". A clone made for a build, recognised by the
+attribute the build agent's authorization sets or by the shared build credential, is recorded as a system call of "Build
+results and logs" under an identifier of its own (`build-agent-fetch/...`): every build clones two repositories, and
+counted as someone's clone those would make both features look used on every instance that runs builds. The SSH
+transport is not instrumented, so clones and pushes over SSH are not counted at all.
 
 **Background** features are recorded explicitly by calling `FeatureUsageCollector.recordUsage` with
-`FeatureKind.BACKGROUND`, the `UserFeature` and the interaction. Keep those identifiers bounded for the same reason. Work the
-server does on behalf of a feature, a notification delivered or a suggestion computed, is an action: it is the feature
-doing what it exists for. Athena's suggestions are the instructive case. The REST call that asks for them fires whenever a
-grader opens a submission and is therefore `AUTOMATIC`; the suggestion Athena actually computes is recorded as an action,
-under "AI feedback suggestions" for graded requests and "AI feedback on request" for the formative feedback students ask
-for.
+`FeatureKind.BACKGROUND`, the `UserFeature` and the interaction. Keep those identifiers bounded for the same reason.
+
+Which interaction a background recording gets depends on whether a user-facing call was already counted for the same
+use. Work that no request triggers, a notification delivered or a continuous plagiarism check run, is an action: it is
+the feature doing what it exists for, and nothing else would record it. Work the server does in the course of a request
+that was already counted is a system call, because counting it as use too would count every such request twice.
+Athena's suggestions are the instructive case: the tutor opening a submission with suggestions is the view of "AI
+feedback suggestions", the student's request is the action of "AI feedback on request", and the call to Athena behind
+either is a system call, recorded for its error rate and duration, which say whether Athena is reachable.
 
 A row created by an earlier version carries no label. The first sighting per node rewrites the label and the interaction
 the caller reports now, which is the counterpart of what the startup pass does for endpoints.
@@ -244,7 +251,11 @@ keeps the page and the weekly email from disagreeing: both are built from the sa
   count over actions only. Distinct days cannot be combined from the per-endpoint counts: summing double counts a shared
   day, and taking the largest misses the days only one endpoint was used on.
 * **Retired endpoints** contribute their calls in the window to their feature, because those calls are part of its
-  history, but not to whether the feature is still offered.
+  history, but not to whether the feature is still offered. Git and background rows never retire, because they are only
+  registered on use: a feature whose background work stopped because its module was switched off reads as unused rather
+  than as not offered.
+* **The headline totals** sum the catalogue features, so a row whose label resolves to no feature is listed among the
+  endpoints but counted nowhere, on the page and in the email alike.
 
 The **trend endpoint** charts either a feature, `feature-usage/trend?feature=FAQ`, summed over every endpoint that serves
 it, or individual rows, `feature-usage/trend?featureIds=1&featureIds=2`. Both return one point per day and interaction, so

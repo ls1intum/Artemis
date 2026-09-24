@@ -34,7 +34,7 @@ Every call to the server is counted for the feature it belongs to, and classifie
 | **Action** | The user did something with the feature | Submitting code, creating an exam, generating a problem statement |
 | **View** | The user looked at something the feature shows | Opening the course calendar, reading an FAQ |
 | **Automatic** | The page called the server on its own | A status check that runs on every page load, a badge, a breadcrumb title |
-| **System** | Another system called the server | A build agent fetching a build plan, a calendar app fetching a subscription |
+| **System** | Another system called the server | A build agent cloning a repository for a build, an AI service reporting back |
 
 **Only actions and views count as use.** Automatic and system calls are shown next to them, but they never make a feature
 "used". This distinction is the reason the page exists in its current form: counted by calls alone, a status check that a
@@ -45,7 +45,7 @@ Calls reach the page through three channels:
 | Channel | What it covers |
 |---------|----------------|
 | REST | Every API endpoint, discovered automatically from the server's own mapping table at startup |
-| Git | Clone, pull and push through the built-in git server. A fetch counts as a view, a push as an action |
+| Git | Clone, pull and push over HTTPS through the built-in git server. A fetch counts as a view, a push as an action. Clones made for a build count as system calls of the build. Git over SSH is not counted |
 | Background | Work the server does on behalf of a feature: continuous plagiarism control, Athena feedback suggestions and course notification delivery |
 
 :::note
@@ -92,7 +92,8 @@ Four tabs then present the data:
 * **Adoption** is not usage at all but configuration: how many courses, exercises, exams or quizzes have each optional
   setting switched on, listed under the feature it switches on.
 * **Endpoints** is the technical view: every endpoint with its module, controller, how its calls count and which feature it
-  serves. Endpoints that belong to no feature are listed here only; they are endpoints an earlier version offered.
+  serves. Endpoints that belong to no feature are listed here only, and counted nowhere else; they are endpoints an earlier
+  version offered.
 
 The columns mean:
 
@@ -100,9 +101,10 @@ The columns mean:
 * **Active days**: the number of days with at least one action or view. Read it together with the counts: a feature with
   500 views spread over 90 days is used more steadily than one with 50 000 on a single afternoon. Automatic calls never
   make a day active.
-* **Errors**, **Mean** and **Max**: useful for spotting a feature that is used but broken or slow. For a feature they cover
-  actions and views only; an endpoint row shows its own. These are not a replacement for proper monitoring: there are no
-  percentiles here, and requests rejected by authentication before they reach a handler are not counted at all.
+* **Errors** and **Mean**, plus **Max** on the **Endpoints** tab: useful for spotting a feature that is used but broken or
+  slow. For a feature they cover actions and views only; an endpoint row shows its own. These are not a replacement for
+  proper monitoring: there are no percentiles here, and requests rejected by authentication before they reach a handler
+  are not counted at all.
 
 Click the chart icon on a feature or an endpoint for its daily trend, with actions, views and automatic calls as separate
 lines.
@@ -112,19 +114,23 @@ Search by a feature's name or description, a module, a controller or a path, and
 nobody touch? A feature the selected role never called still appears, because that is exactly what the question is about.
 The role breakdown card is never filtered, so it stays comparable.
 
-Two limitations are worth keeping in mind while reading, and both are stated on the page itself:
+A few limitations are worth keeping in mind while reading. The first two are stated on the page itself:
 
 * The role is the caller's **global** role. Someone who instructs any course counts as an instructor everywhere, and git
   and background features have no caller at all and are recorded as anonymous.
 * WebSocket traffic is not counted, so features that mostly communicate over the websocket (live quizzes, messaging, exam
   synchronisation) are under-reported relative to their real use.
+* Git over SSH is not counted, so **Local IDE and Git** under-reports on deployments where students mostly clone over SSH.
+* A feature that is only recorded outside REST, such as **Continuous plagiarism control**, stays listed as offered after
+  its module is switched off, and then reads as unused rather than as not offered.
 
 ## Weekly email
 
 Every Monday at 09:00 the administrators receive a summary by email, an hour after the weekly vulnerability report so the
-two do not arrive together. It carries the number of uses, the features used and unused, a table per product area with the
+two do not arrive together. It carries the number of uses, the features used and not used, a table per product area with the
 change against the previous week, the areas that saw no use at all, and a link to this page. Like the page, it counts
-actions and views only, and states how many of the unused features only received automatic calls. It is a summary on
+actions and views only. Its "not used" figure covers both the unused features and those that only received automatic
+calls, and states how many of them are of the second kind. It is a summary on
 purpose: the mail exists to tell you whether it is worth opening the page, not to replace it.
 
 The mail is only sent when an administrator address is configured, and never from a development environment or a test

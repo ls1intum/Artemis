@@ -28,6 +28,9 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * invisible to everything else: these requests are served by a plain servlet at {@code /git/*} and never reach a Spring
  * MVC handler, which is also why they exhaust Micrometer's URI tag budget instead of producing anything useful there.
  * <p>
+ * Clones made for a build count as system calls of the build rather than as someone's use, and only HTTPS traffic is counted:
+ * the SSH transport has no filter to count it in.
+ * <p>
  * Only the single {@code POST} of an operation is counted. A clone or push is three HTTP requests, two handshakes on
  * {@code /info/refs} and one data transfer, so counting every request would inflate the numbers threefold and count
  * abandoned handshakes as usage.
@@ -52,6 +55,9 @@ public class LocalVCUsageTrackingService {
 
     /** Everything that is not a staff repository, which is student repositories plus the rare auxiliary repository. */
     private static final String ASSIGNMENT_REPOSITORY = "assignment";
+
+    /** Prefixes the identifier of a clone made for a build, which is a system call rather than someone's use. */
+    private static final String BUILD_AGENT_PREFIX = "build-agent-";
 
     /** Used when the request URI cannot be parsed, so a malformed request cannot create an unbounded identifier. */
     private static final String UNKNOWN_REPOSITORY = "unknown";
@@ -109,6 +115,15 @@ public class LocalVCUsageTrackingService {
             // the security context, so it is recorded as ANONYMOUS and the admin page shows no role for git features. The
             // interesting distinction, staff repository against student repository, is in the identifier instead.
             String repositoryKind = repositoryKind(request);
+            if (localVCServletService.isBuildAgentClone(request)) {
+                // Every build clones the assignment and the test repository. Counted like a person's clone, those would
+                // make the local IDE and repository editing features look used on every instance that runs builds, so
+                // they are counted as system calls of the build, under an identifier of their own because the
+                // classification belongs to the row.
+                featureUsageCollector.get().recordUsage(FeatureKind.GIT, MODULE, BUILD_AGENT_PREFIX + operation + '/' + repositoryKind, UserFeature.PROGRAMMING_RESULTS,
+                        FeatureInteraction.SYSTEM, Role.ANONYMOUS, failed, durationMs);
+                return;
+            }
             // A fetch reads, a push changes something. Work in the students' own repositories is how they use a local IDE;
             // work in the template, solution and test repositories is how instructors maintain an exercise.
             FeatureInteraction interaction = PUSH_OPERATION.equals(operation) ? FeatureInteraction.ACTION : FeatureInteraction.VIEW;

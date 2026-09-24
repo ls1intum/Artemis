@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.admin.domain.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.core.service.featureusage.ProductArea;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 

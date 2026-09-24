@@ -103,7 +103,7 @@ class AthenaFeedbackSuggestionsUsageTest {
         assertThatExceptionOfType(NetworkingException.class).isThrownBy(() -> service.getTextFeedbackSuggestions(exercise, submission, true, null));
 
         verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("athena"), eq("feedback-suggestions/text/graded"), eq(UserFeature.ATHENA_FEEDBACK_SUGGESTIONS),
-                eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(true), anyLong());
+                eq(FeatureInteraction.SYSTEM), eq(Role.ANONYMOUS), eq(true), anyLong());
     }
 
     /**

@@ -14,6 +14,7 @@
             optionLabel="label"
             optionValue="value"
             size="small"
+            [allowEmpty]="false"
             [itemTemplate]="windowItem"
         />
         <ng-template #windowItem let-option>
@@ -30,7 +31,7 @@
     <p class="text-muted-color mb-1" jhiTranslate="artemisApp.featureUsage.description"></p>
     <!-- The vocabulary every number below uses. Without it, "views" and "automatic calls" read as synonyms, which is the
          confusion the page was redesigned to end. -->
-    <ul class="text-muted-color text-sm mb-1 flex flex-wrap gap-x-6 gap-y-1" data-testid="interaction-legend">
+    <ul class="text-muted-color text-sm mb-1 grid gap-x-6 gap-y-1 md:grid-cols-2" data-testid="interaction-legend">
         <li><span class="font-semibold" jhiTranslate="artemisApp.featureUsage.interaction.ACTION"></span>: <span jhiTranslate="artemisApp.featureUsage.legend.action"></span></li>
         <li><span class="font-semibold" jhiTranslate="artemisApp.featureUsage.interaction.VIEW"></span>: <span jhiTranslate="artemisApp.featureUsage.legend.view"></span></li>
         <li>
@@ -42,7 +43,7 @@
          under-rate every feature that mostly talks over the websocket. -->
     <p class="text-muted-color text-sm mb-4" jhiTranslate="artemisApp.featureUsage.limitations"></p>
 
-    <div class="grid gap-4 mb-4" style="grid-template-columns: repeat(auto-fit, minmax(190px, 1fr))">
+    <div class="grid gap-3 mb-4" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))">
         <!-- Every count here is a feature of the catalogue, the unit the tree below lists, so the headline and the rows an
              admin then works through cannot disagree. -->
         <tum-ui-card data-testid="kpi-used-features">
@@ -94,7 +95,7 @@
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.recordingSince"></div>
             <!-- Guarded rather than piped straight through: the date pipe turns an absent value into today, which would
                  claim evidence that does not exist. -->
-            <div class="text-3xl font-semibold">
+            <div class="text-xl font-semibold">
                 @if (report.recordingSince) {
                     {{ report.recordingSince | artemisDate: 'long-date' }}
                 } @else {

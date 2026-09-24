@@ -14,11 +14,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.admin.domain.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageAreaSummaryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageLabelCallsDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageOverviewDTO;
-import de.tum.cit.aet.artemis.admin.dto.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.admin.dto.UserFeatureUsageDTO;
 import de.tum.cit.aet.artemis.admin.repository.FeatureUsageStatisticsRepository;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
@@ -63,24 +63,31 @@ public class FeatureUsageDigestService {
         Map<ProductArea, Long> previousUseByArea = previousUseByArea(
                 featureUsageStatisticsRepository.findFeatureCallsBetween(from.minusDays(DIGEST_WINDOW_IN_DAYS), from.minusDays(1)));
 
+        // An area is reported when it offers features or saw use in either window: one whose last feature went away still
+        // has to explain the drop in the headline, which counts every catalogue feature in both windows.
         List<FeatureUsageAreaSummaryDTO> summaries = Arrays.stream(ProductArea.values()).map(area -> summarize(area, overview.features(), previousUseByArea))
-                .filter(summary -> summary.availableFeatures() > 0).toList();
-        List<FeatureUsageAreaSummaryDTO> activeAreas = summaries.stream().filter(summary -> summary.useCount() > 0)
+                .filter(summary -> summary.availableFeatures() > 0 || summary.useCount() > 0 || summary.previousUseCount() > 0).toList();
+        // An area used in either week gets a row, so that a drop to zero shows as one rather than vanishing from the table
+        List<FeatureUsageAreaSummaryDTO> activeAreas = summaries.stream().filter(summary -> summary.useCount() > 0 || summary.previousUseCount() > 0)
                 .sorted(Comparator.comparingLong(FeatureUsageAreaSummaryDTO::useCount).reversed()).toList();
         // Only the names: what matters about an area nobody used is that it is on the list, not its row of zeros.
-        List<ProductArea> quietAreas = summaries.stream().filter(summary -> summary.useCount() == 0).map(FeatureUsageAreaSummaryDTO::area).toList();
+        List<ProductArea> quietAreas = summaries.stream().filter(summary -> summary.useCount() == 0 && summary.previousUseCount() == 0 && summary.availableFeatures() > 0)
+                .map(FeatureUsageAreaSummaryDTO::area).toList();
 
-        long useCount = summaries.stream().mapToLong(FeatureUsageAreaSummaryDTO::useCount).sum();
+        // The same figure as the page's headline: actions and views of every catalogue feature, offered here or not
+        long useCount = overview.actionCount() + overview.viewCount();
         long previousUseCount = previousUseByArea.values().stream().mapToLong(Long::longValue).sum();
         return new FeatureUsageDigestDTO(DIGEST_WINDOW_IN_DAYS, from, to, useCount, previousUseCount, overview.availableFeatures(), overview.usedFeatures(),
                 overview.onlyAutomatic() + overview.unusedFeatures(), overview.onlyAutomatic(), overview.retiredEndpoints(), overview.recordingSince(), activeAreas, quietAreas);
     }
 
     private static FeatureUsageAreaSummaryDTO summarize(ProductArea area, List<UserFeatureUsageDTO> features, Map<ProductArea, Long> previousUseByArea) {
-        List<UserFeatureUsageDTO> available = features.stream().filter(feature -> feature.area() == area && feature.status() != FeatureUsageStatus.NOT_AVAILABLE).toList();
-        long useCount = available.stream().mapToLong(feature -> feature.actionCount() + feature.viewCount()).sum();
-        return new FeatureUsageAreaSummaryDTO(area, useCount, previousUseByArea.getOrDefault(area, 0L), available.stream().mapToLong(UserFeatureUsageDTO::actionCount).sum(),
-                available.stream().mapToLong(UserFeatureUsageDTO::errorCount).sum(), available.stream().filter(feature -> feature.status() == FeatureUsageStatus.USED).count(),
+        List<UserFeatureUsageDTO> ofArea = features.stream().filter(feature -> feature.area() == area).toList();
+        List<UserFeatureUsageDTO> available = ofArea.stream().filter(feature -> feature.status() != FeatureUsageStatus.NOT_AVAILABLE).toList();
+        // Use is summed over every feature of the area, like the headline, so the rows add up to it
+        long useCount = ofArea.stream().mapToLong(feature -> feature.actionCount() + feature.viewCount()).sum();
+        return new FeatureUsageAreaSummaryDTO(area, useCount, previousUseByArea.getOrDefault(area, 0L), ofArea.stream().mapToLong(UserFeatureUsageDTO::actionCount).sum(),
+                ofArea.stream().mapToLong(UserFeatureUsageDTO::errorCount).sum(), available.stream().filter(feature -> feature.status() == FeatureUsageStatus.USED).count(),
                 available.size(), available.stream().filter(feature -> feature.status() == FeatureUsageStatus.ONLY_AUTOMATIC).count());
     }
 

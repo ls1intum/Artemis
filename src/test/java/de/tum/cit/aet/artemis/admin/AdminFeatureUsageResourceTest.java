@@ -21,10 +21,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.core.type.TypeReference;
 
+import de.tum.cit.aet.artemis.admin.domain.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.admin.dto.FeatureAdoptionDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageEntryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageOverviewDTO;
-import de.tum.cit.aet.artemis.admin.dto.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageTrendPointDTO;
 import de.tum.cit.aet.artemis.admin.dto.UserFeatureUsageDTO;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;

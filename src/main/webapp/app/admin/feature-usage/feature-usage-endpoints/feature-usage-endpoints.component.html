@@ -77,7 +77,7 @@
                     <td class="text-end" [class.text-state-danger]="row.errorRate >= 5">{{ row.endpoint.callCount ? row.errorRate.toFixed(1) + '%' : '-' }}</td>
                     <td class="text-end">{{ row.endpoint.callCount ? row.meanDurationMs : '-' }}</td>
                     <td class="text-end">{{ row.endpoint.callCount ? row.endpoint.durationMaxMs : '-' }}</td>
-                    <td>{{ row.endpoint.lastUsedDay ?? '-' }}</td>
+                    <td class="whitespace-nowrap">{{ row.endpoint.lastUsedDay ?? '-' }}</td>
                     <td>
                         @if (row.endpoint.callCount > 0) {
                             <button

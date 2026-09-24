@@ -26,10 +26,11 @@ import de.tum.cit.aet.artemis.core.security.Role;
  * @param notAvailable         catalogue features this deployment does not offer, usually because their module is disabled
  * @param noActions            available features that act, were viewed and never acted on
  * @param retiredEndpoints     inventory entries this version no longer offers at all
- * @param actionCount          actions across all features in the window
- * @param viewCount            views across all features in the window
- * @param automaticCount       automatic calls across all features in the window
- * @param systemCount          calls by other systems across all features in the window
+ * @param actionCount          actions across all catalogue features in the window. Endpoints that belong to no feature,
+ *                                 which only an earlier version offered, are listed but not counted, like in the email.
+ * @param viewCount            views across all catalogue features in the window
+ * @param automaticCount       automatic calls across all catalogue features in the window
+ * @param systemCount          calls by other systems across all catalogue features in the window
  * @param inventoryRefreshedAt the most recent time any node reported its endpoints; an entry whose
  *                                 {@code lastRegisteredAt} is clearly older than this no longer exists
  * @param recordingSince       when this deployment started recording. Without it the report would imply more evidence

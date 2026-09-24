@@ -187,6 +187,7 @@ public class IrisChatSessionResource {
      * @param courseId of the course
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of session DTOs
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping({ "courses/{courseId}/sessions/overview", "{courseId}/sessions/overview" })
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)

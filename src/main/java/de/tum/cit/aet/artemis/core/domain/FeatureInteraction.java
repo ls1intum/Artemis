@@ -32,8 +32,9 @@ public enum FeatureInteraction {
     AUTOMATIC,
 
     /**
-     * Another system called the endpoint: a callback from an external service, a build agent, a calendar client fetching a
-     * subscription. Reported, but never counted as use. The default for {@code @Internal} endpoints.
+     * Another system called the endpoint, or the server called another system on behalf of a request that was already
+     * counted: a callback from an external service, a build agent cloning for a build, a call to an AI service. Reported,
+     * but never counted as use. The default for {@code @Internal} endpoints.
      */
     SYSTEM
 }

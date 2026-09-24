@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, map } from 'rxjs';
 
 import { faEnvelope, faSearch, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -163,17 +164,23 @@ export class FeatureUsageComponent implements OnInit {
     /** Use means actions and views; automatic and system calls are reported next to it but never counted as use. */
     readonly useCount = computed<number>(() => (this.overview()?.actionCount ?? 0) + (this.overview()?.viewCount ?? 0));
 
-    /** Resolved eagerly rather than through a pipe, because the select renders `optionLabel` verbatim. */
-    private readonly allAreasLabel = signal<string>('');
-    protected readonly allModulesLabel = signal<string>('');
-    private readonly allRolesLabel = signal<string>('');
+    /**
+     * The current language, so the labels below are translated again when it changes. They are resolved eagerly rather
+     * than through a pipe, because the select renders `optionLabel` verbatim.
+     */
+    private readonly language = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), { initialValue: this.translateService.getCurrentLang() ?? '' });
+
+    protected readonly allModulesLabel = computed(() => this.translated('artemisApp.featureUsage.allModules'));
 
     readonly areaOptions = computed(() => [
-        { label: this.allAreasLabel(), value: ALL_AREAS },
-        ...PRODUCT_AREAS.map((area) => ({ label: this.translateService.instant(areaTranslationKey(area)), value: area })),
+        { label: this.translated('artemisApp.featureUsage.allAreas'), value: ALL_AREAS },
+        ...PRODUCT_AREAS.map((area) => ({ label: this.translated(areaTranslationKey(area)), value: area })),
     ]);
 
-    readonly callerRoleOptions = computed(() => [{ label: this.allRolesLabel(), value: ALL_ROLES }, ...FEATURE_USAGE_CALLER_ROLES.map((role) => ({ label: role, value: role }))]);
+    readonly callerRoleOptions = computed(() => [
+        { label: this.translated('artemisApp.featureUsage.allRoles'), value: ALL_ROLES },
+        ...FEATURE_USAGE_CALLER_ROLES.map((role) => ({ label: role, value: role })),
+    ]);
 
     /** The features the tree and the attention list show, after the area, search and availability filters. */
     readonly visibleFeatures = computed<UserFeatureUsage[]>(() => {
@@ -235,9 +242,6 @@ export class FeatureUsageComponent implements OnInit {
     readonly trendChartConfig: TumUiLineChartConfig = { yAxis: { min: 0 }, legend: true };
 
     ngOnInit(): void {
-        this.allAreasLabel.set(this.translateService.instant('artemisApp.featureUsage.allAreas'));
-        this.allModulesLabel.set(this.translateService.instant('artemisApp.featureUsage.allModules'));
-        this.allRolesLabel.set(this.translateService.instant('artemisApp.featureUsage.allRoles'));
         this.load();
     }
 
@@ -337,6 +341,12 @@ export class FeatureUsageComponent implements OnInit {
             (feature.modules ?? []).some((module) => module.toLowerCase().includes(term)) ||
             endpoints.some((endpoint) => this.endpointMatches(endpoint, term))
         );
+    }
+
+    /** Translates a key in a way that makes the calling computed depend on the current language. */
+    private translated(key: string): string {
+        this.language();
+        return this.translateService.instant(key);
     }
 
     private featureNameMatches(feature: string, term: string): boolean {

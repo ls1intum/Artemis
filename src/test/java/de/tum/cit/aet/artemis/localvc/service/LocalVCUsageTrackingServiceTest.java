@@ -74,6 +74,24 @@ class LocalVCUsageTrackingServiceTest {
                 eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
+    /**
+     * Every build clones the assignment and the test repository. Counted like a person's clone, those would make the local
+     * IDE and repository editing features look used on every instance that runs builds.
+     */
+    @Test
+    void shouldRecordACloneForABuildAsASystemCallOfTheBuild() {
+        givenRepositoryPath("/git/COURSE1EX1/course1ex1-ge12abc.git");
+        MockHttpServletRequest request = postRequest();
+        when(servletService.isBuildAgentClone(request)).thenReturn(true);
+
+        service.recordFetch(request, 5, false);
+
+        verify(collector).recordUsage(eq(FeatureKind.GIT), eq("localvc"), eq("build-agent-fetch/assignment"), eq(UserFeature.PROGRAMMING_RESULTS), eq(FeatureInteraction.SYSTEM),
+                eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(collector, never()).recordUsage(any(FeatureKind.class), anyString(), eq("fetch/assignment"), any(UserFeature.class), any(FeatureInteraction.class), any(Role.class),
+                anyBoolean(), anyLong());
+    }
+
     @Test
     void shouldRecordAFailedTransferAsAFailure() {
         givenRepositoryPath("/git/COURSE1EX1/course1ex1-ge12abc.git");

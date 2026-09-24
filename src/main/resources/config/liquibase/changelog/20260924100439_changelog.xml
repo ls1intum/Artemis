@@ -44,4 +44,47 @@
         <!-- nothing to undo: rolling back the previous changeset drops the column -->
         <rollback/>
     </changeSet>
+
+    <!--
+    Git and background rows written before this change carry no feature label, and a row is only relabelled when the
+    operation happens again after the upgrade. Their identifiers say which feature they belong to, so their history is
+    attributed right away rather than after the next clone, and for an identifier that never recurs, not at all.
+    Athena's calls count as system calls: the request that triggers them was already counted as use.
+    -->
+    <changeSet id="20260924100439-03-tracked-feature-label-backfill" author="krusche">
+        <comment>Attribute git and background rows written before the feature catalogue to their feature.</comment>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="PROGRAMMING_REPOSITORY_EDITING"/>
+            <where>feature_kind = 'GIT' AND feature_label IS NULL AND (identifier LIKE '%/template' OR identifier LIKE '%/solution' OR identifier LIKE '%/tests')</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="PROGRAMMING_LOCAL_IDE"/>
+            <where>feature_kind = 'GIT' AND feature_label IS NULL AND (identifier LIKE '%/assignment' OR identifier LIKE '%/unknown')</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="ATHENA_FEEDBACK_SUGGESTIONS"/>
+            <column name="interaction" value="SYSTEM"/>
+            <where>feature_kind = 'BACKGROUND' AND feature_label IS NULL AND identifier LIKE 'feedback-suggestions/%/graded'</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="AI_FEEDBACK_REQUEST"/>
+            <column name="interaction" value="SYSTEM"/>
+            <where>feature_kind = 'BACKGROUND' AND feature_label IS NULL AND identifier LIKE 'feedback-suggestions/%/non-graded'</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="CONTINUOUS_PLAGIARISM_CONTROL"/>
+            <where>feature_kind = 'BACKGROUND' AND feature_label IS NULL AND identifier LIKE 'continuous-plagiarism-control/%'</where>
+        </update>
+        <update tableName="tracked_feature">
+            <column name="feature_label" value="NOTIFICATION_DELIVERY"/>
+            <where>feature_kind = 'BACKGROUND' AND feature_label IS NULL AND identifier LIKE 'course-notification/%'</where>
+        </update>
+        <!-- the previous version wrote no label for git and background rows, so rolling back restores exactly that -->
+        <rollback>
+            <update tableName="tracked_feature">
+                <column name="feature_label" valueComputed="NULL"/>
+                <where>feature_kind IN ('GIT', 'BACKGROUND')</where>
+            </update>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

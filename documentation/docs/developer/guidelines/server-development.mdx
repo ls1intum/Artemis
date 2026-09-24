@@ -285,8 +285,8 @@ public class StaticCodeAnalysisResource {
 * The whole mapping is rendered into [Feature Usage Catalogue](/developer/feature-usage-catalogue); regenerate it with
   `./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true` and read the diff.
 
-**How its calls count.** A `GET` is a view and everything else an action, unless the endpoint is `@Internal`, which makes
-it a system call. Add `@UsageInteraction` where that is wrong:
+**How its calls count.** A `GET` or `HEAD` is a view and everything else an action, unless the endpoint is `@Internal`,
+which makes it a system call. Add `@UsageInteraction` where that is wrong:
 
 ```java
 @UsageInteraction(FeatureInteraction.AUTOMATIC)
@@ -298,7 +298,7 @@ public ResponseEntity<List<VariantJobDTO>> getJobsOfCurrentUser() {
   one to think about for every new `GET` that a page calls when it loads. Without it, a feature nobody uses looks busy.
 * `VIEW` for a `POST` that only reads, such as a search or a preview.
 * `ACTION` for a `GET` whose purpose is a side effect, such as starting an exam or locking a submission.
-* `SYSTEM` for an endpoint another system calls, such as a build agent or a calendar app.
+* `SYSTEM` for an endpoint another system calls, such as a build agent or an AI service reporting back.
 
 The interaction belongs to the endpoint, not to a call. An endpoint that both acts and reports status, for example
 through a `checkOnly` flag, cannot be counted correctly; give the status its own endpoint.

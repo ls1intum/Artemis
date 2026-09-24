@@ -44,12 +44,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 class FeatureUsageRegistryTest {
 
     /**
-     * A running Artemis has two beans of type {@link RequestMappingHandlerMapping}: MVC's own and Actuator's
-     * {@code controllerEndpointHandlerMapping}. Resolving by type therefore fails as ambiguous, and because registration
-     * deliberately swallows its failures, the only symptom was an admin page that stayed empty forever. The mapping has to
-     * be addressed by its name.
-     */
-    /**
      * Git and background features cannot be enumerated at startup, so their inventory row is created the first time they are
      * seen. Two threads seeing the same feature together used to insert it twice, and the loser's insert was rejected by the
      * unique key: recovered from, but it left a database error in the log for normal operation.
@@ -85,6 +79,12 @@ class FeatureUsageRegistryTest {
         verify(repository).save(any(TrackedFeature.class));
     }
 
+    /**
+     * A running Artemis has two beans of type {@link RequestMappingHandlerMapping}: MVC's own and Actuator's
+     * {@code controllerEndpointHandlerMapping}. Resolving by type therefore fails as ambiguous, and because registration
+     * deliberately swallows its failures, the only symptom was an admin page that stayed empty forever. The mapping has to
+     * be addressed by its name.
+     */
     @Test
     void shouldResolveTheMvcMappingByNameWhenASecondMappingBeanExists() {
         var repository = mock(TrackedFeatureRepository.class);

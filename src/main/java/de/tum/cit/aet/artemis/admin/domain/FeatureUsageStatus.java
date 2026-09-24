@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.admin.dto;
+package de.tum.cit.aet.artemis.admin.domain;
 
 /**
  * What the usage of one {@link de.tum.cit.aet.artemis.core.service.featureusage.UserFeature} over a window amounts to.

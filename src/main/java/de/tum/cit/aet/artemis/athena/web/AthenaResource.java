@@ -22,14 +22,12 @@ import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -137,7 +135,6 @@ public class AthenaResource {
      * @param submissionId the id of the submission to get feedback suggestions for
      * @return 200 Ok if successful with the corresponding result as body
      */
-    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
@@ -155,7 +152,6 @@ public class AthenaResource {
      * @param submissionId the id of the submission to get feedback suggestions for
      * @return 200 Ok if successful with the corresponding result as body
      */
-    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
@@ -170,7 +166,6 @@ public class AthenaResource {
      * @param submissionId the id of the submission to get feedback suggestions for
      * @return 200 Ok if successful with the corresponding result as body
      */
-    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {

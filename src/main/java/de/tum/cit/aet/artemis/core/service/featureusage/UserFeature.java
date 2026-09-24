@@ -14,9 +14,10 @@ package de.tum.cit.aet.artemis.core.service.featureusage;
  * server-side work such as notification delivery. {@code FeatureUsageAnnotationTest} fails for a constant that is
  * neither annotated on an endpoint nor referenced by such a call site, so the catalogue cannot collect dead entries.
  * <p>
- * The constant name is what the inventory stores as the feature label. Renaming a constant or moving an endpoint to
- * another one is safe at any time: the label is re-derived on every startup, and historic counts regroup under the new
- * feature immediately. Display names and descriptions live in the client translations
+ * The constant name is what the inventory stores as the feature label. Moving an endpoint to another constant is safe at
+ * any time: the label is re-derived on every startup, and historic counts regroup under the new feature immediately. The
+ * same holds for renaming a constant, with one exception: a row that is no longer offered is never re-registered, so it
+ * keeps the old name and its history is no longer attributed to the feature. Display names and descriptions live in the client translations
  * ({@code artemisApp.featureUsage.catalog.feature.*}); the test fails when one is missing.
  */
 public enum UserFeature {

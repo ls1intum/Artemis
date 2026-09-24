@@ -1331,7 +1331,6 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
     @FeatureUsage(UserFeature.EXAM_TAKE)
-    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("courses/{courseId}/exams/{examId}/own-student-exam")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamForConductionDTO> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {

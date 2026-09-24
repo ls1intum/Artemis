@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -36,7 +35,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -331,7 +329,6 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
-    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("programming-submissions/{submissionId}/lock")
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
@@ -409,7 +406,6 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
-    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,

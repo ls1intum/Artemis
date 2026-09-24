@@ -380,6 +380,7 @@ public class ProgrammingExerciseParticipationResource {
      *         {@code submission} is populated if a pending submission exists and {@code null} otherwise.
      */
     @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<PendingProgrammingSubmissionDTO>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {

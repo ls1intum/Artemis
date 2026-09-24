@@ -180,18 +180,20 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
     /**
      * Several handler methods can share one verb and path and differ only in their request parameters. The inventory
      * keys on verb and path, so they share one row, and the classification of whichever handler it sees first wins. If
-     * they disagreed, the report would depend on the order Spring enumerates handlers.
+     * they disagreed, the report would depend on the order Spring enumerates handlers, and the row could change its
+     * feature, its interaction or its controller between two restarts.
      */
     @Test
     void endpointsSharingAPathShouldShareTheirClassification() {
         Map<String, Set<String>> classificationsByIdentifier = new TreeMap<>();
         for (Endpoint endpoint : endpoints()) {
-            classificationsByIdentifier.computeIfAbsent(endpoint.identifier(), identifier -> new TreeSet<>()).add(endpoint.feature() + " " + endpoint.interaction());
+            classificationsByIdentifier.computeIfAbsent(endpoint.identifier(), identifier -> new TreeSet<>())
+                    .add(endpoint.feature() + " " + endpoint.interaction() + " " + endpoint.resource());
         }
         Map<String, Set<String>> conflicting = classificationsByIdentifier.entrySet().stream().filter(entry -> entry.getValue().size() > 1)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first, TreeMap::new));
 
-        assertThat(conflicting).as("handler methods sharing a verb and path must declare the same feature and interaction").isEmpty();
+        assertThat(conflicting).as("handler methods sharing a verb and path must declare the same feature and interaction, in the same controller").isEmpty();
     }
 
     /**

@@ -20,11 +20,11 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.admin.domain.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageAreaSummaryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageLabelCallsDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageOverviewDTO;
-import de.tum.cit.aet.artemis.admin.dto.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.admin.dto.UserFeatureUsageDTO;
 import de.tum.cit.aet.artemis.admin.repository.FeatureUsageStatisticsRepository;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
@@ -126,6 +126,26 @@ class FeatureUsageDigestServiceTest {
         verify(repository).findFeatureCallsBetween(eq(FROM.minusDays(7)), eq(FROM.minusDays(1)));
     }
 
+    /**
+     * An area that is not offered any more but was used in the previous week has to appear, otherwise the headline's drop
+     * would be explained by no row.
+     */
+    @Test
+    void shouldReportAnAreaThatWasUsedLastWeekAndIsNoLongerOffered() {
+        givenOverview(Map.of(UserFeature.QUIZ_LIVE, used(5, 0, 0)));
+        when(repository.findFeatureCallsBetween(any(), any())).thenReturn(List.of(new FeatureUsageLabelCallsDTO(UserFeature.SCIENCE.name(), FeatureInteraction.ACTION, 40)));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        // not listed as quiet, because it offers nothing to use any more, but its drop is visible as a row
+        assertThat(digest.quietAreas()).doesNotContain(ProductArea.COMPETENCIES);
+        FeatureUsageAreaSummaryDTO competencies = areaOf(digest, ProductArea.COMPETENCIES);
+        assertThat(competencies.useCount()).isZero();
+        assertThat(competencies.changePercent()).isEqualTo(-100);
+        assertThat(digest.previousUseCount()).isEqualTo(40);
+        assertThat(digest.useCount()).isEqualTo(5);
+    }
+
     @Test
     void shouldReportNoChangeWhenThereIsNothingToCompareAgainst() {
         givenOverview(Map.of(UserFeature.PROGRAMMING_ONLINE_EDITOR, used(10, 0, 0)));
@@ -181,8 +201,10 @@ class FeatureUsageDigestServiceTest {
         long used = list.stream().filter(feature -> feature.status() == FeatureUsageStatus.USED).count();
         long onlyAutomatic = list.stream().filter(feature -> feature.status() == FeatureUsageStatus.ONLY_AUTOMATIC).count();
         long unused = list.stream().filter(feature -> feature.status() == FeatureUsageStatus.UNUSED).count();
+        long actions = list.stream().mapToLong(UserFeatureUsageDTO::actionCount).sum();
+        long views = list.stream().mapToLong(UserFeatureUsageDTO::viewCount).sum();
         when(queryService.getOverview(anyInt(), any())).thenReturn(new FeatureUsageOverviewDTO(7, FROM, null, available, used, onlyAutomatic, unused,
-                UserFeature.values().length - available, 0, 3, 0, 0, 0, 0, Instant.now(), Instant.now().minusSeconds(3600), list, List.of(), List.of()));
+                UserFeature.values().length - available, 0, 3, actions, views, 0, 0, Instant.now(), Instant.now().minusSeconds(3600), list, List.of(), List.of()));
     }
 
     private static Usage used(long actions, long views, long errors) {
