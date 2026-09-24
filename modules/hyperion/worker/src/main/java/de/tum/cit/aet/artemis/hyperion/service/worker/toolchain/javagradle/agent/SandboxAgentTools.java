@@ -189,7 +189,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (safe == null) {
             return SandboxPathPolicy.invalidPathError(path);
         }
-        HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0]);
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
@@ -226,7 +226,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (query == null || query.isBlank() || query.contains("\n") || query.contains("\r")) {
             return "ERROR: query must be non-empty text from a single line.";
         }
-        HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0]);
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
@@ -251,7 +251,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         StringBuilder safeMatches = new StringBuilder();
         for (String line : result.stdout().replace(WORKSPACE + "/", "").lines().toList()) {
             int pathEnd = line.indexOf(':');
-            if (pathEnd < 1 || !SECRET_MATERIAL_POLICY.assess(line.substring(0, pathEnd), new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION).isSafe()) {
+            if (pathEnd < 1 || !SECRET_MATERIAL_POLICY.assess(line.substring(0, pathEnd), new byte[0]).isSafe()) {
                 continue;
             }
             if (!safeMatches.isEmpty()) {
@@ -381,7 +381,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (safe == null) {
             return SandboxPathPolicy.invalidPathError(path);
         }
-        HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        HyperionSecretMaterialPolicy.Assessment pathAssessment = SECRET_MATERIAL_POLICY.assess(safe, new byte[0]);
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
@@ -805,8 +805,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     private static String screenObservation(String logicalPath, String observation) {
-        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, observation.getBytes(StandardCharsets.UTF_8),
-                HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, observation.getBytes(StandardCharsets.UTF_8));
         return assessment.isSafe() ? observation : SECRET_MATERIAL_POLICY.blockedObservation(assessment);
     }
 
