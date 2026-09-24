@@ -91,7 +91,7 @@ final class SandboxPathPolicy {
     }
 
     static String invalidPathError(String path) {
-        String safePath = SECRET_MATERIAL_POLICY.assess(path, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION).safePath();
+        String safePath = SECRET_MATERIAL_POLICY.assess(path, new byte[0]).safePath();
         return "ERROR: invalid path '" + safePath + "'. Use a workspace-relative path containing only letters, digits, '_', '.', '/', '-' and no '..'.";
     }
 

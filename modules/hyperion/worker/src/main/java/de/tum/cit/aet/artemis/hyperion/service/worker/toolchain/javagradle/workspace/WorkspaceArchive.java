@@ -91,13 +91,13 @@ public final class WorkspaceArchive {
             for (Map.Entry<String, String> entry : textFiles.entrySet()) {
                 incrementEntryCount(entryCount);
                 byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
-                rejectSecretMaterial(entry.getKey(), content, HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
+                rejectSecretMaterial(entry.getKey(), content);
                 total = addToSeedTotal(total, content.length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), content, executableFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
             }
             for (Map.Entry<String, byte[]> entry : binaryFiles.entrySet()) {
                 incrementEntryCount(entryCount);
-                rejectSecretMaterial(entry.getKey(), entry.getValue(), HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
+                rejectSecretMaterial(entry.getKey(), entry.getValue());
                 total = addToSeedTotal(total, entry.getValue().length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), entry.getValue(), executableFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
             }
@@ -117,7 +117,7 @@ public final class WorkspaceArchive {
             for (Map.Entry<String, String> entry : textFiles.entrySet()) {
                 incrementEntryCount(entryCount);
                 byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
-                rejectSecretMaterial(entry.getKey(), content, HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
+                rejectSecretMaterial(entry.getKey(), content);
                 total = addToSeedTotal(total, content.length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), content, executableTextFiles.contains(entry.getKey()) ? MODE_EXECUTABLE : MODE_FILE);
             }
@@ -148,7 +148,7 @@ public final class WorkspaceArchive {
                 try (InputStream input = Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS)) {
                     content = readBoundedBytes(input, entryName);
                 }
-                rejectSecretMaterial(entryName, content, HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE);
+                rejectSecretMaterial(entryName, content);
                 total = addToSeedTotal(total, content.length, entryName);
                 writeFileEntry(tar, entryName, content, mode);
             }
@@ -156,8 +156,8 @@ public final class WorkspaceArchive {
         return total;
     }
 
-    private static void rejectSecretMaterial(String logicalPath, byte[] content, HyperionSecretMaterialPolicy.Origin origin) {
-        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, content, origin);
+    private static void rejectSecretMaterial(String logicalPath, byte[] content) {
+        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, content);
         if (!assessment.isSafe()) {
             String description = assessment.category().orElseThrow() == HyperionSecretMaterialPolicy.Category.CREDENTIAL_FILE ? "a credential file" : "credential material";
             throw new RejectedWorkspaceEntryException("Refusing to send " + description + " [" + assessment.category().orElseThrow() + "] to Hyperion at " + assessment.safePath());
@@ -275,7 +275,7 @@ public final class WorkspaceArchive {
             if (total > MAX_TOTAL_BYTES) {
                 throw new RejectedWorkspaceEntryException("Refusing to read the workspace archive: total size exceeds " + MAX_TOTAL_BYTES + " bytes");
             }
-            rejectSecretMaterial(name, bytes, HyperionSecretMaterialPolicy.Origin.GENERATED_CANDIDATE);
+            rejectSecretMaterial(name, bytes);
             if (BinaryContent.isBinary(bytes)) {
                 binaryDigests.put(name, sha256(bytes));
             }
@@ -342,6 +342,6 @@ public final class WorkspaceArchive {
     }
 
     private static String safePath(String logicalPath) {
-        return SECRET_MATERIAL_POLICY.assess(logicalPath, new byte[0], HyperionSecretMaterialPolicy.Origin.WORKSPACE_ARCHIVE).safePath();
+        return SECRET_MATERIAL_POLICY.assess(logicalPath, new byte[0]).safePath();
     }
 }
