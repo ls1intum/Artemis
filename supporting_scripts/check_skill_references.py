@@ -56,7 +56,10 @@ ENTRY_POINT = "AGENTS.md"
 
 ROUTING_DOCUMENTS = (ENTRY_POINT, "documentation/docs/developer/work-with-ai.mdx")
 
-SKILL_LINK = re.compile(r"skills/(?P<name>[A-Za-z0-9._-]+)/SKILL\.md")
+SKILL_LINK = re.compile(
+    r"\]\((?:https://github\.com/ls1intum/Artemis/blob/[^/]+/|(?:\.\./)*)"
+    r"skills/(?P<name>[A-Za-z0-9._-]+)/SKILL\.md\)"
+)
 
 # Manifests that distribute the skills as a Claude Code plugin. Nothing else parses them, and a
 # broken one only surfaces when someone tries to install.
@@ -364,6 +367,10 @@ def self_test() -> int:
                 file=sys.stderr,
             )
             failures += 1
+    link_sample = "[linked](skills/example/SKILL.md) `skills/plain/SKILL.md`"
+    if SKILL_LINK.findall(link_sample) != ["example"]:
+        print("FAIL: skill routing accepted a path that is not a Markdown link", file=sys.stderr)
+        failures += 1
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         manifest_dir = root / ".claude-plugin"
@@ -387,7 +394,7 @@ def self_test() -> int:
             failures += 1
     if failures:
         return 1
-    cases = len(SELF_TEST_EXPECTED) + len(SELF_TEST_FRONTMATTER) + 3
+    cases = len(SELF_TEST_EXPECTED) + len(SELF_TEST_FRONTMATTER) + 4
     print(f"OK: parser self-test passed ({cases} cases).")
     return 0
 

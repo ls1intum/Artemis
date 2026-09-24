@@ -4,7 +4,7 @@ setup() {
     export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
     REPO="$BATS_TEST_TMPDIR/repo"
     mkdir -p "$REPO/.ci/E2E-tests" "$REPO/src/test/playwright/e2e"
-    cp "$BATS_TEST_DIRNAME/../determine-relevant-tests.sh" "$BATS_TEST_DIRNAME/../e2e-test-mapping.json" "$REPO/.ci/E2E-tests/"
+    cp "$BATS_TEST_DIRNAME/../determine-relevant-tests.sh" "$BATS_TEST_DIRNAME/../verify-test-determination.sh" "$BATS_TEST_DIRNAME/../e2e-test-mapping.json" "$REPO/.ci/E2E-tests/"
     cd "$REPO"
     git init -q -b feature
     git config user.name 'E2E selector test'
@@ -66,4 +66,31 @@ setup() {
         [[ "$output" == *"ERROR: Invalid JSON mapping"* ]]
         [ ! -s "$GITHUB_OUTPUT" ]
     done
+}
+
+@test "does not repeat a selected nested spec in the remaining phase" {
+    mkdir -p src/test/playwright/e2e/exercise/file-upload src/main/java/de/tum/cit/aet/artemis/assessment
+    touch src/test/playwright/e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts
+    touch src/test/playwright/e2e/exercise/file-upload/Other.spec.ts
+    git add .
+    git commit -qm existing-specs
+    git branch phase-base
+    touch src/main/java/de/tum/cit/aet/artemis/assessment/Probe.java
+    git add .
+    git commit -qm assessment
+
+    run bash .ci/E2E-tests/determine-relevant-tests.sh phase-base
+    [ "$status" -eq 0 ]
+    grep -q '^RELEVANT_TESTS=.*e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts' "$GITHUB_OUTPUT"
+    grep -q '^REMAINING_TESTS=.*e2e/exercise/file-upload/Other.spec.ts' "$GITHUB_OUTPUT"
+    ! grep -q '^REMAINING_TESTS=.*e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts' "$GITHUB_OUTPUT"
+}
+
+@test "coverage check rejects a mapped path that no longer exists" {
+    cat > .ci/E2E-tests/e2e-test-mapping.json <<'JSON'
+{"allTestPaths":["e2e/"],"alwaysRunTests":[],"runAllTestsPatterns":[],"mappings":{"probe":{"sourcePaths":[],"testPaths":["e2e/Absent.spec.ts"]}}}
+JSON
+    run bash .ci/E2E-tests/verify-test-determination.sh --all
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Mapped E2E path does not exist: e2e/Absent.spec.ts"* ]]
 }

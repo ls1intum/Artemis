@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Check spec coverage using the same selector that CI uses for its two E2E phases.
+# Check mapped paths and spec coverage with the selector used by CI.
 set -euo pipefail
 
 if [ "${1:-}" != "--all" ] || [ "$#" -ne 1 ]; then
@@ -9,6 +9,14 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+MAPPED_PATHS=$(jq -r '[.allTestPaths[], .alwaysRunTests[], (.mappings[].testPaths[])] | unique[]' "$SCRIPT_DIR/e2e-test-mapping.json")
+while IFS= read -r path; do
+    if [ ! -e "$REPO_ROOT/src/test/playwright/$path" ]; then
+        echo "Mapped E2E path does not exist: $path" >&2
+        exit 1
+    fi
+done <<< "$MAPPED_PATHS"
+
 TMP_REPO="$(mktemp -d)"
 trap 'rm -rf "$TMP_REPO"' EXIT
 
@@ -27,6 +35,7 @@ done
     git init -q
     git config user.name 'E2E coverage check'
     git config user.email 'e2e-coverage@example.invalid'
+    git config commit.gpgsign false
     git add .
     git commit -qm base
     git branch base

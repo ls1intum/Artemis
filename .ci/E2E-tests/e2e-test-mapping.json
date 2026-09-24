@@ -51,7 +51,12 @@
         },
         "communication": {
             "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/communication/", "src/main/webapp/app/communication/"],
-            "testPaths": ["e2e/course/CourseMessages.spec.ts"]
+            "testPaths": [
+                "e2e/course/CourseMessageInteractions.spec.ts",
+                "e2e/course/CourseDirectMessages.spec.ts",
+                "e2e/course/CourseGroupChatMessages.spec.ts",
+                "e2e/course/CourseChannelMessages.spec.ts"
+            ]
         },
         "exercise": {
             "sourcePaths": ["src/main/java/de/tum/cit/aet/artemis/exercise/", "src/main/webapp/app/exercise/"],

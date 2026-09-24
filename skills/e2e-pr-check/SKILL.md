@@ -37,6 +37,10 @@ Two things about the input:
 - **Use the pull request's actual base.** The base is the first argument. `origin/develop` is only
   correct for a pull request that targets `develop`.
 
+When adding, moving, or mapping a spec, run `.ci/E2E-tests/verify-test-determination.sh --all`.
+It checks that mapped paths exist and every spec reaches a phase. It does not prove that a spec
+is mapped to the right source module; review `testPaths` for that.
+
 ## Step 2: choose the runner
 
 Default to the single-node runner. It is faster and it is what most changes need.

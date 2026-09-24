@@ -262,9 +262,8 @@ if [ "$ONLY_PLAYWRIGHT_TEST_CHANGES" = "true" ] && [ "$PLAYWRIGHT_INFRA_CHANGE" 
 fi
 
 # Determine remaining tests (all tests minus relevant tests)
-# When a relevant test is a child of an all-test path (e.g., relevant=e2e/exercise/quiz-exercise/
-# and all-test=e2e/exercise/), we expand the parent into its direct children and only exclude
-# the ones already covered by Phase 1.
+# When a relevant test is inside an all-test directory, expand that directory to specs so
+# Phase 2 excludes exactly the specs covered by Phase 1.
 REMAINING_TESTS=()
 
 if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
@@ -291,17 +290,10 @@ if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
         fi
 
         if [ "$HAS_PARTIAL_OVERLAP" = "true" ]; then
-            # Expand this parent directory into its direct children, excluding those covered by Phase 1
+            # Expand the parent to specs, excluding those covered by Phase 1.
             local_dir="$REPO_ROOT/src/test/playwright/$test_path"
             if [ -d "$local_dir" ]; then
-                while IFS= read -r child; do
-                    [ -z "$child" ] && continue
-                    if [ -d "$REPO_ROOT/src/test/playwright/$child" ]; then
-                        child_path="$child/"
-                    else
-                        child_path="$child"
-                    fi
-                    # Check if this child is covered by any relevant test
+                while IFS= read -r child_path; do
                     CHILD_COVERED=false
                     for relevant in "${RELEVANT_TESTS[@]}"; do
                         if [ "$child_path" = "$relevant" ] || [[ "$child_path" == "$relevant"* ]]; then
@@ -312,7 +304,7 @@ if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
                     if [ "$CHILD_COVERED" = "false" ]; then
                         REMAINING_TESTS+=("$child_path")
                     fi
-                done < <(cd "$REPO_ROOT/src/test/playwright" && find "$test_path" -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
+                done < <(cd "$REPO_ROOT/src/test/playwright" && find "$test_path" -name '*.spec.ts' -print)
             fi
         else
             REMAINING_TESTS+=("$test_path")

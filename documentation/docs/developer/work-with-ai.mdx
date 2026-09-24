@@ -92,7 +92,7 @@ Agents can also select skills automatically from their descriptions.
 ## Checking skill behavior
 
 Use a fresh agent session after changing shared instructions. In Claude Code, inspect `/memory`
-to confirm `AGENTS.md` is loaded. In Codex, ask which repository instructions and skills are
+or `/context` to confirm that `CLAUDE.md` loaded and imported `AGENTS.md`. In Codex, ask which repository instructions and skills are
 available. When testing edits to a skill, confirm the agent reads this checkout rather than an
 older installed copy; `claude --plugin-dir .` loads the working plugin directly.
 
