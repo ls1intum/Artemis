@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.aiworker.service.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,9 +24,17 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerCapacityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
 class WorkerTransportTest {
+
+    @Test
+    void constructionDoesNotRequireAnAvailableDistributedProvider() {
+        DistributedDataProvider unavailableProvider = mock(DistributedDataProvider.class);
+        new WorkerTransport(unavailableProvider, new WorkerMessageCodecApi());
+        verifyNoInteractions(unavailableProvider);
+    }
 
     private final LocalDataProviderService provider = new LocalDataProviderService();
 
