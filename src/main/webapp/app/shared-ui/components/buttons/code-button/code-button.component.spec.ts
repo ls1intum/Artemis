@@ -377,9 +377,9 @@ describe('CodeButtonComponent', () => {
             const warningNudge = fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'));
             expect(warningNudge).not.toBeNull();
 
-            const tokenLink = warningNudge.query(By.css('a'));
-            expect(tokenLink).not.toBeNull();
-            tokenLink.nativeElement.click();
+            const switchButton = warningNudge.query(By.css('[data-testid="switch-to-token-button"]'));
+            expect(switchButton).not.toBeNull();
+            switchButton.nativeElement.click();
             fixture.detectChanges();
 
             expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);

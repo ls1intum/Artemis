@@ -17,7 +17,7 @@ import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-sv
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router, RouterLink } from '@angular/router';
@@ -51,6 +51,7 @@ export enum RepositoryAuthenticationMethod {
         ExerciseActionButtonComponent,
         FeatureToggleDirective,
         NgbPopover,
+        NgbTooltip,
         TranslateDirective,
         NgbDropdown,
         NgbDropdownToggle,
