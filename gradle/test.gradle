@@ -36,7 +36,10 @@ tasks.withType(Test).configureEach {
     // timezone (SET TIME ZONE 'UTC'), this ensures consistent timestamp handling across H2
     // and PostgreSQL.
     jvmArgs += "-Duser.timezone=UTC"
-    // The embedded Artemis broker reloads its journal in worker transport tests on Java 25.
+    // Netty 4.2 disables Unsafe by default on Java 25. The embedded Artemis broker's restart test
+    // cannot reconnect with that default. Set this before Netty loads; a per-test toggle depends on
+    // which test first initialized Netty in the shared JVM.
+    // https://netty.io/4.2/xref/io/netty/util/internal/PlatformDependent0.html
     systemProperty 'io.netty.noUnsafe', 'false'
 
     // Pass weaviate server version to integration tests

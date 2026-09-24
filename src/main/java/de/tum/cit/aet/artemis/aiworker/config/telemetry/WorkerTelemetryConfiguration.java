@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.config.telemetry;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +12,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /** Content export is an explicit worker-side opt-in, independent of the core server. */
 @Configuration(proxyBeanMethods = false)
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @Lazy
 public class WorkerTelemetryConfiguration {
 

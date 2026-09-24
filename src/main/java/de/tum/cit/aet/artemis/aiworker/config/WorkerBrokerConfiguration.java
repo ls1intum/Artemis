@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +15,7 @@ import org.springframework.context.annotation.Profile;
 
 /** Requires verified TLS and scoped credentials before any worker broker connection is attempted. */
 @Configuration(proxyBeanMethods = false)
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @Lazy(false)
 public class WorkerBrokerConfiguration {
 

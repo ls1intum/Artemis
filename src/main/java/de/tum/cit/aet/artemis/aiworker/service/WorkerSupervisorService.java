@@ -1,9 +1,17 @@
 package de.tum.cit.aet.artemis.aiworker.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -42,7 +50,7 @@ import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
 
 /** Bounded, independently cancellable executions per worker. The message listener never waits for a model/tool call to complete. */
 @Service
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @Lazy(false)
 public class WorkerSupervisorService implements AutoCloseable {
 
@@ -80,15 +88,15 @@ public class WorkerSupervisorService implements AutoCloseable {
 
     private final Map<UUID, ActiveExecution> active = new HashMap<>();
 
-    private final Map<UUID, WorkerEventDTO> pendingTerminals = new java.util.LinkedHashMap<>();
+    private final Map<UUID, WorkerEventDTO> pendingTerminals = new LinkedHashMap<>();
 
-    private final Map<UUID, WorkerEventDTO> pendingCheckpoints = new java.util.LinkedHashMap<>();
+    private final Map<UUID, WorkerEventDTO> pendingCheckpoints = new LinkedHashMap<>();
 
-    private final Map<UUID, WorkerEventDTO> pendingRejections = new java.util.LinkedHashMap<>();
+    private final Map<UUID, WorkerEventDTO> pendingRejections = new LinkedHashMap<>();
 
-    private final java.util.Deque<WorkerEventDTO> pendingAccounting = new java.util.ArrayDeque<>();
+    private final Deque<WorkerEventDTO> pendingAccounting = new ArrayDeque<>();
 
-    private final java.util.Set<UUID> publishingPending = new java.util.HashSet<>();
+    private final Set<UUID> publishingPending = new HashSet<>();
 
     private boolean draining;
 
@@ -409,7 +417,7 @@ public class WorkerSupervisorService implements AutoCloseable {
     }
 
     private synchronized List<ExecutionIdentityDTO> occupiedExecutions() {
-        var identities = new java.util.ArrayList<ExecutionIdentityDTO>();
+        var identities = new ArrayList<ExecutionIdentityDTO>();
         active.values().forEach(value -> identities.add(value.assignment.identity()));
         pendingTerminals.values().forEach(value -> identities.add(value.identity()));
         return identities;

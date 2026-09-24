@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.time.Duration;
 
 import org.springframework.context.annotation.Bean;
@@ -13,8 +15,8 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
 /** Docker credentials remain on the supervisor and are never added to a sandbox environment. */
-@Configuration
-@Profile("aiworker")
+@Configuration(proxyBeanMethods = false)
+@Profile(PROFILE_AIWORKER)
 @Lazy
 public class DockerConfiguration {
 

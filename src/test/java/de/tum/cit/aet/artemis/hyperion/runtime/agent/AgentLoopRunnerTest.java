@@ -137,6 +137,30 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void truncatedTextResponseIsNotReportedAsComplete() {
+        ChatModel model = mock(ChatModel.class);
+        var truncated = new ChatResponse(List.of(new Generation(new AssistantMessage("partial answer"), ChatGenerationMetadata.builder().finishReason("length").build())));
+        when(model.call(any(Prompt.class))).thenReturn(truncated);
+
+        var session = runner(model).runTextSession("system", null, "brief", 1, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(model).call(any(Prompt.class));
+    }
+
+    @Test
+    void unavailableToolNameIsNotSentToInstructorProgress() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(calls("bad", "private-instructor-text"), text("finished"));
+        List<String> progress = new ArrayList<>();
+
+        var result = runner(model).run("system", "brief", new RecordingTools(), 4, () -> false, null, progress::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(progress).anyMatch(message -> message.contains("unavailable action")).noneMatch(message -> message.contains("private-instructor-text"));
+    }
+
+    @Test
     void turnBudgetStopsRepeatedToolsWithoutFabricatingCompletion() {
         ChatModel model = mock(ChatModel.class);
         when(model.call(any(Prompt.class))).thenReturn(calls("edit", "write"));
