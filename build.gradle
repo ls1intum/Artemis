@@ -881,9 +881,8 @@ tasks.named("dependencyUpdates").configure {
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp
 
-// Standalone AI Worker modules have their own classpaths; root server tests cannot cover them.
-tasks.register('aiWorkerCheck') {
+// Isolated modules have their own classpaths; root server tests cannot cover them.
+tasks.register('isolatedModuleCheck') {
     group = 'verification'
-    description = 'Runs tests, architecture and style checks for standalone AI Worker and Hyperion modules.'
-    dependsOn subprojects.findAll { it.path == ':hyperion' || it.path == ':aiworker' || it.path.startsWith(':aiworker:') }.collect { "${it.path}:check" }
+    description = 'Runs checks for all isolated modules.'
 }
