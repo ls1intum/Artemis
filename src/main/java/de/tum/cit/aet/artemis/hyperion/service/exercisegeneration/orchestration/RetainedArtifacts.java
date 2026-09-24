@@ -141,8 +141,7 @@ final class RetainedArtifacts {
     /** A screen that cannot run is not a screen that passed, so an assessment failure counts as unsafe. */
     private static boolean isSafe(String logicalPath, String content) {
         try {
-            HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, content.getBytes(StandardCharsets.UTF_8),
-                    HyperionSecretMaterialPolicy.Origin.PERSISTENCE);
+            HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, content.getBytes(StandardCharsets.UTF_8));
             if (!assessment.isSafe()) {
                 log.info("Withholding {} from the retained generation candidate: {}", assessment.safePath(), SECRET_MATERIAL_POLICY.blockedObservation(assessment));
             }
