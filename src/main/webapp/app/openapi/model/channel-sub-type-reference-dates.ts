@@ -10,7 +10,7 @@
 
 
 export interface ChannelSubTypeReferenceDates {
-    channelId?: number;
+    channelId: number;
     startDate?: string;
     endDate?: string;
 }

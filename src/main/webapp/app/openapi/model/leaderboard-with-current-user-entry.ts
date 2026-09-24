@@ -12,7 +12,7 @@ import type { LeaderboardEntry } from './leaderboard-entry';
 
 export interface LeaderboardWithCurrentUserEntry {
     leaderboardEntries: Array<LeaderboardEntry>;
-    hasUserSetSettings?: boolean;
+    hasUserSetSettings: boolean;
     currentUserEntry: LeaderboardEntry;
     currentTime: string;
 }

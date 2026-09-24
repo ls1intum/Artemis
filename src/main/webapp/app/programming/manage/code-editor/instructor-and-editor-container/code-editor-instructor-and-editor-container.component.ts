@@ -622,10 +622,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private createCodeGenerationRequest(repositoryType: RepositoryType, initialAutoGeneration = false): CodeGenerationRequest {
         // Built with the client RepositoryType enum so the whole construction is type-checked; see CodeGenerationRequestPayload.
-        const request: CodeGenerationRequestPayload = { repositoryType };
-        if (initialAutoGeneration) {
-            request.initialAutoGeneration = true;
-        }
+        const request: CodeGenerationRequestPayload = { repositoryType, initialAutoGeneration };
         const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
             repositoryType,
             repositoryType === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
