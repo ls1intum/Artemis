@@ -57,7 +57,7 @@ final class AgentToolProgress {
         if (path == null) {
             return null;
         }
-        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(path, new byte[0], HyperionSecretMaterialPolicy.Origin.TOOL_OBSERVATION);
+        HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(path, new byte[0]);
         if (!assessment.isSafe()) {
             return assessment.safePath();
         }
