@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import jakarta.persistence.EntityManagerFactory;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.model.ChatModel;
@@ -14,13 +16,20 @@ import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.boot.web.server.servlet.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.DispatcherServlet;
 
 import com.github.dockerjava.api.DockerClient;
 
+import de.tum.cit.aet.artemis.aiworker.api.AiWorkerApi;
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerApplication;
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
+import de.tum.cit.aet.artemis.aiworker.service.WorkerClientService;
+import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerCommandListener;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
@@ -48,16 +57,21 @@ class WorkerContextTest {
                     assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
                             .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel");
                     assertThat(context.getBean(WorkerSettings.class).maxConcurrentExecutions()).isEqualTo(4);
+                    assertThat(context.getBeanNamesForAnnotation(Controller.class)).isEmpty();
+                    assertThat(context.getBeanNamesForAnnotation(RestController.class)).isEmpty();
+                    assertThat(context).doesNotHaveBean(DispatcherServlet.class).doesNotHaveBean(AiWorkerApi.class).doesNotHaveBean(WorkerClientService.class)
+                            .doesNotHaveBean(WorkerRegistryService.class).doesNotHaveBean(ServletWebServerFactory.class);
                     for (String name : context.getBeanDefinitionNames()) {
                         Class<?> type = context.getType(name);
                         if (type != null) {
                             for (String forbidden : List.of("de.tum.cit.aet.artemis.buildagent.", "de.tum.cit.aet.artemis.localci.", "de.tum.cit.aet.artemis.localvc.",
-                                    "de.tum.cit.aet.artemis.core.web.", "org.hibernate.")) {
+                                    "de.tum.cit.aet.artemis.core.web.", "de.tum.cit.aet.artemis.hyperion.web.", "de.tum.cit.aet.artemis.programming.",
+                                    "de.tum.cit.aet.artemis.exercise.", "de.tum.cit.aet.artemis.exam.", "org.hibernate.")) {
                                 assertThat(type.getName()).doesNotStartWith(forbidden);
                             }
                         }
                     }
-                    assertThat(context).doesNotHaveBean(javax.sql.DataSource.class);
+                    assertThat(context).doesNotHaveBean(javax.sql.DataSource.class).doesNotHaveBean(EntityManagerFactory.class);
                 });
     }
 
