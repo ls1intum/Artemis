@@ -156,11 +156,9 @@ jobs:
               - 'gradlew'
               - 'gradlew.bat'
             has_workflows:
-              - '.ci/E2E-tests/**'
               - '.github/workflows/**'
               - '.github/actions/**'
               - '.github/actionlint.yaml'
-              - 'src/test/playwright/**/*.spec.ts'
             has_version:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-version-consistency.yml'

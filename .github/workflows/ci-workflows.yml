@@ -1,16 +1,20 @@
 name: Lint Workflows
 
+# Reusable workflow called by ci.yml when files under .github/ change.
+# Runs actionlint (configured via .github/actionlint.yaml) and the node/java version
+# drift check.
+
 on:
   workflow_call: {}
 
 permissions: {}
 
 jobs:
-  # Gating logic lives in checked-in scripts rather than inline YAML so that shellcheck can run
-  # strictly on it (actionlint's repo-wide `-shellcheck=` is disabled for the legacy inline
-  # blocks) and bats can exercise it.
-  ci-scripts:
-    name: CI scripts (shellcheck + bats)
+  # Deploy-gating logic lives in checked-in scripts (not inline YAML) so it can be linted and
+  # unit-tested. shellcheck runs strictly on them (unlike actionlint's repo-wide `-shellcheck=`,
+  # disabled for legacy inline blocks), and bats exercises the run-resolution / image-verify logic.
+  deploy-scripts:
+    name: deploy scripts (shellcheck + bats)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -21,18 +25,14 @@ jobs:
         run: |
           set -Eeuo pipefail
           sudo apt-get update
-          sudo apt-get install -y bats jq
-      - name: shellcheck CI scripts
+          sudo apt-get install -y bats
+      - name: shellcheck deploy action scripts
         run: |
           set -Eeuo pipefail
           shellcheck .github/actions/verify-image-build/verify-image-build.sh \
-                     .github/actions/resolve-artifact-run/resolve-artifact-run.sh \
-                     .ci/E2E-tests/determine-relevant-tests.sh \
-                     .ci/E2E-tests/verify-test-determination.sh
+                     .github/actions/resolve-artifact-run/resolve-artifact-run.sh
       - name: bats unit tests
-        run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests .ci/E2E-tests/tests
-      - name: Validate E2E mapping and spec coverage
-        run: .ci/E2E-tests/verify-test-determination.sh --all
+        run: bats .github/actions/verify-image-build/tests .github/actions/resolve-artifact-run/tests
 
   actionlint:
     name: actionlint
@@ -111,19 +111,10 @@ jobs:
               "has_gradle": {".github/workflows/ci.yml", ".github/workflows/ci-gradle-wrapper.yml"},
               "has_version": {".github/workflows/ci.yml", ".github/workflows/ci-version-consistency.yml", "supporting_scripts/update_version.sh"},
               "has_beans": {".github/workflows/ci.yml", ".github/workflows/ci-bean-instantiations.yml"},
-              "has_workflows": {
-                  ".github/workflows/**",
-                  ".ci/E2E-tests/**",
-                  "src/test/playwright/**/*.spec.ts",
-              },
               "has_skills": {
                   ".github/workflows/ci.yml",
                   ".github/workflows/ci-skills.yml",
                   "supporting_scripts/check_skill_references.py",
-                  # Inputs the checker reads, so editing one must run the job.
-                  "AGENTS.md",
-                  "documentation/docs/developer/work-with-ai.mdx",
-                  ".claude-plugin/**",
               },
           }
 

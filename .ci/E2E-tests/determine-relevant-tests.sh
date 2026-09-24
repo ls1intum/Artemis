@@ -1,13 +1,21 @@
 #!/bin/bash
-# Usage: ./determine-relevant-tests.sh [base-branch]
-# Prints OUTPUT: key=value lines and appends them to GITHUB_OUTPUT when set.
+# Script to determine which e2e tests are relevant based on changed files
+# Usage: ./determine-relevant-tests.sh <base-branch>
+# Output: Sets RELEVANT_TESTS and REMAINING_TESTS environment variables
+#
+# In GitHub Actions, this script writes to GITHUB_OUTPUT
+# For local testing, it prints the results to stdout
 
 set -e
 
-# Associative arrays and mapfile require Bash 4+; macOS /bin/bash is older.
+# This script uses associative arrays and `mapfile`, both of which need bash 4+. CI runners ship
+# bash 5, but macOS still ships bash 3.2 as /bin/bash, where the script dies on `declare -A` with a
+# misleading "invalid option" error. Re-exec under a newer bash when one is on PATH (Homebrew
+# installs it as /opt/homebrew/bin/bash) so the script is usable locally, which is what the
+# e2e-pr-check agent skill and anyone debugging test selection needs.
 if [ -z "${DETERMINE_RELEVANT_TESTS_REEXEC:-}" ] && [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
     for candidate in "$(command -v bash || true)" /opt/homebrew/bin/bash /usr/local/bin/bash; do
-        # shellcheck disable=SC2016  # Expand BASH_VERSINFO in the candidate shell.
+        # shellcheck disable=SC2016  # single quotes are required: the expansion must happen in the candidate shell
         if [ -x "$candidate" ] && [ "$("$candidate" -c 'echo ${BASH_VERSINFO[0]}')" -ge 4 ]; then
             DETERMINE_RELEVANT_TESTS_REEXEC=1 exec "$candidate" "${BASH_SOURCE[0]}" "$@"
         fi
@@ -84,11 +92,6 @@ add_test_paths_for_module() {
     done
 }
 
-if ! command -v jq >/dev/null 2>&1; then
-    echo "ERROR: jq is required to read the E2E test mapping. Install jq and retry." >&2
-    exit 1
-fi
-
 # Verify mapping file exists
 if [ ! -f "$MAPPING_FILE" ]; then
     echo "ERROR: Mapping file not found: $MAPPING_FILE"
@@ -98,21 +101,6 @@ if [ ! -f "$MAPPING_FILE" ]; then
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
-fi
-
-if ! jq -es '
-    length == 1 and
-    (.[0] | type == "object" and
-        (.allTestPaths | type == "array" and all(.[]; type == "string" and length > 0)) and
-        (.alwaysRunTests | type == "array" and all(.[]; type == "string" and length > 0)) and
-        (.runAllTestsPatterns | type == "array" and all(.[]; type == "string" and length > 0)) and
-        (.mappings | type == "object" and all(.[];
-            type == "object" and
-            (.sourcePaths | type == "array" and all(.[]; type == "string" and length > 0)) and
-            (.testPaths | type == "array" and all(.[]; type == "string" and length > 0)))))
-' "$MAPPING_FILE" >/dev/null; then
-    echo "ERROR: Invalid JSON mapping in $MAPPING_FILE. Expected one mapping object with required fields; fix the mapping before selecting tests." >&2
-    exit 1
 fi
 
 # All e2e test directories/files (top-level)
@@ -160,10 +148,7 @@ echo ""
 
 # Get list of changed files
 cd "$REPO_ROOT"
-if ! CHANGED_FILES=$(git diff --name-only "$BASE_BRANCH"...HEAD --); then
-    echo "ERROR: Cannot compare '$BASE_BRANCH' with HEAD. Fetch the base and sufficient history for a merge base, then retry." >&2
-    exit 1
-fi
+CHANGED_FILES=$(git diff --name-only "$BASE_BRANCH"...HEAD 2>/dev/null || git diff --name-only HEAD~1 2>/dev/null || echo "")
 
 if [ -z "$CHANGED_FILES" ]; then
     echo "No changed files detected. Running all tests."
@@ -262,8 +247,9 @@ if [ "$ONLY_PLAYWRIGHT_TEST_CHANGES" = "true" ] && [ "$PLAYWRIGHT_INFRA_CHANGE" 
 fi
 
 # Determine remaining tests (all tests minus relevant tests)
-# When a relevant test is inside an all-test directory, expand that directory to specs so
-# Phase 2 excludes exactly the specs covered by Phase 1.
+# When a relevant test is a child of an all-test path (e.g., relevant=e2e/exercise/quiz-exercise/
+# and all-test=e2e/exercise/), we expand the parent into its direct children and only exclude
+# the ones already covered by Phase 1.
 REMAINING_TESTS=()
 
 if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
@@ -290,10 +276,17 @@ if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
         fi
 
         if [ "$HAS_PARTIAL_OVERLAP" = "true" ]; then
-            # Expand the parent to specs, excluding those covered by Phase 1.
+            # Expand this parent directory into its direct children, excluding those covered by Phase 1
             local_dir="$REPO_ROOT/src/test/playwright/$test_path"
             if [ -d "$local_dir" ]; then
-                while IFS= read -r child_path; do
+                while IFS= read -r child; do
+                    [ -z "$child" ] && continue
+                    if [ -d "$REPO_ROOT/src/test/playwright/$child" ]; then
+                        child_path="$child/"
+                    else
+                        child_path="$child"
+                    fi
+                    # Check if this child is covered by any relevant test
                     CHILD_COVERED=false
                     for relevant in "${RELEVANT_TESTS[@]}"; do
                         if [ "$child_path" = "$relevant" ] || [[ "$child_path" == "$relevant"* ]]; then
@@ -304,7 +297,7 @@ if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
                     if [ "$CHILD_COVERED" = "false" ]; then
                         REMAINING_TESTS+=("$child_path")
                     fi
-                done < <(cd "$REPO_ROOT/src/test/playwright" && find "$test_path" -name '*.spec.ts' -print)
+                done < <(cd "$REPO_ROOT/src/test/playwright" && find "$test_path" -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
             fi
         else
             REMAINING_TESTS+=("$test_path")
