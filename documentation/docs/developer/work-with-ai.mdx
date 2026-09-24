@@ -11,11 +11,15 @@ repository-specific procedures for testing, CI, migrations and development.
 ## Shared instructions and task-specific skills
 
 [`AGENTS.md`](https://github.com/ls1intum/Artemis/blob/develop/AGENTS.md) contains shared rules
-and links to skills. [Claude Code](https://code.claude.com/docs/en/memory#agents-md) and
-[Codex](https://developers.openai.com/codex/guides/agents-md) read `AGENTS.md` directly.
-In Claude Code, use version 2.1.281 or later and keep the default **Project instructions**
-setting. A `CLAUDE.md` or `CLAUDE.local.md` in the project path takes precedence by default;
-use `/memory` to check which file Claude loaded.
+and links to skills. [Codex](https://developers.openai.com/codex/guides/agents-md) reads it directly.
+`CLAUDE.md` contains only `@AGENTS.md`, so Claude Code loads the same rules through its
+[documented import](https://code.claude.com/docs/en/memory#share-one-file-with-other-coding-tools).
+Do not copy the rules into `CLAUDE.md` or import the skills there.
+
+[Claude Code can also read `AGENTS.md` directly](https://code.claude.com/docs/en/memory#agents-md),
+but versions before 2.1.281 could silently skip it when telemetry was disabled or the session
+used Bedrock. The import keeps the shared rules available in those sessions without requiring
+telemetry. In Claude Code, use `/memory` or `/context` to check which instruction file loaded.
 
 Skill discovery exposes names and descriptions; the agent reads a selected `SKILL.md` and its
 references as needed. Ordinary Markdown links do not install skills or import their contents.
