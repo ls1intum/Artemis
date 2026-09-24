@@ -65,3 +65,22 @@ tasks.named('verifyRuntimeBoundary') {
         }
     }
 }
+
+// Inspect the shipped archive as well as the compile/runtime dependency boundaries.
+tasks.register('verifyWorkerDistribution') {
+    dependsOn bootJar
+    doLast {
+        new java.util.zip.ZipFile(tasks.bootJar.archiveFile.get().asFile).withCloseable { archive ->
+            def forbidden = archive.entries().findAll {
+                it.name.contains('/hyperion/') || it.name ==~ /BOOT-INF\/lib\/(hyperion|.*openai.*|org.eclipse.jgit|qdox|plantuml).*\.jar/
+            }
+            if (!forbidden.empty) {
+                throw new GradleException("Workload content in generic worker archive: ${forbidden*.name}")
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'verifyWorkerDistribution'
+}
