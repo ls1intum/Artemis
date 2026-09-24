@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -80,7 +83,7 @@ final class RetainedArtifacts {
             retained.add(new ExerciseGenerationRetainedFileDTO(candidate.getKey().substring(0, separator), candidate.getKey().substring(separator + 1), content));
         }
         String statement = truncate(problemStatement, MAX_PROBLEM_STATEMENT_CHARS);
-        dropped = dropped || !java.util.Objects.equals(problemStatement, statement);
+        dropped = dropped || !Objects.equals(problemStatement, statement);
         return new ExerciseGenerationRetainedArtifactsDTO(jobId, dropped ? ExerciseGenerationArtifactCompleteness.PARTIAL : ExerciseGenerationArtifactCompleteness.COMPLETE,
                 statement, specDocument, retained);
     }
@@ -106,9 +109,9 @@ final class RetainedArtifacts {
         if (repository == null) {
             return current == null ? new ExerciseGenerationRetainedArtifactsDTO(jobId, ExerciseGenerationArtifactCompleteness.COMPLETE, null, null, List.of()) : current;
         }
-        Map<RepositoryType, Map<String, String>> files = new java.util.EnumMap<>(RepositoryType.class);
+        Map<RepositoryType, Map<String, String>> files = new EnumMap<>(RepositoryType.class);
         for (RepositoryType type : RETAINED_REPOSITORIES) {
-            files.put(type, new java.util.HashMap<>());
+            files.put(type, new HashMap<>());
         }
         if (current != null) {
             for (ExerciseGenerationRetainedFileDTO file : current.files()) {
@@ -129,10 +132,10 @@ final class RetainedArtifacts {
 
     private static ExerciseGenerationRetainedArtifactsDTO copyWithDocuments(String jobId, @Nullable ExerciseGenerationRetainedArtifactsDTO current,
             @Nullable String problemStatement, @Nullable String specDocument) {
-        Map<RepositoryType, Map<String, String>> files = new java.util.EnumMap<>(RepositoryType.class);
+        Map<RepositoryType, Map<String, String>> files = new EnumMap<>(RepositoryType.class);
         if (current != null) {
             for (ExerciseGenerationRetainedFileDTO file : current.files()) {
-                files.computeIfAbsent(RepositoryType.valueOf(file.repo().toUpperCase(Locale.ROOT)), ignored -> new java.util.HashMap<>()).put(file.path(), file.content());
+                files.computeIfAbsent(RepositoryType.valueOf(file.repo().toUpperCase(Locale.ROOT)), ignored -> new HashMap<>()).put(file.path(), file.content());
             }
         }
         return of(jobId, files, problemStatement, specDocument);

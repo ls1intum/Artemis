@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -75,7 +76,7 @@ public class GenerationExternalMutationService {
                 throw new ConflictException("Exercise authoring or recovery is running; wait before starting the exercise.", "hyperionExerciseGeneration",
                         "exerciseGenerationRunning");
             }
-            var owners = new java.util.HashMap<String, String>();
+            var owners = new HashMap<String, String>();
             if (current != null) {
                 owners.putAll(current.participationOwners());
             }
@@ -109,7 +110,7 @@ public class GenerationExternalMutationService {
             if (current == null || current.participationOwners() == null || !current.participationOwners().containsKey(token)) {
                 return;
             }
-            var owners = new java.util.HashMap<>(current.participationOwners());
+            var owners = new HashMap<>(current.participationOwners());
             owners.remove(token);
             if (owners.isEmpty()) {
                 jobs.remove(key, current);
