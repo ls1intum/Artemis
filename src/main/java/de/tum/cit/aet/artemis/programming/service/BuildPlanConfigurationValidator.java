@@ -46,25 +46,13 @@ public final class BuildPlanConfigurationValidator {
 
     /**
      * Validates that a build plan can be executed, i.e. that it defines at least one container, that the container names
-     * are unique, and that every container has a usable Docker image, a positive timeout if it sets one, and valid build phases. A legacy build plan that carries a flat list of
-     * phases
-     * is validated as the single container it is normalized into.
-     *
-     * @param buildPlan the build plan to validate
-     * @throws BadRequestAlertException if the build plan violates any of the rules above
-     */
-    public static void validate(BuildPlanPhasesDTO buildPlan) {
-        validate(buildPlan, 0);
-    }
-
-    /**
-     * Validates a build plan as {@link #validate(BuildPlanPhasesDTO)} does and, in addition, that no container sets a
-     * timeout above the exercise's: a container timeout tightens the exercise timeout, which has to cover the slowest
-     * container, and must not extend it.
+     * are unique, and that every container has a usable Docker image, valid build phases and, if it sets one, a timeout
+     * that is positive and within the exercise's. A legacy build plan that carries a flat list of phases is validated as
+     * the single container it is normalized into.
      *
      * @param buildPlan              the build plan to validate
      * @param exerciseTimeoutSeconds the timeout of the exercise in seconds, or 0 if the exercise uses the instance default
-     * @throws BadRequestAlertException if the build plan violates any of the rules
+     * @throws BadRequestAlertException if the build plan violates any of the rules above
      */
     public static void validate(BuildPlanPhasesDTO buildPlan, int exerciseTimeoutSeconds) {
         final List<BuildContainerDTO> containers = buildPlan.effectiveContainers();

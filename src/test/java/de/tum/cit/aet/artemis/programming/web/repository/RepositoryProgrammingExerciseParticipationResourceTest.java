@@ -485,7 +485,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         participation.setSubmissions(Set.of(submission));
         var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "compilation failed"));
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
-        when(buildLogService.getBuildLogsOfResult(submission, 90L)).thenReturn(logs);
+        when(buildLogService.getBuildLogsToShow(submission, 90L)).thenReturn(logs);
 
         assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.empty()).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }
@@ -498,7 +498,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         var log = new BuildLogEntry(java.time.ZonedDateTime.now(), "student container terminated");
         log.setContainerName("student_tests");
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
-        when(buildLogService.getBuildLogsOfResult(submission, 90L)).thenReturn(List.of(log));
+        when(buildLogService.getBuildLogsToShow(submission, 90L)).thenReturn(List.of(log));
 
         var body = resource.getBuildLogs(PARTICIPATION_ID, Optional.empty()).getBody();
         assertThat(body).hasSize(1);
@@ -514,10 +514,9 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         var log = new BuildLogEntry(java.time.ZonedDateTime.now(), "the failed build's line");
         log.setResultId(90L);
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
-        when(buildLogService.getBuildLogsOfResult(submission, 90L)).thenReturn(List.of(log));
+        when(buildLogService.getBuildLogsToShow(submission, 90L)).thenReturn(List.of(log));
 
         assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(90L)).getBody()).containsExactly(BuildLogEntryDTO.of(log));
-        verify(buildLogService, never()).getLatestBuildLogs(any());
     }
 
     @Test
@@ -543,7 +542,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         var logs = List.of(new BuildLogEntry(java.time.ZonedDateTime.now(), "an older failure"));
         when(participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingSubmissionRepository.findByResultIdElseThrow(80L)).thenReturn(earlier);
-        when(buildLogService.getBuildLogsOfResult(earlier, 80L)).thenReturn(logs);
+        when(buildLogService.getBuildLogsToShow(earlier, 80L)).thenReturn(logs);
 
         assertThat(resource.getBuildLogs(PARTICIPATION_ID, Optional.of(80L)).getBody()).isEqualTo(logs.stream().map(BuildLogEntryDTO::of).toList());
     }

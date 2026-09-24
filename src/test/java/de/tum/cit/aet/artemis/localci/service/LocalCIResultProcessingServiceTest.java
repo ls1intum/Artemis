@@ -582,7 +582,7 @@ class LocalCIResultProcessingServiceTest {
         aggregatedResult.setId(7L);
         when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
-        when(buildJobRepository.countByBuildGroupIdAndBuildStatusIn(eq("group-1"), any())).thenThrow(new IllegalStateException("the count could not be read"));
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenThrow(new IllegalStateException("the group's jobs could not be read"));
 
         resultProcessingService.processResultAsync();
 
@@ -613,7 +613,8 @@ class LocalCIResultProcessingServiceTest {
         aggregatedResult.setId(7L);
         when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
-        when(buildJobRepository.countByBuildGroupIdAndBuildStatusIn(eq("group-1"), any())).thenReturn(1L);
+        // the recovery records the job without a link, and the group of two is not complete with it alone
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.ERROR, null)));
 
         resultProcessingService.processResultAsync();
 
@@ -642,9 +643,8 @@ class LocalCIResultProcessingServiceTest {
         aggregatedResult.setId(7L);
         when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, false));
-        when(buildJobRepository.countByBuildGroupIdAndBuildStatusIn(eq("group-1"), any())).thenReturn(1L);
-        when(buildJobRepository.existsByBuildGroupIdAndBuildStatusNot("group-1", BuildStatus.SUCCESSFUL)).thenReturn(false);
-        when(buildJobRepository.existsByBuildGroupIdAndResultIsNull("group-1")).thenReturn(false);
+        when(buildJobRepository.findAllByBuildGroupId("group-1"))
+                .thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult)));
         Result draftAssessment = new Result();
         draftAssessment.setId(3L);
         draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -666,12 +666,14 @@ class LocalCIResultProcessingServiceTest {
         when(buildJobRepository.findCompletedBuildGroupsWithResultInProgress(any(), any(ZonedDateTime.class), any(Pageable.class))).thenReturn(List.of("group-1"));
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
         when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(true);
-        when(buildJobRepository.findFirstByBuildGroupIdOrderByIdAsc("group-1")).thenReturn(Optional.of(new BuildJob(anyJobOfTheGroup, BuildStatus.SUCCESSFUL, null)));
-        when(buildJobRepository.countByBuildGroupIdAndBuildStatusIn(eq("group-1"), any())).thenReturn(2L);
-        when(buildJobRepository.findLatestBuildCompletionDateOfBuildGroup("group-1")).thenReturn(Optional.of(completionDate));
-        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(7L));
-        when(buildJobRepository.existsByBuildGroupIdAndBuildStatusNot("group-1", BuildStatus.SUCCESSFUL)).thenReturn(false);
-        when(buildJobRepository.existsByBuildGroupIdAndResultIsNull("group-1")).thenReturn(false);
+        // two finished jobs, both linked to aggregate 7, the second the last to finish
+        Result aggregate = new Result();
+        aggregate.setId(7L);
+        BuildJob firstJob = new BuildJob(anyJobOfTheGroup, BuildStatus.SUCCESSFUL, aggregate);
+        firstJob.setBuildCompletionDate(completionDate.minusSeconds(30));
+        BuildJob lastJob = new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.SUCCESSFUL, aggregate);
+        lastJob.setBuildCompletionDate(completionDate);
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(firstJob, lastJob));
     }
 
     @Test
@@ -743,10 +745,9 @@ class LocalCIResultProcessingServiceTest {
         aggregatedResult.setId(7L);
         when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
                 .thenReturn(new AppendedContainerResult(aggregatedResult, true));
-        when(buildJobRepository.countByBuildGroupIdAndBuildStatusIn(eq("group-1"), any())).thenReturn(1L);
-        when(buildJobRepository.existsByBuildGroupIdAndBuildStatusNot("group-1", BuildStatus.SUCCESSFUL)).thenReturn(false);
-        when(buildJobRepository.existsByBuildGroupIdAndResultIsNull("group-1")).thenReturn(false);
-        when(buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue("group-1")).thenReturn(true);
+        // the job as saved above, read back with the verdict the container recorded on it
+        when(buildJobRepository.findAllByBuildGroupId("group-1"))
+                .thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult, true)));
         Result finalizedResult = new Result();
         finalizedResult.setId(7L);
         finalizedResult.setCompletionDate(ZonedDateTime.now());

@@ -30,7 +30,7 @@ class BuildPlanConfigurationValidatorTest {
 
     private static String errorKeyOf(BuildPlanPhasesDTO buildPlan) {
         try {
-            BuildPlanConfigurationValidator.validate(buildPlan);
+            BuildPlanConfigurationValidator.validate(buildPlan, 0);
         }
         catch (BadRequestAlertException exception) {
             return exception.getErrorKey();
@@ -43,14 +43,14 @@ class BuildPlanConfigurationValidatorTest {
         var plan = planOf(new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(phase("compile"), phase("test"))),
                 new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(phase("compile"))));
 
-        assertThatCode(() -> BuildPlanConfigurationValidator.validate(plan)).doesNotThrowAnyException();
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(plan, 0)).doesNotThrowAnyException();
     }
 
     @Test
     void testAcceptsLegacyBuildPlan() {
         var legacyPlan = new BuildPlanPhasesDTO(List.of(phase("compile")), DOCKER_IMAGE);
 
-        assertThatCode(() -> BuildPlanConfigurationValidator.validate(legacyPlan)).doesNotThrowAnyException();
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(legacyPlan, 0)).doesNotThrowAnyException();
     }
 
     @Test
@@ -90,7 +90,7 @@ class BuildPlanConfigurationValidatorTest {
         // the annotation on the DTO only runs for the build plan endpoint; the exercise update path relies on the validator
         assertThat(errorKeyOf(planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, null, List.of(phase("compile")), 0)))).isEqualTo("invalidBuildContainerTimeout");
         assertThat(errorKeyOf(planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, null, List.of(phase("compile")), -30)))).isEqualTo("invalidBuildContainerTimeout");
-        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, null, List.of(phase("compile")), 90))))
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, null, List.of(phase("compile")), 90)), 0))
                 .doesNotThrowAnyException();
     }
 
@@ -108,7 +108,7 @@ class BuildPlanConfigurationValidatorTest {
     @Test
     void testAcceptsContainerWithoutImage() {
         // null selects the default image of the exercise
-        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(new BuildContainerDTO("tests", null, List.of(phase("compile")))))).doesNotThrowAnyException();
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(new BuildContainerDTO("tests", null, List.of(phase("compile")))), 0)).doesNotThrowAnyException();
     }
 
     @Test
@@ -116,7 +116,7 @@ class BuildPlanConfigurationValidatorTest {
         // an empty selection scopes the container to the assignment repository alone; it is kept on write, see BuildContainerDTO
         var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(), List.of(phase("test")));
 
-        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(container))).doesNotThrowAnyException();
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(planOf(container), 0)).doesNotThrowAnyException();
     }
 
     @Test
@@ -148,7 +148,7 @@ class BuildPlanConfigurationValidatorTest {
         var plan = planOf(new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(phase("compile"))),
                 new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(phase("compile"))));
 
-        assertThatCode(() -> BuildPlanConfigurationValidator.validate(plan)).doesNotThrowAnyException();
+        assertThatCode(() -> BuildPlanConfigurationValidator.validate(plan, 0)).doesNotThrowAnyException();
     }
 
     @Test
@@ -156,7 +156,7 @@ class BuildPlanConfigurationValidatorTest {
         var plan = planOf(new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(phase("compile"))),
                 new BuildContainerDTO("instructor_tests", DOCKER_IMAGE, List.of(phase("test"), phase("test"))));
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> BuildPlanConfigurationValidator.validate(plan)).satisfies(exception -> {
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> BuildPlanConfigurationValidator.validate(plan, 0)).satisfies(exception -> {
             var properties = exception.getBody().getProperties();
             assertThat(properties).isNotNull();
             // the client resolves the alert text from "message" and interpolates "params" into it, so both are required

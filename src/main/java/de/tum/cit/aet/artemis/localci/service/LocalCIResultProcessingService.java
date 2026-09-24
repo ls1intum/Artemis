@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -416,11 +418,13 @@ public class LocalCIResultProcessingService {
             if (!buildJobRepository.existsResultInProgressOfBuildGroup(buildGroupId)) {
                 return false;
             }
-            Optional<BuildJob> anyJob = buildJobRepository.findFirstByBuildGroupIdOrderByIdAsc(buildGroupId);
-            if (anyJob.isEmpty()) {
+            List<BuildJob> jobs = buildJobRepository.findAllByBuildGroupId(buildGroupId);
+            if (jobs.isEmpty()) {
                 return false;
             }
-            BuildJob buildJob = anyJob.get();
+            // every job of a group belongs to the same participation and was triggered by the same push, so any one of
+            // them says what the group is a build of
+            BuildJob buildJob = jobs.getFirst();
             Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.getParticipationId());
             if (participationOptional.isEmpty()) {
                 log.warn("Participation with id {} of build group {} has been deleted. The group is not finalized.", buildJob.getParticipationId(), buildGroupId);
@@ -432,9 +436,10 @@ public class LocalCIResultProcessingService {
             }
             // Every job of the group has finished (that is what the query selected), so the number of finished jobs is the
             // number the group waited for. The result completes when its last job did.
-            long finishedJobs = buildJobRepository.countByBuildGroupIdAndBuildStatusIn(buildGroupId, FINISHED_BUILD_STATUSES);
-            ZonedDateTime completionDate = buildJobRepository.findLatestBuildCompletionDateOfBuildGroup(buildGroupId).orElseGet(ZonedDateTime::now);
-            Result finalizedResult = finalizeIfGroupComplete(buildGroupId, (int) finishedJobs, participation, completionDate);
+            long finishedJobs = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count();
+            ZonedDateTime completionDate = jobs.stream().map(BuildJob::getBuildCompletionDate).filter(Objects::nonNull).max(Comparator.naturalOrder())
+                    .orElseGet(ZonedDateTime::now);
+            Result finalizedResult = finalizeIfGroupComplete(jobs, (int) finishedJobs, participation, completionDate);
             if (finalizedResult == null) {
                 return false;
             }
@@ -587,11 +592,25 @@ public class LocalCIResultProcessingService {
      * @return the finalized result, or null if the group is not complete yet or none of its containers merged a result
      */
     private Result finalizeIfGroupComplete(String buildGroupId, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate) {
-        long finishedContainers = buildJobRepository.countByBuildGroupIdAndBuildStatusIn(buildGroupId, FINISHED_BUILD_STATUSES);
+        return finalizeIfGroupComplete(buildJobRepository.findAllByBuildGroupId(buildGroupId), expectedContainerCount, participation, completionDate);
+    }
+
+    /**
+     * Finalizes a group whose jobs are given, see {@link #finalizeIfGroupComplete(String, int, ProgrammingExerciseParticipation, ZonedDateTime)}.
+     *
+     * @param jobs                   the jobs of the group
+     * @param expectedContainerCount the number of jobs the group waits for
+     * @param participation          the participation that was built
+     * @param completionDate         the completion date to set on the finalized result
+     * @return the finalized result, or null if the group is not complete or has no aggregated result
+     */
+    private Result finalizeIfGroupComplete(List<BuildJob> jobs, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate) {
+        long finishedContainers = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count();
         if (finishedContainers < expectedContainerCount) {
             return null;
         }
-        Long aggregatedResultId = findAggregatedResultId(buildGroupId);
+        // The aggregate is the result the group's jobs link to; a job without a link is one whose merge failed.
+        Long aggregatedResultId = jobs.stream().map(BuildJob::getResult).filter(Objects::nonNull).map(Result::getId).findFirst().orElse(null);
         if (aggregatedResultId == null) {
             return null;
         }
@@ -600,11 +619,10 @@ public class LocalCIResultProcessingService {
         // record such a job as ERROR, which the status check already catches; the null check covers the one remaining
         // writer, the fallback save in processResult after even the recovery path failed, which keeps the status
         // the agent reported: SUCCESSFUL for a job that ran fine and could not be merged.
-        boolean allJobsSucceeded = !buildJobRepository.existsByBuildGroupIdAndBuildStatusNot(buildGroupId, BuildStatus.SUCCESSFUL)
-                && !buildJobRepository.existsByBuildGroupIdAndResultIsNull(buildGroupId);
+        boolean allJobsSucceeded = jobs.stream().allMatch(job -> job.getBuildStatus() == BuildStatus.SUCCESSFUL && job.getResult() != null);
         // Whether a container failed to build is read from this group's jobs rather than from the submission, which every
         // build of the same commit shares: an overlapping build must neither hide this group's failure nor inherit it.
-        boolean anyContainerFailedToBuild = buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue(buildGroupId);
+        boolean anyContainerFailedToBuild = jobs.stream().anyMatch(BuildJob::isBuildFailed);
         return programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild, completionDate);
     }
 

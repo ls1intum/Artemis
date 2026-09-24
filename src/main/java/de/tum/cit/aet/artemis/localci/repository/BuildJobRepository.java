@@ -62,43 +62,6 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<Long> findResultIdsOfBuildGroup(@Param("buildGroupId") String buildGroupId, Pageable pageable);
 
     /**
-     * Counts the jobs of a build group that are in one of the given statuses. Used with the finished statuses to tell
-     * when every container of a multi-container build has reported, whether or not its result could be merged.
-     *
-     * @param buildGroupId  the id of the build group
-     * @param buildStatuses the statuses to count
-     * @return the number of the group's jobs in one of the statuses
-     */
-    long countByBuildGroupIdAndBuildStatusIn(String buildGroupId, Collection<BuildStatus> buildStatuses);
-
-    /**
-     * Checks whether any job of a build group has a status other than the given one. Used to decide whether the group's
-     * aggregated result should be marked successful once every container has finished.
-     *
-     * @param buildGroupId the id of the build group
-     * @param buildStatus  the status that counts as successful
-     * @return true if at least one of the group's jobs has a different status
-     */
-    boolean existsByBuildGroupIdAndBuildStatusNot(String buildGroupId, BuildStatus buildStatus);
-
-    /**
-     * Checks whether any job of a build group is not linked to a result. Once every container has finished, such a job is
-     * one whose result could not be merged, which makes the group's build unsuccessful.
-     *
-     * @param buildGroupId the id of the build group
-     * @return true if at least one of the group's jobs has no result
-     */
-    boolean existsByBuildGroupIdAndResultIsNull(String buildGroupId);
-
-    /**
-     * Checks whether a job of a build group ran a build that failed to build, see {@link BuildJob#isBuildFailed()}.
-     *
-     * @param buildGroupId the id of the build group
-     * @return true if at least one job of the group recorded a failed build
-     */
-    boolean existsByBuildGroupIdAndBuildFailedTrue(String buildGroupId);
-
-    /**
      * The build groups whose jobs have all finished while their aggregated result is still in progress: groups whose last
      * container's finalization did not go through, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}.
      * A group with a job that is still queued, building or missing is not complete and is left alone, and so is a group
@@ -142,27 +105,13 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     boolean existsResultInProgressOfBuildGroup(@Param("buildGroupId") String buildGroupId);
 
     /**
-     * The completion date of the last job of a build group to finish, which is the completion date a finalized aggregated
-     * result carries.
+     * The jobs of a build group, one per container of a multi-container build. The result processing reads the group's
+     * completion, its outcome and its dates off this list, rather than asking the database one question at a time.
      *
      * @param buildGroupId the id of the build group
-     * @return the latest completion date among the group's jobs, if any job has one
+     * @return the group's jobs
      */
-    @Query("""
-            SELECT MAX(b.buildCompletionDate)
-            FROM BuildJob b
-            WHERE b.buildGroupId = :buildGroupId
-            """)
-    Optional<ZonedDateTime> findLatestBuildCompletionDateOfBuildGroup(@Param("buildGroupId") String buildGroupId);
-
-    /**
-     * The first job of a build group. Every job of a group belongs to the same participation and was triggered by the
-     * same push, so any one of them says what the group is a build of.
-     *
-     * @param buildGroupId the id of the build group
-     * @return the group's job with the lowest id
-     */
-    Optional<BuildJob> findFirstByBuildGroupIdOrderByIdAsc(String buildGroupId);
+    List<BuildJob> findAllByBuildGroupId(String buildGroupId);
 
     /**
      * Retrieves all build job ids that were submitted before the given date.

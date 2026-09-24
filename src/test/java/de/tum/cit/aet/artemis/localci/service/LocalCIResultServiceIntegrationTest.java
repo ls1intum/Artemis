@@ -127,10 +127,11 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         buildJobRepository.save(new BuildJob(buildJobFor("merge-1", "merge", participation, commitHash, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResultAgain));
 
         // Both containers have finished, counted over the build jobs of the build group, and both link to the shared result.
-        assertThat(buildJobRepository.countByBuildGroupIdAndBuildStatusIn("merge", LocalCIResultProcessingService.FINISHED_BUILD_STATUSES)).isEqualTo(2);
+        assertThat(buildJobRepository.findAllByBuildGroupId("merge")).hasSize(2).allSatisfy(job -> {
+            assertThat(job.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
+            assertThat(job.getResult()).isNotNull();
+        });
         assertThat(buildJobRepository.countByResultId(aggregatedResultAgain.getId())).isEqualTo(2);
-        assertThat(buildJobRepository.existsByBuildGroupIdAndBuildStatusNot("merge", BuildStatus.SUCCESSFUL)).isFalse();
-        assertThat(buildJobRepository.existsByBuildGroupIdAndResultIsNull("merge")).isFalse();
 
         // Finalizing marks the aggregated result complete. Neither container reported a test case, so no relevant test
         // case passed: the result is not successful, although every container ran.
@@ -248,9 +249,10 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         });
 
         // finalizing once both containers finished marks the result complete but not successful
-        boolean allContainersSucceeded = !buildJobRepository.existsByBuildGroupIdAndBuildStatusNot("crash", BuildStatus.SUCCESSFUL);
+        List<BuildJob> crashJobs = buildJobRepository.findAllByBuildGroupId("crash");
+        boolean allContainersSucceeded = crashJobs.stream().allMatch(job -> job.getBuildStatus() == BuildStatus.SUCCESSFUL);
         assertThat(allContainersSucceeded).isFalse();
-        boolean anyContainerFailedToBuild = buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue("crash");
+        boolean anyContainerFailedToBuild = crashJobs.stream().anyMatch(BuildJob::isBuildFailed);
         assertThat(anyContainerFailedToBuild).as("the crashed container's verdict is read from the group's jobs").isTrue();
         Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain.getId(), participation, allContainersSucceeded,
                 anyContainerFailedToBuild, ZonedDateTime.now());
@@ -517,7 +519,13 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         assertThat(buildJobRepository.findByBuildJobId("late-0")).map(BuildJob::getBuildStatus).as("a finished job stays finished").contains(BuildStatus.SUCCESSFUL);
         assertThat(buildJobRepository.findByBuildJobId("late-1")).map(BuildJob::getBuildStatus).as("a queued job starts building").contains(BuildStatus.BUILDING);
-        assertThat(buildJobRepository.countByBuildGroupIdAndBuildStatusIn("late", LocalCIResultProcessingService.FINISHED_BUILD_STATUSES)).isEqualTo(1);
+        assertThat(buildJobRepository.findAllByBuildGroupId("late")).filteredOn(job -> LocalCIResultProcessingService.FINISHED_BUILD_STATUSES.contains(job.getBuildStatus()))
+                .hasSize(1);
+    }
+
+    /** what the result processing derives for a group when it finalizes it, see LocalCIResultProcessingService#finalizeIfGroupComplete */
+    private boolean anyContainerFailedToBuild(String buildGroupId) {
+        return buildJobRepository.findAllByBuildGroupId(buildGroupId).stream().anyMatch(BuildJob::isBuildFailed);
     }
 
     private ProgrammingSubmission submissionOf(ProgrammingExerciseStudentParticipation participation, String commitHash) {
@@ -614,12 +622,12 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .save(new BuildJob(buildJobFor("overlap-b-0", "overlap-b", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, appendedSecond.result(), false));
 
         Result finalizedFirst = programmingExerciseGradingService.finalizeContainerResult(appendedFirst.result().getId(), participation, true,
-                buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue("overlap-a"), ZonedDateTime.now());
+                anyContainerFailedToBuild("overlap-a"), ZonedDateTime.now());
         assertThat(finalizedFirst.isSuccessful()).isFalse();
         assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).as("the first build's failure is not hidden by the second build").isTrue();
 
-        programmingExerciseGradingService.finalizeContainerResult(appendedSecond.result().getId(), participation, true,
-                buildJobRepository.existsByBuildGroupIdAndBuildFailedTrue("overlap-b"), ZonedDateTime.now());
+        programmingExerciseGradingService.finalizeContainerResult(appendedSecond.result().getId(), participation, true, anyContainerFailedToBuild("overlap-b"),
+                ZonedDateTime.now());
         assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).as("the second build does not inherit the first build's failure")
                 .isFalse();
     }
@@ -649,7 +657,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "container_b failed now"), false, "container_b",
                 appendedA.result().getId());
 
-        assertThat(buildLogEntryService.getBuildLogsOfResult(reloaded, appendedA.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("container_b failed now");
+        assertThat(buildLogEntryService.getBuildLogsToShow(reloaded, appendedA.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("container_b failed now");
     }
 
     /**
@@ -670,12 +678,12 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         var first = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "first build failed"), false, "container_a", null);
         // the second build merges its first container while the first build is in progress
         var second = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null);
-        assertThat(buildLogEntryService.getBuildLogsOfResult(reloaded, first.result().getId())).as("a build in progress keeps its logs").extracting(BuildLogEntry::getLog)
+        assertThat(buildLogEntryService.getBuildLogsToShow(reloaded, first.result().getId())).as("a build in progress keeps its logs").extracting(BuildLogEntry::getLog)
                 .containsExactly("first build failed");
         programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "second build failed"), false, "container_b", second.result().getId());
 
-        assertThat(buildLogEntryService.getBuildLogsOfResult(reloaded, first.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("first build failed");
-        assertThat(buildLogEntryService.getBuildLogsOfResult(reloaded, second.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("second build failed");
+        assertThat(buildLogEntryService.getBuildLogsToShow(reloaded, first.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("first build failed");
+        assertThat(buildLogEntryService.getBuildLogsToShow(reloaded, second.result().getId())).extracting(BuildLogEntry::getLog).containsExactly("second build failed");
     }
 
     /** a container result that failed to build with one log line, as a crashed container reports */
