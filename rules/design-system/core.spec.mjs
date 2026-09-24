@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cwd } from 'node:process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { twMerge } from 'cn';
 import { defaultConfig } from 'cn/config';
 import { categoryOf, GROUP_CATEGORY } from './grammar/categories.mjs';
 import { groupOf, unknownGroups } from './grammar/classifier.mjs';
@@ -60,6 +61,26 @@ describe('native design-system classification and actual project Tailwind', () =
             expect(groupOf(token)).toBe(group);
             expect(categoryOf(groupOf(token))).toBe(category);
         }
+    });
+
+    it('classifies validator-based utilities like the installed cn engine', () => {
+        const groups = [
+            ['text-sm', 'text-[length:14px]', 'font-size'],
+            ['text-blue-500', 'text-[color:#fff]', 'text-color'],
+            ['px-2', 'px-[3rem]', 'px'],
+            ['shadow-sm', 'shadow-[0_0_2px_#000]', 'shadow'],
+            ['font-normal', 'font-[weight:600]', 'font-weight'],
+            ['bg-red-500', 'bg-[color:#123456]', 'bg-color'],
+            ['w-1/2', 'w-[calc(100%-1rem)]', 'w'],
+        ];
+        for (const [known, candidate, group] of groups) {
+            expect(twMerge(known, candidate)).toBe(candidate);
+            expect(groupOf(known)).toBe(group);
+            expect(groupOf(candidate)).toBe(group);
+        }
+        expect(twMerge('text-sm text-blue-500')).toBe('text-sm text-blue-500');
+        expect(categoryOf(groupOf('text-sm'))).toBe('typography');
+        expect(categoryOf(groupOf('text-blue-500'))).toBe('color');
     });
 
     it('inherits imported author tokens, removes reset tokens and keeps scoped colors separate from the palette', () => {
