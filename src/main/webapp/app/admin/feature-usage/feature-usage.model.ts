@@ -1,155 +1,195 @@
-/** The namespace a tracked feature belongs to. Mirrors the server-side {@code FeatureKind} enum. */
+/** The namespace an inventory entry belongs to. Mirrors the server-side {@code FeatureKind} enum. */
 export enum FeatureKind {
     REST = 'REST',
     GIT = 'GIT',
     BACKGROUND = 'BACKGROUND',
 }
 
-/** One feature and what it was used for over the selected window. */
-export interface FeatureUsageEntry {
+/**
+ * What a call says about use. Mirrors the server-side {@code FeatureInteraction} enum.
+ *
+ * Only actions and views are use of a feature. Automatic calls are made by the client on its own, such as a status probe
+ * on every page load, and system calls by another system, so neither says that anybody used the feature.
+ */
+export enum FeatureInteraction {
+    ACTION = 'ACTION',
+    VIEW = 'VIEW',
+    AUTOMATIC = 'AUTOMATIC',
+    SYSTEM = 'SYSTEM',
+}
+
+/** What the usage of one feature amounts to. Mirrors the server-side {@code FeatureUsageStatus} enum. */
+export enum FeatureUsageStatus {
+    USED = 'USED',
+    ONLY_AUTOMATIC = 'ONLY_AUTOMATIC',
+    UNUSED = 'UNUSED',
+    NOT_AVAILABLE = 'NOT_AVAILABLE',
+}
+
+/** One inventory row, that is one endpoint, git operation or background feature, over the selected window. */
+export interface FeatureUsageEndpoint {
     featureId: number;
     featureKind: FeatureKind;
     module: string;
     identifier: string;
-    /** Absent when the endpoint carries no `@FeatureUsage` label. */
+    /** The name of the catalogue feature it serves. A row no longer offered can keep a label no feature resolves any more. */
     featureLabel?: string;
+    interaction: FeatureInteraction;
+    /** The controller serving it, absent for git and background features. */
+    resource?: string;
     callCount: number;
     errorCount: number;
     durationSumMs: number;
     durationMaxMs: number;
     activeDays: number;
-    /** Absent when the feature saw no usage in the window. */
+    /** Absent when it saw no call in the window. */
     lastUsedDay?: string;
-    /** The last time a server reported that this feature still exists. */
     lastRegisteredAt?: string;
-    /** True when this Artemis version no longer offers the feature, so its zero usage needs no decision. */
+    /** True when this Artemis version no longer offers it, so its zero usage needs no decision. */
     retired?: boolean;
 }
 
-/** Calls over the window from callers of one role. */
+/** One user-facing feature, summed over every endpoint and module that serves it. */
+export interface UserFeatureUsage {
+    /** The catalogue constant, for example `PROGRAMMING_ONLINE_EDITOR`; the name and description are translated. */
+    feature: string;
+    area: string;
+    status: FeatureUsageStatus;
+    /** Viewed, but never acted on, although the feature has endpoints that act. */
+    noActions: boolean;
+    actionCount: number;
+    viewCount: number;
+    automaticCount: number;
+    systemCount: number;
+    /** Failed actions and views; automatic calls are not use, so neither are their failures. */
+    errorCount: number;
+    durationSumMs: number;
+    durationMaxMs: number;
+    activeDays: number;
+    actionDays: number;
+    lastUsedDay?: string;
+    lastActionDay?: string;
+    modules?: string[];
+    endpointCount: number;
+    hasActionEndpoints: boolean;
+}
+
+/** Actions and views over the window from callers of one role. */
 export interface FeatureUsageRoleShare {
     callerRole: string;
     callCount: number;
 }
 
-/** The whole report for one window. */
+/** The whole report for one window. Every headline count is per feature, the unit the page leads with. */
 export interface FeatureUsageOverview {
     days: number;
     from: string;
     /** The role the report was filtered to, absent when it covers every caller. */
     callerRole?: string;
-    trackedFeatures: number;
-    /** Features still offered by this version that saw no usage. Retired ones are deliberately not counted. */
+    availableFeatures: number;
+    usedFeatures: number;
+    onlyAutomatic: number;
     unusedFeatures: number;
-    /** Inventory entries this version no longer offers at all. */
-    retiredFeatures: number;
-    totalCalls: number;
+    notAvailable: number;
+    noActions: number;
+    retiredEndpoints: number;
+    actionCount: number;
+    viewCount: number;
+    automaticCount: number;
+    systemCount: number;
     inventoryRefreshedAt?: string;
     /** When this deployment started recording, so the report cannot imply more evidence than it has. */
     recordingSince?: string;
-    features?: FeatureUsageEntry[];
+    /** One entry per catalogue feature, in catalogue order. */
+    features?: UserFeatureUsage[];
+    /** One entry per inventory row, busiest first. */
+    endpoints?: FeatureUsageEndpoint[];
     /** Always covers every caller, so it stays comparable when a role filter is active. */
     roleDistribution?: FeatureUsageRoleShare[];
-    /**
-     * The exact distinct-day count per logical feature, keyed the same way the table groups its rows.
-     * Absent when nothing was used in the window.
-     */
-    activeDaysPerFeature?: FeatureUsageActiveDays[];
 }
 
-/**
- * The number of distinct days one logical feature was used on.
- *
- * Computed server-side because the per-endpoint counts cannot be combined: summing double counts a day two endpoints
- * behind one label were both used on, and taking the largest misses the days only one of them was used on.
- */
-export interface FeatureUsageActiveDays {
-    module: string;
-    /** The feature label when it has one, otherwise the endpoint identifier. */
-    featureKey: string;
-    activeDays: number;
-}
-
-/** One day of one feature's usage. */
+/** One day of calls of one interaction. Days without calls are absent. */
 export interface FeatureUsageTrendPoint {
     usageDay: string;
+    interaction: FeatureInteraction;
     callCount: number;
 }
 
-/** How many entities have one optional feature switched on. */
+/** How many entities have one optional setting switched on, and which feature it switches on. */
 export interface FeatureAdoption {
     module: string;
     key: string;
+    feature?: string;
     count: number;
     total: number;
 }
 
-/**
- * A table row. Several endpoints that share a `@FeatureUsage` label collapse into one row, which is what the label is
- * for, so a row is not necessarily a single endpoint.
- */
-export interface FeatureUsageRow {
+/** A row of the feature tree: a product area, a feature, the module and resource behind it, or a single endpoint. */
+export interface FeatureTreeRow {
     key: string;
-    module: string;
-    /** The area within the module, from the curated catalogue. `other` for endpoints that are not catalogued yet. */
-    area: string;
-    /** The feature within the area, or the raw endpoint identifier when it is not catalogued. */
-    feature: string;
-    /** `area/feature`, what the flat table shows. */
+    level: 0 | 1 | 2 | 3;
+    kind: 'area' | 'feature' | 'resource' | 'endpoint';
+    /** For an area or a feature, the catalogue constant; for a resource, `module · Resource`; for an endpoint, its path. */
     name: string;
-    featureKind: FeatureKind;
-    /** How many inventory entries this row aggregates. Greater than one only for labelled features. */
-    endpointCount: number;
-    /** The identifiers behind the row, so a label can be traced back to the endpoints it covers. */
-    identifiers: string[];
-    /** True only when every endpoint behind the row is gone from this version. */
-    retired: boolean;
-    /** Every inventory row behind this feature, so the trend chart covers the whole feature and not one of its endpoints. */
-    featureIds: number[];
-    callCount: number;
-    errorCount: number;
-    errorRate: number;
-    /** Kept alongside the mean so the tree can compute a call-weighted mean for an area or a module. */
-    durationSumMs: number;
-    meanDurationMs: number;
-    maxDurationMs: number;
-    activeDays: number;
-    lastUsedDay?: string;
-}
-
-/** One row of the explorable tree: a module, an area within it, or a single feature. */
-export interface FeatureTreeNode {
-    key: string;
-    name: string;
-    level: number;
-    callCount: number;
-    errorCount: number;
-    errorRate: number;
-    durationSumMs: number;
-    /** Features below this node that this version still offers. */
-    featureCount: number;
-    /** Of those, how many saw no usage. The reason to drill into a quiet branch. */
-    unusedCount: number;
-    lastUsedDay?: string;
-    children: FeatureTreeNode[];
-}
-
-/** A tree node flattened for rendering, carrying only what the row needs to draw itself. */
-export interface FeatureTreeRow extends FeatureTreeNode {
     hasChildren: boolean;
     expanded: boolean;
-    /** Share of the whole report's calls, so a module can be compared against its siblings at a glance. */
-    sharePercent: number;
+    actionCount: number;
+    viewCount: number;
+    automaticCount: number;
+    errorCount: number;
+    durationSumMs: number;
+    /** Undefined where distinct days cannot be derived, which is an area: summing its features would double count days. */
+    activeDays?: number;
+    lastUsedDay?: string;
+    /** Set on feature rows. */
+    feature?: UserFeatureUsage;
+    /** Set on endpoint rows. */
+    endpoint?: FeatureUsageEndpoint;
+    /** Set on resource rows, which name git and background entries by their kind rather than a controller. */
+    featureKind?: FeatureKind;
+    /** Set on area rows: how many of its offered features were used. */
+    usedFeatures?: number;
+    availableFeatures?: number;
+    /** Set on feature rows that have adoption data. */
+    adoption?: FeatureAdoption[];
 }
 
-/** The area a feature falls into when the catalogue has no entry for its controller yet. */
-export const UNCATALOGUED_AREA = 'other';
+/** The endpoints of a feature as the tree groups them: by module and serving controller. */
+export interface FeatureResourceGroup {
+    key: string;
+    module: string;
+    /** The controller, or undefined for git and background entries, which are shown by their kind instead. */
+    resource?: string;
+    featureKind: FeatureKind;
+    endpoints: FeatureUsageEndpoint[];
+}
 
-/** The windows the admin page offers. Must match the server-side allow list. */
-export const FEATURE_USAGE_WINDOWS_IN_DAYS = [7, 30, 90, 180] as const;
+/** The windows the admin page offers, in days. The server rejects anything else. */
+export const FEATURE_USAGE_WINDOWS_IN_DAYS = [7, 30, 90, 180];
 
-/**
- * Caller roles offered as a filter, highest first. These are global authorities, so a user who instructs any course counts
- * as an instructor everywhere.
- */
-export const FEATURE_USAGE_CALLER_ROLES = ['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS'] as const;
+/** The caller roles the report can be filtered to. Mirrors the server-side {@code Role} enum. */
+export const FEATURE_USAGE_CALLER_ROLES = ['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS'];
+
+/** The product areas in the order the catalogue lists them. Mirrors the server-side {@code ProductArea} enum. */
+export const PRODUCT_AREAS = [
+    'COURSES',
+    'COURSE_MANAGEMENT',
+    'EXERCISES',
+    'PROGRAMMING',
+    'QUIZ',
+    'TEXT_MODELING_UPLOAD',
+    'ASSESSMENT',
+    'EXAMS',
+    'LECTURES',
+    'COMMUNICATION',
+    'NOTIFICATIONS',
+    'TUTORIAL_GROUPS',
+    'COMPETENCIES',
+    'AI_LEARNERS',
+    'AI_AUTHORING',
+    'INTEGRITY',
+    'ACCOUNT',
+    'INTEGRATIONS',
+    'BUILD_SYSTEM',
+    'ADMINISTRATION',
+];

@@ -10,8 +10,8 @@ How the built-in usage tracking is put together, and why. For what the page show
 
 ## What problem it solves
 
-Artemis needed to answer "which features are actually used, and which are dead weight" from its own data. Nothing that
-existed could:
+Artemis needed to answer "which features are actually used, and which are dead weight" from its own data, in terms of the
+features users know rather than the controllers that implement them. Nothing that existed could:
 
 * **Micrometer `http.server.requests`** has templated URI tags, but the budget (`max-uri-tags: 1200`) is exhausted in
   production by the LocalVC git servlet at `/git/*`, whose raw repository paths never get templated. Once the budget is
@@ -28,16 +28,18 @@ Two constraints shaped everything below: no measurable cost on the request path,
 Two tables, a dimension and a fact.
 
 ```
-tracked_feature                        feature_usage_daily
-  id                                     id
-  feature_kind   REST|GIT|BACKGROUND     feature_id        -> tracked_feature.id
-  module         e.g. "programming"      usage_day         UTC date
-  identifier     canonical verb + path   caller_role       highest global role
-  feature_label  from @FeatureUsage      call_count
-  first_seen_at                          error_count
-  last_registered_at                     duration_sum_ms
-                                         duration_max_ms
-  UNIQUE (feature_kind, identifier)      UNIQUE (feature_id, usage_day, caller_role)
+tracked_feature                          feature_usage_daily
+  id                                       id
+  feature_kind   REST|GIT|BACKGROUND       feature_id        -> tracked_feature.id
+  module         e.g. "programming"        usage_day         UTC date
+  identifier     canonical verb + path     caller_role       highest global role
+  feature_label  UserFeature constant      call_count
+  interaction    ACTION|VIEW|AUTOMATIC|    error_count
+                 SYSTEM                    duration_sum_ms
+  resource       controller simple name    duration_max_ms
+  first_seen_at
+  last_registered_at
+  UNIQUE (feature_kind, identifier)        UNIQUE (feature_id, usage_day, caller_role)
 ```
 
 The split is what keeps the fact table narrow: the identifying strings are stored once and referenced by id, so a bucket
@@ -83,9 +85,16 @@ forever, which is why `FeatureUsageRegistryTest` pins the resolution.
   two rows so that neither showed its real usage.
 * **module** from the controller's package, not from the path. The `api/<module>/` convention is enforced by an
   architecture rule so the two agree, and the package is the one that is always present.
-* **label** from `@FeatureUsage` on the method, else on the controller. Every controller is required to carry one, enforced
-  by `FeatureUsageAnnotationTest` in the same way `everyRestEndpointMustBeAuthorized` requires an authorization annotation,
-  so a new controller cannot slip in without someone deciding which feature it belongs to.
+* **label**, the `UserFeature` from `@FeatureUsage` on the method, else on the controller. Every controller is required to
+  carry one, enforced by `FeatureUsageAnnotationTest` in the same way `everyRestEndpointMustBeAuthorized` requires an
+  authorization annotation, so a new controller cannot slip in without someone deciding which feature it belongs to.
+* **interaction**, from `@UsageInteraction` if present, else `SYSTEM` for an `@Internal` endpoint, else `VIEW` for a
+  mapping that only reads (`GET`, `HEAD`) and `ACTION` for everything else. The rules live in
+  `FeatureUsageClassification`, which the catalogue test uses as well, so the document shows exactly what gets counted.
+* **resource**, the controller's simple name, so the page can show which code implements a feature.
+
+The label, the interaction and the resource are grouping attributes of an endpoint's row. Every startup re-derives them
+and rewrites the ones that changed, so reassigning an endpoint regroups its history immediately.
 
 It then upserts the rows and caches `Map<Method, Long>`. Keyed on `java.lang.reflect.Method`, not on `HandlerMethod`,
 because the mapping hands the interceptor a different `HandlerMethod` instance (with the bean resolved) than the one in
@@ -178,14 +187,27 @@ the **username** for student ones, so passing it through would turn every studen
 repositories fall into `assignment`, since telling them from a username needs a database lookup that has no business on
 the git path.
 
+A fetch counts as a view and a push as an action. Work in a student's repository belongs to "Local IDE and Git", work in a
+template, solution or test repository to "Edit exercise repositories".
+
 **Background** features are recorded explicitly by calling `FeatureUsageCollector.recordUsage` with
-`FeatureKind.BACKGROUND`. Keep those identifiers bounded for the same reason.
+`FeatureKind.BACKGROUND`, the `UserFeature` and the interaction. Keep those identifiers bounded for the same reason. Work the
+server does on behalf of a feature, a notification delivered or a suggestion computed, is an action: it is the feature
+doing what it exists for. Athena's suggestions are the instructive case. The REST call that asks for them fires whenever a
+grader opens a submission and is therefore `AUTOMATIC`; the suggestion Athena actually computes is recorded as an action,
+under "AI feedback suggestions" for graded requests and "AI feedback on request" for the formative feedback students ask
+for.
+
+A row created by an earlier version carries no label. The first sighting per node rewrites the label and the interaction
+the caller reports now, which is the counterpart of what the startup pass does for endpoints.
 
 ## Adoption contributors
 
 Call counts cannot tell a feature that is switched off everywhere from one that is switched on and ignored, and those need
 opposite decisions. `FeatureAdoptionContributor` fills the gap: each module implements its own and the admin service
 collects `List<FeatureAdoptionContributor>`.
+
+Each entry names the `UserFeature` its setting switches on, so the page shows adoption next to that feature's usage.
 
 That indirection is not decoration. The admin module must not reach into another module's repositories, and a module that
 is switched off contributes nothing automatically because its beans are never created. Implementations run when an admin
@@ -194,7 +216,7 @@ caching.
 
 ## The read path
 
-One aggregate query, driven **from the inventory** with a `LEFT JOIN`:
+One aggregate query per endpoint, driven **from the inventory** with a `LEFT JOIN`:
 
 ```sql
 FROM TrackedFeature feature
@@ -206,52 +228,72 @@ join produced no bucket, turning the outer join back into an inner one and dropp
 to report. The same applies to the caller-role filter, which is why it is a separate query method rather than a nullable
 parameter.
 
-`COUNT(DISTINCT usage_day)` gives "active days", which is the antidote to a ranking dominated by polling endpoints: it
-separates a feature used steadily by many people from one hammered by a single client on one afternoon.
+`FeatureUsageQueryService` then rolls the endpoints up into one entry per `UserFeature`, including the features without a
+single row, which are the ones this deployment does not offer. Doing this on the server rather than on the client is what
+keeps the page and the weekly email from disagreeing: both are built from the same entries.
 
-The server returns one entry per inventory row, that is per endpoint, and the client groups them by label. Two consequences
-worth knowing before changing either side:
+* **Use means actions and views.** Automatic and system calls are counted per feature, but never make it "used", never
+  count towards its active days, its error rate or its durations, and are left out of the role distribution. A status
+  probe on every page load would otherwise make a feature nobody used look like the busiest one, which is what the page
+  used to report for AI exercise variants.
+* **The status** is `USED` for any action or view, `ONLY_AUTOMATIC` for automatic or system calls only, `UNUSED` for none
+  at all, and `NOT_AVAILABLE` when no live endpoint serves the feature. `noActions` flags a used feature that has
+  endpoints which act and saw views only. It is a flag rather than a status because for a feature people mostly read,
+  such as the FAQs, viewing is use.
+* **Active days** come from `COUNT(DISTINCT usage_day)` grouped per feature label over actions and views, plus a second
+  count over actions only. Distinct days cannot be combined from the per-endpoint counts: summing double counts a shared
+  day, and taking the largest misses the days only one endpoint was used on.
+* **Retired endpoints** contribute their calls in the window to their feature, because those calls are part of its
+  history, but not to whether the feature is still offered.
 
-* The **counts on the page are per feature**, computed on the client from the grouped rows, with the endpoint totals shown
-  as a secondary line. Taking the server's counts for the headline made the page contradict itself, reporting "895 unused"
-  above a list of 131 rows.
-* The **trend endpoint takes a list of ids**, `feature-usage/trend?featureIds=1&featureIds=2`, and sums them per day. A
-  feature is usually served by several endpoints, so charting one of them would report a fraction of the feature's usage as
-  the feature's usage. The list is bounded so the `IN` clause cannot grow arbitrarily.
+The **trend endpoint** charts either a feature, `feature-usage/trend?feature=FAQ`, summed over every endpoint that serves
+it, or individual rows, `feature-usage/trend?featureIds=1&featureIds=2`. Both return one point per day and interaction, so
+the chart can show actions, views and automatic calls as separate series. The list of ids is bounded so the `IN` clause
+cannot grow arbitrarily.
 
-## The curated taxonomy
+## The catalogue
 
-The label is `area/feature`, which gives the page a three level tree: module (from the package) contains areas, an area
-contains features, a feature is served by one or more controllers. The totals live in the generated
-[Feature Usage Catalogue](/developer/feature-usage-catalogue) and are deliberately not repeated here, so that a taxonomy
-change cannot leave this page contradicting the catalogue.
+The page groups the endpoints into the features users know, the `UserFeature` enum, and those into product areas,
+`ProductArea`. A feature is named the way a student, a tutor, an instructor or an administrator would name it: "Online
+code editor", "Take an exam", "AI problem statement generation". It is not a controller and not a module. "Build
+results and logs", for example, is served by `assessment`, `localci` and `programming`, and the page shows those modules
+one level below the feature. That is the whole point of the design: labels that mirror the code let one label cover five things a user would
+name separately, while another feature was split across five modules.
 
-A feature is usually one controller. Where several are one thing to a user they share a label, so the five programming
-exercise CRUD controllers report as one `authoring/exercise-management`: that split is an implementation detail, not five
-things an instructor does.
-
-The annotation is the single source of truth, sitting next to the controller so that whoever changes one decides the label
-and a rename cannot leave a dangling reference. What an annotation cannot do alone is show the taxonomy as a whole, so
-`FeatureUsageAnnotationTest` renders it into [Feature Usage Catalogue](/developer/feature-usage-catalogue) and fails when
-that file drifts. Reviewing the diff of that file is how the shape of the taxonomy stays under control; regenerate it with:
+The annotations are the single source of truth for the mapping, sitting next to the controller so that whoever changes
+one decides the feature and a rename cannot leave a dangling reference. What an annotation cannot do alone is show the
+catalogue as a whole, so `FeatureUsageAnnotationTest` renders it into [Feature Usage Catalogue](/developer/feature-usage-catalogue),
+with the modules and resources behind each feature, their endpoints per interaction and every `@UsageInteraction`
+override. Reviewing the diff of that file is how the shape of the catalogue stays under control; regenerate it with:
 
 ```bash
 ./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
 ```
 
+The same test keeps the catalogue honest in both directions:
+
+* every controller declares a feature;
+* every feature is served by an endpoint or recorded by a call to `FeatureUsageCollector.recordUsage`, so no entry reports
+  "unused" forever;
+* every feature and area has an English and a German name, and every area an email message;
+* no `@UsageInteraction` repeats what the verb implies, so every override is a decision;
+* handler methods that share a verb and path, and therefore one inventory row, agree on feature and interaction.
+
 ## The weekly digest email
 
 `FeatureUsageDigestService` builds the digest from `FeatureUsageQueryService.getOverview`, the same report the page shows,
-so the mail and the page can never disagree. It rolls the per-feature list up per module, because a per-endpoint list is
-unreadable in an email, and excludes retired features from every count: a module is not half unused because endpoints it
-stopped offering are no longer called.
+so the mail and the page can never disagree. It rolls the features up per product area, because a per-feature list is
+unreadable in an email, counts actions and views only, and leaves out the areas this deployment does not offer.
 
 Two decisions are worth keeping:
 
-* **The week-over-week comparison** (`findModuleCallsBetween` over the preceding equally long window). A recurring email
+* **The week-over-week comparison** (`findFeatureCallsBetween` over the preceding equally long window, rolled up per area
+  with the same rules as the current one). A recurring email
   that looks identical every week gets filtered; the direction of travel is what makes it worth opening. `changePercent()`
   returns a boxed value so "no previous data" stays distinguishable from "no change".
-* **Modules with no usage are listed as names, not rows.** What matters about them is only that they are on the list.
+* **Areas with no use are listed as names, not rows.** What matters about them is only that they are on the list. An area
+  whose features only received automatic calls is one of them, and the number of such features is stated separately,
+  because that is what used to make an unused feature look busy.
 
 `FeatureUsageDigestScheduleService` owns the guards, all of which exist to stop mail reaching a human inbox when it
 should not: the scheduling profile (otherwise every node sends its own copy), dev, test servers, the digest switch, the
@@ -277,15 +319,24 @@ Break any of these and the report quietly starts lying:
 
 1. The inventory is written for **all** endpoints at startup, not lazily on first call.
 2. Every controller carries a `@FeatureUsage`, and the generated catalogue document matches the annotations.
-3. Identifiers stay bounded. Never derive one from a user name, an entity id or a raw path.
-4. Counters are cumulative with a watermark; never reset them in place.
-5. Writes stay additive and dialect-neutral.
-6. `last_registered_at` only moves forward.
-7. Window and role predicates stay in the join, never in a `WHERE` clause.
-8. Recording never throws into the caller.
+3. Only actions and views count as use. An automatic or system call never makes a feature used, active or failing.
+4. The interaction belongs to the endpoint. An endpoint that both acts and reports status cannot be counted correctly, so
+   a status probe gets an endpoint of its own, as the active-job check of the AI code generation does.
+5. Identifiers stay bounded. Never derive one from a user name, an entity id or a raw path.
+6. Counters are cumulative with a watermark; never reset them in place.
+7. Writes stay additive and dialect-neutral.
+8. `last_registered_at` only moves forward.
+9. Window and role predicates stay in the join, never in a `WHERE` clause.
+10. Recording never throws into the caller.
 
 ## Deliberate non-goals
 
 WebSocket traffic, per-course attribution, distinct-user counts and latency percentiles are all out of scope. The first
 two are real gaps and are stated on the page itself so the numbers are not misread; percentiles are already available from
-the Prometheus histograms at no storage cost here.
+the Prometheus histograms at no storage cost here. Distinct users would need the user's identity on the recording path,
+which the design deliberately never reads; active days together with the separation of automatic calls are the
+counter-measure against a feature that is called often by few.
+
+Classifying a single call rather than an endpoint is out of scope as well. The Iris course, exercise and lecture chats
+share one endpoint and differ only in a query parameter, so they are one feature; splitting them needs separate
+endpoints, not a smarter interceptor.

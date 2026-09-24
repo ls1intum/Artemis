@@ -2,7 +2,14 @@
     "artemisApp": {
         "featureUsage": {
             "title": "Feature-Nutzung",
-            "description": "Wie häufig die einzelnen Teile von Artemis im gewählten Zeitraum tatsächlich genutzt wurden. Die Zahlen stammen vom Server selbst, werden pro Tag zusammengefasst und enthalten keine Angaben zu einzelnen Nutzenden. Features ohne jede Nutzung werden ebenfalls aufgeführt, denn genau dort lohnt sich eine Entscheidung. Features, die diese Version nicht mehr anbietet, werden separat gezählt und verwässern diese Liste daher nicht.",
+            "description": "Wie die Funktionen von Artemis im gewählten Zeitraum genutzt wurden, gruppiert in Produktbereiche so, wie Nutzer:innen sie kennen. Die Zahlen stammen vom Server selbst, werden pro Tag zusammengefasst und enthalten nichts über einzelne Nutzer:innen. Auch ungenutzte Funktionen werden aufgeführt, denn über sie lohnt sich eine Entscheidung.",
+            "limitations": "Die Rolle ist die höchste Rolle der aufrufenden Person in irgendeinem Kurs, nicht ihre Rolle in dem Kurs, den der Aufruf betraf. Git- und Hintergrundfunktionen haben keine aufrufende Person und zählen als anonym. WebSocket-Verkehr wird nicht gezählt, deshalb erscheinen Funktionen, die überwiegend über den Websocket kommunizieren, seltener genutzt als sie es sind.",
+            "legend": {
+                "action": "die Person hat etwas getan, etwa abgegeben, erstellt oder erzeugt",
+                "view": "die Person hat sich etwas angesehen, das die Funktion anzeigt",
+                "automatic": "die Seite hat den Server von sich aus aufgerufen, etwa für eine Statusabfrage oder ein Badge; zählt nicht als Nutzung",
+                "system": "ein anderes System hat den Server aufgerufen, etwa ein Build-Agent oder eine Kalender-App; zählt nicht als Nutzung"
+            },
             "window": {
                 "label": "Zeitraum",
                 "days7": "7 Tage",
@@ -11,54 +18,106 @@
                 "days180": "180 Tage"
             },
             "kpi": {
-                "trackedFeatures": "Erfasste Features",
-                "unusedFeatures": "In diesem Zeitraum ungenutzt",
-                "totalCalls": "Aufrufe insgesamt",
-                "retiredFeatures": "Nicht mehr vorhanden",
-                "recordingSince": "Erfassung seit",
-                "endpointDetail": "{{ count }} Endpunkte"
+                "usedFeatures": "Genutzte Funktionen",
+                "ofAvailable": "von {{ count }} hier angebotenen",
+                "onlyAutomatic": "Nur automatische Aufrufe",
+                "onlyAutomaticDetail": "in Seiten eingebunden, aber von niemandem genutzt",
+                "unusedFeatures": "Ungenutzt",
+                "unusedDetail": "angeboten, aber kein einziger Aufruf",
+                "noActions": "Angesehen, keine Aktionen",
+                "noActionsDetail": "angesehen, aber nie verwendet",
+                "notAvailable": "Hier nicht angeboten",
+                "retiredEndpoints": "{{ count }} Endpunkte nicht mehr angeboten",
+                "uses": "Nutzungen",
+                "usesDetail": "{{ actions }} Aktionen, {{ views }} Ansichten, {{ automatic }} automatische Aufrufe",
+                "recordingSince": "Erfassung seit"
             },
             "tab": {
-                "tree": "Erkunden",
-                "allFeatures": "Alle Features",
-                "unused": "Ungenutzt",
-                "adoption": "Verbreitung"
+                "features": "Funktionen",
+                "attention": "Handlungsbedarf",
+                "adoption": "Verbreitung",
+                "endpoints": "Endpunkte"
             },
             "column": {
-                "module": "Modul",
-                "feature": "Feature",
-                "calls": "Aufrufe",
+                "area": "Bereich",
+                "feature": "Funktion",
+                "status": "Status",
+                "actions": "Aktionen",
+                "views": "Ansichten",
+                "automatic": "Automatisch",
                 "activeDays": "Aktive Tage",
+                "lastUsed": "Zuletzt genutzt",
                 "errorRate": "Fehler",
                 "meanDuration": "Mittel (ms)",
-                "maxDuration": "Max (ms)",
-                "lastUsed": "Zuletzt genutzt",
+                "maxDuration": "Max. (ms)",
                 "trend": "Verlauf anzeigen",
+                "module": "Modul",
+                "modules": "Module",
+                "resource": "Ressource",
+                "endpoint": "Endpunkt",
+                "interaction": "Zählt als",
+                "calls": "Aufrufe",
+                "setting": "Einstellung",
                 "enabledOn": "Aktiviert bei",
-                "share": "Anteil",
-                "unusedBelow": "Ungenutzt"
+                "share": "Anteil"
             },
-            "search": "Nach Feature oder Modul filtern",
-            "moduleFilter": "Modul",
+            "status": {
+                "USED": "Genutzt",
+                "ONLY_AUTOMATIC": "Nur automatische Aufrufe",
+                "UNUSED": "Ungenutzt",
+                "NOT_AVAILABLE": "Hier nicht angeboten"
+            },
+            "interaction": {
+                "ACTION": "Aktion",
+                "VIEW": "Ansicht",
+                "AUTOMATIC": "Automatisch",
+                "SYSTEM": "System"
+            },
+            "kind": {
+                "REST": "REST",
+                "GIT": "Git",
+                "BACKGROUND": "Hintergrund"
+            },
+            "attention": {
+                "onlyAutomatic": {
+                    "title": "Nur automatische Aufrufe",
+                    "hint": "Diese Funktionen sind in Seiten eingebunden, die Nutzer:innen öffnen, deshalb erreichen den Server Aufrufe von ihnen, genutzt hat sie aber niemand. Allein nach Aufrufen gezählt, wirkten sie wie die meistgenutzten Funktionen."
+                },
+                "unused": {
+                    "title": "Ungenutzt",
+                    "hint": "In diesem System angeboten, aber im Zeitraum kein einziger Aufruf."
+                },
+                "noActions": {
+                    "title": "Angesehen, keine Aktionen",
+                    "hint": "Nutzer:innen sehen sich an, was diese Funktionen anzeigen, führen aber nie den Schritt aus, für den sie gedacht sind. Bei einer Funktion, die vor allem gelesen wird, kann das in Ordnung sein, bei einer Hilfe für Lehrende meist nicht."
+                },
+                "none": "Keine in diesem Zeitraum."
+            },
+            "noActionsTag": "Angesehen, keine Aktionen",
+            "noActionsHint": "Die Funktion hat Endpunkte, die etwas tun, und keiner davon wurde in diesem Zeitraum aufgerufen.",
+            "adoptionTag": "Aktiviert bei {{ count }} von {{ total }}",
+            "featuresUsed": "{{ used }} von {{ available }} genutzt",
+            "retiredTag": "nicht mehr angeboten",
+            "uncatalogued": "Keine Funktion",
+            "showNotAvailable": "Hier nicht angebotene Funktionen anzeigen",
+            "search": "Funktionen, Module, Ressourcen oder Pfade suchen",
+            "areaFilter": "Nach Bereich filtern",
+            "allAreas": "Alle Bereiche",
+            "moduleFilter": "Nach Modul filtern",
             "allModules": "Alle Module",
-            "endpointCount": "{{ count }} Endpunkte",
-            "unusedTag": "ungenutzt",
-            "roleDistribution": "Aufrufe nach Rolle der aufrufenden Person. Gemeint ist die globale Rolle, nicht die Rolle in einem bestimmten Kurs. Git- und Hintergrund-Features haben keine aufrufende Person und zählen als anonym.",
-            "noUsageYet": "Für diesen Zeitraum wurde noch keine Nutzung erfasst. Die Zähler werden alle paar Minuten geschrieben, ein frisch gestarteter Server braucht also einen Moment, bis die ersten Zahlen erscheinen.",
-            "noMatches": "Kein Feature entspricht dem aktuellen Filter.",
-            "noAdoptionData": "Kein Modul hat Daten zur Verbreitung gemeldet.",
-            "trendTitle": "Aufrufe pro Tag",
-            "closeTrend": "Schließen",
-            "limitations": "Zwei Dinge bleiben unsichtbar. WebSocket-Verkehr wird nicht gezählt, deshalb erscheinen Features, die überwiegend über den Websocket kommunizieren (Live-Quiz, Nachrichten, Klausur-Synchronisation), seltener genutzt als sie es sind. Von der Authentifizierung abgewiesene Anfragen erreichen keinen Handler und werden gar nicht gezählt.",
+            "roleFilter": "Nach Rolle der aufrufenden Person filtern",
             "allRoles": "Alle Rollen",
-            "roleFilter": "Rolle der aufrufenden Person",
-            "retiredTag": "nicht mehr vorhanden",
+            "roleDistribution": "Aktionen und Ansichten pro Rolle",
+            "noUsageYet": "In diesem Zeitraum wurde noch keine Aktion und keine Ansicht erfasst. Die Zähler werden alle paar Minuten geschrieben, deshalb zeigt ein frisch gestarteter Server zunächst nichts an.",
+            "noMatches": "Keine passenden Einträge.",
+            "noAdoptionData": "Keine Daten zur Verbreitung verfügbar.",
+            "trendTitle": "Täglicher Verlauf",
+            "closeTrend": "Schließen",
             "sendDigest": "Wöchentliche E-Mail jetzt senden",
-            "digestSent": "Die E-Mail zur Feature-Nutzung wurde gesendet.",
-            "digestFailed": "Die E-Mail konnte nicht gesendet werden. Prüfe, ob ein Empfänger konfiguriert und der Versand aktiviert ist.",
-            "expandAll": "Alle ausklappen",
-            "collapseAll": "Alle einklappen",
-            "featureCount": "{{ count }} Features",
+            "digestSent": "Die wöchentliche E-Mail zur Feature-Nutzung wurde gesendet.",
+            "digestFailed": "Die wöchentliche E-Mail zur Feature-Nutzung konnte nicht gesendet werden. Prüfe, ob der Bericht aktiviert und ein Empfänger konfiguriert ist.",
+            "expandAll": "Alle aufklappen",
+            "collapseAll": "Alle zuklappen",
             "catalog": {
                 "area": {
                     "COURSES": "Kurse",

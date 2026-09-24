@@ -2,7 +2,14 @@
     "artemisApp": {
         "featureUsage": {
             "title": "Feature usage",
-            "description": "How often each part of Artemis was actually used in the selected period. Counts come from the server itself, are aggregated per day and contain nothing about individual users. Features with no usage at all are listed too, because those are the ones worth a decision. Features this version no longer offers are counted separately, so they do not dilute that list.",
+            "description": "How the features of Artemis were used in the selected period, grouped into product areas the way users know them. Counts come from the server itself, are aggregated per day and contain nothing about individual users. Features nobody used are listed too, because those are the ones worth a decision.",
+            "limitations": "The role is the caller's highest role in any course, not their role in the course the call touched. Git and background features have no caller and count as anonymous. WebSocket traffic is not counted, so features that mostly communicate over the websocket appear less used than they are.",
+            "legend": {
+                "action": "the user did something, such as submitting, creating or generating",
+                "view": "the user looked at something the feature shows",
+                "automatic": "the page called the server on its own, such as a status check or a badge; not counted as use",
+                "system": "another system called the server, such as a build agent or a calendar app; not counted as use"
+            },
             "window": {
                 "label": "Period",
                 "days7": "7 days",
@@ -11,54 +18,106 @@
                 "days180": "180 days"
             },
             "kpi": {
-                "trackedFeatures": "Tracked features",
-                "unusedFeatures": "Unused in this period",
-                "totalCalls": "Total calls",
-                "retiredFeatures": "No longer offered",
-                "recordingSince": "Recording since",
-                "endpointDetail": "{{ count }} endpoints"
+                "usedFeatures": "Features used",
+                "ofAvailable": "of {{ count }} offered here",
+                "onlyAutomatic": "Only automatic calls",
+                "onlyAutomaticDetail": "wired into pages, but nobody used them",
+                "unusedFeatures": "Unused",
+                "unusedDetail": "offered, but not a single call",
+                "noActions": "Viewed, no actions",
+                "noActionsDetail": "looked at, but never acted on",
+                "notAvailable": "Not offered here",
+                "retiredEndpoints": "{{ count }} endpoints no longer offered",
+                "uses": "Uses",
+                "usesDetail": "{{ actions }} actions, {{ views }} views, {{ automatic }} automatic calls",
+                "recordingSince": "Recording since"
             },
             "tab": {
-                "tree": "Explore",
-                "allFeatures": "All features",
-                "unused": "Unused",
-                "adoption": "Adoption"
+                "features": "Features",
+                "attention": "Needs attention",
+                "adoption": "Adoption",
+                "endpoints": "Endpoints"
             },
             "column": {
-                "module": "Module",
+                "area": "Area",
                 "feature": "Feature",
-                "calls": "Calls",
+                "status": "Status",
+                "actions": "Actions",
+                "views": "Views",
+                "automatic": "Automatic",
                 "activeDays": "Active days",
+                "lastUsed": "Last used",
                 "errorRate": "Errors",
                 "meanDuration": "Mean (ms)",
                 "maxDuration": "Max (ms)",
-                "lastUsed": "Last used",
                 "trend": "Show trend",
+                "module": "Module",
+                "modules": "Modules",
+                "resource": "Resource",
+                "endpoint": "Endpoint",
+                "interaction": "Counts as",
+                "calls": "Calls",
+                "setting": "Setting",
                 "enabledOn": "Enabled on",
-                "share": "Share",
-                "unusedBelow": "Unused"
+                "share": "Share"
             },
-            "search": "Filter by feature or module",
-            "moduleFilter": "Module",
-            "allModules": "All modules",
-            "endpointCount": "{{ count }} endpoints",
-            "unusedTag": "unused",
-            "roleDistribution": "Calls by role of the caller. This is the caller's global role, not their role in a particular course. Git and background features have no caller and count as anonymous.",
-            "noUsageYet": "No usage has been recorded for this period yet. Counters are written every few minutes, so a freshly started server needs a moment before the first numbers appear.",
-            "noMatches": "No feature matches the current filter.",
-            "noAdoptionData": "No module reported any adoption data.",
-            "trendTitle": "Daily calls",
-            "closeTrend": "Close",
-            "limitations": "Two things this cannot see. WebSocket traffic is not counted, so features that mostly communicate over the websocket (live quizzes, messaging, exam synchronisation) are under-reported. Requests rejected by authentication never reach a handler and are not counted at all.",
-            "allRoles": "All roles",
-            "roleFilter": "Caller role",
+            "status": {
+                "USED": "Used",
+                "ONLY_AUTOMATIC": "Only automatic calls",
+                "UNUSED": "Unused",
+                "NOT_AVAILABLE": "Not offered here"
+            },
+            "interaction": {
+                "ACTION": "Action",
+                "VIEW": "View",
+                "AUTOMATIC": "Automatic",
+                "SYSTEM": "System"
+            },
+            "kind": {
+                "REST": "REST",
+                "GIT": "Git",
+                "BACKGROUND": "Background"
+            },
+            "attention": {
+                "onlyAutomatic": {
+                    "title": "Only automatic calls",
+                    "hint": "These features are wired into pages people open, so the server hears from them, but nobody used them. Counted by calls alone, they looked like the busiest features."
+                },
+                "unused": {
+                    "title": "Unused",
+                    "hint": "Offered in this deployment, but not a single call in the period."
+                },
+                "noActions": {
+                    "title": "Viewed, no actions",
+                    "hint": "People look at what these features show, but never take the step they exist for. For a feature people mostly read this can be fine; for an authoring aid it usually is not."
+                },
+                "none": "None in this period."
+            },
+            "noActionsTag": "Viewed, no actions",
+            "noActionsHint": "The feature has endpoints that act, and none of them was called in this period.",
+            "adoptionTag": "Enabled in {{ count }} of {{ total }}",
+            "featuresUsed": "{{ used }} of {{ available }} used",
             "retiredTag": "no longer offered",
+            "uncatalogued": "No feature",
+            "showNotAvailable": "Show features not offered here",
+            "search": "Search features, modules, resources or paths",
+            "areaFilter": "Filter by area",
+            "allAreas": "All areas",
+            "moduleFilter": "Filter by module",
+            "allModules": "All modules",
+            "roleFilter": "Filter by caller role",
+            "allRoles": "All roles",
+            "roleDistribution": "Actions and views per caller role",
+            "noUsageYet": "No action or view has been recorded in this period yet. Counters are written every few minutes, so a freshly started server shows nothing at first.",
+            "noMatches": "No matching entries.",
+            "noAdoptionData": "No adoption data available.",
+            "trendTitle": "Daily trend",
+            "closeTrend": "Close",
             "sendDigest": "Send weekly email now",
-            "digestSent": "The feature usage digest email was sent.",
-            "digestFailed": "The digest email could not be sent. Check that a recipient is configured and that the digest is enabled.",
+            "digestSent": "The weekly feature usage email was sent.",
+            "digestFailed": "The weekly feature usage email could not be sent. Check that the digest is enabled and a recipient is configured.",
             "expandAll": "Expand all",
             "collapseAll": "Collapse all",
-            "featureCount": "{{ count }} features",
             "catalog": {
                 "area": {
                     "COURSES": "Courses",

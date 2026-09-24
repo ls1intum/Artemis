@@ -75,7 +75,9 @@ test.describe('Feature usage records git operations', { tag: '@slow' }, () => {
     async function gitCallCounts(page: Page): Promise<Map<string, number>> {
         const response = await page.request.get('/api/admin/feature-usage?days=7');
         expect(response.ok()).toBeTruthy();
-        const features = (await response.json()).features ?? [];
-        return new Map(features.filter((feature: any) => feature.featureKind === 'GIT').map((feature: any) => [feature.identifier as string, (feature.callCount ?? 0) as number]));
+        const endpoints = (await response.json()).endpoints ?? [];
+        return new Map(
+            endpoints.filter((endpoint: any) => endpoint.featureKind === 'GIT').map((endpoint: any) => [endpoint.identifier as string, (endpoint.callCount ?? 0) as number]),
+        );
     }
 });
