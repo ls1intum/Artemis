@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 146 features, 1035 REST endpoints in 28 modules, and 61 interaction overrides.
+Currently 20 product areas, 146 features, 1035 REST endpoints in 28 modules, and 62 interaction overrides.
 
 ## Courses
 
@@ -971,7 +971,7 @@ Also recorded outside REST by `CourseNotificationService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | atlas | `ScienceResource` | 1 | 0 | 0 | 0 |
-| atlas | `ScienceSettingsResource` | 1 | 1 | 0 | 0 |
+| atlas | `ScienceSettingsResource` | 1 | 0 | 1 | 0 |
 
 ## AI for learners
 
@@ -1450,6 +1450,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/admin/organizations/{organizationId}/title` (`ORGANIZATIONS`)
 * `GET api/admin/websocket/nodes` (`MONITORING`)
 * `GET api/atlas/course-competencies/{competencyId}/title` (`COMPETENCY_PROGRESS`)
+* `GET api/atlas/science-settings` (`SCIENCE`)
 * `GET api/communication/courses/{courseId}/unread-messages` (`CONVERSATION_ORGANIZATION`)
 * `GET api/core/files/courses/{courseId}/conversations/{conversationId}/{filename}` (`MESSAGING`)
 * `GET api/core/files/courses/{courseId}/icons/*` (`COURSE_DASHBOARD`)

@@ -24,8 +24,6 @@
     >
         <thead>
             <tr>
-                <th scope="col" [tumUiSortableColumn]="'module'"><span jhiTranslate="artemisApp.featureUsage.column.module"></span></th>
-                <th scope="col" [tumUiSortableColumn]="'resource'"><span jhiTranslate="artemisApp.featureUsage.column.resource"></span></th>
                 <th scope="col" [tumUiSortableColumn]="'identifier'"><span jhiTranslate="artemisApp.featureUsage.column.endpoint"></span></th>
                 <th scope="col" [tumUiSortableColumn]="'interaction'"><span jhiTranslate="artemisApp.featureUsage.column.interaction"></span></th>
                 <th scope="col" [tumUiSortableColumn]="'featureLabel'"><span jhiTranslate="artemisApp.featureUsage.column.feature"></span></th>
@@ -41,26 +39,26 @@
         <tbody>
             @for (row of rows(); track row.endpoint.featureId) {
                 <tr [attr.data-testid]="'endpoint-row-' + row.endpoint.featureId" [class.text-muted-color]="row.endpoint.retired">
-                    <td>{{ row.endpoint.module }}</td>
-                    <td class="text-sm">
-                        @if (row.endpoint.resource) {
-                            {{ row.endpoint.resource }}
-                        } @else {
-                            <tum-ui-tag severity="secondary">{{ 'artemisApp.featureUsage.kind.' + row.endpoint.featureKind | artemisTranslate }}</tum-ui-tag>
-                        }
-                    </td>
                     <td>
-                        <span class="inline-flex items-center gap-1">
+                        <span class="flex items-center gap-1">
                             @if (verbOf(row.endpoint); as verb) {
                                 <tum-ui-tag severity="secondary">{{ verb }}</tum-ui-tag>
                             }
-                            <span class="font-mono text-xs">{{ pathOf(row.endpoint) }}</span>
+                            <span class="font-mono text-xs wrap-anywhere">{{ pathOf(row.endpoint) }}</span>
                             @if (row.endpoint.retired) {
                                 <tum-ui-tag severity="secondary"><span jhiTranslate="artemisApp.featureUsage.retiredTag"></span></tum-ui-tag>
                             }
                         </span>
+                        <span class="block text-xs text-muted-color wrap-anywhere mt-1" data-testid="endpoint-source">
+                            {{ row.endpoint.module }} ·
+                            @if (row.endpoint.resource) {
+                                {{ row.endpoint.resource }}
+                            } @else {
+                                {{ 'artemisApp.featureUsage.kind.' + row.endpoint.featureKind | artemisTranslate }}
+                            }
+                        </span>
                     </td>
-                    <td>
+                    <td class="whitespace-nowrap">
                         <tum-ui-tag [severity]="interactionSeverity(row.endpoint.interaction)">{{
                             'artemisApp.featureUsage.interaction.' + row.endpoint.interaction | artemisTranslate
                         }}</tum-ui-tag>
@@ -95,7 +93,7 @@
                 </tr>
             } @empty {
                 <tr>
-                    <td colspan="12" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
+                    <td colspan="10" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
                 </tr>
             }
         </tbody>

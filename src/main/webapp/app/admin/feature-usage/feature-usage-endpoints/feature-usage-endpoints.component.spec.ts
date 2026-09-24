@@ -70,8 +70,8 @@ describe('FeatureUsageEndpointsComponent', () => {
         component.onSort({ field: 'lastUsedDay', order: -1 } as any);
         expect(component.rows().map((row) => row.endpoint.featureId)).toEqual([1, 3, 2]);
 
-        component.onSort({ field: 'module', order: 1 } as any);
-        expect(component.rows()[0].endpoint.module).toBe('localvc');
+        component.onSort({ field: 'identifier', order: 1 } as any);
+        expect(component.rows().map((row) => row.endpoint.featureId)).toEqual([2, 3, 1]);
     });
 
     it('should filter by module', () => {

@@ -18,8 +18,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FeatureInteraction, FeatureUsageEndpoint } from '../feature-usage.model';
 import { featureTranslationKey, pathOf, verbOf } from '../feature-usage.util';
 
-type SortField =
-    'module' | 'resource' | 'identifier' | 'interaction' | 'featureLabel' | 'callCount' | 'activeDays' | 'errorRate' | 'meanDurationMs' | 'durationMaxMs' | 'lastUsedDay';
+type SortField = 'identifier' | 'interaction' | 'featureLabel' | 'callCount' | 'activeDays' | 'errorRate' | 'meanDurationMs' | 'durationMaxMs' | 'lastUsedDay';
 
 /** An endpoint with the values the table sorts on that the server does not send. */
 interface EndpointRow {

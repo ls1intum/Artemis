@@ -102,9 +102,11 @@ The columns mean:
   500 views spread over 90 days is used more steadily than one with 50 000 on a single afternoon. Automatic calls never
   make a day active.
 * **Errors** and **Mean**, plus **Max** on the **Endpoints** tab: useful for spotting a feature that is used but broken or
-  slow. For a feature they cover actions and views only; an endpoint row shows its own. These are not a replacement for
-  proper monitoring: there are no percentiles here, and requests rejected by authentication before they reach a handler
-  are not counted at all.
+  slow. These are not a replacement for proper monitoring: there are no percentiles here, and requests rejected by
+  authentication before they reach a handler are not counted at all.
+
+A feature, and an area above it, counts actions and views only. An endpoint row shows that endpoint's own calls, whatever
+they count as, so an automatic endpoint can show active days, errors and a mean duration while its feature shows none.
 
 Click the chart icon on a feature or an endpoint for its daily trend, with actions, views and automatic calls as separate
 lines.

@@ -88,7 +88,7 @@
                             }
                             @case ('feature') {
                                 @if (row.feature) {
-                                    <span class="inline-flex flex-wrap gap-1">
+                                    <span class="inline-flex flex-wrap gap-1 whitespace-nowrap">
                                         <tum-ui-tag [severity]="statusSeverity(row.feature.status)" data-testid="feature-status">{{
                                             'artemisApp.featureUsage.status.' + row.feature.status | artemisTranslate
                                         }}</tum-ui-tag>
@@ -107,7 +107,7 @@
                             }
                             @case ('endpoint') {
                                 @if (row.endpoint) {
-                                    <span class="inline-flex flex-wrap gap-1">
+                                    <span class="inline-flex flex-wrap gap-1 whitespace-nowrap">
                                         <tum-ui-tag [severity]="interactionSeverity(row.endpoint.interaction)" data-testid="endpoint-interaction">{{
                                             'artemisApp.featureUsage.interaction.' + row.endpoint.interaction | artemisTranslate
                                         }}</tum-ui-tag>
