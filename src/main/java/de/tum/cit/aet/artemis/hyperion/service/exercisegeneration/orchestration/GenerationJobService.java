@@ -4,9 +4,12 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -925,10 +928,10 @@ public class GenerationJobService {
         JobInfo withParticipationOwners(Map<String, String> owners) {
             // Stable serialization is required for Hazelcast binary compare-and-set across JVMs.
             return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId,
-                    java.util.Collections.unmodifiableSortedMap(new java.util.TreeMap<>(owners)));
+                    Collections.unmodifiableSortedMap(new TreeMap<>(owners)));
         }
 
-        boolean ownersAbsentFrom(java.util.Set<String> nodes) {
+        boolean ownersAbsentFrom(Set<String> nodes) {
             return participationOwners != null ? !participationOwners.isEmpty() && participationOwners.values().stream().noneMatch(nodes::contains)
                     : ownerNodeId != null && !nodes.contains(ownerNodeId);
         }

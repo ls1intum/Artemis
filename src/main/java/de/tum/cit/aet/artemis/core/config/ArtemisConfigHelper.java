@@ -15,6 +15,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.OIDC_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME;
@@ -24,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
  * Helper class for property configuration, in particular for determining conditions
@@ -101,8 +105,7 @@ public class ArtemisConfigHelper {
      * @return true if the Hyperion module is enabled, false otherwise
      */
     public boolean isHyperionEnabled(Environment environment) {
-        return environment.acceptsProfiles(org.springframework.core.env.Profiles.of(Constants.PROFILE_CORE))
-                && getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+        return environment.acceptsProfiles(Profiles.of(PROFILE_CORE)) && getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -111,7 +114,7 @@ public class ArtemisConfigHelper {
      */
     public boolean isHyperionExerciseGenerationEnabled(Environment environment) {
         return isHyperionEnabled(environment) && environment.getProperty(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)
-                && environment.acceptsProfiles(org.springframework.core.env.Profiles.of("core & localci & localvc"));
+                && environment.acceptsProfiles(Profiles.of(PROFILE_CORE + " & " + PROFILE_LOCALCI + " & " + PROFILE_LOCALVC));
     }
 
     /**

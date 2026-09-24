@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.hyperion.protocol;
 
+import java.util.List;
+
 import tools.jackson.core.StreamReadConstraints;
 import tools.jackson.core.StreamReadFeature;
 import tools.jackson.core.json.JsonFactory;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerCommandType;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerEventType;
 import de.tum.cit.aet.artemis.aiworker.dto.ExecutionAssignmentDTO;
@@ -18,9 +21,9 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 /** Fixed JSON wire format, independent of either application's HTTP mapper or Java serialization. */
 public final class WorkerMessageCodec {
 
-    public static final int MAX_MESSAGE_CHARS = de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi.MAX_MESSAGE_CHARS;
+    public static final int MAX_MESSAGE_CHARS = WorkerMessageCodecApi.MAX_MESSAGE_CHARS;
 
-    private final de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi wire = new de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi();
+    private final WorkerMessageCodecApi wire = new WorkerMessageCodecApi();
 
     private final JsonMapper mapper = JsonMapper
             .builder(JsonFactory.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
@@ -88,7 +91,7 @@ public final class WorkerMessageCodec {
     public WorkerEventDTO toWire(WorkerEvent event) {
         String payload = event.output() != null ? encodePayload(event.output())
                 : event.activity() != null || event.progress() != null ? encodePayload(new GenerationEventPayloadDTO(event.activity(), event.progress())) : null;
-        var capacity = event.capacity() == null ? new WorkerCapacity(1, java.util.List.of()) : event.capacity();
+        var capacity = event.capacity() == null ? new WorkerCapacity(1, List.of()) : event.capacity();
         return new WorkerEventDTO(event.protocolVersion(), event.workerId(), event.incarnation(), event.sequence(), event.timestamp(),
                 WorkerEventType.valueOf(event.progress() != null && event.progress().usage() != null ? "ACCOUNTING" : event.type().name()),
                 event.identity() == null ? null : toWire(event.identity()), event.ready(), event.imageDigest(), event.message(), payload,

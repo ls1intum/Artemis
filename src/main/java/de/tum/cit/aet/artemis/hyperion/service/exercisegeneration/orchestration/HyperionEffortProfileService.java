@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -74,7 +75,7 @@ public class HyperionEffortProfileService {
     }
 
     private static void validateStagedContext(String context) {
-        if (!java.util.Set.of("CONTINUOUS", "FRESH").contains(context)) {
+        if (!Set.of("CONTINUOUS", "FRESH").contains(context)) {
             throw new IllegalArgumentException("staged-context must be CONTINUOUS or FRESH");
         }
     }
