@@ -34,14 +34,22 @@ Block database, repository/NFS, management and cloud-metadata access.
 ## Distributed-data access
 
 The worker host must reach the same distributed-data store as the core nodes. For
-Hazelcast, the worker is a **client**, not a cluster member. Give it an explicit list
-of reachable core Hazelcast addresses with `artemis.aiworker.hazelcast-addresses`.
+Hazelcast, the worker is a **client**, not a cluster member. Enable Eureka on core
+nodes and on the worker. The worker reads the core nodes' Hazelcast addresses from
+the same Eureka registry as a Build Agent. It does not register itself. Set
+`eureka.client.service-url.defaultZone` to the registry URL on each process.
+The addresses that core nodes publish must be reachable from the worker host.
+Do not configure a fixed list of core addresses on the worker.
 For Redis/Valkey, configure the same `spring.data.redis.*` endpoint and credentials
-used by the core deployment. Do not select `local` for a separate worker: local
-state cannot cross process boundaries.
+used by the core deployment. Redis turns Eureka off. The standalone entry point
+rejects `local`: process-local state cannot carry worker messages.
 
-Keep the provider port private to trusted hosts. The worker JVM can read and write
-shared coordination data, so isolate the worker host and protect its credentials.
+Keep the provider port private to trusted hosts. A host-loopback Docker port map
+does **not** block containers on the same application bridge from reaching the
+core container's IP. Bind Hazelcast to a separate internal provider network, and
+allow only the worker host to reach that address and port. The worker JVM can read
+and write shared coordination data, so isolate the worker host and protect its
+credentials.
 Generated-code containers still have network `none` and never receive provider
 credentials. A provider outage stops new admission and delivery; do not treat a
 missing heartbeat as proof that a job completed. Worker commands and events have
@@ -94,12 +102,17 @@ and worker UID, and mounted read-only.
 spring:
     main:
         web-application-type: none
+eureka:
+    client:
+        enabled: true # Hazelcast only; Redis turns discovery off.
+        register-with-eureka: false
+        service-url:
+            defaultZone: http://admin:<registry-password>@registry.internal:8761/eureka/
 artemis:
     distributed-data:
         provider: hazelcast # Or redis, matching the core nodes.
     aiworker:
         id: worker-1
-        hazelcast-addresses: core-1.internal:5701,core-2.internal:5701 # Hazelcast only.
         image: registry.example/hyperion-java-gradle@sha256:<qualified-digest>
         workload: hyperion-generation
         workload-version: 1
