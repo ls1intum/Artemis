@@ -650,6 +650,11 @@ public class HazelcastConfiguration {
     private void configureNetworkBindingAndDiscovery(Config config) {
         if (registration.isEmpty()) {
             log.info("No discovery service is set up, Hazelcast cannot create a multi-node cluster.");
+            if ("0.0.0.0".equals(hazelcastInterface) && !hazelcastLocalInstances) {
+                // A standalone core can accept an external Hazelcast client when the deployment restricts access to this port.
+                configurePortAndMetadata(config);
+                return;
+            }
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
             return;
         }
