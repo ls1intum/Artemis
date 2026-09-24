@@ -1,12 +1,11 @@
 ---
 name: liquibase-migration
-description: Write an Artemis Liquibase changelog that applies cleanly on both PostgreSQL and MySQL. Use when adding, changing, or dropping a database column, table, index, or constraint, or when a changeset fails on startup. Covers the file and id conventions, the guarded pattern for adding NOT NULL, expand and contract for a column that code still reads or writes, the rollback invariant, and the local validation steps.
+description: Add, change, or debug an Artemis Liquibase schema migration.
 ---
 
 # Write a Liquibase migration
 
-A bad changeset does not fail a test, it stops the application from starting, on every node, in
-production. Everything here exists because of that.
+Migrations must work on PostgreSQL and MySQL and preserve the required schema invariants.
 
 ## The mechanics
 
