@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -171,8 +172,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      *
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
-     * @return the same job record or a new job record with the same job id if changes were made
+     * @return the same job record or a new job record with the same job id if changes were made, or {@code null} if the session no longer exists
      */
+    @Nullable
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         long handlingStart = System.nanoTime();
         // Only the result branch (saving the assistant message) needs the messages and contents;
@@ -180,7 +182,12 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         // its pipeline thread on each callback, so this reload is on the chat latency critical path.
         // noinspection unchecked
         var session = statusUpdate.result() != null ? (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId())
-                : (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
+                : (S) irisSessionRepository.findById(job.sessionId()).orElse(null);
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping status update for Iris job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return null;
+        }
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         TrackedSessionBasedPyrisJob updatedJob;

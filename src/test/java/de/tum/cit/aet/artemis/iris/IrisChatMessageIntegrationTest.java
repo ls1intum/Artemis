@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
@@ -146,6 +147,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisChatSessionService irisChatSessionService;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
 
     private AtomicBoolean pipelineDone;
 
@@ -694,6 +698,22 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         request.delete(url, HttpStatus.OK);
 
         assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PyrisRunState.class, names = { "RUNNING", "FINISHED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusUpdateForDeletedSession_isDroppedAndRemovesJob(PyrisRunState runState) throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        irisChatSessionRepository.deleteById(session.getId());
+
+        // a result on the terminal update, none on the intermediate one, so both session loads are covered
+        String result = runState == FINISHED ? "Hello World" : null;
+        sendStatus(jobId, result, runState, null, null);
+
+        assertThat(pyrisJobService.getJob(jobId)).isNull();
         assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
     }
 
