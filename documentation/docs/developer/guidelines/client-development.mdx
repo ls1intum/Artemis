@@ -21,9 +21,9 @@ Key principles:
 **Angular best practices**
 
 <Callout variant={CalloutVariant.danger}>
-    **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code.** Use Angular's signal-based
-    APIs instead. An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules and will fail the build if legacy decorators are reintroduced.
-    In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components.
+    **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in client code.** Use Angular's
+    signal-based APIs instead. The `localRules/enforce-signal-apis` ESLint rule rejects these decorators throughout `src/main/webapp/app/` and `src/test/javascript/`, including
+    tests. Use signal APIs when changing an existing component; there is no unmigrated-module exception.
 </Callout>
 
 - Use **standalone components** instead of Angular modules: https://angular.dev/reference/migrations/standalone
