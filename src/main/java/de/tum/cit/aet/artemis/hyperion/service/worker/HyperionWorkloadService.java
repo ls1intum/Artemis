@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -24,7 +26,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 /** The only translation between generic worker execution and typed Hyperion authoring. */
 @Service
 @Lazy
-@Profile("aiworker")
+@Profile(PROFILE_AIWORKER)
 @ConditionalOnProperty(name = "artemis.aiworker.workload", havingValue = "hyperion-generation")
 public class HyperionWorkloadService implements WorkloadApi {
 

@@ -39,7 +39,7 @@ public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportF
         // A standalone build agent can inherit the core feature flag; only the core or an explicit AI Worker workload needs the model auto-configuration.
         boolean hyperionEnabled = env.acceptsProfiles(Profiles.of(Constants.PROFILE_CORE)) && env.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false);
         boolean atlasEnabled = env.getProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, Boolean.class, false);
-        boolean hyperionWorker = env.acceptsProfiles(Profiles.of("aiworker")) && "hyperion-generation".equals(env.getProperty("artemis.aiworker.workload"));
+        boolean hyperionWorker = env.acceptsProfiles(Profiles.of(Constants.PROFILE_AIWORKER)) && "hyperion-generation".equals(env.getProperty("artemis.aiworker.workload"));
         boolean springAIEnabled = hyperionEnabled || atlasEnabled || hyperionWorker;
 
         boolean[] matches = new boolean[autoConfigurationClasses.length];
