@@ -3,9 +3,14 @@ package de.tum.cit.aet.artemis.localci.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -26,9 +31,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -38,7 +45,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
@@ -48,11 +57,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService.AppendedContainerResult;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
@@ -112,6 +123,9 @@ class LocalCIResultProcessingServiceTest {
     private DistributedQueue<ResultQueueItem> resultQueue;
 
     @Mock
+    private DistributedMap<String, Boolean> aggregationLocks;
+
+    @Mock
     private BuildResult buildResult;
 
     private LocalCIResultProcessingService resultProcessingService;
@@ -159,7 +173,22 @@ class LocalCIResultProcessingServiceTest {
                 new RepositoryInfo("repo", repositoryType, triggeredByPushTo, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now(), null, 60),
                 new BuildConfig(null, "ghcr.io/example/image:1", "commit", "commit", "test-commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null,
-                null);
+                null, null);
+    }
+
+    /**
+     * The same job as a container of a multi-container build: it carries the membership of its build group.
+     */
+    private static BuildJobQueueItem containerJob(String buildGroupId, int expectedContainerCount, String containerName) {
+        return containerJob(RepositoryType.USER, RepositoryType.USER, buildGroupId, expectedContainerCount, containerName);
+    }
+
+    private static BuildJobQueueItem containerJob(RepositoryType repositoryType, RepositoryType triggeredByPushTo, String buildGroupId, int expectedContainerCount,
+            String containerName) {
+        var job = buildJob(repositoryType, triggeredByPushTo);
+        return new BuildJobQueueItem(job.id(), job.name(), job.buildAgent(), job.participationId(), job.courseId(), job.exerciseId(), job.retryCount(), job.priority(),
+                job.status(), job.repositoryInfo(), job.jobTimingInfo(), job.buildConfig(), job.submissionResult(),
+                new BuildJobQueueItem.BuildGroupMembership(buildGroupId, expectedContainerCount, containerName), job.cloneToken());
     }
 
     private void withQueuedResult(ResultQueueItem item) {
@@ -534,5 +563,201 @@ class LocalCIResultProcessingServiceTest {
         ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
         verify(buildJobRepository).save(saved.capture());
         assertThat(saved.getValue().getId()).isEqualTo(55L);
+    }
+
+    // --- a container of a multi-container build --------------------------------------------------------------------
+
+    @Test
+    void aContainerWhoseFinalizationFailsKeepsItsJobLinkedToTheAggregate() {
+        // Append, link and finalize are committed one by one. Once the job links to the aggregate, the container's
+        // feedback is merged and its siblings find the aggregate through that link. A finalization that fails afterwards
+        // must not record the job as failed without the link: that would drop the feedback from the merged result and,
+        // for the first container of the group, send the next sibling to a second aggregate.
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_a"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenThrow(new IllegalStateException("the group's jobs could not be read"));
+
+        resultProcessingService.processResultAsync();
+
+        // saved exactly once: linked to the aggregate with the status the agent reported, never again as failed
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository).save(saved.capture());
+        assertThat(saved.getValue().getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
+        assertThat(saved.getValue().getResult()).isSameAs(aggregatedResult);
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        // the aggregate is still in progress, so the student is told neither of a result nor of an error
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
+        verify(aggregationLocks).unlock("group-1");
+    }
+
+    @Test
+    void aContainerWhoseJobCannotBeSavedAfterItsMergeIsRecordedAsFailed() {
+        // saveFinishedBuildJob swallows the failure and returns null. Nothing rolls the merged rows back, so the container
+        // path must treat the missing link as a failed merge and record the job as failed without a link: that keeps the
+        // group's completion count advancing, instead of finalizing with a count one short and leaving the group open.
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_a"), List.of(), null));
+        withParticipation();
+        lenient().when(buildJobRepository.findByBuildJobId(anyString())).thenReturn(Optional.empty());
+        when(buildJobRepository.save(any(BuildJob.class))).thenThrow(new IllegalStateException("connection lost")).thenAnswer(invocation -> invocation.getArgument(0));
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of());
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+        // the recovery records the job without a link, and the group of two is not complete with it alone
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.ERROR, null)));
+
+        resultProcessingService.processResultAsync();
+
+        // the failed link, then the recovery: recorded as failed and without a link
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository, times(2)).save(saved.capture());
+        BuildJob recorded = saved.getAllValues().getLast();
+        assertThat(recorded.getBuildStatus()).isEqualTo(BuildStatus.ERROR);
+        assertThat(recorded.getResult()).isNull();
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        verify(aggregationLocks).unlock("group-1");
+    }
+
+    @Test
+    void theLastContainerReportsTheAssessmentItsFeedbackWasMergedIntoEvenWithoutACompletionDate() {
+        // Finalize merges the feedback into a tutor's open assessment when there is one, and hands that assessment back. A
+        // draft assessment carries no completion date, and the single-container path reports it all the same; the report
+        // must not be suppressed because the guard mistakes the missing date for a group that is still in progress.
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        // no aggregate before the append, the appended one once the job links to it
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(), List.of(7L));
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+        when(buildJobRepository.findAllByBuildGroupId("group-1"))
+                .thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult)));
+        Result draftAssessment = new Result();
+        draftAssessment.setId(3L);
+        draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        draftAssessment.setCompletionDate(null);
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(false), any())).thenReturn(draftAssessment);
+
+        resultProcessingService.processResultAsync();
+
+        verify(programmingMessagingService).notifyUserAboutNewResult(draftAssessment, participation);
+        verify(programmingSubmissionMessagingService, never()).notifyUserAboutSubmissionError(any(Participation.class), any(BuildTriggerWebsocketError.class));
+    }
+
+    // --- the sweep over complete groups whose aggregate stayed in progress -------------------------------------------
+
+    /**
+     * A build group of two finished container jobs, found by the sweep, whose aggregated result 7 is still in progress.
+     */
+    private void withACompleteGroupInProgress(BuildJobQueueItem anyJobOfTheGroup, ZonedDateTime completionDate) {
+        when(buildJobRepository.findCompletedBuildGroupsWithResultInProgress(any(), any(ZonedDateTime.class), any(Pageable.class))).thenReturn(List.of("group-1"));
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(true);
+        // two finished jobs, both linked to aggregate 7, the second the last to finish
+        Result aggregate = new Result();
+        aggregate.setId(7L);
+        BuildJob firstJob = new BuildJob(anyJobOfTheGroup, BuildStatus.SUCCESSFUL, aggregate);
+        firstJob.setBuildCompletionDate(completionDate.minusSeconds(30));
+        BuildJob lastJob = new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.SUCCESSFUL, aggregate);
+        lastJob.setBuildCompletionDate(completionDate);
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(firstJob, lastJob));
+    }
+
+    @Test
+    void theSweepFinalizesACompleteGroupWhoseAggregateStayedInProgressAndReportsTheResult() {
+        // The last container finalizes its group, but if the process died between linking its job and finalizing, the
+        // group is complete by count while its result has no completion date, and no job is missing that a retry could
+        // pick up. The sweep finalizes it as the last container would have: scored with the jobs' completion date and
+        // reported to the student.
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
+        withACompleteGroupInProgress(containerJob("group-1", 2, "container_b"), completionDate);
+        withParticipation();
+        Result finalizedResult = new Result();
+        finalizedResult.setCompletionDate(completionDate);
+        when(programmingExerciseGradingService.finalizeContainerResult(7L, participation, true, false, completionDate)).thenReturn(finalizedResult);
+
+        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+
+        verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, participation);
+        verify(programmingTriggerService, never()).triggerTemplateBuildAndNotifyUser(anyLong(), any(), any(), any());
+        verify(aggregationLocks).unlock("group-1");
+    }
+
+    @Test
+    void theSweepRebuildsTheTemplateAfterASolutionBuildOfATestsPush() {
+        // On the direct path the container that completes the merged solution result triggers the template build. A group
+        // the sweep finalizes has to do the same, otherwise the template stays on the old tests.
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
+        withACompleteGroupInProgress(containerJob(RepositoryType.SOLUTION, RepositoryType.TESTS, "group-1", 2, "container_b"), completionDate);
+        var solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(PARTICIPATION_ID);
+        solutionParticipation.setProgrammingExercise(exercise);
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.of(solutionParticipation));
+        Result finalizedResult = new Result();
+        finalizedResult.setCompletionDate(completionDate);
+        when(programmingExerciseGradingService.finalizeContainerResult(7L, solutionParticipation, true, false, completionDate)).thenReturn(finalizedResult);
+
+        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isEqualTo(1);
+
+        // the job carries the tests commit as the commit it built, which is what the template is built against
+        verify(programmingTriggerService, timeout(2000)).triggerTemplateBuildAndNotifyUser(EXERCISE_ID, "commit", SubmissionType.TEST, RepositoryType.TESTS);
+        verify(programmingMessagingService).notifyUserAboutNewResult(finalizedResult, solutionParticipation);
+    }
+
+    @Test
+    void theSweepLeavesAGroupAloneThatItsLastContainerFinalizedMeanwhile() {
+        // The query runs before the lock is taken; a container that finalizes the group in between must not be followed
+        // by a second finalization, which would score and report the result twice.
+        when(buildJobRepository.findCompletedBuildGroupsWithResultInProgress(any(), any(ZonedDateTime.class), any(Pageable.class))).thenReturn(List.of("group-1"));
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(false);
+
+        assertThat(resultProcessingService.finalizeCompletedBuildGroups()).isZero();
+
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any());
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(any(), any());
+        verify(aggregationLocks).unlock("group-1");
+    }
+
+    @Test
+    void aContainerThatFailedToBuildIsRecordedOnItsJobAndTheGroupFinalizesWithThatOutcome() {
+        // The build outcome of a container is kept on its job and read back per group when the group finalizes, never
+        // through the submission, which every build of the same commit shares.
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 1, "container_a"), List.of(), null));
+        withParticipation();
+        withSavedBuildJob();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(), List.of(7L));
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_a"), isNull()))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, true));
+        // the job as saved above, read back with the verdict the container recorded on it
+        when(buildJobRepository.findAllByBuildGroupId("group-1"))
+                .thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult, true)));
+        Result finalizedResult = new Result();
+        finalizedResult.setId(7L);
+        finalizedResult.setCompletionDate(ZonedDateTime.now());
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(true), any())).thenReturn(finalizedResult);
+
+        resultProcessingService.processResultAsync();
+
+        ArgumentCaptor<BuildJob> saved = ArgumentCaptor.captor();
+        verify(buildJobRepository).save(saved.capture());
+        assertThat(saved.getValue().isBuildFailed()).as("the container's verdict is recorded on its job").isTrue();
+        verify(programmingExerciseGradingService).finalizeContainerResult(eq(7L), any(), eq(true), eq(true), any());
     }
 }

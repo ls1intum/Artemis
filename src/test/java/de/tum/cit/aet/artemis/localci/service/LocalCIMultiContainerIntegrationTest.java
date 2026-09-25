@@ -1,0 +1,852 @@
+package de.tum.cit.aet.artemis.localci.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
+import org.mockito.ArgumentMatcher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
+import com.github.dockerjava.api.command.ExecCreateCmd;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.ExecStartCmd;
+import com.github.dockerjava.api.command.InspectExecCmd;
+import com.github.dockerjava.api.command.InspectExecResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
+
+import tools.jackson.core.JacksonException;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+
+/**
+ * End-to-end tests for multi-container build plans that run the full path a submission takes: a push to the assignment
+ * repository triggers one build job per configured container, the in-process build agent executes each job against the
+ * mocked Docker client, and the result processing on the core merges the per-container results into a single finalized
+ * result for the submission.
+ * <p>
+ * This covers the glue that the service-level merge tests in {@link LocalCIResultServiceIntegrationTest} bypass:
+ * scheduling, agent execution, the result queue, and the locked, transactional aggregation in
+ * {@code LocalCIResultProcessingService#processContainerResult}. The failure-mode tests verify the feedback guarantee
+ * that motivates the multi-container design: the results a container has already delivered survive a sibling
+ * container's crash, out-of-memory kill, or timeout.
+ */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
+@Isolated
+class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+
+    private static final String TEST_PREFIX = "localcimc";
+
+    private static final String INSTRUCTOR_CONTAINER = "instructor_tests";
+
+    private static final String STUDENT_CONTAINER = "student_tests";
+
+    /** The 9 structural test cases of the partly-successful fixture; returned by the instructor container. */
+    private static final Set<String> STRUCTURAL_TEST_NAMES = Set.of("testClass[SortStrategy]", "testAttributes[Context]", "testAttributes[Policy]", "testClass[MergeSort]",
+            "testClass[BubbleSort]", "testConstructors[Policy]", "testMethods[Context]", "testMethods[Policy]", "testMethods[SortStrategy]");
+
+    /** The 4 behavior test cases of the partly-successful fixture; returned by the student container. */
+    private static final Set<String> BEHAVIOR_TEST_NAMES = Set.of("testMergeSort()", "testUseBubbleSortForSmallList()", "testUseMergeSortForBigList()", "testBubbleSort()");
+
+    private static final String RESULTS_DIRECTORY_REGEX = LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY;
+
+    // The result processing service is lazy and registers its result queue listener in @PostConstruct; without this
+    // injection the agent's results would pile up in the queue unprocessed and no result would ever finalize.
+    @SuppressWarnings("unused")
+    @Autowired
+    private LocalCIResultProcessingService localCIResultProcessingService;
+
+    @Autowired
+    private TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private LocalVCTestRepository studentAssignmentRepository;
+
+    private LocalVCTestRepository testsRepository;
+
+    /** Only created by the solution-build tests; reset after them when present. */
+    private LocalVCTestRepository solutionRepository;
+
+    /** Only created by the template-build test; reset after it when present. */
+    private LocalVCTestRepository templateRepository;
+
+    private String commitHash;
+
+    private String testsCommitHash;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @BeforeAll
+    void setupAll() {
+        buildJobRepository.deleteAll();
+        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
+    }
+
+    @BeforeEach
+    void initRepositories() throws Exception {
+        // Every test here needs a live build agent, and the classes that share this context leave it in different states:
+        // some stop its queue listener to simulate missing jobs (a plain init() afterwards is a no-op while the service
+        // still counts as initialized), one closes its services, which leaves the build executor null. Start from a known
+        // state: empty queues, open services, an unpaused agent with a live listener.
+        distributedDataAccessService.getDistributedBuildJobQueue().clear();
+        distributedDataAccessService.getDistributedProcessingJobs().clear();
+        distributedDataAccessService.getDistributedBuildResultQueue().clear();
+        if (buildAgentConfiguration.getBuildExecutor() == null) {
+            buildAgentConfiguration.openBuildAgentServices();
+        }
+        sharedQueueProcessingService.resetInitializedState();
+        sharedQueueProcessingService.setPauseState(false);
+        sharedQueueProcessingService.init();
+        studentAssignmentRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, assignmentRepositorySlug);
+        commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyPath(), studentAssignmentRepository.workingCopy());
+        studentAssignmentRepository.workingCopy().push().call();
+
+        testsRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, testsRepositorySlug);
+        testsCommitHash = localVCLocalCITestService.commitFile(testsRepository.workingCopyPath(), testsRepository.workingCopy());
+        testsRepository.workingCopy().push().call();
+
+        dockerClientTestService.mockInspectImage(dockerClient);
+    }
+
+    @AfterEach
+    void removeRepositories() throws IOException {
+        studentAssignmentRepository.deleteWorkingCopy();
+        testsRepository.deleteWorkingCopy();
+        if (solutionRepository != null) {
+            solutionRepository.deleteWorkingCopy();
+            solutionRepository = null;
+        }
+        if (templateRepository != null) {
+            templateRepository.deleteWorkingCopy();
+            templateRepository = null;
+        }
+    }
+
+    /**
+     * A failed build attempt marks the submission as failed. A later attempt of the SAME commit that succeeds must
+     * come out successful: the flag belongs to the attempt, not to the submission forever. The rebuild also meets a
+     * tutor's draft manual assessment on the submission, which has no completion date either: the containers must
+     * open a fresh automatic result instead of appending their feedback to the draft; the finished feedback is then
+     * merged into the draft, as it is after a single-container build.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRebuildOfSameCommitAfterFailedAttemptIsSuccessfulAndSparesManualDraft() throws Exception {
+        String instructorImage = "mc-instructor:rebuild";
+        String studentImage = "mc-student:rebuild";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-rebuild");
+        mockContainerLifecycle(studentImage, "mc-student-rebuild");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-rebuild", RESULTS_DIRECTORY_REGEX, structuralResults());
+        // First attempt: the student container crashes.
+        mockScriptExitCode("mc-student-rebuild", "mc-student-rebuild-exec", 1L);
+        mockMissingResults("mc-student-rebuild");
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush();
+        ProgrammingSubmission failedSubmission = awaitFinalizedResult(participation.getId(), 120);
+        Result failedResult = failedSubmission.getLatestResult();
+        assertThat(failedSubmission.isBuildFailed()).isTrue();
+        assertThat(failedResult.isSuccessful()).isFalse();
+
+        // A tutor starts a manual assessment on the submission before the rebuild (no completion date yet).
+        Result manualDraft = new Result();
+        manualDraft.setAssessmentType(AssessmentType.MANUAL);
+        manualDraft.setCompletionDate(null);
+        manualDraft.setSubmission(failedSubmission);
+        manualDraft.setExerciseId(programmingExercise.getId());
+        manualDraft = resultRepository.save(manualDraft);
+
+        // Second attempt of the same commit: the student container now succeeds. Both containers get fresh result
+        // streams, since a mocked archive stream can only be read once and the first attempt consumed the instructor's.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-rebuild", RESULTS_DIRECTORY_REGEX, structuralResults());
+        mockScriptExitCode("mc-student-rebuild", "mc-student-rebuild-exec", 0L);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-rebuild", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        localCITriggerService.triggerBuild(participation, false);
+
+        ProgrammingSubmission rebuiltSubmission = awaitFinalizedResultAfter(participation.getId(), manualDraft.getId(), 120);
+        Result rebuiltResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(rebuiltSubmission.getLatestResult().getId());
+        assertThat(rebuiltResult.getId()).isNotEqualTo(manualDraft.getId());
+        assertThat(rebuiltResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+        String jobStatuses = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId()))
+                .map(job -> job.getBuildJobId() + ":" + job.getBuildStatus()).toList().toString();
+        // the attempt built (no container failed), but the fixture is only partly successful: like a single-container
+        // result with failing tests, the merged result is complete and scored, not successful
+        assertThat(rebuiltSubmission.isBuildFailed()).as("jobs %s", jobStatuses).isFalse();
+        assertThat(rebuiltResult.isSuccessful()).isFalse();
+        assertThat(rebuiltResult.getScore()).isNotNull();
+        assertThat(feedbackTestNames(rebuiltResult)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+
+        // The draft was not used as the aggregate (the automatic result above is separate), but, as after a
+        // single-container build, the finished automatic feedback was merged into it for the tutor; it stays open.
+        Result draftAfterRebuild = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualDraft.getId());
+        assertThat(draftAfterRebuild.getCompletionDate()).isNull();
+        assertThat(draftAfterRebuild.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(feedbackTestNames(draftAfterRebuild)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+    }
+
+    /**
+     * The student policies of a single-container result apply to the merged result of a multi-container build as well.
+     * The lock-repository policy's result-time step is a fallback for submissions that exceed the limit without the
+     * VCS having blocked them: such a result is stored as not rated. That situation is reproduced by activating a
+     * limit-one policy after two submissions already exist and rebuilding — the merged result must then be unrated.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testLockRepositoryPolicyMarksTheMergedResultOfAnOverLimitSubmissionUnrated() throws Exception {
+        String instructorImage = "mc-instructor:lock";
+        String studentImage = "mc-student:lock";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-lock");
+        mockContainerLifecycle(studentImage, "mc-student-lock");
+        stubLockTestResults();
+
+        // Two student submissions, each built and merged, before any policy exists.
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), student1, Optional.empty(), Optional.empty(),
+                Optional.empty());
+        ProgrammingSubmission firstSubmission = awaitFinalizedResult(participation.getId(), 120);
+
+        String secondCommit = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyPath(), studentAssignmentRepository.workingCopy(), "second-push.txt");
+        studentAssignmentRepository.workingCopy().push().call();
+        stubLockTestResults();
+        localVCServletService.processNewPush(secondCommit, studentAssignmentRepository.bareRepository().getRepository(), student1, Optional.empty(), Optional.empty(),
+                Optional.empty());
+        ProgrammingSubmission secondSubmission = awaitFinalizedResultAfter(participation.getId(), firstSubmission.getLatestResult().getId(), 120);
+
+        // Now a lock-repository policy allowing a single submission becomes active.
+        LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
+        lockRepositoryPolicy.setSubmissionLimit(1);
+        lockRepositoryPolicy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+
+        // A rebuild of the over-limit submission: the merged result is stored, but not rated.
+        stubLockTestResults();
+        localCITriggerService.triggerBuild(participation, false);
+        ProgrammingSubmission rebuiltSubmission = awaitFinalizedResultAfter(participation.getId(), secondSubmission.getLatestResult().getId(), 120);
+        Result rebuiltResult = rebuiltSubmission.getLatestResult();
+        assertThat(rebuiltResult.getCompletionDate()).isNotNull();
+        assertThat(rebuiltResult.isRated()).isFalse();
+    }
+
+    /** Fresh result streams for both lock-test containers; a mocked archive stream can only be read once per build. */
+    private void stubLockTestResults() throws IOException {
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-lock", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-lock", RESULTS_DIRECTORY_REGEX, behaviorResults());
+    }
+
+    /**
+     * When a submission is already under manual assessment, a new automatic result merges its feedback into that
+     * manual result instead of standing on its own, exactly as after a single-container build. The merged result of a
+     * rebuild therefore lands in the completed manual result, alongside the tutor's assessment.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMergedResultFeedbackIsMergedIntoTheLatestManualResult() throws Exception {
+        String instructorImage = "mc-instructor:manual";
+        String studentImage = "mc-student:manual";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-manual");
+        mockContainerLifecycle(studentImage, "mc-student-manual");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-manual", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-manual", RESULTS_DIRECTORY_REGEX, behaviorResults());
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush();
+        ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 120);
+
+        // A tutor completes a manual assessment of the submission.
+        Result manualResult = new Result();
+        manualResult.setAssessmentType(AssessmentType.MANUAL);
+        manualResult.setCompletionDate(ZonedDateTime.now());
+        manualResult.setSubmission(submission);
+        manualResult.setExerciseId(programmingExercise.getId());
+        manualResult = resultRepository.save(manualResult);
+
+        // Rebuild the same commit with fresh result streams.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-manual", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-manual", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        localCITriggerService.triggerBuild(participation, false);
+        awaitFinalizedResultAfter(participation.getId(), manualResult.getId(), 120);
+
+        // The containers' feedback was merged into the manual result.
+        Result mergedManualResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualResult.getId());
+        assertThat(mergedManualResult.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(feedbackTestNames(mergedManualResult)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+    }
+
+    /**
+     * A push to the test repository builds the solution and, once that result is complete, the template. With several
+     * containers the solution reports one queue item per container; the template must still be rebuilt exactly once.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestsPushRebuildsTemplateOnceAfterMultiContainerSolutionBuild() throws Exception {
+        String instructorImage = "mc-instructor:template";
+        String studentImage = "mc-student:template";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-template");
+        mockContainerLifecycle(studentImage, "mc-student-template");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-template", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-template", RESULTS_DIRECTORY_REGEX, behaviorResults());
+
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
+        solutionRepository.workingCopy().push().call();
+        templateRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, templateRepositorySlug);
+        localVCLocalCITestService.commitFile(templateRepository.workingCopyPath(), templateRepository.workingCopy());
+        templateRepository.workingCopy().push().call();
+
+        localVCServletService.processNewPush(testsCommitHash, testsRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities(), Optional.empty(),
+                Optional.empty(), Optional.empty());
+
+        // The solution build (two containers) finishes and triggers the template build, whose two containers finish too.
+        awaitFinalizedResult(solutionParticipation.getId(), 120);
+        awaitFinishedBuildJobs(templateParticipation.getId(), 2, 120);
+        awaitFinalizedResult(templateParticipation.getId(), 120);
+
+        // Exactly one template build: two container jobs, not two per solution container.
+        var templateJobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), templateParticipation.getId())).toList();
+        assertThat(templateJobs).hasSize(2);
+    }
+
+    /**
+     * The solution participation is the one that generates the exercise's test cases, so its multi-container build
+     * exercises two hazards a student build never meets: each container reconciles the test-case registry against a
+     * PARTIAL result (it must not deactivate its siblings' test cases), and a test case reported by several containers
+     * (here {@code testConstructors[Policy]}, returned by both) must reach the merged result exactly once, because a
+     * duplicate test case zeroes the score.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionBuildGeneratesAllTestCasesAcrossContainersWithoutDuplicates() throws Exception {
+        String instructorImage = "mc-instructor:solution";
+        String studentImage = "mc-student:solution";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-solution");
+        mockContainerLifecycle(studentImage, "mc-student-solution");
+        // The structural results already contain the constructor test; the behavior container reports it a second time.
+        var behaviorPlusSharedTest = new java.util.HashMap<>(behaviorResults());
+        behaviorPlusSharedTest.putAll(constructorTestResult());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-solution", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-solution", RESULTS_DIRECTORY_REGEX, behaviorPlusSharedTest);
+
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
+        solutionRepository.workingCopy().push().call();
+
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+
+        ProgrammingSubmission submission = awaitFinalizedResult(solutionParticipation.getId(), 120);
+
+        // Neither container deactivated the other's test cases: the registry is the union of both.
+        Set<String> expectedNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(expectedNames);
+
+        // The shared test case reached the merged result once, so the result was scored instead of zeroed as a duplicate.
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
+        assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(expectedNames);
+        assertThat(testCaseFeedbacksOf(result)).filteredOn(feedback -> "testConstructors[Policy]".equals(feedback.getTestCase().getTestName())).hasSize(1);
+        assertThat(result.getFeedbacks()).noneMatch(feedback -> feedback.getText() != null && feedback.getText().contains("Duplicate Test Case"));
+        assertThat(result.getScore()).isGreaterThan(0.0);
+        // partly successful fixture: scored, built, but not every test passed
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(submission.isBuildFailed()).isFalse();
+    }
+
+    /**
+     * A solution build generates the exercise's test cases. On a single container, a test removed from the solution is
+     * deactivated because that one result covers every test case; a multi-container build must reach the same outcome,
+     * but only once every container's feedback is merged: no single container may deactivate a test absent from it,
+     * because that absence is a sibling container's test, not a removal. This builds the solution twice; the second
+     * build omits one test from both containers, and that test, and only that test, becomes inactive.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionBuildDeactivatesATestRemovedFromEveryContainer() throws Exception {
+        String instructorImage = "mc-instructor:deactivate";
+        String studentImage = "mc-student:deactivate";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-deactivate");
+        mockContainerLifecycle(studentImage, "mc-student-deactivate");
+
+        // First solution build: every test case is registered across the two containers.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-deactivate", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-deactivate", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
+        solutionRepository.workingCopy().push().call();
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+        ProgrammingSubmission firstSubmission = awaitFinalizedResult(solutionParticipation.getId(), 120);
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+
+        // Second build: the constructor test is removed from the solution, so it is reported by neither container.
+        Map<String, String> structuralWithoutConstructor = structuralResults().entrySet().stream().filter(entry -> !entry.getKey().contains("ConstructorTest"))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-deactivate", RESULTS_DIRECTORY_REGEX, structuralWithoutConstructor);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-deactivate", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+        awaitFinalizedResultAfter(solutionParticipation.getId(), firstSubmission.getLatestResult().getId(), 120);
+
+        // Only the removed test is deactivated; every other test case stays active. No single container deactivated it
+        // (each still passed false); the reconciliation at finalize did, once, against the union of both containers.
+        Set<String> remainingActive = new HashSet<>(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+        remainingActive.remove("testConstructors[Policy]");
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(remainingActive);
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), false)).extracting(testCase -> testCase.getTestName())
+                .contains("testConstructors[Policy]");
+    }
+
+    /**
+     * A container that failed to build reported none of its tests, so their absence from the merged feedback says nothing
+     * about the solution. The reconciliation at finalize is skipped for such a build: the registry keeps every test case
+     * of the last clean solution build instead of dropping a whole container's share from grading until the next clean
+     * build.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionBuildWithACrashedContainerKeepsItsTestCasesActive() throws Exception {
+        String instructorImage = "mc-instructor:keep";
+        String studentImage = "mc-student:keep";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-keep");
+        mockContainerLifecycle(studentImage, "mc-student-keep");
+
+        // First solution build: every test case is registered across the two containers.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-keep", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-keep", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        solutionRepository = localVCLocalCITestService.createRepositoryWithWorkingCopy(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyPath(), solutionRepository.workingCopy());
+        solutionRepository.workingCopy().push().call();
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+        ProgrammingSubmission firstSubmission = awaitFinalizedResult(solutionParticipation.getId(), 120);
+        Set<String> allTestNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(allTestNames);
+
+        // Second build: the student container crashes and reports no tests at all.
+        mockScriptExitCode("mc-student-keep", "mc-student-keep-exec", 1L);
+        mockMissingResults("mc-student-keep");
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+        ProgrammingSubmission secondSubmission = awaitFinalizedResultAfter(solutionParticipation.getId(), firstSubmission.getLatestResult().getId(), 120);
+
+        // The build is failed, but no test case was deactivated: the behaviour tests are absent because their container
+        // crashed, not because they were removed from the solution.
+        assertThat(secondSubmission.isBuildFailed()).isTrue();
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(allTestNames);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testContainerResultsMergeIntoOneFinalizedResultEndToEnd() throws Exception {
+        String instructorImage = "mc-instructor:happy";
+        String studentImage = "mc-student:happy";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-happy");
+        mockContainerLifecycle(studentImage, "mc-student-happy");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-happy", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-happy", RESULTS_DIRECTORY_REGEX, behaviorResults());
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        // The spy is not among the beans reset between tests, so only the calls of this build are counted.
+        clearInvocations(programmingMessagingService);
+        processNewPush();
+
+        ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 120);
+
+        // The student is told about the build once, when the merged result is complete. A container that finishes first
+        // leaves the shared result in progress, and reporting that would show a finished build carrying part of the
+        // feedback and no score, corrected once per remaining container.
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(argThat(reported -> reported.getCompletionDate() == null), any());
+        verify(programmingMessagingService, timeout(2000).times(1)).notifyUserAboutNewResult(argThat(reported -> reported.getCompletionDate() != null), any());
+        // Reporting the result synthesizes the merged feedback for the client, which reads the messages of rows that were
+        // loaded inside the merge transaction; a report that reaches the student proves they were loaded whole.
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessageToUser(eq(student1Login), eq(NEW_RESULT_TOPIC), any());
+
+        // The containers of one commit share a single submission and a single result.
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId())).hasSize(1);
+        assertThat(submission.isBuildFailed()).isFalse();
+        assertThat(submission.getResults()).hasSize(1);
+
+        // The finalized result carries the feedback of both containers.
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
+        Set<String> expectedNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
+        assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(expectedNames);
+        // the fixture is partly successful, so the merged result is scored but, as on the single-container path, not successful
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getScore()).isNotNull();
+
+        // One build job per container, both linked to the shared result.
+        assertThat(buildJobRepository.countByResultId(result.getId())).isEqualTo(2);
+        var jobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId())).toList();
+        assertThat(jobs).hasSize(2);
+        assertThat(jobs).allSatisfy(job -> assertThat(job.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL));
+        assertThat(jobs).extracting(job -> job.getDockerImage()).containsExactlyInAnyOrder(instructorImage, studentImage);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testInstructorResultsPreservedWhenStudentContainerCrashesEndToEnd() throws Exception {
+        String instructorImage = "mc-instructor:crash";
+        String studentImage = "mc-student:crash";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-crash");
+        mockContainerLifecycle(studentImage, "mc-student-crash");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-crash", RESULTS_DIRECTORY_REGEX, structuralResults());
+        // The student container's build script dies with a non-zero exit code and leaves no test results behind.
+        mockScriptExitCode("mc-student-crash", "mc-student-crash-exec", 1L);
+        mockMissingResults("mc-student-crash");
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush();
+
+        ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 120);
+
+        assertResultPreservedAfterStudentContainerFailure(participation, submission, instructorImage, studentImage);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testInstructorResultsPreservedWhenStudentContainerIsOomKilledEndToEnd() throws Exception {
+        String instructorImage = "mc-instructor:oom";
+        String studentImage = "mc-student:oom";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-oom");
+        mockContainerLifecycle(studentImage, "mc-student-oom");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-oom", RESULTS_DIRECTORY_REGEX, structuralResults());
+        // An out-of-memory kill surfaces to the agent as exit code 137 (SIGKILL by the kernel) and no test results.
+        mockScriptExitCode("mc-student-oom", "mc-student-oom-exec", 137L);
+        mockMissingResults("mc-student-oom");
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush();
+
+        ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 120);
+
+        assertResultPreservedAfterStudentContainerFailure(participation, submission, instructorImage, studentImage);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testInstructorResultsPreservedWhenStudentContainerTimesOutEndToEnd() throws Exception {
+        String instructorImage = "mc-instructor:timeout";
+        String studentImage = "mc-student:timeout";
+        // The build configuration is stored apart from the exercise, so it is read after the two-container plan was saved:
+        // an instance read before would write the previous plan back together with the timeout below.
+        configureTwoContainerPlan(instructorImage, studentImage);
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+        int originalTimeout = buildConfig.getTimeoutSeconds();
+        try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
+            mockContainerLifecycle(instructorImage, "mc-instructor-timeout");
+            mockContainerLifecycle(studentImage, "mc-student-timeout");
+            dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-timeout", RESULTS_DIRECTORY_REGEX, structuralResults());
+
+            // The instructor-configured timeout applies to each container job individually: only the student container's
+            // commands hang past the timeout, so only the student job runs into it. The delay must sit inside the timed
+            // part of the job — the time spent pulling and inspecting the image is deliberately excluded from the build
+            // timeout — and the timeout must leave the instructor job enough room for its real git clones in this harness.
+            buildConfig.setTimeoutSeconds(20);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            mockHangingExec("mc-student-timeout", "mc-student-timeout-exec", scheduler);
+
+            ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            processNewPush();
+
+            ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 180);
+
+            // The instructor container's feedback reaches the student although the sibling job timed out.
+            Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
+            assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(STRUCTURAL_TEST_NAMES);
+            assertThat(result.getCompletionDate()).isNotNull();
+            assertThat(result.isSuccessful()).isFalse();
+            assertThat(submission.isBuildFailed()).isTrue();
+
+            // The timed-out job is recorded as such; the sibling job is untouched by the timeout.
+            assertThat(buildJobRepository.countByResultId(result.getId())).isEqualTo(2);
+            var jobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId())).toList();
+            assertThat(jobs).hasSize(2);
+            assertThat(statusOfJobWithImage(jobs, studentImage)).isEqualTo(BuildStatus.TIMEOUT);
+            assertThat(statusOfJobWithImage(jobs, instructorImage)).isEqualTo(BuildStatus.SUCCESSFUL);
+        }
+        finally {
+            buildConfig.setTimeoutSeconds(originalTimeout);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+        }
+    }
+
+    /**
+     * The shared assertions of the crash and out-of-memory scenarios: the aggregated result still finalizes, the
+     * instructor container's feedback is preserved, the submission is marked as failed, and the failed container's
+     * build logs are labeled with its name.
+     */
+    private void assertResultPreservedAfterStudentContainerFailure(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission submission, String instructorImage,
+            String studentImage) {
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
+        assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(STRUCTURAL_TEST_NAMES);
+        assertThat(result.getCompletionDate()).isNotNull();
+        // A result of a submission with a failed container must not present itself as successful.
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(submission.isBuildFailed()).isTrue();
+
+        assertThat(buildJobRepository.countByResultId(result.getId())).isEqualTo(2);
+        var jobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId())).toList();
+        assertThat(jobs).hasSize(2);
+        assertThat(jobs).extracting(job -> job.getDockerImage()).containsExactlyInAnyOrder(instructorImage, studentImage);
+
+        // The failed container's logs are preserved for the student, labeled with the container that produced them.
+        var buildLogs = buildLogEntryService.getLatestBuildLogs(submission);
+        assertThat(buildLogs).isNotEmpty();
+        assertThat(buildLogs).allSatisfy(buildLogEntry -> assertThat(buildLogEntry.getContainerName()).isEqualTo(STUDENT_CONTAINER));
+    }
+
+    // -------------------------------------------------------------------------------------------------
+    // Setup helpers
+    // -------------------------------------------------------------------------------------------------
+
+    private void processNewPush() {
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.bareRepository().getRepository(), userTestRepository.getUserWithAuthorities(),
+                Optional.empty(), Optional.empty(), Optional.empty());
+    }
+
+    /**
+     * Configures the exercise with a plan of two containers: the instructor container additionally checks out the test
+     * repository, the student container is scoped to the assignment repository only.
+     */
+    private void configureTwoContainerPlan(String instructorImage, String studentImage) throws JacksonException {
+        BuildPhaseDTO instructorPhase = new BuildPhaseDTO("instructor_phase", "gradle test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"));
+        BuildPhaseDTO studentPhase = new BuildPhaseDTO("student_phase", "gradle test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"));
+        BuildContainerDTO instructorContainer = new BuildContainerDTO(INSTRUCTOR_CONTAINER, instructorImage, List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)),
+                List.of(instructorPhase));
+        BuildContainerDTO studentContainer = new BuildContainerDTO(STUDENT_CONTAINER, studentImage, List.of(), List.of(studentPhase));
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(instructorContainer, studentContainer)).toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+    }
+
+    /**
+     * Maps the given image to its own Docker container id and gives that container its own commit-hash file streams, so
+     * the two container jobs of one submission do not consume each other's mocked streams.
+     */
+    private void mockContainerLifecycle(String image, String containerId) throws IOException {
+        DockerClientTestService.mockCreateContainerCmd(dockerClient, containerId, image);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, containerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+                Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, containerId,
+                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+", Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
+    }
+
+    /**
+     * Replaces the exec chain of the given container with one whose commands report the given exit code. Only the build
+     * script's exit code is ever read back (setup commands discard it), so this effectively sets the script's exit code.
+     */
+    private void mockScriptExitCode(String containerId, String execId, long exitCode) {
+        ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
+        ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
+        when(dockerClient.execCreateCmd(eq(containerId))).thenReturn(execCreateCmd);
+        when(execCreateCmd.withCmd(any(String[].class))).thenReturn(execCreateCmd);
+        when(execCreateCmd.withCmd(anyString(), anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withCmd(anyString(), anyString(), anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withUser(anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStdout(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStderr(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.exec()).thenReturn(execCreateCmdResponse);
+        when(execCreateCmdResponse.getId()).thenReturn(execId);
+
+        ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
+        when(dockerClient.execStartCmd(eq(execId))).thenReturn(execStartCmd);
+        when(execStartCmd.withDetach(anyBoolean())).thenReturn(execStartCmd);
+        when(execStartCmd.exec(any())).thenAnswer(invocation -> {
+            ResultCallback.Adapter<?> callback = invocation.getArgument(0);
+            callback.onComplete();
+            return null;
+        });
+
+        InspectExecCmd inspectExecCmd = mock(InspectExecCmd.class);
+        InspectExecResponse inspectExecResponse = mock(InspectExecResponse.class);
+        when(dockerClient.inspectExecCmd(eq(execId))).thenReturn(inspectExecCmd);
+        when(inspectExecCmd.exec()).thenReturn(inspectExecResponse);
+        when(inspectExecResponse.getExitCodeLong()).thenReturn(exitCode);
+    }
+
+    /**
+     * Makes every command in the given container hang for 45 seconds before completing, so the job running the
+     * container hits the instructor-configured build timeout. The delay sits inside the timed part of the job (command
+     * execution), unlike an image-inspection delay, which the build timeout deliberately does not cover.
+     */
+    private void mockHangingExec(String containerId, String execId, ScheduledExecutorService scheduler) {
+        ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
+        ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
+        when(dockerClient.execCreateCmd(eq(containerId))).thenReturn(execCreateCmd);
+        when(execCreateCmd.withCmd(any(String[].class))).thenReturn(execCreateCmd);
+        when(execCreateCmd.withCmd(anyString(), anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withCmd(anyString(), anyString(), anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withUser(anyString())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStdout(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.withAttachStderr(anyBoolean())).thenReturn(execCreateCmd);
+        when(execCreateCmd.exec()).thenReturn(execCreateCmdResponse);
+        when(execCreateCmdResponse.getId()).thenReturn(execId);
+
+        ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
+        when(dockerClient.execStartCmd(eq(execId))).thenReturn(execStartCmd);
+        when(execStartCmd.withDetach(anyBoolean())).thenReturn(execStartCmd);
+        when(execStartCmd.exec(any())).thenAnswer(invocation -> {
+            ResultCallback.Adapter<?> callback = invocation.getArgument(0);
+            scheduler.schedule(callback::onComplete, 45, TimeUnit.SECONDS);
+            return null;
+        });
+    }
+
+    /** The given container has no test results to collect, as after a crashed or killed build script. */
+    private void mockMissingResults(String containerId) {
+        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
+        ArgumentMatcher<String> resultsDirectoryMatcher = path -> path != null && path.matches(RESULTS_DIRECTORY_REGEX);
+        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(eq(containerId), argThat(resultsDirectoryMatcher));
+        doThrow(new NotFoundException("no test results in container " + containerId)).when(copyArchiveFromContainerCmd).exec();
+    }
+
+    private Map<String, String> structuralResults() throws IOException {
+        return dockerClientTestService.createMapFromTestResultsFolder(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH).entrySet().stream()
+                .filter(entry -> !entry.getKey().contains("SortingExampleBehaviorTest")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private Map<String, String> behaviorResults() throws IOException {
+        return dockerClientTestService.createMapFromTestResultsFolder(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH).entrySet().stream()
+                .filter(entry -> entry.getKey().contains("SortingExampleBehaviorTest")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    /** The single constructor test file ({@code testConstructors[Policy]}), used to make two containers report one test case. */
+    private Map<String, String> constructorTestResult() throws IOException {
+        return dockerClientTestService.createMapFromTestResultsFolder(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH).entrySet().stream()
+                .filter(entry -> entry.getKey().contains("ConstructorTest")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    // -------------------------------------------------------------------------------------------------
+    // Assertion helpers
+    // -------------------------------------------------------------------------------------------------
+
+    /**
+     * Waits until the submission's latest result is finalized (completion date set) and returns the submission.
+     * Uncaught exceptions of unrelated background threads (e.g. the SSH server's session teardown on Windows) must not
+     * abort the wait, hence {@code dontCatchUncaughtExceptions()}.
+     */
+    private ProgrammingSubmission awaitFinalizedResult(long participationId, int timeoutInSeconds) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        await().dontCatchUncaughtExceptions().atMost(Duration.ofSeconds(timeoutInSeconds)).until(() -> {
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId)
+                    .map(submission -> submission.getLatestResult() != null && submission.getLatestResult().getCompletionDate() != null).orElse(false);
+        });
+        return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
+    }
+
+    /**
+     * The names of the test cases a container actually delivered feedback for. Finalizing the result adds a
+     * "Test was not executed." placeholder for every registered test case without feedback, so those placeholders are
+     * excluded here — they mark the absence of a container's results, not their delivery.
+     */
+    /** Waits until the participation's latest result is finalized and newer than the given result, e.g. after a rebuild. */
+    private ProgrammingSubmission awaitFinalizedResultAfter(long participationId, long previousResultId, int timeoutInSeconds) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        await().dontCatchUncaughtExceptions().atMost(Duration.ofSeconds(timeoutInSeconds)).until(() -> {
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).map(ProgrammingSubmission::getLatestResult)
+                    .map(latest -> latest.getId() > previousResultId && latest.getCompletionDate() != null).orElse(false);
+        });
+        return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
+    }
+
+    /** Waits until the participation has at least the given number of build jobs that are no longer queued or building. */
+    private void awaitFinishedBuildJobs(long participationId, int count, int timeoutInSeconds) {
+        await().dontCatchUncaughtExceptions().atMost(Duration.ofSeconds(timeoutInSeconds))
+                .until(() -> buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == participationId)
+                        .filter(job -> job.getBuildStatus() != BuildStatus.QUEUED && job.getBuildStatus() != BuildStatus.BUILDING).count() >= count);
+    }
+
+    /** The test cases a result reports as executed; a placeholder row marks a registered test the build did not execute. */
+    private Set<String> feedbackTestNames(Result result) {
+        return testCaseFeedbacksOf(result).stream().filter(feedback -> !"Test was not executed.".equals(feedback.getMessageText()))
+                .map(feedback -> feedback.getTestCase().getTestName()).collect(Collectors.toSet());
+    }
+
+    /** The stored test-case feedback rows of a result, with their test cases and messages loaded. */
+    private List<TestCaseFeedback> testCaseFeedbacksOf(Result result) {
+        return testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(result.getId());
+    }
+
+    private BuildStatus statusOfJobWithImage(List<BuildJob> jobs, String dockerImage) {
+        return jobs.stream().filter(job -> dockerImage.equals(job.getDockerImage())).findFirst().orElseThrow().getBuildStatus();
+    }
+
+    private static Set<String> union(Set<String> first, Set<String> second) {
+        var union = new HashSet<>(first);
+        union.addAll(second);
+        return Set.copyOf(union);
+    }
+}

@@ -155,6 +155,32 @@
                 "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
                 "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB."
             },
+            "buildContainersEditor": {
+                "title": "Build Containers",
+                "help": "A build container runs its own Docker image and executes its build phases inside it. Containers are independent of each other, so a container can be given only the repositories its phases need, which keeps student code away from the instructor's test files.",
+                "addContainer": "Add Container",
+                "removeContainer": "Remove this container",
+                "detailTitle": "Build Containers / Phases",
+                "defaultImage": "Default image of the programming language",
+                "repositories": "Repositories",
+                "exerciseRepositories": "All repositories of the exercise",
+                "containerName": "Container Name",
+                "containerNameHelp": "Use only letters, digits and underscores, and do not start with a digit. The name must be unique within the build plan.",
+                "containerNameInvalid": "Use only letters, digits and underscores, and do not start with a digit.",
+                "containerNameDuplicate": "Another container already uses this name.",
+                "timeout": "Timeout (seconds)",
+                "timeoutHelp": "Leave empty to use the timeout of the exercise. The exercise timeout has to cover the slowest container; a container whose phases are short can be bounded more tightly, so that a hung submission frees its build agent slot, and the merged result reaches the student, sooner.",
+                "timeoutInvalid": "The timeout must be a whole number of seconds between {{ min }} and {{ max }}.",
+                "scopeRepositories": "Check out only selected repositories",
+                "scopeRepositoriesHelp": "By default a container checks out the repositories configured on the exercise. Select the repositories explicitly to give this container access to a subset only, for example to run student-authored tests without the instructor's test repository.",
+                "repositoryTypes": {
+                    "TEMPLATE": "Template",
+                    "SOLUTION": "Solution",
+                    "TESTS": "Tests",
+                    "AUXILIARY": "Auxiliary",
+                    "USER": "Assignment"
+                }
+            },
             "buildPhasesEditor": {
                 "title": "Build Phases",
                 "help": "Before a build is executed, the scripts of all phases whose conditions are met are concatenated in order. If no result paths are configured, the script's exit code determines build success. Otherwise, success depends on whether test results are produced.",
@@ -174,7 +200,7 @@
                 "resultPaths": "Result Paths",
                 "resultPathsHelp": "Add glob patterns for test result files produced by this phase, for example JUnit XML reports.",
                 "testsExpected": "Tests expected",
-                "expectedTestsBeforeDueDateWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date. To fix this, go to \"Edit\", switch to \"advanced mode\", check \"Customize build configuration\" and find \"Build Phases\".",
+                "expectedTestsBeforeDueDateWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date. To fix this, open the build plan editor with \"Edit build plan\" and set the phase's inclusion condition to \"After due date\".",
                 "expectedTestsBeforeDueDateEditorWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date.",
                 "resultPathPlaceholder": "e.g. **/results/*.xml",
                 "addResultPath": "Add Result Path",

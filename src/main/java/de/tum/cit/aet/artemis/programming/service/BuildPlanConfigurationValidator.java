@@ -46,13 +46,15 @@ public final class BuildPlanConfigurationValidator {
 
     /**
      * Validates that a build plan can be executed, i.e. that it defines at least one container, that the container names
-     * are unique, and that every container has a usable Docker image and valid build phases. A legacy build plan that carries a flat list of phases
-     * is validated as the single container it is normalized into.
+     * are unique, and that every container has a usable Docker image, valid build phases and, if it sets one, a timeout
+     * that is positive and within the exercise's. A legacy build plan that carries a flat list of phases is validated as
+     * the single container it is normalized into.
      *
-     * @param buildPlan the build plan to validate
+     * @param buildPlan              the build plan to validate
+     * @param exerciseTimeoutSeconds the timeout of the exercise in seconds, or 0 if the exercise uses the instance default
      * @throws BadRequestAlertException if the build plan violates any of the rules above
      */
-    public static void validate(BuildPlanPhasesDTO buildPlan) {
+    public static void validate(BuildPlanPhasesDTO buildPlan, int exerciseTimeoutSeconds) {
         final List<BuildContainerDTO> containers = buildPlan.effectiveContainers();
         // an empty build plan would leave the exercise without any way to build a submission
         if (containers.isEmpty()) {
@@ -63,6 +65,7 @@ public final class BuildPlanConfigurationValidator {
         for (final BuildContainerDTO container : containers) {
             validateContainerName(container, containerNames);
             validateDockerImageOf(container);
+            validateTimeoutOf(container, exerciseTimeoutSeconds);
             validatePhasesOf(container);
         }
     }
@@ -85,6 +88,25 @@ public final class BuildPlanConfigurationValidator {
         // null selects the default image of the exercise; a blank image would be persisted verbatim and fail every build
         if (container.dockerImage() != null && container.dockerImage().isBlank()) {
             throw new BadRequestAlertException("The Docker image must not be blank", ENTITY_NAME, "blankDockerImage");
+        }
+    }
+
+    private static void validateTimeoutOf(BuildContainerDTO container, int exerciseTimeoutSeconds) {
+        if (container.timeoutSeconds() == null) {
+            // the container uses the exercise's timeout
+            return;
+        }
+        // the agent would replace a non-positive timeout by its instance maximum, which is not what an instructor who
+        // typed it intended
+        if (container.timeoutSeconds() <= 0) {
+            throw badRequest("The timeout of a build container must be positive", "invalidBuildContainerTimeout", Map.of("container", container.name()));
+        }
+        // a container timeout tightens the exercise timeout, which has to cover the slowest container; one above it
+        // would extend the exercise's budget instead. An exercise timeout of 0 means the instance default, which the
+        // agent applies as the upper bound of every job anyway.
+        if (exerciseTimeoutSeconds > 0 && container.timeoutSeconds() > exerciseTimeoutSeconds) {
+            throw badRequest("The timeout of a build container must not exceed the timeout of the exercise", "buildContainerTimeoutExceedsExerciseTimeout",
+                    Map.of("container", container.name(), "timeout", exerciseTimeoutSeconds));
         }
     }
 

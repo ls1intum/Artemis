@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, c
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { faPlayCircle, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,11 +15,20 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { BuildPlanConfigurationService } from 'app/programming/manage/services/build-plan-configuration.service';
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
-import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import {
+    BUILD_CONTAINER_NAME_PATTERN,
+    BUILD_PHASE_NAME_PATTERN,
+    BUILD_PHASE_RESERVED_NAMES,
+    BuildContainer,
+    DEFAULT_BUILD_CONTAINER_NAME,
+    effectiveContainers,
+    parseBuildPlanPhases,
+} from 'app/programming/shared/entities/build-plan-phases.model';
 import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { BuildContainerEditorComponent } from 'app/programming/manage/build-plan-editor/build-container-editor/build-container-editor.component';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/build-plan-editor/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
-import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 
 /**
  * Dedicated build plan editor page for LocalCI. It edits the structured build plan configuration (build phases, Docker
@@ -37,7 +46,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-ed
         HelpIconComponent,
         UpdatingResultComponent,
         ProgrammingExerciseBuildConfigurationComponent,
-        BuildPhasesEditorComponent,
+        BuildContainerEditorComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -53,13 +62,14 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
 
     protected readonly farPlayCircle = faPlayCircle;
 
+    protected readonly faPlus = faPlus;
+
     readonly programmingExercise = signal<ProgrammingExercise | undefined>(undefined);
     readonly loadingResults = signal(true);
     readonly isSaving = signal(false);
 
-    readonly phases = signal<BuildPhase[]>([]);
-    readonly dockerImage = signal<string>('');
-    // the language default, shown as a placeholder while the field is empty instead of being seeded into it and pinned
+    readonly containers = signal<BuildContainer[]>([]);
+    // the language default image, recorded so the container editor can offer it instead of pinning it into a field
     readonly defaultDockerImage = signal<string>('');
     readonly timeout = signal<number>(0);
 
@@ -71,19 +81,44 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
 
     private readonly buildConfigurationComponent = viewChild(ProgrammingExerciseBuildConfigurationComponent);
 
-    readonly arePhaseNamesValid = computed(() => {
-        const phases = this.phases();
-        const normalizedNames = phases.map((phase) => phase.name.toLowerCase());
+    /** phase names only have to be unique within their container, as containers execute independently of each other */
+    readonly arePhaseNamesValid = computed(() =>
+        this.containers().every((container) => {
+            const normalizedNames = container.phases.map((phase) => phase.name.toLowerCase());
+            const namesAreUnique = new Set(normalizedNames).size === normalizedNames.length;
+            const namesArePatternValid = container.phases.every((phase) => BUILD_PHASE_NAME_PATTERN.test(phase.name));
+            const namesAreNotReserved = normalizedNames.every((name) => !BUILD_PHASE_RESERVED_NAMES.has(name));
+            return namesAreUnique && namesArePatternValid && namesAreNotReserved;
+        }),
+    );
+
+    readonly areContainerNamesValid = computed(() => {
+        const containers = this.containers();
+        const normalizedNames = containers.map((container) => container.name.toLowerCase());
         const namesAreUnique = new Set(normalizedNames).size === normalizedNames.length;
-        const namesArePatternValid = phases.every((phase) => BUILD_PHASE_NAME_PATTERN.test(phase.name));
-        const namesAreNotReserved = normalizedNames.every((name) => !BUILD_PHASE_RESERVED_NAMES.has(name));
-        return namesAreUnique && namesArePatternValid && namesAreNotReserved;
+        return namesAreUnique && containers.every((container) => BUILD_CONTAINER_NAME_PATTERN.test(container.name));
     });
 
     // the timeout bounds come from the build configuration child once it has read the profile info; exposed so the
     // template can render the valid range in the out-of-bounds message
     readonly timeoutMinValue = computed(() => this.buildConfigurationComponent()?.timeoutMinValue());
     readonly timeoutMaxValue = computed(() => this.buildConfigurationComponent()?.timeoutMaxValue());
+
+    /**
+     * The largest timeout a container may set: a container timeout tightens the exercise timeout, which has to cover the
+     * slowest container, so it is capped at the exercise timeout within the instance bounds. An exercise timeout of 0
+     * means the instance default, which bounds every job on the agent anyway.
+     */
+    readonly containerTimeoutMaxValue = computed(() => {
+        const instanceMax = this.timeoutMaxValue();
+        const exerciseTimeout = this.timeout();
+        if (!exerciseTimeout || exerciseTimeout <= 0) {
+            return instanceMax;
+        }
+        return instanceMax === undefined ? exerciseTimeout : Math.min(instanceMax, exerciseTimeout);
+    });
+
+    readonly hasPhases = computed(() => this.containers().every((container) => container.phases.length > 0));
 
     readonly isTimeoutValid = computed(() => {
         const timeout = this.timeout();
@@ -104,20 +139,56 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     // the Docker flags are assembled by the build configuration child, so the size check lives there and is delegated here
     readonly areDockerFlagsWithinSizeLimit = computed(() => this.buildConfigurationComponent()?.areDockerFlagsWithinSizeLimit() ?? true);
 
-    readonly isBuildPlanConfigurationWithinSizeLimit = computed(
-        () => JSON.stringify({ phases: this.phases(), dockerImage: this.dockerImage().trim() || undefined }).length <= BUILD_PLAN_CONFIGURATION_MAX_LENGTH,
-    );
+    /** a container timeout is optional; a set one has to lie within the instance bounds and must not exceed the exercise timeout */
+    readonly areContainerTimeoutsValid = computed(() => {
+        const min = this.timeoutMinValue();
+        const max = this.containerTimeoutMaxValue();
+        return this.containers().every((container) => {
+            const timeout = container.timeoutSeconds;
+            return timeout === undefined || (Number.isInteger(timeout) && timeout > 0 && (min === undefined || timeout >= min) && (max === undefined || timeout <= max));
+        });
+    });
 
-    // An empty image is allowed: submit() sends no image and the server falls back to the exercise's language default.
+    readonly isBuildPlanConfigurationWithinSizeLimit = computed(() => JSON.stringify({ containers: this.containers() }).length <= BUILD_PLAN_CONFIGURATION_MAX_LENGTH);
+
+    // An empty container image is allowed: submit() sends no image for it and the build falls back to the exercise's
+    // language default per container, so the container keeps following default image bumps instead of pinning one.
     readonly canSubmit = computed(
         () =>
-            this.phases().length > 0 &&
+            this.containers().length > 0 &&
+            this.hasPhases() &&
+            this.areContainerNamesValid() &&
             this.arePhaseNamesValid() &&
             this.isTimeoutValid() &&
+            this.areContainerTimeoutsValid() &&
             this.areDockerResourcesValid() &&
             this.isBuildPlanConfigurationWithinSizeLimit() &&
             this.areDockerFlagsWithinSizeLimit(),
     );
+
+    /**
+     * Appends a container that checks out the repositories configured on the exercise, i.e. one that does not scope its
+     * repositories, so that adding a container does not silently change what an existing build plan checks out.
+     */
+    addContainer(): void {
+        // the new container reuses the first container's image; when that one inherits the language default, so does this one
+        this.containers.update((containers) => [...containers, { name: '', dockerImage: containers[0]?.dockerImage, phases: [] }]);
+    }
+
+    removeContainer(index: number): void {
+        this.containers.update((containers) => containers.filter((_, currentIndex) => currentIndex !== index));
+    }
+
+    updateContainer(index: number, container: BuildContainer): void {
+        this.containers.update((containers) => containers.map((current, currentIndex) => (currentIndex === index ? container : current)));
+    }
+
+    /** the names of all other containers, so that a container can detect a duplicate name */
+    otherContainerNames(index: number): string[] {
+        return this.containers()
+            .filter((_, currentIndex) => currentIndex !== index)
+            .map((container) => container.name);
+    }
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ exercise }) => {
@@ -131,22 +202,21 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     }
 
     /**
-     * Fetches the language default template to fill in what the exercise left implicit, without pinning those defaults on
-     * the next save. A missing image is offered only as a placeholder, so the field stays empty and {@link submit} keeps
-     * sending no image; missing phases (a null configuration builds on the language default at build time) are seeded into
-     * the editor so it opens with the real default plan instead of an empty list. Does nothing when neither is needed or
-     * the exercise has no programming language. The response is only applied while it still fits the editor state that
-     * asked for it, so neither a slow response for a previously opened exercise nor one overtaken by the instructor's own
-     * edits can overwrite what is on screen.
+     * Requests the language default plan of the exercise. Its Docker image is the placeholder every container without an
+     * image of its own shows, so it is fetched for a saved plan as well. Its phases seed the editor only when the exercise
+     * has no build plan configuration yet (a null configuration builds on the language default at build time), so it
+     * opens with the real default plan instead of an empty list; the seeded plan becomes one default container. Does
+     * nothing when the exercise has no programming language. The response is only applied while it still fits the editor
+     * state that asked for it, so neither a slow response for a previously opened exercise nor one overtaken by the
+     * instructor's own edits can overwrite what is on screen.
      */
     private seedDefaultsFromTemplate(exercise: ProgrammingExercise): void {
         const programmingLanguage = exercise.programmingLanguage;
-        if (!programmingLanguage || (this.dockerImage().trim().length > 0 && this.phases().length > 0)) {
+        if (!programmingLanguage) {
             return;
         }
-        // the field values as they stand before the request: only the seeded phases may later be folded into the
+        // the field values as they stand before the request: only the seeded containers may later be folded into the
         // baseline, so an edit made while the template is loading stays unsaved instead of being marked as persisted
-        const baselineDockerImage = this.dockerImage();
         const baselineTimeout = this.timeout();
         const baselineDockerFlags = this.programmingExercise()?.buildConfig?.dockerFlags;
         this.buildPhasesTemplateService
@@ -159,15 +229,18 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
                     if (this.programmingExercise()?.id !== exercise.id) {
                         return;
                     }
-                    if (template.dockerImage && this.dockerImage().trim().length === 0) {
+                    if (template.dockerImage) {
                         this.defaultDockerImage.set(template.dockerImage);
                     }
-                    // re-check the phases here: the instructor may have authored one while the request was in flight
-                    if (template.phases?.length && this.phases().length === 0) {
-                        this.phases.set(template.phases);
-                        // the seeded phases are not a user edit, so they are folded into the baseline; every other field
+                    // only an editor that is still empty is seeded: a saved plan keeps its containers, and the instructor may
+                    // have authored one while the request was in flight
+                    if (template.phases?.length && this.containers().length === 0) {
+                        // the image stays unset so the seeded container inherits; the template's image is only the placeholder
+                        const seeded = [{ name: DEFAULT_BUILD_CONTAINER_NAME, phases: template.phases }];
+                        this.containers.set(seeded);
+                        // the seeded containers are not a user edit, so they are folded into the baseline; every other field
                         // keeps its pre-request value, which leaves an edit made in the meantime dirty
-                        this.persistedSnapshot.set(this.snapshotOf(template.phases, baselineDockerImage, baselineTimeout, baselineDockerFlags));
+                        this.persistedSnapshot.set(this.snapshotOf(seeded, baselineTimeout, baselineDockerFlags));
                     }
                 },
                 // the editor stays usable without the template; the instructor can still author the plan manually
@@ -176,7 +249,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     }
 
     /**
-     * Initializes the editable build plan state (phases, Docker image, timeout) from the exercise's build config.
+     * Initializes the editable build plan state (containers and timeout) from the exercise's build config. A build plan
+     * that carries a flat list of phases is normalized into a single container, so that the editor only deals with
+     * containers.
      */
     private initEditingState(exercise: ProgrammingExercise): void {
         const buildConfig = exercise.buildConfig;
@@ -184,17 +259,18 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
 
         const configJson = buildConfig?.buildPlanConfiguration;
         const parsed = parseBuildPlanPhases(configJson);
-        if (parsed?.phases?.length) {
-            this.phases.set(parsed.phases);
-            this.dockerImage.set(parsed.dockerImage ?? '');
+        const containers = effectiveContainers(parsed);
+        if (containers.length) {
+            this.containers.set(containers);
             return;
         }
 
         // No structured phases yet: convert a legacy build script or older configuration format so an existing exercise
         // keeps its build plan instead of opening with an empty editor (which would overwrite the script on save).
         const converted = this.legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(buildConfig?.buildScript, configJson);
-        this.phases.set(converted?.phases ?? []);
-        this.dockerImage.set(converted?.dockerImage ?? parsed?.dockerImage ?? '');
+        this.containers.set(
+            converted?.phases?.length ? [{ name: DEFAULT_BUILD_CONTAINER_NAME, dockerImage: converted.dockerImage ?? parsed?.dockerImage ?? '', phases: converted.phases }] : [],
+        );
     }
 
     /**
@@ -249,8 +325,13 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
         const submittedExerciseId = exercise.id;
         this.buildPlanConfigurationService
             .updateBuildPlanConfiguration(exercise.id, {
-                // the image is validated trimmed, so it is also stored trimmed instead of keeping the whitespace an instructor pasted
-                buildPlan: { phases: this.phases(), dockerImage: this.dockerImage().trim() || undefined },
+                // a blank image is trimmed to undefined, so the container inherits the language default instead of
+                // persisting an unusable empty image (mirrors the plan-level behaviour the reviewed editor had)
+                buildPlan: {
+                    containers: this.containers().map((container) =>
+                        cloneWith(container, { dockerImage: container.dockerImage?.trim() || undefined, timeoutSeconds: container.timeoutSeconds || undefined }),
+                    ),
+                },
                 timeoutSeconds: this.timeout(),
                 dockerFlags: exercise.buildConfig?.dockerFlags,
             })
@@ -280,7 +361,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
      * let env variable, network and resource limit edits be discarded without a warning.
      */
     private snapshot(): string {
-        return this.snapshotOf(this.phases(), this.dockerImage(), this.timeout(), this.programmingExercise()?.buildConfig?.dockerFlags);
+        return this.snapshotOf(this.containers(), this.timeout(), this.programmingExercise()?.buildConfig?.dockerFlags);
     }
 
     /**
@@ -288,8 +369,8 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
      * this method and name the values it actually persisted: taking {@link snapshot} there would claim every field the
      * instructor edited while the request was running, and those edits would then be discarded without a warning.
      */
-    private snapshotOf(phases: BuildPhase[], dockerImage: string, timeout: number, dockerFlags: string | undefined): string {
-        return JSON.stringify({ phases, dockerImage, timeout, dockerFlags });
+    private snapshotOf(containers: BuildContainer[], timeout: number, dockerFlags: string | undefined): string {
+        return JSON.stringify({ containers, timeout, dockerFlags });
     }
 
     /**

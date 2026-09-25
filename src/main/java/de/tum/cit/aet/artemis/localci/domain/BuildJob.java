@@ -8,7 +8,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,6 +29,11 @@ public class BuildJob extends DomainObject {
     @Column(name = "build_job_id")
     private String buildJobId;
 
+    // The build group of a container job of a multi-container build: shared by every container job of the same build and
+    // what their results are merged under. Null for a job that builds a submission on its own.
+    @Column(name = "build_group_id")
+    private String buildGroupId;
+
     @Column(name = "name")
     private String name;
 
@@ -41,8 +46,10 @@ public class BuildJob extends DomainObject {
     @Column(name = "participation_id")
     private Long participationId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
+    // The containers of a multi-container build all link their jobs to the one result they merged into, so several jobs
+    // can point at the same result. The schema's index on result_id is not unique either.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn
     private Result result;
 
     @Column(name = "build_agent_address")
@@ -84,10 +91,32 @@ public class BuildJob extends DomainObject {
     @Column(name = "docker_image")
     private String dockerImage;
 
+    /**
+     * Whether the build this job ran failed to build, as the result processing judged it from what the job reported: no
+     * test results although tests were expected, or a non-zero exit code of a compile-only script. The job status only
+     * records how the job executed, so a container whose build script crashed still completes as a SUCCESSFUL job. This
+     * is where a multi-container build keeps each container's build outcome; the submission's build-failed flag is
+     * derived from the jobs of a group when the group finalizes, so that an overlapping attempt of the same commit
+     * cannot overwrite it in between.
+     */
+    @Column(name = "build_failed")
+    private boolean buildFailed;
+
     public BuildJob() {
     }
 
     public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+        this(queueItem, buildStatus, result, false);
+    }
+
+    /**
+     * @param queueItem   the queue item the job was executed from
+     * @param buildStatus how the job executed
+     * @param result      the result the job's feedback went into, or null if it produced none
+     * @param buildFailed whether the build itself failed, see {@link #isBuildFailed()}
+     */
+    public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, boolean buildFailed) {
+        this.buildFailed = buildFailed;
         this.buildJobId = queueItem.id();
         this.name = queueItem.name();
         this.exerciseId = queueItem.exerciseId();
@@ -106,14 +135,31 @@ public class BuildJob extends DomainObject {
         this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();
         this.buildStatus = buildStatus;
         this.dockerImage = queueItem.buildConfig().dockerImage();
+        this.buildGroupId = queueItem.buildGroup() != null ? queueItem.buildGroup().buildGroupId() : null;
     }
 
     public String getBuildJobId() {
         return buildJobId;
     }
 
+    public boolean isBuildFailed() {
+        return buildFailed;
+    }
+
+    public void setBuildFailed(boolean buildFailed) {
+        this.buildFailed = buildFailed;
+    }
+
     public void setBuildJobId(String buildJobId) {
         this.buildJobId = buildJobId;
+    }
+
+    public String getBuildGroupId() {
+        return buildGroupId;
+    }
+
+    public void setBuildGroupId(String buildGroupId) {
+        this.buildGroupId = buildGroupId;
     }
 
     public String getName() {

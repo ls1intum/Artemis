@@ -142,6 +142,32 @@
                 "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
                 "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB."
             },
+            "buildContainersEditor": {
+                "title": "Build-Container",
+                "help": "Ein Build-Container führt sein eigenes Docker-Image aus und darin seine Build-Phasen. Container sind unabhängig voneinander, sodass ein Container nur die Repositories erhalten kann, die seine Phasen benötigen. So bleibt Studierenden-Code von den Testdateien der Lehrenden getrennt.",
+                "addContainer": "Container hinzufügen",
+                "removeContainer": "Diesen Container entfernen",
+                "detailTitle": "Build-Container / Phasen",
+                "defaultImage": "Standard-Image der Programmiersprache",
+                "repositories": "Repositories",
+                "exerciseRepositories": "Alle Repositories der Aufgabe",
+                "containerName": "Container-Name",
+                "containerNameHelp": "Verwende nur Buchstaben, Ziffern und Unterstriche und beginne nicht mit einer Ziffer. Der Name muss innerhalb des Build-Plans eindeutig sein.",
+                "containerNameInvalid": "Verwende nur Buchstaben, Ziffern und Unterstriche und beginne nicht mit einer Ziffer.",
+                "containerNameDuplicate": "Ein anderer Container verwendet diesen Namen bereits.",
+                "timeout": "Timeout (Sekunden)",
+                "timeoutHelp": "Leer lassen, um den Timeout der Aufgabe zu verwenden. Der Timeout der Aufgabe muss den langsamsten Container abdecken; ein Container mit kurzen Phasen kann hier enger begrenzt werden, damit eine hängende Abgabe ihren Build-Agent-Slot früher freigibt und das zusammengeführte Ergebnis die Studierenden früher erreicht.",
+                "timeoutInvalid": "Der Timeout muss eine ganze Zahl von Sekunden zwischen {{ min }} und {{ max }} sein.",
+                "scopeRepositories": "Nur ausgewählte Repositories auschecken",
+                "scopeRepositoriesHelp": "Standardmäßig checkt ein Container die auf der Aufgabe konfigurierten Repositories aus. Wähle die Repositories explizit aus, um diesem Container nur auf eine Teilmenge Zugriff zu geben, zum Beispiel um von Studierenden geschriebene Tests ohne das Test-Repository der Lehrenden auszuführen.",
+                "repositoryTypes": {
+                    "TEMPLATE": "Vorlage",
+                    "SOLUTION": "Lösung",
+                    "TESTS": "Tests",
+                    "AUXILIARY": "Zusätzlich",
+                    "USER": "Abgabe"
+                }
+            },
             "buildPhasesEditor": {
                 "title": "Build-Phasen",
                 "help": "Bevor ein Build ausgeführt wird, werden die Skripte aller Phasen, deren Bedingungen erfüllt sind, in ihrer Reihenfolge zusammengefügt. Wenn keine Ergebnispfade konfiguriert sind, bestimmt der Exit-Code des Skripts den Build-Erfolg. Andernfalls hängt der Erfolg davon ab, ob Testergebnisse erzeugt werden.",
@@ -161,7 +187,7 @@
                 "resultPaths": "Ergebnispfade",
                 "resultPathsHelp": "Füge Glob-Muster für Testergebnisdateien hinzu, die in dieser Phase erzeugt werden, zum Beispiel JUnit-XML-Berichte.",
                 "testsExpected": "Tests erwartet",
-                "expectedTestsBeforeDueDateWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden. Um dies zu beheben, drücke auf \"Bearbeiten\", wechsle in den \"erweiterten Modus\", aktiviere \"Build Konfiguration anpassen\" und suche nach \"Build Phasen\".",
+                "expectedTestsBeforeDueDateWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden. Um dies zu beheben, öffne den Build-Plan-Editor über \"Build-Plan bearbeiten\" und setze die Inklusionsbedingung der Phase auf \"Nach Abgabefrist\".",
                 "expectedTestsBeforeDueDateEditorWarning": "Im Klausurmodus wird empfohlen, Phasen mit erwarteten Tests nur nach der Abgabefrist einzubinden.",
                 "resultPathPlaceholder": "z. B. **/results/*.xml",
                 "addResultPath": "Ergebnispfad hinzufügen",

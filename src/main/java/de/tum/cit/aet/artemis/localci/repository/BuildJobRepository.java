@@ -44,6 +44,76 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
     /**
+     * The ids of the results the jobs of a build group have merged into, oldest first. The containers of one build are
+     * scheduled as separate jobs that share a build group (see {@code BuildJobQueueItem#buildGroupId}) and all merge into
+     * one result, so the first id is the group's aggregated result.
+     *
+     * @param buildGroupId the id of the build group
+     * @param pageable     limits the query, typically to the first linked result
+     * @return the ids of the results linked to the group's jobs, oldest first
+     */
+    @Query("""
+            SELECT b.result.id
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+                AND b.result IS NOT NULL
+            ORDER BY b.id ASC
+            """)
+    List<Long> findResultIdsOfBuildGroup(@Param("buildGroupId") String buildGroupId, Pageable pageable);
+
+    /**
+     * The build groups whose jobs have all finished while their aggregated result is still in progress: groups whose last
+     * container's finalization did not go through, see {@code LocalCIResultProcessingService#finalizeCompletedBuildGroups}.
+     * A group with a job that is still queued, building or missing is not complete and is left alone, and so is a group
+     * whose jobs finished after the given date, so that a merge under way is not raced.
+     *
+     * @param finishedStatuses the statuses in which a job counts as finished
+     * @param completedBefore  only groups whose jobs finished before this date
+     * @param pageable         limits the number of groups
+     * @return the ids of the complete build groups whose aggregated result has no completion date
+     */
+    @Query("""
+            SELECT DISTINCT b.buildGroupId
+            FROM BuildJob b
+            WHERE b.buildGroupId IS NOT NULL
+                AND b.result IS NOT NULL
+                AND b.result.completionDate IS NULL
+                AND b.buildCompletionDate < :completedBefore
+                AND NOT EXISTS (
+                    SELECT o
+                    FROM BuildJob o
+                    WHERE o.buildGroupId = b.buildGroupId
+                        AND o.buildStatus NOT IN :finishedStatuses)
+            """)
+    List<String> findCompletedBuildGroupsWithResultInProgress(@Param("finishedStatuses") Collection<BuildStatus> finishedStatuses,
+            @Param("completedBefore") ZonedDateTime completedBefore, Pageable pageable);
+
+    /**
+     * Checks whether the aggregated result a build group's jobs link to is still in progress. Written as a query rather
+     * than derived, so that a job without a result does not count: the join to the result has to be an inner one.
+     *
+     * @param buildGroupId the id of the build group
+     * @return true if a job of the group links to a result without a completion date
+     */
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+                AND b.result IS NOT NULL
+                AND b.result.completionDate IS NULL
+            """)
+    boolean existsResultInProgressOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * The jobs of a build group, one per container of a multi-container build. The result processing reads the group's
+     * completion, its outcome and its dates off this list, rather than asking the database one question at a time.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the group's jobs
+     */
+    List<BuildJob> findAllByBuildGroupId(String buildGroupId);
+
+    /**
      * Retrieves all build job ids that were submitted before the given date.
      *
      * @param date the date before which build jobs should be deleted
@@ -221,6 +291,10 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * Update the build job status and set the build start date if it is not set yet. The buildStartDate is required to calculate the statistics and the correctly display in the
      * build overview.
      * This is used to update missing jobs that do not have a build start date yet.
+     * <p>
+     * A job that has already finished is left alone: the processing-map event that reports a job as building is delivered
+     * asynchronously and can arrive after the job's result has been processed, and reopening the finished job would make
+     * its build group look incomplete forever.
      *
      * @param buildJobId     the build job id
      * @param newStatus      the new build status
@@ -233,6 +307,13 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             SET b.buildStatus = :newStatus,
                 b.buildStartDate = CASE WHEN b.buildStartDate IS NULL THEN :buildStartDate ELSE b.buildStartDate END
             WHERE b.buildJobId = :buildJobId
+                AND b.buildStatus NOT IN (
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.FAILED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.ERROR,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.CANCELLED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.TIMEOUT
+                )
             """)
     void updateBuildJobStatusWithBuildStartDate(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus,
             @Param("buildStartDate") ZonedDateTime buildStartDate);

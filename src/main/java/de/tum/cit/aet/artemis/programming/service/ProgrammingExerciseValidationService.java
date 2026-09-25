@@ -352,7 +352,7 @@ public class ProgrammingExerciseValidationService {
             return; // default will be used when saving
         }
 
-        BuildPlanConfigurationValidator.validate(buildPlan);
+        BuildPlanConfigurationValidator.validate(buildPlan, buildConfig.getTimeoutSeconds());
     }
 
     /**

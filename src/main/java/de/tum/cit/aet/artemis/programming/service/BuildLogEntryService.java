@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -93,6 +94,42 @@ public class BuildLogEntryService {
     }
 
     /**
+     * Deletes the build logs of the builds of a submission that are over, without touching the submission entity, for a
+     * caller that holds only a detached skeleton of it: the first container of a multi-container build to merge clears
+     * the logs earlier builds of the same submission left behind, as {@link #saveBuildLogs} does for a single-container
+     * build. The logs of a build of the same submission that is still merging are kept.
+     *
+     * @param submissionId the id of the submission whose logs are deleted
+     */
+    public void deleteBuildLogsOfFinishedBuilds(long submissionId) {
+        buildLogEntryRepository.deleteLogsOfFinishedBuilds(submissionId);
+    }
+
+    /**
+     * Saves the build logs of one container of a multi-container build, labeled with the container's name and attributed
+     * to the build's aggregated result. Unlike {@link #saveBuildLogs}, only the logs the same container saved for the
+     * same build are replaced (a container that was retried after its agent was lost reports twice); the logs its
+     * sibling containers contributed are kept, so every failed container of a build keeps its own labeled logs.
+     *
+     * @param buildLogs             the build logs of the container
+     * @param programmingSubmission the submission shared by all containers of the build
+     * @param containerName         the name of the container that produced the logs
+     * @param resultId              the id of the aggregated result of the build
+     * @return the saved build log entries
+     */
+    public List<BuildLogEntry> appendBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, String containerName, long resultId) {
+        buildLogEntryRepository.deleteByProgrammingSubmissionIdAndResultIdAndContainerName(programmingSubmission.getId(), resultId, containerName);
+        return buildLogs.stream().map(buildLogEntry -> {
+            buildLogEntry.truncateLogToMaxLength();
+            buildLogEntry.setContainerName(containerName);
+            buildLogEntry.setResultId(resultId);
+            // The entry owns the foreign key, so setting the submission before saving writes it with the insert.
+            buildLogEntry.setProgrammingSubmission(programmingSubmission);
+            return buildLogEntryRepository.save(buildLogEntry);
+        }).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
      * Retrieves the latest build logs for a given programming submission.
      *
      * @param programmingSubmission submission for which to retrieve the build logs
@@ -101,6 +138,31 @@ public class BuildLogEntryService {
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
         return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf)
                 .orElseGet(List::of);
+    }
+
+    /**
+     * The build logs to show for a result of a submission: the logs the multi-container build that produced the result
+     * attributed to it, whose presence alone makes them visible; otherwise the logs of a single-container build, which
+     * carry no result and are kept only while the submission's latest build failed, which its build-failed flag
+     * records. The logs another multi-container build of the same submission attributed to its own result, such as an
+     * overlapping re-run of the same commit, are never among them.
+     *
+     * @param programmingSubmission the submission the logs belong to, with its build-failed flag
+     * @param resultId              the id of the result shown, or null if the submission has no result
+     * @return the build log entries to show
+     */
+    public List<BuildLogEntry> getBuildLogsToShow(ProgrammingSubmission programmingSubmission, @Nullable Long resultId) {
+        List<BuildLogEntry> allLogs = getLatestBuildLogs(programmingSubmission);
+        if (resultId != null) {
+            List<BuildLogEntry> attributed = allLogs.stream().filter(entry -> resultId.equals(entry.getResultId())).toList();
+            if (!attributed.isEmpty()) {
+                return attributed;
+            }
+        }
+        if (!programmingSubmission.isBuildFailed()) {
+            return List.of();
+        }
+        return allLogs.stream().filter(entry -> entry.getResultId() == null).toList();
     }
 
     private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",

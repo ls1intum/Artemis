@@ -23,7 +23,7 @@ public final class DistributedDataSchema {
     /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
 
     /**
      * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
@@ -92,6 +92,21 @@ public final class DistributedDataSchema {
             new CarriedOverStructure("features", StructureKind.MAP),
             // Iris jobs waiting for a Pyris callback. Obtained as an expiring map, so its entries have to move with
             // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
+            new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
+
+    /**
+     * The structures carried over from schema version 1 to 2. Version 2 was cut when
+     * {@link de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem} gained the build group membership of a
+     * multi-container build, which changes the positional encoding of every queued job, every processing entry and
+     * every queued result. Those three structures are deliberately not carried over, which is the flush described
+     * above: transforming them would need a frozen copy of the version 1 DTOs and a decoder for them, while a dropped
+     * entry heals itself. A queued or running build keeps its QUEUED or BUILDING row, which the missing-job check marks
+     * as MISSING once no structure holds it any more, and the missing-job retry triggers the build again (a build
+     * whose agent still finishes it may thus run twice). A result waiting in the queue at that moment is lost, and its
+     * build is retried the same way. Feature toggles and the Iris jobs waiting for a callback are unchanged on the wire
+     * and cannot be rebuilt, so they move byte for byte.
+     */
+    public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(new CarriedOverStructure("features", StructureKind.MAP),
             new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {

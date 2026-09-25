@@ -171,7 +171,9 @@ public class BuildJobExecutionService {
         log.debug(startMessage);
 
         LocalVCRepositoryUri assignmentRepositoryUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().assignmentRepositoryUri());
-        LocalVCRepositoryUri testRepositoryUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri());
+        // A container scoped to exclude the test repository has a null test URI; it is then neither cloned nor mounted.
+        LocalVCRepositoryUri testRepositoryUri = buildJob.repositoryInfo().testRepositoryUri() != null ? new LocalVCRepositoryUri(buildJob.repositoryInfo().testRepositoryUri())
+                : null;
         LocalVCRepositoryUri solutionRepositoryUri = null;
         LocalVCRepositoryUri[] auxiliaryRepositoryUris = new LocalVCRepositoryUri[buildJob.repositoryInfo().auxiliaryRepositoryUris().length];
         Path assignmentRepositoryPath = null;
@@ -179,7 +181,8 @@ public class BuildJobExecutionService {
         Path solutionRepositoryPath = null;
         Path[] auxiliaryRepositoryPaths = new Path[auxiliaryRepositoryUris.length];
         String assignmentCommitHash = resolveCommitHash(buildJob, assignmentRepositoryUri, buildJob.buildConfig().assignmentCommitHash(), "assignment");
-        String testCommitHash = resolveCommitHash(buildJob, testRepositoryUri, buildJob.buildConfig().testCommitHash(), "test");
+        String testCommitHash = testRepositoryUri != null ? resolveCommitHash(buildJob, testRepositoryUri, buildJob.buildConfig().testCommitHash(), "test")
+                : buildJob.buildConfig().testCommitHash();
         BuildResult buildResult;
 
         try {
@@ -187,7 +190,8 @@ public class BuildJobExecutionService {
                     && buildJob.repositoryInfo().triggeredByPushTo() != RepositoryType.AUXILIARY;
             assignmentRepositoryPath = cloneRepository(assignmentRepositoryUri, useSpecificAssignmentCommit ? assignmentCommitHash : null, useSpecificAssignmentCommit,
                     buildJob.id());
-            testRepositoryPath = cloneRepository(testRepositoryUri, null, false, buildJob.id());
+            // A container scoped to exclude the test repository has no test URI, so there is nothing to clone.
+            testRepositoryPath = testRepositoryUri != null ? cloneRepository(testRepositoryUri, null, false, buildJob.id()) : null;
 
             if (buildJob.repositoryInfo().solutionRepositoryUri() != null) {
                 solutionRepositoryUri = new LocalVCRepositoryUri(buildJob.repositoryInfo().solutionRepositoryUri());
@@ -260,13 +264,13 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void cleanupRepositories(String buildJobId, LocalVCRepositoryUri assignmentRepositoryUri, LocalVCRepositoryUri testRepositoryUri,
+    private void cleanupRepositories(String buildJobId, LocalVCRepositoryUri assignmentRepositoryUri, @Nullable LocalVCRepositoryUri testRepositoryUri,
             @Nullable LocalVCRepositoryUri solutionRepositoryUri, LocalVCRepositoryUri[] auxiliaryRepositoryUris, @Nullable Path assignmentRepositoryPath,
             @Nullable Path testRepositoryPath, @Nullable Path solutionRepositoryPath, Path[] auxiliaryRepositoryPaths) {
         if (assignmentRepositoryPath != null) {
             deleteCloneRepo(assignmentRepositoryUri, buildJobId, assignmentRepositoryPath);
         }
-        if (testRepositoryPath != null) {
+        if (testRepositoryUri != null && testRepositoryPath != null) {
             deleteCloneRepo(testRepositoryUri, buildJobId, testRepositoryPath);
         }
         if (solutionRepositoryUri != null && solutionRepositoryPath != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {

@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -459,13 +460,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(List.of());
         }
 
-        // Empty build logs are returned if the submission is not build failed
-        if (!programmingSubmission.isBuildFailed()) {
-            return ResponseEntity.ok(List.of());
-        }
-
-        // Load the logs from the database
-        List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
+        // The logs shown are the ones of the result shown, the requested one or the submission's latest; the service
+        // decides what that means for a single-container and for a multi-container build.
+        Result latestResult = programmingSubmission.getLatestResult();
+        Long shownResultId = resultId.orElse(latestResult == null ? null : latestResult.getId());
+        List<BuildLogEntry> buildLogs = buildLogService.getBuildLogsToShow(programmingSubmission, shownResultId);
         return ResponseEntity.ok(buildLogs.stream().map(BuildLogEntryDTO::of).toList());
     }
 }
