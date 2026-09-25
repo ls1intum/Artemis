@@ -5,18 +5,18 @@
             "subtitle": "Interaktives Lernen mit individuellem Feedback",
             "courseRequests": "Neuen Kurs beantragen",
             "installation": {
-                "title": "Diese Installation",
+                "title": "Wer Artemis hier betreibt",
                 "operator": "Betrieben von",
                 "testServer": "Testserver"
             },
             "help": {
                 "title": "Kontakt",
-                "courseQuestions": "Fragen zu einem Kurs, einer Aufgabe oder einer Bewertung? Wende dich an die Lehrenden des Kurses. Bei Problemen mit dem Zugang oder deinem Konto hilft die Administration dieser Installation.",
+                "courseQuestions": "Fragen zu einem Kurs, einer Aufgabe oder einer Bewertung? Wende dich an die Lehrenden des Kurses. Bei Problemen mit dem Zugang oder deinem Konto hilft die oben genannte Administration.",
                 "contactAdministrator": "Administration kontaktieren"
             },
             "highlights": {
                 "title": "Highlights",
-                "description": "Einiges von dem, was du auf dieser Installation tun kannst."
+                "description": "Einiges von dem, was du hier tun kannst."
             },
             "modules": {
                 "title": "Aktivierte Module",
@@ -42,7 +42,7 @@
             "project": {
                 "title": "Powered by Artemis",
                 "description": "Artemis ist eine Open-Source-Lernplattform, entwickelt von der Forschungsgruppe Applied Education Technologies an der Technischen Universität München, und im Einsatz an Hochschulen und Schulen in mehreren Ländern.",
-                "operatedBy": "Diese Installation wird von {{ operator }} betrieben, nicht vom Artemis-Team.",
+                "operatedBy": "Diese Seite wird von {{ operator }} betrieben, nicht vom Artemis-Team.",
                 "links": {
                     "documentation": "Dokumentation",
                     "sourceCode": "Quellcode",
