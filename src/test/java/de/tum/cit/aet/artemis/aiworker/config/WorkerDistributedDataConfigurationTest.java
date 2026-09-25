@@ -44,7 +44,7 @@ class WorkerDistributedDataConfigurationTest {
             when(core.getHost()).thenReturn("127.0.0.1");
             when(core.getPort()).thenReturn(8080);
             when(discovery.getInstances("Artemis")).thenReturn(List.of(core));
-            new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker", "aiworker-standalone"))
+            new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
                     .withPropertyValues("artemis.distributed-data.provider=hazelcast", "spring.hazelcast.localInstances=false").withBean(DiscoveryClient.class, () -> discovery)
                     .withBean(TlsProperties.class, TlsProperties::new).withUserConfiguration(WorkerDistributedDataConfiguration.class).run(context -> {
                         assertThat(context).hasNotFailed().hasSingleBean(DistributedDataProvider.class).hasSingleBean(HazelcastDistributedDataProviderService.class);
@@ -67,9 +67,9 @@ class WorkerDistributedDataConfigurationTest {
     void standaloneWorkerUsesRedisProvider() {
         try (var store = ValkeyTestContainerFactory.create()) {
             store.start();
-            new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker", "aiworker-standalone"))
-                    .withPropertyValues("artemis.distributed-data.provider=redis", "spring.data.redis.host=" + store.getHost(),
-                            "spring.data.redis.port=" + store.getMappedPort(6379))
+            new ApplicationContextRunner()
+                    .withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker")).withPropertyValues("artemis.distributed-data.provider=redis",
+                            "spring.data.redis.host=" + store.getHost(), "spring.data.redis.port=" + store.getMappedPort(6379))
                     .withUserConfiguration(WorkerDistributedDataConfiguration.class).run(context -> {
                         assertThat(context).hasNotFailed().hasSingleBean(DistributedDataProvider.class).hasSingleBean(RedissonDistributedDataProviderService.class);
                         context.getBean(DistributedDataProvider.class).<String, String>getMap("worker-bootstrap-redis").put("ready", "yes");
@@ -84,7 +84,7 @@ class WorkerDistributedDataConfigurationTest {
 
     @Test
     void standaloneWorkerDoesNotLoadProcessLocalProvider() {
-        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker", "aiworker-standalone"))
+        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
                 .withPropertyValues("artemis.distributed-data.provider=local").withUserConfiguration(WorkerDistributedDataConfiguration.class).run(context -> {
                     assertThat(context).hasNotFailed().doesNotHaveBean(DistributedDataProvider.class);
                     assertThat(context).doesNotHaveBean("hazelcastInstance");

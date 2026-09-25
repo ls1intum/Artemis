@@ -322,7 +322,7 @@ core and worker must be upgraded together after draining.
 
 ### Toolchains and deployment placement
 
-The standalone application is `aiworker`. Its execution infrastructure has no Hyperion
+The standalone process uses the normal Artemis entry point with the `aiworker` profile. Its execution infrastructure has no Hyperion
 imports. Hyperion supplies `HyperionWorkloadService`, which validates and decodes its
 bounded assignment, selects a qualified toolchain and returns typed generation evidence.
 The generic transport does not interpret briefs, tests, quality findings or exercise IDs.
@@ -333,21 +333,22 @@ qualified; naming another profile does not add a language implementation. Core a
 and returned evidence must agree on the workload schema, profile, image and execution.
 See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
 
-| Environment | Worker placement | Operational requirement |
-| --- | --- | --- |
-| Staging | Dedicated generation VM or host | Separate broker accounts, provider credentials and capacity from production. Qualify the exact images and configuration before promotion. |
-| Production | Dedicated generation VM or host | Start with one slot, monitor actual resource use, and increase only within host and provider limits. Keep generation off exam-critical hosts. |
+| Environment | Worker placement                                           | Operational requirement                                                                                                                                                         |
+| ----------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Staging     | Dedicated generation VM or host                            | Use separate distributed-data, model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                             |
+| Production  | Dedicated generation VM or host                            | Start with one slot, monitor actual resource use, and increase only within host and provider limits. Keep generation off exam-critical hosts.                                   |
 | Test server | Dedicated generation VM, which may share physical hardware | Use a separate Docker daemon inside the VM. Sharing the core or LocalCI Docker socket is not an isolation boundary. Leave generation disabled if no isolated host is available. |
 
 The supervisor's Docker socket is host-level authority even when the supervisor
-container is unprivileged. Provision outbound access only to the dedicated TLS
-broker, approved model provider, image registry and approved telemetry endpoint.
+container is unprivileged. Provision outbound access only to the configured
+distributed-data provider, Eureka when Hazelcast is used, the approved model
+provider, image registry and approved telemetry endpoint.
 Deny access to databases, repository/NFS services, core management interfaces and
 cloud metadata. Generated-code containers retain network isolation and receive
 neither provider credentials nor the Docker socket.
 
-Before enabling admission, preload the immutable sandbox image, configure broker
-certificate trust and per-worker permissions, and confirm the administrator view
+Before enabling admission, preload the immutable sandbox image, configure
+distributed-data access and per-worker permissions, and confirm the administrator view
 reports the intended toolchain and capacity. Then run a controlled generation,
 verify solution/starter grading and persistence, cancel a second run, and verify
 undo. Test an interrupted worker and exact-run recovery in staging before
@@ -468,7 +469,7 @@ administrator-switchable runtime feature toggle. Core configuration and the
 | Missing any required profile                                                     | Generation remains disabled even when both properties are true.                                                   |
 | No ready worker or no free slot                                                  | Enabled but unavailable; capacity errors do not turn off the module flag.                                         |
 
-The standalone worker is a separate application artifact, not an additional core
+The standalone worker is a separate process of the normal Artemis WAR, not an additional core
 profile. Its component scan contains only worker code, and it starts without an
 HTTP server. Provision access to the selected provider, an immutable sandbox image and positive
 resource limits. An
