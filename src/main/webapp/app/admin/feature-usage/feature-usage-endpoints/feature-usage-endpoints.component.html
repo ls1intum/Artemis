@@ -1,5 +1,5 @@
 <div class="flex flex-wrap gap-2 mb-2">
-    <tum-ui-select
+    <tumaet-ui-select
         [options]="moduleOptions()"
         [ngModel]="selectedModule()"
         (ngModelChange)="selectedModule.set($event)"
@@ -13,7 +13,7 @@
 
 <div class="overflow-x-auto">
     <table
-        tumUiTable
+        tumAetUiTable
         size="small"
         style="min-width: 100%"
         [sortField]="sortField()"
@@ -24,15 +24,15 @@
     >
         <thead>
             <tr>
-                <th scope="col" [tumUiSortableColumn]="'identifier'"><span jhiTranslate="artemisApp.featureUsage.column.endpoint"></span></th>
-                <th scope="col" [tumUiSortableColumn]="'interaction'"><span jhiTranslate="artemisApp.featureUsage.column.interaction"></span></th>
-                <th scope="col" [tumUiSortableColumn]="'featureLabel'"><span jhiTranslate="artemisApp.featureUsage.column.feature"></span></th>
-                <th scope="col" class="text-end" [tumUiSortableColumn]="'callCount'"><span jhiTranslate="artemisApp.featureUsage.column.calls"></span></th>
-                <th scope="col" class="text-end" [tumUiSortableColumn]="'activeDays'"><span jhiTranslate="artemisApp.featureUsage.column.activeDays"></span></th>
-                <th scope="col" class="text-end" [tumUiSortableColumn]="'errorRate'"><span jhiTranslate="artemisApp.featureUsage.column.errorRate"></span></th>
-                <th scope="col" class="text-end" [tumUiSortableColumn]="'meanDurationMs'"><span jhiTranslate="artemisApp.featureUsage.column.meanDuration"></span></th>
-                <th scope="col" class="text-end" [tumUiSortableColumn]="'durationMaxMs'"><span jhiTranslate="artemisApp.featureUsage.column.maxDuration"></span></th>
-                <th scope="col" [tumUiSortableColumn]="'lastUsedDay'"><span jhiTranslate="artemisApp.featureUsage.column.lastUsed"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'identifier'"><span jhiTranslate="artemisApp.featureUsage.column.endpoint"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'interaction'"><span jhiTranslate="artemisApp.featureUsage.column.interaction"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'featureLabel'"><span jhiTranslate="artemisApp.featureUsage.column.feature"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'callCount'"><span jhiTranslate="artemisApp.featureUsage.column.calls"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'activeDays'"><span jhiTranslate="artemisApp.featureUsage.column.activeDays"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'errorRate'"><span jhiTranslate="artemisApp.featureUsage.column.errorRate"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'meanDurationMs'"><span jhiTranslate="artemisApp.featureUsage.column.meanDuration"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'durationMaxMs'"><span jhiTranslate="artemisApp.featureUsage.column.maxDuration"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'lastUsedDay'"><span jhiTranslate="artemisApp.featureUsage.column.lastUsed"></span></th>
                 <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
             </tr>
         </thead>
@@ -42,11 +42,11 @@
                     <td>
                         <span class="flex items-center gap-1">
                             @if (verbOf(row.endpoint); as verb) {
-                                <tum-ui-tag severity="secondary">{{ verb }}</tum-ui-tag>
+                                <tumaet-ui-tag severity="secondary">{{ verb }}</tumaet-ui-tag>
                             }
                             <span class="font-mono text-xs wrap-anywhere">{{ pathOf(row.endpoint) }}</span>
                             @if (row.endpoint.retired) {
-                                <tum-ui-tag severity="secondary"><span jhiTranslate="artemisApp.featureUsage.retiredTag"></span></tum-ui-tag>
+                                <tumaet-ui-tag severity="secondary"><span jhiTranslate="artemisApp.featureUsage.retiredTag"></span></tumaet-ui-tag>
                             }
                         </span>
                         <span class="block text-xs text-muted-color wrap-anywhere mt-1" data-testid="endpoint-source">
@@ -59,9 +59,9 @@
                         </span>
                     </td>
                     <td class="whitespace-nowrap">
-                        <tum-ui-tag [severity]="interactionSeverity(row.endpoint.interaction)">{{
+                        <tumaet-ui-tag [severity]="interactionSeverity(row.endpoint.interaction)">{{
                             'artemisApp.featureUsage.interaction.' + row.endpoint.interaction | artemisTranslate
-                        }}</tum-ui-tag>
+                        }}</tumaet-ui-tag>
                     </td>
                     <td class="text-sm">
                         @if (row.endpoint.featureLabel && knownFeatures().has(row.endpoint.featureLabel)) {
@@ -79,7 +79,7 @@
                     <td>
                         @if (row.endpoint.callCount > 0) {
                             <button
-                                tumUiButton
+                                tumAetUiButton
                                 severity="secondary"
                                 size="small"
                                 variant="outlined"

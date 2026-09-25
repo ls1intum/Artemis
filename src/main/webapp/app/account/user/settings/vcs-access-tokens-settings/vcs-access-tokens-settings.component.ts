@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective, TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,11 +23,11 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
         TranslateDirective,
         FaIconComponent,
         DeleteButtonDirective,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiTableDirective,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiTableDirective,
         FormDateTimePickerComponent,
         FormsModule,
         ArtemisDatePipe,

@@ -2,7 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, model, out
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
@@ -19,12 +26,12 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './exercise-group-edit-modal.component.html',
     imports: [
         FormsModule,
-        TumUiDialogComponent,
-        TumUiInputDirective,
-        TumUiInputNumberComponent,
-        TumUiButtonComponent,
-        TumUiMessageComponent,
-        TumUiTooltipDirective,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         FaIconComponent,
         TimelineComponent,
         ArtemisTranslatePipe,

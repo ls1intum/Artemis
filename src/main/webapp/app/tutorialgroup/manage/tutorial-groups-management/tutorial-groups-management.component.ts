@@ -10,12 +10,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     CellTemplateRef,
     ColumnDef,
-    TumUiButtonDirective,
-    TumUiMessageComponent,
-    TumUiSearchFieldComponent,
-    TumUiTableComponent,
-    TumUiTableQueryEvent,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiMessageComponent,
+    TumAetUiSearchFieldComponent,
+    TumAetUiTableComponent,
+    TumAetUiTableQueryEvent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -127,11 +127,11 @@ function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableFi
         ArtemisTranslatePipe,
         MeetingPatternPipe,
         CourseTitleBarActionsDirective,
-        TumUiTableComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
-        TumUiSearchFieldComponent,
-        TumUiTooltipDirective,
+        TumAetUiTableComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSearchFieldComponent,
+        TumAetUiTooltipDirective,
         TutorialGroupsImportButtonComponent,
         TutorialGroupsExportButtonComponent,
         TutorialGroupRowButtonsComponent,
@@ -155,8 +155,8 @@ export class TutorialGroupsManagementComponent {
     readonly tutorialGroups = signal<TutorialGroup[]>([]);
     readonly searchTerm = signal('');
 
-    private readonly table = viewChild(TumUiTableComponent<TutorialGroupRow>);
-    private readonly query = signal<TumUiTableQueryEvent | undefined>(undefined);
+    private readonly table = viewChild(TumAetUiTableComponent<TutorialGroupRow>);
+    private readonly query = signal<TumAetUiTableQueryEvent | undefined>(undefined);
 
     private readonly titleColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('titleColumn');
     private readonly tutorColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('tutorColumn');
@@ -280,7 +280,7 @@ export class TutorialGroupsManagementComponent {
         this.table()?.resetPage();
     }
 
-    protected onDataRequest(event: TumUiTableQueryEvent): void {
+    protected onDataRequest(event: TumAetUiTableQueryEvent): void {
         this.query.set(event);
     }
 }

@@ -1,4 +1,4 @@
-<tum-ui-dialog [(visible)]="visible" [header]="'artemisApp.exercise.exportAction' | artemisTranslate" [closable]="true" [closeOnEscape]="true" size="large">
+<tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.exercise.exportAction' | artemisTranslate" [closable]="true" [closeOnEscape]="true" size="large">
     <div class="d-flex flex-column flex-grow-1 overflow-hidden">
         <h2>
             @if (course(); as course) {
@@ -53,4 +53,4 @@
         </p-button>
         <button class="btn btn-success" (click)="exportQuiz()" jhiTranslate="artemisApp.quizExercise.export.export"></button>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>
