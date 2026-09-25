@@ -12,6 +12,9 @@ catalog:
   '@arethetypeswrong/cli': 0.18.5
   '@angular-devkit/architect': 0.2202.0
   '@angular-devkit/core': 22.2.0
+  # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
+  # move both together.
+  '@angular/aria': 22.2.0
   '@angular/build': 22.2.0
   '@angular/cdk': 22.2.0
   '@angular/cli': 22.2.0

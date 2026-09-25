@@ -79,6 +79,15 @@ export const KeyboardNavigation: Story = {
 
         await fireEvent.keyDown(settings, { key: 'ArrowRight', keyCode: 39 });
         await expect(overview).toHaveFocus();
+
+        // A disabled tab takes focus, so it can be discovered and is announced as unavailable, but is not selected.
+        await fireEvent.keyDown(overview, { key: 'ArrowLeft', keyCode: 37 });
+        await fireEvent.keyDown(settings, { key: 'ArrowLeft', keyCode: 37 });
+        const grading = canvas.getByRole('tab', { name: 'Grading' });
+        await expect(grading).toHaveFocus();
+        await expect(grading).toHaveAttribute('aria-disabled', 'true');
+        await expect(grading).toHaveAttribute('aria-selected', 'false');
+        await expect(canvas.getByRole('tabpanel')).toHaveTextContent('Course settings');
     },
 };
 

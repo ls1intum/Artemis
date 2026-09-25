@@ -50,6 +50,7 @@
         "./styles.css": "./styles.css"
     },
     "peerDependencies": {
+        "@angular/aria": "^22.2.0",
         "@angular/cdk": "^22.2.0",
         "@angular/common": "^22.2.0",
         "@angular/core": "^22.2.0",
@@ -67,6 +68,7 @@
     "devDependencies": {
         "@angular-devkit/architect": "catalog:",
         "@angular-devkit/core": "catalog:",
+        "@angular/aria": "catalog:",
         "@angular/build": "catalog:",
         "@angular/cdk": "catalog:",
         "@angular/cli": "catalog:",
