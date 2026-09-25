@@ -567,8 +567,8 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     /** The /with-exercises response omits the quizBatches association, so fetch it from the quiz endpoint and merge. */
     private loadQuizBatches(courseId: number): void {
-        this.quizExerciseService.findForCourse(courseId).subscribe((response) => {
-            const merged = this.groupSync.mergeQuizInfo(this.exercises(), this.groups(), response.body ?? []);
+        this.quizExerciseService.findForCourse(courseId).subscribe((quizExercises) => {
+            const merged = this.groupSync.mergeQuizInfo(this.exercises(), this.groups(), quizExercises);
             if (!merged) {
                 return;
             }

@@ -2,7 +2,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import dayjs from 'dayjs/esm';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -363,9 +363,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         } else {
             this.viewingExistingPracticeResult.set(false);
             this.practiceLoadSubscription = this.quizExerciseService.findForStudent(this.quizId).subscribe({
-                next: (res: HttpResponse<QuizExercise>) => {
-                    if (res.body && hasDueDatePassed(res.body)) {
-                        this.startQuizPreviewOrPractice(res.body);
+                next: (quizExercise) => {
+                    if (hasDueDatePassed(quizExercise)) {
+                        this.startQuizPreviewOrPractice(quizExercise);
                     } else {
                         alert('Error: This quiz is not open for practice!');
                     }
@@ -392,17 +392,15 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      */
     initPreview() {
         this.quizExerciseService.find(this.quizId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.startQuizPreviewOrPractice(res.body!);
-            },
+            next: (quizExercise) => this.startQuizPreviewOrPractice(quizExercise),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 
     initShowSolution() {
         this.quizExerciseService.find(this.quizId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.quizExercise.set(res.body!);
+            next: (quizExercise) => {
+                this.quizExercise.set(quizExercise);
                 this.initQuiz();
                 this.showingResult.set(true);
             },
@@ -1170,8 +1168,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     refreshQuiz(refresh = false) {
         this.refreshingQuiz.set(refresh);
         this.quizExerciseService.findForStudent(this.quizId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                const quizExercise = res.body!;
+            next: (quizExercise) => {
                 if (quizExercise.quizStarted) {
                     if (quizExercise.quizEnded) {
                         this.waitingForQuizStart.set(false);

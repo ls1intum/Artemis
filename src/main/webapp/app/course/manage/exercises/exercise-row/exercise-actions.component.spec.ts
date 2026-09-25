@@ -349,7 +349,7 @@ describe('ExerciseActionsComponent', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);
             vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
-            vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quiz })));
+            vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quiz));
             const emitted: Exercise[] = [];
             component.exerciseUpdated.subscribe((e) => emitted.push(e));
 

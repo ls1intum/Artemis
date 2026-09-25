@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
@@ -12,7 +12,6 @@ import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-e
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
 import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -373,8 +372,7 @@ export class ExamExerciseRowButtonsComponent {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizById(exportAll: boolean) {
-        this.quizExerciseService.find(this.exercise().id!).subscribe((res: HttpResponse<QuizExercise>) => {
-            const exercise = res.body!;
+        this.quizExerciseService.find(this.exercise().id!).subscribe((exercise) => {
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }

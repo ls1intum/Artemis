@@ -34,6 +34,7 @@ import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.mode
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object
@@ -133,12 +134,22 @@ describe('QuizExercise Service', () => {
         vi.restoreAllMocks();
     });
 
-    it('should find an element', async () => {
-        const returnedFromService = Object.assign({}, elemDefault);
+    it('should convert a loaded quiz into the class graph the editor works on', async () => {
         const result = firstValueFrom(service.find(123));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect((await result)?.body).toEqual(elemDefault);
+        httpMock.expectOne({ method: 'GET' }).flush({
+            id: 123,
+            releaseDate: '2026-05-01T10:00:00Z',
+            categories: ['{"category":"Week 1","color":"#6ae8ac"}'],
+            quizQuestions: [{ id: 1, type: 'multiple-choice', answerOptions: [{ id: 2, isCorrect: true }] }],
+        });
+
+        const quizExercise = await result;
+        expect(quizExercise).toBeInstanceOf(QuizExercise);
+        expect(quizExercise.releaseDate!.toISOString()).toBe('2026-05-01T10:00:00.000Z');
+        expect(quizExercise.categories).toEqual([new ExerciseCategory('Week 1', '#6ae8ac')]);
+        const question = quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
+        expect(question).toBeInstanceOf(MultipleChoiceQuestion);
+        expect(question.answerOptions![0]).toBeInstanceOf(AnswerOption);
     });
 
     it.each([
@@ -234,26 +245,6 @@ describe('QuizExercise Service', () => {
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
-    });
-
-    const quizEx = makeQuiz();
-    it.each([
-        ['findForStudent', [123], quizEx, 'GET', '/for-student'],
-        ['findForExam', [123], [quizEx], 'GET', '/quiz-exercises'],
-        ['findForCourse', [123], [quizEx], 'GET', '/quiz-exercises'],
-        ['find', [123], quizEx, 'GET', ''],
-    ])('should perform a http request for %p', async (method, args, response, httpMethod, urlSuffix) => {
-        const functionToCall = service[method as keyof QuizExerciseService] as (...args: unknown[]) => Observable<HttpResponse<unknown>>;
-        if (typeof functionToCall !== 'function') {
-            throw new Error(`Method ${method} not found in service`);
-        }
-        const result = firstValueFrom(functionToCall.apply(service, args));
-        const req = httpMock.expectOne({ method: httpMethod });
-        expect(req.request.url.endsWith(urlSuffix)).toBe(true);
-        req.flush(response);
-        const resp = await result;
-        expect(resp.ok).toBe(true);
-        expect(resp.body).toEqual(response);
     });
 
     it.each([

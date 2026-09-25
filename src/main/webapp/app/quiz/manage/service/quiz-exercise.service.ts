@@ -11,12 +11,14 @@ import { downloadFile, downloadZipFromFilePromises } from 'app/foundation/util/d
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { FileService } from 'app/foundation/service/file.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { QuizExerciseRetrievalApi } from 'app/openapi/api/quiz-exercise-retrieval-api';
+import { toQuizExercise, toQuizExerciseFromListRow } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
-export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 export type StatisticsOverviewResponseType = HttpResponse<QuizStatisticsOverviewResponse>;
 export type PointStatisticsResponseType = HttpResponse<QuizPointStatisticsResponse>;
 export type QuestionStatisticResponseType = HttpResponse<QuizQuestionStatisticResponse>;
@@ -26,6 +28,8 @@ export class QuizExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
     private fileService = inject(FileService);
+    private accountService = inject(AccountService);
+    private quizExerciseRetrievalApi = inject(QuizExerciseRetrievalApi);
     private resourceUrl = 'api/quiz/quiz-exercises';
     private quizBaseURL = 'api/quiz';
 
@@ -110,13 +114,11 @@ export class QuizExerciseService {
     }
 
     /**
-     * Find the quiz exercise with the given id
+     * Find the quiz exercise with the given id, with the full question graph an instructor edits
      * @param quizExerciseId the id of the quiz exercise that should be found
      */
-    find(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    find(quizExerciseId: number): Observable<QuizExercise> {
+        return this.quizExerciseRetrievalApi.getQuizExercise(quizExerciseId).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
     }
 
     /**
@@ -167,37 +169,34 @@ export class QuizExerciseService {
     }
 
     /**
-     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
-     * They also do not contain questions
+     * Note: the exercises in the response do not contain participations, the course or questions, to save network bandwidth
      *
      * @param courseId the course for which the quiz exercises should be returned
      */
-    findForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<QuizExercise[]>(`api/quiz/courses/${courseId}/quiz-exercises`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
+    findForCourse(courseId: number): Observable<QuizExercise[]> {
+        return this.quizExerciseRetrievalApi
+            .getQuizExercisesForCourse(courseId)
+            .pipe(map((exercises) => exercises.map((exercise) => this.prepareForClient(toQuizExerciseFromListRow(exercise)))));
     }
 
     /**
-     * Note: the exercises in the response do not contain participations, the course and also not the exerciseGroup to save network bandwidth
-     * They also do not contain questions
+     * Note: the exercises in the response do not contain participations, the course, the exercise group or questions, to
+     * save network bandwidth
      *
      * @param examId the exam for which the quiz exercises should be returned
      */
-    findForExam(examId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<QuizExercise[]>(`api/exam/exams/${examId}/quiz-exercises`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
+    findForExam(examId: number): Observable<QuizExercise[]> {
+        return this.quizExerciseRetrievalApi
+            .getQuizExercisesForExam(examId)
+            .pipe(map((exercises) => exercises.map((exercise) => this.prepareForClient(toQuizExerciseFromListRow(exercise)))));
     }
 
     /**
-     * Find the quiz exercise with the given id, with information filtered for students
+     * Find the quiz exercise with the given id, with as much of the question graph as the quiz state lets a student see
      * @param quizExerciseId the id of the quiz exercise that should be loaded
      */
-    findForStudent(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/for-student`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    findForStudent(quizExerciseId: number): Observable<QuizExercise> {
+        return this.quizExerciseRetrievalApi.getQuizExerciseForStudent(quizExerciseId).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
     }
 
     /**
@@ -306,5 +305,19 @@ export class QuizExerciseService {
             return QuizStatus.ACTIVE;
         }
         return QuizStatus.VISIBLE;
+    }
+
+    /**
+     * Applies the client-side preparation every loaded exercise receives, whatever its type: parsed categories, the
+     * current user's access rights, and the title the breadcrumbs show.
+     *
+     * @param quizExercise the converted exercise
+     * @returns the same exercise, prepared
+     */
+    private prepareForClient(quizExercise: QuizExercise): QuizExercise {
+        ExerciseService.parseExerciseCategories(quizExercise);
+        this.accountService.setAccessRightsForExerciseAndReferencedCourse(quizExercise);
+        this.exerciseService.sendExerciseTitleToTitleService(quizExercise);
+        return quizExercise;
     }
 }

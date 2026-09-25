@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -86,8 +86,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizExercise(exportAll: boolean) {
-        this.quizExerciseService.find(this.quizExercise().id!).subscribe((response: HttpResponse<QuizExercise>) => {
-            const exercise = response.body!;
+        this.quizExerciseService.find(this.quizExercise().id!).subscribe((exercise) => {
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }

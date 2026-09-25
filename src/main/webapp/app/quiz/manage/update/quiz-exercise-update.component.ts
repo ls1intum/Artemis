@@ -322,8 +322,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             });
         }
         if (quizId) {
-            this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
-                const quiz = response.body!;
+            this.quizExerciseService.find(quizId).subscribe((quiz) => {
                 quiz.quizQuestions ??= [];
                 this.quizExercise.set(quiz);
                 this.init();
