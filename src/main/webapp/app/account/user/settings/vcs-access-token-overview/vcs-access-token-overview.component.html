@@ -1,7 +1,7 @@
 <div class="flex flex-col">
     <h3 jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.title"></h3>
     <p class="text-muted-color" jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.description"></p>
-    <tum-ui-table
+    <tumaet-ui-table
         [columns]="columns()"
         [rows]="rows()"
         [totalRecords]="totalCount()"
@@ -50,7 +50,7 @@
 
 <ng-template #tokenActions let-token>
     <div class="flex items-center justify-end">
-        <tum-ui-button
+        <tumaet-ui-button
             severity="danger"
             size="small"
             [icon]="faTrash"

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.FINISHED;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.RUNNING;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
@@ -287,7 +288,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         // (2) one RUNNING run-state status update emitted when the run is dispatched (PyrisPipelineService#executePipeline),
         // (3) the final LLM answer message (AbstractIrisChatSessionService#handleResultStatusUpdate).
         // Three sends per run, six for the two messages this test drives.
-        verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + session.getId()), any());
+        verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/" + session.getId()), any());
         assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).hasSize(4);
     }
 

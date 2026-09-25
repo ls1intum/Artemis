@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/account/user/shared/user.service';
@@ -9,7 +9,7 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED, isAcceptedLLMSelection } fro
  * Shared entry point for prompting the current user to opt into AI usage (their "AI Experience" setting)
  * from a context other than the dedicated user settings page, e.g. a hint shown next to an AI-powered feature.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AiExperienceOptInService {
     private readonly accountService = inject(AccountService);
     private readonly userService = inject(UserService);

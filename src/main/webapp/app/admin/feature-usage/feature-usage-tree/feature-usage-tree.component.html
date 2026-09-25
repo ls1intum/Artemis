@@ -1,14 +1,14 @@
 <div class="flex flex-wrap gap-2 mb-2">
-    <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="expandAll()" data-testid="expand-all">
+    <button tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="expandAll()" data-testid="expand-all">
         <span jhiTranslate="artemisApp.featureUsage.expandAll"></span>
     </button>
-    <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="collapseAll()" data-testid="collapse-all">
+    <button tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="collapseAll()" data-testid="collapse-all">
         <span jhiTranslate="artemisApp.featureUsage.collapseAll"></span>
     </button>
 </div>
 
 <div class="overflow-x-auto">
-    <table tumUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="feature-tree">
+    <table tumAetUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="feature-tree">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
@@ -36,7 +36,7 @@
                         <span class="inline-flex items-center gap-2" [style.padding-left.rem]="row.level * 1.25">
                             @if (row.hasChildren) {
                                 <button
-                                    tumUiButton
+                                    tumAetUiButton
                                     severity="secondary"
                                     size="small"
                                     variant="text"
@@ -61,22 +61,23 @@
                                     <span class="font-semibold">{{ areaTranslationKey(row.name) | artemisTranslate }}</span>
                                 }
                                 @case ('feature') {
-                                    <span [tumUiTooltip]="featureTranslationKey(row.name, 'description') | artemisTranslate">{{
+                                    <span [tumAetUiTooltip]="featureTranslationKey(row.name, 'description') | artemisTranslate">{{
                                         featureTranslationKey(row.name, 'name') | artemisTranslate
                                     }}</span>
                                 }
                                 @case ('resource') {
                                     <span class="text-sm wrap-anywhere">{{ row.name }}</span>
                                     @if (row.featureKind && row.featureKind !== FeatureKind.REST) {
-                                        <tum-ui-tag severity="secondary">{{ 'artemisApp.featureUsage.kind.' + row.featureKind | artemisTranslate }}</tum-ui-tag>
+                                        <tumaet-ui-tag severity="secondary">{{ 'artemisApp.featureUsage.kind.' + row.featureKind | artemisTranslate }}</tumaet-ui-tag>
                                     }
                                 }
                                 @case ('endpoint') {
                                     @if (row.endpoint && verbOf(row.endpoint); as verb) {
-                                        <tum-ui-tag severity="secondary">{{ verb }}</tum-ui-tag>
+                                        <tumaet-ui-tag severity="secondary">{{ verb }}</tumaet-ui-tag>
                                     }
                                     <span class="font-mono text-xs wrap-anywhere">{{ row.name }}</span>
                                 }
+                                @default never;
                             }
                         </span>
                     </td>
@@ -90,18 +91,18 @@
                             @case ('feature') {
                                 @if (row.feature) {
                                     <span class="inline-flex flex-wrap gap-1 whitespace-nowrap">
-                                        <tum-ui-tag [severity]="statusSeverity(row.feature.status)" data-testid="feature-status">{{
+                                        <tumaet-ui-tag [severity]="statusSeverity(row.feature.status)" data-testid="feature-status">{{
                                             'artemisApp.featureUsage.status.' + row.feature.status | artemisTranslate
-                                        }}</tum-ui-tag>
+                                        }}</tumaet-ui-tag>
                                         @if (row.feature.noActions) {
-                                            <tum-ui-tag severity="info" [tumUiTooltip]="'artemisApp.featureUsage.noActionsHint' | artemisTranslate">{{
+                                            <tumaet-ui-tag severity="info" [tumAetUiTooltip]="'artemisApp.featureUsage.noActionsHint' | artemisTranslate">{{
                                                 'artemisApp.featureUsage.noActionsTag' | artemisTranslate
-                                            }}</tum-ui-tag>
+                                            }}</tumaet-ui-tag>
                                         }
                                         @for (adoption of row.adoption ?? []; track adoption.module + '/' + adoption.key) {
-                                            <tum-ui-tag severity="secondary" [tumUiTooltip]="adoption.module + '/' + adoption.key">{{
+                                            <tumaet-ui-tag severity="secondary" [tumAetUiTooltip]="adoption.module + '/' + adoption.key">{{
                                                 'artemisApp.featureUsage.adoptionTag' | artemisTranslate: { count: adoption.count, total: adoption.total }
-                                            }}</tum-ui-tag>
+                                            }}</tumaet-ui-tag>
                                         }
                                     </span>
                                 }
@@ -109,15 +110,16 @@
                             @case ('endpoint') {
                                 @if (row.endpoint) {
                                     <span class="inline-flex flex-wrap gap-1 whitespace-nowrap">
-                                        <tum-ui-tag [severity]="interactionSeverity(row.endpoint.interaction)" data-testid="endpoint-interaction">{{
+                                        <tumaet-ui-tag [severity]="interactionSeverity(row.endpoint.interaction)" data-testid="endpoint-interaction">{{
                                             'artemisApp.featureUsage.interaction.' + row.endpoint.interaction | artemisTranslate
-                                        }}</tum-ui-tag>
+                                        }}</tumaet-ui-tag>
                                         @if (row.endpoint.retired) {
-                                            <tum-ui-tag severity="secondary"><span jhiTranslate="artemisApp.featureUsage.retiredTag"></span></tum-ui-tag>
+                                            <tumaet-ui-tag severity="secondary"><span jhiTranslate="artemisApp.featureUsage.retiredTag"></span></tumaet-ui-tag>
                                         }
                                     </span>
                                 }
                             }
+                            @default {}
                         }
                     </td>
                     <td class="text-end">{{ row.actionCount }}</td>
@@ -133,7 +135,7 @@
                     <td>
                         @if ((row.kind === 'feature' || row.kind === 'endpoint') && hasCalls(row)) {
                             <button
-                                tumUiButton
+                                tumAetUiButton
                                 severity="secondary"
                                 size="small"
                                 variant="outlined"

@@ -4,7 +4,7 @@
     <!-- Upcoming Exams Section -->
     <h4 id="upcoming-exams-page-heading" jhiTranslate="artemisApp.upcomingExamsAndExercises.upcomingExams"></h4>
     @if (upcomingExams().length) {
-        <table tumUiTable [striped]="true" style="table-layout: fixed" data-testid="upcoming-exams-table" aria-describedby="upcoming-exams-page-heading">
+        <table tumAetUiTable [striped]="true" style="table-layout: fixed" data-testid="upcoming-exams-table" aria-describedby="upcoming-exams-page-heading">
             <thead>
                 <tr>
                     <th scope="col" class="w-[300px]">
@@ -35,13 +35,13 @@
                         </td>
                         <td>
                             @if (exam.testExam) {
-                                <tum-ui-tag severity="info" data-testid="exam-mode-tag">
+                                <tumaet-ui-tag severity="info" data-testid="exam-mode-tag">
                                     <span jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                                </tum-ui-tag>
+                                </tumaet-ui-tag>
                             } @else {
-                                <tum-ui-tag severity="success" data-testid="exam-mode-tag">
+                                <tumaet-ui-tag severity="success" data-testid="exam-mode-tag">
                                     <span jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                                </tum-ui-tag>
+                                </tumaet-ui-tag>
                             }
                         </td>
                         @if (exam.course; as course) {
@@ -65,7 +65,7 @@
     <!-- Upcoming Exercises Section -->
     <h4 id="upcoming-exercises-page-heading" class="mt-4" jhiTranslate="artemisApp.upcomingExamsAndExercises.upcomingExercises"></h4>
     @if (upcomingExercises().length) {
-        <table tumUiTable [striped]="true" style="table-layout: fixed" data-testid="upcoming-exercises-table" aria-describedby="upcoming-exercises-page-heading">
+        <table tumAetUiTable [striped]="true" style="table-layout: fixed" data-testid="upcoming-exercises-table" aria-describedby="upcoming-exercises-page-heading">
             <thead>
                 <tr>
                     <th scope="col" class="w-[50px]">
@@ -89,7 +89,7 @@
                 @for (exercise of upcomingExercises(); track exercise.id) {
                     <tr>
                         <td>
-                            <fa-icon [icon]="getIcon(exercise.type)" [tumUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
+                            <fa-icon [icon]="getIcon(exercise.type)" [tumAetUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
                         </td>
                         <td>
                             <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</a>

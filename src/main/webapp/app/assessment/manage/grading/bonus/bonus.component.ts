@@ -29,7 +29,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 export enum BonusStrategyOption {
     GRADES,
@@ -59,7 +59,7 @@ export enum BonusStrategyDiscreteness {
         HelpIconComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class BonusComponent implements OnInit {

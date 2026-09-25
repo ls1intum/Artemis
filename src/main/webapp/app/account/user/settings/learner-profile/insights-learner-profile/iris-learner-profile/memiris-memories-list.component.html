@@ -1,14 +1,14 @@
 <h5 jhiTranslate="artemisApp.iris.memories.title"></h5>
 
 @if (hasConflicts()) {
-    <tum-ui-message severity="warn">
+    <tumaet-ui-message severity="warn">
         <div class="flex w-full items-center justify-between gap-3">
             <span jhiTranslate="artemisApp.iris.memories.conflict.warning"></span>
-            <tum-ui-button severity="warn" size="small" (clicked)="openResolveConflictsModal()">
+            <tumaet-ui-button severity="warn" size="small" (clicked)="openResolveConflictsModal()">
                 <span jhiTranslate="artemisApp.iris.memories.conflict.resolve"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         </div>
-    </tum-ui-message>
+    </tumaet-ui-message>
 }
 
 @if (loading()) {
@@ -17,21 +17,21 @@
     @if (memories()?.length === 0) {
         <div class="text-sm text-muted-color" jhiTranslate="artemisApp.iris.memories.empty"></div>
     } @else {
-        <tum-ui-list [ariaLabel]="'artemisApp.iris.memories.title' | artemisTranslate">
+        <tumaet-ui-list [ariaLabel]="'artemisApp.iris.memories.title' | artemisTranslate">
             @for (memory of memories(); track memory.id) {
-                <li tumUiListItem>
+                <li tumAetUiListItem>
                     <div class="flex items-center justify-between gap-3">
                         <button type="button" class="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-start" (click)="toggleOpen(memory)">
                             <fa-icon [icon]="open()[memory.id] ? faChevronDown : faChevronRight" />
                             <span class="font-semibold">{{ memory.title || memory.id }}</span>
                         </button>
-                        <tum-ui-button severity="danger" variant="outlined" size="small" [disabled]="deleting()[memory.id]" (clicked)="deleteMemory(memory)">
+                        <tumaet-ui-button severity="danger" variant="outlined" size="small" [disabled]="deleting()[memory.id]" (clicked)="deleteMemory(memory)">
                             @if (deleting()[memory.id]) {
                                 <span jhiTranslate="artemisApp.iris.memories.deleting"></span>
                             } @else {
                                 <span jhiTranslate="artemisApp.iris.memories.delete"></span>
                             }
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     </div>
 
                     @if (open()[memory.id]) {
@@ -41,11 +41,11 @@
                     }
                 </li>
             }
-        </tum-ui-list>
+        </tumaet-ui-list>
     }
 }
 
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="conflictDialogVisible"
     size="large"
     [header]="'artemisApp.iris.memories.conflict.modalTitle' | artemisTranslate"
@@ -59,4 +59,4 @@
             (closed)="conflictDialogVisible.set(false)"
         />
     }
-</tum-ui-dialog>
+</tumaet-ui-dialog>

@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -34,7 +34,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('isAssessor', true);
         fixture.detectChanges();
 
-        const messages = fixture.debugElement.queryAll(By.directive(TumUiMessageComponent));
+        const messages = fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent));
         expect(messages).toHaveLength(1);
         expect(messages[0].nativeElement.textContent).toContain('artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable');
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
@@ -46,7 +46,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
         fixture.detectChanges();
 
-        const messages = fixture.debugElement.queryAll(By.directive(TumUiMessageComponent));
+        const messages = fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent));
         expect(messages).toHaveLength(1);
         expect(messages[0].nativeElement.textContent).toContain('artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable');
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
@@ -57,14 +57,14 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.queryAll(By.directive(TumUiMessageComponent))).toHaveLength(1);
+        expect(fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent))).toHaveLength(1);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeTruthy();
     });
 
     it('should render nothing when no conditions are met', () => {
         fixture.detectChanges();
 
-        expect(fixture.debugElement.queryAll(By.directive(TumUiMessageComponent))).toHaveLength(0);
+        expect(fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent))).toHaveLength(0);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
 
@@ -75,7 +75,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
         fixture.detectChanges();
 
-        const messages = fixture.debugElement.queryAll(By.directive(TumUiMessageComponent));
+        const messages = fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent));
         expect(messages).toHaveLength(1);
         expect(translationKeys()).toEqual(['artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint', 'artemisApp.assessment.feedbackSuggestions.chooseAiExperience']);
         expect(fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions'))).toBeTruthy();
@@ -89,7 +89,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('hasChosenNoAi', true);
         fixture.detectChanges();
 
-        const messages = fixture.debugElement.queryAll(By.directive(TumUiMessageComponent));
+        const messages = fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent));
         expect(messages).toHaveLength(1);
         expect(translationKeys()).toEqual(['artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHintNoAi', 'artemisApp.assessment.feedbackSuggestions.changeAiExperience']);
     });

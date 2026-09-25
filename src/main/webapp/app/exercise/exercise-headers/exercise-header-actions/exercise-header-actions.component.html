@@ -272,7 +272,7 @@
                     [exercise]="exercise()"
                     [isSubmitted]="true"
                     [participationId]="activeParticipationForCode()?.id"
-                    [asTumUiButton]="true"
+                    [asTumAetUiButton]="true"
                     [alwaysShowLabel]="true"
                     [smallButtons]="true"
                 />
@@ -281,7 +281,7 @@
     } @else {
         <p class="mb-2" [jhiTranslate]="aiFeedbackPopoverDisabledDescriptionKey()"></p>
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <tum-ui-button
+            <tumaet-ui-button
                 variant="outlined"
                 severity="secondary"
                 size="small"
@@ -289,13 +289,13 @@
                 (clicked)="dismissAiFeedbackPopoverPermanently()"
             >
                 <span jhiTranslate="artemisApp.exercise.aiFeedbackPopover.dontShowAgain"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
             <span (click)="closeSubmitPopover()">
                 <jhi-request-feedback-button
                     [exercise]="exercise()"
                     [isSubmitted]="true"
                     [participationId]="activeParticipationForCode()?.id"
-                    [asTumUiButton]="true"
+                    [asTumAetUiButton]="true"
                     [alwaysShowLabel]="true"
                     [smallButtons]="true"
                     [showAiExperiencePrompt]="true"

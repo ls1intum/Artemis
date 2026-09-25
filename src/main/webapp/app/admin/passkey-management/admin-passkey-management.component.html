@@ -12,7 +12,7 @@
 
 <ng-template #approvedCellTemplate let-cell>
     <div class="flex items-center gap-2">
-        <tum-ui-toggle-switch
+        <tumaet-ui-toggle-switch
             [ngModel]="cell.data.isSuperAdminApproved"
             [inputId]="'approval-' + cell.data.credentialId"
             (changed)="onApprovalToggle(cell.data)"

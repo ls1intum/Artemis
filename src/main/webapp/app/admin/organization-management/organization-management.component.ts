@@ -5,13 +5,13 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { CellTemplateRef, ColumnDef, TumUiButtonDirective, TumUiTableComponent, TumUiTableQueryEvent } from '@tumaet/ui-angular';
+import { CellTemplateRef, ColumnDef, TumAetUiButtonDirective, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui-integration/tum-ui-table-request-builder';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-aet-ui-integration/tumaet-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 
@@ -30,8 +30,8 @@ import { onError } from 'app/foundation/util/global.utils';
         DeleteButtonDirective,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiTableComponent,
-        TumUiButtonDirective,
+        TumAetUiTableComponent,
+        TumAetUiButtonDirective,
     ],
 })
 export class OrganizationManagementComponent {
@@ -62,7 +62,7 @@ export class OrganizationManagementComponent {
     faTrash = faTrash;
     faPencil = faPencil;
 
-    private lastLoadEvent: TumUiTableQueryEvent | undefined;
+    private lastLoadEvent: TumAetUiTableQueryEvent | undefined;
     private loadRequestId = 0;
 
     /**
@@ -86,7 +86,7 @@ export class OrganizationManagementComponent {
         });
     }
 
-    loadOrganizations(event: TumUiTableQueryEvent): void {
+    loadOrganizations(event: TumAetUiTableQueryEvent): void {
         this.lastLoadEvent = event;
         this.isLoading.set(true);
         const requestId = ++this.loadRequestId;

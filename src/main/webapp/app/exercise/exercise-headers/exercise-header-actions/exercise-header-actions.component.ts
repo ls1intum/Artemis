@@ -57,7 +57,7 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { TumUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -88,7 +88,7 @@ export const AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY = 'artemisApp.aiFee
         RequestFeedbackButtonComponent,
         NgbPopover,
         TranslatePipe,
-        TumUiButtonComponent,
+        TumAetUiButtonComponent,
     ],
     providers: [ExternalCloningService],
 })

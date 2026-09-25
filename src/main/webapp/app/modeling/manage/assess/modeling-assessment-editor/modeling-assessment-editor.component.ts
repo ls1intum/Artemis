@@ -47,7 +47,7 @@ import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-w
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
-import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
@@ -70,8 +70,8 @@ import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
         ModelingAssessmentTopRightDirective,
         ModelingAssessmentLegendComponent,
         AssessmentNotPossibleYetComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {

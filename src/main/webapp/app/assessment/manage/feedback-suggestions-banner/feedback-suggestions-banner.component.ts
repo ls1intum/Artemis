@@ -2,14 +2,14 @@ import { Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faInfoCircle, faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { TumUiButtonComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
     templateUrl: './feedback-suggestions-banner.component.html',
-    imports: [TumUiMessageComponent, TumUiButtonComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiMessageComponent, TumAetUiButtonComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackSuggestionsBannerComponent {
     readonly isLoading = input.required<boolean>();
