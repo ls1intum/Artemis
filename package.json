@@ -10,6 +10,7 @@
     },
     "packageManager": "pnpm@12.5.1",
     "dependencies": {
+        "@angular/aria": "catalog:",
         "@angular/cdk": "catalog:",
         "@angular/common": "catalog:",
         "@angular/compiler": "catalog:",
