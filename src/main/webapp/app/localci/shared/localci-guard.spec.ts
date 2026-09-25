@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Router } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -13,12 +13,8 @@ describe('LocalCIGuard', () => {
     let profileService: ProfileService;
 
     beforeEach(() => {
-        const routerMock = {
-            navigate: vi.fn(),
-        };
-
         TestBed.configureTestingModule({
-            providers: [LocalCIGuard, { provide: ProfileService, useClass: MockProfileService }, { provide: Router, useValue: routerMock }],
+            providers: [LocalCIGuard, { provide: ProfileService, useClass: MockProfileService }],
         });
 
         guard = TestBed.inject(LocalCIGuard);
@@ -26,15 +22,15 @@ describe('LocalCIGuard', () => {
         profileService = TestBed.inject(ProfileService);
     });
 
-    it('should allow access if PROFILE_LOCALCI is active', async () => {
+    it('should allow access if PROFILE_LOCALCI is active', () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [PROFILE_LOCALCI] } as ProfileInfo);
-        await guard.canActivate();
-        expect(router.navigate).not.toHaveBeenCalled();
+        expect(guard.canActivate()).toBe(true);
     });
 
-    it('should not allow access if PROFILE_LOCALCI is not active', async () => {
+    it('should not allow access if PROFILE_LOCALCI is not active', () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [] } as unknown as ProfileInfo);
-        await guard.canActivate();
-        expect(router.navigate).toHaveBeenCalledWith(['/courses']);
+        const result = guard.canActivate();
+        expect(result).toBeInstanceOf(UrlTree);
+        expect(router.serializeUrl(result as UrlTree)).toBe('/courses');
     });
 });
