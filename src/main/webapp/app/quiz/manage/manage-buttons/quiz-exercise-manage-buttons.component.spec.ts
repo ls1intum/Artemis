@@ -86,13 +86,7 @@ describe('QuizExercise Management Buttons Component', () => {
     });
 
     it('should export quiz', () => {
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizExercise,
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
         vi.spyOn(quizExerciseService, 'exportQuiz');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
@@ -103,13 +97,7 @@ describe('QuizExercise Management Buttons Component', () => {
     });
 
     it('should export quiz with exportAll false', () => {
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: quizExercise,
-                }),
-            ),
-        );
+        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
         vi.spyOn(quizExerciseService, 'exportQuiz');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);

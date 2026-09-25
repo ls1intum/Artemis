@@ -39,7 +39,7 @@ describe('QuizStatisticComponent', () => {
     let accountSpy: MockInstance<AccountService['hasAnyAuthorityDirect']>;
     let websocketService: MockWebsocketService;
     let router: Router;
-    let quizServiceFindSpy: MockInstance<QuizExerciseService['find']>;
+    let quizServiceFindSpy: MockInstance<QuizExerciseService['findStatisticsOverview']>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

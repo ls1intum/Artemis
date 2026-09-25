@@ -93,7 +93,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
 
         comp.quizExercise = quizExercise;
-        vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: createQuizExercise() })));
+        vi.spyOn(quizService, 'find').mockReturnValue(of(createQuizExercise()));
     });
 
     afterEach(() => {

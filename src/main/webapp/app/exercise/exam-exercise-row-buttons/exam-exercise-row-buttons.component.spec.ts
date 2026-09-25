@@ -47,7 +47,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
     const quizExercise = { id: 345, type: ExerciseType.QUIZ } as QuizExercise;
     const fileUploadExercise = { id: 456, type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
     const programmingExercise = { id: 963, type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-    const quizResponse = { body: { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise };
+    const loadedQuiz = { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise;
 
     let deleteTextExerciseStub: ReturnType<typeof vi.spyOn>;
     let deleteModelingExerciseStub: ReturnType<typeof vi.spyOn>;
@@ -383,14 +383,14 @@ describe('ExamExerciseRowButtonsComponent', () => {
     });
     describe('exportQuizById', () => {
         it('should export Quiz, exportAll true', () => {
-            quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
+            quizExerciseServiceFindStub.mockReturnValue(of(loadedQuiz));
             setExerciseInput(fixture, quizExercise);
             component.exportQuizById(true);
             expect(quizExerciseExportSpy).toHaveBeenCalledOnce();
             expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, true, quizExercise.title);
         });
         it('should export Quiz, exportAll false', () => {
-            quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
+            quizExerciseServiceFindStub.mockReturnValue(of(loadedQuiz));
             setExerciseInput(fixture, quizExercise);
             component.exportQuizById(false);
             expect(quizExerciseExportSpy).toHaveBeenCalledOnce();

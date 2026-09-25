@@ -195,7 +195,7 @@ describe('QuizExerciseUpdateComponent', () => {
             courseManagementServiceStub = vi.spyOn(courseManagementService, 'find');
             exerciseGroupServiceStub = vi.spyOn(exerciseGroupService, 'find');
             initStub = vi.spyOn(comp, 'init');
-            quizExerciseServiceStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+            quizExerciseServiceStub.mockReturnValue(of(quizExercise));
             courseManagementServiceStub.mockReturnValue(of(new HttpResponse<Course>({ body: course })));
             exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: undefined })));
         };

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { asyncScheduler, of } from 'rxjs';
 import { observeOn } from 'rxjs/operators';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -99,7 +99,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         const { question: quizQuestion2 } = createValidDnDQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];
         // Use asyncScheduler to ensure ngOnInit initializes duration before the subscription callback runs
-        quizServiceFindStub = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })).pipe(observeOn(asyncScheduler)));
+        quizServiceFindStub = vi.spyOn(quizService, 'find').mockReturnValue(of(quizExercise).pipe(observeOn(asyncScheduler)));
     });
 
     afterEach(() => {
