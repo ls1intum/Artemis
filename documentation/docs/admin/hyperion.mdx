@@ -227,6 +227,10 @@ management:
 
 ## Whole-exercise generation workers
 
+> This core-coordination layer does not yet include the deployable worker-only
+> profile or the Java Gradle generation workload. Use the following deployment
+> settings only after the dependent worker layer is installed.
+
 Whole-exercise generation uses a separate worker process and the selected
 `DistributedDataProvider`. It does not execute generated code in the core JVM or
 on ordinary LocalCI build agents. Deploy the worker with the normal Artemis WAR and
