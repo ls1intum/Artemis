@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { VERSION } from 'app/app.constants';
 import { BUG_REPORT_URL, CITATION, CONTRIBUTORS_URL, FEATURE_REQUEST_URL, HIGHLIGHTS, ICONS, MAX_HIGHLIGHTS, MODULES, PROJECT_LINKS } from 'app/core/about-us/about-us-data';
 import { AboutUsMaintainer, AboutUsModel } from 'app/core/about-us/models/about-us-model';
@@ -28,7 +28,7 @@ const CONTACT_MAIL_BODY =
     templateUrl: './about-us.component.html',
     styleUrl: './about-us.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CdkCopyToClipboard, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective, TumUiTagComponent],
+    imports: [CdkCopyToClipboard, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTagComponent],
 })
 export class AboutUsComponent implements OnInit {
     private readonly profileService = inject(ProfileService);

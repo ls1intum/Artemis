@@ -8,7 +8,7 @@
         <div class="flex flex-wrap items-center gap-3">
             <h2 jhiTranslate="artemisApp.aboutUsOverview.installation.title"></h2>
             @if (profileInfo()?.testServer) {
-                <tum-ui-tag severity="warn" [value]="'artemisApp.aboutUsOverview.installation.testServer' | artemisTranslate" data-testid="about-test-server" />
+                <tumaet-ui-tag severity="warn" [value]="'artemisApp.aboutUsOverview.installation.testServer' | artemisTranslate" data-testid="about-test-server" />
             }
         </div>
         <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -91,7 +91,7 @@
             <ul class="about__list flex flex-wrap gap-2">
                 @for (module of enabledModules(); track module.feature) {
                     <li [attr.data-testid]="'about-module-' + module.feature">
-                        <tum-ui-tag severity="secondary" [value]="'artemisApp.aboutUsOverview.modules.' + module.translationKey | artemisTranslate" />
+                        <tumaet-ui-tag severity="secondary" [value]="'artemisApp.aboutUsOverview.modules.' + module.translationKey | artemisTranslate" />
                     </li>
                 }
             </ul>
@@ -104,7 +104,7 @@
         <p class="text-muted-color" [jhiTranslate]="'artemisApp.aboutUsOverview.project.operatedBy'" [translateValues]="{ operator: profileInfo()?.operatorName ?? '' }"></p>
         <div class="flex flex-wrap gap-2">
             @for (link of PROJECT_LINKS; track link.url) {
-                <a tumUiButton severity="secondary" variant="outlined" size="small" [href]="link.url" target="_blank" rel="noopener noreferrer">
+                <a tumAetUiButton severity="secondary" variant="outlined" size="small" [href]="link.url" target="_blank" rel="noopener noreferrer">
                     <span [jhiTranslate]="'artemisApp.aboutUsOverview.project.links.' + link.translationKey"></span>
                     <fa-icon [icon]="faArrowUpRightFromSquare" />
                 </a>
@@ -150,7 +150,7 @@
                 <a [href]="CITATION.doiUrl" target="_blank" rel="noopener noreferrer">{{ CITATION.doiUrl }}</a>
             </span>
             <button
-                tumUiButton
+                tumAetUiButton
                 type="button"
                 class="shrink-0"
                 size="small"
