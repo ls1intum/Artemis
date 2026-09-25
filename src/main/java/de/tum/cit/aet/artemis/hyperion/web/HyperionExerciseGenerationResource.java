@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -175,8 +176,7 @@ public class HyperionExerciseGenerationResource {
                 && !generationRequestService.isAuthoritativeProblemStatement(exercise)) {
             throw new BadRequestAlertException("Enter a brief before generating an exercise without a problem statement.", ENTITY_NAME, "generationBriefRequired");
         }
-        if (!workerRegistry
-                .hasAvailableGenerationSandboxSlot(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile.toolchainFor(exercise))) {
+        if (!workerRegistry.hasAvailableGenerationSandboxSlot(LanguageGenerationProfile.toolchainFor(exercise))) {
             generationCapacityHealthIndicator.warnGenerationRejectedForMissingCapacity();
             throw new ServiceUnavailableAlertException("No compatible Hyperion worker currently has a free generation slot.", ENTITY_NAME, "generationCapacityUnavailable");
         }

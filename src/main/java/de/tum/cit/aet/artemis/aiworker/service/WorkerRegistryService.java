@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.aiworker.domain.WorkerState;
 import de.tum.cit.aet.artemis.aiworker.dto.ExecutionClaimDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.ExecutionIdentityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
+import de.tum.cit.aet.artemis.aiworker.dto.WorkerExecutionDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerStatusDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
@@ -215,9 +216,8 @@ public class WorkerRegistryService {
                 state = live.ready() ? WorkerState.AVAILABLE : WorkerState.NOT_READY;
             }
             return new WorkerStatusDTO(worker, state, live.receivedAt(), live.imageDigest(), live.incarnation(),
-                    live.executions().isEmpty() ? null : live.executions().getFirst().executionId(), leaseHeld, live.slots(), availableSlots(worker, live),
-                    live.executions().stream().map(execution -> new de.tum.cit.aet.artemis.aiworker.dto.WorkerExecutionDTO(execution.slot(), execution.executionId(),
-                            execution.jobId(), execution.resourceId())).toList(),
+                    live.executions().isEmpty() ? null : live.executions().getFirst().executionId(), leaseHeld, live.slots(), availableSlots(worker, live), live.executions()
+                            .stream().map(execution -> new WorkerExecutionDTO(execution.slot(), execution.executionId(), execution.jobId(), execution.resourceId())).toList(),
                     live.capability());
         }).toList();
     }

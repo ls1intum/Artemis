@@ -29,6 +29,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.springframework.ai.util.JsonHelper;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
@@ -55,6 +56,8 @@ public class AgentLoopRunner {
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
 
     private static final String SUBMIT_TOOL_NAME = "submit";
+
+    private static final JsonHelper TOOL_ARGUMENT_JSON = new JsonHelper();
 
     /** Emitted immediately before every provider call; see {@link #emitWaitingOnModel}. */
     static final String WAITING_ON_MODEL_MESSAGE = "Thinking about the next step.";
@@ -390,7 +393,10 @@ public class AgentLoopRunner {
                 continue;
             }
             ToolExecutionResult toolExecutionResult;
+            boolean executionStarted = false;
             try {
+                validateToolBatch(toolCalls, toolCallbacks);
+                executionStarted = true;
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
                 // Preserve the model call and tool results even when a sandbox failure ends the session.
                 conversation = new ArrayList<>(toolExecutionResult.conversationHistory());
@@ -436,17 +442,18 @@ public class AgentLoopRunner {
                     emit(stepListener, "The build environment stopped responding.");
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
                 }
-                // Unknown tool or malformed arguments surface here: feed the error back so the model can self-correct rather than failing the run on one bad call.
+                // A preflight rejection changed nothing. A callback failure may have followed successful calls, so do not claim that those calls failed.
                 consecutiveToolFailures++;
                 log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}, type: {})", turn, consecutiveToolFailures, e.getClass().getSimpleName());
                 emit(stepListener, "The agent tried an unavailable action and is correcting it.");
                 AssistantMessage failedTurn = response.getResult().getOutput();
                 conversation.add(failedTurn);
                 // Every requested call id must be answered, or the chat-completions tool-pairing contract is violated on the next request.
+                String outcome = executionStarted
+                        ? "ERROR: this batch stopped after execution began. Some calls may have completed. Inspect the workspace before retrying any action."
+                        : "ERROR: no call in this batch was executed. Use only available tools with valid JSON object arguments, then retry.";
                 List<ToolResponseMessage.ToolResponse> errorResponses = failedTurn.getToolCalls().stream()
-                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(), "ERROR: this tool call could not be executed: " + e.getMessage()
-                                + ". Only use the available tools (read_file, write_file, edit_file, delete_file, bash, verify, submit) with valid JSON arguments, then continue."))
-                        .toList();
+                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(), outcome)).toList();
                 conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                     return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
@@ -883,6 +890,22 @@ public class AgentLoopRunner {
             return "";
         }
         return response.getResult().getOutput().getText();
+    }
+
+    private static void validateToolBatch(List<AssistantMessage.ToolCall> calls, ToolCallback[] callbacks) {
+        for (AssistantMessage.ToolCall call : calls) {
+            boolean available = false;
+            for (ToolCallback callback : callbacks) {
+                if (callback.getToolDefinition().name().equals(call.name())) {
+                    available = true;
+                    break;
+                }
+            }
+            if (!available || call.arguments() == null || !call.arguments().stripLeading().startsWith("{")) {
+                throw new IllegalArgumentException("Unknown tool or invalid arguments");
+            }
+            TOOL_ARGUMENT_JSON.fromJsonToMap(call.arguments());
+        }
     }
 
     private static void emit(@Nullable Consumer<String> stepListener, String message) {
