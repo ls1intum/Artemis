@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import jakarta.annotation.PreDestroy;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
@@ -42,7 +43,7 @@ public class TelemetryService {
 
     private ScheduledFuture<?> pendingReport;
 
-    public TelemetryService(ProfileService profileService, ApplicationContext applicationContext, TaskScheduler taskScheduler,
+    public TelemetryService(ProfileService profileService, ApplicationContext applicationContext, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
             @Value("${artemis.telemetry.enabled:false}") boolean useTelemetry, @Value("${artemis.telemetry.sendAdminDetails:false}") boolean sendAdminDetails,
             @Value("${info.testServer:false}") boolean testServer) {
         this.profileService = profileService;

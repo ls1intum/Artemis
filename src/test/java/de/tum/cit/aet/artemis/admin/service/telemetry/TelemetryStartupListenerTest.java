@@ -15,7 +15,10 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.context.support.TestPropertySourceUtils;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 class TelemetryStartupListenerTest {
@@ -76,14 +79,13 @@ class TelemetryStartupListenerTest {
             TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context, "artemis.version=9.9.3", "server.url=https://artemis.example", "info.operatorName=Existing operator",
                     "info.contact=admin@example.org", "artemis.telemetry.destination=https://telemetry.example", "spring.datasource.url=jdbc:postgresql://localhost/artemis");
             context.registerBean(ProfileService.class, () -> mock(ProfileService.class));
-            context.registerBean(org.springframework.web.client.RestTemplate.class, () -> new org.springframework.web.client.RestTemplate());
-            context.registerBean(com.fasterxml.jackson.databind.ObjectMapper.class, de.tum.cit.aet.artemis.core.util.JsonObjectMapper::get);
-            context.registerBean("hazelcastInstance", com.hazelcast.core.HazelcastInstance.class, () -> mock(com.hazelcast.core.HazelcastInstance.class));
+            context.registerBean(RestTemplate.class, () -> new RestTemplate());
+            context.registerBean(EurekaInstanceHelper.class, () -> mock(EurekaInstanceHelper.class));
             context.register(TelemetrySendingService.class);
             context.refresh();
             var sender = context.getBean(TelemetrySendingService.class);
-            assertThat(org.springframework.test.util.ReflectionTestUtils.getField(sender, "universityName")).isEqualTo("");
-            assertThat(org.springframework.test.util.ReflectionTestUtils.getField(sender, "operatorAdminName")).isEqualTo("");
+            assertThat(ReflectionTestUtils.getField(sender, "universityName")).isEqualTo("");
+            assertThat(ReflectionTestUtils.getField(sender, "operatorAdminName")).isEqualTo("");
         }
     }
 

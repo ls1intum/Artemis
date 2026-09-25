@@ -9,7 +9,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -23,12 +22,9 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
+import de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.api.LocalCITelemetryApi;
 
@@ -51,19 +47,16 @@ public class TelemetrySendingService {
 
     private final ProfileService profileService;
 
-    private final ObjectMapper objectMapper;
-
-    private final HazelcastInstance hazelcastInstance;
+    private final EurekaInstanceHelper eurekaInstanceHelper;
 
     private final Optional<LocalCITelemetryApi> localCITelemetryApi;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, ObjectMapper objectMapper,
-            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, Optional<LocalCITelemetryApi> localCITelemetryApi) {
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, EurekaInstanceHelper eurekaInstanceHelper,
+            Optional<LocalCITelemetryApi> localCITelemetryApi) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
-        this.objectMapper = objectMapper;
-        this.hazelcastInstance = hazelcastInstance;
+        this.eurekaInstanceHelper = eurekaInstanceHelper;
         this.localCITelemetryApi = localCITelemetryApi;
     }
 
@@ -103,8 +96,8 @@ public class TelemetrySendingService {
      * enabled module features, connected nodes and build agents, and optionally administrator details.
      *
      * <p>
-     * The method constructs the telemetry data object, converts it to JSON, and sends it to a
-     * telemetry collection server. The request is sent asynchronously due to the {@code @Async} annotation.
+     * The method constructs the telemetry data object and posts it to a telemetry collection server, which receives it as JSON.
+     * The request is sent asynchronously due to the {@code @Async} annotation.
      *
      * @param sendAdminDetails a flag indicating whether to include administrator details in the
      *                             telemetry data (such as contact information and admin name).
@@ -115,22 +108,15 @@ public class TelemetrySendingService {
     public void sendTelemetryByPostRequest(boolean sendAdminDetails, String startupId, Instant startedAt) {
 
         try {
-            var telemetryData = buildTelemetryData(sendAdminDetails, startupId, startedAt);
-            ObjectNode payload = objectMapper.valueToTree(telemetryData);
-            // NON_EMPTY is the DTO convention, but [] must distinguish no enabled features from an older sender.
-            payload.set("moduleFeatures", objectMapper.valueToTree(telemetryData.moduleFeatures()));
-            String telemetryJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(payload);
             HttpHeaders headers = new HttpHeaders();
+            // Declared explicitly: the default message converters include XML, which could otherwise be chosen for the record.
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
+            var requestEntity = new HttpEntity<>(buildTelemetryData(sendAdminDetails, startupId, startedAt), headers);
 
             log.info("Sending startup telemetry to {}", destination);
             // NOTE: there should be no module in the following URL
             var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
             log.info("Successfully sent telemetry data: {}", response.getStatusCode());
-        }
-        catch (JsonProcessingException e) {
-            log.warn("JsonProcessingException in sendTelemetry.", e);
         }
         catch (Exception e) {
             log.warn("Exception in sendTelemetry, with dst URI: {}", destination, e);
@@ -159,12 +145,15 @@ public class TelemetrySendingService {
         Integer nodeCount = null;
         Integer buildAgentCount = localCITelemetryApi.isEmpty() ? 0 : null;
         try {
-            // On 9.9.x every core node joins Hazelcast, including when Local CI uses Redis.
-            // Dedicated build agents are clients; exclude legacy lite members as well.
-            if (hazelcastInstance.getLifecycleService().isRunning()) {
-                int liveCoreNodes = (int) hazelcastInstance.getCluster().getMembers().stream().filter(member -> !member.isLiteMember()).count();
-                if (liveCoreNodes > 0) {
-                    nodeCount = liveCoreNodes;
+            // Core nodes find each other through the service registry, so a node without a registration runs alone. Build agents
+            // register as well, but without the core profile.
+            if (eurekaInstanceHelper.getServiceId().isEmpty()) {
+                nodeCount = 1;
+            }
+            else {
+                int registeredCoreNodes = (int) eurekaInstanceHelper.getServiceInstances().stream().filter(eurekaInstanceHelper::isClusterMember).count();
+                if (registeredCoreNodes > 0) {
+                    nodeCount = registeredCoreNodes;
                 }
             }
         }

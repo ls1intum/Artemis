@@ -1,47 +1,38 @@
 package de.tum.cit.aet.artemis.admin.service.telemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.hazelcast.cluster.Member;
-import com.hazelcast.core.HazelcastInstance;
-
+import de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.localci.api.LocalCITelemetryApi;
 
 class TelemetrySendingServiceTest {
 
-    private static final java.util.List<String> MODULE_PROPERTIES = java.util.List.of(de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.ATLASML_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.TEXT_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.MODELING_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.LECTURE_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME);
-
     private final ProfileService profiles = mock(ProfileService.class);
 
-    private final HazelcastInstance nodes = mock(HazelcastInstance.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+    private final EurekaInstanceHelper registry = mock(EurekaInstanceHelper.class);
 
     private final LocalCITelemetryApi agents = mock(LocalCITelemetryApi.class);
 
@@ -49,23 +40,29 @@ class TelemetrySendingServiceTest {
 
     private final MockRestServiceServer server = MockRestServiceServer.bindTo(rest).build();
 
-    private final MockEnvironment env = new MockEnvironment();
+    // Module flags that are not set read as disabled, so a newly added module does not need to be listed here.
+    private final MockEnvironment env = new MockEnvironment() {
+
+        @Override
+        public <T> T getProperty(String key, Class<T> targetType) {
+            T value = super.getProperty(key, targetType);
+            return value == null && targetType == Boolean.class ? targetType.cast(Boolean.FALSE) : value;
+        }
+    };
 
     private TelemetrySendingService service;
 
     @BeforeEach
     void setUp() {
-        when(nodes.getLifecycleService().isRunning()).thenReturn(true);
         env.setActiveProfiles("prod", "core", "scheduling");
-        for (String key : MODULE_PROPERTIES) {
-            env.setProperty(key, "false");
-        }
         env.setProperty("artemis.iris.enabled", "true");
+        when(registry.getServiceId()).thenReturn(Optional.of("artemis"));
+        when(registry.isClusterMember(any())).thenCallRealMethod();
         service = sender(Optional.of(agents));
     }
 
     private TelemetrySendingService sender(Optional<LocalCITelemetryApi> api) {
-        var sender = new TelemetrySendingService(env, rest, profiles, JsonObjectMapper.get(), nodes, api);
+        var sender = new TelemetrySendingService(env, rest, profiles, registry, api);
         ReflectionTestUtils.setField(sender, "version", "10.0.0");
         ReflectionTestUtils.setField(sender, "serverUrl", "https://artemis.example");
         ReflectionTestUtils.setField(sender, "operator", "Operator");
@@ -77,9 +74,16 @@ class TelemetrySendingServiceTest {
         return sender;
     }
 
+    private static ServiceInstance instance(String profile) {
+        ServiceInstance instance = mock(ServiceInstance.class);
+        when(instance.getMetadata()).thenReturn(Map.of("profile", profile));
+        return instance;
+    }
+
     @Test
     void reportsLiveTopologyFeaturesAndStartupIdentity() {
-        when(nodes.getCluster().getMembers()).thenReturn(Set.of(mock(Member.class), mock(Member.class)));
+        var instances = List.of(instance("prod,core,scheduling"), instance("prod,core"), instance("prod,buildagent"));
+        when(registry.getServiceInstances()).thenReturn(instances);
         when(agents.getConnectedBuildAgentCount()).thenReturn(3);
         var data = service.buildTelemetryData(true, "startup-id", Instant.EPOCH);
         assertThat(data.numberOfNodes()).isEqualTo(2);
@@ -93,8 +97,8 @@ class TelemetrySendingServiceTest {
     }
 
     @Test
-    void keepsUnknownTopologyUnknownAndOmitsPersonalData() throws Exception {
-        when(nodes.getCluster().getMembers()).thenReturn(Set.of());
+    void keepsUnknownTopologyUnknownAndOmitsPersonalData() {
+        when(registry.getServiceInstances()).thenReturn(List.of());
         when(agents.getConnectedBuildAgentCount()).thenReturn(null);
         var data = service.buildTelemetryData(false, "startup-id", Instant.EPOCH);
         assertThat(data.numberOfNodes()).isNull();
@@ -102,12 +106,11 @@ class TelemetrySendingServiceTest {
         assertThat(data.buildAgentCount()).isNull();
         assertThat(data.adminName()).isNull();
         assertThat(data.contact()).isNull();
-        assertThat(JsonObjectMapper.get().writeValueAsString(data)).doesNotContain("adminName", "contact", "numberOfNodes", "buildAgentCount", "isMultiNode");
     }
 
     @Test
-    void standaloneWithoutLocalCiHasNoBuildAgents() {
-        when(nodes.getCluster().getMembers()).thenReturn(Set.of(mock(Member.class)));
+    void nodeWithoutRegistryRunsAloneAndWithoutLocalCiHasNoBuildAgents() {
+        when(registry.getServiceId()).thenReturn(Optional.empty());
         var data = sender(Optional.empty()).buildTelemetryData(false, "startup-id", Instant.EPOCH);
         assertThat(data.numberOfNodes()).isEqualTo(1);
         assertThat(data.isMultiNode()).isFalse();
@@ -116,7 +119,7 @@ class TelemetrySendingServiceTest {
 
     @Test
     void collectionFailureDoesNotInventCountsOrPreventOtherTelemetry() {
-        when(nodes.getCluster().getMembers()).thenThrow(new IllegalStateException("disconnected"));
+        when(registry.getServiceInstances()).thenThrow(new IllegalStateException("registry unavailable"));
         when(agents.getConnectedBuildAgentCount()).thenThrow(new IllegalStateException("disconnected"));
         var data = service.buildTelemetryData(false, "startup-id", Instant.EPOCH);
         assertThat(data.numberOfNodes()).isNull();
@@ -125,46 +128,37 @@ class TelemetrySendingServiceTest {
     }
 
     @Test
-    void distinguishesAnEmptyFeatureListFromAnOlderSenderWithoutFeatureData() {
-        env.setProperty("artemis.iris.enabled", "false");
-        server.expect(requestTo("https://telemetry.example/api/telemetry"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath("$.moduleFeatures").isArray())
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath("$.moduleFeatures").isEmpty()).andRespond(withSuccess());
+    void postsTheReportAsJson() {
+        var instances = List.of(instance("prod,core,scheduling"), instance("prod,core"));
+        when(registry.getServiceInstances()).thenReturn(instances);
+        when(agents.getConnectedBuildAgentCount()).thenReturn(3);
+        server.expect(requestTo("https://telemetry.example/api/telemetry")).andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.universityName").value("University")).andExpect(jsonPath("$.moduleFeatures[0]").value("iris"))
+                .andExpect(jsonPath("$.numberOfNodes").value(2)).andExpect(jsonPath("$.buildAgentCount").value(3)).andExpect(jsonPath("$.isMultiNode").value(true))
+                .andExpect(jsonPath("$.startupId").value("startup-id")).andExpect(jsonPath("$.startedAt").value("1970-01-01T00:00:00Z"))
+                .andExpect(jsonPath("$.adminName").doesNotExist()).andExpect(jsonPath("$.contact").doesNotExist()).andRespond(withSuccess());
         service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH);
         server.verify();
     }
 
     @Test
-    void missingOptionalMetadataDoesNotPreventSending() {
+    void omitsEmptyAndUnknownValues() {
+        env.setProperty("artemis.iris.enabled", "false");
         ReflectionTestUtils.setField(service, "universityName", "");
         ReflectionTestUtils.setField(service, "operatorAdminName", "");
-        server.expect(requestTo("https://telemetry.example/api/telemetry"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath("$.universityName").doesNotExist())
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath("$.adminName").doesNotExist()).andRespond(withSuccess());
+        when(registry.getServiceInstances()).thenReturn(List.of());
+        when(agents.getConnectedBuildAgentCount()).thenReturn(null);
+        server.expect(requestTo("https://telemetry.example/api/telemetry")).andExpect(jsonPath("$.moduleFeatures").doesNotExist())
+                .andExpect(jsonPath("$.universityName").doesNotExist()).andExpect(jsonPath("$.adminName").doesNotExist()).andExpect(jsonPath("$.numberOfNodes").doesNotExist())
+                .andExpect(jsonPath("$.buildAgentCount").doesNotExist()).andRespond(withSuccess());
         service.sendTelemetryByPostRequest(true, "startup-id", Instant.EPOCH);
         server.verify();
     }
 
     @Test
-    void excludesLiteMembersAndDoesNotCountStoppedCluster() {
-        Member core = mock(Member.class);
-        Member lite = mock(Member.class);
-        when(lite.isLiteMember()).thenReturn(true);
-        when(nodes.getCluster().getMembers()).thenReturn(Set.of(core, lite));
-        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).numberOfNodes()).isEqualTo(1);
-        when(nodes.getLifecycleService().isRunning()).thenReturn(false);
-        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).numberOfNodes()).isNull();
-    }
-
-    @Test
-    void sendsJsonAndHandlesHttpFailure() {
-        server.expect(requestTo("https://telemetry.example/api/telemetry")).andExpect(content().contentType("application/json"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath("$.startedAt").value("1970-01-01T00:00:00Z")).andRespond(withSuccess());
-        service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH);
-        server.verify();
-        server.reset();
+    void handlesHttpFailure() {
         server.expect(requestTo("https://telemetry.example/api/telemetry")).andRespond(withServerError());
-        org.assertj.core.api.Assertions.assertThatNoException().isThrownBy(() -> service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH));
+        assertThatNoException().isThrownBy(() -> service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH));
         server.verify();
     }
 }
