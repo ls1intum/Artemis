@@ -20,9 +20,14 @@ import { ResultAfterEvaluationWithSubmission } from 'app/openapi/model/result-af
 import { StudentQuizParticipation } from 'app/openapi/model/student-quiz-participation';
 import type { QuizBatch as GeneratedQuizBatch } from 'app/openapi/model/quiz-batch';
 import { QuizBatchWithPassword } from 'app/openapi/model/quiz-batch-with-password';
+import { QuizExerciseDetails } from 'app/openapi/model/quiz-exercise-details';
+import { QuizExerciseForCourse } from 'app/openapi/model/quiz-exercise-for-course';
+import { QuizExerciseForStudentResponse } from 'app/openapi/model/quiz-exercise-for-student-response';
+import type { ExerciseVariantGroupReference as GeneratedExerciseVariantGroupReference } from 'app/openapi/model/exercise-variant-group-reference';
+import { ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
- * Bridges the generated models of the quiz participation endpoints and the quiz class graph.
+ * Bridges the generated models of the quiz retrieval and participation endpoints and the quiz class graph.
  *
  * The quiz views are built on the class graph: they read prototype behaviour, dayjs dates, and the client-side
  * helper fields the classes declare. Conversion therefore happens once, at the service boundary.
@@ -31,8 +36,12 @@ import { QuizBatchWithPassword } from 'app/openapi/model/quiz-batch-with-passwor
  * matching what the hand-written services did before the generated client replaced them.
  */
 
-/** The three quiz states the server discriminates. They differ only in how much of the question graph they carry. */
-type GeneratedQuizExercise = QuizExerciseWithSolution | QuizExerciseWithQuestions | QuizExerciseWithoutQuestions;
+/**
+ * Every generated shape of a full quiz exercise. They share the exercise fields and differ only in how much of the
+ * question graph the server sends: none before the quiz starts, no solutions while it runs, everything afterwards,
+ * plus the editor-only fields of the instructor view.
+ */
+type GeneratedQuizExercise = QuizExerciseWithSolution | QuizExerciseWithQuestions | QuizExerciseWithoutQuestions | QuizExerciseDetails | QuizExerciseForStudentResponse;
 
 /** A submission carries evaluated answers, unevaluated answers, or evaluated answers plus the owning participation. */
 type GeneratedQuizSubmission = QuizSubmissionAfterEvaluation | QuizSubmissionBeforeEvaluation | QuizSubmissionForResult;
@@ -49,10 +58,28 @@ export function toQuizBatch(batch: GeneratedQuizBatch | QuizBatchWithPassword): 
     return quizBatch;
 }
 
+function toExerciseVariantGroupReference(group: GeneratedExerciseVariantGroupReference): ExerciseVariantGroupReference {
+    // The group carries the shared timeline of its variants; a string date here would be written back as missing and
+    // wipe that timeline the next time the group is saved.
+    return {
+        id: group.id,
+        title: group.title,
+        maxPoints: group.maxPoints,
+        releaseDate: convertDateStringFromServer(group.releaseDate),
+        startDate: convertDateStringFromServer(group.startDate),
+        dueDate: convertDateStringFromServer(group.dueDate),
+        assessmentDueDate: convertDateStringFromServer(group.assessmentDueDate),
+        exampleSolutionPublicationDate: convertDateStringFromServer(group.exampleSolutionPublicationDate),
+    };
+}
+
 /**
  * Converts a generated quiz exercise into a {@link QuizExercise} instance.
  *
- * @param exercise the generated exercise in any of its three question-visibility states
+ * Categories arrive as JSON strings and are left for the caller to parse, since parsing them is shared with every
+ * other exercise type.
+ *
+ * @param exercise the generated exercise in any of its question-visibility states
  * @returns a class instance with dayjs dates and a converted question graph
  */
 export function toQuizExercise(exercise: GeneratedQuizExercise): QuizExercise {
@@ -64,9 +91,27 @@ export function toQuizExercise(exercise: GeneratedQuizExercise): QuizExercise {
     quizExercise.dueDate = convertDateStringFromServer(exercise.dueDate);
     quizExercise.assessmentDueDate = convertDateStringFromServer(exercise.assessmentDueDate);
     quizExercise.course = exercise.course ? hydrate(new Course(), exercise.course) : undefined;
+    quizExercise.exerciseVariantGroup = exercise.exerciseVariantGroup ? toExerciseVariantGroupReference(exercise.exerciseVariantGroup) : undefined;
     quizExercise.quizBatches = exercise.quizBatches?.map(toQuizBatch);
     // Absent while the quiz has not started yet; the server withholds the questions until then.
     quizExercise.quizQuestions = 'quizQuestions' in exercise ? exercise.quizQuestions?.map(toQuizQuestion) : undefined;
+    return quizExercise;
+}
+
+/**
+ * Converts a row of a quiz exercise list into a {@link QuizExercise} instance.
+ *
+ * The list endpoints send a summary without questions, course or variant group, to keep the payload small.
+ *
+ * @param exercise the generated list row
+ * @returns a class instance with dayjs dates
+ */
+export function toQuizExerciseFromListRow(exercise: QuizExerciseForCourse): QuizExercise {
+    const quizExercise: QuizExercise = hydrate(new QuizExercise(undefined, undefined), exercise);
+    quizExercise.releaseDate = convertDateStringFromServer(exercise.releaseDate);
+    quizExercise.startDate = convertDateStringFromServer(exercise.startDate);
+    quizExercise.dueDate = convertDateStringFromServer(exercise.dueDate);
+    quizExercise.quizBatches = exercise.quizBatches?.map(toQuizBatch);
     return quizExercise;
 }
 
