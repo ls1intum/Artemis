@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
@@ -11,9 +11,7 @@ interface AgentChatRequest {
     message: string;
 }
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class AgentChatService {
     private readonly http = inject(HttpClient);
     private readonly translateService = inject(TranslateService);

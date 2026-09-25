@@ -50,6 +50,37 @@ constructor(private courseService: CourseService) {}
 private readonly courseService = inject(CourseService);
 ```
 
+Declare the `inject()` fields before every other member (`@angular-eslint/inject-at-top`).
+
+## `@Injectable({ providedIn: 'root' })` to `@Service()`
+
+```typescript
+// before
+@Injectable({ providedIn: 'root' })
+export class CourseService {}
+
+// after
+@Service()
+export class CourseService {}
+```
+
+`@angular-eslint/prefer-service-decorator` fixes this with `pnpm run lint:fix`. `@Service()`
+rejects constructor injection, and it cannot share a class with `@Pipe` or another Angular
+decorator. The rule still reports such a pipe and the autofix breaks `ng build` with NG1006, so
+keep `@Injectable` there with a justified line-level disable and check with `ng build`.
+
+## A `computed()` that reads no signal
+
+```typescript
+// before: never re-runs, so it only wraps a constant
+readonly chartColors = computed(() => [GraphColors.DARK_BLUE]);
+
+// after
+readonly chartColors = [GraphColors.DARK_BLUE];
+```
+
+Readers change from `chartColors()` to `chartColors`, in templates and specs too.
+
 ## `ngOnChanges` to `computed()` or `effect()`
 
 Deriving a value from inputs is a `computed()`:
@@ -120,6 +151,24 @@ Full rationale with more examples:
 ```
 
 `@for` requires `track`. It is not optional the way `trackBy` was.
+
+Every `@switch` needs a `@default`. Write `@default never;` when the cases cover the whole union
+or enum, so the template type check reports a missing case; write `@default {}` otherwise, for
+example when the value may be `undefined`. Both render nothing for an unmatched value.
+
+## `[ngStyle]` to style bindings
+
+```html
+<!-- before -->
+<div [ngStyle]="{ position: 'fixed', 'top.px': y, backgroundColor: color }"></div>
+
+<!-- after -->
+<div style="position: fixed" [style.top.px]="y" [style.background-color]="color"></div>
+```
+
+A constant becomes a static `style` attribute. A `[style]` object does not accept unit suffixes
+such as `top.px`, and it is compared by reference. Remove `NgStyle` from the component's
+`imports` afterwards, or the build warns about an unused import.
 
 ## Colours
 

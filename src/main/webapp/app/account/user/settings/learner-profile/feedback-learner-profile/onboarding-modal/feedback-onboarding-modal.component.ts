@@ -20,6 +20,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [CommonModule, TextResultComponent, TranslateDirective, TumUiButtonComponent, TumUiDialogComponent, ArtemisTranslatePipe],
 })
 export class FeedbackOnboardingModalComponent {
+    private learnerProfileApiService = inject(LearnerProfileApiService);
+    private alertService = inject(AlertService);
+    protected translateService = inject(TranslateService);
+    protected themeService = inject(ThemeService);
+
     readonly visible = model<boolean>(false);
     readonly completed = output<void>();
 
@@ -27,11 +32,6 @@ export class FeedbackOnboardingModalComponent {
     readonly totalSteps = 2;
     readonly selected = signal<(number | undefined)[]>([undefined, undefined]);
     feedbackExamples = FEEDBACK_EXAMPLES;
-
-    private learnerProfileApiService = inject(LearnerProfileApiService);
-    private alertService = inject(AlertService);
-    protected translateService = inject(TranslateService);
-    protected themeService = inject(ThemeService);
 
     /**
      * Navigates to the next step in the onboarding process.

@@ -17,6 +17,8 @@ import { CommentContentType } from 'app/exercise/shared/entities/review/comment-
     imports: [FormsModule, ButtonDirective, ArtemisTranslatePipe],
 })
 export class ReviewCommentDraftWidgetComponent {
+    private readonly reviewCommentService = inject(ExerciseReviewCommentService);
+
     readonly canSubmit = input<boolean>(true);
     readonly targetType = input<CommentThreadLocationType | undefined>(undefined);
     readonly lineNumber = input<number | undefined>(undefined);
@@ -27,7 +29,6 @@ export class ReviewCommentDraftWidgetComponent {
     readonly onCancel = output<void>();
 
     text = '';
-    private readonly reviewCommentService = inject(ExerciseReviewCommentService);
 
     /**
      * Creates a review thread in the current exercise context when submission is allowed and non-empty.

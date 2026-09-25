@@ -23,11 +23,7 @@ import { TumUiChartTooltipComponent } from './tum-ui-chart-tooltip.component';
 import { TumUiChartDataTableComponent } from './tum-ui-chart-data-table.component';
 
 const POINT_RADIUS = 3;
-/**
- * How close a click has to land before it counts as selecting a point. The hit area spans the whole
- * plot so that hovering anywhere reports a category, but a click often navigates, and a stray click
- * in empty space should not open an exercise in a new tab.
- */
+/** Restrict selection to nearby points; hovering still covers the whole plot. */
 const SELECT_RADIUS = 40;
 /** Lines are drawn at the band centers, so the band needs no gap between neighbours. */
 const LINE_CATEGORY_PADDING = 0;
@@ -40,6 +36,8 @@ interface LineView {
     points: { key: string; x: number; y: number; context: TumUiChartDatumContext }[];
 }
 
+let nextLineChartId = 0;
+
 /**
  * A line chart rendered as inline SVG, with one line per series.
  *
@@ -47,8 +45,6 @@ interface LineView {
  * comparable at a glance; a series marked as a reference line is drawn dashed and stays out of the
  * legend, the tooltip and select events.
  */
-let nextLineChartId = 0;
-
 @Component({
     selector: 'tum-ui-line-chart',
     templateUrl: './tum-ui-line-chart.component.html',
@@ -127,7 +123,7 @@ export class TumUiLineChartComponent implements OnDestroy {
             .filter(({ index }) => !this.hiddenSeries().has(`${index}`)),
     );
 
-    /** As for the bar chart: an integer-valued series must not be given fractional ticks. */
+    /** Keep integer-valued series on whole-number ticks. */
     private readonly minTickStep = computed(() => (allIntegers(this.visibleSeries().flatMap(({ entry }) => [...entry.data])) ? 1 : 0));
 
     private readonly valueDomain = computed<[number, number]>(() => {
@@ -346,11 +342,7 @@ export class TumUiLineChartComponent implements OnDestroy {
         this.hovered.set(undefined);
     }
 
-    /**
-     * Emits the point closest to the click. The hit area covers the plot so that the whole chart is
-     * clickable rather than only the few pixels of a marker, which matches how the hover behaves.
-     */
-    /** Keyboard activation of a focused point, which the plot-wide hit area cannot provide. */
+    /** Keyboard activation of a focused point. */
     protected onPointSelect(context: TumUiChartDatumContext): void {
         const { seriesIndex, index, label, seriesLabel, value, meta } = context;
         this.dataSelect.emit({ seriesIndex, index, label, seriesLabel, value, meta });

@@ -73,18 +73,19 @@ export interface UpdateTutorialGroupEvent {
     styleUrl: './tutorial-create-or-edit.component.scss',
 })
 export class TutorialCreateOrEditComponent {
+    private confirmationService = inject(TumUiConfirmationService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly ValidationStatus = ValidationStatus;
-    private confirmationService = inject(TumUiConfirmationService);
     protected readonly faHashtag = faHashtag;
     protected readonly faLanguage = faLanguage;
     protected readonly faUser = faUser;
     protected readonly faCompass = faCompass;
     protected readonly faBuilding = faBuilding;
     protected readonly faCircleInfo = faCircleInfo;
-    private tutorialGroupApiService = inject(TutorialGroupApi);
-    private translateService = inject(TranslateService);
-    private alertService = inject(AlertService);
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     courseId = input.required<number>();

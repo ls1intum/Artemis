@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
 import { Subject, Subscription } from 'rxjs';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
@@ -15,9 +15,7 @@ import { User } from 'app/account/user/user.model';
  * Manages websocket subscriptions for course notifications and propagates
  * received notifications to the appropriate services.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseNotificationWebsocketService implements OnDestroy {
     private websocketService = inject(WebsocketService);
     private courseNotificationService = inject(CourseNotificationService);

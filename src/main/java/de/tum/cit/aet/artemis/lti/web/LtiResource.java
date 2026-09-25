@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -61,7 +62,7 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
-@FeatureUsage("lti/launch")
+@FeatureUsage(UserFeature.LTI)
 @RestController
 @RequestMapping("api/lti/")
 public class LtiResource {

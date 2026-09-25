@@ -167,8 +167,22 @@ jobs:
         run: pnpm --dir packages/tum-ui run storybook:docs:test:built
         if: ${{ !cancelled() && inputs.has_tum_ui }}
       - name: Validate TUM UI Package Artifact
+        id: tum-ui-package
         run: pnpm run tum-ui:pack:check
         if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Test TUM UI With Minimum Peer Versions
+        run: pnpm run tum-ui:test:consumer minimum
+        if: ${{ !cancelled() && inputs.has_tum_ui && steps.tum-ui-package.outcome == 'success' }}
+      - name: Test TUM UI With Latest Compatible Peer Versions
+        run: pnpm run tum-ui:test:consumer latest
+        if: ${{ !cancelled() && inputs.has_tum_ui && steps.tum-ui-package.outcome == 'success' }}
+      - uses: actions/upload-artifact@v7
+        if: failure() && inputs.has_tum_ui
+        with:
+          name: tum-ui-consumer
+          path: build/test-results/tum-ui-consumer/
+          if-no-files-found: ignore
+          retention-days: 7
 
   code-quality:
     name: Server Code Quality

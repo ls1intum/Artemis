@@ -66,7 +66,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @Execution(ExecutionMode.SAME_THREAD)
@@ -90,6 +92,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private CourseNotificationParameterTestRepository courseNotificationParameterRepository;
+
+    @Autowired
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusRepository;
 
     private List<Post> existingCourseWideMessages;
 
@@ -1132,6 +1140,36 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
             assertThat(notifications).filteredOn(notification -> notification.getCourse().getId().equals(courseId)).filteredOn(notification -> notification.getType() == 1)
                     .isNotEmpty();
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotifyTheStudentsOfADirectMessageOrGroupChat(boolean groupChat) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        Conversation conversation = groupChat ? conversationUtilService.createGroupChat(course, author, member)
+                : conversationUtilService.createOneToOneChat(course, author, member);
+        Post postToSave = new Post();
+        postToSave.setAuthor(author);
+        postToSave.setConversation(conversation);
+        postToSave.setContent("Test content for the members of the conversation");
+
+        var createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(postToSave), PostResponseDTO.class,
+                HttpStatus.CREATED);
+
+        // the other member receives the notification, neither the author nor anybody outside the conversation does
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
+                    .filter(parameter -> "postId".equals(parameter.getKey()) && String.valueOf(createdPost.id()).equals(parameter.getValue()))
+                    .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
+            List<CourseNotification> newPostNotifications = courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == 1)
+                    .toList();
+            assertThat(newPostNotifications).hasSize(1);
+            assertThat(userCourseNotificationStatusRepository.findAllByCourseNotificationId(newPostNotifications.getFirst().getId())).extracting(status -> status.getUser().getId())
+                    .containsExactly(member.getId());
         });
     }
 

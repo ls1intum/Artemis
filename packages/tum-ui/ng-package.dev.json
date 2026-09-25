@@ -3,7 +3,7 @@
     "deleteDestPath": false,
     "dest": "./dist",
     "assets": ["README.md", "LICENSE", "styles.css"],
-    "allowedNonPeerDependencies": ["dayjs", "lodash-es"],
+    "allowedNonPeerDependencies": ["@fortawesome/free-solid-svg-icons", "dayjs", "lodash-es"],
     "lib": {
         "entryFile": "src/public-api.ts"
     }
