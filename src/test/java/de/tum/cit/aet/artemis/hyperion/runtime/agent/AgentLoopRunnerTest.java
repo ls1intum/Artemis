@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -158,6 +159,37 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(progress).anyMatch(message -> message.contains("unavailable action")).noneMatch(message -> message.contains("private-instructor-text"));
+    }
+
+    @Test
+    void validCallBeforeUnknownCallDoesNotChangeWorkspace() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(calls("one", "write", "two", "unknown"), text("finished"));
+        RecordingTools tools = new RecordingTools();
+
+        var result = runner(model).run("system", "brief", tools, 4, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(tools.actions).isEmpty();
+        var prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(model, times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues().getLast().getInstructions().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream()).toList()).hasSize(2)
+                .allSatisfy(response -> assertThat(response.responseData()).contains("no call in this batch was executed"));
+    }
+
+    @Test
+    void validCallBeforeMalformedArgumentsDoesNotChangeWorkspace() {
+        ChatModel model = mock(ChatModel.class);
+        var batch = new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("")
+                .toolCalls(List.of(new AssistantMessage.ToolCall("one", "function", "write", "{}"), new AssistantMessage.ToolCall("two", "function", "write", "{"))).build())));
+        when(model.call(any(Prompt.class))).thenReturn(batch, text("finished"));
+        RecordingTools tools = new RecordingTools();
+
+        var result = runner(model).run("system", "brief", tools, 4, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(tools.actions).isEmpty();
     }
 
     @Test
