@@ -128,6 +128,19 @@ describe('AboutUsComponent', () => {
         expect(byTestId('about-modules')).toBeNull();
     });
 
+    it('links the exam feature pages only where the exam mode is enabled', () => {
+        render(profile({ activeModuleFeatures: [MODULE_FEATURE_EXAM] }));
+
+        expect(byTestId('about-exam-features-students')?.getAttribute('href')).toBe('/features/students');
+        expect(byTestId('about-exam-features-instructors')?.getAttribute('href')).toBe('/features/instructors');
+    });
+
+    it('does not link the exam feature pages without the exam mode', () => {
+        render(profile());
+
+        expect(byTestId('about-exam-features')).toBeNull();
+    });
+
     it('highlights only features whose module is enabled', () => {
         render(profile({ activeModuleFeatures: [MODULE_FEATURE_IRIS] }));
 

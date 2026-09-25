@@ -1,10 +1,15 @@
 {
     "featureOverview": {
         "title": "Onlineklausuren in Artemis",
-        "featureDetails": "Featuredetails",
+        "featureDetails": "Funktionen im Detail",
+        "overview": "Überblick",
+        "audience": {
+            "label": "Zielgruppe",
+            "students": "Für Studierende",
+            "instructors": "Für Lehrende"
+        },
         "instructor": {
             "pageTitle": "Klausurfeatures für Lehrende",
-            "featureOverview": "Features für Lehrende",
             "feature": {
                 "createConductAssess": {
                     "title": "Klausur Erstellen, Durchführen und Bewerten",
@@ -100,7 +105,6 @@
         },
         "students": {
             "pageTitle": "Klausurfeatures für Studierende",
-            "featureOverview": "Features für Studierende",
             "feature": {
                 "localIDE": {
                     "title": "Verwende Deine IDE",

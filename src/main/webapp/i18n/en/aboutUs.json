@@ -15,7 +15,8 @@
                 "contactAdministrator": "Contact the administrator"
             },
             "highlights": {
-                "title": "Available features"
+                "title": "Available features",
+                "examFeatures": "Exam mode in detail:"
             },
             "modules": {
                 "title": "Enabled modules",

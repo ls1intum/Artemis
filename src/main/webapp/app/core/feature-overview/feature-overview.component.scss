@@ -1,0 +1,72 @@
+// Layout and spacing are Tailwind utilities in the template. What stays here are rules Bootstrap's unlayered Reboot
+// would otherwise win over a layered utility (heading, paragraph and list margins, heading sizes, button chrome) and the
+// shared card look of the About page.
+.feature-overview {
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+
+    h1,
+    h2,
+    h3,
+    p {
+        margin: 0;
+    }
+
+    h1 {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    &__eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    &__list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__card,
+    &__detail {
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        background: var(--module-bg);
+        color: var(--body-color);
+    }
+
+    &__card {
+        cursor: pointer;
+        transition: border-color 0.15s;
+
+        &:hover {
+            border-color: var(--primary);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+    }
+
+    &__detail {
+        scroll-margin-top: 1rem;
+    }
+
+    &__description {
+        white-space: pre-line;
+    }
+}

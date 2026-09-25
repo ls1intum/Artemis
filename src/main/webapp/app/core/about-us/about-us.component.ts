@@ -2,9 +2,9 @@ import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faArrowUpRightFromSquare, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
-import { VERSION } from 'app/app.constants';
+import { MODULE_FEATURE_EXAM, VERSION } from 'app/app.constants';
 import { BUG_REPORT_URL, CITATION, CONTRIBUTORS_URL, FEATURE_REQUEST_URL, HIGHLIGHTS, ICONS, MAX_HIGHLIGHTS, MODULES, PROJECT_LINKS } from 'app/core/about-us/about-us-data';
 import { AboutUsMaintainer, AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -42,6 +42,7 @@ export class AboutUsComponent implements OnInit {
     protected readonly PROJECT_LINKS = PROJECT_LINKS;
     protected readonly CITATION = CITATION;
     protected readonly ICONS = ICONS;
+    protected readonly faArrowRight = faArrowRight;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly faCheck = faCheck;
     protected readonly faCopy = faCopy;
@@ -55,6 +56,9 @@ export class AboutUsComponent implements OnInit {
     protected readonly enabledModules = computed(() => MODULES.filter((module) => this.activeModules().has(module.feature)));
 
     protected readonly highlights = computed(() => HIGHLIGHTS.filter((highlight) => !highlight.module || this.activeModules().has(highlight.module)).slice(0, MAX_HIGHLIGHTS));
+
+    /** The exam feature pages describe the exam mode, so they are linked only where it exists. */
+    protected readonly examModeEnabled = computed(() => this.activeModules().has(MODULE_FEATURE_EXAM));
 
     protected readonly contactMailto = computed(() => {
         const contact = this.profileInfo()?.contact;

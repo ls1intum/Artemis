@@ -1,10 +1,15 @@
 {
     "featureOverview": {
         "title": "Online Exams in Artemis",
-        "featureDetails": "Feature Details",
+        "featureDetails": "Feature details",
+        "overview": "Overview",
+        "audience": {
+            "label": "Audience",
+            "students": "For students",
+            "instructors": "For instructors"
+        },
         "instructor": {
             "pageTitle": "Exam Features for Instructors",
-            "featureOverview": "Features Instructors",
             "feature": {
                 "createConductAssess": {
                     "title": "Create, Conduct, and Assess Exams",
@@ -100,7 +105,6 @@
         },
         "students": {
             "pageTitle": "Exam Features for Students",
-            "featureOverview": "Features Students",
             "feature": {
                 "localIDE": {
                     "title": "Use Your IDE",

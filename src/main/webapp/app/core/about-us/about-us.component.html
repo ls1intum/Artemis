@@ -76,6 +76,19 @@
                     </li>
                 }
             </ul>
+            @if (examModeEnabled()) {
+                <p class="flex flex-wrap items-center gap-x-4 gap-y-1" data-testid="about-exam-features">
+                    <span class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.highlights.examFeatures"></span>
+                    <a routerLink="/features/students" data-testid="about-exam-features-students">
+                        <span jhiTranslate="featureOverview.audience.students"></span>
+                        <fa-icon class="ms-1" [icon]="faArrowRight" />
+                    </a>
+                    <a routerLink="/features/instructors" data-testid="about-exam-features-instructors">
+                        <span jhiTranslate="featureOverview.audience.instructors"></span>
+                        <fa-icon class="ms-1" [icon]="faArrowRight" />
+                    </a>
+                </p>
+            }
         </section>
     }
 

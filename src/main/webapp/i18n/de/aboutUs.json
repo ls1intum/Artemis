@@ -15,7 +15,8 @@
                 "contactAdministrator": "Administration kontaktieren"
             },
             "highlights": {
-                "title": "Verfügbare Funktionen"
+                "title": "Verfügbare Funktionen",
+                "examFeatures": "Klausurmodus im Detail:"
             },
             "modules": {
                 "title": "Aktivierte Module",
