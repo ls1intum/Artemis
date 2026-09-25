@@ -29,7 +29,13 @@ export { TumAetUiEmptyStateComponent } from './lib/empty-state/tumaet-ui-empty-s
 export type { TumAetUiEmptyStateVariant } from './lib/empty-state/tumaet-ui-empty-state.variants';
 export { TumAetUiFormFieldComponent } from './lib/form-field/tumaet-ui-form-field.component';
 export { TUM_AET_UI_FORM_FIELD, type TumAetUiFormFieldContext } from './lib/form-field/tumaet-ui-form-field.token';
-export { TUM_AET_UI_TRANSLATOR, provideTumAetUiTranslator, type TumAetUiTranslationKey, type TumAetUiTranslationParams, type TumAetUiTranslator } from './lib/i18n/tumaet-ui-translations';
+export {
+    TUM_AET_UI_TRANSLATOR,
+    provideTumAetUiTranslator,
+    type TumAetUiTranslationKey,
+    type TumAetUiTranslationParams,
+    type TumAetUiTranslator,
+} from './lib/i18n/tumaet-ui-translations';
 export { TumAetUiIconFieldComponent, type TumAetUiIconFieldPosition } from './lib/icon-field/tumaet-ui-icon-field.component';
 export { TumAetUiInputGroupAddonComponent } from './lib/input-group/tumaet-ui-input-group-addon.component';
 export { TumAetUiInputGroupComponent } from './lib/input-group/tumaet-ui-input-group.component';
