@@ -1,0 +1,167 @@
+---
+id: websocket
+title: WebSocket Topics
+sidebar_label: WebSocket Topics
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+Artemis pushes live updates to the client over a STOMP websocket: new results, posts, exam announcements, build queue
+changes, Iris answers and many more. The server publishes a message to a **destination**, and every client that holds
+a subscription to that destination receives it. Who may subscribe to a destination is therefore as important as who
+may call a REST endpoint, and Artemis declares it in the same place for both: next to the code that defines the
+endpoint or the topic.
+
+<Callout variant={CalloutVariant.danger}>
+
+  <strong>Every destination the server sends to is a declared topic, and every topic declares who may subscribe.</strong>
+  A topic is a <code>WebsocketTopic</code> or <code>WebsocketUserTopic</code> constant in the <code>*WebsocketTopics</code>
+  class of the module that owns it. <code>WebsocketMessagingService</code> only accepts destinations of such constants,
+  and a subscription to a destination that no topic declares is rejected. Architecture tests
+  (<code>WebsocketTopicArchitectureTest</code>) fail the build if a topic is declared anywhere else.
+
+</Callout>
+
+## The two kinds of topics
+
+| Kind               | Declared as          | Sent with                                                   | Client subscribes to     | Who receives a message                                         |
+|--------------------|----------------------|-------------------------------------------------------------|--------------------------|----------------------------------------------------------------|
+| Broadcast topic    | `WebsocketTopic`     | `websocketMessagingService.sendMessage(TOPIC.at(id), dto)`  | `/topic/...`             | every client subscribed to the destination                     |
+| Per-user topic     | `WebsocketUserTopic` | `sendMessageToUser(login, TOPIC.at(id), dto)`               | `/user/topic/...`        | only the sessions of the user the server addresses             |
+
+Use a **per-user topic** whenever a message belongs to one person: their results, their Iris chat, their
+notifications, the progress of a job they started. Delivery is decided by the server for each message, so a per-user
+topic needs no access rule. Use a **broadcast topic** when many users receive the same payload, such as the posts of a
+course-wide channel or the build queue of a course. Everybody who can subscribe receives everything, so the topic has
+to declare exactly who that is.
+
+## Declaring a topic
+
+Each module that sends websocket messages has one `<Module>WebsocketTopics` class in its `web` package, next to its REST
+resources. It implements `WebsocketTopicProvider`, is a lazy `@Component`, and carries the same `@Profile` or
+`@Conditional` as the rest of the module, so the topics of a disabled module do not exist:
+
+```java
+@Conditional(ExamEnabled.class)
+@Lazy
+@Component
+public class ExamWebsocketTopics implements WebsocketTopicProvider {
+
+    /**
+     * Live events for all students of an exam, such as announcements.
+     */
+    public static final WebsocketTopic EXAM_EVENTS = WebsocketTopic.of("/topic/exam-participation/exam/{examId}/events",
+            WebsocketTopicAccess.custom(ExamWebsocketTopics.class, ExamWebsocketTopics::isParticipantOrInstructorOfExam));
+
+    /**
+     * Progress of an exam import, for the instructor who started it.
+     */
+    public static final WebsocketUserTopic IMPORT_PROGRESS = WebsocketUserTopic.of("/topic/exam-import/{importId}");
+
+    // ...
+}
+```
+
+The template starts with `/topic/`, and each id is a `{variable}` that stands for one whole segment. A destination
+matches a template only segment by segment: no prefixes, no patterns. Send with the typed destination and subscribe on
+the client with the same string:
+
+```java
+websocketMessagingService.sendMessage(EXAM_EVENTS.at(exam.getId()), eventDTO);
+```
+
+```ts
+this.websocketService.subscribe<ExamLiveEvent>(`/topic/exam-participation/exam/${examId}/events`);
+```
+
+Give every constant a Javadoc comment that says what the topic carries. That comment is where a reviewer checks
+whether the access rule fits the payload.
+
+## Choosing the access rule
+
+`WebsocketTopicAccess` offers the same vocabulary as the REST authorization annotations. The course, exercise and
+lecture rules read the id from a template variable and also admit an administrator with active elevation.
+
+| Rule                                                           | Admits                                                                                   |
+|----------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| `anyAuthenticatedUser()`                                       | every logged-in user; only for data everyone may see, such as system notifications       |
+| `administrator()`                                              | administrators with active elevation                                                     |
+| `ownUser("userId")`                                            | only the user whose id is in the destination; no administrator override                  |
+| `atLeastStudentInCourse("courseId")`, `...Tutor...`, `...Editor...`, `...Instructor...` | the role in the course                                                                    |
+| `atLeastTutorInExercise("exerciseId")`, `...Editor...`, `...Instructor...`             | the role in the course of the exercise                                                    |
+| `atLeastTutorInExerciseAndInstructorInExamExercise("exerciseId")` | tutors for course exercises, instructors for exam exercises                            |
+| `atLeastEditorInLecture("lectureId")`                          | editors and instructors of the course of the lecture                                     |
+| `custom(Provider.class, Provider::check)`                      | whatever the check method of the provider decides                                        |
+
+Pick the narrowest rule that fits the payload, and compare it with the REST endpoint that returns the same data: a
+topic must never reveal more than that endpoint. Rules that need data of the module, such as the owner of a student
+exam or the members of a quiz batch, are **custom checks**: a method of the provider that receives the
+`WebsocketSubscription` and uses the module's repositories. `subscription.id("examId")` parses an id strictly and
+rejects the subscription if the value is not a canonical number; `subscription.hasAdministratorAccess()` tells whether
+an administrator override applies.
+
+```java
+private boolean isOwnerOfStudentExam(WebsocketSubscription subscription) {
+    return studentExamRepository.existsByIdAndUserLogin(subscription.id("studentExamId"), subscription.login());
+}
+```
+
+A subscription is checked once, when the client subscribes. Keep the checks to one indexed query.
+
+## Messages from the client
+
+Clients send messages to destinations under `/app`, never to `/topic`. Those messages only reach `@MessageMapping`
+handlers; the broker never sees them, so a client cannot publish to other users' subscriptions. A handler lives in a
+`@Controller` in the `web` package, maps a destination relative to `/app`, and checks the permissions of the sender
+itself, like a REST endpoint does:
+
+```java
+@MessageMapping("/participations/{participationId}/team/typing")
+public void startTyping(@DestinationVariable Long participationId, Principal principal) {
+    if (!isMemberOfParticipation(participationId, principal)) {
+        return;
+    }
+    // ...
+}
+```
+
+The client sends to `/app/participations/42/team/typing`. When clients have to exchange messages with each other, as the
+collaborative exercise editor does, the handler relays them to the declared topic after checking the sender (see
+`ExerciseEditorSyncWebsocketController`).
+
+`@SubscribeMapping` is not used. To react to a new subscription, listen for `SessionSubscribeEvent`: it is only published
+for subscriptions that passed the access rule of their topic.
+
+## How the rules are enforced
+
+Every frame a client sends passes two checks on the inbound channel, both configured in `WebsocketConfiguration`:
+
+1. **Spring Security** (`WebsocketSecurityConfiguration`) authenticates every frame and restricts what a client may send:
+   subscriptions to `/topic/**` and `/user/topic/**`, messages to `/app/**`, nothing else. A frame that breaks these
+   rules is answered with an ERROR frame.
+2. **The subscription check** (`WebsocketSubscriptionInterceptor` with `WebsocketTopicRegistry`) resolves the
+   destination of every subscription to exactly one declared topic and applies its access rule. A rejected
+   subscription is dropped silently, so the client keeps its connection and its other subscriptions. Destinations
+   with wildcard characters, the internal topics of an external broker and destinations of undeclared topics are
+   rejected without any rule for them.
+
+The server logs every rejected subscription with its reason. A warning that names an undeclared destination usually
+means that a client subscribes to a topic that nobody declares.
+
+## Testing
+
+* `WebsocketTopicAuthorizationTest` checks the access rules through `WebsocketTopicRegistry.authorizeSubscription`. Add
+  cases for a new rule, in particular a user who must be rejected.
+* Verify sent messages with `WebsocketDestinationMatchers`, which compare the destination as it goes over the wire:
+  `verify(websocketMessagingService).sendMessage(topic("/topic/exercise/" + exerciseId + "/newResults"), any())`.
+* `WebsocketTopicArchitectureTest` and `WebsocketSecurityConfigurationTest` guard the model itself. The architecture test
+  also builds the registry from the topics of all modules, so two templates that match the same destination fail the build.
+
+## Checklist for a new topic
+
+1. Decide between a per-user topic and a broadcast topic.
+2. Declare the constant in the `*WebsocketTopics` class of the module, with a Javadoc comment on its payload.
+3. For a broadcast topic, pick the narrowest access rule, or write a custom check.
+4. Send with `WebsocketMessagingService` and the typed destination; subscribe on the client with the same string.
+5. Add a case to `WebsocketTopicAuthorizationTest` for a user who is admitted and one who is not.
