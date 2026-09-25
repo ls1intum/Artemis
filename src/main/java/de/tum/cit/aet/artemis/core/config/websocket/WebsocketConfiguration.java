@@ -20,12 +20,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,11 +42,15 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompReactorNettyCodec;
+import org.springframework.messaging.simp.user.SimpSession;
+import org.springframework.messaging.simp.user.SimpUser;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
@@ -62,6 +68,7 @@ import org.springframework.web.socket.sockjs.transport.handler.WebSocketTranspor
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -70,10 +77,13 @@ import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
+import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 
 @Profile(PROFILE_CORE)
 @Configuration
@@ -86,7 +96,74 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
 
+    /**
+     * The signals that a student started or submitted an exam ({@code /topic/exam/{examId}/started|submitted}), which the exam overview of the course staff counts.
+     */
+    private static final Pattern EXAM_PROGRESS_TOPIC_PATTERN = Pattern.compile("^/topic/exam/(\\d+)/.+$");
+
     private static final Pattern EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN = Pattern.compile("^/topic/exercises/(\\d+)/synchronization$");
+
+    /**
+     * The only destinations that can be subscribed: topics made of plain path segments. This excludes the wildcards of the simple broker ({@code *}, {@code ?}, {@code {}})
+     * and of an external broker ({@code *}, {@code #}, {@code >}), and the queue syntax of an external broker ({@code address::queue}), which would all reach other topics
+     * than the one that was checked.
+     */
+    private static final Pattern SUBSCRIPTION_DESTINATION_PATTERN = Pattern.compile("^/(?:user/)?topic/[A-Za-z0-9._/-]+$");
+
+    /**
+     * Destinations that only the server uses: the broadcasts between the nodes when an external broker is configured, and the destinations a user destination of a
+     * session resolves to ({@code <destination>-user<sessionId>}).
+     */
+    private static final Pattern BROKER_INTERNAL_DESTINATION_PATTERN = Pattern.compile("^/topic/(unresolved-user|user-registry)$|-user[^/]*$");
+
+    private static final String USER_TOPIC_PREFIX = "/topic/user/";
+
+    private static final Pattern USER_TOPIC_PATTERN = Pattern.compile("^/topic/user/(\\d+)/.+$");
+
+    private static final String ADMIN_TOPIC_PREFIX = "/topic/admin/";
+
+    private static final Pattern COURSE_WIDE_POSTS_PATTERN = Pattern.compile("^/topic/(?:communication|metis)/courses/(\\d+)$");
+
+    private static final Pattern PLAGIARISM_CASE_POSTS_PATTERN = Pattern.compile("^/topic/(?:communication|metis)/plagiarismCase/(\\d+)$");
+
+    private static final Pattern STUDENT_EXAM_EVENTS_PATTERN = Pattern.compile("^/topic/exam-participation/studentExam/(\\d+)/events$");
+
+    private static final Pattern EXAM_EVENTS_PATTERN = Pattern.compile("^/topic/exam-participation/exam/(\\d+)/events$");
+
+    private static final Pattern COURSE_QUIZ_EXERCISES_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/quizExercises$");
+
+    private static final Pattern QUIZ_BATCH_PATTERN = Pattern.compile("^/topic/courses/\\d+/quizExercises/(\\d+)$");
+
+    private static final Pattern QUIZ_STATISTICS_PATTERN = Pattern.compile("^/topic/statistic/(\\d+)$");
+
+    private static final Pattern EXERCISE_BUILDS_PATTERN = Pattern.compile("^/topic/exercise/(\\d+)/(?:newSubmissions|submissionProcessing)$");
+
+    private static final Pattern PROGRAMMING_EXERCISE_STAFF_PATTERN = Pattern
+            .compile("^/topic/programming-exercises/(\\d+)/(?:test-cases|test-cases-changed|all-builds-triggered)$");
+
+    private static final Pattern PLAGIARISM_CHECK_PATTERN = Pattern.compile("^/topic/(?:programming|text)-exercises/(\\d+)/plagiarism-check$");
+
+    private static final Pattern COURSE_OPERATION_PROGRESS_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/operation-progress$");
+
+    private static final Pattern COURSE_ARCHIVE_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/export-course$");
+
+    private static final Pattern LECTURE_PROCESSING_STATE_PATTERN = Pattern.compile("^/topic/lectures/(\\d+)/unit-processing-state$");
+
+    private static final Pattern ORCHESTRATION_SUMMARY_PATTERN = Pattern.compile("^/topic/atlas/orchestrator/(\\d+)$");
+
+    /**
+     * The Android app sends the answers of a live quiz to this destination and waits for the receipt of the broker. The server has not read these messages for a long
+     * time, so they are accepted but nobody may subscribe to this topic, see {@link #QUIZ_SUBMISSION_TOPIC_PREFIX}.
+     */
+    private static final Pattern QUIZ_SUBMISSION_MESSAGE_PATTERN = Pattern.compile("^/topic/quizExercise/\\d+/submission$");
+
+    private static final String QUIZ_SUBMISSION_TOPIC_PREFIX = "/topic/quizExercise/";
+
+    /**
+     * The destinations clients send team synchronization messages to, handled by {@code ParticipationTeamWebsocketService}.
+     */
+    private static final Pattern TEAM_MESSAGE_PATTERN = Pattern
+            .compile("^/topic/participations/(\\d+)/team/(trigger|typing|modeling-submissions/update|modeling-submissions/patch|text-submissions/update)$");
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
@@ -104,6 +181,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final Optional<ExamRepositoryApi> examRepositoryApi;
 
+    // Resolved on the first subscription rather than injected: this class is eager, and these beans are not needed before somebody subscribes
+    private final ObjectProvider<UserRepository> userRepository;
+
+    private final ObjectProvider<QuizBatchRepository> quizBatchRepository;
+
+    private final ObjectProvider<StudentExamApi> studentExamApi;
+
+    private final ObjectProvider<PlagiarismCaseApi> plagiarismCaseApi;
+
+    private final ObjectProvider<SimpUserRegistry> simpUserRegistry;
+
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
     private List<String> brokerAddresses;
@@ -116,7 +204,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
+            Optional<ExamRepositoryApi> examRepositoryApi, ObjectProvider<UserRepository> userRepository, ObjectProvider<QuizBatchRepository> quizBatchRepository,
+            ObjectProvider<StudentExamApi> studentExamApi, ObjectProvider<PlagiarismCaseApi> plagiarismCaseApi, ObjectProvider<SimpUserRegistry> simpUserRegistry) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -124,6 +213,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
         this.examRepositoryApi = examRepositoryApi;
+        this.userRepository = userRepository;
+        this.quizBatchRepository = quizBatchRepository;
+        this.studentExamApi = studentExamApi;
+        this.plagiarismCaseApi = plagiarismCaseApi;
+        this.simpUserRegistry = simpUserRegistry;
     }
 
     @Override
@@ -352,6 +446,27 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     log.warn("An error occurred while subscribing user {} to destination {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
                     return null;
                 }
+                catch (RuntimeException e) {
+                    // e.g. an id that does not fit into a long; the subscription is rejected, the connection stays open
+                    log.warn("Could not check the subscription of {} to {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
+                    return null;
+                }
+            }
+            else if (SimpMessageType.MESSAGE.equals(headerAccessor.getMessageType())) {
+                boolean allowed;
+                try {
+                    // Clients send SEND frames. A MESSAGE frame is only ever sent by the server, but the broker would forward one from a client as well.
+                    allowed = StompCommand.SEND.equals(headerAccessor.getCommand()) && allowSend(principal, destination, headerAccessor.getSessionId());
+                }
+                catch (RuntimeException e) {
+                    log.warn("Could not check the message of {} to {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
+                    allowed = false;
+                }
+                if (!allowed) {
+                    // Without this, the broker would forward the message to every subscriber of the destination
+                    log.warn("Dropped a message of {} to {}", principal != null ? principal.getName() : "anonymous", destination);
+                    return null;
+                }
             }
 
             return message;
@@ -380,7 +495,27 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return false;
             }
 
+            if (destination == null || !SUBSCRIPTION_DESTINATION_PATTERN.matcher(destination).matches() || BROKER_INTERNAL_DESTINATION_PATTERN.matcher(destination).find()) {
+                // A subscription has to name exactly one topic that the server sends to
+                return false;
+            }
+
             final var login = principal.getName();
+
+            if (destination.startsWith(USER_TOPIC_PREFIX)) {
+                // A personal topic is only ever subscribed by the user whose id it contains
+                return isOwnUserTopic(login, destination);
+            }
+
+            if (destination.startsWith(QUIZ_SUBMISSION_TOPIC_PREFIX)) {
+                // The server sends nothing here; a subscriber would only receive the quiz answers other students send
+                return false;
+            }
+
+            if (destination.startsWith(ADMIN_TOPIC_PREFIX)) {
+                // All administrator topics, including the details of a single build agent
+                return authorizationCheckService.isAdmin(login);
+            }
 
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
                 return authorizationCheckService.isAdmin(login);
@@ -424,7 +559,92 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return authorizationCheckService.isAtLeastEditorInExercise(login, synchronizationExerciseId.get());
             }
 
-            return true;
+            return allowTopicWithCourseData(login, destination).orElse(true);
+        }
+
+        /**
+         * Checks the topics that carry course, exam or exercise data, for the topics not handled above.
+         *
+         * @param login       the login of the subscriber
+         * @param destination the destination of the subscription
+         * @return whether the subscription is allowed, or empty if the destination is none of these topics
+         */
+        private Optional<Boolean> allowTopicWithCourseData(String login, String destination) {
+            Matcher matcher;
+            if ((matcher = COURSE_WIDE_POSTS_PATTERN.matcher(destination)).matches() || (matcher = COURSE_QUIZ_EXERCISES_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(userRepository.getObject().isAtLeastStudentInCourse(login, id(matcher)));
+            }
+            if ((matcher = PLAGIARISM_CASE_POSTS_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(isPartyOfPlagiarismCase(login, id(matcher)));
+            }
+            if ((matcher = STUDENT_EXAM_EVENTS_PATTERN.matcher(destination)).matches()) {
+                StudentExamApi api = studentExamApi.getIfAvailable();
+                return Optional.of(api != null && api.isOwnerOfStudentExam(id(matcher), login));
+            }
+            if ((matcher = EXAM_EVENTS_PATTERN.matcher(destination)).matches()) {
+                long examId = id(matcher);
+                StudentExamApi api = studentExamApi.getIfAvailable();
+                return Optional.of(api != null && api.hasStudentExamInExam(examId, login) || isInstructorOfExam(login, examId));
+            }
+            if ((matcher = EXAM_PROGRESS_TOPIC_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(isAtLeastTutorOfExam(login, id(matcher)));
+            }
+            if ((matcher = QUIZ_BATCH_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(mayFollowQuizBatch(login, id(matcher)));
+            }
+            if ((matcher = QUIZ_STATISTICS_PATTERN.matcher(destination)).matches() || (matcher = PROGRAMMING_EXERCISE_STAFF_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, id(matcher)));
+            }
+            if ((matcher = EXERCISE_BUILDS_PATTERN.matcher(destination)).matches()) {
+                // template and solution builds: tutors of a course exercise, editors of an exam exercise
+                long exerciseId = id(matcher);
+                boolean allowed = exerciseRepository.isExamExercise(exerciseId) ? authorizationCheckService.isAtLeastEditorInExercise(login, exerciseId)
+                        : authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);
+                return Optional.of(allowed);
+            }
+            if ((matcher = PLAGIARISM_CHECK_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(authorizationCheckService.isAtLeastEditorInExercise(login, id(matcher)));
+            }
+            if ((matcher = COURSE_OPERATION_PROGRESS_PATTERN.matcher(destination)).matches() || (matcher = ORCHESTRATION_SUMMARY_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(authorizationCheckService.isAtLeastTeachingAssistantInCourse(login, id(matcher)));
+            }
+            if ((matcher = COURSE_ARCHIVE_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(authorizationCheckService.isAtLeastInstructorInCourse(login, id(matcher)));
+            }
+            if ((matcher = LECTURE_PROCESSING_STATE_PATTERN.matcher(destination)).matches()) {
+                return Optional.of(userRepository.getObject().isAtLeastEditorInLecture(login, id(matcher)));
+            }
+            return Optional.empty();
+        }
+
+        /**
+         * Clients may only send the messages the server handles. Without this check, the broker would forward any message sent to a topic to all its subscribers.
+         *
+         * @param principal   the sender
+         * @param destination the destination of the message
+         * @param sessionId   the websocket session of the sender
+         * @return whether the message may pass
+         */
+        private boolean allowSend(@Nullable Principal principal, @Nullable String destination, @Nullable String sessionId) {
+            if (principal == null || destination == null) {
+                return false;
+            }
+            Matcher team = TEAM_MESSAGE_PATTERN.matcher(destination);
+            if (team.matches()) {
+                // Submission updates and patches check the team membership in their handlers; the online list and typing indicator do not
+                boolean checkedByHandler = team.group(2).startsWith("modeling-submissions") || team.group(2).startsWith("text-submissions");
+                return checkedByHandler || studentParticipationRepository.existsByIdAndParticipatingStudentLogin(id(team), principal.getName());
+            }
+            if (QUIZ_SUBMISSION_MESSAGE_PATTERN.matcher(destination).matches()) {
+                return true;
+            }
+            var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
+            if (synchronizationExerciseId.isPresent()) {
+                // Editors synchronize through the broker. Subscribing to this topic already required the editor role, so the subscription is checked first.
+                return isSubscribed(principal.getName(), sessionId, destination)
+                        || authorizationCheckService.isAtLeastEditorInExercise(principal.getName(), synchronizationExerciseId.get());
+            }
+            return false;
         }
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {
@@ -440,6 +660,73 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
+    }
+
+    /**
+     * Returns whether the given destination is a personal topic of the user with the given login, e.g. {@code /topic/user/{userId}/notifications/conversations}. The id
+     * is compared as text, so a destination whose id has leading zeros or does not fit into a long never matches.
+     */
+    private boolean isOwnUserTopic(String login, String destination) {
+        Matcher matcher = USER_TOPIC_PATTERN.matcher(destination);
+        if (!matcher.matches()) {
+            return false;
+        }
+        String requestedUserId = matcher.group(1);
+        return userRepository.getObject().findIdByLogin(login).map(String::valueOf).filter(requestedUserId::equals).isPresent();
+    }
+
+    /**
+     * The student or team a plagiarism case is about, and the instructors of its course.
+     */
+    private boolean isPartyOfPlagiarismCase(String login, long plagiarismCaseId) {
+        PlagiarismCaseApi api = plagiarismCaseApi.getIfAvailable();
+        if (api == null) {
+            return false;
+        }
+        return api.isStudentOrTeamMemberOfPlagiarismCase(plagiarismCaseId, login)
+                || api.findCourseIdOfPlagiarismCase(plagiarismCaseId).filter(courseId -> authorizationCheckService.isAtLeastInstructorInCourse(login, courseId)).isPresent();
+    }
+
+    private boolean isInstructorOfExam(String login, long examId) {
+        return authorizationCheckService.isAtLeastInstructorInCourse(login, findCourseIdOfExam(examId));
+    }
+
+    private boolean isAtLeastTutorOfExam(String login, long examId) {
+        return authorizationCheckService.isAtLeastTeachingAssistantInCourse(login, findCourseIdOfExam(examId));
+    }
+
+    private long findCourseIdOfExam(long examId) {
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+        return api.findByIdElseThrow(examId).getCourse().getId();
+    }
+
+    /**
+     * The students who joined a batch of a batched quiz receive its questions when the batch starts, and tutors may follow it as well. Students of a synchronized quiz
+     * also wait on the topic of its single batch, although the server announces the start of such a quiz on the course topic.
+     */
+    private boolean mayFollowQuizBatch(String login, long quizBatchId) {
+        QuizBatchRepository repository = quizBatchRepository.getObject();
+        if (repository.existsByIdAndJoinedStudentLogin(quizBatchId, login)) {
+            return true;
+        }
+        Optional<Long> quizExerciseId = repository.findQuizExerciseIdById(quizBatchId);
+        if (quizExerciseId.isEmpty()) {
+            return false;
+        }
+        if (repository.existsByIdAndSynchronizedQuizExercise(quizBatchId)) {
+            return userRepository.getObject().isAtLeastStudentInExercise(login, quizExerciseId.get());
+        }
+        return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, quizExerciseId.get());
+    }
+
+    private boolean isSubscribed(String login, @Nullable String sessionId, String destination) {
+        SimpUser user = simpUserRegistry.getObject().getUser(login);
+        SimpSession session = user != null && sessionId != null ? user.getSession(sessionId) : null;
+        return session != null && session.getSubscriptions().stream().anyMatch(subscription -> destination.equals(subscription.getDestination()));
+    }
+
+    private static long id(Matcher matcher) {
+        return Long.parseLong(matcher.group(1));
     }
 
     /**

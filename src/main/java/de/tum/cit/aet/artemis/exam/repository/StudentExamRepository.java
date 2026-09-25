@@ -305,6 +305,22 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     boolean existsByExam_CourseIdAndExamIdAndUserId(long courseId, long examId, long userId);
 
     @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.id = :studentExamId
+                AND studentExam.user.login = :login
+            """)
+    boolean existsByIdAndUserLogin(@Param("studentExamId") long studentExamId, @Param("login") String login);
+
+    @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.exam.id = :examId
+                AND studentExam.user.login = :login
+            """)
+    boolean existsByExamIdAndUserLogin(@Param("examId") long examId, @Param("login") String login);
+
+    @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
