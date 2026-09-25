@@ -1,25 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Component } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { WritableSignal, inputBinding, signal } from '@angular/core';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { ActiveMenuDirective } from './active-menu.directive';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 
-@Component({
-    template: `<div [jhiActiveMenu]="menuLanguage"></div>`,
-    imports: [ActiveMenuDirective],
-})
-class TestHostComponent {
-    menuLanguage = 'en';
-}
-
 describe('ActiveMenuDirective', () => {
-    let fixture: ComponentFixture<TestHostComponent>;
-    let hostComponent: TestHostComponent;
+    let fixture: DirectiveFixture<ActiveMenuDirective>;
+    let menuLanguage: WritableSignal<string | undefined>;
     let translateService: TranslateService;
     let langChangeSubject: Subject<LangChangeEvent>;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         langChangeSubject = new Subject<LangChangeEvent>();
 
         const mockTranslateService = {
@@ -27,13 +19,12 @@ describe('ActiveMenuDirective', () => {
             getCurrentLang: vi.fn().mockReturnValue('en'),
         };
 
-        await TestBed.configureTestingModule({
-            imports: [TestHostComponent],
+        TestBed.configureTestingModule({
             providers: [{ provide: TranslateService, useValue: mockTranslateService }],
-        }).compileComponents();
+        });
 
-        fixture = TestBed.createComponent(TestHostComponent);
-        hostComponent = fixture.componentInstance;
+        menuLanguage = signal<string | undefined>('en');
+        fixture = TestBed.createDirective(ActiveMenuDirective, { tagName: 'div', bindings: [inputBinding('jhiActiveMenu', menuLanguage)] });
         translateService = TestBed.inject(TranslateService);
     });
 
@@ -43,31 +34,30 @@ describe('ActiveMenuDirective', () => {
 
     it('should create the directive', () => {
         fixture.detectChanges();
-        const divElement = fixture.nativeElement.querySelector('div');
-        expect(divElement).toBeTruthy();
+        expect(fixture.directiveInstance).toBeInstanceOf(ActiveMenuDirective);
     });
 
     it('should add active class when menu language matches current language', () => {
-        hostComponent.menuLanguage = 'en';
+        menuLanguage.set('en');
         fixture.detectChanges();
 
-        const divElement = fixture.nativeElement.querySelector('div');
+        const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(true);
     });
 
     it('should not add active class when menu language does not match current language', () => {
-        hostComponent.menuLanguage = 'de';
+        menuLanguage.set('de');
         fixture.detectChanges();
 
-        const divElement = fixture.nativeElement.querySelector('div');
+        const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(false);
     });
 
     it('should update active class when language changes to match menu language', async () => {
-        hostComponent.menuLanguage = 'de';
+        menuLanguage.set('de');
         fixture.detectChanges();
 
-        const divElement = fixture.nativeElement.querySelector('div');
+        const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(false);
 
         // Simulate language change to German
@@ -79,10 +69,10 @@ describe('ActiveMenuDirective', () => {
     });
 
     it('should remove active class when language changes to not match menu language', async () => {
-        hostComponent.menuLanguage = 'en';
+        menuLanguage.set('en');
         fixture.detectChanges();
 
-        const divElement = fixture.nativeElement.querySelector('div');
+        const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(true);
 
         // Simulate language change to German
@@ -94,10 +84,10 @@ describe('ActiveMenuDirective', () => {
     });
 
     it('should handle multiple language changes correctly', async () => {
-        hostComponent.menuLanguage = 'en';
+        menuLanguage.set('en');
         fixture.detectChanges();
 
-        const divElement = fixture.nativeElement.querySelector('div');
+        const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(true);
 
         // Change to German
@@ -125,19 +115,19 @@ describe('ActiveMenuDirective', () => {
     });
 
     it('should handle undefined menu language gracefully', () => {
-        hostComponent.menuLanguage = undefined as any;
+        menuLanguage.set(undefined);
         fixture.detectChanges();
 
-        const divElement = fixture.nativeElement.querySelector('div');
+        const divElement = fixture.nativeElement;
         // undefined !== 'en', so should not have active class
         expect(divElement.classList.contains('active')).toBe(false);
     });
 
     it('should handle empty string menu language', async () => {
-        hostComponent.menuLanguage = '';
+        menuLanguage.set('');
         fixture.detectChanges();
 
-        const divElement = fixture.nativeElement.querySelector('div');
+        const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(false);
 
         // Even if language changes to empty string, should match

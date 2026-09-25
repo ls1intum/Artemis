@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.SESSION_COMMANDS;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -51,11 +53,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 public class IrisCommandService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisCommandService.class);
-
-    /**
-     * WebSocket topic suffix (appended to the per-session Iris topic) on which command requests are pushed to the client.
-     */
-    public static final String COMMAND_TOPIC_SUFFIX = "/commands";
 
     /**
      * The only command type Artemis implements so far. Every other type is dropped in {@link #executeCommand}.
@@ -183,7 +180,7 @@ public class IrisCommandService {
         // the view after this request has already returned "not applied" to Pyris.
         var expiresAt = System.currentTimeMillis() + CLIENT_ACTION_TIMEOUT_MILLIS;
         var request = new IrisCommandRequestWebsocketDTO(correlationId, command.type(), command.parameters(), targetClientId, expiresAt);
-        irisWebsocketService.send(userLogin, session.getId() + COMMAND_TOPIC_SUFFIX, request);
+        irisWebsocketService.send(userLogin, SESSION_COMMANDS.at(session.getId()), request);
         log.debug("Iris command {} of type {} sent to user {} (session {}, client {}), awaiting client ack", correlationId, command.type(), userLogin, session.getId(),
                 targetClientId);
 

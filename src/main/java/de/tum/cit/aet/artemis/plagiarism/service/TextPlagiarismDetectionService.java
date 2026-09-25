@@ -105,7 +105,7 @@ public class TextPlagiarismDetectionService {
 
         try {
             long start = System.nanoTime();
-            String topic = plagiarismWebsocketService.getTextExercisePlagiarismCheckTopic(textExercise.getId());
+            var topic = plagiarismWebsocketService.getTextExercisePlagiarismCheckTopic(textExercise.getId());
 
             // TODO: why do we have such a strange folder name?
             final var submissionsFolderName = "./tmp/submissions";
