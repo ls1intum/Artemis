@@ -62,7 +62,6 @@ export const TimeOnly: Story = {
         const trigger = canvas.getByRole('button', { name: 'Open clock' });
         await userEvent.click(trigger);
 
-        // The dialog is the clock alone: there is no calendar to page through.
         const dialog = await screen.findByRole('dialog', { name: 'Choose time' });
         await expect(within(dialog).queryByRole('grid')).toBeNull();
 
@@ -87,7 +86,6 @@ export const TimeOnlyInvalid: Story = {
         await userEvent.clear(field);
         await userEvent.type(field, '13.06.2026 08:30');
 
-        // A full date is not what this field accepts, and the message says so in its own terms.
         await expect(canvas.getByRole('alert')).toHaveTextContent('Enter a valid time.');
     },
 };

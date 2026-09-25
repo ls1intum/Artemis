@@ -1,19 +1,4 @@
-/**
- * Minimal scale and tick helpers for the chart components.
- *
- * These cover the linear and band scales the charts need. They deliberately do not depend on
- * `d3-scale` / `d3-array`: the required surface is small enough that pulling in six transitive
- * packages is not justified. If log, time or diverging scales are ever needed, swapping in
- * `d3-scale` behind these signatures is a contained change.
- */
-
-/**
- * Maps a run of categories to evenly spaced, equally wide bands.
- *
- * Bands are addressed by position, not by label: two categories may legitimately carry the same
- * label — two exercises with the same title, or two untitled ones — and keying on the label would
- * collapse them onto one band and hide a bar behind another.
- */
+/** Equal-width bands addressed by index so repeated labels remain distinct categories. */
 export interface BandScale {
     /** Start coordinate of the band at `index`. */
     position(index: number): number;
@@ -122,14 +107,7 @@ export function linearScale(domain: readonly [number, number], range: readonly [
     return scale;
 }
 
-/**
- * Approximates the rendered width of a label in px.
- *
- * Charts need tick label widths to reserve axis margins before the SVG is laid out, and measuring
- * every label in the DOM on each resize is disproportionate. The factor matches the average glyph
- * advance of the UI font at the chart's tick font size and errs on the generous side, since an
- * over-wide margin only costs plot area whereas an under-wide one clips the label.
- */
+/** Estimates label width in pixels before SVG layout, using an average glyph width of 0.58 em. */
 export function approximateTextWidth(text: string, fontSize: number): number {
     return text.length * fontSize * 0.58;
 }
@@ -139,10 +117,7 @@ export function allIntegers(values: readonly (number | undefined)[]): boolean {
     return values.every((value) => value === undefined || Number.isInteger(value));
 }
 
-/**
- * Keeps only the values a scale can actually place. A single NaN — one missing field in a server
- * response — would otherwise poison the domain and blank the whole chart rather than one bar.
- */
+/** Excludes missing and non-finite values from domain calculations. */
 export function finiteValues(values: readonly (number | undefined | null)[]): number[] {
     return values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
 }
