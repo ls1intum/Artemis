@@ -57,8 +57,9 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)
 - Use TUM UI and Tailwind. Do not add Bootstrap or ng-bootstrap. If TUM UI lacks a reusable
-  feature, extend it; use PrimeNG only if that cannot reasonably be done in the same change,
-  and explain the fallback in the PR. [TUM UI](documentation/docs/developer/guidelines/tum-ui-kit.mdx)
+  feature, extend it on native HTML, Angular Aria or stable Angular CDK primitives; use PrimeNG
+  only if that cannot reasonably be done in the same change, and explain the fallback in the PR.
+  [TUM UI](documentation/docs/developer/guidelines/tum-ui-kit.mdx)
 - Use semantic colour tokens, not primitive colours, Bootstrap classes or hand-written PrimeNG
   root classes. [client theming](documentation/docs/developer/guidelines/client-theming.mdx)
 
