@@ -202,17 +202,9 @@ jobs:
           echo "sha=${sha}" >> "$GITHUB_OUTPUT"
       - name: Resolve develop's report run
         id: resolve-develop-run
-        # Bootstraps false on the very first run of this check (before this PR has ever merged,
-        # no develop push has published a chunk-eager-report yet) -- don't fail the job over it,
-        # just skip the comparison. Self-resolves once this PR merges and develop rebuilds once.
-        continue-on-error: true
-        uses: ./.github/actions/resolve-artifact-run
-        with:
-          workflow: ci.yml
-          sha: ${{ steps.develop-sha.outputs.sha }}
-          artifact-name: chunk-eager-report
-          branch: develop
-          token: ${{ github.token }}
+        # DEMO ONLY, never merge: uses the clean CI run of the guard PR's own head as the baseline,
+        # because develop has no chunk-eager-report yet. Everything after this step is the real workflow.
+        run: echo "run-id=35603568009" >> "$GITHUB_OUTPUT"
       - name: Download develop's report
         if: steps.resolve-develop-run.outcome == 'success'
         uses: actions/download-artifact@v8
