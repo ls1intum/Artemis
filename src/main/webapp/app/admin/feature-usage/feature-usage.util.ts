@@ -43,11 +43,6 @@ export function callsOf(endpoints: FeatureUsageEndpoint[], interaction: FeatureI
     return endpoints.filter((endpoint) => endpoint.interaction === interaction).reduce((sum, endpoint) => sum + (endpoint.callCount ?? 0), 0);
 }
 
-/** Automatic and system calls together, which is the traffic that does not count as use. */
-export function automaticCallsOf(endpoints: FeatureUsageEndpoint[]): number {
-    return callsOf(endpoints, FeatureInteraction.AUTOMATIC) + callsOf(endpoints, FeatureInteraction.SYSTEM);
-}
-
 /**
  * Groups the endpoints by the catalogue feature they serve. Endpoints whose label resolves to no feature, which only
  * happens for rows this version no longer offers, are left out: they belong to no feature and are only listed on the
@@ -132,7 +127,8 @@ export function buildFeatureTree(
             expanded: areaExpanded,
             actionCount: sum(areaFeatures, (feature) => feature.actionCount),
             viewCount: sum(areaFeatures, (feature) => feature.viewCount),
-            automaticCount: sum(areaFeatures, (feature) => feature.automaticCount + feature.systemCount),
+            automaticCount: sum(areaFeatures, (feature) => feature.automaticCount),
+            systemCount: sum(areaFeatures, (feature) => feature.systemCount),
             errorCount: sum(areaFeatures, (feature) => feature.errorCount),
             durationSumMs: sum(areaFeatures, (feature) => feature.durationSumMs),
             lastUsedDay: latest(areaFeatures.map((feature) => feature.lastUsedDay)),
@@ -155,7 +151,8 @@ export function buildFeatureTree(
                 expanded: featureExpanded,
                 actionCount: feature.actionCount,
                 viewCount: feature.viewCount,
-                automaticCount: feature.automaticCount + feature.systemCount,
+                automaticCount: feature.automaticCount,
+                systemCount: feature.systemCount,
                 errorCount: feature.errorCount,
                 durationSumMs: feature.durationSumMs,
                 activeDays: feature.activeDays,
@@ -179,7 +176,8 @@ export function buildFeatureTree(
                     expanded: groupExpanded,
                     actionCount: callsOf(group.endpoints, FeatureInteraction.ACTION),
                     viewCount: callsOf(group.endpoints, FeatureInteraction.VIEW),
-                    automaticCount: automaticCallsOf(group.endpoints),
+                    automaticCount: callsOf(group.endpoints, FeatureInteraction.AUTOMATIC),
+                    systemCount: callsOf(group.endpoints, FeatureInteraction.SYSTEM),
                     errorCount: sum(use, (endpoint) => endpoint.errorCount ?? 0),
                     durationSumMs: sum(use, (endpoint) => endpoint.durationSumMs ?? 0),
                     lastUsedDay: latest(use.map((endpoint) => endpoint.lastUsedDay)),
@@ -199,7 +197,6 @@ export function buildFeatureTree(
 
 function endpointRow(key: string, endpoint: FeatureUsageEndpoint): FeatureTreeRow {
     const calls = endpoint.callCount ?? 0;
-    const use = countsAsUse(endpoint.interaction);
     return {
         key,
         level: 3,
@@ -209,7 +206,8 @@ function endpointRow(key: string, endpoint: FeatureUsageEndpoint): FeatureTreeRo
         expanded: false,
         actionCount: endpoint.interaction === FeatureInteraction.ACTION ? calls : 0,
         viewCount: endpoint.interaction === FeatureInteraction.VIEW ? calls : 0,
-        automaticCount: use ? 0 : calls,
+        automaticCount: endpoint.interaction === FeatureInteraction.AUTOMATIC ? calls : 0,
+        systemCount: endpoint.interaction === FeatureInteraction.SYSTEM ? calls : 0,
         // an automatic endpoint's own errors are still worth seeing, on its own row, where they cannot inflate the feature
         errorCount: endpoint.errorCount ?? 0,
         durationSumMs: endpoint.durationSumMs ?? 0,

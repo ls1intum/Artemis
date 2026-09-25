@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -70,7 +70,6 @@ export class FeatureUsageEndpointsComponent {
     protected readonly verbOf = verbOf;
     protected readonly pathOf = pathOf;
 
-    readonly selectedModule = signal<string>(ALL_MODULES);
     readonly sortField = signal<SortField>('callCount');
     readonly sortAscending = signal<boolean>(false);
 
@@ -80,6 +79,15 @@ export class FeatureUsageEndpointsComponent {
             .sort((first, second) => first.localeCompare(second))
             .map((module) => ({ label: module, value: module })),
     ]);
+
+    /**
+     * Follows the options: the page's search and area filter decide which endpoints arrive here, and a module that is no
+     * longer among them falls back to all modules. Kept as it was, it would leave an empty select above an empty table.
+     */
+    readonly selectedModule = linkedSignal<{ value: string }[], string>({
+        source: this.moduleOptions,
+        computation: (options, previous) => (previous && options.some((option) => option.value === previous.value) ? previous.value : ALL_MODULES),
+    });
 
     readonly rows = computed<EndpointRow[]>(() => {
         const module = this.selectedModule();

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -20,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationExecutionService;
@@ -253,6 +256,37 @@ class HyperionCodeGenerationResourceTest {
         assertThat(response.getBody()).isNull();
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
         verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false, null);
+    }
+
+    /**
+     * An editor tab loaded before the active-job endpoint existed still asks with {@code {"checkOnly": true}} and no
+     * repository type. Rejecting that as a generation without a repository type would stop the tab from restoring a running
+     * job after a deployment, so it is answered like the active-job endpoint and never starts anything.
+     */
+    @Test
+    @SuppressWarnings("removal")
+    void generateCode_withLegacyCheckOnly_returnsActiveJobWithoutStartingOne() {
+        HyperionCodeGenerationJobService.JobInfo jobInfo = new HyperionCodeGenerationJobService.JobInfo("job-legacy-1", testUser.getLogin(), 1L, RepositoryType.TESTS,
+                Instant.now());
+        // Exactly what those clients send
+        CodeGenerationRequestDTO legacyCheck = JsonObjectMapper.get().readValue("{\"checkOnly\":true}", CodeGenerationRequestDTO.class);
+        assertThat(legacyCheck.checkOnly()).isTrue();
+        assertThat(legacyCheck.repositoryType()).isNull();
+
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(codeGenerationJobService.getActiveJob(testUser, testExercise)).thenReturn(Optional.of(jobInfo), Optional.empty());
+
+        ResponseEntity<CodeGenerationJobStartDTO> running = resource.generateCode(1L, legacyCheck);
+        ResponseEntity<CodeGenerationJobStartDTO> idle = resource.generateCode(1L, legacyCheck);
+
+        assertThat(running.getStatusCode().value()).isEqualTo(200);
+        assertThat(running.getBody()).isNotNull();
+        assertThat(running.getBody().jobId()).isEqualTo("job-legacy-1");
+        assertThat(running.getBody().repositoryType()).isEqualTo(RepositoryType.TESTS);
+        assertThat(idle.getStatusCode().value()).isEqualTo(204);
+        assertThat(idle.getBody()).isNull();
+        verify(codeGenerationJobService, never()).startJob(any(), any(), any(), any(), anyBoolean(), any());
     }
 
     @Test

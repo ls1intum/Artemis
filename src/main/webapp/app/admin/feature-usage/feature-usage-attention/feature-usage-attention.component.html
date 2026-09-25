@@ -13,12 +13,13 @@
                             <th scope="col" jhiTranslate="artemisApp.featureUsage.column.area"></th>
                             <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
                             <th scope="col" jhiTranslate="artemisApp.featureUsage.column.modules"></th>
+                            @if (section.key === 'onlyAutomatic') {
+                                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.automatic"></th>
+                                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.system"></th>
+                            } @else if (section.key === 'noActions') {
+                                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.views"></th>
+                            }
                             @if (section.key !== 'unused') {
-                                <th
-                                    scope="col"
-                                    class="text-end"
-                                    [jhiTranslate]="section.key === 'onlyAutomatic' ? 'artemisApp.featureUsage.column.automatic' : 'artemisApp.featureUsage.column.views'"
-                                ></th>
                                 <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
                             }
                         </tr>
@@ -33,8 +34,13 @@
                                     }}</span>
                                 </td>
                                 <td class="text-muted-color text-sm">{{ (feature.modules ?? []).join(', ') }}</td>
+                                @if (section.key === 'onlyAutomatic') {
+                                    <td class="text-end" data-testid="attention-automatic">{{ feature.automaticCount }}</td>
+                                    <td class="text-end" data-testid="attention-system">{{ feature.systemCount }}</td>
+                                } @else if (section.key === 'noActions') {
+                                    <td class="text-end" data-testid="attention-views">{{ feature.viewCount }}</td>
+                                }
                                 @if (section.key !== 'unused') {
-                                    <td class="text-end">{{ callsOf(section, feature) }}</td>
                                     <td>
                                         <button
                                             tumUiButton

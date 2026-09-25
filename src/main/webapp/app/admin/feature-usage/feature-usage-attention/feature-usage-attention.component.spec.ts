@@ -61,11 +61,14 @@ describe('FeatureUsageAttentionComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="attention-row-PROGRAMMING_ONLINE_EDITOR"]')).toBeNull();
     });
 
-    it('should show the calls that make a feature worth a look', () => {
-        const [automatic, , noActions] = component.sections();
+    it('should show the calls that make a feature worth a look, with automatic and system calls apart', () => {
+        const automaticRow: HTMLElement = fixture.nativeElement.querySelector('[data-testid="attention-row-HYPERION_VARIANT_GENERATION"]');
+        const viewedRow: HTMLElement = fixture.nativeElement.querySelector('[data-testid="attention-row-FAQ"]');
 
-        expect(component.callsOf(automatic, onlyAutomatic)).toBe(700);
-        expect(component.callsOf(noActions, viewedOnly)).toBe(20);
+        expect(automaticRow.querySelector('[data-testid="attention-automatic"]')!.textContent!.trim()).toBe('690');
+        expect(automaticRow.querySelector('[data-testid="attention-system"]')!.textContent!.trim()).toBe('10');
+        expect(viewedRow.querySelector('[data-testid="attention-views"]')!.textContent!.trim()).toBe('20');
+        expect(viewedRow.querySelector('[data-testid="attention-automatic"]')).toBeNull();
     });
 
     it('should say so when a section is empty', () => {

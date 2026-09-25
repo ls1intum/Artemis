@@ -108,6 +108,7 @@ describe('FeatureUsageComponent', () => {
                         of([
                             { usageDay: '2026-09-24', interaction: FeatureInteraction.ACTION, callCount: 2 },
                             { usageDay: '2026-09-24', interaction: FeatureInteraction.AUTOMATIC, callCount: 400 },
+                            { usageDay: '2026-09-24', interaction: FeatureInteraction.SYSTEM, callCount: 3 },
                         ]),
                     getEndpointTrend: () => of([{ usageDay: '2026-09-23', interaction: FeatureInteraction.VIEW, callCount: 20 }]),
                     sendDigestEmail: () => of(undefined),
@@ -213,7 +214,7 @@ describe('FeatureUsageComponent', () => {
         expect(component.overview()?.days).toBe(90);
     });
 
-    it('should chart a feature as actions, views and automatic calls, over every day of the window', () => {
+    it('should chart a feature as actions, views, automatic and system calls, over every day of the window', () => {
         fixture.detectChanges();
         const trendSpy = vi.spyOn(featureUsageService, 'getFeatureTrend');
 
@@ -222,7 +223,8 @@ describe('FeatureUsageComponent', () => {
         expect(trendSpy).toHaveBeenCalledWith(variants.feature, 30, undefined);
         const chart = component.trendChartData()!;
         expect(chart.labels).toHaveLength(7);
-        expect(chart.series.map((series) => series.data.at(-1))).toEqual([2, 0, 400]);
+        // system calls are not made by the page, so they get their own line rather than joining the automatic one
+        expect(chart.series.map((series) => series.data.at(-1))).toEqual([2, 0, 400, 3]);
     });
 
     it('should chart a single endpoint and keep the role filter', () => {

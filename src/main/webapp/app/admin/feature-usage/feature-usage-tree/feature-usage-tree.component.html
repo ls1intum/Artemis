@@ -16,6 +16,7 @@
                 <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.actions"></th>
                 <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.views"></th>
                 <th scope="col" class="text-end text-muted-color" jhiTranslate="artemisApp.featureUsage.column.automatic"></th>
+                <th scope="col" class="text-end text-muted-color" jhiTranslate="artemisApp.featureUsage.column.system"></th>
                 <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.activeDays"></th>
                 <th scope="col" jhiTranslate="artemisApp.featureUsage.column.lastUsed"></th>
                 <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.errorRate"></th>
@@ -65,7 +66,7 @@
                                     }}</span>
                                 }
                                 @case ('resource') {
-                                    <span class="text-sm">{{ row.name }}</span>
+                                    <span class="text-sm wrap-anywhere">{{ row.name }}</span>
                                     @if (row.featureKind && row.featureKind !== FeatureKind.REST) {
                                         <tum-ui-tag severity="secondary">{{ 'artemisApp.featureUsage.kind.' + row.featureKind | artemisTranslate }}</tum-ui-tag>
                                     }
@@ -74,7 +75,7 @@
                                     @if (row.endpoint && verbOf(row.endpoint); as verb) {
                                         <tum-ui-tag severity="secondary">{{ verb }}</tum-ui-tag>
                                     }
-                                    <span class="font-mono text-xs">{{ row.name }}</span>
+                                    <span class="font-mono text-xs wrap-anywhere">{{ row.name }}</span>
                                 }
                             }
                         </span>
@@ -122,6 +123,7 @@
                     <td class="text-end">{{ row.actionCount }}</td>
                     <td class="text-end">{{ row.viewCount }}</td>
                     <td class="text-end text-muted-color">{{ row.automaticCount }}</td>
+                    <td class="text-end text-muted-color">{{ row.systemCount }}</td>
                     <td class="text-end">{{ row.activeDays ?? '-' }}</td>
                     <td class="whitespace-nowrap">{{ row.lastUsedDay ?? '-' }}</td>
                     @let rate = errorRate(row);
@@ -146,7 +148,7 @@
                 </tr>
             } @empty {
                 <tr>
-                    <td colspan="10" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
+                    <td colspan="11" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
                 </tr>
             }
         </tbody>

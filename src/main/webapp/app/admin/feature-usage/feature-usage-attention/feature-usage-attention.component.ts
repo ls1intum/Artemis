@@ -21,8 +21,8 @@ interface AttentionSection {
  * Features this deployment does not offer are never listed: their zero usage is not a finding, because nobody could have
  * used them. Everything else is in exactly one group.
  * <ul>
- * <li>Only automatic calls: the feature is wired into pages that people open, but nobody used it. These used to look like
- * the busiest features on the page.</li>
+ * <li>Only automatic or system calls: the feature is wired into pages that people open, or called by another system, but
+ * nobody used it. These used to look like the busiest features on the page.</li>
  * <li>Unused: offered, and not a single call.</li>
  * <li>Viewed, no actions: people look at what the feature shows, but never take the step it exists for.</li>
  * </ul>
@@ -47,9 +47,4 @@ export class FeatureUsageAttentionComponent {
         { key: 'unused', features: this.features().filter((feature) => feature.status === FeatureUsageStatus.UNUSED) },
         { key: 'noActions', features: this.features().filter((feature) => feature.noActions) },
     ]);
-
-    /** The calls that make a feature in this section worth a look, the number shown next to it. */
-    callsOf(section: AttentionSection, feature: UserFeatureUsage): number {
-        return section.key === 'onlyAutomatic' ? feature.automaticCount + feature.systemCount : section.key === 'noActions' ? feature.viewCount : 0;
-    }
 }

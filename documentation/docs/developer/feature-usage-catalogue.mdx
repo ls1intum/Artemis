@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 146 features, 1035 REST endpoints in 28 modules, and 62 interaction overrides.
+Currently 20 product areas, 146 features, 1036 REST endpoints in 28 modules, and 62 interaction overrides.
 
 ## Courses
 
@@ -848,7 +848,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | course | `CourseOverviewResource` | 0 | 0 | 1 | 0 |
 | notification | `CourseNotificationResource` | 0 | 1 | 1 | 0 |
-| notification | `UserCourseNotificationStatusResource` | 1 | 0 | 1 | 0 |
+| notification | `UserCourseNotificationStatusResource` | 2 | 0 | 1 | 0 |
 
 ### Notification delivery
 
@@ -1482,7 +1482,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `PATCH api/communication/courses/{courseId}/conversations/{conversationId}/mark-as-read` (`CONVERSATION_ORGANIZATION`)
 * `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)
 * `POST api/iris/tutor-suggestion/posts/{postId}/sessions/current` (`IRIS_TUTOR_SUGGESTIONS`)
-* `PUT api/notification/courses/{courseId}/status` (`COURSE_NOTIFICATIONS`)
+* `PUT api/notification/courses/{courseId}/seen` (`COURSE_NOTIFICATIONS`)
 
 ### Counted as system calls
 

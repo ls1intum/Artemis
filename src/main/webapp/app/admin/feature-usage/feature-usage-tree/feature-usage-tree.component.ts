@@ -101,7 +101,7 @@ export class FeatureUsageTreeComponent {
 
     /** Whether the row saw anything to chart. */
     hasCalls(row: FeatureTreeRow): boolean {
-        return row.actionCount + row.viewCount + row.automaticCount > 0;
+        return row.actionCount + row.viewCount + row.automaticCount + row.systemCount > 0;
     }
 
     showTrend(row: FeatureTreeRow): void {

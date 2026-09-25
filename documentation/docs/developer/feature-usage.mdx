@@ -259,7 +259,7 @@ keeps the page and the weekly email from disagreeing: both are built from the sa
 
 The **trend endpoint** charts either a feature, `feature-usage/trend?feature=FAQ`, summed over every endpoint that serves
 it, or individual rows, `feature-usage/trend?featureIds=1&featureIds=2`. Both return one point per day and interaction, so
-the chart can show actions, views and automatic calls as separate series. The list of ids is bounded so the `IN` clause
+the chart can show actions, views, automatic and system calls as separate series. The list of ids is bounded so the `IN` clause
 cannot grow arbitrarily.
 
 ## The catalogue
@@ -303,7 +303,7 @@ Two decisions are worth keeping:
   that looks identical every week gets filtered; the direction of travel is what makes it worth opening. `changePercent()`
   returns a boxed value so "no previous data" stays distinguishable from "no change".
 * **Areas with no use are listed as names, not rows.** What matters about them is only that they are on the list. An area
-  whose features only received automatic calls is one of them, and the number of such features is stated separately,
+  whose features only received automatic or system calls is one of them, and the number of such features is stated separately,
   because that is what used to make an unused feature look busy.
 
 `FeatureUsageDigestScheduleService` owns the guards, all of which exist to stop mail reaching a human inbox when it
@@ -332,7 +332,9 @@ Break any of these and the report quietly starts lying:
 2. Every controller carries a `@FeatureUsage`, and the generated catalogue document matches the annotations.
 3. Only actions and views count as use. An automatic or system call never makes a feature used, active or failing.
 4. The interaction belongs to the endpoint. An endpoint that both acts and reports status cannot be counted correctly, so
-   a status probe gets an endpoint of its own, as the active-job check of the AI code generation does.
+   a status probe gets an endpoint of its own, as the active-job check of the AI code generation does, and so does an
+   update the client sends on its own, as marking displayed notifications as seen does next to the user's own status
+   changes.
 5. Identifiers stay bounded. Never derive one from a user name, an entity id or a raw path.
 6. Counters are cumulative with a watermark; never reset them in place.
 7. Writes stay additive and dialect-neutral.

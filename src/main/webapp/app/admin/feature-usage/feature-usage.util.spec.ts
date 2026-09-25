@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { FeatureInteraction, FeatureKind, FeatureUsageEndpoint, FeatureUsageStatus, FeatureUsageTrendPoint, UserFeatureUsage } from './feature-usage.model';
 import {
-    automaticCallsOf,
     buildFeatureTree,
     callsOf,
     dailySeries,
@@ -85,7 +84,9 @@ describe('feature usage utilities', () => {
     it('should sum the calls of one interaction and keep automatic calls apart', () => {
         expect(callsOf([commit, files, probe], FeatureInteraction.ACTION)).toBe(15);
         expect(callsOf([commit, files, probe], FeatureInteraction.VIEW)).toBe(40);
-        expect(automaticCallsOf([commit, files, probe, endpoint(9, { interaction: FeatureInteraction.SYSTEM, callCount: 2 })])).toBe(702);
+        const buildAgentAddress = endpoint(9, { interaction: FeatureInteraction.SYSTEM, callCount: 2 });
+        expect(callsOf([commit, files, probe, buildAgentAddress], FeatureInteraction.AUTOMATIC)).toBe(700);
+        expect(callsOf([commit, files, probe, buildAgentAddress], FeatureInteraction.SYSTEM)).toBe(2);
     });
 
     it('should group endpoints by feature and leave out those that belong to no feature', () => {
@@ -194,6 +195,32 @@ describe('feature usage utilities', () => {
         const resource = rows.find((row) => row.kind === 'resource')!;
         expect(resource.actionCount + resource.viewCount).toBe(0);
         expect(resource.automaticCount).toBe(700);
+    });
+
+    it('should keep system calls apart from automatic calls on every level of the tree', () => {
+        // The legend defines automatic calls as calls the page made on its own; a build agent is another system
+        const buildAgentAddress = endpoint(9, {
+            module: 'localvc',
+            identifier: 'GET api/localvc/public/observed-client-address',
+            interaction: FeatureInteraction.SYSTEM,
+            resource: 'PublicBuildAgentAddressResource',
+            callCount: 4,
+        });
+        const buildAgents = feature('BUILD_AGENTS', 'BUILD_SYSTEM', { status: FeatureUsageStatus.ONLY_AUTOMATIC, systemCount: 4 });
+
+        const rows = buildFeatureTree(
+            [buildAgents],
+            new Map([[buildAgents.feature, [buildAgentAddress]]]),
+            new Map(),
+            new Set(['BUILD_SYSTEM', 'BUILD_SYSTEM/BUILD_AGENTS', 'BUILD_SYSTEM/BUILD_AGENTS/localvc/PublicBuildAgentAddressResource']),
+        );
+
+        expect(rows.map((row) => row.kind)).toEqual(['area', 'feature', 'resource', 'endpoint']);
+        for (const row of rows) {
+            expect(row.systemCount).toBe(4);
+            expect(row.automaticCount).toBe(0);
+            expect(row.actionCount + row.viewCount).toBe(0);
+        }
     });
 
     it('should list every expandable key for expand all', () => {

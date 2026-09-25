@@ -70,14 +70,14 @@ the first time.
 Pick a period of 7, 30, 90 or 180 days in the title bar. The cards at the top count features, the unit the page lists:
 
 * **Features used**: features with at least one action or view, out of those offered here.
-* **Only automatic calls**: features that received automatic or system calls only. Somebody opened the pages that contain
-  them, but nobody used them.
+* **Only automatic or system calls**: features that received automatic or system calls only. Somebody opened the pages
+  that contain them, or another system called them, but nobody used them.
 * **Unused**: features offered here without a single call.
 * **Viewed, no actions**: features that were looked at, but whose actions nobody took. For a feature people mostly read,
   such as the FAQs, this can be fine. For an authoring aid, it usually means nobody took the step it is for.
 * **Not offered here**: features whose module is not enabled in this deployment. The line below counts the endpoints that
   this version no longer offers at all; they keep their history but are not a decision to make.
-* **Uses**: actions and views, with the automatic calls listed separately below.
+* **Uses**: actions and views, with the automatic and the system calls listed separately below.
 * **Recording since**: when this deployment started recording. "Unused over 180 days" means little on a server that has been
   recording for a week.
 
@@ -87,8 +87,8 @@ Four tabs then present the data:
   endpoint. An area shows how many of its features were used; a feature shows its status, whether it was only viewed, and
   how many courses or exercises have it switched on where that is known. Open a feature to see which controllers and
   endpoints carry its traffic, and how each endpoint's calls count.
-* **Needs attention** lists the features a decision starts from, grouped into **Only automatic calls**, **Unused** and
-  **Viewed, no actions**.
+* **Needs attention** lists the features a decision starts from, grouped into **Only automatic or system calls**,
+  **Unused** and **Viewed, no actions**.
 * **Adoption** is not usage at all but configuration: how many courses, exercises, exams or quizzes have each optional
   setting switched on, listed under the feature it switches on.
 * **Endpoints** is the technical view: every endpoint with its module, controller, how its calls count and which feature it
@@ -97,7 +97,7 @@ Four tabs then present the data:
 
 The columns mean:
 
-* **Actions**, **Views** and **Automatic**: the calls of the period, split by how they count.
+* **Actions**, **Views**, **Automatic** and **System**: the calls of the period, split by how they count.
 * **Active days**: the number of days with at least one action or view. Read it together with the counts: a feature with
   500 views spread over 90 days is used more steadily than one with 50 000 on a single afternoon. Automatic calls never
   make a day active.
@@ -108,8 +108,8 @@ The columns mean:
 A feature, and an area above it, counts actions and views only. An endpoint row shows that endpoint's own calls, whatever
 they count as, so an automatic endpoint can show active days, errors and a mean duration while its feature shows none.
 
-Click the chart icon on a feature or an endpoint for its daily trend, with actions, views and automatic calls as separate
-lines.
+Click the chart icon on a feature or an endpoint for its daily trend, with actions, views, automatic and system calls as
+separate lines.
 
 Search by a feature's name or description, a module, a controller or a path, and narrow the page to one **area**. Filter by
 **caller role** to ask a more precise question: which features do students actually use, and which instructor features does

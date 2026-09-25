@@ -82,6 +82,26 @@ describe('FeatureUsageEndpointsComponent', () => {
         expect(component.rows().map((row) => row.endpoint.featureId)).toEqual([2]);
     });
 
+    it('should fall back to all modules when the selected module is filtered away', () => {
+        component.selectedModule.set('localvc');
+        expect(component.rows().map((row) => row.endpoint.featureId)).toEqual([2]);
+
+        // the page's area filter leaves only programming endpoints
+        fixture.componentRef.setInput('endpoints', [commit, removed]);
+
+        expect(component.selectedModule()).toBe('');
+        expect(component.rows().map((row) => row.endpoint.featureId)).toEqual([1, 3]);
+    });
+
+    it('should keep the selected module while it is still among the endpoints', () => {
+        component.selectedModule.set('programming');
+
+        fixture.componentRef.setInput('endpoints', [commit, removed]);
+
+        expect(component.selectedModule()).toBe('programming');
+        expect(component.rows().map((row) => row.endpoint.featureId)).toEqual([1, 3]);
+    });
+
     it('should mark endpoints that belong to no feature and git entries without a controller', () => {
         const removedRow: HTMLElement = fixture.nativeElement.querySelector('[data-testid="endpoint-row-3"]');
         const cloneRow: HTMLElement = fixture.nativeElement.querySelector('[data-testid="endpoint-row-2"]');

@@ -136,6 +136,7 @@ export interface FeatureTreeRow {
     actionCount: number;
     viewCount: number;
     automaticCount: number;
+    systemCount: number;
     errorCount: number;
     durationSumMs: number;
     /** Undefined where distinct days cannot be derived, which is an area: summing its features would double count days. */

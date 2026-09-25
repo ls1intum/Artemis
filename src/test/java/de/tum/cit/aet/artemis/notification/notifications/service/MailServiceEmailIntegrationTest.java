@@ -525,8 +525,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(body).contains("+50%");
         // an area nobody used is named rather than shown as a row of zeros
         assertThat(body).contains("Lectures");
-        // features that only received automatic calls are called out, because that is what made them look used
-        assertThat(body).contains("only received automatic calls");
+        // features that only received automatic or system calls are called out, because that is what made them look used
+        assertThat(body).contains("only received automatic or system calls");
         // the whole point of the mail is to get someone onto the page
         assertThat(body).contains("admin/feature-usage");
     }

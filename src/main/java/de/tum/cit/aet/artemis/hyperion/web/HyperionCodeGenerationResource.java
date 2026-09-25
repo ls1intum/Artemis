@@ -81,8 +81,15 @@ public class HyperionCodeGenerationResource {
      */
     @PostMapping("programming-exercises/{exerciseId}/generate-code")
     @EnforceAtLeastEditorInExercise
+    @SuppressWarnings("removal")
     public ResponseEntity<CodeGenerationJobStartDTO> generateCode(@PathVariable long exerciseId, @Valid @RequestBody CodeGenerationRequestDTO request) {
         log.debug("REST request to generate code for programming exercise [{}] with repository type [{}]", exerciseId, request.repositoryType());
+        if (request.checkOnly()) {
+            // A client from before the active-job endpoint, still open across a deployment. Its checks count as actions of
+            // this endpoint until it reloads, which is the price of not breaking the tab.
+            // TODO: Remove together with CodeGenerationRequestDTO.checkOnly.
+            return getActiveCodeGenerationJob(exerciseId);
+        }
         validateGenerationRequest(exerciseId, request);
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
         User user = userRepository.getUserWithAuthorities();

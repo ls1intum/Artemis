@@ -20,8 +20,8 @@
             "kpi": {
                 "usedFeatures": "Genutzte Funktionen",
                 "ofAvailable": "von {{ count }} hier angebotenen",
-                "onlyAutomatic": "Nur automatische Aufrufe",
-                "onlyAutomaticDetail": "in Seiten eingebunden, aber von niemandem genutzt",
+                "onlyAutomatic": "Nur automatische oder Systemaufrufe",
+                "onlyAutomaticDetail": "von Seiten oder anderen Systemen aufgerufen, aber von niemandem genutzt",
                 "unusedFeatures": "Ungenutzt",
                 "unusedDetail": "angeboten, aber kein einziger Aufruf",
                 "noActions": "Angesehen, keine Aktionen",
@@ -29,7 +29,7 @@
                 "notAvailable": "Hier nicht angeboten",
                 "retiredEndpoints": "{{ count }} Endpunkte nicht mehr angeboten",
                 "uses": "Nutzungen",
-                "usesDetail": "{{ actions }} Aktionen, {{ views }} Ansichten, {{ automatic }} automatische Aufrufe",
+                "usesDetail": "{{ actions }} Aktionen, {{ views }} Ansichten, {{ automatic }} automatische und {{ system }} Systemaufrufe",
                 "recordingSince": "Erfassung seit"
             },
             "tab": {
@@ -45,6 +45,7 @@
                 "actions": "Aktionen",
                 "views": "Ansichten",
                 "automatic": "Automatisch",
+                "system": "System",
                 "activeDays": "Aktive Tage",
                 "lastUsed": "Zuletzt genutzt",
                 "errorRate": "Fehler",
@@ -61,7 +62,7 @@
             },
             "status": {
                 "USED": "Genutzt",
-                "ONLY_AUTOMATIC": "Nur automatische Aufrufe",
+                "ONLY_AUTOMATIC": "Nur automatische oder Systemaufrufe",
                 "UNUSED": "Ungenutzt",
                 "NOT_AVAILABLE": "Hier nicht angeboten"
             },
@@ -78,8 +79,8 @@
             },
             "attention": {
                 "onlyAutomatic": {
-                    "title": "Nur automatische Aufrufe",
-                    "hint": "Diese Funktionen sind in Seiten eingebunden, die Nutzer:innen öffnen, deshalb erreichen den Server Aufrufe von ihnen, genutzt hat sie aber niemand. Allein nach Aufrufen gezählt, wirkten sie wie die meistgenutzten Funktionen."
+                    "title": "Nur automatische oder Systemaufrufe",
+                    "hint": "Den Server erreichen Aufrufe dieser Funktionen, weil Seiten, die Nutzer:innen öffnen, sie von sich aus aufrufen oder weil ein anderes System es tut, genutzt hat sie aber niemand. Allein nach Aufrufen gezählt, wirkten sie wie die meistgenutzten Funktionen."
                 },
                 "unused": {
                     "title": "Ungenutzt",

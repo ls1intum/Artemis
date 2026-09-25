@@ -23,6 +23,9 @@ import { dismissPasskeyReminderIfPresent } from '../../support/dismissPasskeyRem
  * stack. Everything else runs with the shipped defaults.
  */
 test.describe('Feature usage analysis', { tag: '@fast' }, () => {
+    /** The report itself: every read of it is a call this suite makes, so it is the one endpoint whose count it controls. */
+    const OWN_ENDPOINT = 'GET api/admin/feature-usage';
+
     let page: Page;
 
     test.beforeAll('Login as admin', async ({ browser }) => {
@@ -69,7 +72,7 @@ test.describe('Feature usage analysis', { tag: '@fast' }, () => {
         const account = report.endpoints.find((endpoint: any) => endpoint.identifier === 'GET api/core/public/account');
 
         expect(account?.interaction).toBe('AUTOMATIC');
-        expect(report.endpoints.find((endpoint: any) => endpoint.identifier === 'GET api/admin/feature-usage')?.interaction).toBe('VIEW');
+        expect(report.endpoints.find((endpoint: any) => endpoint.identifier === OWN_ENDPOINT)?.interaction).toBe('VIEW');
     });
 
     test('Lists the features that need attention and counts them like the headline', async () => {
@@ -86,30 +89,20 @@ test.describe('Feature usage analysis', { tag: '@fast' }, () => {
 
     /**
      * The whole write path in one assertion: this browser's own API traffic has to appear in the database and come back
-     * through the read API. Polling with reloads rather than a fixed wait, because the flush is scheduled and the test
-     * must not depend on landing between two ticks.
+     * through the read API. Polling rather than a fixed wait, because the flush is scheduled and the test must not depend
+     * on landing between two ticks.
      */
     test('Records the calls of a request that just happened', async () => {
-        // Asserted as an increase over what is already stored, not as "more than zero". A stack that has served other
-        // tests first already has counts, and against those a zero-based assertion passes instantly without the flush
-        // ever having run - proving nothing while looking like coverage. Loading this page is itself a view of the
-        // feature usage feature, so the uses have to grow.
-        await page.locator('[data-testid="tab-features"]').click();
-        const before = await headlineNumberOf('kpi-calls');
+        // Asserted on this endpoint's own count, and as an increase over what is already stored. A headline total is not
+        // enough: tests running in parallel raise it too, so it can grow while the calls made here are still in memory.
+        // And a stack that has served other tests first already has counts, against which "more than zero" passes
+        // without the flush ever having run. Every poll reads the report, so each one is itself a call to this endpoint.
+        const before = await callsOfEndpoint(OWN_ENDPOINT);
 
-        await expect
-            .poll(
-                async () => {
-                    await page.reload();
-                    await page.waitForLoadState('domcontentloaded');
-                    await dismissPasskeyReminderIfPresent(page);
-                    return headlineNumberOf('kpi-calls');
-                },
-                { timeout: 90000, intervals: [5000] },
-            )
-            .toBeGreaterThan(before);
+        await expect.poll(() => callsOfEndpoint(OWN_ENDPOINT), { timeout: 90000, intervals: [5000] }).toBeGreaterThan(before);
 
         // The caller's role bucket is the only thing recorded about who called, so it has to be resolved and stored.
+        await reloadPage();
         await expect(page.locator('[data-testid="role-distribution"]')).toContainText('ADMIN');
     });
 
@@ -119,8 +112,15 @@ test.describe('Feature usage analysis', { tag: '@fast' }, () => {
      * area, served by the controller that handles it.
      */
     test('Attributes the calls to the feature and the resource that served them', async () => {
+        // Waits for this feature itself rather than relying on the previous test: that one proves a flush for one endpoint,
+        // and this one must hold when it runs alone as well.
+        await expect
+            .poll(async () => (await overviewFromApi()).features.find((feature: any) => feature.feature === 'FEATURE_USAGE')?.status, { timeout: 90000, intervals: [5000] })
+            .toBe('USED');
+        await reloadPage();
+
         await page.locator('[data-testid="tab-features"]').click();
-        await page.locator('[data-testid="search-input"]').fill('api/admin/feature-usage');
+        await page.locator('[data-testid="search-input"]').fill(OWN_ENDPOINT.slice(OWN_ENDPOINT.indexOf(' ') + 1));
 
         await page.locator('[data-testid="toggle-ADMINISTRATION"]').click();
         const ownFeature = page.locator('[data-testid="tree-row-ADMINISTRATION/FEATURE_USAGE"]');
@@ -129,6 +129,17 @@ test.describe('Feature usage analysis', { tag: '@fast' }, () => {
         await page.locator('[data-testid="toggle-ADMINISTRATION/FEATURE_USAGE"]').click();
         await expect(page.locator('[data-kind="resource"]', { hasText: 'AdminFeatureUsageResource' })).toBeVisible();
     });
+
+    async function reloadPage(): Promise<void> {
+        await page.reload();
+        await page.waitForLoadState('domcontentloaded');
+        await dismissPasskeyReminderIfPresent(page);
+    }
+
+    async function callsOfEndpoint(identifier: string): Promise<number> {
+        const report = await overviewFromApi();
+        return report.endpoints.find((endpoint: any) => endpoint.identifier === identifier)?.callCount ?? 0;
+    }
 
     /**
      * Addressed by test id rather than by position or by label text: the card component owns wrapper elements the test

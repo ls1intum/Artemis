@@ -20,8 +20,8 @@
             "kpi": {
                 "usedFeatures": "Features used",
                 "ofAvailable": "of {{ count }} offered here",
-                "onlyAutomatic": "Only automatic calls",
-                "onlyAutomaticDetail": "wired into pages, but nobody used them",
+                "onlyAutomatic": "Only automatic or system calls",
+                "onlyAutomaticDetail": "called by pages or other systems, but nobody used them",
                 "unusedFeatures": "Unused",
                 "unusedDetail": "offered, but not a single call",
                 "noActions": "Viewed, no actions",
@@ -29,7 +29,7 @@
                 "notAvailable": "Not offered here",
                 "retiredEndpoints": "{{ count }} endpoints no longer offered",
                 "uses": "Uses",
-                "usesDetail": "{{ actions }} actions, {{ views }} views, {{ automatic }} automatic calls",
+                "usesDetail": "{{ actions }} actions, {{ views }} views, {{ automatic }} automatic and {{ system }} system calls",
                 "recordingSince": "Recording since"
             },
             "tab": {
@@ -45,6 +45,7 @@
                 "actions": "Actions",
                 "views": "Views",
                 "automatic": "Automatic",
+                "system": "System",
                 "activeDays": "Active days",
                 "lastUsed": "Last used",
                 "errorRate": "Errors",
@@ -61,7 +62,7 @@
             },
             "status": {
                 "USED": "Used",
-                "ONLY_AUTOMATIC": "Only automatic calls",
+                "ONLY_AUTOMATIC": "Only automatic or system calls",
                 "UNUSED": "Unused",
                 "NOT_AVAILABLE": "Not offered here"
             },
@@ -78,8 +79,8 @@
             },
             "attention": {
                 "onlyAutomatic": {
-                    "title": "Only automatic calls",
-                    "hint": "These features are wired into pages people open, so the server hears from them, but nobody used them. Counted by calls alone, they looked like the busiest features."
+                    "title": "Only automatic or system calls",
+                    "hint": "The server hears from these features because pages people open call them on their own, or because another system does, but nobody used them. Counted by calls alone, they looked like the busiest features."
                 },
                 "unused": {
                     "title": "Unused",

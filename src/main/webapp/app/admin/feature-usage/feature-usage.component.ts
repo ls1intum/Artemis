@@ -232,9 +232,10 @@ export class FeatureUsageComponent implements OnInit {
             [
                 { name: this.translateService.instant('artemisApp.featureUsage.column.actions'), series: series([FeatureInteraction.ACTION]) },
                 { name: this.translateService.instant('artemisApp.featureUsage.column.views'), series: series([FeatureInteraction.VIEW]) },
-                { name: this.translateService.instant('artemisApp.featureUsage.column.automatic'), series: series([FeatureInteraction.AUTOMATIC, FeatureInteraction.SYSTEM]) },
+                { name: this.translateService.instant('artemisApp.featureUsage.column.automatic'), series: series([FeatureInteraction.AUTOMATIC]) },
+                { name: this.translateService.instant('artemisApp.featureUsage.column.system'), series: series([FeatureInteraction.SYSTEM]) },
             ],
-            [GraphColors.DARK_BLUE, GraphColors.GREEN, GraphColors.GREY],
+            [GraphColors.DARK_BLUE, GraphColors.GREEN, GraphColors.GREY, GraphColors.LIGHT_GREY],
         );
     });
 
