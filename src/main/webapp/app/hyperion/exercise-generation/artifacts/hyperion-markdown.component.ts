@@ -8,7 +8,7 @@ import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 /** Generated documents may contain prose and code, but not stylesheets or interactive controls. */
 const FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'label', 'fieldset', 'legend'];
 
-/** Uses Artemis markdown rendering and TUM UI typography, with stricter sanitisation for generated content. */
+/** Uses Artemis markdown rendering and TUM AET UI typography, with stricter sanitisation for generated content. */
 @Component({
     selector: 'jhi-hyperion-markdown',
     template: `<div tumAetUiProse class="hyperion-markdown-body" [density]="density()" [innerHTML]="rendered() | safeHtml"></div>`,

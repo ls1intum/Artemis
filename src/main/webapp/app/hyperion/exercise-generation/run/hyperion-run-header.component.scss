@@ -26,7 +26,7 @@
 /*
  * The facts rail's qualifiers.
  *
- * Colour is named through the TUM UI semantic layer rather than through a `text-state-*` utility on purpose. Artemis'
+ * Colour is named through the TUM AET UI semantic layer rather than through a `text-state-*` utility on purpose. Artemis'
  * `text-state-warning` aliases the raw Bootstrap fill (#ffc107), which measures 1.63:1 on a light card — below the
  * 3:1 WCAG 2.2 SC 1.4.11 asks of a non-text graphic, let alone the 4.5:1 this is as text. The `-foreground` token is
  * the value the design system already corrected for both themes (#604c0c light, #f39c12 dark), and both pass.

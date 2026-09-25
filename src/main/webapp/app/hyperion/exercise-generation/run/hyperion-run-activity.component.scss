@@ -26,7 +26,7 @@
  *    the rolling window. Everything here is server-triggered, which is the kind of motion that interrupts rather
  *    than informs, so it is kept to the smallest thing that still carries the meaning.
  *
- * Durations and easings come from the TUM UI motion tokens; the literal fallbacks keep the transition working in a
+ * Durations and easings come from the TUM AET UI motion tokens; the literal fallbacks keep the transition working in a
  * build where the package's compiled `styles.css` is a step behind the token source.
  */
 .hyperion-liveness {
@@ -35,7 +35,7 @@
 }
 
 /*
- * The stalled tone. Named through the TUM UI semantic layer rather than `text-state-warning`, which aliases the raw
+ * The stalled tone. Named through the TUM AET UI semantic layer rather than `text-state-warning`, which aliases the raw
  * Bootstrap #ffc107 and measures 1.63:1 on a light card. The `-foreground` token is the value the design system
  * already corrected for both themes. Colour is never the only signal: the sentence says "No update for N minutes",
  * the status dot changes shape-carrying state, and the dot's label reaches assistive technology as a word.

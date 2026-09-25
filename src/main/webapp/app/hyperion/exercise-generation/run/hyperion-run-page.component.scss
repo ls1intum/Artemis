@@ -4,7 +4,7 @@
  * A rule and lower contrast rather than a fourth card: grouping by proximity and a rule ranks a region below the ones
  * above it, whereas a fourth container of identical weight would put the spend back on equal footing with the verdict.
  *
- * The rule is drawn from the TUM UI border token rather than from a bare Tailwind `border-t`. Tailwind preflight is
+ * The rule is drawn from the TUM AET UI border token rather than from a bare Tailwind `border-t`. Tailwind preflight is
  * not loaded here and the `@layer base` default is overridden by a dependency pointing `border-color` at an undefined
  * custom property, so a bare border utility falls back to `currentColor` — measured at 17.63:1 in dark where 1.24:1
  * was intended. Naming the token is deterministic and correct in both themes.
@@ -18,7 +18,7 @@
      * white card but only 4.01:1 on the light page's #e9ecef and 4.33:1 on the dark page's #22272e — both below the
      * 4.5:1 AA threshold for the 14px labels this region is largely made of.
      *
-     * Neither the Artemis nor the TUM UI layer ships a muted tier for a page-level surface, so one is derived here from
+     * Neither the Artemis nor the TUM AET UI layer ships a muted tier for a page-level surface, so one is derived here from
      * the two tokens that do exist: halfway between muted and the text colour. That measures 5.76:1 light and 8.73:1
      * dark against the page, while staying a visible step below body text (8.73:1 / 15.0:1) — so the region keeps the
      * contrast ranking the design gives it instead of trading legibility for it. A custom property inherits through

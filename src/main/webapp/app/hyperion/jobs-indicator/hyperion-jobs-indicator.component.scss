@@ -1,5 +1,5 @@
 /*
- * The navbar is a fixed dark surface in BOTH themes (`--navbar-bg` = #353d47), while every TUM UI token resolves
+ * The navbar is a fixed dark surface in BOTH themes (`--navbar-bg` = #353d47), while every TUM AET UI token resolves
  * against the page surface. Without a chrome context the trigger's muted label measures 2.31:1 in light — the
  * worst-contrast item in the whole navbar — and the count tag paints a #f1f5f9 blob in light and disappears at
  * 1.30:1 in dark.
