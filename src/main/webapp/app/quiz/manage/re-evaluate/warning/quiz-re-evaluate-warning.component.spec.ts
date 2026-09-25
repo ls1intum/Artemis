@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -15,7 +15,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
+import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
@@ -23,7 +23,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
     let comp: QuizReEvaluateWarningComponent;
     let fixture: ComponentFixture<QuizReEvaluateWarningComponent>;
     let quizService: QuizExerciseService;
-    let quizReEvaluateService: QuizReEvaluateService;
+    let quizExerciseEvaluationApi: QuizExerciseEvaluationApi;
     let dialogRef: DynamicDialogRef;
     let navigationUtilService: ArtemisNavigationUtilService;
 
@@ -77,7 +77,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
             providers: [
                 MockProvider(DynamicDialogRef),
                 { provide: DynamicDialogConfig, useValue: dialogConfig },
-                MockProvider(QuizReEvaluateService),
+                MockProvider(QuizExerciseEvaluationApi),
                 MockProvider(ArtemisNavigationUtilService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -88,7 +88,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         fixture = TestBed.createComponent(QuizReEvaluateWarningComponent);
         comp = fixture.componentInstance;
         quizService = TestBed.inject(QuizExerciseService);
-        quizReEvaluateService = TestBed.inject(QuizReEvaluateService);
+        quizExerciseEvaluationApi = TestBed.inject(QuizExerciseEvaluationApi);
         dialogRef = TestBed.inject(DynamicDialogRef);
         navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
 
@@ -315,7 +315,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
     });
 
     it('should confirm change successfully', () => {
-        vi.spyOn(quizReEvaluateService, 'reevaluate').mockReturnValue(of(new HttpResponse({ body: createQuizExercise() })));
+        vi.spyOn(quizExerciseEvaluationApi, 'reEvaluateQuizExercise').mockReturnValue(of(undefined));
         comp.files = new Map();
 
         comp.confirmChange();
@@ -326,7 +326,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
     });
 
     it('should handle confirm change error', () => {
-        vi.spyOn(quizReEvaluateService, 'reevaluate').mockReturnValue(throwError(() => new Error('error')));
+        vi.spyOn(quizExerciseEvaluationApi, 'reEvaluateQuizExercise').mockReturnValue(throwError(() => new Error('error')));
         comp.files = new Map();
 
         comp.confirmChange();
