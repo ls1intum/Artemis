@@ -31,6 +31,11 @@ export class TumUiMenuItemDirective {
     /** Emits when the entry is chosen with a click, Enter, or Space; never while it is disabled. */
     readonly triggered = output<void>();
 
+    /** @internal Whether this is the entry aria moves focus to and chooses from the keyboard. */
+    isActive(): boolean {
+        return this.menuItem.active();
+    }
+
     /** @internal Whether the event target lies inside this entry. */
     contains(target: EventTarget | null): boolean {
         return target instanceof Node && this.element.contains(target);
@@ -49,9 +54,9 @@ export class TumUiMenuItemDirective {
     protected onEnter(event: Event): void {
         // Aria handles Enter on the menu and cancels it, which would keep a link from navigating. A link follows its
         // own activation instead: the browser turns Enter into a click, which the menu treats like a pointer click.
-        const keyboardEvent = event as KeyboardEvent;
+        // `keydown.enter` only matches Enter without modifiers, so Shift or Ctrl with Enter keeps the browser's meaning.
         const isLink = this.element instanceof HTMLAnchorElement && this.element.hasAttribute('href');
-        if (isLink && !this.menuItem.disabled() && !keyboardEvent.altKey && !keyboardEvent.ctrlKey && !keyboardEvent.metaKey && !keyboardEvent.shiftKey) {
+        if (isLink && !this.menuItem.disabled()) {
             event.stopPropagation();
         }
     }

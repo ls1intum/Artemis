@@ -41,7 +41,7 @@ export class TumUiMenuComponent {
     private readonly trigger = inject(TUM_UI_MENU_TRIGGER, { optional: true });
     private readonly items = contentChildren(TumUiMenuItemDirective, { descendants: true });
 
-    /** The entry the event being dispatched started from, the one aria activates if the event selects an item. */
+    /** The entry aria chooses if the event being dispatched selects one. */
     private pendingItem?: TumUiMenuItemDirective;
 
     constructor() {
@@ -49,13 +49,18 @@ export class TumUiMenuComponent {
         const renderer = inject(Renderer2);
         const detach = this.trigger?.attachMenu(this.menu);
         // Aria reports a chosen entry through the menu's `itemSelected` output, with the entry's `value`. Entries have no
-        // value here, so the entry is taken from the event instead: a capturing listener runs before aria's own and
-        // notes the entry the click or key press started from, and aria selects exactly that one.
+        // value here, so the entry is noted before aria acts, by a capturing listener that runs before aria's own: for a
+        // click the entry that was clicked, for a key press the active entry, which is the one aria chooses even when
+        // focus sits on the menu surface itself. Aria clears the active entry while closing, before it reports the choice.
         const noteTarget = (event: Event) => {
-            this.pendingItem = this.items().find((item) => item.contains(event.target));
-            if (event instanceof KeyboardEvent && event.key.length === 1) {
-                // Aria's typeahead matches the entries' search terms, which follow the rendered label.
-                this.items().forEach((item) => item.syncSearchTerm());
+            if (event instanceof KeyboardEvent) {
+                this.pendingItem = this.items().find((item) => item.isActive());
+                if (event.key.length === 1) {
+                    // Aria's typeahead matches the entries' search terms, which follow the rendered label.
+                    this.items().forEach((item) => item.syncSearchTerm());
+                }
+            } else {
+                this.pendingItem = this.items().find((item) => item.contains(event.target));
             }
         };
         const removeListeners = [renderer.listen(element, 'click', noteTarget, { capture: true }), renderer.listen(element, 'keydown', noteTarget, { capture: true })];

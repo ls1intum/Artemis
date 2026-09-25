@@ -1,4 +1,19 @@
-import { DestroyRef, Directive, InjectionToken, Injector, InputSignal, TemplateRef, ViewContainerRef, effect, inject, input, output, signal, untracked } from '@angular/core';
+import {
+    DestroyRef,
+    Directive,
+    InjectionToken,
+    Injector,
+    InputSignal,
+    TemplateRef,
+    ViewContainerRef,
+    booleanAttribute,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+} from '@angular/core';
 import { Menu, MenuTrigger } from '@angular/aria/menu';
 import { Directionality } from '@angular/cdk/bidi';
 import {
@@ -22,7 +37,16 @@ export const TUM_UI_MENU_TRIGGER = new InjectionToken<TumUiMenuTriggerDirective>
  * last entry), closing on Escape or when focus leaves the menu, and returning focus to the trigger. This directive
  * renders the template in a CDK overlay while the trigger is expanded.
  *
- * A disabled trigger stays focusable and is announced as disabled, but does not open its menu.
+ * `disabled` disables the trigger natively, like the `disabled` attribute of a button: it cannot be focused or clicked,
+ * and `tumUiButton` shows it as disabled.
+ *
+ * Aria opens the menu from Enter and Space on keydown and cancels the key, so a keyboard user produces no `click` on
+ * the trigger. React to the menu with `menuOpened` and to a chosen entry with its `triggered` output, never with a
+ * `(click)` handler on the trigger, which only mouse users would reach.
+ *
+ * The class extends the aria trigger, which reads its inputs lazily through `this`, for example `this.menu()` inside
+ * its computed signals and effects. The `menu` and `softDisabled` overrides below only take effect because aria keeps
+ * doing that; if an aria update captures them at construction instead, the menu no longer opens.
  */
 @Directive({
     selector: '[tumUiMenuTrigger]',
@@ -32,6 +56,12 @@ export const TUM_UI_MENU_TRIGGER = new InjectionToken<TumUiMenuTriggerDirective>
     },
 })
 export class TumUiMenuTriggerDirective extends MenuTrigger<unknown> {
+    /**
+     * Aria soft-disables a trigger by default, which keeps it focusable and drops the native `disabled` attribute. A
+     * menu button in Artemis is an ordinary button, so `disabled` keeps its native meaning.
+     */
+    override readonly softDisabled = input(false, { transform: booleanAttribute });
+
     private readonly injector = inject(Injector);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly directionality = inject(Directionality, { optional: true });
@@ -53,12 +83,25 @@ export class TumUiMenuTriggerDirective extends MenuTrigger<unknown> {
      * registers itself instead (see `attachMenu`), and aria reads it from this signal, which it only ever calls.
      */
     private readonly renderedMenu = signal<Menu<unknown> | undefined>(undefined);
+    /**
+     * The menu aria operates on. Do not bind `[menu]` on the trigger: the name stays an input inherited from aria, and
+     * the template type check accepts the binding, but it throws at runtime, because the trigger always takes its menu
+     * from the template it points at. Narrowing the input so the check rejects it would break the override of aria's type.
+     */
     override readonly menu = this.renderedMenu.asReadonly() as InputSignal<Menu<unknown> | undefined>;
 
     private overlayRef?: OverlayRef;
 
     constructor() {
         super();
+        // Aria handles Escape on the trigger even while the menu is closed, and cancels it and stops its propagation, so
+        // an enclosing dialog or drawer would never see it. Escape only concerns the trigger while its menu is open.
+        const handleKeydown = this._pattern.onKeydown.bind(this._pattern);
+        this._pattern.onKeydown = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape' || this.expanded()) {
+                handleKeydown(event);
+            }
+        };
         effect(() => {
             const expanded = this.expanded();
             untracked(() => (expanded ? this.attachOverlay() : this.detachOverlay()));

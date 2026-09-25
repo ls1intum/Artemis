@@ -249,6 +249,44 @@ describe('TumUiMenuComponent', () => {
         expect(host.events).toEqual(['opened', 'closed', 'opened']);
     });
 
+    it('lets Escape on a closed trigger reach enclosing handlers', async () => {
+        const escapes: KeyboardEvent[] = [];
+        const listener = (event: Event) => escapes.push(event as KeyboardEvent);
+        document.body.addEventListener('keydown', listener);
+        trigger().focus();
+
+        const event = await press(trigger(), 'Escape');
+        document.body.removeEventListener('keydown', listener);
+
+        expect(escapes).toEqual([event]);
+        expect(event.defaultPrevented).toBe(false);
+        expect(menu()).toBeNull();
+    });
+
+    it('closes on Escape when focus is on the trigger of an open menu', async () => {
+        await open();
+        trigger().focus();
+        await settle();
+
+        const event = await press(trigger(), 'Escape');
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(menu()).toBeNull();
+        expect(document.activeElement).toBe(trigger());
+    });
+
+    it('chooses the active item with Enter while focus is on the menu surface', async () => {
+        await open();
+        await press(items()[0], 'ArrowDown');
+        menu()!.focus();
+        await settle();
+
+        await press(menu()!, 'Enter');
+
+        expect(host.picked()).toBe('tutors');
+        expect(menu()).toBeNull();
+    });
+
     it('toggles closed when the trigger is clicked again', async () => {
         await open();
 
@@ -280,5 +318,67 @@ describe('TumUiMenuComponent', () => {
         fixture.destroy();
 
         expect(overlayPane!.isConnected).toBe(false);
+    });
+});
+
+@Component({
+    imports: [TumUiMenuComponent, TumUiMenuItemDirective, TumUiMenuTriggerDirective],
+    template: `
+        <button id="bound" [tumUiMenuTrigger]="actions" [disabled]="disabled()" (click)="clicks = clicks + 1">Bound</button>
+        <button id="static" [tumUiMenuTrigger]="actions" disabled>Static</button>
+        <ng-template #actions>
+            <tum-ui-menu>
+                <button tumUiMenuItem>Add students</button>
+            </tum-ui-menu>
+        </ng-template>
+    `,
+})
+class DisabledTriggerHostComponent {
+    readonly disabled = signal(true);
+    clicks = 0;
+}
+
+describe('TumUiMenuTriggerDirective (disabled)', () => {
+    let fixture: ComponentFixture<DisabledTriggerHostComponent>;
+
+    beforeEach(async () => {
+        fixture = TestBed.createComponent(DisabledTriggerHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+    });
+
+    afterEach(() => fixture.destroy());
+
+    const button = (id: string) => fixture.nativeElement.querySelector(`#${id}`) as HTMLButtonElement;
+
+    it('disables the trigger natively, so it can neither be clicked nor open its menu', async () => {
+        expect(button('bound').disabled).toBe(true);
+        expect(button('bound').getAttribute('aria-disabled')).toBe('true');
+
+        button('bound').click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.clicks).toBe(0);
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+    });
+
+    it('keeps a static disabled attribute', () => {
+        expect(button('static').disabled).toBe(true);
+        expect(button('static').hasAttribute('disabled')).toBe(true);
+    });
+
+    it('opens once it is enabled again', async () => {
+        fixture.componentInstance.disabled.set(false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(button('bound').disabled).toBe(false);
+        button('bound').click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.clicks).toBe(1);
+        expect(document.querySelector('[role="menu"]')).not.toBeNull();
     });
 });

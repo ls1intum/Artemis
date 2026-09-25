@@ -70,3 +70,26 @@ export const KeyboardNavigation: Story = {
         await expect(trigger).toHaveAttribute('aria-expanded', 'false');
     },
 };
+
+/**
+ * A menu followed by another control. A click outside closes the menu, and Tab closes it and moves on from the trigger
+ * to the next control, as for a native select. Both need real pointer and key events, so
+ * `.storybook/tests/menu-dismissal.spec.ts` checks them on this story in the browser.
+ */
+export const Dismissal: Story = {
+    tags: ['!dev', '!autodocs'],
+    render: () => ({
+        template: `
+            <div style="display: flex; gap: 0.5rem">
+                <button tumUiButton [tumUiMenuTrigger]="actions">Course actions</button>
+                <button tumUiButton variant="outlined">Next control</button>
+            </div>
+            <ng-template #actions>
+                <tum-ui-menu>
+                    <button tumUiMenuItem>Add students</button>
+                    <button tumUiMenuItem>Add tutors</button>
+                </tum-ui-menu>
+            </ng-template>
+        `,
+    }),
+};
