@@ -71,7 +71,15 @@
                                 </span>
                             </td>
                             <td class="d-md-table-cell">
-                                <img class="img-fluid" width="60" [src]="examUser.studentImagePath ? addPublicFilePrefix(examUser.studentImagePath) : MISSING_IMAGE" />
+                                <img
+                                    class="img-fluid"
+                                    width="60"
+                                    [src]="examUser.studentImagePath ? addPublicFilePrefix(examUser.studentImagePath) : MISSING_IMAGE"
+                                    [alt]="
+                                        (examUser.studentImagePath ? 'artemisApp.exam.examUsers.studentPhotoAlt' : 'artemisApp.exam.examUsers.studentPhotoMissingAlt')
+                                            | artemisTranslate: { login: examUser.login }
+                                    "
+                                />
                             </td>
                             <td class="d-md-table-cell">
                                 <span>
@@ -85,7 +93,12 @@
                             </td>
                             <td class="d-md-table-cell">
                                 @if (allExamUsersAttendanceCheck().length === 0 && examUser?.signingImagePath) {
-                                    <img class="img-fluid" width="60" [src]="addPublicFilePrefix(examUser.signingImagePath)" />
+                                    <img
+                                        class="img-fluid"
+                                        width="60"
+                                        [src]="addPublicFilePrefix(examUser.signingImagePath)"
+                                        [alt]="'artemisApp.exam.examUsers.studentSignatureAlt' | artemisTranslate: { login: examUser.login }"
+                                    />
                                 } @else {
                                     <h3>
                                         <span class="m-2">

@@ -480,6 +480,12 @@ not accept the unit suffixes `NgStyle` understands: write `{ 'top.px': y }` as `
 Never bind `outerHTML`: replacing the element Angular is bound to breaks the next update. Use `[innerHTML]` to render markup inside an element. The
 `@angular-eslint/template/no-outerhtml` rule enforces this.
 
+Give every image a text alternative that conveys its purpose. Localize descriptions that users hear through a screen reader. Use `alt=""` for a decorative image or one
+whose information is already stated next to it; do not omit the attribute. The `@angular-eslint/template/alt-text` rule enforces its presence.
+
+Keep keyboard focus in the same order as the page content. Use native controls and arrange the markup in the intended focus order instead of assigning positive `tabindex`
+values. The `@angular-eslint/template/no-positive-tabindex` rule enforces this.
+
 ### Comments & Documentation
 
 - Use JSDoc style comments for functions, interfaces, enums, and classes.

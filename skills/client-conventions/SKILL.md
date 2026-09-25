@@ -63,6 +63,13 @@ Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, never `[ngSty
 (`@angular-eslint/template/prefer-style-binding`); a constant is a static `style` attribute. Never
 bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
 
+## Images and keyboard order
+
+Give every `<img>` a useful, localized text alternative, or `alt=""` when the image is decorative
+or already described next to it (`@angular-eslint/template/alt-text`). Keep keyboard focus in DOM
+order; do not use a positive `tabindex` to reorder controls
+(`@angular-eslint/template/no-positive-tabindex`). Move markup when the DOM order is wrong.
+
 ## Redirecting from guards and resolvers
 
 A guard returns or emits `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)`

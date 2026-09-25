@@ -4,6 +4,7 @@
             #sourceImage
             class="ngx-ic-source-image"
             [src]="safeImgDataUrl()"
+            alt=""
             [style.visibility]="imageVisible() ? 'visible' : 'hidden'"
             [style.transform]="safeTransformStyle()"
             (load)="imageLoadedInView()"
