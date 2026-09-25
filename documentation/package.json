@@ -2,7 +2,7 @@
     "name": "guidelines",
     "version": "0.0.0",
     "private": true,
-    "packageManager": "pnpm@12.5.1",
+    "packageManager": "pnpm@12.6.0",
     "scripts": {
         "build": "docusaurus build",
         "clear": "docusaurus clear",
@@ -44,11 +44,11 @@
         "@types/mdast": "4.0.4",
         "@types/prop-types": "15.7.15",
         "@types/react": "19.3.0",
-        "@typescript-eslint/eslint-plugin": "8.70.0",
-        "@typescript-eslint/parser": "8.70.0",
+        "@typescript-eslint/eslint-plugin": "8.70.1",
+        "@typescript-eslint/parser": "8.70.1",
         "baseline-browser-mapping": "2.11.25",
-        "eslint": "10.10.0",
-        "prettier": "3.9.8",
+        "eslint": "10.11.0",
+        "prettier": "3.9.9",
         "typescript": "6.0.3"
     },
     "browserslist": {
