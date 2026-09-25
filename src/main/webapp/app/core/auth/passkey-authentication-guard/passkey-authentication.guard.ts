@@ -41,7 +41,7 @@ export class PasskeyAuthenticationGuard implements CanActivate {
      * @return true if the user has logged in with a passkey (or if passkey requirement is disabled), otherwise a redirect to
      * the passkey-required page that carries the attempted URL as returnUrl
      */
-    async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean | UrlTree> {
+    async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<true | UrlTree> {
         if (!this.shouldEnforcePasskeyForAdminFeatures()) {
             return true;
         }

@@ -13,7 +13,7 @@ export class IrisGuard implements CanActivate {
      * Check if the client can activate a route.
      * @return true if Iris is enabled for this instance, otherwise a redirect to the start page
      */
-    canActivate(): boolean | UrlTree {
+    canActivate(): true | UrlTree {
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS)) {
             return this.router.createUrlTree(['/']);
         }

@@ -81,6 +81,7 @@ export class UserRouteAccessService implements CanActivate {
                     });
                 }
 
+                // The user is not logged in.
                 this.sessionStorageService.store('previousUrl', url);
                 // Two navigations in sequence: the user sees the access denied page and is then sent to the sign-in
                 // page, and both stay in the browser history. A redirect returned from a guard has exactly one target,
@@ -88,11 +89,8 @@ export class UserRouteAccessService implements CanActivate {
                 // history entry. It therefore stays imperative until that change is decided on its own.
                 // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- first of two chained navigations, see above
                 void this.router.navigate(['accessdenied']).then(() => {
-                    // send the user on to the sign-in page, as they have not logged in yet
-                    if (!account) {
-                        // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- runs after the access denied navigation has finished
-                        void this.router.navigate(['/sign-in']);
-                    }
+                    // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- runs after the access denied navigation has finished
+                    void this.router.navigate(['/sign-in']);
                 });
                 return false;
             }),

@@ -13,7 +13,7 @@ export class LocalCIGuard implements CanActivate {
      * Check if the client can activate a route.
      * @return true if the local CI profile is active, otherwise a redirect to the course overview
      */
-    canActivate(): boolean | UrlTree {
+    canActivate(): true | UrlTree {
         if (!this.profileService.isProfileActive(PROFILE_LOCALCI)) {
             return this.router.createUrlTree(['/courses']);
         }
