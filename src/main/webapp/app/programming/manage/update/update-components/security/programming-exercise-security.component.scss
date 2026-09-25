@@ -1,18 +1,18 @@
-// One base colour per lifecycle state. The card tint, pill and sync line all derive from it, so the
-// five states stay visually consistent. color-mix over `transparent` keeps the tint subtle and lets
-// the parent surface (light or dark theme) show through, so these read correctly in both themes.
-$sf-states: (
-    'inactive': #868e96,
-    'generating': #2f7de1,
-    'active': #2f9e54,
-    'deleting': #d9a520,
-    'error': #dc3545,
-);
-
+// Lifecycle state drives three theme-aware TUM UI tokens, set by the `.sf-card--{state}` modifiers
+// below and inherited by the pill and sync line: `--sf-accent` tints the card, border and pill,
+// `--sf-foreground` colours the pill label, and `--sf-syncline-color` colours the sync line. These
+// state tokens deliberately differ in dark mode, so the card follows theme and contrast automatically.
+// color-mix over `transparent` keeps the tint subtle and lets the parent surface show through.
 .sf-card {
-    border: 1px solid var(--bs-border-color, #dee2e6);
+    --sf-accent: var(--tumaet-ui-muted-color);
+    --sf-foreground: var(--tumaet-ui-muted-color);
+    --sf-syncline-color: var(--tumaet-ui-muted-color);
+
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-color: color-mix(in srgb, var(--sf-accent) 30%, var(--tumaet-ui-border-color));
     border-radius: 0.5rem;
     overflow: hidden;
+    background: color-mix(in srgb, var(--sf-accent) 9%, transparent);
 
     &__main {
         display: flex;
@@ -30,6 +30,35 @@ $sf-states: (
     }
 }
 
+.sf-card--inactive {
+    --sf-accent: var(--tumaet-ui-muted-color);
+    --sf-foreground: var(--tumaet-ui-muted-color);
+}
+
+.sf-card--generating {
+    --sf-accent: var(--tumaet-ui-state-info);
+    --sf-foreground: var(--tumaet-ui-state-info-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-info-foreground);
+}
+
+.sf-card--active {
+    --sf-accent: var(--tumaet-ui-state-success);
+    --sf-foreground: var(--tumaet-ui-state-success-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-success-foreground);
+}
+
+.sf-card--deleting {
+    --sf-accent: var(--tumaet-ui-state-warning);
+    --sf-foreground: var(--tumaet-ui-state-warning-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-warning-foreground);
+}
+
+.sf-card--error {
+    --sf-accent: var(--tumaet-ui-state-danger);
+    --sf-foreground: var(--tumaet-ui-state-danger-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-danger-foreground);
+}
+
 .sf-title-row {
     display: flex;
     align-items: center;
@@ -39,7 +68,7 @@ $sf-states: (
 
 .sf-desc {
     margin-top: 0.3rem;
-    color: var(--bs-secondary-color, #6c757d);
+    color: var(--tumaet-ui-muted-color);
 }
 
 .sf-version {
@@ -59,7 +88,7 @@ $sf-states: (
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--bs-secondary-color, #6c757d);
+    color: var(--tumaet-ui-muted-color);
 }
 
 .sf-syncline {
@@ -67,9 +96,9 @@ $sf-states: (
     align-items: center;
     gap: 0.4rem;
     padding: 0.45rem 1.1rem;
-    border-top: 1px solid var(--bs-border-color, #e9ecef);
+    border-top: 1px solid var(--tumaet-ui-border-color);
     font-size: 0.78rem;
-    color: var(--bs-secondary-color, #6c757d);
+    color: var(--sf-syncline-color);
 }
 
 .sf-pill {
@@ -80,6 +109,8 @@ $sf-states: (
     border-radius: 999px;
     font-size: 0.72rem;
     font-weight: 600;
+    background: color-mix(in srgb, var(--sf-accent) 18%, transparent);
+    color: var(--sf-foreground);
 }
 
 .sf-dot {
@@ -88,7 +119,7 @@ $sf-states: (
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: currentColor;
+    background: currentcolor;
 }
 
 .sf-retry {
@@ -100,30 +131,12 @@ $sf-states: (
     background: none;
     font: inherit;
     font-weight: 600;
-    color: var(--bs-primary, #0d6efd);
+    color: var(--tumaet-ui-primary-color);
     cursor: pointer;
 }
 
 .sf-warning {
     margin: 0 1.1rem 0.9rem;
-}
-
-@each $name, $colour in $sf-states {
-    .sf-card--#{$name} {
-        background: color-mix(in srgb, #{$colour} 9%, transparent);
-        border-color: color-mix(in srgb, #{$colour} 30%, var(--bs-border-color, #dee2e6));
-
-        .sf-pill {
-            background: color-mix(in srgb, #{$colour} 18%, transparent);
-            color: #{$colour};
-        }
-
-        @if $name != 'inactive' {
-            .sf-syncline {
-                color: #{$colour};
-            }
-        }
-    }
 }
 
 .sf-spin {
