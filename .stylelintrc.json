@@ -22,7 +22,7 @@
             }
         },
         {
-            "files": ["src/main/webapp/tailwind.css", "packages/tum-ui/tailwind.css", "packages/tum-ui/tailwind-theme.css"],
+            "files": ["src/main/webapp/tailwind.css", "packages/tum-aet-ui/tailwind.css", "packages/tum-aet-ui/tailwind-theme.css"],
             "rules": {
                 "scss/at-rule-no-unknown": [
                     true,
@@ -61,7 +61,7 @@
                 "src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.scss",
                 "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",
                 "src/main/webapp/app/account/**/*.scss",
-                "packages/tum-ui/src/lib/**/*.scss"
+                "packages/tum-aet-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {

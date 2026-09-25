@@ -1,5 +1,5 @@
 <div class="overflow-x-auto">
-    <table tumUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="adoption-table">
+    <table tumAetUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="adoption-table">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.featureUsage.column.area"></th>
@@ -17,7 +17,7 @@
                     <td class="font-mono text-xs">{{ row.entry.module }}/{{ row.entry.key }}</td>
                     <td class="text-end">{{ row.entry.count }} / {{ row.entry.total }}</td>
                     <td>
-                        <tum-ui-progress-bar
+                        <tumaet-ui-progress-bar
                             [value]="row.sharePercent"
                             size="small"
                             [showValue]="false"

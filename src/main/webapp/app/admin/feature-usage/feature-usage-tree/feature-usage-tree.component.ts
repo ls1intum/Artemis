@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import { DecimalPipe } from '@angular/common';
 import { faChartLine, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiTableDirective, TumUiTagComponent, TumUiTagSeverity, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTagComponent, TumAetUiTagSeverity, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,14 +13,14 @@ import { areaTranslationKey, buildFeatureTree, expandableKeys, featureTranslatio
 /** What a row of the tree asks the page to chart. */
 export type FeatureUsageTrendRequest = { feature: UserFeatureUsage } | { endpoint: FeatureUsageEndpoint };
 
-const STATUS_SEVERITY: Record<FeatureUsageStatus, TumUiTagSeverity> = {
+const STATUS_SEVERITY: Record<FeatureUsageStatus, TumAetUiTagSeverity> = {
     [FeatureUsageStatus.USED]: 'success',
     [FeatureUsageStatus.ONLY_AUTOMATIC]: 'warn',
     [FeatureUsageStatus.UNUSED]: 'warn',
     [FeatureUsageStatus.NOT_AVAILABLE]: 'secondary',
 };
 
-const INTERACTION_SEVERITY: Record<FeatureInteraction, TumUiTagSeverity> = {
+const INTERACTION_SEVERITY: Record<FeatureInteraction, TumAetUiTagSeverity> = {
     [FeatureInteraction.ACTION]: 'info',
     [FeatureInteraction.VIEW]: 'secondary',
     [FeatureInteraction.AUTOMATIC]: 'contrast',
@@ -39,7 +39,16 @@ const INTERACTION_SEVERITY: Record<FeatureInteraction, TumUiTagSeverity> = {
     selector: 'jhi-feature-usage-tree',
     templateUrl: './feature-usage-tree.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DecimalPipe, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective, TumUiTableDirective, TumUiTagComponent, TumUiTooltipDirective],
+    imports: [
+        DecimalPipe,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+    ],
 })
 export class FeatureUsageTreeComponent {
     readonly features = input.required<UserFeatureUsage[]>();
@@ -79,11 +88,11 @@ export class FeatureUsageTreeComponent {
         this.expandedKeys.set(new Set());
     }
 
-    statusSeverity(status: FeatureUsageStatus): TumUiTagSeverity {
+    statusSeverity(status: FeatureUsageStatus): TumAetUiTagSeverity {
         return STATUS_SEVERITY[status];
     }
 
-    interactionSeverity(interaction: FeatureInteraction): TumUiTagSeverity {
+    interactionSeverity(interaction: FeatureInteraction): TumAetUiTagSeverity {
         return INTERACTION_SEVERITY[interaction];
     }
 
