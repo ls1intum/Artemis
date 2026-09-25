@@ -353,19 +353,20 @@ export class TableViewComponent<T> {
     }
 
     /**
-     * Goes back to page 0 and fires an immediate lazy load, preserving the current search term and sort.
-     * Use this when an external state change requires a fresh page 1 without disturbing the user's search
-     * (e.g. the search term in a parent component changed).
+     * Fires an immediate lazy load at the given 0-based page, preserving the current search term, sort, and page
+     * size. Defaults to the page currently being viewed, so a plain `reload()` just refreshes in place without
+     * disturbing the user's position (e.g. after adding a row). Pass an explicit page to land somewhere else —
+     * e.g. `reload(0)` when an external state change (a new search term) means page 0 is the only valid choice.
      * No-op in non-lazy mode.
      */
-    reload(): void {
+    reload(page = this.currentPageNumber()): void {
         if (!this.resolvedOptions().lazy) return;
-        this.currentFirst.set(0);
-        this.currentPageSizeOverride.set(undefined);
+        const first = page * this.effectivePageSize();
+        this.currentFirst.set(first);
         const dt = this.dt();
-        dt.first = 0;
+        dt.first = first;
         this.handleLazyLoad({
-            first: 0,
+            first,
             rows: this.effectivePageSize(),
             sortField: dt.sortField,
             sortOrder: dt.sortOrder ?? undefined,
@@ -373,6 +374,24 @@ export class TableViewComponent<T> {
             globalFilter: (dt.filters?.['global'] as { value?: string } | undefined)?.value ?? null,
             multiSortMeta: undefined,
         });
+    }
+
+    /**
+     * Reload after removing `removedCount` rows from the dataset, staying on the current page unless that page
+     * is no longer valid (e.g. the removed row was the last one on the last page), in which case it steps back
+     * to the last valid page. Uses only the table's own last-known total, so it always resolves in a single
+     * request — unlike {@link reload}, it never needs to fetch a page first to discover it came back empty.
+     * No-op in non-lazy mode.
+     */
+    reloadAfterRemoval(removedCount = 1): void {
+        if (!this.resolvedOptions().lazy) return;
+        const newTotal = Math.max(0, this.effectiveTotalRows() - removedCount);
+        const lastValidPage = Math.max(0, Math.ceil(newTotal / this.effectivePageSize()) - 1);
+        this.reload(Math.min(this.currentPageNumber(), lastValidPage));
+    }
+
+    private currentPageNumber(): number {
+        return Math.floor(this.currentFirst() / this.effectivePageSize());
     }
 
     /** Clears the current row selection. */

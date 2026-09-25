@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationMessageReposi
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -137,7 +138,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(postsBelongingToExercise).hasSameSizeAs(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), 1));
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
