@@ -480,6 +480,11 @@ not accept the unit suffixes `NgStyle` understands: write `{ 'top.px': y }` as `
 Never bind `outerHTML`: replacing the element Angular is bound to breaks the next update. Use `[innerHTML]` to render markup inside an element. The
 `@angular-eslint/template/no-outerhtml` rule enforces this.
 
+Associate a form label with its native control: match the label's `for` to the input's `id`, or place the input inside the label. When a custom component renders the
+input, connect the label to that inner input rather than to the component host. Use a heading or `span` for text that only names a section or explains a legend. Name a
+group of related controls with a `fieldset` and `legend` or with `aria-labelledby` on a group. The
+`@angular-eslint/template/label-has-associated-control` rule enforces this in TUM UI and selected client template areas as they are migrated.
+
 ### Comments & Documentation
 
 - Use JSDoc style comments for functions, interfaces, enums, and classes.

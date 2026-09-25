@@ -100,6 +100,15 @@ receives a `RedirectCommand` for a thrown one. Do not assert a `navigate` spy. F
 combinations and browser history, route with `provideRouter(...)` and `provideLocationMocks()`
 as in `src/main/webapp/app/localci/shared/localci-guard.spec.ts`.
 
+## Form labels
+
+Associate each visible form label with its native input using a matching `for` and `id`, or wrap
+the input in the label. For a custom control, connect the label to the input inside the component,
+not its host element. Use a heading or `span` for informational text that does not label a control;
+give groups of controls an accessible group name. The
+`@angular-eslint/template/label-has-associated-control` rule enforces this in TUM UI and the
+client template areas listed in `eslint.config.mjs`.
+
 ## Copying objects
 
 In production `src/main/webapp/app/**/*.ts`, use the wrappers in
