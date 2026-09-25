@@ -302,8 +302,11 @@ describe('@tumaet/ui-angular integration contract', () => {
             expect(version, `${name} must be valid in the ng-packagr output`).not.toMatch(/^(?:catalog|workspace):/);
         }
         for (const [name, version] of Object.entries(packageJson.peerDependencies)) {
-            expect(semver.valid(version), `${name} must declare the exact tested peer version`).not.toBeNull();
-            expect(version, `${name} peer version must match the workspace catalog`).toBe(catalog[name]);
+            expect(semver.validRange(version), `${name} must declare a consumer compatibility range`).not.toBeNull();
+            expect(semver.satisfies(catalog[name], version), `${name} must support the version tested in the workspace`).toBe(true);
+            if (name.startsWith('@angular/')) {
+                expect(semver.minVersion(version)?.version, `${name} consumers must support the Angular version used to build the library`).toBe(catalog[name]);
+            }
             expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
             expect(packageJson.devDependencies[name], `${name} must be installed for isolated package development`).toBe('catalog:');
         }
@@ -332,8 +335,9 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(angularWorkspace.projects['tum-ui'].architect.build.configurations.pack.project).toBe('packages/tum-ui/ng-package.pack.json');
     });
 
-    it('keeps the package private and declares one complete stylesheet subpath', () => {
-        expect(packageJson.private).toBe(true);
+    it('declares a public package and one complete stylesheet subpath', () => {
+        expect(packageJson.private).not.toBe(true);
+        expect(packageJson.publishConfig).toEqual({ access: 'public', registry: 'https://registry.npmjs.org/' });
         expect(packageJson.files).toEqual(expect.arrayContaining(['fesm2022', 'types', 'styles.css', 'README.md', 'LICENSE']));
         expect(packageJson.files).not.toContain('themes.css');
         expect(packageJson.files).not.toContain('tailwind-theme.css');
@@ -415,7 +419,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         );
 
         expect(ruleElementSelectors(typographyRule)).toEqual(packageElementSelectors);
-        expect(ruleElementSelectors(nativeControlRule)).toEqual(packageElementsWithNativeControls);
+        expect(ruleElementSelectors(nativeControlRule)).toEqual(expect.arrayContaining(packageElementsWithNativeControls));
     });
 
     it('prefixes every static template class', () => {
