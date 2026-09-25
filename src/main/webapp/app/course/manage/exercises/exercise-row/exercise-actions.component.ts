@@ -25,6 +25,7 @@ import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exe
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 /**
  * Builds the course-exercise `ActionItem[]` (course-scoped routes, role and feature-toggle gates, delete wiring) and
@@ -43,6 +44,7 @@ export class ExerciseActionsComponent {
     private readonly textExerciseService = inject(TextExerciseService);
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
     private readonly quizExerciseService = inject(QuizExerciseService);
+    private readonly quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly exerciseService = inject(ExerciseService);
@@ -315,13 +317,10 @@ export class ExerciseActionsComponent {
             .find(exerciseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (response) => {
-                    const quiz = response.body;
-                    if (quiz) {
-                        quiz.status = this.quizExerciseService.getStatus(quiz);
-                        quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
-                        this.exerciseUpdated.emit(quiz);
-                    }
+                next: (quiz) => {
+                    quiz.status = this.quizExerciseService.getStatus(quiz);
+                    quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+                    this.exerciseUpdated.emit(quiz);
                 },
                 error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
             });
@@ -352,7 +351,7 @@ export class ExerciseActionsComponent {
                 finish(this.fileUploadExerciseService.delete(exerciseId), 'fileUploadExerciseListModification');
                 break;
             case ExerciseType.QUIZ:
-                finish(this.quizExerciseService.delete(exerciseId), 'quizExerciseListModification');
+                finish(this.quizExerciseDeletionApi.deleteQuizExercise(exerciseId), 'quizExerciseListModification');
                 break;
             case ExerciseType.MODELING:
                 finish(this.modelingExerciseService.delete(exerciseId), 'modelingExerciseListModification');

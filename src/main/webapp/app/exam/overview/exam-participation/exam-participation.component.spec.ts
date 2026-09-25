@@ -65,6 +65,8 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 describe('ExamParticipationComponent', () => {
     // Backing signal for the mocked submission-sync contract; see the MockProvider below.
     const submissionSyncVersion = signal(0);
@@ -761,16 +763,18 @@ describe('ExamParticipationComponent', () => {
             quizExercise.id = 5;
             const participation = new StudentParticipation();
             const submission = new QuizSubmission();
+            submission.id = 1;
             const syncedSubmission = new QuizSubmission();
+            syncedSubmission.id = 2;
             syncedSubmission.isSynced = true;
             participation.submissions = [submission, syncedSubmission];
             quizExercise.studentParticipations = [participation];
             comp.studentExam().exercises = [quizExercise];
-            quizSubmissionUpdateSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
+            quizSubmissionUpdateSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             comp.triggerSave(false);
             await new Promise((resolve) => setTimeout(resolve, 500));
-            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
-            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
+            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, toQuizSubmissionFromLiveClient(submission));
+            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, toQuizSubmissionFromLiveClient(syncedSubmission));
             expectSyncedSubmissions(submission, syncedSubmission);
         });
     });
@@ -817,7 +821,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
             // The mocked submission services return synchronous observables, so the re-send happens synchronously.
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -826,7 +830,7 @@ describe('ExamParticipationComponent', () => {
             // All three not-yet-saved answers must be re-sent to the server instead of being silently dropped.
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
         });
 
         it('should force the recovery re-send even when the websocket is not (re)connected yet at resume', () => {
@@ -837,14 +841,14 @@ describe('ExamParticipationComponent', () => {
             // and it must fire regardless — otherwise the restored answers are silently deferred to the next autosave
             // cycle, the answer-loss window this recovery path exists to close (regression: ExamSubmissionRecovery E2E).
             comp.connected.set(false);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
             comp.examStarted(studentExam, true);
 
             // All three restored answers are re-sent immediately, not deferred, despite the websocket being down.
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
             expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
         });
@@ -871,7 +875,7 @@ describe('ExamParticipationComponent', () => {
         it('should not re-send anything and mark submissions synced on a normal (fresh) start', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -911,7 +915,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
             // the text re-send fails (still-flaky connection on resume), while quiz and modeling succeed
-            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
             const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
@@ -935,7 +939,7 @@ describe('ExamParticipationComponent', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
-            vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
             const setLastSaveFailedSpy = vi.spyOn(examParticipationService, 'setLastSaveFailed');
@@ -955,7 +959,7 @@ describe('ExamParticipationComponent', () => {
             textSubmission.isSynced = true;
             comp.exam.set(studentExam.exam!);
             comp.connected.set(true);
-            const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
+            const quizSpy = vi.spyOn(TestBed.inject(QuizSubmissionApi), 'submitQuizForExam').mockReturnValue(of({}));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
@@ -963,7 +967,7 @@ describe('ExamParticipationComponent', () => {
 
             // an already-synced answer must not be re-sent (avoids overwriting good server state / a duplicate submission)
             expect(textSpy).not.toHaveBeenCalled();
-            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(quizSpy).toHaveBeenCalledWith(11, toQuizSubmissionFromLiveClient(quizSubmission));
             expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
         });
     });

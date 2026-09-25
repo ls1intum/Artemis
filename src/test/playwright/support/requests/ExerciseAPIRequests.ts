@@ -44,7 +44,7 @@ import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-ass
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
-import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
+import { toQuizExerciseCreate } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
 
 type PatchProgrammingExerciseTestVisibilityDto = {
     id: number;
@@ -703,7 +703,7 @@ export class ExerciseAPIRequests {
         if (competencyLinks) {
             newQuizExercise.competencyLinks = competencyLinks;
         }
-        const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
+        const quizExerciseDTO = toQuizExerciseCreate(newQuizExercise);
         const multipartData = {
             exercise: {
                 name: 'exercise',

@@ -3,7 +3,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -58,9 +57,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
-                    this.loadQuiz(res.body!);
-                });
+                this.quizExerciseService.find(params['exerciseId']).subscribe((quizExercise) => this.loadQuiz(quizExercise));
             }
         });
 

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -73,7 +73,7 @@ describe('QuizExercise Details Component', () => {
     });
 
     it('should initialize detail component', async () => {
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
         vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
         vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of({} as unknown as ExerciseManagementStatisticsDto));
 
@@ -95,7 +95,7 @@ describe('QuizExercise Details Component', () => {
         const exerciseWithCompetencies = { ...quizExercise };
         exerciseWithCompetencies.competencyLinks = [{ competency: competency1 } as CompetencyExerciseLink, { competency: competency2 } as CompetencyExerciseLink];
 
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseWithCompetencies })));
+        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(exerciseWithCompetencies));
         vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
         vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of({} as unknown as ExerciseManagementStatisticsDto));
 
@@ -112,7 +112,7 @@ describe('QuizExercise Details Component', () => {
     });
 
     it('should not display competency links when exercise has no competencies', async () => {
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
         vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
         vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of({} as unknown as ExerciseManagementStatisticsDto));
 
