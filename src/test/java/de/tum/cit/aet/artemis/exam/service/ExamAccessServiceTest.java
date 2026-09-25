@@ -7,9 +7,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,9 +76,6 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private StudentExamService studentExamService;
-
-    @Autowired
-    private StudentExamAssignmentService assignmentService;
 
     private Course course1;
 
@@ -396,50 +390,6 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(generated.getExercises()).isNotEmpty();
         assertThat(generated.getExercises().getFirst().getExerciseGroup().getId()).isEqualTo(exerciseGroup1.getId());
-    }
-
-    @Test
-    void concurrentTestExamStartsReuseTheUnfinishedAttempt() throws Exception {
-        studentExamRepository.delete(studentExamForTestExam1);
-        ExerciseGroup group = testExam1.getExerciseGroups().getFirst();
-        exerciseRepository.save(QuizExerciseFactory.generateQuizExerciseForExam(group));
-        long examId = testExam1.getId();
-        long userId = student1.getId();
-        CountDownLatch callersReady = new CountDownLatch(2);
-        CountDownLatch start = new CountDownLatch(1);
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            java.util.concurrent.Callable<StudentExam> assign = () -> {
-                callersReady.countDown();
-                assertThat(start.await(10, TimeUnit.SECONDS)).isTrue();
-                return assignmentService.assignStudent(examId, userId);
-            };
-            var first = executor.submit(assign);
-            var second = executor.submit(assign);
-            assertThat(callersReady.await(10, TimeUnit.SECONDS)).isTrue();
-            start.countDown();
-            StudentExam firstAttempt = first.get(20, TimeUnit.SECONDS);
-            StudentExam secondAttempt = second.get(20, TimeUnit.SECONDS);
-            assertThat(firstAttempt.getId()).isEqualTo(secondAttempt.getId());
-            assertThat(studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(userId, examId)).hasSize(1);
-        }
-        finally {
-            start.countDown();
-        }
-    }
-
-    @Test
-    void finishedTestExamAttemptDoesNotPreventANewAttempt() {
-        studentExamForTestExam1.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(1));
-        studentExamForTestExam1.setSubmitted(true);
-        studentExamRepository.saveAndFlush(studentExamForTestExam1);
-        ExerciseGroup group = testExam1.getExerciseGroups().getFirst();
-        exerciseRepository.save(QuizExerciseFactory.generateQuizExerciseForExam(group));
-
-        StudentExam newAttempt = assignmentService.assignStudent(testExam1.getId(), student1.getId());
-
-        assertThat(newAttempt.getId()).isNotEqualTo(studentExamForTestExam1.getId());
-        assertThat(assignmentService.assignStudent(testExam1.getId(), student1.getId()).getId()).isEqualTo(newAttempt.getId());
-        assertThat(studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(student1.getId(), testExam1.getId())).hasSize(2);
     }
 
     @Test

@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
 
 class ProblemStatementBindingCheckerTest {
 
@@ -41,8 +42,7 @@ class ProblemStatementBindingCheckerTest {
 
     @Test
     void canonicalGradleTeachingStatementUsesTheAdaptedFixturesTestNames() throws IOException {
-        String statement = de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources
-                .javaGradleStatementFixture(new ClassPathResource("templates/java/gradle_gradle/readme").getContentAsString(StandardCharsets.UTF_8));
+        String statement = GenerationResources.javaGradleStatementFixture(new ClassPathResource("templates/java/gradle_gradle/readme").getContentAsString(StandardCharsets.UTF_8));
         List<String> testNames = List.of("testBubbleSort", "testMergeSort", "testClass[SortStrategy]", "testMethods[SortStrategy]", "testAttributes[Context]",
                 "testMethods[Context]", "testConstructors[Policy]", "testAttributes[Policy]", "testMethods[Policy]", "testClass[MergeSort]", "testUseMergeSortForBigList",
                 "testClass[BubbleSort]", "testUseBubbleSortForSmallList");
@@ -234,8 +234,7 @@ class ProblemStatementBindingCheckerTest {
 
     @Test
     void duplicateInstructionLines_emptyForTheCanonicalArtemisStatement() throws IOException {
-        String statement = de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources
-                .javaGradleStatementFixture(new ClassPathResource("templates/java/gradle_gradle/readme").getContentAsString(StandardCharsets.UTF_8));
+        String statement = GenerationResources.javaGradleStatementFixture(new ClassPathResource("templates/java/gradle_gradle/readme").getContentAsString(StandardCharsets.UTF_8));
         assertThat(ProblemStatementBindingChecker.duplicateInstructionLines(statement)).isEmpty();
     }
 

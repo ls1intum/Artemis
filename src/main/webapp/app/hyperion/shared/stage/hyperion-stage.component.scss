@@ -1,0 +1,229 @@
+// The step is a two-track grid: a marker track that is exactly as wide as the marker, and the content track. The
+// connector lives inside the marker track, so centring it is `inset-inline-start: 50%` plus `translateX(-50%)` and
+// never arithmetic on spacing tokens. No negative margin takes part in the layout.
+:host {
+    --hyperion-stage-marker-size: calc(var(--tumaet-ui-spacing) * 6);
+    --hyperion-stage-connector-width: 2px;
+
+    // Distance the connector travels out of this step into the next one; it is also the step's trailing padding.
+    --hyperion-stage-lead: calc(var(--tumaet-ui-spacing) * 6);
+
+    // The muted colour, not the border colour: a pending marker is a graphical object a reader needs in order to
+    // understand the ladder, so it owes 3:1 against the surface. The border colour measures 1.23:1 in light and
+    // 1.24:1 in dark, which is a rail you can only see if you already know it is there.
+    --hyperion-stage-edge-color: var(--tumaet-ui-muted-color);
+    --hyperion-stage-ink-color: var(--tumaet-ui-muted-color);
+    --hyperion-stage-label-color: var(--tumaet-ui-text-color);
+    --hyperion-stage-marker-border-style: solid;
+
+    // The connector reports the state of the step it leads into, so it is set from the following sibling below.
+    // Same reasoning as the marker edge: the rail is part of the picture, so it carries the muted colour.
+    --hyperion-stage-connector-color: var(--tumaet-ui-muted-color);
+    --hyperion-stage-connector-style: solid;
+
+    display: grid;
+    grid-template-columns: var(--hyperion-stage-marker-size) 1fr;
+    column-gap: calc(var(--tumaet-ui-spacing) * 3);
+    padding-block-end: var(--hyperion-stage-lead);
+}
+
+// A step that ends the ladder has nothing to lead into, so it carries neither the trailing room nor a connector.
+:host(:not(:has(+ jhi-hyperion-stage))) {
+    padding-block-end: 0;
+}
+
+:host([data-state='current']) {
+    --hyperion-stage-edge-color: var(--tumaet-ui-primary-color);
+    --hyperion-stage-ink-color: var(--tumaet-ui-primary-color);
+}
+
+:host([data-state='complete']) {
+    --hyperion-stage-edge-color: var(--tumaet-ui-state-success);
+    --hyperion-stage-ink-color: var(--tumaet-ui-state-success);
+}
+
+:host([data-state='failed']) {
+    --hyperion-stage-edge-color: var(--tumaet-ui-state-danger);
+    --hyperion-stage-ink-color: var(--tumaet-ui-state-danger);
+}
+
+// A skipped stage keeps the solid marker every other stage has, so the ladder reads as one family and the state
+// comes from the skip glyph and the muted colour. "Never travelled" is carried by the dashed rail leading into it.
+:host([data-state='skipped']) {
+    --hyperion-stage-label-color: var(--tumaet-ui-muted-color);
+}
+
+// The skip glyph is a filled shape where the check and the cross are strokes, so at the same size it would carry more
+// ink than a finished stage and pull the eye to the part of the ladder that matters least.
+:host([data-state='skipped']) .hyperion-stage-marker {
+    font-size: calc(var(--tumaet-ui-font-size-xs) * 0.85);
+}
+
+:host(:has(+ jhi-hyperion-stage[data-state='current'])) {
+    --hyperion-stage-connector-color: var(--tumaet-ui-primary-color);
+}
+
+:host(:has(+ jhi-hyperion-stage[data-state='complete'])) {
+    --hyperion-stage-connector-color: var(--tumaet-ui-state-success);
+}
+
+:host(:has(+ jhi-hyperion-stage[data-state='failed'])) {
+    --hyperion-stage-connector-color: var(--tumaet-ui-state-danger);
+}
+
+:host(:has(+ jhi-hyperion-stage[data-state='skipped'])) {
+    --hyperion-stage-connector-style: dashed;
+}
+
+.hyperion-stage-marker-track {
+    position: relative;
+    grid-column: 1;
+    grid-row: 1;
+    width: var(--hyperion-stage-marker-size);
+}
+
+.hyperion-stage-marker {
+    display: flex;
+    box-sizing: border-box;
+    width: var(--hyperion-stage-marker-size);
+    height: var(--hyperion-stage-marker-size);
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-style: var(--hyperion-stage-marker-border-style);
+    border-color: var(--hyperion-stage-edge-color);
+    border-radius: 50%;
+    background: var(--tumaet-ui-content-background);
+    color: var(--hyperion-stage-ink-color);
+    font-size: var(--tumaet-ui-font-size-xs);
+    line-height: var(--tumaet-ui-line-height-xs);
+}
+
+// The connector is the leading edge of the step it points at. It starts at the trailing edge of this step's marker
+// and ends at the top of the next one, which is `--hyperion-stage-lead` past this step's content box.
+.hyperion-stage-connector {
+    position: absolute;
+    display: none;
+    box-sizing: border-box;
+    width: var(--hyperion-stage-connector-width);
+    border-inline-start: var(--hyperion-stage-connector-width) var(--hyperion-stage-connector-style) var(--hyperion-stage-connector-color);
+    inset-block-start: var(--hyperion-stage-marker-size);
+    inset-block-end: calc(-1 * var(--hyperion-stage-lead));
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+}
+
+.hyperion-stage-content {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--tumaet-ui-spacing);
+}
+
+.hyperion-stage-label {
+    color: var(--hyperion-stage-label-color);
+    font-weight: 500;
+    overflow-wrap: break-word;
+}
+
+.hyperion-stage-detail {
+    min-width: 0;
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+    line-height: var(--tumaet-ui-line-height-sm);
+}
+
+.hyperion-stage-detail:empty {
+    display: none;
+}
+
+:host(:has(+ jhi-hyperion-stage)) .hyperion-stage-connector {
+    display: block;
+}
+
+// A `current` marker animates only when motion is welcome. Under reduced motion a frozen spinner would read as a
+// broken graphic, so the running state falls back to a distinct static filled marker instead.
+.hyperion-stage-running-indicator {
+    display: none;
+}
+
+.hyperion-stage-running-fallback {
+    display: block;
+    width: calc(var(--tumaet-ui-spacing) * 2.5);
+    height: calc(var(--tumaet-ui-spacing) * 2.5);
+    border-radius: 50%;
+    background: currentcolor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .hyperion-stage-running-indicator {
+        display: block;
+        width: calc(var(--tumaet-ui-spacing) * 3.5);
+        height: calc(var(--tumaet-ui-spacing) * 3.5);
+        border: 2px solid color-mix(in srgb, currentcolor 25%, transparent);
+        border-block-start-color: currentcolor;
+        border-radius: 50%;
+        animation: hyperion-stage-spin 0.9s linear infinite;
+    }
+
+    .hyperion-stage-running-fallback {
+        display: none;
+    }
+
+    // A stage that changes state fades from one colour into the next instead of snapping.
+    .hyperion-stage-marker,
+    .hyperion-stage-connector,
+    .hyperion-stage-label {
+        transition:
+            border-color 180ms cubic-bezier(0.2, 0, 0, 1),
+            background-color 180ms cubic-bezier(0.2, 0, 0, 1),
+            color 180ms cubic-bezier(0.2, 0, 0, 1);
+    }
+}
+
+@keyframes hyperion-stage-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// In forced colors the marker's border and the connector survive as system colours, but the state colours behind
+// them do not, so the ladder would read as one undifferentiated column. The glyphs are what distinguish the
+// states here — a check, a cross, a skip arrow, a running indicator, an empty ring — so they are pinned against
+// the forced palette rather than left to be recoloured into the background.
+@media (forced-colors: active) {
+    .hyperion-stage-marker {
+        border-color: CanvasText;
+        background: Canvas;
+        color: CanvasText;
+        forced-color-adjust: none;
+    }
+
+    :host([data-state='current']) .hyperion-stage-marker {
+        border-color: Highlight;
+        color: Highlight;
+    }
+
+    :host([data-state='pending']) .hyperion-stage-marker,
+    :host([data-state='skipped']) .hyperion-stage-marker {
+        border-color: GrayText;
+        color: GrayText;
+    }
+
+    .hyperion-stage-running-fallback {
+        background: Highlight;
+        forced-color-adjust: none;
+    }
+
+    // The arc keeps a leading edge in a different system colour, or a fully coloured ring would rotate invisibly.
+    .hyperion-stage-running-indicator {
+        border-color: GrayText;
+        border-block-start-color: Highlight;
+        forced-color-adjust: none;
+    }
+
+    .hyperion-stage-connector {
+        border-color: CanvasText;
+        forced-color-adjust: none;
+    }
+}

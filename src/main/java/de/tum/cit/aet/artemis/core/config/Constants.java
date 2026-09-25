@@ -69,7 +69,19 @@ public final class Constants {
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
+    public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
+
+    public static final String NEW_RESULT_TOPIC = "/topic/newResults";
+
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
+
+    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
+
+    public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
+
+    public static final String SUBMISSION_PROCESSING = "/submissionProcessing";
+
+    public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
 
@@ -481,6 +493,9 @@ public final class Constants {
      */
     public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
 
+    /** The independent AI Worker coordinator module feature. */
+    public static final String MODULE_FEATURE_AIWORKER = "aiworker";
+
     /**
      * The name of the module feature used for Deimos malicious participation analysis functionality.
      */
@@ -587,6 +602,9 @@ public final class Constants {
      * The name of the property used to enable or disable whole-exercise generation.
      */
     public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
+
+    /** The property that enables the AI Worker coordinator on a core node. */
+    public static final String AIWORKER_ENABLED_PROPERTY_NAME = "artemis.aiworker.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.

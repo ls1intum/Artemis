@@ -30,13 +30,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDT
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -419,6 +420,32 @@ class GenerationJobReplayStoreTest {
         replayStore.sealUsage(jobId);
 
         assertThat(replayStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
+        assertThat(usageFailureMarkers(replayStore).estimatedSize()).isZero();
+    }
+
+    @Test
+    void failedAggregateWriteMarkerExpiresOnlyAfterTheRetainedUsageIsGone() {
+        var shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(1), Duration.ofSeconds(1));
+        String jobId = "short-lived-failed-usage";
+        shortLivedStore.initializeStart(618L, jobId, "owner", GenerationMode.GENERATE, null);
+        IMap<String, Object> actualUsageMap = usageMap();
+        IMap<String, Object> failingUsageMap = spy(actualUsageMap);
+        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), anyLong(), eq(TimeUnit.MILLISECONDS));
+        ReflectionTestUtils.setField(shortLivedStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingUsageMap));
+
+        shortLivedStore.recordAgentTurn(jobId);
+        ReflectionTestUtils.setField(shortLivedStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(actualUsageMap));
+        assertThat(shortLivedStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            usageFailureMarkers(shortLivedStore).cleanUp();
+            assertThat(usageFailureMarkers(shortLivedStore).estimatedSize()).isZero();
+            assertThat(shortLivedStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
+        });
+    }
+
+    private static Cache<?, ?> usageFailureMarkers(GenerationJobReplayStore store) {
+        return (Cache<?, ?>) ReflectionTestUtils.getField(store, "usageWriteFailures");
     }
 
     @Test
@@ -495,8 +522,8 @@ class GenerationJobReplayStoreTest {
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> assertThat(usageMap().get("orphan")).isNull());
     }
 
-    private static LLMRequest llmRequest() {
-        return new LLMRequest("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true);
+    private static GenerationUsage llmRequest() {
+        return new GenerationUsage("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true);
     }
 
     private static GenerationJobService.JobInfo jobInfo(String jobId, long exerciseId) {

@@ -13,4 +13,5 @@ import type { ExerciseGenerationFeedback } from './exercise-generation-feedback'
 export interface ExerciseGenerationInput {
     prompt?: string;
     reviewFeedback?: Array<ExerciseGenerationFeedback>;
+    sourceExerciseId?: number;
 }

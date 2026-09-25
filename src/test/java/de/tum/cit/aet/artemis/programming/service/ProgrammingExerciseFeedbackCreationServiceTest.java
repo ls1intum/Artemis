@@ -346,13 +346,13 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
 
     @Test
     void shouldPersistGenericApiChecksAsStructuralTests() {
-        var result = generateResult(List.of("testGenericApi[GenericLabBox]"), List.of("storesItems"));
+        var result = generateResult(List.of("testClass[GenericApi:GenericLabBox]"), List.of("storesItems"));
 
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
         var byName = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getType));
-        assertThat(byName).containsEntry("testGenericApi[GenericLabBox]", ProgrammingExerciseTestCaseType.STRUCTURAL).containsEntry("storesItems",
+        assertThat(byName).containsEntry("testClass[GenericApi:GenericLabBox]", ProgrammingExerciseTestCaseType.STRUCTURAL).containsEntry("storesItems",
                 ProgrammingExerciseTestCaseType.BEHAVIORAL);
     }
 

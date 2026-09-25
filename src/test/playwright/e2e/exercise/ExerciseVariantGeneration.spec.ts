@@ -143,8 +143,8 @@ test.describe('Exercise variant generation with AI', { tag: '@fast' }, () => {
 
         // Closing the wizard detaches the UI but must not cancel the @Async job.
         await wizard.runInBackground();
-        await expect(page.getByTestId('variant-tray-button')).toBeVisible();
-        await expect(page.getByTestId('variant-tray-spinner')).toBeVisible();
+        await expect(page.getByTestId('ai-activity-trigger')).toBeVisible();
+        await expect(page.getByTestId('ai-activity-running')).toBeVisible();
 
         // The background job runs to completion on the server; the variant lands in the course list.
         const job = await awaitCompletedJob(page.request, sourceQuiz.id!);

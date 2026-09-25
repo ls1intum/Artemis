@@ -1,7 +1,8 @@
-<div class="mx-auto flex max-w-4xl flex-col gap-4 px-0 py-4 sm:px-4" data-testid="hyperion-run-page">
+<div class="mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-4" data-testid="hyperion-run-page">
     <jhi-hyperion-run-header
         [exerciseTitle]="exercise()?.title"
         [adapting]="adapting()"
+        [variant]="variant()"
         [metaLabelKeys]="metaLabelKeys()"
         [statusState]="statusDotState()"
         [statusLabelKey]="statusLabelKey()"
@@ -17,7 +18,7 @@
         [startPending]="starting()"
         [editorLink]="terminal() && !running() ? editorLink() : undefined"
         [exerciseLink]="exerciseLink()"
-        [stepPosition]="stepPosition()"
+        [stepPosition]="showStepCounter() ? stepPosition() : undefined"
         [stepTotal]="stepTotal"
         [spend]="spend()"
         [fileCount]="fileCount()"
@@ -84,7 +85,13 @@
         @if (outcomeView(); as view) {
             <tumaet-ui-card>
                 <jhi-hyperion-run-outcome [view]="view" />
-                <tumaet-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="stageStripHeader()" data-testid="hyperion-run-stage-strip">
+                <tumaet-ui-panel
+                    class="mt-3 block"
+                    toggleable
+                    [collapsed]="true"
+                    [header]="stageStripHeaderKey() | artemisTranslate: stageStripHeaderParams()"
+                    data-testid="hyperion-run-stage-strip"
+                >
                     <jhi-hyperion-run-progress
                         [stages]="stages()"
                         [adapting]="adapting()"
@@ -100,7 +107,7 @@
                 <div class="flex items-center justify-between gap-3">
                     <h2 class="text-xl font-medium" id="hyperion-run-progress-title">{{ 'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate }}</h2>
                     <div class="flex items-center gap-2">
-                        @if (stepPosition(); as position) {
+                        @if (showStepCounter() && stepPosition(); as position) {
                             <span class="text-sm tabular-nums text-muted-color" data-testid="hyperion-run-step-counter">{{
                                 'artemisApp.hyperion.generation.run.stepCounter' | artemisTranslate: { position, total: stepTotal }
                             }}</span>
@@ -127,6 +134,8 @@
             <jhi-hyperion-artifacts
                 [jobId]="jobId()"
                 [specDocument]="specDocument()"
+                [adapting]="adapting()"
+                [variant]="variant()"
                 [savedToExercise]="savedToExercise()"
                 [files]="fileChanges()"
                 [running]="running()"

@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Lazy
 @RestController
 @Profile(PROFILE_CORE)
+@ConditionalOnProperty(name = "artemis.hyperion.exercise-generation.enabled", havingValue = "true")
 @RequestMapping("api/hyperion/admin/exercises/")
 @EnforceAdmin
 @FeatureUsage(UserFeature.HYPERION_GENERATION_RECOVERY)
@@ -55,7 +57,7 @@ public class AdminHyperionGenerationResource {
      * @param exerciseId exercise blocked by a non-cancellable slot
      * @return administrator-only ownership evidence, or 404
      */
-    @GetMapping("{exerciseId}/hyperion-wedged-slot")
+    @GetMapping("{exerciseId}/wedged-slot")
     public ResponseEntity<ExerciseGenerationWedgedSlotDTO> getWedgedSlot(@PathVariable long exerciseId) {
         return slotInfo(exerciseId)
                 .map(info -> ResponseEntity.ok(
@@ -71,7 +73,7 @@ public class AdminHyperionGenerationResource {
      * @param reason     incident reason recorded before attempting recovery
      * @return 204 on recovery, 400 for an invalid reason, or 404 for stale ownership evidence
      */
-    @DeleteMapping("{exerciseId}/hyperion-wedged-slots/{token}")
+    @DeleteMapping("{exerciseId}/wedged-slot/{token}")
     public ResponseEntity<Void> recoverWedgedSlot(@PathVariable long exerciseId, @PathVariable String token, @RequestParam String reason) {
         String boundedReason = CONTROL_CHARACTERS.matcher(reason).replaceAll(" ").trim();
         if (boundedReason.isBlank() || boundedReason.length() > 500) {

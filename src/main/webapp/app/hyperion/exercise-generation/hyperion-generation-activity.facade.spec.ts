@@ -40,6 +40,7 @@ function normalizeStatus(status: TestGenerationStatus): HyperionGenerationStatus
         ...status,
         events: status.events.map(normalizeEvent),
         revertAvailable: status.revertAvailable ?? false,
+        revertJobId: status.revertJobId ?? (status.revertAvailable ? status.jobId : undefined),
         ownedByCaller: status.ownedByCaller ?? true,
         cancellable: status.cancellable ?? status.running,
         accountingState: status.accountingState ?? (status.running ? 'PENDING' : 'COMPLETE'),
@@ -56,6 +57,10 @@ class MockService {
 
     getStatus() {
         return of(this.status ? normalizeStatus(this.status) : null);
+    }
+
+    getRunStatus(_exerciseId: number, _runId: string) {
+        return this.getStatus();
     }
 
     cancel(exerciseId: number, jobId: string): Observable<void> {
@@ -86,11 +91,12 @@ function fileChange(path: string, action: 'write' | 'edit' | 'delete', overrides
 
 @Component({ template: '', providers: [HyperionGenerationActivityFacade] })
 class RunStateHost {
+    readonly facade = inject(HyperionGenerationActivityFacade);
     readonly exerciseId = input<number>();
     readonly refreshingEditor = input(false);
-    readonly facade = inject(HyperionGenerationActivityFacade);
+    readonly runId = input<string>();
     constructor() {
-        this.facade.connect({ exerciseId: this.exerciseId, refreshingEditor: this.refreshingEditor });
+        this.facade.connect({ exerciseId: this.exerciseId, runId: this.runId, refreshingEditor: this.refreshingEditor });
     }
 }
 describe('HyperionGenerationActivityFacade', () => {
@@ -531,6 +537,7 @@ describe('HyperionGenerationActivityFacade', () => {
         const successSpy = vi.spyOn(alertService, 'success');
 
         component.confirmRevert();
+        component.confirmRevert();
         component.acceptRevert();
         component.running.set(true);
         component.cancel();
@@ -683,6 +690,7 @@ describe('HyperionGenerationActivityFacade', () => {
         const errorAlert = vi.spyOn(TestBed.inject(AlertService), 'error');
         const reverted = vi.fn();
         component.generationReverted.subscribe(reverted);
+        component.confirmRevert();
         component.acceptRevert();
 
         service.status = { jobId: 'current', fileChanges: [], running: true, events: [{ type: 'PROGRESS', message: 'Current exercise' }] };
@@ -710,6 +718,7 @@ describe('HyperionGenerationActivityFacade', () => {
         const component = fixture.componentInstance.facade;
         const response = new Subject<ExerciseGenerationRevertResult>();
         vi.spyOn(service, 'revertExerciseGeneration').mockReturnValue(response);
+        component.confirmRevert();
         component.acceptRevert();
         expect(component.reverting()).toBe(true);
         service.status = { jobId: 'current', fileChanges: [], running: true, events: [] };
@@ -768,6 +777,7 @@ describe('HyperionGenerationActivityFacade', () => {
 
         component.confirmRevert();
         expect(component.confirmRevertVisible()).toBe(true);
+        component.confirmRevert();
         component.acceptRevert();
 
         expect(service.revertCalls).toEqual([42]);
@@ -891,6 +901,39 @@ describe('HyperionGenerationActivityFacade', () => {
         expect(component.verdict()).toBeUndefined();
         expect(component.canRevert()).toBe(false);
     });
+    it('keeps undo bound to the run shown when confirmation opened', () => {
+        const fixture = createWith({ jobId: 'old', running: false, events: [], fileChanges: [], revertAvailable: true });
+        const component = fixture.componentInstance.facade;
+        const revert = vi.spyOn(service, 'revertExerciseGeneration');
+        component.confirmRevert();
+        component.revertJobId.set('newer-save');
+        component.acceptRevert();
+        expect(revert).toHaveBeenCalledExactlyOnceWith(42, 'old');
+    });
+
+    it('does not execute undo without confirming a specific run', () => {
+        const fixture = createWith({ jobId: 'old', running: false, events: [], fileChanges: [], revertAvailable: true });
+        const revert = vi.spyOn(service, 'revertExerciseGeneration');
+        fixture.componentInstance.facade.acceptRevert();
+        expect(revert).not.toHaveBeenCalled();
+    });
+
+    it('keeps canonical inspection on the selected run when another run starts on the exercise', () => {
+        const fixture = createWith({ jobId: 'old', running: false, events: [], fileChanges: [] });
+        const exact = vi.spyOn(service, 'getRunStatus');
+        fixture.componentRef.setInput('runId', 'old');
+        fixture.detectChanges();
+        service.exerciseState$.next({ exerciseId: 42, jobId: 'new', running: true });
+        expect(exact).toHaveBeenLastCalledWith(42, 'old');
+        expect(fixture.componentInstance.facade.jobId()).toBe('old');
+        expect(fixture.componentInstance.facade.running()).toBe(false);
+        fixture.componentRef.setInput('runId', 'second');
+        service.status = { jobId: 'second', running: false, events: [], fileChanges: [] };
+        fixture.detectChanges();
+        expect(exact).toHaveBeenLastCalledWith(42, 'second');
+        expect(fixture.componentInstance.facade.jobId()).toBe('second');
+    });
+
     it('refreshes a prior adaptation undo after a later generation stops', () => {
         vi.useFakeTimers();
         const fixture = createWith(null);
@@ -912,7 +955,7 @@ describe('HyperionGenerationActivityFacade', () => {
             .fn()
             .mockReturnValueOnce(of(runningStatus))
             .mockReturnValueOnce(of(stoppedStatus))
-            .mockReturnValueOnce(of({ ...stoppedStatus, revertAvailable: true }));
+            .mockReturnValueOnce(of({ ...stoppedStatus, revertAvailable: true, revertJobId: 'earlier-adaptation' }));
         component.attachToJob('later-run', 'GENERATE');
 
         service.stream$.next({ type: 'CANCELLED', message: 'Cancelled' });

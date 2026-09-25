@@ -1,9 +1,11 @@
+import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
+import { generationCapabilityBlocker, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { HyperionRunInputComponent } from './hyperion-run-input.component';
 import { filter, merge } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker } from 'app/hyperion/exercise-generation/hyperion-generation-support';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, linkedSignal, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -16,7 +18,6 @@ import {
     TumAetUiMessageComponent,
     TumAetUiMessageSeverity,
     TumAetUiPanelComponent,
-    TumAetUiStatusDotState,
 } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -25,6 +26,7 @@ import { getCourseId } from 'app/exercise/shared/entities/exercise/exercise.mode
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionArtifactsComponent } from 'app/hyperion/exercise-generation/run/hyperion-artifacts.component';
+import { artifactFiles } from 'app/hyperion/exercise-generation/artifacts/hyperion-artifact-file';
 import { HyperionRunHeaderComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-header.component';
 import { HyperionRunOutcomeCheck, HyperionRunOutcomeComponent, HyperionRunOutcomeView } from 'app/hyperion/exercise-generation/run/hyperion-run-outcome.component';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
@@ -40,9 +42,10 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 /** The status word shown next to the dot, and the dot state that goes with it. */
-type RunStatus = 'queued' | 'running' | 'cancelling' | 'saved' | 'needsReview' | 'partial' | 'failed' | 'cancelled' | 'notStarted' | 'unknown';
+type RunStatus = 'queued' | 'running' | 'cancelling' | 'saved' | 'needsReview' | 'partial' | 'failed' | 'cancelled' | 'notStarted' | 'unknown' | 'reverted';
 
-const STATUS_DOT_STATE: Record<RunStatus, TumAetUiStatusDotState> = {
+const STATUS_DOT_STATE: Record<RunStatus, HyperionStatusState> = {
+    reverted: 'success',
     queued: 'queued',
     running: 'running',
     cancelling: 'running',
@@ -115,6 +118,11 @@ export class HyperionRunPageComponent {
     private readonly generationService = inject(HyperionExerciseGenerationService);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly destroyRef = inject(DestroyRef);
+    readonly inspectedExerciseId = input<number>();
+    readonly showStepCounter = input(true);
+    readonly inspectedRunId = input<string>();
+    protected readonly runId = computed(() => this.inspectedRunId() ?? this.routeParams()['runId'] ?? this.routeQuery()['run']);
+    protected readonly variant = computed(() => this.facade.run()?.kind === 'VARIANT');
     protected readonly jobId = this.facade.jobId;
     protected readonly canRevert = this.facade.canRevert;
     protected readonly reverting = this.facade.reverting;
@@ -123,6 +131,7 @@ export class HyperionRunPageComponent {
     protected readonly revertPartialRepositories = this.facade.revertPartialRepositories;
     protected readonly undoKey = computed(() => (this.facade.effectiveRevertMode() === 'ADAPT' ? 'undoAdaptation' : 'undoGeneration'));
 
+    private readonly routeQuery = toSignal(this.route.queryParams, { initialValue: this.route.snapshot.queryParams });
     private readonly routeParams = toSignal(this.route.params, { initialValue: this.route.snapshot.params });
     private readonly resolvedExercise = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
 
@@ -130,6 +139,7 @@ export class HyperionRunPageComponent {
     private readonly refreshedExercise = signal<ProgrammingExercise | undefined>(undefined);
 
     protected readonly exerciseId = computed(() => {
+        if (this.inspectedExerciseId() !== undefined) return this.inspectedExerciseId();
         const raw = this.routeParams()['exerciseId'];
         const parsed = Number(raw);
         return raw !== undefined && Number.isFinite(parsed) ? parsed : undefined;
@@ -137,7 +147,11 @@ export class HyperionRunPageComponent {
 
     protected readonly exercise = computed<ProgrammingExercise | undefined>(() => {
         const refreshed = this.refreshedExercise();
-        return refreshed?.id === this.exerciseId() ? refreshed : (this.resolvedExercise()['programmingExercise'] as ProgrammingExercise | undefined);
+        return refreshed?.id === this.exerciseId()
+            ? refreshed
+            : this.inspectedExerciseId()
+              ? undefined
+              : (this.resolvedExercise()['programmingExercise'] as ProgrammingExercise | undefined);
     });
 
     /** The course the exercise belongs to; the route segment is the fallback for an exercise served without its course. */
@@ -164,12 +178,12 @@ export class HyperionRunPageComponent {
     protected readonly spend = this.facade.spend;
 
     protected readonly outcome = computed(() => runOutcome(this.events()));
-    protected readonly terminal = computed(() => this.outcome() !== undefined);
+    protected readonly terminal = computed(() => this.outcome() !== undefined || (!!this.facade.run() && !this.running()));
     protected readonly stages = computed(() => stageStates(this.events(), this.outcome()));
     /** `Step 2 of 5`, from position in the fixed five stages rather than from completion, so it never walks backwards. */
     protected readonly stepPosition = computed(() => stagePosition(this.stages()));
     protected readonly stepTotal = HYPERION_STAGE_COUNT;
-    protected readonly fileCount = computed(() => this.fileChanges().length);
+    protected readonly fileCount = computed(() => artifactFiles(this.fileChanges()).length);
     /**
      * Whether the page can still reach the server.
      *
@@ -185,6 +199,7 @@ export class HyperionRunPageComponent {
     private readonly terminalEvent = computed(() => latestTerminalEvent(this.events()));
 
     protected readonly status = computed<RunStatus>(() => {
+        if (this.reverted()) return 'reverted';
         const outcome = this.outcome();
         if (outcome) {
             return OUTCOME_STATUS[outcome];
@@ -196,6 +211,7 @@ export class HyperionRunPageComponent {
             // Another instructor's run streams no events to this reader, yet it is running, not waiting to start.
             return this.events().length > 0 || !this.ownedByCaller() ? 'running' : 'queued';
         }
+        if (this.facade.run() && !this.running()) return 'unknown';
         if (this.facade.jobId() !== undefined) {
             return 'queued';
         }
@@ -217,7 +233,7 @@ export class HyperionRunPageComponent {
         ].filter((key): key is string => key !== undefined);
     });
 
-    protected readonly startedAt = computed(() => this.events().find((event) => event.type === 'STARTED')?.timestamp);
+    protected readonly startedAt = computed(() => this.events().find((event) => event.type === 'STARTED')?.timestamp ?? this.facade.run()?.startedAt);
     protected readonly endedAt = computed(() => this.terminalEvent()?.timestamp);
 
     /** Nothing has ever run for this exercise: no job, and no outstanding or failed status check to explain why. */
@@ -226,14 +242,15 @@ export class HyperionRunPageComponent {
     protected readonly cancelAvailable = computed(() => !this.terminal() && this.running() && this.ownedByCaller() && this.facade.cancellable());
     /** Whether starting a run is this deployment's and this instructor's to do at all; why the exercise may still refuse one is {@link startBlockedReason}. */
     protected readonly generationOffered = computed(() => this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) && this.ownedByCaller());
+    private readonly generationCapabilities = injectGenerationCapabilities(this.exercise, this.generationOffered);
     /** Translation key for what about the exercise prevents a run, so the start button can say it instead of vanishing. */
     protected readonly startBlockedReason = computed(() => {
         const exercise = this.exercise();
         const blocker = exercise ? hyperionGenerationBlocker(exercise, this.now()) : undefined;
-        return blocker ? HYPERION_GENERATION_BLOCKER_KEY + blocker : undefined;
+        return blocker ? HYPERION_GENERATION_BLOCKER_KEY + blocker : generationCapabilityBlocker(this.generationCapabilities.value());
     });
-    protected readonly runAgainAvailable = computed(() => this.generationOffered() && this.terminal() && !this.starting());
-    protected readonly startAvailable = computed(() => this.generationOffered() && this.notStarted() && !this.starting());
+    protected readonly runAgainAvailable = computed(() => !this.runId() && this.generationOffered() && this.terminal() && !this.starting());
+    protected readonly startAvailable = computed(() => !this.runId() && this.generationOffered() && this.notStarted() && !this.starting());
     private readonly canStart = computed(() => (this.runAgainAvailable() || this.startAvailable()) && this.startBlockedReason() === undefined);
 
     /** How long a finished run took, for the folded stage strip. Static: a terminal run has no clock left to tick. */
@@ -247,19 +264,10 @@ export class HyperionRunPageComponent {
         return Number.isFinite(seconds) ? formatElapsed(seconds) : undefined;
     });
 
-    /**
-     * The header of the folded stage ladder on a finished run.
-     *
-     * The ladder collapses to a strip rather than disappearing, because the stages are still real information about
-     * what the run did - they are simply no longer the answer.
-     */
-    protected readonly stageStripHeader = computed(() => {
-        const duration = this.runDuration();
-        const total = this.stepTotal;
-        return duration
-            ? this.translateService.instant('artemisApp.hyperion.generation.run.stageStripWithDuration', { total, duration })
-            : this.translateService.instant('artemisApp.hyperion.generation.run.stageStrip', { total });
-    });
+    protected readonly stageStripHeaderKey = computed(() =>
+        this.runDuration() ? 'artemisApp.hyperion.generation.run.stageStripWithDuration' : 'artemisApp.hyperion.generation.run.stageStrip',
+    );
+    protected readonly stageStripHeaderParams = computed(() => ({ total: this.stepTotal, duration: this.runDuration() }));
 
     /** When the page last heard anything at all, so stale data on screen is marked as stale rather than passed off as current. */
     protected readonly lastUpdateTime = computed(() => formatClockTime(this.events().at(-1)?.timestamp));
@@ -275,16 +283,20 @@ export class HyperionRunPageComponent {
     protected readonly exerciseLink = computed(() => {
         const courseId = this.courseId();
         const exerciseId = this.exerciseId();
-        return courseId !== undefined && exerciseId !== undefined ? (['/course-management', courseId, 'programming-exercises', exerciseId] as const) : undefined;
+        if (courseId === undefined || exerciseId === undefined) return undefined;
+        const group = this.exercise()?.exerciseGroup;
+        if (group) {
+            return group.id !== undefined && group.exam?.id !== undefined
+                ? ['/course-management', courseId, 'exams', group.exam.id, 'exercise-groups', group.id, 'programming-exercises', exerciseId]
+                : undefined;
+        }
+        return ['/course-management', courseId, 'programming-exercises', exerciseId];
     });
 
     protected readonly editorLink = computed(() => {
-        const courseId = this.courseId();
-        const exerciseId = this.exerciseId();
+        const exerciseLink = this.exerciseLink();
         const participationId = this.exercise()?.templateParticipation?.id;
-        return courseId !== undefined && exerciseId !== undefined && participationId !== undefined
-            ? (['/course-management', courseId, 'programming-exercises', exerciseId, 'code-editor', RepositoryType.TEMPLATE, participationId] as const)
-            : undefined;
+        return exerciseLink && participationId !== undefined ? [...exerciseLink, 'code-editor', RepositoryType.TEMPLATE, participationId] : undefined;
     });
 
     /** Whether the run completed a save, rather than only producing working files. */
@@ -312,7 +324,6 @@ export class HyperionRunPageComponent {
             severity: OUTCOME_SEVERITY[outcome],
             titleKey: `artemisApp.hyperion.generation.outcome.${copy}Title`,
             bodyKey: `artemisApp.hyperion.generation.outcome.${copy}Body`,
-            bodyParams: { testCount: verdict?.testCount ?? 0 },
             terminationReasonKey:
                 (outcome === 'failed' || outcome === 'cancelled') && terminal?.terminationReason
                     ? `artemisApp.hyperion.generation.terminationReason.${terminal.terminationReason}`
@@ -369,7 +380,16 @@ export class HyperionRunPageComponent {
     });
 
     constructor() {
-        this.facade.connect({ exerciseId: this.exerciseId, refreshingEditor: signal(false) });
+        this.facade.connect({ exerciseId: this.exerciseId, runId: this.runId, refreshingEditor: signal(false) });
+        effect((onCleanup) => {
+            const id = this.inspectedExerciseId();
+            if (id === undefined) return;
+            const subscription = this.programmingExerciseService.find(id).subscribe({
+                next: ({ body }) => this.refreshedExercise.set(body ?? undefined),
+                error: () => this.refreshedExercise.set(undefined),
+            });
+            onCleanup(() => subscription.unsubscribe());
+        });
 
         effect(() => {
             const announcement = this.announcement();

@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionResponseDTO;
@@ -65,10 +66,12 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationToolchain;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseMetadataSuggestionService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionEffortProfileService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -128,9 +131,7 @@ class HyperionExerciseGenerationResourceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, auxiliaryRepositoryRepository, jobService, agentSystemPromptService,
-                reviewCommentContextRenderer, generationRevertService, sandboxClient, generationBudgetService, generationCapacityHealthIndicator, effortProfileService,
-                metadataSuggestionService);
+        resource = createResource(effortProfileService);
         when(auxiliaryRepositoryRepository.findByExerciseId(org.mockito.ArgumentMatchers.any())).thenReturn(java.util.List.of());
         when(sandboxClient.hasAvailableGenerationSandboxSlot(GenerationToolchain.JAVA_GRADLE)).thenReturn(true);
         when(generationBudgetService.reserveGenerationBudget(any(), any(), anyLong())).thenReturn(HyperionGenerationBudgetService.BudgetReservation.none());
@@ -219,7 +220,7 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
-        var selectedFeedback = List.of(new de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Fix the boundary.")));
+        var selectedFeedback = List.of(new ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Fix the boundary.")));
         when(reviewCommentContextRenderer.captureWholeExerciseSelectedFeedback(1L, List.of(5L, 9L)))
                 .thenReturn(new HyperionReviewCommentContextRendererService.SelectedFeedback("FEEDBACK_BLOCK", selectedFeedback));
         when(jobService.startJob(eq(testUser), eq(testExercise), argThat(prompt -> prompt.contains("RESOLVED") && prompt.contains("FEEDBACK_BLOCK")), eq(GenerationMode.ADAPT),
@@ -253,10 +254,10 @@ class HyperionExerciseGenerationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
-        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
-                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(true, List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS))));
+        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(
+                Optional.of(new ExerciseGenerationRevertService.RevertResult(true, List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS), true)));
 
-        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
+        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L, "adapt-job");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
@@ -270,14 +271,15 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void revertExerciseGeneration_whenRevertIsPartial_returns409() {
+        when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
         when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
-                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(RepositoryType.SOLUTION))));
+                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(RepositoryType.SOLUTION), true)));
 
-        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
+        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L, "adapt-job");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
@@ -289,6 +291,46 @@ class HyperionExerciseGenerationResourceTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
+    void cleanRestoreRefusalReleasesOnlyAFreshGuard(boolean recovering) {
+        when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
+        when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
+        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
+                .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(), false)));
+
+        assertThat(resource.revertExerciseGeneration(1L, "adapt-job").getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+
+        verify(jobService, never()).discardRetainedRun(anyLong(), any());
+        if (recovering) {
+            verify(jobService).retainRevertRecoverySlot(1L, "revert-slot");
+            verify(jobService, never()).clearRevertSlot(1L, "revert-slot");
+        }
+        else {
+            verify(jobService).clearRevertSlot(1L, "revert-slot");
+            verify(jobService, never()).retainRevertRecoverySlot(1L, "revert-slot");
+        }
+    }
+
+    @Test
+    void staleUndoCannotRevertANewerRunAndReleasesOnlyItsFreshGuard() {
+        when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("newer-job"));
+
+        assertThat(resource.revertExerciseGeneration(1L, "adapt-job").getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+
+        var ordered = org.mockito.Mockito.inOrder(jobService, generationRevertService);
+        ordered.verify(jobService).claimRevertSlot(testUser, 1L);
+        ordered.verify(generationRevertService).findRevertibleJobId(1L);
+        verify(generationRevertService, never()).revert(any(), any(), any());
+        verify(jobService).clearRevertSlot(1L, "revert-slot");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     void revertExerciseGeneration_whenNothingToRevert_preservesAnExistingRecoveryGuard(boolean recovering) {
         when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
@@ -296,7 +338,7 @@ class HyperionExerciseGenerationResourceTest {
         when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(Optional.empty());
 
-        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L);
+        ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L, "adapt-job");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         if (recovering) {
@@ -315,7 +357,7 @@ class HyperionExerciseGenerationResourceTest {
         when(jobService.claimRevertSlot(testUser, 1L))
                 .thenThrow(new ConflictException("Exercise generation is already running for this exercise", "hyperionExerciseGeneration", "exerciseGenerationRunning"));
 
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.revertExerciseGeneration(1L));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.revertExerciseGeneration(1L, "adapt-job"));
 
         verify(generationRevertService, never()).revert(any(), any(), any());
         verify(jobService, never()).clearRevertSlot(eq(1L), any());
@@ -674,7 +716,7 @@ class HyperionExerciseGenerationResourceTest {
         Method generate = HyperionExerciseGenerationResource.class.getMethod("generateExercise", long.class, ExerciseGenerationRequestDTO.class);
         Method status = HyperionExerciseGenerationResource.class.getMethod("getExerciseGenerationStatus", long.class);
         Method cancel = HyperionExerciseGenerationResource.class.getMethod("cancelExerciseGeneration", long.class, String.class);
-        Method revert = HyperionExerciseGenerationResource.class.getMethod("revertExerciseGeneration", long.class);
+        Method revert = HyperionExerciseGenerationResource.class.getMethod("revertExerciseGeneration", long.class, String.class);
         Method supported = HyperionExerciseGenerationResource.class.getMethod("getSupportedGenerationLanguages");
         Method effortProfiles = HyperionExerciseGenerationResource.class.getMethod("getGenerationEffortProfiles");
         Method metadataSuggestion = HyperionExerciseGenerationResource.class.getMethod("suggestGenerationMetadata", long.class,
@@ -726,9 +768,7 @@ class HyperionExerciseGenerationResourceTest {
         standard.setLabel("Standard");
         profiles.put("standard", standard);
         properties.setProfiles(profiles);
-        return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, auxiliaryRepositoryRepository, jobService, agentSystemPromptService,
-                reviewCommentContextRenderer, generationRevertService, sandboxClient, generationBudgetService, generationCapacityHealthIndicator,
-                new HyperionEffortProfileService(properties, List.of()), metadataSuggestionService);
+        return createResource(new HyperionEffortProfileService(properties, List.of()));
     }
 
     private void stubHappyPath(ExerciseGenerationRequestDTO request) {
@@ -833,4 +873,13 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThat(resource.getExerciseGenerationStatus(1L).getBody()).isNotNull().extracting(ExerciseGenerationStatusDTO::effortProfile).isEqualTo("thorough");
     }
+
+    private HyperionExerciseGenerationResource createResource(HyperionEffortProfileService profiles) {
+        var capabilities = new GenerationCapabilityService(agentSystemPromptService, auxiliaryRepositoryRepository, programmingExerciseRepository, jobService, sandboxClient);
+        var admission = new GenerationAdmissionService(programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, reviewCommentContextRenderer,
+                sandboxClient, generationBudgetService, generationCapacityHealthIndicator, profiles);
+        return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, admission,
+                generationRevertService, profiles, metadataSuggestionService);
+    }
+
 }

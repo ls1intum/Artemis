@@ -1,4 +1,5 @@
-import { TumAetUiStepState } from '@tumaet/ui-angular';
+export type HyperionStepState = 'pending' | 'current' | 'complete' | 'failed' | 'skipped';
+
 import { HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 export type HyperionStageKey = 'prepare' | 'design' | 'build' | 'review' | 'save';
@@ -39,7 +40,7 @@ export const HYPERION_SUBSTEPS: readonly HyperionSubstepKey[] = ['concept', 'spe
 
 export interface HyperionSubstep {
     key: HyperionSubstepKey;
-    state: TumAetUiStepState;
+    state: HyperionStepState;
 }
 
 /**
@@ -55,7 +56,7 @@ export interface HyperionStageSummary {
 
 export interface HyperionStage {
     key: HyperionStageKey;
-    state: TumAetUiStepState;
+    state: HyperionStepState;
     /** Present only once the agent has reported at least one substep for this stage. */
     substeps?: HyperionSubstep[];
     /** Present only on a stage that has ended and did report work. */
@@ -247,12 +248,12 @@ export function stagePosition(stages: readonly HyperionStage[]): number | undefi
  * the guard for the moment the server starts reporting a substep outcome independently, which is the point at which a
  * template-level fix would be forgotten.
  */
-export function mostCriticalState(parent: TumAetUiStepState, substeps: readonly HyperionSubstep[] | undefined): TumAetUiStepState {
+export function mostCriticalState(parent: HyperionStepState, substeps: readonly HyperionSubstep[] | undefined): HyperionStepState {
     if (!substeps?.length) {
         return parent;
     }
-    const order: TumAetUiStepState[] = ['failed', 'current', 'complete', 'skipped', 'pending'];
-    const rank = (state: TumAetUiStepState) => order.indexOf(state);
+    const order: HyperionStepState[] = ['failed', 'current', 'complete', 'skipped', 'pending'];
+    const rank = (state: HyperionStepState) => order.indexOf(state);
     return substeps.reduce((worst, substep) => (rank(substep.state) < rank(worst) ? substep.state : worst), parent);
 }
 
@@ -262,7 +263,7 @@ export function mostCriticalState(parent: TumAetUiStepState, substeps: readonly 
  * The parent decides: a stage that is over can hold no running substep, which is what keeps a terminal outcome from
  * leaving a spinner behind inside a step that has already been struck through.
  */
-function substepStates(parent: TumAetUiStepState, latest: number, furthest: number): HyperionSubstep[] {
+function substepStates(parent: HyperionStepState, latest: number, furthest: number): HyperionSubstep[] {
     return HYPERION_SUBSTEPS.map((key, index) => {
         const visited = index <= furthest;
         switch (parent) {
@@ -280,7 +281,7 @@ function substepStates(parent: TumAetUiStepState, latest: number, furthest: numb
     });
 }
 
-function stageState(index: number, latest: number, furthest: number, outcome: HyperionRunOutcome | undefined): TumAetUiStepState {
+function stageState(index: number, latest: number, furthest: number, outcome: HyperionRunOutcome | undefined): HyperionStepState {
     switch (outcome) {
         case 'saved':
         case 'needsReview':

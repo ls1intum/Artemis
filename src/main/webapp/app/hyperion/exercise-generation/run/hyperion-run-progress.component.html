@@ -1,6 +1,11 @@
-<tumaet-ui-stepper [ariaLabel]="'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate" data-testid="hyperion-run-progress">
+<ol
+    role="list"
+    class="m-0 flex list-none flex-col p-0"
+    [attr.aria-label]="'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate"
+    data-testid="hyperion-run-progress"
+>
     @for (step of steps(); track step.key) {
-        <tumaet-ui-step [state]="step.state" [label]="step.labelKey | artemisTranslate" [attr.data-stage]="step.key" [attr.data-state]="step.state">
+        <jhi-hyperion-stage [state]="step.state" [label]="step.labelKey | artemisTranslate" [attr.data-stage]="step.key" [attr.data-state]="step.state">
             <!--
                 Before the substeps rather than after them: this is the stage's own clock, and a duration printed under the
                 last substep reads as that substep's, which is wrong whenever the substep it lands under has not started.
@@ -22,11 +27,16 @@
 
             @if (step.substeps; as substeps) {
                 <!-- The same visual language one level down, so the pieces of the design stage read as part of it. -->
-                <tumaet-ui-stepper class="mt-1 block" [ariaLabel]="step.labelKey | artemisTranslate" data-testid="hyperion-run-substeps">
+                <ol role="list" class="mt-1 mb-0 flex list-none flex-col p-0" [attr.aria-label]="step.labelKey | artemisTranslate" data-testid="hyperion-run-substeps">
                     @for (substep of substeps; track substep.key) {
-                        <tumaet-ui-step [state]="substep.state" [label]="substep.labelKey | artemisTranslate" [attr.data-substep]="substep.key" [attr.data-state]="substep.state" />
+                        <jhi-hyperion-stage
+                            [state]="substep.state"
+                            [label]="substep.labelKey | artemisTranslate"
+                            [attr.data-substep]="substep.key"
+                            [attr.data-state]="substep.state"
+                        />
                     }
-                </tumaet-ui-stepper>
+                </ol>
             }
 
             @if (step.detail) {
@@ -76,6 +86,6 @@
                     }
                 </div>
             }
-        </tumaet-ui-step>
+        </jhi-hyperion-stage>
     }
-</tumaet-ui-stepper>
+</ol>

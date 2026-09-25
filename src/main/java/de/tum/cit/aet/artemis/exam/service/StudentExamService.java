@@ -121,9 +121,7 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
-    private final StudentExamAssignmentService assignmentService;
-
-    private final ExamExercisePreparationStatusService preparationStatus;
+    private final StudentExamPreparationService preparationService;
 
     private final TaskScheduler scheduler;
 
@@ -136,9 +134,9 @@ public class StudentExamService {
             Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository,
-            StudentExamAssignmentService assignmentService, ExamExercisePreparationStatusService preparationStatus, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            StudentExamPreparationService preparationService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
+            StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -155,8 +153,7 @@ public class StudentExamService {
         this.programmingTriggerService = programmingTriggerService;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
-        this.assignmentService = assignmentService;
-        this.preparationStatus = preparationStatus;
+        this.preparationService = preparationService;
         this.scheduler = scheduler;
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
@@ -565,7 +562,7 @@ public class StudentExamService {
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
-        testRun = assignmentService.assignTestRun(testRun);
+        testRun = preparationService.assignTestRun(testRun);
         return testRun;
     }
 
@@ -723,7 +720,7 @@ public class StudentExamService {
         var failedExamsCounter = new AtomicInteger(0);
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
-        preparationStatus.update(examId, 0, 0, studentExamCount, 0, startedAt, lock);
+        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExamCount, 0, startedAt, lock);
 
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = rowsByStudentExamId.entrySet().stream().map(entry -> {
@@ -737,18 +734,19 @@ public class StudentExamService {
                 return CompletableFuture
                         .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, startedExerciseIds, generatedParticipations, true),
                                 threadPool)
-                        .thenRun(() -> preparationStatus.update(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
+                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam {}", studentExamId, throwable);
-                            preparationStatus.update(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount, generatedParticipations.size(),
-                                    startedAt, lock);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount,
+                                    generatedParticipations.size(), startedAt, lock);
                             return null;
                         });
             }).toArray(CompletableFuture[]::new);
             return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
                 threadPool.shutdown();
-                preparationStatus.update(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt, lock);
+                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt,
+                        lock);
                 return generatedParticipations.size();
             });
         }
@@ -796,12 +794,16 @@ public class StudentExamService {
         return startedStudentIdsByExerciseId;
     }
 
+    private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
+        preparationService.sendAndCacheExercisePreparationStatus(examId, finished, failed, overall, participations, startTime, lock);
+    }
+
     public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
-        return preparationStatus.get(examId);
+        return preparationService.getExerciseStartStatusOfExam(examId);
     }
 
     public void invalidateExerciseStartStatus(Long examId) {
-        preparationStatus.invalidate(examId);
+        preparationService.invalidateExerciseStartStatus(examId);
     }
 
     /**
@@ -814,7 +816,7 @@ public class StudentExamService {
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         long start = System.nanoTime();
-        StudentExam studentExam = assignmentService.assignStudent(exam.getId(), student.getId());
+        StudentExam studentExam = preparationService.assignStudent(exam.getId(), student.getId());
         // The bulk paths never read the user back, so creation only writes the foreign key and leaves a stub behind.
         // This one hands its student exam to a caller that returns it to the client, so it gets the real user it
         // already holds. Safe to set here: the save ran in its own transaction, so this entity is detached and no
@@ -836,20 +838,26 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        return assignmentService.assignRegisteredStudents(exam.getId(), false);
+        return preparationService.assignRegisteredStudents(exam.getId(), false);
     }
 
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
      * <p>
-     * Selection and insertion are serialized on the exam row; programming authoring is excluded until assignment commits.
+     * <b>Not serialised against a concurrent generation.</b> The exam-row lock this and the other generation paths used
+     * to take is gone with the transaction that held it, so two simultaneous calls can both read the same user as
+     * missing and both create a student exam for them; there is no unique constraint on {@code (exam_id, user_id)} to
+     * catch it, and a portable one cannot be added because a test run is a second student exam for the same pair. The
+     * same removal also means the exercise groups are no longer re-read under a lock, so a concurrent exercise-group
+     * move can desync the selection. Restoring both means a repository-owned boundary that locks the exam row, which is
+     * recorded as a follow-up rather than reintroduced here.
      *
      * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
         this.invalidateExerciseStartStatus(exam.getId());
-        return assignmentService.assignRegisteredStudents(exam.getId(), true);
+        return preparationService.assignRegisteredStudents(exam.getId(), true);
     }
 }

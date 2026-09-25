@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Lazy
 @RestController
 @Profile(PROFILE_CORE)
-@RequestMapping("api/hyperion/admin/exercises/")
+@RequestMapping("api/hyperion/admin/")
 @EnforceAdmin
 @FeatureUsage(UserFeature.HYPERION_GENERATION_MONITORING)
 public class AdminHyperionGenerationMonitoringResource {
@@ -64,7 +64,7 @@ public class AdminHyperionGenerationMonitoringResource {
      * @param reason       the operator's reason
      * @return 202 when requested, 400 for an invalid reason, or 409 when no longer cancellable
      */
-    @DeleteMapping("{exerciseId}/generations/{generationId}")
+    @DeleteMapping("exercises/{exerciseId}/generations/{generationId}")
     public ResponseEntity<Void> cancelGeneration(@PathVariable long exerciseId, @PathVariable String generationId, @RequestParam String reason) {
         String boundedReason = CONTROL_CHARACTERS.matcher(reason).replaceAll(" ").trim();
         if (boundedReason.isBlank() || boundedReason.length() > 500 || generationId.length() > 128) {

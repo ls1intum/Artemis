@@ -18,6 +18,7 @@ import { Observable } from 'rxjs';
 import { ExerciseGenerationRequest } from '../model/exercise-generation-request';
 import { ExerciseGenerationJobStart } from '../model/exercise-generation-job-start';
 import { ExerciseGenerationStatus } from '../model/exercise-generation-status';
+import { ExerciseGenerationCapabilities } from '../model/exercise-generation-capabilities';
 import { ExerciseGenerationEffortProfile } from '../model/exercise-generation-effort-profile';
 import { ExerciseGenerationRetainedArtifacts } from '../model/exercise-generation-retained-artifacts';
 import { ExerciseGenerationRevertResult } from '../model/exercise-generation-revert-result';
@@ -65,6 +66,16 @@ export class HyperionExerciseGenerationApi {
     /**
      *
      *
+     * @param exerciseId
+     */
+    getGenerationCapabilities(exerciseId: number): Observable<ExerciseGenerationCapabilities> {
+        const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generation/capabilities`;
+        return this.http.get<ExerciseGenerationCapabilities>(url);
+    }
+
+    /**
+     *
+     *
      */
     getGenerationEffortProfiles(): Observable<Array<ExerciseGenerationEffortProfile>> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/generation/effort-profiles`;
@@ -94,9 +105,11 @@ export class HyperionExerciseGenerationApi {
      *
      *
      * @param exerciseId
+     * @param runId
      */
-    revertExerciseGeneration(exerciseId: number): Observable<ExerciseGenerationRevertResult> {
-        const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert`;
+    revertExerciseGeneration(exerciseId: number, runId: string): Observable<ExerciseGenerationRevertResult> {
+        const runIdPath = encodeURIComponent(String(runId));
+        const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generation/runs/${runIdPath}/revert`;
         return this.http.post<ExerciseGenerationRevertResult>(url, null);
     }
 

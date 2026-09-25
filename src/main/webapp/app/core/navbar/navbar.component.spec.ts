@@ -51,6 +51,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { mockThemeSwitcherComponentViewChildren } from 'test/helpers/mocks/mock-instance.helper';
+import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperion-activity-tray.component';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
@@ -145,10 +146,18 @@ describe('NavbarComponent', () => {
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent, CourseNotificationOverviewComponent],
+                    imports: [
+                        ThemeSwitchComponent,
+                        JhiConnectionWarningComponent,
+                        LoadingNotificationComponent,
+                        ImageComponent,
+                        CourseNotificationOverviewComponent,
+                        HyperionActivityTrayComponent,
+                    ],
                 },
                 add: {
                     imports: [
+                        MockComponent(HyperionActivityTrayComponent),
                         StubThemeSwitchComponent,
                         StubConnectionWarningComponent,
                         StubLoadingNotificationComponent,
@@ -180,11 +189,18 @@ describe('NavbarComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should not render the variant generation tray host without jobs', () => {
-        TestBed.inject(ExerciseVariantGenerationService).jobs.set([]);
+    it('mounts exactly one AI activity tray for both workflows and hides it during an exam', () => {
         fixture.detectChanges();
-
+        component.currAccount.set({ login: 'editor' } as User);
+        component.hyperionExerciseGenerationEnabled.set(true);
+        TestBed.inject(ExerciseVariantGenerationService).jobs.set([{ jobId: 'quiz', phase: 'TRANSFORMING' }]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('jhi-hyperion-activity-tray')).toHaveLength(1);
         expect(fixture.nativeElement.querySelector('jhi-variant-generation-tray')).toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-hyperion-jobs-indicator')).toBeNull();
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('jhi-hyperion-activity-tray')).toBeNull();
     });
 
     it('should display the current course next to the logo', () => {

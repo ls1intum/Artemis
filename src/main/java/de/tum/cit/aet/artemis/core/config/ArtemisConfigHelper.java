@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.AIWORKER_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLASLLM_ENABLED_PROPERTY_NAME;
@@ -114,6 +115,16 @@ public class ArtemisConfigHelper {
     public boolean isHyperionExerciseGenerationEnabled(Environment environment) {
         return isHyperionEnabled(environment) && environment.getProperty(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)
                 && environment.acceptsProfiles(Profiles.of(PROFILE_CORE + " & " + PROFILE_LOCALCI + " & " + PROFILE_LOCALVC));
+    }
+
+    /**
+     * @param environment the Spring environment
+     * @return whether this core node coordinates AI Workers for generation or an explicitly enabled workload
+     */
+    public boolean isAiWorkerEnabled(Environment environment) {
+        return environment.acceptsProfiles(org.springframework.core.env.Profiles.of(Constants.PROFILE_CORE))
+                && (environment.getProperty(AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)
+                        || (environment.getProperty(HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false) && isHyperionExerciseGenerationEnabled(environment)));
     }
 
     /**
@@ -311,6 +322,9 @@ public class ArtemisConfigHelper {
         }
         if (isHyperionExerciseGenerationEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+        }
+        if (isAiWorkerEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_AIWORKER);
         }
         if (isDeimosEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_DEIMOS);

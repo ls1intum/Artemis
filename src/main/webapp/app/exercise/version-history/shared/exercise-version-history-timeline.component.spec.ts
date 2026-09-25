@@ -42,6 +42,18 @@ describe('ExerciseVersionHistoryTimelineComponent', () => {
         expect(text).toContain('Editor One');
     });
 
+    it('keeps anonymized recovery versions visible and selectable', () => {
+        fixture.componentRef.setInput('versions', [{ id: 5, createdDate: dayjs('2026-03-04T11:00:00Z') }]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('#5');
+        expect(component.timelineEntries()[0].authorId).toBeUndefined();
+        expect(component.timelineEntries()[0].displayName).toBe('-');
+        const emitSpy = vi.spyOn(component.selectVersion, 'emit');
+        component.onSelect(5);
+        expect(emitSpy).toHaveBeenCalledWith(5);
+    });
+
     it('should emit selected version id', () => {
         const emitSpy = vi.spyOn(component.selectVersion, 'emit');
         const versionButton: HTMLButtonElement = fixture.nativeElement.querySelector('.timeline-card');

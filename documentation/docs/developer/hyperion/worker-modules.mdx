@@ -68,3 +68,44 @@ The architecture tests enforce package ownership, root-project conventions and
 portable contracts. Docker-backed tests require a qualified immutable image; a
 skipped test does not qualify an image. See [AI Worker operations](/admin/aiworker)
 for deployment and recovery.
+
+## Core integration boundaries
+
+The standalone worker does not own course authorization, exercise persistence or student grading.
+The following integrations remain in their existing modules because those modules own the operation being protected.
+The deployment-wide generation setting activates mutation protection; shared parser and snapshot APIs remain available without it. All writer nodes must use the same setting.
+
+| Owner                                  | Required integration                                                                                                                 | Scope and cost                                                                                                                                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Programming and LocalVC                | Reserve an exercise before an authoring write or HTTP/SSH push; release the exact reservation afterwards.                            | Prevents an instructor push or ordinary update from interleaving with a generated save. In generation-enabled deployments, all writer nodes opt in, including nodes without local model or worker services. A crashed writer can require manual recovery.  |
+| LocalVC                                | Expose branch-specific checkout and expected-head Git operations.                                                                    | Hyperion uses a fresh temporary checkout for each operation. Ordinary checkout coordination is unchanged; no additional lock is added to normal reads or pulls.                                                                 |
+| LocalCI                                | Execute post-save synchronization builds without networking or exercise-provided environment variables; retain this policy on retry. | The restricted entry point is separate. Ordinary builds retain their existing configuration. CI implementations without this capability reject the restricted request.                                                          |
+| LocalCI                                | Resolve wrapper assignment types to the existing test-repository build template.                                                     | A wrapper in the assignment does not change the test harness. Plain Maven/Gradle and black-box template names remain unchanged.                                                                                                 |
+| Build agent                            | Keep LocalCI's JUnit parser in the build-agent layer.                                                                                | Hyperion uses the same production parser through the existing build-agent API. A parity test checks test names, skips and failures. |
+| Exercise and exam                      | Reserve programming templates during participation creation and student exam assignment.                                             | Prevents assignment from observing a partially saved exercise. Exercise-group moves and student-exam selection share a short exam-row lock; no duplicate-assignment policy is introduced. Programming reservations can still affect student-start availability. Assignment and its existing progress reporting share one preparation service; progress behavior is unchanged.                  |
+| Core distributed data                  | Provide conditional writes, expiry renewal and process identities through all supported providers.                                   | Callers must not assume that local, Hazelcast and Redis membership or expiry events are identical. Unknown coordination state rejects protected writes.                                                                         |
+| Core WebSocket security                | Authorize AI subscriptions and reject direct sends to server-owned topics.                                                          | Client sends are limited to mapped commands, with participation-owner or exercise-editor checks where needed. |
+| Exercise versioning and LLM accounting | Use existing storage for version snapshots and usage.                                                                                | No schema migration is required. Shared pricing and accounting stay unchanged. Hyperion owns explicit-price and cache accounting, then writes through the existing usage service.                                                                |
+
+Hyperion's generic-API oracle uses the existing `testClass[...]` structural-test naming convention.
+LocalCI does not need a Hyperion-specific test-name exception.
+
+## Client ownership
+
+The client follows the same feature-folder and standalone-component convention as Iris. There is no additional Angular NgModule.
+
+- `app/hyperion/variants` owns the AI variant wizard and entry button.
+- `app/hyperion/code-editor` owns the editor's AI action controls.
+- `app/hyperion/editor`, `assessment`, `problem-statement` and `quiz` own their AI actions, services and dialogs.
+- `app/hyperion/review` owns the adaptation dialog.
+- `app/hyperion/exercise-generation`, `activity-tray` and `admin` own generation progress, activity and administration.
+- `app/hyperion/shared` contains generation-specific stage and status views, not application-wide design-system APIs.
+
+Course pages, the navbar and the ordinary editor compose these components. They do not own the AI dialogs.
+Generated-document typography is scoped to the sanitized Hyperion markdown view; it does not change global code or prose colors.
+Blocked actions use native disabled controls and a visible explanation rather than a new shared button-disabling API.
+
+The shared TUM AET UI extension is limited to opt-in tab-content preservation. Artifact review uses it to retain
+file expansion and scroll state across tab changes. Its default remains to destroy inactive content;
+preserved inactive panels are hidden and inert. No generation-specific stepper, status, empty-state,
+skeleton or prose API is added to TUM AET UI.

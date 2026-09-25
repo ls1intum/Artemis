@@ -1,16 +1,20 @@
 package de.tum.cit.aet.artemis.hyperion.service.websocket;
 
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.EXERCISE_GENERATION_STATE;
+
 import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationStateChangedEvent;
 
 @Lazy
 @Service
@@ -23,6 +27,17 @@ public class HyperionWebsocketService {
 
     public HyperionWebsocketService(WebsocketMessagingService websocketMessagingService) {
         this.websocketMessagingService = websocketMessagingService;
+    }
+
+    /**
+     * Notifies editors when a generation acquires or releases an exercise's mutation slot.
+     *
+     * @param event the new exercise state
+     */
+    @EventListener
+    public void sendExerciseState(ExerciseGenerationStateChangedEvent event) {
+        var state = event.state();
+        websocketMessagingService.sendMessage(EXERCISE_GENERATION_STATE.at(state.exerciseId()), state);
     }
 
     /**

@@ -25,7 +25,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, PROFILE_LOCALCI } from 'app/app.constants';
+import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
@@ -74,6 +76,7 @@ describe('ExerciseActionsComponent', () => {
                 MockProvider(DeleteDialogService),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: GenerationCapabilityRequestsService, useValue: { describe: () => of({ canCreateVariant: true }) } },
             ],
         })
             .overrideComponent(ExerciseActionsComponent, {
@@ -103,14 +106,18 @@ describe('ExerciseActionsComponent', () => {
     describe('mainActions', () => {
         it('offers the AI variant action for programming exercises only when Hyperion is enabled', () => {
             const programming = textExercise({ id: 5, type: ExerciseType.PROGRAMMING, isAtLeastEditor: true });
+            Object.assign(programming, { programmingLanguage: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE });
             fixture.componentRef.setInput('exercise', programming);
             expect(component.mainActions().map((a) => a.id)).not.toContain('create-variant-ai');
 
-            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+            vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
             const hyperionFixture = TestBed.createComponent(ExerciseActionsComponent);
             hyperionFixture.componentRef.setInput('exercise', programming);
             hyperionFixture.componentRef.setInput('courseId', 1);
             hyperionFixture.componentRef.setInput('course', course);
+            TestBed.tick();
             const variantAction = hyperionFixture.componentInstance.mainActions().find((a) => a.id === 'create-variant-ai');
             expect(variantAction).toBeDefined();
             variantAction!.onClick!();

@@ -1404,18 +1404,6 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
-  /api/hyperion/admin/exercises/generations:
-    get:
-      tags: [admin-hyperion-generation-monitoring]
-      operationId: getActiveGenerations
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: {$ref: '#/components/schemas/ActiveGeneration'}
   /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}:
     delete:
       tags: [admin-hyperion-generation-monitoring]
@@ -1426,40 +1414,6 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       - name: generationId
-        in: path
-        required: true
-        schema: {type: string}
-      - name: reason
-        in: query
-        required: true
-        schema: {type: string}
-      responses:
-        '200': {description: OK}
-  /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slot:
-    get:
-      tags: [admin-hyperion-generation]
-      operationId: getWedgedSlot
-      parameters:
-      - name: exerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ExerciseGenerationWedgedSlot'}
-  /api/hyperion/admin/exercises/{exerciseId}/hyperion-wedged-slots/{token}:
-    delete:
-      tags: [admin-hyperion-generation]
-      operationId: recoverWedgedSlot
-      parameters:
-      - name: exerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      - name: token
         in: path
         required: true
         schema: {type: string}
@@ -1567,21 +1521,6 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
-  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert:
-    post:
-      tags: [hyperion-exercise-generation]
-      operationId: revertExerciseGeneration
-      parameters:
-      - name: exerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ExerciseGenerationRevertResult'}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status:
     get:
       tags: [hyperion-exercise-generation]
@@ -1609,6 +1548,162 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/WorkerStatus'}
+  /api/hyperion/programming-exercises/{exerciseId}/generation/variants:
+    post:
+      tags: [hyperion-programming-variant]
+      operationId: generateProgrammingVariant
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/VariantGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationJobStart'}
+  /api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert:
+    post:
+      tags: [hyperion-exercise-generation]
+      operationId: revertExerciseGeneration
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: runId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRevertResult'}
+  /api/hyperion/authoring-runs/access:
+    post:
+      tags: [hyperion-authoring-run]
+      operationId: checkAuthoringRunAccess
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: string, maxLength: 128, minLength: 1}
+              maxItems: 500
+              minItems: 1
+        required: true
+      responses:
+        '200':
+          description: Currently authorized run identities
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: string, maxLength: 128}
+                maxItems: 500
+  /api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}:
+    get:
+      tags: [hyperion-authoring-run]
+      operationId: getAuthoringRunStatus
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: runId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationStatus'}
+  /api/hyperion/programming-exercises/{exerciseId}/generation/capabilities:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getGenerationCapabilities
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationCapabilities'}
+  /api/hyperion/authoring-runs:
+    get:
+      tags: [hyperion-authoring-run]
+      operationId: getAuthoringRuns
+      parameters:
+      - name: beforeId
+        in: query
+        required: false
+        schema: {type: integer, format: int64, exclusiveMinimum: 0}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AuthoringRunPage'}
+  /api/hyperion/admin/exercises/{exerciseId}/wedged-slot:
+    get:
+      tags: [admin-hyperion-generation]
+      operationId: getWedgedSlot
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationWedgedSlot'}
+  /api/hyperion/admin/generations:
+    get:
+      tags: [admin-hyperion-generation-monitoring]
+      operationId: getActiveGenerations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ActiveGeneration'}
+  /api/hyperion/admin/exercises/{exerciseId}/wedged-slot/{token}:
+    delete:
+      tags: [admin-hyperion-generation]
+      operationId: recoverWedgedSlot
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: token
+        in: path
+        required: true
+        schema: {type: string}
+      - name: reason
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200': {description: OK}
 components:
   schemas:
     QuizBatchWithPassword:
@@ -3436,10 +3531,13 @@ components:
         reviewFeedback:
           type: array
           items: {$ref: '#/components/schemas/ExerciseGenerationFeedback'}
+        sourceExerciseId: {type: integer, format: int64}
     ExerciseGenerationJobStart:
       type: object
       properties:
         jobId: {type: string}
+        exerciseId: {type: integer, format: int64}
+        sourceExerciseId: {type: integer, format: int64}
       required: [jobId]
     ExerciseGenerationLiveUsage:
       type: object
@@ -3521,8 +3619,8 @@ components:
           maxItems: 25
           minItems: 0
         effortProfile: {type: string, maxLength: 64, minLength: 0}
-        maxTokens: {type: integer, format: int64, minimum: 0}
-        maxJobDuration: {type: string}
+        maxTokens: {type: integer, format: int64, exclusiveMinimum: 0}
+        maxJobDuration: {type: string, format: duration}
       required: [mode]
     ExerciseGenerationRetainedArtifacts:
       type: object
@@ -3599,6 +3697,7 @@ components:
         artifactsRetained: {type: boolean, description: Whether a current or retained
             candidate snapshot from this run is readable}
         input: {$ref: '#/components/schemas/ExerciseGenerationInput'}
+        run: {$ref: '#/components/schemas/AuthoringRun'}
       required: [accountingState, artifactsRetained, cancellable, events, fileChanges,
         jobId, ownedByCaller, revertAvailable, running]
     ExerciseGenerationUsage:
@@ -3683,3 +3782,42 @@ components:
         workload: {type: string}
         version: {type: integer, format: int32}
         profile: {type: string}
+    AuthoringRunPage:
+      type: object
+      properties:
+        runs:
+          type: array
+          items: {$ref: '#/components/schemas/AuthoringRun'}
+        nextBeforeId: {type: integer, format: int64}
+      required: [runs]
+    AuthoringRun:
+      type: object
+      properties:
+        jobId: {type: string}
+        exerciseId: {type: integer, format: int64}
+        sourceExerciseId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        kind:
+          type: string
+          enum: [CREATE, ADAPT, VARIANT]
+        status:
+          type: string
+          enum: [QUEUED, SAVED, NEEDS_REVIEW, PARTIAL, ERROR, CANCELLED, UNKNOWN]
+        running: {type: boolean}
+        startedAt: {type: string, format: date-time}
+        finishedAt: {type: string, format: date-time}
+        beforeVersionId: {type: integer, format: int64}
+        afterVersionId: {type: integer, format: int64}
+        revertedAt: {type: string, format: date-time}
+      required: [courseId, exerciseId, jobId, kind, running, startedAt, status]
+    ExerciseGenerationCapabilities:
+      type: object
+      properties:
+        supported: {type: boolean}
+        canGenerate: {type: boolean}
+        canAdapt: {type: boolean}
+        canCreateVariant: {type: boolean}
+        busy: {type: boolean}
+        capacityAvailable: {type: boolean}
+        restriction: {type: string}

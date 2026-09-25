@@ -1,8 +1,10 @@
+import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
+import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-status.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, exhaustMap, merge, of, startWith, switchMap, timer } from 'rxjs';
-import { TumAetUiButtonDirective, TumAetUiStatusDotComponent, TumAetUiStatusDotState } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -17,11 +19,20 @@ import { runOutcome } from '../model/hyperion-generation-stages';
 @Component({
     selector: 'jhi-hyperion-run-link',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, TumAetUiButtonDirective, TumAetUiStatusDotComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [RouterLink, TumAetUiButtonDirective, HyperionStatusComponent, TranslateDirective, ArtemisTranslatePipe],
     template: `
         @if (status()?.jobId) {
-            <a tumAetUiButton severity="primary" variant="outlined" size="small" [routerLink]="['generation']" data-testid="hyperion-exercise-open-generation">
-                <tumaet-ui-status-dot [state]="dotState()" [label]="statusLabelKey() | artemisTranslate" />
+            <a
+                tumAetUiButton
+                severity="primary"
+                variant="outlined"
+                size="small"
+                [routerLink]="[]"
+                [queryParams]="{ aiRun: 'authoring:' + exercise().id + ':' + status()?.jobId }"
+                queryParamsHandling="merge"
+                data-testid="hyperion-exercise-open-generation"
+            >
+                <jhi-hyperion-status [state]="dotState()" [label]="statusLabelKey() | artemisTranslate" />
                 <span [jhiTranslate]="labelKey()"></span>
             </a>
         }
@@ -53,7 +64,7 @@ export class HyperionRunLinkComponent {
         ),
     );
     protected readonly runStatus = computed(() => (this.status()?.running ? 'running' : (runOutcome(this.status()?.events ?? []) ?? 'unknown')));
-    protected readonly dotState = computed<TumAetUiStatusDotState>(() => {
+    protected readonly dotState = computed<HyperionStatusState>(() => {
         switch (this.runStatus()) {
             case 'running':
                 return 'running';

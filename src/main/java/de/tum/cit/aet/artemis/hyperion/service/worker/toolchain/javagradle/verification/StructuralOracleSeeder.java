@@ -288,7 +288,7 @@ public class StructuralOracleSeeder {
                 names.add("testClass[" + className + "]");
             }
             if (entry.has("genericApi")) {
-                names.add("testGenericApi[" + className + "]");
+                names.add("testClass[GenericApi:" + className + "]");
             }
             if (hasEntries(entry, "methods")) {
                 names.add("testMethods[" + className + "]");

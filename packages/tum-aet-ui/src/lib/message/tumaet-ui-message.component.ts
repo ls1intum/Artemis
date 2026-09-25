@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -30,14 +30,11 @@ const MESSAGE_SEVERITY: Record<TumAetUiMessageSeverity, string> = {
 export class TumAetUiMessageComponent {
     readonly severity = input<TumAetUiMessageSeverity>('info');
 
-    /** Disable when a surrounding live announcer already reports this message. */
-    readonly announce = input(true, { transform: booleanAttribute });
-
     readonly text = input<string>();
 
     readonly icon = input<IconProp>();
 
-    protected readonly messageRole = computed(() => (this.announce() ? (this.severity() === 'error' ? 'alert' : 'status') : null));
+    protected readonly messageRole = computed(() => (this.severity() === 'error' ? 'alert' : 'status'));
 
     protected readonly hostClasses = computed(() => `${MESSAGE_BASE} ${MESSAGE_SEVERITY[this.severity()]}`.trim());
 }

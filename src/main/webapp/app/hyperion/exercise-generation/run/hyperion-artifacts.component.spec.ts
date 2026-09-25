@@ -36,6 +36,29 @@ describe('HyperionArtifactsComponent', () => {
         expect(active()?.textContent).toContain('Preserve existing operations.');
         expect(getRetained).not.toHaveBeenCalled();
     });
+    it('shows adaptation files without an empty design tab', () => {
+        fixture.componentRef.setInput('adapting', true);
+        fixture.detectChanges();
+
+        expect(host().querySelector('[data-testid="hyperion-artifacts-tab-spec"]')).toBeNull();
+        expect(active()?.querySelector('jhi-hyperion-file-change-list')).not.toBeNull();
+    });
+    it('shows a variant design when supplied but not an empty design after a variant ends', () => {
+        fixture.componentRef.setInput('variant', true);
+        fixture.componentRef.setInput('running', true);
+        fixture.detectChanges();
+        expect(active()?.textContent).toContain('variantSpecPending');
+
+        fixture.componentRef.setInput('running', false);
+        fixture.componentRef.setInput('terminal', true);
+        fixture.detectChanges();
+        expect(host().querySelector('[data-testid="hyperion-artifacts-tab-spec"]')).toBeNull();
+
+        fixture.componentRef.setInput('specDocument', '# Variant contract');
+        fixture.detectChanges();
+        expect(host().querySelector('[data-testid="hyperion-artifacts-tab-spec"]')?.textContent).toContain('variantSpecTitle');
+        expect(active()?.textContent).toContain('Variant contract');
+    });
     it('lists the problem statement with the other files, with no content controls or repository fetches', () => {
         fixture.componentRef.setInput('files', [
             { type: 'FILE_CHANGE', repo: 'other', path: 'problem-statement.md', action: 'write', turn: 1, timestamp: '' },

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import java.time.Instant;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -19,13 +21,39 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationTaskService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobInfo;
 
 class GenerationExternalMutationServiceTest {
 
+    private static LocalDataProviderService initializedProvider() {
+        var provider = new LocalDataProviderService();
+        return provider;
+    }
+
+    @Test
+    void baseHyperionRegistersCodeGenerationDependenciesWithoutExerciseGeneration() {
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().setActiveProfiles("core");
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context, "artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=false");
+            context.registerBean(DistributedDataProvider.class, GenerationExternalMutationServiceTest::initializedProvider);
+            context.registerBean(HyperionCodeGenerationTaskService.class, () -> mock(HyperionCodeGenerationTaskService.class));
+            context.register(GenerationExternalMutationService.class, HyperionCodeGenerationJobService.class);
+            context.refresh();
+
+            assertThat(context.getBean(HyperionCodeGenerationJobService.class)).isNotNull();
+            var service = context.getBean(GenerationExternalMutationService.class);
+            String token = service.claimExternalMutationSlot(42);
+            assertThat(service.isGenerationActive(42)).isTrue();
+            service.clearExternalMutationSlot(42, token);
+            assertThat(service.isGenerationActive(42)).isFalse();
+        }
+    }
+
     @Test
     void sharedCopyRecoveryRequiresEveryRecordedOwnerToBeAbsent() {
-        var provider = new LocalDataProviderService();
+        var provider = initializedProvider();
         var service = new GenerationExternalMutationService(provider, 1);
         String first = service.claimParticipationSlot(42);
         String second = service.claimParticipationSlot(42);
@@ -41,10 +69,11 @@ class GenerationExternalMutationServiceTest {
     }
 
     @Test
-    void disabledWriterNodeStillProtectsGenerationWithoutInstantiatingEngine() {
+    void optedInWriterProtectsGenerationWithoutInstantiatingEngine() {
         try (var context = new AnnotationConfigApplicationContext()) {
             context.getEnvironment().setActiveProfiles("localvc");
-            context.registerBean(DistributedDataProvider.class, LocalDataProviderService::new);
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context, "artemis.hyperion.exercise-generation.enabled=true", "artemis.hyperion.enabled=false");
+            context.registerBean(DistributedDataProvider.class, GenerationExternalMutationServiceTest::initializedProvider);
             context.register(GenerationExternalMutationService.class, HyperionExerciseMutationApi.class);
             context.refresh();
             var api = context.getBean(HyperionExerciseMutationApi.class);
@@ -69,7 +98,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void generationActiveIsAReadOnlyViewOfAnySlotAndWorksWithoutTheGenerationEngine() {
-        var provider = new LocalDataProviderService();
+        var provider = initializedProvider();
         var service = new GenerationExternalMutationService(provider, 1);
         var api = new HyperionExerciseMutationApi(service);
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
@@ -92,7 +121,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void delayedReleaseDoesNotClearReplacement() {
-        var provider = new LocalDataProviderService();
+        var provider = initializedProvider();
         var service = new GenerationExternalMutationService(provider, 1);
         String old = service.claimExternalMutationSlot(42);
         service.clearExternalMutationSlot(42, old);
@@ -107,7 +136,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void recoveryRequiresExactDepartedOwnerAndMajority() {
-        var provider = spy(new LocalDataProviderService());
+        var provider = spy(initializedProvider());
         var service = new GenerationExternalMutationService(provider, 3);
         doReturn(Optional.of(new CoordinationSnapshot(Set.of("local-node", "other", "third"), true))).when(provider).getCoordinationSnapshot();
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
@@ -128,7 +157,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void disabledGenerationRecoveryNeverReleasesGenerationOrUnknownOwner() {
-        var provider = new LocalDataProviderService();
+        var provider = initializedProvider();
         var service = new GenerationExternalMutationService(provider, 1);
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
         JobInfo generation = new JobInfo("generation", "owner", 42, Instant.now(), null, "departed", Instant.now(), false, null);
@@ -146,7 +175,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void unknownCoordinationNeverBypassesWriterProtection() {
-        var provider = spy(new LocalDataProviderService());
+        var provider = spy(initializedProvider());
         doReturn(Optional.empty()).when(provider).getCoordinationSnapshot();
         var service = new GenerationExternalMutationService(provider, 1);
         assertThatThrownBy(() -> service.claimExternalMutationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);
@@ -156,7 +185,7 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void missingTopologyDoesNotBypassTheGuard() {
-        var provider = spy(new LocalDataProviderService());
+        var provider = spy(initializedProvider());
         var service = new GenerationExternalMutationService(provider, 1);
         doReturn(Optional.empty()).when(provider).getCoordinationSnapshot();
         assertThatThrownBy(() -> service.claimExternalMutationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);

@@ -57,6 +57,6 @@ export class ExerciseVariantAiWizard {
     }
 
     async close() {
-        await this.page.getByRole('button', { name: 'Close' }).click();
+        await this.page.getByTestId('variant-wizard-close').click();
     }
 }

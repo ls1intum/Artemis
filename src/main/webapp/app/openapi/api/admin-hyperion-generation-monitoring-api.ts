@@ -45,7 +45,7 @@ export class AdminHyperionGenerationMonitoringApi {
      *
      */
     getActiveGenerations(): Observable<Array<ActiveGeneration>> {
-        const url = `${this.basePath}/api/hyperion/admin/exercises/generations`;
+        const url = `${this.basePath}/api/hyperion/admin/generations`;
         return this.http.get<Array<ActiveGeneration>>(url);
     }
 }

@@ -21,7 +21,7 @@ Hyperion extends Artemis with AI-assisted authoring features. For programming ex
 
 ## Enable the Hyperion module
 
-Hyperion is disabled by default. Activate it by overriding the `artemis.hyperion.enabled` property in the configuration that the server reads on startup (for example `application-prod.yml`).
+Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. The generation setting protects repository writes across the deployment, so every writer node needs it even if that node does not run Hyperion.
 
 ```yaml
 artemis:
@@ -102,7 +102,7 @@ Add entries for each model you use. The key must match the model name returned b
 
 Cache pricing and cache usage are separate inputs. When the provider explicitly reports **zero cache-read tokens**, configured input and output rates suffice for a complete estimate. When cache reads are positive, also configure `cached-input-cost-per-million-eur`. An omitted cache count means **unknown**, not zero: without a reported split, a complete estimate is possible only when the configured cached and uncached input rates are equal. Artemis does not silently substitute the uncached rate for a missing cache price.
 
-The shared usage ledger stores the effective input rate in `cost_per_million_input_tokens`. When a provider reports a cache split, this is the token-weighted blend of the configured cached and uncached rates, not the model's catalogue input price. This applies to all LLM services using the ledger, including Iris, Athena and Atlas. Administrative queries can use the stored rate to reproduce the recorded estimate; use deployment configuration to inspect catalogue rates. Incomplete estimates remain incomplete even if the ledger has a numeric value.
+For whole-exercise generation, the shared usage ledger stores the effective input rate in `cost_per_million_input_tokens`. When a provider reports a cache split, this is the token-weighted blend of the configured cached and uncached rates, not the model's catalogue input price. Other LLM services keep their existing accounting rules and default prices. Hyperion reads explicitly configured prices from the same `artemis.llm.model-costs` keys, without inheriting those defaults. Administrative queries can use the stored rate to reproduce the recorded estimate; use deployment configuration to inspect catalogue rates. Generation activity reports estimate completeness; the existing ledger does not persist that flag. A numeric ledger entry alone does not prove that all prices were known.
 
 When using catalogue prices as a reference for another provider, retain the catalogue retrieval date and currency conversion with the deployment configuration. A reference estimate is not an invoice or evidence of provider billing.
 
@@ -243,7 +243,6 @@ artemis:
         exercise-generation:
             enabled: true
     aiworker:
-        enabled: true
         ids: [worker-1]
 ```
 
@@ -252,18 +251,42 @@ worker connects as a Hazelcast client or to Redis/Valkey; it does not join the
 core Hazelcast cluster as a member. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
 starting a supervisor process is not evidence that generation is available.
 
-Generation accepts only unreleased Java Gradle exercises (`PLAIN_GRADLE` or
+Generation and adaptation accept mutable Java Gradle exercises (`PLAIN_GRADLE` or
 `GRADLE_GRADLE`; both share the Gradle test harness) without auxiliary
 repositories, sequential test runs, or static code analysis. Maven projects are
 not supported. The worker receives a frozen, bounded repository snapshot, not credentials or repository paths. Core validates returned artifacts
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
-Use identical generation settings on generation-capable core nodes. The
-exercise-mutation guard also runs on `core` and `localvc` writer nodes where
-Hyperion is disabled; it does not load a model or connect to a worker.
-Every writer must run this version of Artemis and use the same distributed data
-provider. Do not mix guarded and older, unguarded nodes while generation is enabled.
+Set `artemis.hyperion.exercise-generation.enabled=true` on **every `core` and
+`localvc` writer node** in a generation-enabled deployment. Writer-only nodes may
+keep `artemis.hyperion.enabled=false` and `artemis.aiworker.enabled=false`: their
+mutation guard does not load a model or connect to the worker. All writers
+must run this version and use the same distributed provider. Do not mix guarded
+and unguarded nodes while generation is enabled.
+
+On a writer-only node, use only the generation setting:
+
+```yaml
+artemis:
+    hyperion:
+        enabled: false
+        exercise-generation:
+            enabled: true
+```
+
+On an eligible generation core, these two Hyperion settings also start AI Worker
+coordination. Do not set `artemis.aiworker.enabled=true` just for Hyperion. That
+setting is optional and reserved for a core that must coordinate workers while
+Hyperion generation is off. Provider access and worker IDs are still required
+on a generation core.
+
+When the generation setting is absent or false throughout a deployment, ordinary
+writes do not load the generation mutation service or require its coordination
+checks. This is a deployment setting, not automatic cluster discovery. Drain
+active runs and stop all writers before enabling or disabling it across the
+cluster, then restart with consistent values. Never disable it to bypass an
+interrupted save; reconcile that save first.
 
 Coordination follows the selected provider rather than assuming every store is a
 Hazelcast cluster:
@@ -287,13 +310,66 @@ the database. Non-cancellable slots do not expire or become automatically
 recoverable when an owner disconnects. The operator recovery procedure below is
 mandatory for both providers.
 
-The store is coordination infrastructure, not a disposable cache: use persistent,
-non-evicting storage and do not flush it while any writer is running. Redis
-asynchronous replication can lose acknowledged writes during failover; client
+The store is coordination infrastructure, not a disposable cache. Redis/Valkey
+must use `appendonly yes`, `appendfsync always`, `no-appendfsync-on-rewrite no`,
+and `maxmemory-policy noeviction`. Snapshot-only persistence and `everysec` can
+lose acknowledged ownership slots after a store crash while Artemis writers are
+still running. Put the matching `valkey_*` settings on the store and writer hosts
+when using the Ansible collection. Artemis does not inspect these Redis server
+settings at startup, so the operator must verify the actual server with
+`CONFIG GET` and `INFO persistence` before enabling generation. Inventory
+checks alone cannot prove the settings were applied.
+Measure synchronous-write latency on staging rather than weakening durability.
+
+Do not flush the store while any writer is running. Redis asynchronous replication
+can lose acknowledged writes during failover even with synchronous AOF; client
 membership checks do not prevent that. Do not treat these checks as certification
 of automatic Redis failover. Drain and stop all Artemis writers before replacing
 or restoring a store, reconcile interrupted saves, and run the deployment canary
 before reopening authoring.
+
+### Authoring history and version restoration
+
+Programming Create, Adapt, and Variant share the worker lifecycle. Variant
+preparation copies a protected source to a separately reserved destination;
+quiz generation remains separate. Programming exam authoring is available only
+before student exams or test runs exist. Assignment and authoring use the same
+exercise guards and the existing draft-creation transaction.
+
+Hyperion introduces no database schema changes. Saved exercise content and
+before/after snapshots use the existing exercise version history. Existing
+account-deletion rules remain unchanged; missing versions disable automatic undo.
+
+Owner-scoped activity and version references live in the configured distributed
+provider for `artemis.hyperion.generation.terminal-replay-ttl` (default four hours).
+Runs without a complete save expire from admission; a saved run's undo reference expires from
+completion. The paged `GET /api/hyperion/authoring-runs` endpoint lists only
+retained runs and rechecks current course authorization. Exact run inspection and
+restoration use
+`/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}`
+and its `/revert` POST operation. Expired references are not reconstructed from
+unrelated exercise versions, and an older successful run is never substituted
+for an expired or incomplete latest mutation. Saved exercise versions remain
+available through normal version history after activity expires.
+
+Non-expiring exercise mutation slots continue to protect interrupted saves and
+restores while distributed state is retained. Expiring activity does not release
+those slots. If undo references expire, use the audited operator reconciliation
+path rather than offering an unsafe automatic restore. There is no SQL recovery
+journal or database startup reconstruction. Complete loss of distributed state
+requires stopping writers and manually reconciling potentially interrupted
+operations against repository state and exercise versions before reopening
+writes. Preserve the configured provider's state across restarts and follow the
+Redis durability and coordinated shutdown requirements above.
+
+Restoration uses captured test metadata and rebuilds task bindings from the saved
+statement. It does not require the previous draft to compile or pass a build.
+Tests introduced by the undone run become inactive rather than being deleted,
+so historical result feedback remains intact. Newly generated output still has
+to pass verification before it can be saved.
+
+Guarded restoration checks the selected run, repository heads, grading and
+placement metadata. It does not rewind other exercises or delete a variant.
 
 ### Concurrent worker slots
 
@@ -379,33 +455,35 @@ entered reason so the operator can refresh and assess the current state.
 Administrator-only APIs expose the same metadata and controls:
 
 - `GET /api/hyperion/admin/workers` (404 when generation is disabled).
-- `GET /api/hyperion/admin/exercises/generations` (active runs only).
+- `GET /api/hyperion/admin/generations` (active runs only).
 - `DELETE /api/hyperion/admin/exercises/{exerciseId}/generations/{generationId}?reason=...`
   (202 when accepted, 409 if no longer cancellable).
 
-| State | Meaning |
-| --- | --- |
-| Offline | No unexpired heartbeat is available. A core reservation can still exist. |
-| Not ready | The worker has not advertised usable capacity. |
-| Available | At least one slot is free; other slots can already be running. |
-| Reserved by core | Slots have been reserved but no active execution is reported yet. |
-| Running | The worker reports active executions and no free slot. |
+| State            | Meaning                                                                  |
+| ---------------- | ------------------------------------------------------------------------ |
+| Offline          | No unexpired heartbeat is available. A core reservation can still exist. |
+| Not ready        | The worker has not advertised usable capacity.                           |
+| Available        | At least one slot is free; other slots can already be running.           |
+| Reserved by core | Slots have been reserved but no active execution is reported yet.        |
+| Running          | The worker reports active executions and no free slot.                   |
 
 This view contains no prompts, generated artifacts, or credentials. It cannot
 execute commands, terminate a worker, or release an exercise mutation slot.
 Ordinary LocalCI monitoring continues to report ordinary build agents separately.
 
-The **Configured workers** count includes offline identities. **Free / total
-slots** includes only workers with a current heartbeat; an offline row displays
-an unknown capacity, not a usable zero-slot worker. **Toolchain** identifies the
-advertised language/build adapter. Free capacity is not necessarily compatible
-with every exercise. **Technical details** contains every active execution with
-its one-based slot number, the core reservation, worker instance and sandbox
-image digest. These identifiers support incident diagnosis, not host control.
+The unified **AI Generation** page shows worker state, free/total slots, last
+contact and running jobs. Offline capacity is unknown, not a usable zero-slot
+worker. Compatibility and ownership identifiers remain internal safeguards rather
+than instructor-facing configuration. See [AI Worker operations](/admin/aiworker)
+for the column definitions and live-update behavior.
 
 ### Save, cancellation, and recovery
 
-Cancellation before persistence changes no exercise repositories or metadata.
+Cancellation before persistence saves no generated candidate. A variant can
+already have an imported destination draft, which remains available for inspection.
+Activity admission is synchronous and precedes the variant draft transaction's
+commit. If recording that identity fails, draft preparation rolls back and no
+worker is dispatched; a later executor rejection retains an inspectable failed run.
 Read-only retained artifacts and job transcripts are temporary inspection data,
 not saved exercises. A worker disconnect cannot authorize a replacement to save
 under the old execution identity. Inspect incomplete accounting as unknown usage,
@@ -433,8 +511,8 @@ generation-enabled core node so their job state is reconciled too:
 
 1. Confirm that the owning JVM is stopped, not merely disconnected from the cluster.
 2. Reconcile the exercise's repository heads and metadata before allowing new edits.
-3. As an administrator, read `GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot`.
-4. Release that exact token with `DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`, supplying a nonblank incident reason of at most 500 characters.
+3. As an administrator, read `GET /api/hyperion/admin/exercises/{id}/wedged-slot`.
+4. Release that exact token with `DELETE /api/hyperion/admin/exercises/{id}/wedged-slot/{token}?reason=...`, supplying a nonblank incident reason of at most 500 characters.
 
 Recovery records an audit attempt before releasing anything, refuses a live owner,
 and requires a complete coordination view. Hazelcast additionally requires a
@@ -461,13 +539,20 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Control                                                                                             | Effect                                                                                                                          |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `artemis.hyperion.enabled=false`                                                                    | Disables Hyperion, including generation.                                                                                        |
-| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent                    | Other Hyperion tools remain available; no generation transport beans or worker configuration are required.                      |
-| Both Hyperion properties true, `artemis.aiworker.enabled=true`, and profiles `core,localci,localvc` | Enables generation coordination and advertises its module feature. A compatible worker and provider configuration are required. |
-| Missing a required profile or AI Worker coordination flag                                           | Generation remains unavailable even when both Hyperion properties are true.                                                     |
-| No ready worker or no free slot                                                                     | Enabled but unavailable; capacity errors do not turn off the module flag.                                                       |
+| Node and settings                                                    | What happens                                                                                                                       |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Core with both settings false                                        | No Hyperion tools or generation.                                                                                                   |
+| Core with only `artemis.hyperion.enabled=true`                       | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation or worker connection.         |
+| Core with both settings true and profiles `core,localci,localvc`     | All Hyperion tools plus programming exercise generation and AI Worker coordination. Worker and provider configuration is required. |
+| Writer with only `artemis.hyperion.exercise-generation.enabled=true` | Protects repository writes against generation. It does not load Hyperion tools or connect to AI Workers.                           |
+| Core with both settings true but a required profile missing          | Generation stays off. The generation setting still protects writes if this node is a repository writer.                            |
+
+The Administration > Features page shows AI authoring and programming exercise
+generation as separate module cards. Their status reports which features this
+core offers; it does not report worker capacity. A missing ready worker or a
+full worker returns `503 generationCapacityUnavailable` without changing the
+status. On a writer-only node, the mutation guard can be active even though
+the generation card is inactive.
 
 The standalone worker is a separate process of the normal Artemis WAR, not an additional core
 profile. Its component scan contains only worker code, and it starts without an
@@ -486,11 +571,11 @@ not promise automatic continuation or resampling of interrupted runs.
 
 ### Build-agent and worker deployment boundaries
 
-| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                 |
-| ------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                   |
-| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                   |
-| Hyperion generation worker            | Normal Artemis WAR      | The `aiworker` profile loads worker services and the selected workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
+| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                          |
+| ------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                            |
+| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                            |
+| Hyperion generation worker            | Normal Artemis WAR      | The `aiworker` profile loads worker services and the selected Hyperion workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
 
 The generation worker uses chat models only; its bundled configuration excludes
 OpenAI embedding, image, speech, transcription, and moderation auto-configuration.
@@ -517,3 +602,9 @@ retry **Undo** against the retained baseline; another undo, generation, or ordin
 run concurrently. A missing or expired baseline during this recovery does not unlock an
 inconsistent exercise. If a retry cannot finish, reconcile the repositories and release the
 `REVERT_RECOVERY` slot through the audited operator recovery path described above.
+
+A `REVERT_RECOVERY` slot denotes a quiescent, incomplete undo rather than a running
+writer. An authorized retry can complete that undo. After reconciling the
+repositories and metadata, an administrator can release this exact recovery token
+even while its owner node remains a member. This exception does not permit
+reclaiming an actively persisting generation or an active revert.

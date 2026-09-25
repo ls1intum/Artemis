@@ -156,12 +156,13 @@ public class GenerationExternalMutationService {
     public Optional<GenerationJobService.WedgedSlotInfo> getWedgedSlotInfo(long exerciseId) {
         DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
         JobInfo job = jobs.get(String.valueOf(exerciseId));
-        if (job == null || job.cancellable() || !GenerationJobService.isExternalMutationJob(job)) {
+        if (job == null || job.cancellable() || !GenerationJobService.isExternalMutationJob(job) && !GenerationRevertSlots.isPending(job)) {
             return Optional.empty();
         }
         boolean ownerAbsent = distributedDataProvider.getCoordinationSnapshot().map(snapshot -> job.ownersAbsentFrom(snapshot.ownerNodeIds())).orElse(false);
-        return Optional.of(new GenerationJobService.WedgedSlotInfo(exerciseId, job.jobId(), GenerationJobService.WedgedSlotKind.EXTERNAL_MUTATION, job.ownerNodeId(),
-                job.startedAt(), ownerAbsent));
+        return Optional.of(new GenerationJobService.WedgedSlotInfo(exerciseId, job.jobId(),
+                GenerationRevertSlots.isPending(job) ? GenerationJobService.WedgedSlotKind.REVERT_RECOVERY : GenerationJobService.WedgedSlotKind.EXTERNAL_MUTATION,
+                job.ownerNodeId(), job.startedAt(), ownerAbsent));
     }
 
     /**
@@ -178,8 +179,8 @@ public class GenerationExternalMutationService {
         try {
             Set<String> nodes = new GenerationClusterTopology(distributedDataProvider, expectedDataMemberCount).verifyMajority().ownerNodeIds();
             JobInfo current = jobs.get(key);
-            return current != null && !current.cancellable() && GenerationJobService.isExternalMutationJob(current) && current.jobId().equals(token)
-                    && current.ownersAbsentFrom(nodes) && jobs.remove(key, current);
+            return current != null && !current.cancellable() && (GenerationJobService.isExternalMutationJob(current) || GenerationRevertSlots.isPending(current))
+                    && current.jobId().equals(token) && (GenerationRevertSlots.isPending(current) || current.ownersAbsentFrom(nodes)) && jobs.remove(key, current);
         }
         finally {
             jobs.unlock(key);

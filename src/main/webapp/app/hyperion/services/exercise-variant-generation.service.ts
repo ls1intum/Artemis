@@ -1,4 +1,4 @@
-import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Service, effect, inject, signal, untracked } from '@angular/core';
 import { Observable, Subscription, map, tap } from 'rxjs';
 import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-variant-api';
 import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
@@ -30,14 +30,10 @@ export class ExerciseVariantGenerationService {
     /** Login of the user whose jobs are currently loaded, used to avoid redundant re-syncs. */
     private loadedForLogin?: string;
 
+    private identityRevision = 0;
+
     /** All jobs of the current user (running + retained-finished), authoritative copy of GET /variant-jobs. */
     readonly jobs = signal<VariantJob[]>([]);
-
-    /** Running jobs drive the tray spinner ring + count badge. */
-    readonly runningJobs = computed(() => this.jobs().filter((job) => !isTerminalVariantPhase(job.phase)));
-
-    /** Tray button hidden when the user has no variant jobs at all. */
-    readonly hasJobs = computed(() => this.jobs().length > 0);
 
     constructor() {
         effect(() => {
@@ -46,6 +42,7 @@ export class ExerciseVariantGenerationService {
                 if (login === this.loadedForLogin) {
                     return;
                 }
+                this.clearJobs();
                 this.loadedForLogin = login;
                 // Variant generation is an editor tool: the job endpoint is @EnforceAtLeastEditor, so fetching as
                 // a student produced nothing but a 403 in the console. Mirror the server's rule here — a user who
@@ -53,8 +50,6 @@ export class ExerciseVariantGenerationService {
                 // Hyperion the endpoint is not registered at all, so there is nothing to fetch either.
                 if (login && this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION)) {
                     this.loadJobs().subscribe({ error: () => {} });
-                } else {
-                    this.clearJobs();
                 }
             });
         });
@@ -69,9 +64,12 @@ export class ExerciseVariantGenerationService {
      * @returns the created job id
      */
     startGeneration(exerciseId: number, request: VariantGenerationRequest, sourceExerciseTitle?: string): Observable<string> {
+        const login = this.accountService.userIdentity()?.login;
+        const revision = this.identityRevision;
         return this.api.generateVariant(exerciseId, request).pipe(
             map((response) => response.jobId!),
             tap((jobId) => {
+                if (!this.isCurrentIdentity(login, revision)) return;
                 this.upsertJob({ jobId, sourceExerciseId: exerciseId, sourceExerciseTitle, request, phase: 'ANALYZING' });
                 this.attachToJob(jobId);
             }),
@@ -83,8 +81,11 @@ export class ExerciseVariantGenerationService {
      * fire-and-forget, so the server-side job record is authoritative.
      */
     loadJobs(): Observable<VariantJob[]> {
+        const login = this.accountService.userIdentity()?.login;
+        const revision = this.identityRevision;
         return this.api.getJobsOfCurrentUser().pipe(
             tap((jobs) => {
+                if (!this.isCurrentIdentity(login, revision)) return;
                 this.jobs.set(jobs);
                 const stillRunning = new Set(jobs.filter((job) => !isTerminalVariantPhase(job.phase) && job.jobId).map((job) => job.jobId!));
                 // REST is authoritative: a job that finished while its terminal event was missed must lose its
@@ -103,6 +104,7 @@ export class ExerciseVariantGenerationService {
 
     /** Clears the tray state and detaches all websocket subscriptions — called on logout. */
     clearJobs(): void {
+        this.identityRevision++;
         this.jobSubscriptions.forEach((subscription, jobId) => {
             subscription.unsubscribe();
             this.websocketService.unsubscribeFromJob(jobId);
@@ -142,6 +144,8 @@ export class ExerciseVariantGenerationService {
     }
 
     private handleEvent(jobId: string, event: VariantGenerationEvent): void {
+        const login = this.accountService.userIdentity()?.login;
+        const revision = this.identityRevision;
         this.jobs.update((jobs) =>
             jobs.map((job) => {
                 if (job.jobId !== jobId) {
@@ -163,7 +167,7 @@ export class ExerciseVariantGenerationService {
             // copy instead; it is the authority on what survived.
             this.api.getJobDetail(jobId).subscribe({
                 next: (detail) => {
-                    if (detail.job) {
+                    if (detail.job && this.isCurrentIdentity(login, revision)) {
                         this.replaceJob(jobId, detail.job);
                     }
                 },
@@ -174,8 +178,14 @@ export class ExerciseVariantGenerationService {
             // subject — done synchronously it would stop later subscribers (the wizard modal) before the
             // subject's next() loop delivers this terminal event to them, freezing the modal in the last live
             // phase. Detaching in a microtask lets every subscriber receive the event first.
-            window.queueMicrotask(() => this.detachFromJob(jobId));
+            window.queueMicrotask(() => {
+                if (this.isCurrentIdentity(login, revision)) this.detachFromJob(jobId);
+            });
         }
+    }
+
+    private isCurrentIdentity(login: string | undefined, revision: number): boolean {
+        return this.accountService.userIdentity()?.login === login && this.identityRevision === revision;
     }
 
     private detachFromJob(jobId: string): void {

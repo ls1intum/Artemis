@@ -15,7 +15,7 @@ import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-dia
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/quiz-question-list-edit-existing.component';
-import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-question-refinement-panel/quiz-ai-question-refinement-panel.component';
+import { QuizAiQuestionRefinementPanelComponent } from 'app/hyperion/quiz/quiz-ai-question-refinement-panel/quiz-ai-question-refinement-panel.component';
 
 @Component({
     selector: 'jhi-quiz-question-list-edit',

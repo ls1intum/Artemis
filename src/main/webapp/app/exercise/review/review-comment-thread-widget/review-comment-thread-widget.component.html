@@ -206,34 +206,27 @@
             <div class="monaco-review-comment-actions">
                 @if (showFeedbackAction() && !thread().outdated && (!thread().resolved || isSelectedAsFeedback())) {
                     <button
-                        pButton
+                        tumAetUiButton
+                        variant="outlined"
                         type="button"
-                        severity="secondary"
+                        severity="primary"
                         size="small"
                         class="monaco-review-comment-feedback-selection-button"
                         [class.monaco-review-comment-feedback-selection-button--selected]="isSelectedAsFeedback()"
+                        [attr.aria-pressed]="isSelectedAsFeedback()"
+                        [disabled]="!!adaptBlockedReason()"
                         (click)="toggleFeedbackSelection()"
                     >
+                        <fa-icon [icon]="facArtemisIntelligence" />
                         @if (isSelectedAsFeedback()) {
                             {{ 'artemisApp.review.removeThreadFromFeedback' | artemisTranslate }}
                         } @else {
                             {{ 'artemisApp.review.selectThreadAsFeedback' | artemisTranslate }}
                         }
                     </button>
-                }
-                @if (canAdaptExercise()) {
-                    <button
-                        pButton
-                        type="button"
-                        severity="secondary"
-                        size="small"
-                        class="monaco-review-comment-adapt-button"
-                        [tumAetUiDisabledReason]="adaptBlockedReason() ? (adaptBlockedReason()! | artemisTranslate) : ''"
-                        (click)="requestAdapt()"
-                    >
-                        <fa-icon [icon]="faScrewdriverWrench" class="monaco-review-comment-button-icon" />
-                        {{ 'artemisApp.review.adaptExercise.threadAction' | artemisTranslate }}
-                    </button>
+                    @if (adaptBlockedReason(); as reason) {
+                        <span class="text-sm text-muted-color">{{ reason | artemisTranslate }}</span>
+                    }
                 }
                 <div class="monaco-review-comment-resolve-controls">
                     <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">
