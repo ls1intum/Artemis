@@ -342,6 +342,14 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     Optional<Long> findCourseIdById(@Param("plagiarismCaseId") long plagiarismCaseId);
 
     @Query("""
+            SELECT COUNT(plagiarismCase) > 0
+            FROM PlagiarismCase plagiarismCase
+            WHERE plagiarismCase.id = :plagiarismCaseId
+                AND plagiarismCase.student.login = :login
+            """)
+    boolean existsByIdAndStudentLogin(@Param("plagiarismCaseId") long plagiarismCaseId, @Param("login") String login);
+
+    @Query("""
             SELECT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO(
                 plagiarismCase.id,
                 new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseExerciseDTO(

@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.quiz;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -970,7 +970,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private void checkQuizNotStarted(String path) {
         // check that quiz has not started now
         log.debug("// Check that the quiz has not started and submissions are not allowed");
-        verify(websocketMessagingService, never()).sendMessage(eq(path), any());
+        verify(websocketMessagingService, never()).sendMessage(topic(path), any());
     }
 
     private QuizSubmission createScoredSubmission(QuizExercise quizExercise, boolean correct, ZonedDateTime submissionDate) {
@@ -1050,9 +1050,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private void verifyNoWebsocketMessageForExercise(QuizExercise exercise) {
-        String topic = EXERCISE_TOPIC_ROOT + exercise.getId() + "/newResults";
-        verify(websocketMessagingService, never()).sendMessage(eq(topic), any());
-        verify(websocketMessagingService, never()).sendMessageToUser(any(), eq(topic), any());
+        String topic = "/topic/exercise/" + exercise.getId() + "/newResults";
+        verify(websocketMessagingService, never()).sendMessage(topic(topic), any());
+        verify(websocketMessagingService, never()).sendMessageToUser(any(), userTopic(topic), any());
     }
 
     @Nested

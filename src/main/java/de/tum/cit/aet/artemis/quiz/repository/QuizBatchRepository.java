@@ -52,6 +52,29 @@ public interface QuizBatchRepository extends ArtemisJpaRepository<QuizBatch, Lon
     Optional<QuizBatch> findByQuizExerciseAndStudentLogin(@Param("quizExercise") QuizExercise quizExercise, @Param("studentLogin") String studentLogin);
 
     /**
+     * Checks whether a student joined a quiz batch, i.e. has a quiz submission assigned to it.
+     *
+     * @param quizBatchId the id of the quiz batch
+     * @param login       the login of the student
+     * @return true if the student joined the batch
+     */
+    @Query("""
+            SELECT COUNT(submission) > 0
+            FROM QuizSubmission submission
+                JOIN TREAT(submission.participation AS StudentParticipation) participation
+            WHERE submission.quizBatch = :quizBatchId
+                AND participation.student.login = :login
+            """)
+    boolean existsByIdAndJoinedStudentLogin(@Param("quizBatchId") long quizBatchId, @Param("login") String login);
+
+    @Query("""
+            SELECT quizBatch.quizExercise.id
+            FROM QuizBatch quizBatch
+            WHERE quizBatch.id = :quizBatchId
+            """)
+    Optional<Long> findQuizExerciseIdById(@Param("quizBatchId") long quizBatchId);
+
+    /**
      * Clamp every batch's startTime so it cannot start later than the last moment compatible with the new dueDate,
      * used by END_NOW. Mirrors {@link de.tum.cit.aet.artemis.quiz.service.QuizBatchService#quizBatchStartDate} but
      * evaluated entirely in the database as a single statement.

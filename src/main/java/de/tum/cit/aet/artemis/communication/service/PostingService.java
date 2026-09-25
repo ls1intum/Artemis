@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.COURSE_WIDE_POSTS;
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.PLAGIARISM_CASE_POSTS;
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.USER_CONVERSATION_POSTS;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,8 +64,6 @@ public abstract class PostingService {
 
     protected static final String METIS_POST_ENTITY_NAME = "metis.post";
 
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
-
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository) {
@@ -118,6 +120,9 @@ public abstract class PostingService {
      * before the frame leaves the server. Sending the {@link Post} entity directly used to walk
      * the same JSON cycle that fires Jackson's {@code DeserializerCache} race during integration
      * test deserialization (see {@code JacksonDeserializerInitializationConfig}).
+     * <p>
+     * The conversation of the post must still carry the exercise and exam of its channel: whether students may see the channel depends on them, so hide the
+     * details of the conversation only after broadcasting.
      *
      * @param post       the affected post
      * @param action     the action performed on the post
@@ -143,21 +148,27 @@ public abstract class PostingService {
         PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, action);
 
         if (postConversation != null) {
-            String coursePathSuffix = "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
+                if (channel.isVisibleToStudents()) {
+                    websocketMessagingService.sendMessage(COURSE_WIDE_POSTS.at(courseId), broadcastPayload);
+                }
+                else {
+                    // Staff discuss an exercise or exam in its channel before students can see it. The course-wide topic reaches every
+                    // student of the course, so the post goes to the personal topic of each staff member instead.
+                    getNotificationRecipients(channel).filter(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse)
+                            .forEach(recipient -> websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), broadcastPayload));
+                }
             }
             else {
                 if (recipients == null) {
                     // send to all participants of the conversation
                     recipients = getConversationParticipantsAsSummaries(postConversation);
                 }
-                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", broadcastPayload));
+                recipients.forEach(recipient -> websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), broadcastPayload));
             }
         }
         else if (post.getPlagiarismCase() != null) {
-            String plagiarismCaseSuffix = "plagiarismCase/" + post.getPlagiarismCase().getId();
-            websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
+            websocketMessagingService.sendMessage(PLAGIARISM_CASE_POSTS.at(post.getPlagiarismCase().getId()), broadcastPayload);
         }
     }
 
@@ -206,10 +217,12 @@ public abstract class PostingService {
         post.getAnswers().removeIf(AnswerPost::isUnverifiedIrisReply);
         PostBroadcastDTO studentPayload = PostBroadcastDTO.from(post, action);
 
+        // Students must not see posts of a channel whose exercise or exam is not visible to them yet.
+        boolean visibleToStudents = !(conversation instanceof Channel channel) || channel.isVisibleToStudents();
         // Resolve recipients together with their course role — a caller-supplied set need not carry the tutor flag.
-        getNotificationRecipients(conversation).forEach(recipient -> {
+        getNotificationRecipients(conversation).filter(recipient -> visibleToStudents || recipient.isAtLeastTutorInCourse()).forEach(recipient -> {
             PostBroadcastDTO payload = recipient.isAtLeastTutorInCourse() ? tutorPayload : studentPayload;
-            websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", payload);
+            websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), payload);
         });
     }
 
