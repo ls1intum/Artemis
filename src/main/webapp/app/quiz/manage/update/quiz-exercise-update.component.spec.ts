@@ -1232,9 +1232,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 resetQuizExercise();
                 comp.quizExercise.set(quizExercise);
                 quizExerciseServiceCreateStub = vi.spyOn(quizExerciseService, 'create');
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+                quizExerciseServiceCreateStub.mockReturnValue(of(quizExercise));
                 quizExerciseServiceUpdateStub = vi.spyOn(quizExerciseService, 'update');
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(quizExercise));
                 const calendarService = TestBed.inject(CalendarService);
                 refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
                 exerciseSanitizeSpy = vi.spyOn(Exercise, 'sanitize');
@@ -1267,7 +1267,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise());
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), {});
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), undefined);
                 expect(refreshSpy).toHaveBeenCalled();
             });
 
@@ -1296,26 +1296,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise());
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), { notificationText: 'test' });
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise().id, comp.quizExercise(), new Map<string, Blob>(), 'test');
                 expect(refreshSpy).toHaveBeenCalled();
-            });
-
-            it('should call alert service if response has no body on create', () => {
-                comp.quizExercise().id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
-            });
-
-            it('should call alert service if response has no body on update', () => {
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
-            });
-
-            it('should call alert service if response has no body on import', () => {
-                comp.isImport.set(true);
-                comp.quizExercise().id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({})));
-                saveAndExpectAlertService();
             });
 
             it('should call alert service if create fails', () => {
@@ -1363,7 +1345,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 savedResponse.quizBatches = [];
                 savedResponse.isAtLeastEditor = true;
                 savedResponse.isEditable = undefined;
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(savedResponse));
 
                 saveQuizWithPendingChangesCache();
 
@@ -1383,7 +1365,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 savedResponse.quizBatches = [];
                 savedResponse.isAtLeastEditor = true;
                 savedResponse.isEditable = false;
-                quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: savedResponse })));
+                quizExerciseServiceUpdateStub.mockReturnValue(of(savedResponse));
 
                 saveQuizWithPendingChangesCache();
 
