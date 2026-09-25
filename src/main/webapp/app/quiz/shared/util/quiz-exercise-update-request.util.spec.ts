@@ -6,9 +6,9 @@ import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { toQuizExerciseUpdateDTO } from './quiz-exercise-update-dto.model';
+import { toUpdateQuizExercise } from 'app/quiz/shared/util/quiz-exercise-update-request.util';
 
-describe('QuizExerciseUpdateDTO', () => {
+describe('toUpdateQuizExercise', () => {
     it('should normalize persisted drag-and-drop ids for updates', () => {
         const dragItem = new DragItem();
         dragItem.id = 21;
@@ -37,7 +37,7 @@ describe('QuizExerciseUpdateDTO', () => {
         const exercise = new QuizExercise(undefined, undefined);
         exercise.quizQuestions = [question];
 
-        const dto = toQuizExerciseUpdateDTO(exercise);
+        const dto = toUpdateQuizExercise(exercise);
         const dndQuestion = dto.quizQuestions?.[0];
 
         expect(dndQuestion).toEqual(
@@ -74,7 +74,7 @@ describe('QuizExerciseUpdateDTO', () => {
         const exercise = new QuizExercise(undefined, undefined);
         exercise.quizQuestions = [question];
 
-        const dto = toQuizExerciseUpdateDTO(exercise);
+        const dto = toUpdateQuizExercise(exercise);
         const dndQuestion = dto.quizQuestions?.[0] as any;
 
         expect(dndQuestion.dragItems[0]).toEqual(expect.objectContaining({ id: undefined, tempID: 2200 }));
@@ -97,7 +97,7 @@ describe('QuizExerciseUpdateDTO', () => {
         const exercise = new QuizExercise(undefined, undefined);
         exercise.quizQuestions = [question];
 
-        const dto = toQuizExerciseUpdateDTO(exercise);
+        const dto = toUpdateQuizExercise(exercise);
         const mcQuestion = dto.quizQuestions?.[0] as any;
 
         expect(mcQuestion).toEqual(expect.objectContaining({ id: 5, type: 'multiple-choice' }));

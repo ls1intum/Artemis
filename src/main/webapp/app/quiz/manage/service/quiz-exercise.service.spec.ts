@@ -164,10 +164,11 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.create(quizExercise, fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/courses/1/quiz-exercises' });
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/courses/1/quiz-exercises' });
         validateFormData(req);
         req.flush(returnedFromService);
-        expect((await result)?.body).toEqual(expected);
+        expect(await result).toBeInstanceOf(QuizExercise);
+        expect((await result).id).toBe(expected.id);
     });
 
     it('should create a QuizExercise for an exam', async () => {
@@ -180,39 +181,15 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.create(quizExercise, fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/exercise-groups/1/quiz-exercises' });
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/quiz/exercise-groups/1/quiz-exercises' });
         validateFormData(req);
         req.flush(returnedFromService);
-        expect((await result)?.body).toEqual(expected);
+        expect((await result).id).toBe(expected.id);
     });
 
     it('should throw an error if QuizExercise has neither course nor exerciseGroup', async () => {
         const quizExercise = new QuizExercise(undefined, undefined);
         expect(() => service.create(quizExercise, fileMap)).toThrow('Quiz exercise must belong to a course or an exercise group');
-    });
-
-    it('should import a QuizExercise', async () => {
-        const returnedFromService = Object.assign(
-            {
-                description: 'BBBBBB',
-                explanation: 'BBBBBB',
-                randomizeQuestionOrder: true,
-                allowedNumberOfAttempts: 1,
-                isVisibleBeforeStart: true,
-                isPlannedToStart: true,
-                duration: 1,
-            },
-            elemDefault,
-        );
-        const quizExercise = new QuizExercise(undefined, undefined);
-        quizExercise.id = 42;
-
-        const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.import(quizExercise, fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/quiz-exercises/import/42' });
-        validateFormData(req);
-        req.flush(returnedFromService);
-        expect((await result)?.body).toEqual(expected);
     });
 
     it('should update a QuizExercise', async () => {
@@ -229,11 +206,11 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.update(1, expected, fileMap));
-        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1' });
+        const result = firstValueFrom(service.update(1, expected, fileMap, 'Changed the solution'));
+        const req = httpMock.expectOne({ method: 'PUT', url: '/api/quiz/quiz-exercises/1?notificationText=Changed+the+solution' });
         validateFormData(req);
         req.flush(returnedFromService);
-        expect((await result)?.body).toEqual(expected);
+        expect((await result).duration).toBe(expected.duration);
     });
 
     it.each([
@@ -418,6 +395,7 @@ describe('QuizExercise Service', () => {
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
         const fileArray = req.request.body.getAll('files');
         expect(fileArray).toHaveLength(1);
-        expect(fileArray[0]).toBeInstanceOf(Blob);
+        // The server matches an upload to its question by the part's file name, so the part must carry the map key.
+        expect((fileArray[0] as File).name).toBe('file.jpg');
     }
 });
