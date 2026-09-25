@@ -29,6 +29,14 @@ public class StudentExamApi extends AbstractExamApi {
         this.studentExamRepository = studentExamRepository;
     }
 
+    public boolean isOwnerOfStudentExam(long studentExamId, String login) {
+        return studentExamRepository.existsByIdAndUserLogin(studentExamId, login);
+    }
+
+    public boolean hasStudentExamInExam(long examId, String login) {
+        return studentExamRepository.existsByExamIdAndUserLogin(examId, login);
+    }
+
     public Optional<StudentExam> findByExerciseIdAndUserId(Long exerciseId, Long userId) {
         return studentExamRepository.findByExerciseIdAndUserId(exerciseId, userId);
     }

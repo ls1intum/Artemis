@@ -31,6 +31,14 @@ public class PlagiarismCaseApi extends AbstractPlagiarismApi {
         this.plagiarismCaseService = plagiarismCaseService;
     }
 
+    public boolean isStudentOrTeamMemberOfPlagiarismCase(long plagiarismCaseId, String login) {
+        return plagiarismCaseRepository.existsByIdAndStudentOrTeamMemberLogin(plagiarismCaseId, login);
+    }
+
+    public Optional<Long> findCourseIdOfPlagiarismCase(long plagiarismCaseId) {
+        return plagiarismCaseRepository.findCourseIdById(plagiarismCaseId);
+    }
+
     public Optional<PlagiarismCaseInfoDTO> getPlagiarismCaseInfoForExerciseAndUser(long exerciseId, long userId) {
         return plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exerciseId, userId);
     }
