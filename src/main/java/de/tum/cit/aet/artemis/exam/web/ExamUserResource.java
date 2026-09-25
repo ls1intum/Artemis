@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -59,7 +60,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 @Validated
 @Conditional(ExamEnabled.class)
 @Lazy
-@FeatureUsage("authoring/registration")
+@FeatureUsage(UserFeature.EXAM_REGISTRATION)
 @RestController
 @RequestMapping("api/exam/")
 public class ExamUserResource {
@@ -94,6 +95,7 @@ public class ExamUserResource {
      * @param examId        the id of the exam
      * @return saved examUser ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
     @EnforceAtLeastTutor
     public ResponseEntity<ExamUserDTO> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile signatureFile,
@@ -160,6 +162,7 @@ public class ExamUserResource {
      * @param examId   the id of the exam
      * @return list of students who did not sign ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping("courses/{courseId}/exams/{examId}/verify-exam-users")
     @EnforceAtLeastInstructor
     public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -175,6 +178,7 @@ public class ExamUserResource {
      * @param examId   the id of the exam
      * @return boolean indicating if attendance was checked ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.EXAM_TAKE)
     @GetMapping("courses/{courseId}/exams/{examId}/attendance")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> isAttendanceChecked(@PathVariable Long courseId, @PathVariable Long examId) {

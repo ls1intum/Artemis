@@ -1,27 +1,27 @@
-import { ApplicationRef, Component, signal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ApplicationRef, Binding, WritableSignal, inputBinding, signal } from '@angular/core';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { By } from '@angular/platform-browser';
 import { TumUiTooltipDirective } from './tum-ui-tooltip.directive';
 
-@Component({
-    template: `<button [tumUiTooltip]="text()" [showDelayMs]="0" [hideDelayMs]="0">Hover me</button>`,
-    imports: [TumUiTooltipDirective],
-})
-class TooltipHostComponent {
-    text = signal<string | readonly string[]>('Help text');
+/** Applies the tooltip to a <button> with both delays at zero, plus the given bindings. */
+function createTooltip(bindings: Binding[]): DirectiveFixture<TumUiTooltipDirective> {
+    return TestBed.createDirective(TumUiTooltipDirective, {
+        tagName: 'button',
+        bindings: [inputBinding('showDelayMs', () => 0), inputBinding('hideDelayMs', () => 0), ...bindings],
+    });
 }
 
 describe('TumUiTooltipDirective', () => {
-    let fixture: ComponentFixture<TooltipHostComponent>;
+    let fixture: DirectiveFixture<TumUiTooltipDirective>;
+    let text: WritableSignal<string | readonly string[]>;
     let button: HTMLButtonElement;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.useFakeTimers();
-        await TestBed.configureTestingModule({ imports: [TooltipHostComponent] }).compileComponents();
-        fixture = TestBed.createComponent(TooltipHostComponent);
+        text = signal<string | readonly string[]>('Help text');
+        fixture = createTooltip([inputBinding('tumUiTooltip', text)]);
         fixture.detectChanges();
-        button = fixture.debugElement.query(By.css('button')).nativeElement;
+        button = fixture.nativeElement as HTMLButtonElement;
     });
 
     afterEach(() => {
@@ -167,7 +167,7 @@ describe('TumUiTooltipDirective', () => {
         vi.advanceTimersByTime(1);
         appRef.tick();
         expect(bubble()?.textContent).toContain('Help text');
-        fixture.componentInstance.text.set('Updated help text');
+        text.set('Updated help text');
         appRef.tick();
         appRef.tick();
         expect(bubble()?.textContent).toContain('Updated help text');
@@ -180,7 +180,7 @@ describe('TumUiTooltipDirective', () => {
         appRef.tick();
         expect(bubble()).not.toBeNull();
         expect(button.getAttribute('aria-describedby')).toBeTruthy();
-        fixture.componentInstance.text.set('');
+        text.set('');
         appRef.tick();
         expect(bubble()).toBeNull();
         expect(button.getAttribute('aria-describedby')).toBeNull();
@@ -188,7 +188,7 @@ describe('TumUiTooltipDirective', () => {
 
     it('renders several reasons as a list and clamps wider than the one-line form', () => {
         const appRef = TestBed.inject(ApplicationRef);
-        fixture.componentInstance.text.set(['First reason', 'Second reason']);
+        text.set(['First reason', 'Second reason']);
         fixture.detectChanges();
         button.dispatchEvent(new MouseEvent('mouseenter'));
         vi.advanceTimersByTime(1);
@@ -200,7 +200,7 @@ describe('TumUiTooltipDirective', () => {
     });
 
     it('stays hidden when the content is an empty list', () => {
-        fixture.componentInstance.text.set([]);
+        text.set([]);
         fixture.detectChanges();
         button.dispatchEvent(new MouseEvent('mouseenter'));
         vi.advanceTimersByTime(1);
@@ -221,24 +221,18 @@ describe('TumUiTooltipDirective', () => {
     });
 });
 
-@Component({
-    template: `<button aria-describedby="external-desc" [tumUiTooltip]="text()" [tumUiTooltipDescribesHost]="false" [showDelayMs]="0" [hideDelayMs]="0">Hover me</button>`,
-    imports: [TumUiTooltipDirective],
-})
-class NonDescribingTooltipHostComponent {
-    text = signal<string | readonly string[]>(['First reason', 'Second reason']);
-}
-
 describe('TumUiTooltipDirective with tumUiTooltipDescribesHost false', () => {
-    let fixture: ComponentFixture<NonDescribingTooltipHostComponent>;
     let button: HTMLButtonElement;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.useFakeTimers();
-        await TestBed.configureTestingModule({ imports: [NonDescribingTooltipHostComponent] }).compileComponents();
-        fixture = TestBed.createComponent(NonDescribingTooltipHostComponent);
+        const reasons = ['First reason', 'Second reason'];
+        const fixture = createTooltip([inputBinding('tumUiTooltip', () => reasons), inputBinding('tumUiTooltipDescribesHost', () => false)]);
+        button = fixture.nativeElement as HTMLButtonElement;
+        // The directive reads the host's aria-describedby only while showing and hiding, so setting it before the
+        // first change detection is equivalent to writing it in a template.
+        button.setAttribute('aria-describedby', 'external-desc');
         fixture.detectChanges();
-        button = fixture.debugElement.query(By.css('button')).nativeElement;
     });
 
     afterEach(() => {
@@ -265,25 +259,17 @@ describe('TumUiTooltipDirective with tumUiTooltipDescribesHost false', () => {
     });
 });
 
-@Component({
-    template: `<button [tumUiTooltip]="text()" [tumUiTooltipDescribesHost]="describes()" [showDelayMs]="0" [hideDelayMs]="0">Hover me</button>`,
-    imports: [TumUiTooltipDirective],
-})
-class TogglingTooltipHostComponent {
-    text = signal<string | readonly string[]>('Help text');
-    describes = signal(true);
-}
-
 describe('TumUiTooltipDirective when tumUiTooltipDescribesHost changes while open', () => {
-    let fixture: ComponentFixture<TogglingTooltipHostComponent>;
+    let fixture: DirectiveFixture<TumUiTooltipDirective>;
+    let describes: WritableSignal<boolean>;
     let button: HTMLButtonElement;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.useFakeTimers();
-        await TestBed.configureTestingModule({ imports: [TogglingTooltipHostComponent] }).compileComponents();
-        fixture = TestBed.createComponent(TogglingTooltipHostComponent);
+        describes = signal(true);
+        fixture = createTooltip([inputBinding('tumUiTooltip', () => 'Help text'), inputBinding('tumUiTooltipDescribesHost', describes)]);
         fixture.detectChanges();
-        button = fixture.debugElement.query(By.css('button')).nativeElement;
+        button = fixture.nativeElement as HTMLButtonElement;
     });
 
     afterEach(() => {
@@ -297,7 +283,7 @@ describe('TumUiTooltipDirective when tumUiTooltipDescribesHost changes while ope
         vi.advanceTimersByTime(1);
         expect(button.getAttribute('aria-describedby')).toBeTruthy();
 
-        fixture.componentInstance.describes.set(false);
+        describes.set(false);
         fixture.detectChanges();
         button.dispatchEvent(new MouseEvent('mouseleave'));
         vi.advanceTimersByTime(1);

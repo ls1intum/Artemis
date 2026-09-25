@@ -7,6 +7,7 @@ import { DifficultyLevel, Exercise, IncludedInOverallScore, getIcon } from 'app/
 import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
@@ -36,6 +37,7 @@ import { TumUiTooltipDirective } from '@tumaet/ui-angular';
         ExerciseHeadersInformationComponent,
         InformationBoxComponent,
         TumUiTooltipDirective,
+        CourseSidebarToggleButtonComponent,
     ],
     /* preserveWhitespaces: false is required here because the global tsconfig sets preserveWhitespaces: true,
      * which inserts whitespace text nodes that break [contentComponent] slot matching in jhi-information-box. */
@@ -48,20 +50,25 @@ export class CourseExerciseGroupDetailComponent {
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly serverDateService = inject(ArtemisServerDateService);
+    private readonly scoresStorageService = inject(ScoresStorageService);
+    private readonly participationService = inject(ParticipationService);
 
     protected readonly faLayerGroup = faLayerGroup;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly getIcon = getIcon;
     protected readonly DifficultyLevel = DifficultyLevel;
 
-    private readonly serverDateService = inject(ArtemisServerDateService);
-    private readonly scoresStorageService = inject(ScoresStorageService);
-    private readonly participationService = inject(ParticipationService);
     private readonly now = this.serverDateService.now();
 
     private readonly groupId = signal<number | undefined>(undefined);
     private readonly courseExercises = signal<Exercise[]>([]);
     protected readonly course = signal<Course | undefined>(undefined);
+
+    protected readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    protected readonly showSidebarToggle = computed(() => !!this.sidebarToggle());
+    protected readonly toggleSidebar = () => this.sidebarToggle()?.();
 
     protected readonly group = computed<CourseExerciseGroup | undefined>(() => {
         const groupId = this.groupId();
@@ -111,11 +118,11 @@ export class CourseExerciseGroupDetailComponent {
         return this.scoresStorageService.getStoredAchievedGroupPoints(this.courseId, group.id) ?? 0;
     });
 
-    protected readonly pointsInfoBoxData = computed<InformationBox>(() => ({
+    protected readonly pointsInfoBoxData: InformationBox = {
         title: 'artemisApp.courseOverview.exerciseDetails.points',
         content: { type: 'string', value: '' },
         isContentComponent: true,
-    }));
+    };
 
     protected readonly variantsInfoBoxData = computed<InformationBox>(() => ({
         title: 'artemisApp.exerciseVariantGroup.detail.variants',
@@ -203,6 +210,16 @@ export class CourseExerciseGroupDetailComponent {
                     this.entityTitleService.setTitle(EntityType.EXERCISE_VARIANT_GROUP, [g.id], g.title);
                 }
             });
+    }
+
+    /**
+     * Hands this page the exercise sidebar's state and its toggle. Implementing it is what makes
+     * {@code CourseExercisesComponent} recognise the activated route component as one that renders the expand button
+     * itself, so a collapsed sidebar can be brought back from a group page rather than only from an exercise page.
+     */
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
     }
 
     /**

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -124,6 +125,18 @@ class PyrisStatusUpdateServiceTest {
 
         verify(irisTutorSuggestionSessionService).handleStatusUpdate(job, statusUpdate);
         verifyLifecycle(job, runState);
+    }
+
+    @Test
+    void tutorSuggestionJobIsRemovedWhenSessionNoLongerExists() {
+        var job = new TutorSuggestionJob("tutor-run", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new TutorSuggestionStatusUpdateDTO(null, null, PyrisRunState.RUNNING, null, List.of());
+        when(irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(null);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(pyrisJobService).removeJob(job);
+        verify(pyrisJobService, never()).updateJob(any());
     }
 
     @ParameterizedTest

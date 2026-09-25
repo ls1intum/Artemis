@@ -86,11 +86,7 @@ export interface CartesianFrame {
     plot: ChartPlot;
     /** Room a single category label may occupy before it has to be truncated. */
     categoryLabelBudget: number;
-    /**
-     * Category labels on a vertical chart are rotated once they can no longer sit side by side.
-     * Rotating all of them keeps the axis legible without dropping any label, which matters here
-     * because the labels carry meaning (grade buckets, exercise titles) rather than a continuum.
-     */
+    /** Rotate category labels when their combined width exceeds the available space. */
     rotateCategoryLabels: boolean;
 }
 
@@ -113,8 +109,6 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
     // Reserved vertical band for rotated labels; also the budget a rotated label has to fit into.
     let rotatedHeight = 0;
     if (input.horizontal) {
-        // A long category title must not eat the plot: past a third of the width the label is
-        // truncated instead, which keeps the bars visible rather than collapsing them to nothing.
         const categoryAllowance = Math.min(categoryLabelWidth, input.size.width * MAX_CATEGORY_AXIS_SHARE);
         margin = {
             top: EDGE_PADDING,
@@ -148,9 +142,7 @@ export function cartesianFrame(input: CartesianFrameInput): CartesianFrame {
             top: margin.top,
         },
         rotateCategoryLabels,
-        // A vertical chart reserves only a slice of its height for category labels, so the label has to fit
-        // that slice. Left unbounded, a long title is drawn in full and runs off the chart over whatever
-        // follows it. Rotated labels are measured along their own direction, hence dividing by the projection.
+        // Convert the reserved vertical height to a length along the rotated label.
         categoryLabelBudget: input.horizontal
             ? Math.max(margin.left - TICK_GAP - titleAllowance(input.yAxisTitle), 0)
             : rotateCategoryLabels

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
  * Service responsible for activating user accounts after registration.
  * Communicates with the server to validate activation keys sent via email.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ActivateService {
     private http = inject(HttpClient);
 

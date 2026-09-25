@@ -1,0 +1,156 @@
+<div class="flex flex-wrap gap-2 mb-2">
+    <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="expandAll()" data-testid="expand-all">
+        <span jhiTranslate="artemisApp.featureUsage.expandAll"></span>
+    </button>
+    <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="collapseAll()" data-testid="collapse-all">
+        <span jhiTranslate="artemisApp.featureUsage.collapseAll"></span>
+    </button>
+</div>
+
+<div class="overflow-x-auto">
+    <table tumUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="feature-tree">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
+                <th scope="col" jhiTranslate="artemisApp.featureUsage.column.status"></th>
+                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.actions"></th>
+                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.views"></th>
+                <th scope="col" class="text-end text-muted-color" jhiTranslate="artemisApp.featureUsage.column.automatic"></th>
+                <th scope="col" class="text-end text-muted-color" jhiTranslate="artemisApp.featureUsage.column.system"></th>
+                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.activeDays"></th>
+                <th scope="col" jhiTranslate="artemisApp.featureUsage.column.lastUsed"></th>
+                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.errorRate"></th>
+                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.meanDuration"></th>
+                <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (row of rows(); track row.key) {
+                <tr
+                    [attr.data-testid]="'tree-row-' + row.key"
+                    [attr.data-kind]="row.kind"
+                    [attr.data-status]="row.feature?.status"
+                    [class.text-muted-color]="row.feature?.status === FeatureUsageStatus.NOT_AVAILABLE || row.endpoint?.retired"
+                >
+                    <td>
+                        <span class="inline-flex items-center gap-2" [style.padding-left.rem]="row.level * 1.25">
+                            @if (row.hasChildren) {
+                                <button
+                                    tumUiButton
+                                    severity="secondary"
+                                    size="small"
+                                    variant="text"
+                                    (click)="toggle(row.key)"
+                                    [attr.aria-expanded]="row.expanded"
+                                    [attr.aria-label]="
+                                        row.kind === 'area'
+                                            ? (areaTranslationKey(row.name) | artemisTranslate)
+                                            : row.kind === 'feature'
+                                              ? (featureTranslationKey(row.name, 'name') | artemisTranslate)
+                                              : row.name
+                                    "
+                                    [attr.data-testid]="'toggle-' + row.key"
+                                >
+                                    <fa-icon [icon]="row.expanded ? faChevronDown : faChevronRight" />
+                                </button>
+                            } @else {
+                                <span class="inline-block" style="width: 1.5rem"></span>
+                            }
+                            @switch (row.kind) {
+                                @case ('area') {
+                                    <span class="font-semibold">{{ areaTranslationKey(row.name) | artemisTranslate }}</span>
+                                }
+                                @case ('feature') {
+                                    <span [tumUiTooltip]="featureTranslationKey(row.name, 'description') | artemisTranslate">{{
+                                        featureTranslationKey(row.name, 'name') | artemisTranslate
+                                    }}</span>
+                                }
+                                @case ('resource') {
+                                    <span class="text-sm wrap-anywhere">{{ row.name }}</span>
+                                    @if (row.featureKind && row.featureKind !== FeatureKind.REST) {
+                                        <tum-ui-tag severity="secondary">{{ 'artemisApp.featureUsage.kind.' + row.featureKind | artemisTranslate }}</tum-ui-tag>
+                                    }
+                                }
+                                @case ('endpoint') {
+                                    @if (row.endpoint && verbOf(row.endpoint); as verb) {
+                                        <tum-ui-tag severity="secondary">{{ verb }}</tum-ui-tag>
+                                    }
+                                    <span class="font-mono text-xs wrap-anywhere">{{ row.name }}</span>
+                                }
+                            }
+                        </span>
+                    </td>
+                    <td>
+                        @switch (row.kind) {
+                            @case ('area') {
+                                <span class="text-muted-color text-xs" data-testid="area-used-features">{{
+                                    'artemisApp.featureUsage.featuresUsed' | artemisTranslate: { used: row.usedFeatures, available: row.availableFeatures }
+                                }}</span>
+                            }
+                            @case ('feature') {
+                                @if (row.feature) {
+                                    <span class="inline-flex flex-wrap gap-1 whitespace-nowrap">
+                                        <tum-ui-tag [severity]="statusSeverity(row.feature.status)" data-testid="feature-status">{{
+                                            'artemisApp.featureUsage.status.' + row.feature.status | artemisTranslate
+                                        }}</tum-ui-tag>
+                                        @if (row.feature.noActions) {
+                                            <tum-ui-tag severity="info" [tumUiTooltip]="'artemisApp.featureUsage.noActionsHint' | artemisTranslate">{{
+                                                'artemisApp.featureUsage.noActionsTag' | artemisTranslate
+                                            }}</tum-ui-tag>
+                                        }
+                                        @for (adoption of row.adoption ?? []; track adoption.module + '/' + adoption.key) {
+                                            <tum-ui-tag severity="secondary" [tumUiTooltip]="adoption.module + '/' + adoption.key">{{
+                                                'artemisApp.featureUsage.adoptionTag' | artemisTranslate: { count: adoption.count, total: adoption.total }
+                                            }}</tum-ui-tag>
+                                        }
+                                    </span>
+                                }
+                            }
+                            @case ('endpoint') {
+                                @if (row.endpoint) {
+                                    <span class="inline-flex flex-wrap gap-1 whitespace-nowrap">
+                                        <tum-ui-tag [severity]="interactionSeverity(row.endpoint.interaction)" data-testid="endpoint-interaction">{{
+                                            'artemisApp.featureUsage.interaction.' + row.endpoint.interaction | artemisTranslate
+                                        }}</tum-ui-tag>
+                                        @if (row.endpoint.retired) {
+                                            <tum-ui-tag severity="secondary"><span jhiTranslate="artemisApp.featureUsage.retiredTag"></span></tum-ui-tag>
+                                        }
+                                    </span>
+                                }
+                            }
+                        }
+                    </td>
+                    <td class="text-end">{{ row.actionCount }}</td>
+                    <td class="text-end">{{ row.viewCount }}</td>
+                    <td class="text-end text-muted-color">{{ row.automaticCount }}</td>
+                    <td class="text-end text-muted-color">{{ row.systemCount }}</td>
+                    <td class="text-end">{{ row.activeDays ?? '-' }}</td>
+                    <td class="whitespace-nowrap">{{ row.lastUsedDay ?? '-' }}</td>
+                    @let rate = errorRate(row);
+                    @let mean = meanDuration(row);
+                    <td class="text-end" [class.text-state-danger]="(rate ?? 0) >= 5">{{ rate === undefined ? '-' : (rate | number: '1.0-1') + '%' }}</td>
+                    <td class="text-end">{{ mean === undefined ? '-' : (mean | number: '1.0-0') }}</td>
+                    <td>
+                        @if ((row.kind === 'feature' || row.kind === 'endpoint') && hasCalls(row)) {
+                            <button
+                                tumUiButton
+                                severity="secondary"
+                                size="small"
+                                variant="outlined"
+                                (click)="showTrend(row)"
+                                [attr.aria-label]="'artemisApp.featureUsage.column.trend' | artemisTranslate"
+                                data-testid="show-trend"
+                            >
+                                <fa-icon [icon]="faChartLine" />
+                            </button>
+                        }
+                    </td>
+                </tr>
+            } @empty {
+                <tr>
+                    <td colspan="11" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

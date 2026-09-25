@@ -138,6 +138,7 @@ export class TumUiDialogComponent implements OnDestroy {
             throw new Error('tum-ui-dialog requires a visible header, a header template, or ariaLabel');
         }
         const ref = this.dialog.open(this.panel(), {
+            panelClass: 'tum-ui-overlay',
             viewContainerRef: this.viewContainerRef,
             // Page scrolling is held by lockPageScroll() instead — see the note on that function.
             scrollStrategy: this.overlay.scrollStrategies.noop(),

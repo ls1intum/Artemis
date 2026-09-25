@@ -19,13 +19,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FormsModule, TranslateDirective, WorkingTimeControlComponent, WorkingTimeChangeComponent, ConfirmEntityNameComponent, FaIconComponent],
 })
 export class ExamEditWorkingTimeDialogComponent implements OnInit {
-    protected readonly faBan = faBan;
-    protected readonly faSpinner = faSpinner;
-    protected readonly faCheck = faCheck;
-
     private dialogRef = inject(DynamicDialogRef);
     private dialogConfig = inject(DynamicDialogConfig);
     private examManagementService = inject(ExamManagementService);
+
+    protected readonly faBan = faBan;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faCheck = faCheck;
 
     exam = signal<Exam | undefined>(undefined);
 

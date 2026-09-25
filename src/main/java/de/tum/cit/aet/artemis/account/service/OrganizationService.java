@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.account.dto.OrganizationRequestDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationSpecs;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.repository.UserSpecs;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -163,7 +164,7 @@ public class OrganizationService {
      */
     public Page<OrganizationMemberDTO> getUsersByOrganizationId(long organizationId, SearchTermPageableSearchDTO<String> search) {
         Specification<User> spec = OrganizationSpecs.getMemberSpecification(organizationId, search.getSearchTerm())
-                .and(OrganizationSpecs.orderedForMembers(search.getSortedColumn(), search.getSortingOrder()));
+                .and(UserSpecs.orderByColumn(search.getSortedColumn(), search.getSortingOrder()));
         var pageable = PageRequest.of(search.getPage(), search.getPageSize(), Sort.unsorted());
         return userRepository.findAll(spec, pageable).map(u -> new OrganizationMemberDTO(u.getId(), u.getLogin(),
                 ((u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "")).trim(), u.getEmail()));

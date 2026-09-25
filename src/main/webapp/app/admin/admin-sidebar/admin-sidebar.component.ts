@@ -57,6 +57,8 @@ export interface AdminSidebarGroup {
     host: { class: 'flex h-full flex-col bg-[var(--module-bg)]' },
 })
 export class AdminSidebarComponent {
+    layoutService = inject(LayoutService);
+
     protected readonly faChevronRight = faChevronRight;
     protected readonly faUserShield = faUserShield;
 
@@ -72,7 +74,6 @@ export class AdminSidebarComponent {
 
     toggleCollapseState = output<void>();
 
-    layoutService = inject(LayoutService);
     activeBreakpoints = toSignal(this.layoutService.subscribeToLayoutChanges(), { initialValue: [] as string[] });
     canExpand = computed(() => {
         this.activeBreakpoints();

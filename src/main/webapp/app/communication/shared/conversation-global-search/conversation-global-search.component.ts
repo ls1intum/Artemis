@@ -57,14 +57,14 @@ enum UserSearchStatus {
     imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip, CourseSidebarToggleButtonComponent],
 })
 export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
+    private courseManagementService = inject(CourseManagementService);
+    private accountService = inject(AccountService);
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
     readonly SearchMode = SearchMode;
     readonly UserSearchStatus = UserSearchStatus;
     readonly CONVERSATION_FILTER = CONVERSATION_FILTER;
     readonly USER_FILTER = USER_FILTER;
-
-    private courseManagementService = inject(CourseManagementService);
-    private accountService = inject(AccountService);
 
     conversations = input<ConversationDTO[]>([]);
     courseId = input<number | undefined>(undefined);

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, catchError, concatMap, finalize, of, shareReplay } from 'rxjs';
 
@@ -40,7 +40,7 @@ export type AthenaCourseConfigUpdate = Partial<AthenaCourseConfigDTO>;
  * dedicated endpoint rather than the whole-course update: a stale course settings form must not be able to overwrite
  * what was just toggled.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AthenaCourseConfigService {
     private http = inject(HttpClient);
 

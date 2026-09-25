@@ -8,6 +8,8 @@ import { EMPTY } from 'rxjs';
     pure: false,
 })
 // needed to be injectable in the notification.service
+// @Service() cannot share a class with @Pipe (the compiler reports a decorator collision), so this stays @Injectable.
+// eslint-disable-next-line @angular-eslint/prefer-service-decorator
 @Injectable({ providedIn: 'root' })
 export class ArtemisTranslatePipe implements PipeTransform {
     private translateService = inject(TranslateService);

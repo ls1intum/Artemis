@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.DEFAULT_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
 
 import java.util.Locale;
-import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -26,13 +24,15 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
-@FeatureUsage("learner-profile/learner-profile")
+@FeatureUsage(UserFeature.LEARNER_PROFILE)
 @RestController
 @RequestMapping("api/atlas/")
 public class LearnerProfileResource {
@@ -43,9 +43,12 @@ public class LearnerProfileResource {
 
     private final LearnerProfileRepository learnerProfileRepository;
 
-    public LearnerProfileResource(UserRepository userRepository, LearnerProfileRepository learnerProfileRepository) {
+    private final LearnerProfileService learnerProfileService;
+
+    public LearnerProfileResource(UserRepository userRepository, LearnerProfileRepository learnerProfileRepository, LearnerProfileService learnerProfileService) {
         this.userRepository = userRepository;
         this.learnerProfileRepository = learnerProfileRepository;
+        this.learnerProfileService = learnerProfileService;
     }
 
     /**
@@ -72,18 +75,7 @@ public class LearnerProfileResource {
         User user = userRepository.getUser();
         log.debug("REST request to get or create LearnerProfile of user {}", user.getLogin());
 
-        Optional<LearnerProfile> existingProfile = learnerProfileRepository.findByUser(user);
-        if (existingProfile.isPresent()) {
-            return ResponseEntity.ok(LearnerProfileDTO.of(existingProfile.get()));
-        }
-
-        LearnerProfile profile = new LearnerProfile();
-        profile.setUser(user);
-        profile.setFeedbackDetail(DEFAULT_PROFILE_VALUE);
-        profile.setFeedbackFormality(DEFAULT_PROFILE_VALUE);
-        profile.setHasSetupFeedbackPreferences(false);
-
-        return ResponseEntity.ok(LearnerProfileDTO.of(learnerProfileRepository.save(profile)));
+        return ResponseEntity.ok(LearnerProfileDTO.of(learnerProfileService.getOrCreateLearnerProfile(user)));
     }
 
     /**

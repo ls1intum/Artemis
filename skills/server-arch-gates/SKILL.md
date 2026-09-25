@@ -1,14 +1,12 @@
 ---
 name: server-arch-gates
-description: Check Artemis server code against the architectural rules the build enforces, before pushing. Use when writing or changing Java under src/main/java, adding a service, repository, REST resource, DTO, cache, or cross-node state, or when an ArchUnit test fails and the message does not make the rule obvious. Gives the rule, the reason, and the exact local command that proves it.
+description: Apply Artemis architecture rules when changing server Java or diagnosing an ArchUnit failure.
 ---
 
 # Server architecture gates
 
-Artemis enforces its server conventions with a large ArchUnit suite under `src/test/java`, most of
-it module-scoped subclasses of a handful of abstract rule bases. They are not style preferences. Each one exists because the pattern it forbids
-produced a production bug. The failure messages are often terse, so this skill maps a change to the
-rules it is subject to and to the reason behind each.
+Artemis enforces server conventions with ArchUnit tests under `src/test/java`. This skill maps
+server changes to those checks and explains rules whose failure messages lack context.
 
 ## Run them locally
 
@@ -36,10 +34,10 @@ A single class while iterating:
 | A repository                           | Transactions, raw JDBC                              |
 | A DTO record                           | DTO conventions                                     |
 | Anything holding state across requests | Caching, distributed data                           |
-| An entity or an association            | Caching, entity conventions                         |
+| An entity or an association            | Caching, entity conventions, column mapping         |
 | Anything at all in a large file        | Counted gates                                       |
 | Anything that lowercases or uppercases | Case conversion                                     |
-| Anything that serializes JSON          | Jackson version                                      |
+| Anything that serializes JSON          | Jackson version                                     |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
@@ -83,6 +81,12 @@ has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`. Enforced by
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`.
 The provider is configurable, so direct usage does not fail loudly, it silently loses the state.
+
+**No `@Lob`.** A CLOB on PostgreSQL is a large object, so the value lands in `pg_largeobject` and the
+column keeps only its id - while the long text columns here are Liquibase `longtext` or `clob`, both
+`text` on PostgreSQL, holding the text itself. A `String` or a converted attribute needs no
+annotation at all; for a structured value use `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column.
+Enforced by `testNoLobAnnotation` in `ArchitectureTest.java`.
 
 **No Hibernate second-level cache.** No `@Cache` on entities or associations. Enforced by
 `testNoHibernateSecondLevelCacheAnnotation` in `ArchitectureTest.java`. For DTO and projection

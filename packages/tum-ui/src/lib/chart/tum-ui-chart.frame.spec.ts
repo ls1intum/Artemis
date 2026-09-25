@@ -1,11 +1,5 @@
-import { cartesianFrame } from './tum-ui-chart.frame';
-import { bandScale, linearScale } from './tum-ui-chart.scales';
+import { TICK_GAP, cartesianFrame } from './tum-ui-chart.frame';
 
-/**
- * A vertical chart reserves at most a third of its height for rotated category labels, so a label longer than
- * that has to be shortened. Left unbounded it is drawn in full and runs off the bottom and side of the chart,
- * over whatever follows it — which is what a long exercise title did on the course average-score chart.
- */
 describe('cartesianFrame category label budget', () => {
     const longTitle = 'Programming exercise about building a distributed system with fault tolerance and recovery';
 
@@ -19,9 +13,7 @@ describe('cartesianFrame category label budget', () => {
                 { value: 0, text: '0' },
                 { value: 100, text: '100' },
             ],
-            categoryScale: bandScale(labels.length, horizontal ? size.height : size.width),
-            valueScale: linearScale([0, 100], [0, 100]),
-        } as never);
+        });
     }
 
     it('gives a vertical chart a finite budget for its category labels', () => {
@@ -39,9 +31,9 @@ describe('cartesianFrame category label budget', () => {
         expect(frame.categoryLabelBudget).toBeLessThanOrEqual(reserved * 2);
     });
 
-    it('still gives a horizontal chart the left margin as its budget', () => {
+    it('reserves the horizontal chart label budget inside the left margin', () => {
         const frame = frameFor([longTitle, 'Short'], true);
 
-        expect(Number.isFinite(frame.categoryLabelBudget)).toBe(true);
+        expect(frame.categoryLabelBudget).toBe(frame.margin.left - TICK_GAP);
     });
 });
