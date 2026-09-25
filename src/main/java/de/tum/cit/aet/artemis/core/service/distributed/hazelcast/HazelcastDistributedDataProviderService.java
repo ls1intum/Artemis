@@ -33,6 +33,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.LifecycleListener;
 
 import de.tum.cit.aet.artemis.core.config.HazelcastDistributedDataCondition;
+import de.tum.cit.aet.artemis.core.service.distributed.api.CoordinationSnapshot;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DefaultTimeToLiveDistributedMap;
@@ -273,6 +274,23 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
         // For cluster members, format consistently with client addresses
         var memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress();
         return "[" + memberAddress.getHost() + "]:" + memberAddress.getPort();
+    }
+
+    @Override
+    public String getLocalNodeId() {
+        if (!isInstanceRunning()) {
+            throw new HazelcastInstanceNotActiveException();
+        }
+        return hazelcastInstance.getLocalEndpoint().getUuid().toString();
+    }
+
+    @Override
+    public Optional<CoordinationSnapshot> getCoordinationSnapshot() {
+        if (!isInstanceRunning()) {
+            return Optional.empty();
+        }
+        return Optional.of(new CoordinationSnapshot(
+                getClusterMembers().stream().filter(member -> !member.isLiteMember()).map(Member::getUuid).map(UUID::toString).collect(Collectors.toUnmodifiableSet()), true));
     }
 
     /**

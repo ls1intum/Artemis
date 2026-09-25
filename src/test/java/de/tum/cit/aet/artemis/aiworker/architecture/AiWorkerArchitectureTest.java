@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Service;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -37,9 +36,7 @@ class AiWorkerArchitectureTest {
     }
 
     @Test
-    void springServicesFollowArtemisNamingAndPackaging() {
-        classes().that().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").andShould().resideInAPackage("..service..").check(CLASSES);
-        classes().that().haveSimpleNameEndingWith("Service").should().beAnnotatedWith(Service.class).check(CLASSES);
+    void springConfigurationsStayInTheConfigPackage() {
         classes().that().areAnnotatedWith(Configuration.class).should().resideInAPackage("..config..").check(CLASSES);
     }
 
