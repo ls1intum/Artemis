@@ -203,6 +203,11 @@
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "Iris reply needs review"
             },
+            "atlasCompetencyUpdateNotification": {
+                "title": "Automatic competency update",
+                "content": "Automatic competency update after changes to {{exerciseCount}} exercise(s): {{appliedCount}} change(s) applied. The details were sent by email.",
+                "settingsTitle": "Automatic competency updates (instructors)"
+            },
             "newMentionNotification": {
                 "title": "You were mentioned",
                 "content": "{{postMarkdownContent}}",

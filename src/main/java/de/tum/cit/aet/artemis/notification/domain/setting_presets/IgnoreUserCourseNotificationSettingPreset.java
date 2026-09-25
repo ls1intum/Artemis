@@ -5,6 +5,7 @@ import java.util.Map;
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AddedToChannelNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.AtlasCompetencyUpdateNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AttachmentChangedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ChannelDeletedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
@@ -87,6 +88,8 @@ public class IgnoreUserCourseNotificationSettingPreset extends UserCourseNotific
                 Map.entry(TutorialGroupDeletedNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
                 Map.entry(IrisResponseNeedsReviewNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(AtlasCompetencyUpdateNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)));
     }
 }
