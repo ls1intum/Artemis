@@ -43,15 +43,15 @@ import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/featur
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import dayjs from 'dayjs/esm';
 import {
-    TumUiButtonDirective,
-    TumUiCheckboxComponent,
-    TumUiMessageComponent,
-    TumUiPanelComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTagComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPanelComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 
 @Component({
@@ -59,7 +59,7 @@ import {
     templateUrl: './assessment-dashboard.component.html',
     providers: [CourseManagementService],
     imports: [
-        TumUiMessageComponent,
+        TumAetUiMessageComponent,
         RouterLink,
         FaIconComponent,
         TranslateDirective,
@@ -77,15 +77,15 @@ import {
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
         DeimosDateRangeModalComponent,
         FeatureToggleHideDirective,
-        TumUiCheckboxComponent,
-        TumUiPanelComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiTagComponent,
-        TumUiTooltipDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPanelComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -470,7 +470,7 @@ export class AssessmentDashboardComponent implements OnInit {
         this.currentlyShownExercises.set(sorted);
     }
 
-    onExerciseSortChange(event: TumUiTableSortEvent): void {
+    onExerciseSortChange(event: TumAetUiTableSortEvent): void {
         this.exercisesSortingPredicate.set(event.field);
         this.exercisesReverseOrder.set(event.order > 0);
         this.sortRows();

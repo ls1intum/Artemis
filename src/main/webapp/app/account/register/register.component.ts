@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 import { PasswordStrengthBarComponent } from '../password/password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Type definition for the user registration form controls.
@@ -41,10 +41,10 @@ interface RegisterForm {
         ReactiveFormsModule,
         PasswordStrengthBarComponent,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiFormFieldComponent,
-        TumUiInputDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

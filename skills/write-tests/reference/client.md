@@ -60,11 +60,11 @@ fixture.detectChanges(); // applies the input bindings
 ```
 
 - `tagName` is required when the selector names no element (`[jhiMarkdown]`) or two different
-  tags, or `createDirective` throws. `table[tumUiTable]` infers `<table>` on its own.
+  tags, or `createDirective` throws. `table[tumAetUiTable]` infers `<table>` on its own.
 - `inputBinding(name, signalOrGetter)`, `outputBinding(name, handler)` and
   `twoWayBinding(name, writableSignal)` (for a `model()`) come from `@angular/core`;
   `DirectiveFixture` comes from `@angular/core/testing`. Use the public name, which is the alias
-  where one exists: `tumUiTooltip`, not `content`. A wrong name throws `NG0315` in dev mode.
+  where one exists: `tumAetUiTooltip`, not `content`. A wrong name throws `NG0315` in dev mode.
 - **Input bindings are applied on the first `fixture.detectChanges()`.** Before that an input
   holds its default and a required input throws when read. Output bindings are live at once. After
   that, a changed signal reaches the directive on the next `fixture.detectChanges()`.
@@ -91,7 +91,7 @@ Keep a host component when:
   leave an existing `href` alone). Angular writes static attributes before it creates the
   directive; `createDirective` cannot;
 - an input takes a `TemplateRef` or a component instance from the same template
-  (`jhiStickyPopover`, `tumUiPopoverTrigger`).
+  (`jhiStickyPopover`, `tumAetUiPopoverTrigger`).
 
 An abstract base directive is still tested through a concrete subclass. One spec can mix both
 styles: `src/main/webapp/app/assessment/manage/secure-link.directive.spec.ts` uses

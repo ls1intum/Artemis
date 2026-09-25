@@ -16,14 +16,22 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { TumUiButtonDirective, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
     styleUrls: ['./apollon-diagram-list.component.scss'],
     providers: [ApollonDiagramService],
-    imports: [TranslateDirective, FaIconComponent, ArtemisTranslatePipe, DeleteButtonDirective, TumUiButtonDirective, TumUiTableDirective, TumUiTableSortableColumnComponent],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        DeleteButtonDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+    ],
 })
 export class ApollonDiagramListComponent {
     private apollonDiagramsService = inject(ApollonDiagramService);
@@ -142,7 +150,7 @@ export class ApollonDiagramListComponent {
         this.closeDialog.emit();
     }
 
-    sortRows(event: TumUiTableSortEvent) {
+    sortRows(event: TumAetUiTableSortEvent) {
         this.predicate.set(event.field);
         this.ascending.set(event.order >= 0);
         this.apollonDiagrams.set(this.sorted(this.apollonDiagrams()));

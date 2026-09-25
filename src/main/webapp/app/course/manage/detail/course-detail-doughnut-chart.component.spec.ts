@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiChartTooltipConfig, TumUiDoughnutChartComponent } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig, TumAetUiDoughnutChartComponent } from '@tumaet/ui-angular';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
@@ -33,7 +33,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
             ],
         }).overrideComponent(CourseDetailDoughnutChartComponent, {
             set: {
-                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), TumUiDoughnutChartComponent],
+                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), TumAetUiDoughnutChartComponent],
             },
         });
         await TestBed.compileComponents();
@@ -105,7 +105,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
 
     it('should show only the value in the tooltip body', () => {
         fixture.detectChanges();
-        const tooltip = component.chartConfig().tooltip as TumUiChartTooltipConfig;
+        const tooltip = component.chartConfig().tooltip as TumAetUiChartTooltipConfig;
 
         expect(tooltip.label!({ seriesIndex: 0, index: 0, label: 'Done', value: 20 })).toBe('20');
     });

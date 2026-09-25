@@ -1,4 +1,4 @@
-<tum-ui-dialog [(visible)]="visible" [header]="'entity.action.editSelected' | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="large">
+<tumaet-ui-dialog [(visible)]="visible" [header]="'entity.action.editSelected' | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="large">
     @if (failureOccurred()) {
         <div class="row justify-content-center">
             <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred"></span>
@@ -73,4 +73,4 @@
             </div>
         </div>
     }
-</tum-ui-dialog>
+</tumaet-ui-dialog>

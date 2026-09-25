@@ -23,7 +23,7 @@ import { Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { RouterLink } from '@angular/router';
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -63,16 +63,16 @@ describe('HomeComponent', () => {
         })
             .overrideComponent(HomeComponent, {
                 remove: {
-                    imports: [Saml2LoginComponent, RouterLink, TumUiButtonComponent, TumUiInputDirective, TumUiCheckboxComponent, TumUiMessageComponent],
+                    imports: [Saml2LoginComponent, RouterLink, TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiCheckboxComponent, TumAetUiMessageComponent],
                 },
                 add: {
                     imports: [
                         MockComponent(Saml2LoginComponent),
                         MockRouterLinkDirective,
-                        MockComponent(TumUiButtonComponent),
-                        MockDirective(TumUiInputDirective),
-                        MockComponent(TumUiCheckboxComponent),
-                        MockComponent(TumUiMessageComponent),
+                        MockComponent(TumAetUiButtonComponent),
+                        MockDirective(TumAetUiInputDirective),
+                        MockComponent(TumAetUiCheckboxComponent),
+                        MockComponent(TumAetUiMessageComponent),
                     ],
                 },
             })
@@ -150,7 +150,7 @@ describe('HomeComponent', () => {
 
         expect(component.isIdentifierValid()).toBe(true);
         expect(input.injector.get(NgModel).valid).toBe(true);
-        expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(TumAetUiButtonComponent)).componentInstance.disabled()).toBe(false);
     });
 
     it.each(['user@dept_name', 'user@@department'])('should retain configured username support for @ identifiers: %s', async (identifier) => {
@@ -162,7 +162,7 @@ describe('HomeComponent', () => {
 
         expect(component.isIdentifierValid()).toBe(true);
         expect(input.injector.get(NgModel).valid).toBe(true);
-        expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(false);
+        expect(fixture.debugElement.query(By.directive(TumAetUiButtonComponent)).componentInstance.disabled()).toBe(false);
         component.onContinue();
         const req = httpMock.expectOne((request) => request.url === 'api/core/public/login-options');
         expect(req.request.params.get('usernameOrEmail')).toBe(identifier);
@@ -179,7 +179,7 @@ describe('HomeComponent', () => {
 
         expect(component.isIdentifierValid()).toBe(false);
         expect(input.injector.get(NgModel).valid).toBe(false);
-        expect(fixture.debugElement.query(By.directive(TumUiButtonComponent)).componentInstance.disabled()).toBe(true);
+        expect(fixture.debugElement.query(By.directive(TumAetUiButtonComponent)).componentInstance.disabled()).toBe(true);
     });
 
     it('should keep the configured pattern for usernames', () => {
