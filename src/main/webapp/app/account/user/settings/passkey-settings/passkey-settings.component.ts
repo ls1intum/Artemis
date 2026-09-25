@@ -56,6 +56,11 @@ export interface DisplayedPasskey extends PasskeyDTO {
     styleUrls: ['../user-settings.scss'],
 })
 export class PasskeySettingsComponent implements OnDestroy {
+    protected readonly alertService = inject(AlertService);
+    protected readonly webauthnService = inject(WebauthnService);
+    private readonly accountService = inject(AccountService);
+    private readonly passkeySettingsApiService = inject(PasskeySettingsApiService);
+
     protected readonly ActionType = ActionType;
     protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
@@ -65,11 +70,6 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faKey = faKey;
     protected readonly MAX_PASSKEY_LABEL_LENGTH = 64;
-
-    protected readonly alertService = inject(AlertService);
-    protected readonly webauthnService = inject(WebauthnService);
-    private readonly accountService = inject(AccountService);
-    private readonly passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
 

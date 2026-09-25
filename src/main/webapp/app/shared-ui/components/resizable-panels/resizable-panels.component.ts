@@ -13,11 +13,12 @@ import { parseJson } from 'app/foundation/util/json.util';
 
 @Directive({ selector: 'ng-template[jhiPanel]' })
 export class PanelDirective {
+    readonly templateRef = inject(TemplateRef);
+
     readonly label = input.required<string>();
     readonly icon = input<IconProp>();
     readonly iconTemplate = input<TemplateRef<unknown>>();
     readonly startsCollapsed = input(false);
-    readonly templateRef = inject(TemplateRef);
 }
 
 @Component({

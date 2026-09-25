@@ -75,6 +75,7 @@
                             (onConfirm)="editSubmission()"
                         />
                     }
+                    @default {}
                 }
                 @switch (state.assessButton) {
                     <!--TODO: Disable Button if unsaved changes in submission -->
@@ -96,6 +97,7 @@
                             {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                         </button>
                     }
+                    @default {}
                 }
             </div>
         }

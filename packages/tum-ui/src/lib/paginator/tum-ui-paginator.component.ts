@@ -18,8 +18,9 @@ const NAV_BUTTON_CLASSES =
 })
 export class TumUiPaginatorComponent {
     private readonly directionality = inject(Directionality);
-    private readonly direction = signal(this.directionality.value);
     private readonly destroyRef = inject(DestroyRef);
+
+    private readonly direction = signal(this.directionality.value);
 
     readonly ariaLabel = input<string>();
     /** Total records in the consumer-owned result set. */

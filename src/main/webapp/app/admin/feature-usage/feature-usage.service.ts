@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -7,7 +7,7 @@ import { FeatureAdoption, FeatureUsageOverview, FeatureUsageTrendPoint } from '.
 /**
  * Service for fetching the built-in feature usage analysis from the server.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FeatureUsageService {
     private readonly http = inject(HttpClient);
     private readonly resourceUrl = 'api/admin/feature-usage';

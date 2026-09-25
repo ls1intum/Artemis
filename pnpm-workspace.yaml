@@ -230,6 +230,11 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
+  # Backport of angular-eslint/angular-eslint#3201: reactive-context-must-read-signal looks up its settings by the
+  # called function's name in a plain object, so a bare call such as toString(x) or a destructured valueOf(...)
+  # resolves to an Object.prototype member and aborts the whole lint run. Remove this entry once angular-eslint
+  # releases the fix (any version after 22.5.0).
+  '@angular-eslint/eslint-plugin@22.5.0': 'patches/@angular-eslint__eslint-plugin@22.5.0.patch'
   'eslint@10.11.0': 'patches/eslint+10.11.0.patch'
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 

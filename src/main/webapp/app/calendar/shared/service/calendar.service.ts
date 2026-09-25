@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { OnDestroy, Service, computed, effect, inject, signal } from '@angular/core';
 import { Observable, Subscription, catchError, map, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -10,9 +10,7 @@ import { CalendarApi } from 'app/openapi/api/calendar-api';
 import { CalendarEvent } from 'app/openapi/model/calendar-event';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CalendarService implements OnDestroy {
     private readonly apiService = inject(CalendarApi);
     private readonly alertService = inject(AlertService);

@@ -41,6 +41,8 @@ export interface HolidaySubmission {
     ],
 })
 export class HolidayDialogComponent {
+    private readonly translateService = inject(TranslateService);
+
     readonly visible = model(false);
     /**
      * What the form opens against: the bar of the holiday being edited, the preview of the run being created, or the
@@ -78,7 +80,6 @@ export class HolidayDialogComponent {
 
     private readonly popover = viewChild<TumUiPopoverComponent>('popover');
 
-    private readonly translateService = inject(TranslateService);
     private readonly locale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly start = signal<dayjs.Dayjs | undefined>(undefined);

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -28,9 +28,7 @@ type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
 type TextBlockRequest = Pick<TextBlock, 'id' | 'type' | 'startIndex' | 'endIndex' | 'text'>;
 type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlockRequest[]; assessmentNote?: string };
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class TextAssessmentService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);

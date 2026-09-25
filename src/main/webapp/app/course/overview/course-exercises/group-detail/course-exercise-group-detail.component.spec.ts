@@ -137,7 +137,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
         effectiveGroupMaxPoints: () => number;
         capReducesMaxPoints: () => boolean;
         variantsInfoBoxData: () => InformationBox;
-        pointsInfoBoxData: () => InformationBox;
+        pointsInfoBoxData: InformationBox;
         groupDateInfoBoxes: () => InformationBox[];
         exerciseParticipation: (exercise: Exercise) => StudentParticipation | undefined;
         exerciseLink: (exercise: Exercise) => string;
@@ -226,7 +226,7 @@ describe('CourseExerciseGroupDetailComponent', () => {
             ).toEqual([1, 2]);
             expect(comp().exerciseSumMaxPoints()).toBe(20);
             expect(comp().variantsInfoBoxData().content.value).toBe(2);
-            expect(comp().pointsInfoBoxData().isContentComponent).toBe(true);
+            expect(comp().pointsInfoBoxData.isContentComponent).toBe(true);
         });
 
         it('resolves no group when the course has no exercises of that group', async () => {

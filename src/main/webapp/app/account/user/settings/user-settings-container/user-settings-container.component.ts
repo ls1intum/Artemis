@@ -23,12 +23,12 @@ import { TumUiListComponent, TumUiListItemActionDirective, TumUiListItemDirectiv
     imports: [TranslateDirective, RouterModule, FontAwesomeModule, TumUiListComponent, TumUiListItemDirective, TumUiListItemActionDirective],
 })
 export class UserSettingsContainerComponent implements OnInit {
-    protected readonly faUser = faUser;
-
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
     private readonly dataGuard = inject(DataGuard);
     private readonly featureToggleService = inject(FeatureToggleService);
+
+    protected readonly faUser = faUser;
 
     // Read straight from the account service's signal instead of taking a snapshot from the
     // authentication state observable: that is a BehaviorSubject driven by the log-in / log-out effect, so

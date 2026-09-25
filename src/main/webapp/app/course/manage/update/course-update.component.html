@@ -69,7 +69,7 @@
                                 class="color-preview form-control"
                                 role="button"
                                 [attr.aria-label]="'artemisApp.course.color' | artemisTranslate"
-                                [ngStyle]="{ backgroundColor: courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR }"
+                                [style.background-color]="courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR"
                                 (click)="openColorSelector($event)"
                             ></div>
                             <jhi-color-selector (selectedColor)="onSelectedColor($event)" />

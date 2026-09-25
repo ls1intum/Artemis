@@ -1,6 +1,6 @@
-import { Injectable, Signal, TemplateRef, signal } from '@angular/core';
+import { Service, Signal, TemplateRef, signal } from '@angular/core';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AdminTitleBarService {
     private currentTitleTemplate = signal<TemplateRef<unknown> | undefined>(undefined);
     private currentActionsTemplate = signal<TemplateRef<unknown> | undefined>(undefined);

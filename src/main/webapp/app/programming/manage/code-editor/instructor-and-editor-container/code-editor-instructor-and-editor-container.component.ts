@@ -205,6 +205,26 @@ interface ConsistencyIssueNavigationIssue {
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
+    /** Shared helper that encapsulates all AI-powered problem statement operations. */
+    readonly aiOps = new ProblemStatementAiOperationsHelper(
+        inject(ProblemStatementService),
+        inject(AlertService),
+        inject(ArtemisIntelligenceService),
+        inject(ProfileService),
+        inject(DestroyRef),
+        inject(Injector),
+    );
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+    private codeGenAlertService = inject(AlertService);
+    private sessionStorageService = inject(SessionStorageService);
+    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private hyperionWs = inject(HyperionWebsocketService);
+    private repoService = inject(CodeEditorRepositoryService);
+    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApi);
+
     readonly codeGenerationRunningModal = viewChild.required<TemplateRef<unknown>>('codeGenerationRunningModal');
     readonly resultComp = viewChild(UpdatingResultComponent);
     readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
@@ -219,16 +239,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
             .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
             .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER['MEDIUM']) - (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER['MEDIUM']) || a.threadId - b.threadId),
-    );
-
-    /** Shared helper that encapsulates all AI-powered problem statement operations. */
-    readonly aiOps = new ProblemStatementAiOperationsHelper(
-        inject(ProblemStatementService),
-        inject(AlertService),
-        inject(ArtemisIntelligenceService),
-        inject(ProfileService),
-        inject(DestroyRef),
-        inject(Injector),
     );
 
     // Delegate signals for template binding compatibility
@@ -251,10 +261,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /** Prompt bound to the refinement popover textarea — aliased to aiOps.userPrompt. */
     readonly refinementPrompt = this.aiOps.userPrompt;
     protected readonly faPaperPlane = faPaperPlane;
-
-    private consistencyCheckService = inject(ConsistencyCheckService);
-    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
@@ -281,13 +287,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
-    private codeGenAlertService = inject(AlertService);
-    private sessionStorageService = inject(SessionStorageService);
-    private modalService = inject(NgbModal);
-    private dialogService = inject(DialogService);
-    private hyperionWs = inject(HyperionWebsocketService);
-    private repoService = inject(CodeEditorRepositoryService);
-    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApi);
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
