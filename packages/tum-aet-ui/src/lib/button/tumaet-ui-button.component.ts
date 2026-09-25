@@ -18,6 +18,8 @@ export class TumAetUiButtonComponent {
 
     readonly variant = input<TumAetUiButtonVariant>('solid');
     readonly disabled = input(false, { transform: booleanAttribute });
+    /** Keep the button focusable and explain why it cannot be used. */
+    readonly disabledReason = input<string | undefined>(undefined);
 
     readonly rounded = input(false, { transform: booleanAttribute });
 
