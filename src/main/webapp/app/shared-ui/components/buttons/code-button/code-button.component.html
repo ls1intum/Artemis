@@ -28,10 +28,6 @@
                     <span>
                         {{ 'artemisApp.exerciseActions.passwordWarningText' | artemisTranslate }}
                         <a
-                            (click)="useHttpsToken()"
-                            (keydown.enter)="useHttpsToken()"
-                            (keydown.space)="$event.preventDefault(); useHttpsToken()"
-                            role="button"
                             tabindex="0"
                             class="text-decoration-none fw-bold"
                             style="cursor: pointer"
