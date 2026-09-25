@@ -76,6 +76,13 @@ class WebsocketSecurityConfigurationTest extends AbstractSpringIntegrationIndepe
         assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.SEND, "/app/iris/command-ack"), new IllegalStateException("broken"))).isNotNull();
     }
 
+    @Test
+    void testClientFramesPreserveReceiveOrderWithinEachSession() {
+        var stompHandler = subProtocolWebSocketHandler.getProtocolHandlers().stream().filter(StompSubProtocolHandler.class::isInstance).map(StompSubProtocolHandler.class::cast)
+                .findFirst().orElseThrow();
+        assertThat(stompHandler.isPreserveReceiveOrder()).isTrue();
+    }
+
     private static Message<byte[]> frame(StompCommand command, String destination) {
         var headers = StompHeaderAccessor.create(command);
         headers.setDestination(destination);

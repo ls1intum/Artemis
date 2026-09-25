@@ -199,6 +199,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Process frames from the same session in order: an editor's SUBSCRIBE must reach the user registry before a subsequent synchronization SEND is checked.
+        registry.setPreserveReceiveOrder(true);
         DefaultHandshakeHandler handshakeHandler = defaultHandshakeHandler();
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
         // @formatter:off
