@@ -24,7 +24,7 @@ import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-st
 import { greenColor, greyColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
@@ -226,7 +226,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
     describe('tooltip labels', () => {
         function labelFor(item: { index: number; value: number }): string {
-            const tooltip = comp.chartConfig().tooltip as TumUiChartTooltipConfig;
+            const tooltip = comp.chartConfig().tooltip as TumAetUiChartTooltipConfig;
             return tooltip.label!({ seriesIndex: 0, label: '', ...item }) as string;
         }
 

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -6,7 +6,7 @@ import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { QuizExerciseReEvaluateDTO, convertQuizExerciseToReEvaluateDTO } from 'app/quiz/shared/entities/quiz-exercise-reevaluation/quiz-exercise-reevaluate-dto.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class QuizReEvaluateService {
     private http = inject(HttpClient);
 

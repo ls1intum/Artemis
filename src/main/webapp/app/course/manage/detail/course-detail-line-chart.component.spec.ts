@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ComponentRef } from '@angular/core';
-import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 class MockCourseManagementService {
     getStatisticsData = vi.fn().mockReturnValue(of([]));
@@ -189,7 +189,7 @@ describe('CourseDetailLineChartComponent', () => {
 
     it('should keep the week label in the tooltip title and not repeat it in the body', () => {
         component.absoluteSeries = [{ name: '42', absoluteValue: 11 }];
-        const tooltip = component.chartConfig().tooltip as TumUiChartTooltipConfig;
+        const tooltip = component.chartConfig().tooltip as TumAetUiChartTooltipConfig;
 
         expect(tooltip.label!({ seriesIndex: 0, index: 0, label: '42', seriesLabel: 'Students', value: 22 })).toBe('Students: 11 (22%)');
     });

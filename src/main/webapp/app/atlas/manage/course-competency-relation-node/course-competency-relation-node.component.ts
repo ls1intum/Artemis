@@ -13,11 +13,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     styleUrl: './course-competency-relation-node.component.scss',
 })
 export class CourseCompetencyRelationNodeComponent implements AfterViewInit {
+    private readonly element = inject(ElementRef);
+
     protected readonly CourseCompetencyType = CourseCompetencyType;
     // height of node element in pixels
     private readonly nodeHeight = 45.59;
-
-    private readonly element = inject(ElementRef);
 
     courseCompetencyNode = input.required<CourseCompetencyGraphNode>();
     readonly courseCompetencyType = computed(() => this.courseCompetencyNode().data.type!);

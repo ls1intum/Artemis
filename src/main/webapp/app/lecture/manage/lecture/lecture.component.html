@@ -165,13 +165,13 @@
             </table>
         </div>
     } @else if (loaded()) {
-        <tum-ui-empty-state
+        <tumaet-ui-empty-state
             class="mt-5"
             [icon]="faChalkboardTeacher"
             [title]="(lectures().length === 0 ? 'artemisApp.lecture.home.empty.title' : 'artemisApp.lecture.home.empty.noMatchingTitle') | artemisTranslate"
             [description]="(lectures().length === 0 ? 'artemisApp.lecture.home.empty.description' : 'artemisApp.lecture.home.empty.noMatchingDescription') | artemisTranslate"
         >
-            <ng-container tumUiEmptyStateActions>
+            <ng-container tumAetUiEmptyStateActions>
                 @if (lectures().length === 0) {
                     <button type="button" class="btn btn-primary btn-sm" (click)="navigateToLectureCreationPage()">
                         <fa-icon [icon]="faPlus" />
@@ -183,7 +183,7 @@
                     </button>
                 }
             </ng-container>
-            <ng-container tumUiEmptyStateDocumentation>
+            <ng-container tumAetUiEmptyStateDocumentation>
                 @if (lectures().length === 0) {
                     <a
                         href="https://docs.artemis.tum.de/instructor/lectures/"
@@ -193,6 +193,6 @@
                     ></a>
                 }
             </ng-container>
-        </tum-ui-empty-state>
+        </tumaet-ui-empty-state>
     }
 </div>

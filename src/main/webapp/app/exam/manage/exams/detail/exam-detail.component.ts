@@ -29,7 +29,7 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -48,7 +48,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         FeatureOverlayComponent,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
     providers: [ArtemisDurationFromSecondsPipe],
 })

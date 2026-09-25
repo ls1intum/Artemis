@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -48,7 +49,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @Lazy
 @Conditional(WeaviateEnabled.class)
-@FeatureUsage("search/global-search")
+@FeatureUsage(UserFeature.GLOBAL_SEARCH)
 @RestController
 @RequestMapping("api/")
 @Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and public communication channels including their messages and replies")

@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -93,7 +94,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.MODELING_AUTHORING)
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingExerciseResource {

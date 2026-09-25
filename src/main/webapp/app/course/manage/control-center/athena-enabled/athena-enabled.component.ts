@@ -4,7 +4,7 @@ import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
@@ -15,7 +15,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-athena-enabled',
     templateUrl: './athena-enabled.component.html',
-    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, TumUiTooltipDirective, FaIconComponent],
+    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiTooltipDirective, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `

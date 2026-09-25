@@ -27,15 +27,15 @@ interface SuggestedRelationDTO {
     imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule, FeatureToggleHideDirective, ButtonComponent],
 })
 export class CourseCompetencyRelationFormComponent {
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
+    private readonly alertService = inject(AlertService);
+
     protected readonly faSpinner = faSpinner;
     protected readonly faLightbulb = faLightbulb;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonType = ButtonType;
 
     protected readonly competencyRelationType = CompetencyRelationType;
-
-    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
-    private readonly alertService = inject(AlertService);
 
     readonly courseId = input.required<number>();
     readonly courseCompetencies = input.required<CourseCompetency[]>();

@@ -13,18 +13,18 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import {
-    TumUiButtonDirective,
-    TumUiMessageComponent,
-    TumUiPaginatorComponent,
-    TumUiTabComponent,
-    TumUiTabListComponent,
-    TumUiTabPanelComponent,
-    TumUiTabPanelsComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTabsComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPaginatorComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTabsComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
@@ -45,23 +45,23 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumUiTooltipDirective,
-        TumUiTabsComponent,
-        TumUiTabListComponent,
-        TumUiTabComponent,
-        TumUiTabPanelsComponent,
-        TumUiTabPanelComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
         HelpIconComponent,
         CopyToClipboardButtonComponent,
         RouterLink,
         FaIconComponent,
         DeleteButtonDirective,
         ItemCountComponent,
-        TumUiPaginatorComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
         AdminTitleBarTitleDirective,
     ],
 })
@@ -185,7 +185,7 @@ export class LtiConfigurationComponent implements OnInit {
     }
 
     /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
-    onTableSort(event: TumUiTableSortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         if (!event.field) {
             return;
         }

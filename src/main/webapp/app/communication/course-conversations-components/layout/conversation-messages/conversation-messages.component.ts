@@ -82,6 +82,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private breakpointObserver = inject(BreakpointObserver);
     metisService = inject(MetisService);
     metisConversationService = inject(MetisConversationService);
+    accountService = inject(AccountService);
 
     private ngUnsubscribe = new Subject<void>();
     readonly isMobile = getIsMobileSignal(this.breakpointObserver);
@@ -149,8 +150,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly isHiddenInputFull = signal(false);
     focusOnPostId: number | undefined = undefined;
     isOpenThreadOnFocus = false;
-
-    accountService = inject(AccountService);
 
     constructor() {
         // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as effect()s: the first three react to

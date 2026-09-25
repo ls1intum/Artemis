@@ -30,6 +30,16 @@ import { SidebarView } from 'app/course/shared/sidebar-view.interface';
     imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent implements SidebarView {
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private courseStorageService = inject(CourseStorageService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
+    private lectureService = inject(LectureService);
+    private courseOverviewService = inject(CourseOverviewService);
+    private sessionStorageService = inject(SessionStorageService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
         allGroups: true,
         registeredGroups: false,
@@ -46,16 +56,6 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         currentTutorialLecture: false,
         furtherTutorialLectures: false,
     };
-
-    private router = inject(Router);
-    private activatedRoute = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private courseStorageService = inject(CourseStorageService);
-    private tutorialGroupApiService = inject(TutorialGroupApi);
-    private lectureService = inject(LectureService);
-    private courseOverviewService = inject(CourseOverviewService);
-    private sessionStorageService = inject(SessionStorageService);
-    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     courseId = this.getCurrentCourseIdSignal();
     // Undefined until loaded, so a refresh that legitimately returns nothing is distinguishable from the initial state

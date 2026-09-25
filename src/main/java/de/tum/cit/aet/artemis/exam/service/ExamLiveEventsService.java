@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXAM_EVENTS;
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.STUDENT_EXAM_EVENTS;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -36,16 +39,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 @Service
 public class ExamLiveEventsService {
-
-    /**
-     * The name of the topic for notifying the client about events specific to a student exam.
-     */
-    public static final String STUDENT_EXAM_EVENT = "/topic/exam-participation/studentExam/%s/events";
-
-    /**
-     * The name of the topic for notifying the client about events specific to an entire exam.
-     */
-    public static final String EXAM_EVENT = "/topic/exam-participation/exam/%s/events";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -186,12 +179,12 @@ public class ExamLiveEventsService {
 
         // If the event is for a specific student exam, only send it to that student exam.
         if (event.getStudentExamId() != null) {
-            websocketMessagingService.sendMessage(STUDENT_EXAM_EVENT.formatted(storedEvent.getStudentExamId()), storedEvent.asDTO());
+            websocketMessagingService.sendMessage(STUDENT_EXAM_EVENTS.at(storedEvent.getStudentExamId()), storedEvent.asDTO());
             return storedEvent;
         }
 
         // Otherwise, send it to all student exams of the exam.
-        websocketMessagingService.sendMessage(EXAM_EVENT.formatted(storedEvent.getExamId()), storedEvent.asDTO());
+        websocketMessagingService.sendMessage(EXAM_EVENTS.at(storedEvent.getExamId()), storedEvent.asDTO());
 
         return storedEvent;
     }

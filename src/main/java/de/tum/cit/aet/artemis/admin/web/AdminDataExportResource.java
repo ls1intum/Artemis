@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 
 /**
@@ -48,7 +49,7 @@ import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("data-privacy/data-exports")
+@FeatureUsage(UserFeature.ADMIN_DATA_EXPORTS)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/admin/")

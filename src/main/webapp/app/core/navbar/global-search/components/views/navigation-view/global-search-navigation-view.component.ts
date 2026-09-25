@@ -41,6 +41,8 @@ import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/c
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
+    private readonly router = inject(Router);
+    private readonly overlay = inject(SearchOverlayService);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -76,9 +78,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
-
-    private readonly router = inject(Router);
-    private readonly overlay = inject(SearchOverlayService);
 
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
