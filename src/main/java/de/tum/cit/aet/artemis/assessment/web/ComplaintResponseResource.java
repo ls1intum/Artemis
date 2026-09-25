@@ -31,13 +31,14 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for managing complaints.
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("complaints/complaint-responses")
+@FeatureUsage(UserFeature.COMPLAINTS)
 @RestController
 @RequestMapping("api/assessment/")
 public class ComplaintResponseResource {

@@ -21,9 +21,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThemeSwitchComponent implements OnInit {
-    protected readonly faSync = faSync;
-
     private readonly themeService = inject(ThemeService);
+
+    protected readonly faSync = faSync;
 
     popoverPlacement = input.required<Placement>();
     popover = viewChild.required<NgbPopover>('popover');

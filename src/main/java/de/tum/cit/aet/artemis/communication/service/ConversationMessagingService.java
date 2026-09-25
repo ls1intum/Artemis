@@ -244,14 +244,16 @@ public class ConversationMessagingService extends PostingService {
             var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
                     conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId(), author.isBot());
 
-            var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
+            // Direct messages and group chats only reach their members, who may always read them. A channel can still be hidden from students, e.g. before its
+            // exercise is released.
+            var isVisibleToStudents = !(conversation instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
 
             // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
             // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
             courseNotificationService.sendCourseNotification(newPostNotification,
                     recipientSummaries.stream()
                             .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
-                                    && (isChannelVisibleForStudents || summary.isAtLeastTutorInCourse())
+                                    && (isVisibleToStudents || summary.isAtLeastTutorInCourse())
                                     && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
                             .map((summary) -> {
                                 var user = new User(summary.userId());

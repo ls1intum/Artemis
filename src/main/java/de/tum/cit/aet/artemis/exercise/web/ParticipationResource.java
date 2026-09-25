@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -72,7 +73,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATION)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {
@@ -290,6 +291,7 @@ public class ParticipationResource {
      * @param participationId of the participation for which feedback is requested
      * @return ResponseEntity with status 200 (OK) and the updated participation as body
      */
+    @FeatureUsage(UserFeature.AI_FEEDBACK_REQUEST)
     @PutMapping("exercises/{exerciseId}/participations/{participationId}/request-feedback")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipationDTO> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {

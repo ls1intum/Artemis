@@ -40,6 +40,10 @@ interface NotificationTypeLink {
     styleUrls: ['../user-settings.scss'],
 })
 export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
+    private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+
     protected readonly faSpinner = faSpinner;
     protected readonly notificationTypes = Object.values(GLOBAL_NOTIFICATION_TYPES);
     protected readonly filteredNotificationTypes = signal<GlobalNotificationType[]>([]);
@@ -63,10 +67,6 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
         },
     ];
     readonly notificationSettings = signal<{ [key: string]: boolean } | undefined>(undefined);
-
-    private globalNotificationSettingsService = inject(GlobalNotificationSettingsService);
-    private profileService = inject(ProfileService);
-    private alertService = inject(AlertService);
 
     private getAllSub?: Subscription;
     private updateSub?: Subscription;

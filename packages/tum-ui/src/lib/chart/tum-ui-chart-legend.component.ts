@@ -2,13 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { ChartLegendItem } from './tum-ui-chart.frame';
 import { TumUiChartLegendPosition } from './tum-ui-chart.types';
 
-/**
- * Legend for a chart's series or slices.
- *
- * Entries are buttons: clicking one hides or shows what it names, which is how a reader compares two
- * lines out of five. Rendering them as real buttons rather than painted swatches also makes the
- * legend keyboard operable, which the canvas charts never were.
- */
+/** Keyboard-operable legend whose buttons toggle the visibility of series or slices. */
 @Component({
     selector: 'tum-ui-chart-legend',
     changeDetection: ChangeDetectionStrategy.OnPush,

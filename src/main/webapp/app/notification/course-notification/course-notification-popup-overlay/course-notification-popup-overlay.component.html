@@ -1,6 +1,6 @@
 <div
     [ngClass]="{ 'is-expanded': isExpanded(), hidden: notifications().length === 0 }"
-    [ngStyle]="{ height: isExpanded() ? 5 + notifications().length * 7 + 'rem' : null }"
+    [style.height]="isExpanded() ? 5 + notifications().length * 7 + 'rem' : null"
     class="course-notification-popup-overlay"
     (click)="overlayClicked()"
 >
@@ -9,7 +9,7 @@
             class="notification-animation-wrapper"
             animate.enter="notification-entering"
             animate.leave="notification-leaving"
-            [ngStyle]="{ bottom: isExpanded() ? (notifications().length - $index - 1) * 7 + 5 + 'rem' : null }"
+            [style.bottom]="isExpanded() ? (notifications().length - $index - 1) * 7 + 5 + 'rem' : null"
         >
             <div class="course-notification-popup-overlay-notification">
                 <jhi-course-notification

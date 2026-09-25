@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.videosource.config.TumLiveEnabled;
 import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
 
@@ -24,7 +25,7 @@ import de.tum.cit.aet.artemis.videosource.service.TumLiveService;
  * REST controller for managing TUM Live lecture transcriptions and related utilities.
  */
 @Lazy
-@FeatureUsage("video/tum-live")
+@FeatureUsage(UserFeature.LECTURE_VIDEO)
 @RestController
 @RequestMapping("api/videosource/")
 @Conditional(TumLiveEnabled.class)

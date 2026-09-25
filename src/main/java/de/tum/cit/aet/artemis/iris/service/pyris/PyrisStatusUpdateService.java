@@ -172,7 +172,10 @@ public class PyrisStatusUpdateService {
         var runState = resolveRunState(statusUpdate.runState(), job);
         var normalizedStatusUpdate = withRunState(statusUpdate, runState);
         if (statusUpdate.partialResult() != null && runState == PyrisRunState.RUNNING) {
-            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+            if (!irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate)) {
+                // The session no longer exists, so no later callback of this job can be delivered either.
+                pyrisJobService.removeJob(job);
+            }
             return;
         }
         if (statusUpdate.partialResult() != null) {
@@ -181,6 +184,11 @@ public class PyrisStatusUpdateService {
         }
 
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, normalizedStatusUpdate);
+        if (updatedJob == null) {
+            // The session no longer exists, so no later callback of this job can be delivered either.
+            pyrisJobService.removeJob(job);
+            return;
+        }
 
         removeJobIfTerminatedElseUpdate(runState, updatedJob);
     }
@@ -316,6 +324,11 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(TutorSuggestionJob job, TutorSuggestionStatusUpdateDTO statusUpdate) {
         var runState = resolveRunState(statusUpdate.runState(), job);
         var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, withRunState(statusUpdate, runState));
+        if (updatedJob == null) {
+            // The session no longer exists, so no later callback of this job can be delivered either.
+            pyrisJobService.removeJob(job);
+            return;
+        }
 
         removeJobIfTerminatedElseUpdate(runState, updatedJob);
     }

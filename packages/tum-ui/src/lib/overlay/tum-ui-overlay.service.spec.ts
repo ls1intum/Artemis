@@ -29,6 +29,7 @@ describe('TumUiOverlayService', () => {
     it('creates a connected overlay that can attach and dispose', () => {
         const overlayRef = service.createConnectedOverlay(origin, 'bottom');
         expect(overlayRef).toBeTruthy();
+        expect(overlayRef.getConfig().panelClass).toBe('tum-ui-overlay');
         expect(overlayRef.hasAttached()).toBe(false);
         overlayRef.dispose();
     });
@@ -39,6 +40,38 @@ describe('TumUiOverlayService', () => {
 
         expect(overlayRef.getConfig().width).toBe(288);
         overlayRef.dispose();
+    });
+
+    it('tracks origin width and disconnects its resize observer when disposed', () => {
+        let resize!: () => void;
+        const observe = vi.fn();
+        const disconnect = vi.fn();
+        class MockResizeObserver {
+            observe = observe;
+            disconnect = disconnect;
+            unobserve = vi.fn();
+
+            constructor(callback: ResizeObserverCallback) {
+                resize = () => callback([], this);
+            }
+        }
+        vi.stubGlobal('ResizeObserver', MockResizeObserver);
+        let width = 288;
+        vi.spyOn(origin, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
+
+        const overlayRef = service.createConnectedOverlay(origin, 'bottom', { matchOriginWidth: true });
+        try {
+            expect(observe).toHaveBeenCalledWith(origin);
+            expect(overlayRef.getConfig().width).toBe(288);
+
+            width = 320;
+            resize();
+            expect(overlayRef.getConfig().width).toBe(320);
+        } finally {
+            overlayRef.dispose();
+            vi.unstubAllGlobals();
+        }
+        expect(disconnect).toHaveBeenCalledOnce();
     });
 
     it('propagates right-to-left direction while preserving physical horizontal placements', () => {

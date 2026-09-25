@@ -2,7 +2,14 @@
     "artemisApp": {
         "featureUsage": {
             "title": "Feature usage",
-            "description": "How often each part of Artemis was actually used in the selected period. Counts come from the server itself, are aggregated per day and contain nothing about individual users. Features with no usage at all are listed too, because those are the ones worth a decision. Features this version no longer offers are counted separately, so they do not dilute that list.",
+            "description": "How the features of Artemis were used in the selected period, grouped into product areas the way users know them. Counts come from the server itself, are aggregated per day and contain nothing about individual users. Features nobody used are listed too, because those are the ones worth a decision.",
+            "limitations": "The role is the caller's highest role in any course, not their role in the course the call touched. Git and background features have no caller and count as anonymous. WebSocket traffic is not counted, so features that mostly communicate over the websocket appear less used than they are.",
+            "legend": {
+                "action": "the user did something, such as submitting, creating or generating",
+                "view": "the user looked at something the feature shows",
+                "automatic": "the page called the server on its own, such as a status check or a badge; not counted as use",
+                "system": "another system called the server, such as a build agent or an AI service reporting back; not counted as use"
+            },
             "window": {
                 "label": "Period",
                 "days7": "7 days",
@@ -11,54 +18,731 @@
                 "days180": "180 days"
             },
             "kpi": {
-                "trackedFeatures": "Tracked features",
-                "unusedFeatures": "Unused in this period",
-                "totalCalls": "Total calls",
-                "retiredFeatures": "No longer offered",
-                "recordingSince": "Recording since",
-                "endpointDetail": "{{ count }} endpoints"
+                "usedFeatures": "Features used",
+                "ofAvailable": "of {{ count }} offered here",
+                "onlyAutomatic": "Only automatic or system calls",
+                "onlyAutomaticDetail": "called by pages or other systems, but nobody used them",
+                "unusedFeatures": "Unused",
+                "unusedDetail": "offered, but not a single call",
+                "noActions": "Viewed, no actions",
+                "noActionsDetail": "looked at, but never acted on",
+                "notAvailable": "Not offered here",
+                "retiredEndpoints": "{{ count }} endpoints no longer offered",
+                "uses": "Uses",
+                "usesDetail": "{{ actions }} actions, {{ views }} views, {{ automatic }} automatic and {{ system }} system calls",
+                "recordingSince": "Recording since"
             },
             "tab": {
-                "tree": "Explore",
-                "allFeatures": "All features",
-                "unused": "Unused",
-                "adoption": "Adoption"
+                "features": "Features",
+                "attention": "Needs attention",
+                "adoption": "Adoption",
+                "endpoints": "Endpoints"
             },
             "column": {
-                "module": "Module",
+                "area": "Area",
                 "feature": "Feature",
-                "calls": "Calls",
+                "status": "Status",
+                "actions": "Actions",
+                "views": "Views",
+                "automatic": "Automatic",
+                "system": "System",
                 "activeDays": "Active days",
+                "lastUsed": "Last used",
                 "errorRate": "Errors",
                 "meanDuration": "Mean (ms)",
                 "maxDuration": "Max (ms)",
-                "lastUsed": "Last used",
                 "trend": "Show trend",
+                "modules": "Modules",
+                "endpoint": "Endpoint",
+                "interaction": "Counts as",
+                "calls": "Calls",
+                "setting": "Setting",
                 "enabledOn": "Enabled on",
-                "share": "Share",
-                "unusedBelow": "Unused"
+                "share": "Share"
             },
-            "search": "Filter by feature or module",
-            "moduleFilter": "Module",
-            "allModules": "All modules",
-            "endpointCount": "{{ count }} endpoints",
-            "unusedTag": "unused",
-            "roleDistribution": "Calls by role of the caller. This is the caller's global role, not their role in a particular course. Git and background features have no caller and count as anonymous.",
-            "noUsageYet": "No usage has been recorded for this period yet. Counters are written every few minutes, so a freshly started server needs a moment before the first numbers appear.",
-            "noMatches": "No feature matches the current filter.",
-            "noAdoptionData": "No module reported any adoption data.",
-            "trendTitle": "Daily calls",
-            "closeTrend": "Close",
-            "limitations": "Two things this cannot see. WebSocket traffic is not counted, so features that mostly communicate over the websocket (live quizzes, messaging, exam synchronisation) are under-reported. Requests rejected by authentication never reach a handler and are not counted at all.",
-            "allRoles": "All roles",
-            "roleFilter": "Caller role",
+            "status": {
+                "USED": "Used",
+                "ONLY_AUTOMATIC": "Only automatic or system calls",
+                "UNUSED": "Unused",
+                "NOT_AVAILABLE": "Not offered here"
+            },
+            "interaction": {
+                "ACTION": "Action",
+                "VIEW": "View",
+                "AUTOMATIC": "Automatic",
+                "SYSTEM": "System"
+            },
+            "kind": {
+                "REST": "REST",
+                "GIT": "Git",
+                "BACKGROUND": "Background"
+            },
+            "attention": {
+                "onlyAutomatic": {
+                    "title": "Only automatic or system calls",
+                    "hint": "The server hears from these features because pages people open call them on their own, or because another system does, but nobody used them. Counted by calls alone, they looked like the busiest features."
+                },
+                "unused": {
+                    "title": "Unused",
+                    "hint": "Offered in this deployment, but not a single call in the period."
+                },
+                "noActions": {
+                    "title": "Viewed, no actions",
+                    "hint": "People look at what these features show, but never take the step they exist for. For a feature people mostly read this can be fine; for an authoring aid it usually is not."
+                },
+                "none": "None in this period."
+            },
+            "noActionsTag": "Viewed, no actions",
+            "noActionsHint": "The feature has endpoints that act, and none of them was called in this period.",
+            "adoptionTag": "Enabled in {{ count }} of {{ total }}",
+            "featuresUsed": "{{ used }} of {{ available }} used",
             "retiredTag": "no longer offered",
+            "uncatalogued": "No feature",
+            "showNotAvailable": "Show features not offered here",
+            "search": "Search features, modules, resources or paths",
+            "areaFilter": "Filter by area",
+            "allAreas": "All areas",
+            "moduleFilter": "Filter by module",
+            "allModules": "All modules",
+            "roleFilter": "Filter by caller role",
+            "allRoles": "All roles",
+            "roleDistribution": "Actions and views per caller role",
+            "noUsageYet": "No action or view has been recorded in this period yet. Counters are written every few minutes, so a freshly started server shows nothing at first.",
+            "noMatches": "No matching entries.",
+            "noAdoptionData": "No adoption data available.",
+            "trendTitle": "Daily trend",
+            "closeTrend": "Close",
             "sendDigest": "Send weekly email now",
-            "digestSent": "The feature usage digest email was sent.",
-            "digestFailed": "The digest email could not be sent. Check that a recipient is configured and that the digest is enabled.",
+            "digestSent": "The weekly feature usage email was sent.",
+            "digestFailed": "The weekly feature usage email could not be sent. Check that the digest is enabled and a recipient is configured.",
             "expandAll": "Expand all",
             "collapseAll": "Collapse all",
-            "featureCount": "{{ count }} features"
+            "catalog": {
+                "area": {
+                    "COURSES": "Courses",
+                    "COURSE_MANAGEMENT": "Course management",
+                    "EXERCISES": "Exercises",
+                    "PROGRAMMING": "Programming exercises",
+                    "QUIZ": "Quizzes",
+                    "TEXT_MODELING_UPLOAD": "Text, modeling and file upload exercises",
+                    "ASSESSMENT": "Assessment and grading",
+                    "EXAMS": "Exams",
+                    "LECTURES": "Lectures",
+                    "COMMUNICATION": "Communication",
+                    "NOTIFICATIONS": "Notifications",
+                    "TUTORIAL_GROUPS": "Tutorial groups",
+                    "COMPETENCIES": "Competencies and learning paths",
+                    "AI_LEARNERS": "AI for learners",
+                    "AI_AUTHORING": "AI for instructors and tutors",
+                    "INTEGRITY": "Academic integrity",
+                    "ACCOUNT": "Account and security",
+                    "INTEGRATIONS": "Integrations",
+                    "BUILD_SYSTEM": "Build system",
+                    "ADMINISTRATION": "Administration and operations"
+                },
+                "feature": {
+                    "COURSE_DASHBOARD": {
+                        "name": "My courses",
+                        "description": "The course cards on the start page and the archive of past courses."
+                    },
+                    "COURSE_OVERVIEW": {
+                        "name": "Course page",
+                        "description": "The student view of a course with its sidebar and exercise list."
+                    },
+                    "COURSE_ENROLLMENT": {
+                        "name": "Enrollment",
+                        "description": "Self-enrollment into open courses and leaving a course."
+                    },
+                    "STUDENT_COURSE_STATISTICS": {
+                        "name": "My statistics and grading key",
+                        "description": "A student's own scores per exercise type and the course grading key."
+                    },
+                    "CALENDAR": {
+                        "name": "Course calendar",
+                        "description": "Month, week and day views of course events, and the calendar subscription."
+                    },
+                    "GLOBAL_SEARCH": {
+                        "name": "Global search",
+                        "description": "The search dialog for courses, exercises, lectures and lecture content."
+                    },
+                    "COURSE_CREATION": {
+                        "name": "Course creation and requests",
+                        "description": "Creating courses and requesting a new course from the administrators."
+                    },
+                    "COURSE_MANAGEMENT_OVERVIEW": {
+                        "name": "Course management overview",
+                        "description": "The list of managed courses and the course detail page for staff."
+                    },
+                    "COURSE_SETTINGS": {
+                        "name": "Course settings",
+                        "description": "Course configuration, onboarding and the switches for optional features."
+                    },
+                    "COURSE_MEMBERS": {
+                        "name": "Course members",
+                        "description": "Managing students, tutors, editors and instructors of a course."
+                    },
+                    "COURSE_MATERIAL_IMPORT": {
+                        "name": "Import from another course",
+                        "description": "Importing exercises, lectures, exams and more from an earlier course."
+                    },
+                    "COURSE_STATISTICS": {
+                        "name": "Course statistics",
+                        "description": "Activity and performance charts of a course."
+                    },
+                    "COURSE_SCORES": {
+                        "name": "Course scores",
+                        "description": "The table of every student's points across all exercises."
+                    },
+                    "COURSE_ARCHIVE": {
+                        "name": "Course archive and cleanup",
+                        "description": "Archiving a finished course and cleaning up its data."
+                    },
+                    "COURSE_RESET_DELETE": {
+                        "name": "Course reset and deletion",
+                        "description": "Resetting or deleting a course, including the progress display."
+                    },
+                    "MARKDOWN_UPLOADS": {
+                        "name": "Images in Markdown",
+                        "description": "Uploading and showing images and files embedded in Markdown texts."
+                    },
+                    "EXERCISE_DETAILS": {
+                        "name": "Exercise details page",
+                        "description": "The page students open for an exercise, with its problem statement."
+                    },
+                    "EXERCISE_PARTICIPATION": {
+                        "name": "Start and practice",
+                        "description": "Starting, resuming and practicing an exercise."
+                    },
+                    "EXERCISE_FEEDBACK": {
+                        "name": "Results and feedback",
+                        "description": "The result and feedback students see for a submission."
+                    },
+                    "TEAM_EXERCISES": {
+                        "name": "Team exercises",
+                        "description": "Creating and importing teams and working on an exercise as a team."
+                    },
+                    "EXERCISE_VARIANT_GROUPS": {
+                        "name": "Exercise variant groups",
+                        "description": "Interchangeable exercise variants that share a timeline and score."
+                    },
+                    "EXERCISE_MANAGEMENT": {
+                        "name": "Exercise management",
+                        "description": "The staff list of a course's exercises and the common exercise actions."
+                    },
+                    "EXERCISE_VERSION_HISTORY": {
+                        "name": "Version history",
+                        "description": "Browsing earlier versions of an exercise."
+                    },
+                    "EXERCISE_REVIEW": {
+                        "name": "Review comments",
+                        "description": "Review threads on exercise content and resolving them."
+                    },
+                    "EXERCISE_PARTICIPATIONS_STAFF": {
+                        "name": "Participations",
+                        "description": "The staff view of participations, individual due dates and submissions."
+                    },
+                    "EXERCISE_SCORES": {
+                        "name": "Exercise scores and statistics",
+                        "description": "Results per student, external results and exercise statistics."
+                    },
+                    "PROGRAMMING_ONLINE_EDITOR": {
+                        "name": "Online code editor",
+                        "description": "Editing, committing and submitting code in the browser."
+                    },
+                    "PROGRAMMING_LOCAL_IDE": {
+                        "name": "Local IDE and Git",
+                        "description": "Cloning and pushing repositories to work in a local IDE."
+                    },
+                    "PROGRAMMING_ONLINE_IDE": {
+                        "name": "Online IDE",
+                        "description": "Working on a programming exercise in the cloud IDE."
+                    },
+                    "PROGRAMMING_REPOSITORY_HISTORY": {
+                        "name": "Repository and commit history",
+                        "description": "Viewing a repository, its commits and its access log."
+                    },
+                    "PROGRAMMING_RESULTS": {
+                        "name": "Build results and logs",
+                        "description": "Automatic test results, build status and build logs."
+                    },
+                    "PROGRAMMING_AUTHORING": {
+                        "name": "Create and edit programming exercises",
+                        "description": "Setting up, updating and deleting programming exercises."
+                    },
+                    "PROGRAMMING_REPOSITORY_EDITING": {
+                        "name": "Edit exercise repositories",
+                        "description": "Editing the test and auxiliary repositories in the editor, and the template, solution and test repositories over Git."
+                    },
+                    "PROGRAMMING_BUILD_CONFIGURATION": {
+                        "name": "Build plan and configuration",
+                        "description": "Editing the build plan and build settings of an exercise."
+                    },
+                    "PROGRAMMING_GRADING_CONFIGURATION": {
+                        "name": "Test weights and static code analysis",
+                        "description": "Configuring test case weights, bonus points and code analysis categories."
+                    },
+                    "PROGRAMMING_REEVALUATION": {
+                        "name": "Re-evaluate and trigger builds",
+                        "description": "Re-evaluating results and triggering the builds of all participants."
+                    },
+                    "PROGRAMMING_SUBMISSION_POLICY": {
+                        "name": "Submission policies",
+                        "description": "Limits and penalties for the number of submissions."
+                    },
+                    "PROGRAMMING_CONSISTENCY_CHECK": {
+                        "name": "Structural consistency check",
+                        "description": "Checking the repositories and build plans of an exercise for errors."
+                    },
+                    "PROGRAMMING_IMPORT_EXPORT": {
+                        "name": "Import and export programming exercises",
+                        "description": "Importing exercises, exporting them and downloading repositories."
+                    },
+                    "QUIZ_LIVE": {
+                        "name": "Live quiz",
+                        "description": "Taking part in a synchronized, batched or individual quiz."
+                    },
+                    "QUIZ_PRACTICE": {
+                        "name": "Quiz practice",
+                        "description": "Retaking a quiz after it has ended."
+                    },
+                    "QUIZ_TRAINING": {
+                        "name": "Quiz training",
+                        "description": "Training with the course's question pool and the leaderboard."
+                    },
+                    "QUIZ_AUTHORING": {
+                        "name": "Quiz editor",
+                        "description": "Creating quiz questions, including drag and drop from UML diagrams."
+                    },
+                    "QUIZ_LIFECYCLE": {
+                        "name": "Quiz start and batches",
+                        "description": "Starting and ending a quiz and managing its batches."
+                    },
+                    "QUIZ_EVALUATION": {
+                        "name": "Quiz statistics and re-evaluation",
+                        "description": "Question statistics and correcting and re-scoring a quiz."
+                    },
+                    "TEXT_EXERCISES": {
+                        "name": "Text exercises",
+                        "description": "Writing and submitting a text answer."
+                    },
+                    "TEXT_AUTHORING": {
+                        "name": "Create text exercises",
+                        "description": "Creating, importing and exporting text exercises."
+                    },
+                    "MODELING_EXERCISES": {
+                        "name": "Modeling exercises",
+                        "description": "Drawing and submitting a UML diagram."
+                    },
+                    "MODELING_AUTHORING": {
+                        "name": "Create modeling exercises",
+                        "description": "Creating, importing and exporting modeling exercises."
+                    },
+                    "FILE_UPLOAD_EXERCISES": {
+                        "name": "File upload exercises",
+                        "description": "Uploading files as the answer to an exercise."
+                    },
+                    "FILE_UPLOAD_AUTHORING": {
+                        "name": "Create file upload exercises",
+                        "description": "Creating, importing and exporting file upload exercises."
+                    },
+                    "ASSESSMENT_DASHBOARD": {
+                        "name": "Assessment dashboard",
+                        "description": "The tutor dashboards of courses, exams and exercises, and assessment locks."
+                    },
+                    "MANUAL_ASSESSMENT": {
+                        "name": "Manual assessment",
+                        "description": "Assessing text, modeling, file upload and programming submissions."
+                    },
+                    "COMPLAINTS": {
+                        "name": "Complaints and feedback requests",
+                        "description": "Students complaining about an assessment and tutors responding."
+                    },
+                    "FEEDBACK_RATINGS": {
+                        "name": "Feedback ratings",
+                        "description": "Students rating the feedback they received."
+                    },
+                    "TUTOR_TRAINING": {
+                        "name": "Tutor training",
+                        "description": "Example submissions with example assessments for training tutors."
+                    },
+                    "TUTOR_EFFORT": {
+                        "name": "Tutor effort",
+                        "description": "Statistics on the time tutors spend assessing."
+                    },
+                    "GRADING_KEYS": {
+                        "name": "Grading keys",
+                        "description": "Grade steps of courses and exams."
+                    },
+                    "BONUS": {
+                        "name": "Bonus",
+                        "description": "Bonus points from another course or exam."
+                    },
+                    "RESULTS_AND_FEEDBACK_ANALYSIS": {
+                        "name": "Results and feedback analysis",
+                        "description": "Aggregated feedback across all submissions of an exercise."
+                    },
+                    "EXAM_TAKE": {
+                        "name": "Take an exam",
+                        "description": "Starting an exam, working on it and handing it in."
+                    },
+                    "EXAM_TEST_EXAMS": {
+                        "name": "Test exams",
+                        "description": "Practice exams with several attempts."
+                    },
+                    "EXAM_RESULTS": {
+                        "name": "Exam results and review",
+                        "description": "The exam summary, the grade and the review period."
+                    },
+                    "EXAM_AUTHORING": {
+                        "name": "Create and configure exams",
+                        "description": "Creating, importing and configuring exams and exercise groups."
+                    },
+                    "EXAM_REGISTRATION": {
+                        "name": "Exam registration",
+                        "description": "Registering students for an exam."
+                    },
+                    "EXAM_ROOMS": {
+                        "name": "Rooms and seats",
+                        "description": "Exam rooms and distributing students to seats."
+                    },
+                    "EXAM_ATTENDANCE": {
+                        "name": "Attendance check",
+                        "description": "Checking identities and signatures during the exam."
+                    },
+                    "EXAM_CONDUCTION_MANAGEMENT": {
+                        "name": "Exam conduction",
+                        "description": "Generating student exams, test runs, working time and announcements."
+                    },
+                    "EXAM_SUSPICIOUS_BEHAVIOR": {
+                        "name": "Suspicious behavior",
+                        "description": "Suspicious exam sessions and potential plagiarism in an exam."
+                    },
+                    "EXAM_SCORES": {
+                        "name": "Exam scores and statistics",
+                        "description": "The scores and statistics of an exam."
+                    },
+                    "EXAM_ARCHIVE": {
+                        "name": "Exam archive, reset and deletion",
+                        "description": "Archiving, resetting, cleaning up and deleting an exam."
+                    },
+                    "LECTURE_PAGES": {
+                        "name": "Lecture pages",
+                        "description": "The list of lectures and the lecture detail page."
+                    },
+                    "LECTURE_UNITS": {
+                        "name": "Lecture units and slides",
+                        "description": "Viewing attachments and slides and completing lecture units."
+                    },
+                    "LECTURE_VIDEO": {
+                        "name": "Lecture videos and transcripts",
+                        "description": "Watching lecture videos and reading their transcripts."
+                    },
+                    "LECTURE_AUTHORING": {
+                        "name": "Create and manage lectures",
+                        "description": "Creating lectures and their units and importing lectures."
+                    },
+                    "LECTURE_SLIDE_PROCESSING": {
+                        "name": "Slide splitting and hidden pages",
+                        "description": "Splitting a slide deck into units and hiding pages for students."
+                    },
+                    "LECTURE_CONTENT_PROCESSING": {
+                        "name": "Automatic content processing",
+                        "description": "Transcription and processing of lecture content."
+                    },
+                    "MESSAGING": {
+                        "name": "Messages and threads",
+                        "description": "Writing, reading and answering messages in any conversation."
+                    },
+                    "CHANNELS": {
+                        "name": "Channels",
+                        "description": "Browsing, creating and moderating channels."
+                    },
+                    "DIRECT_MESSAGES": {
+                        "name": "Direct messages and group chats",
+                        "description": "Starting one-to-one and group conversations."
+                    },
+                    "CONVERSATION_ORGANIZATION": {
+                        "name": "Conversation list",
+                        "description": "Favorites, muting, unread messages and the code of conduct."
+                    },
+                    "MESSAGE_INTERACTIONS": {
+                        "name": "Reactions, saved and forwarded messages",
+                        "description": "Reacting to, saving and forwarding messages."
+                    },
+                    "LINK_PREVIEWS": {
+                        "name": "Link previews",
+                        "description": "Previews of links in messages."
+                    },
+                    "FAQ": {
+                        "name": "FAQs",
+                        "description": "Reading, proposing and managing the frequently asked questions of a course."
+                    },
+                    "COURSE_NOTIFICATIONS": {
+                        "name": "In-app notifications",
+                        "description": "The notification bell with the notifications of each course."
+                    },
+                    "NOTIFICATION_DELIVERY": {
+                        "name": "Notification delivery",
+                        "description": "Delivering notifications in the app, by email and by push."
+                    },
+                    "NOTIFICATION_SETTINGS": {
+                        "name": "Notification settings",
+                        "description": "Choosing which notifications to receive."
+                    },
+                    "SYSTEM_NOTIFICATIONS": {
+                        "name": "System notifications",
+                        "description": "Maintenance and information banners for all users."
+                    },
+                    "TUTORIAL_GROUPS": {
+                        "name": "My tutorial groups",
+                        "description": "The tutorial groups of a course with their schedule and sessions."
+                    },
+                    "TUTORIAL_GROUP_MANAGEMENT": {
+                        "name": "Tutorial group management",
+                        "description": "Creating groups, registering students and configuring free days."
+                    },
+                    "TUTORIAL_GROUP_SESSIONS": {
+                        "name": "Tutorial group sessions",
+                        "description": "Creating, cancelling and activating sessions."
+                    },
+                    "COMPETENCY_PROGRESS": {
+                        "name": "Competency progress",
+                        "description": "Students' progress and mastery per competency."
+                    },
+                    "COMPETENCY_MANAGEMENT": {
+                        "name": "Competency management",
+                        "description": "Creating, linking and importing competencies and prerequisites."
+                    },
+                    "STANDARDIZED_COMPETENCIES": {
+                        "name": "Standardized competency catalog",
+                        "description": "The shared catalog of standardized competencies."
+                    },
+                    "LEARNING_PATHS": {
+                        "name": "Learning paths",
+                        "description": "A student's personalized sequence of learning objects."
+                    },
+                    "LEARNING_PATH_MANAGEMENT": {
+                        "name": "Learning path management",
+                        "description": "Enabling learning paths and monitoring their health."
+                    },
+                    "LEARNER_PROFILE": {
+                        "name": "Learner profile",
+                        "description": "A student's learning preferences."
+                    },
+                    "SCIENCE": {
+                        "name": "Research data collection",
+                        "description": "Collecting learning events for research, with an opt-out."
+                    },
+                    "IRIS_CHAT": {
+                        "name": "Iris chat",
+                        "description": "Chatting with Iris about a course, an exercise or a lecture."
+                    },
+                    "IRIS_MEMORY": {
+                        "name": "Iris memories",
+                        "description": "What Iris remembers about a student, and deleting it."
+                    },
+                    "IRIS_STRUGGLE_INTERVENTION": {
+                        "name": "Iris struggle intervention",
+                        "description": "Iris offering help when a student is stuck."
+                    },
+                    "IRIS_SEARCH_ANSWER": {
+                        "name": "Iris answers in search",
+                        "description": "An AI answer shown in the global search."
+                    },
+                    "IRIS_SETTINGS": {
+                        "name": "Iris course settings",
+                        "description": "Configuring Iris for a course."
+                    },
+                    "IRIS_CONTENT_INGESTION": {
+                        "name": "Iris content ingestion",
+                        "description": "Sending FAQs to Iris so that it can answer with them."
+                    },
+                    "AI_FEEDBACK_REQUEST": {
+                        "name": "AI feedback on request",
+                        "description": "Students requesting formative AI feedback on their work."
+                    },
+                    "HYPERION_PROBLEM_STATEMENT": {
+                        "name": "AI problem statement generation",
+                        "description": "Generating, refining and rewriting a problem statement."
+                    },
+                    "HYPERION_CHECKLIST": {
+                        "name": "AI instructor checklist",
+                        "description": "Analyzing a problem statement against a quality checklist."
+                    },
+                    "HYPERION_CONSISTENCY_CHECK": {
+                        "name": "AI consistency check",
+                        "description": "Checking the problem statement against the code of an exercise."
+                    },
+                    "HYPERION_CODE_GENERATION": {
+                        "name": "AI code generation",
+                        "description": "Generating the solution, template or test code of an exercise."
+                    },
+                    "HYPERION_EXERCISE_GENERATION": {
+                        "name": "AI exercise generation",
+                        "description": "Generating a whole programming exercise from a brief or selected review feedback."
+                    },
+                    "HYPERION_GENERATION_MONITORING": {
+                        "name": "AI generation monitoring",
+                        "description": "Inspecting and stopping whole-exercise generation jobs."
+                    },
+                    "HYPERION_GENERATION_RECOVERY": {
+                        "name": "AI generation recovery",
+                        "description": "Inspecting and releasing blocked exercise mutation slots."
+                    },
+                    "HYPERION_VARIANT_GENERATION": {
+                        "name": "AI exercise variants",
+                        "description": "Generating variants of an existing exercise."
+                    },
+                    "HYPERION_QUIZ_GENERATION": {
+                        "name": "AI quiz questions",
+                        "description": "Generating and refining quiz questions."
+                    },
+                    "HYPERION_ASSESSMENT_CRITERIA": {
+                        "name": "AI grading criteria",
+                        "description": "Generating structured grading criteria."
+                    },
+                    "HYPERION_FAQ_REWRITE": {
+                        "name": "AI FAQ rewrite",
+                        "description": "Rewriting the text of an FAQ."
+                    },
+                    "ATHENA_FEEDBACK_SUGGESTIONS": {
+                        "name": "AI feedback suggestions",
+                        "description": "Suggested feedback for tutors while they assess."
+                    },
+                    "IRIS_TUTOR_SUGGESTIONS": {
+                        "name": "AI answer suggestions for tutors",
+                        "description": "Suggested answers when tutors reply to a question."
+                    },
+                    "ATLAS_AGENT": {
+                        "name": "Atlas agent",
+                        "description": "A chat assistant for managing competencies."
+                    },
+                    "COMPETENCY_ORCHESTRATION": {
+                        "name": "Automatic competency linking",
+                        "description": "Linking exercises to competencies automatically."
+                    },
+                    "AI_COMPETENCY_GENERATION": {
+                        "name": "AI competency generation",
+                        "description": "Generating competencies and suggesting their relations."
+                    },
+                    "PLAGIARISM_CHECKS": {
+                        "name": "Plagiarism checks",
+                        "description": "Running plagiarism checks and inspecting the matches."
+                    },
+                    "CONTINUOUS_PLAGIARISM_CONTROL": {
+                        "name": "Continuous plagiarism control",
+                        "description": "Plagiarism checks that run automatically."
+                    },
+                    "PLAGIARISM_CASES": {
+                        "name": "Plagiarism cases",
+                        "description": "Verdicts on plagiarism cases and the discussion with students."
+                    },
+                    "DEIMOS": {
+                        "name": "Malicious participation analysis",
+                        "description": "Analyzing programming participations for malicious code."
+                    },
+                    "SIGN_IN": {
+                        "name": "Sign-in",
+                        "description": "Signing in and out, including single sign-on."
+                    },
+                    "REGISTRATION_PASSWORD": {
+                        "name": "Registration and password",
+                        "description": "Registering an account and changing or resetting the password."
+                    },
+                    "ACCOUNT_SETTINGS": {
+                        "name": "Account settings",
+                        "description": "Profile, language, profile picture and AI preferences."
+                    },
+                    "PASSKEYS": {
+                        "name": "Passkeys",
+                        "description": "Registering and managing passkeys."
+                    },
+                    "GIT_CREDENTIALS": {
+                        "name": "SSH keys and access tokens",
+                        "description": "SSH keys and personal access tokens for Git."
+                    },
+                    "PERSONAL_DATA_EXPORT": {
+                        "name": "Personal data export",
+                        "description": "Exporting one's own data."
+                    },
+                    "LTI": {
+                        "name": "LTI",
+                        "description": "Opening Artemis content from a learning management system."
+                    },
+                    "SHARING_PLATFORM": {
+                        "name": "Sharing platform",
+                        "description": "Exchanging programming exercises with the sharing platform."
+                    },
+                    "MOBILE_APPS": {
+                        "name": "Mobile apps",
+                        "description": "Deep links and push notifications of the iOS and Android apps."
+                    },
+                    "VS_CODE_EXTENSION": {
+                        "name": "VS Code extension",
+                        "description": "Signing in to Artemis from the VS Code extension."
+                    },
+                    "BUILD_OVERVIEW": {
+                        "name": "Build overview",
+                        "description": "The build jobs of a course with their logs."
+                    },
+                    "BUILD_AGENTS": {
+                        "name": "Build agents",
+                        "description": "All build jobs and the build agents of the server."
+                    },
+                    "AI_WORKERS": {
+                        "name": "AI workers",
+                        "description": "Checking the status and capacity of AI workers."
+                    },
+                    "USER_MANAGEMENT": {
+                        "name": "User management",
+                        "description": "Creating, importing, editing and deleting users."
+                    },
+                    "ORGANIZATIONS": {
+                        "name": "Organizations",
+                        "description": "Organizations that group users and courses."
+                    },
+                    "FEATURE_TOGGLES": {
+                        "name": "Feature toggles",
+                        "description": "Switching features on and off at runtime."
+                    },
+                    "MONITORING": {
+                        "name": "Monitoring",
+                        "description": "Metrics, logs, audits, websocket and scheduled jobs."
+                    },
+                    "USAGE_STATISTICS": {
+                        "name": "Usage statistics",
+                        "description": "Platform usage over time."
+                    },
+                    "FEATURE_USAGE": {
+                        "name": "Feature usage",
+                        "description": "This page."
+                    },
+                    "DATA_CLEANUP": {
+                        "name": "Cleanup service",
+                        "description": "Deleting orphaned and outdated data."
+                    },
+                    "ADMIN_DATA_EXPORTS": {
+                        "name": "Data exports",
+                        "description": "Creating data exports for users."
+                    },
+                    "LEGAL_PAGES": {
+                        "name": "Imprint and privacy statement",
+                        "description": "Viewing and editing the imprint and the privacy statement."
+                    },
+                    "DEPENDENCIES": {
+                        "name": "Dependencies and vulnerabilities",
+                        "description": "The software bill of materials and known vulnerabilities."
+                    },
+                    "IRIS_ADMIN_DASHBOARD": {
+                        "name": "Iris dashboard",
+                        "description": "Usage, cost and alerts of Iris."
+                    },
+                    "UPCOMING_EXAMS_AND_EXERCISES": {
+                        "name": "Upcoming exams and exercises",
+                        "description": "An overview of what is coming up across all courses."
+                    }
+                }
+            }
         }
     }
 }

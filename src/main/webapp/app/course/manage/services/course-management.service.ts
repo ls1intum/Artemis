@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO, CoursesForDashboardResponseDTO, coursesForDashboardFromDTO } from 'app/course/shared/entities/courses-for-dashboard-dto';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
@@ -88,7 +88,7 @@ export class GradeScoreDTO {
     presentationScore!: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseManagementService implements OnDestroy {
     private http = inject(HttpClient);
     private courseStorageService = inject(CourseStorageService);

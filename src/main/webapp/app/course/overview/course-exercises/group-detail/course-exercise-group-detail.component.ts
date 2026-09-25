@@ -50,15 +50,15 @@ export class CourseExerciseGroupDetailComponent {
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly serverDateService = inject(ArtemisServerDateService);
+    private readonly scoresStorageService = inject(ScoresStorageService);
+    private readonly participationService = inject(ParticipationService);
 
     protected readonly faLayerGroup = faLayerGroup;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly getIcon = getIcon;
     protected readonly DifficultyLevel = DifficultyLevel;
 
-    private readonly serverDateService = inject(ArtemisServerDateService);
-    private readonly scoresStorageService = inject(ScoresStorageService);
-    private readonly participationService = inject(ParticipationService);
     private readonly now = this.serverDateService.now();
 
     private readonly groupId = signal<number | undefined>(undefined);
@@ -118,11 +118,11 @@ export class CourseExerciseGroupDetailComponent {
         return this.scoresStorageService.getStoredAchievedGroupPoints(this.courseId, group.id) ?? 0;
     });
 
-    protected readonly pointsInfoBoxData = computed<InformationBox>(() => ({
+    protected readonly pointsInfoBoxData: InformationBox = {
         title: 'artemisApp.courseOverview.exerciseDetails.points',
         content: { type: 'string', value: '' },
         isContentComponent: true,
-    }));
+    };
 
     protected readonly variantsInfoBoxData = computed<InformationBox>(() => ({
         title: 'artemisApp.exerciseVariantGroup.detail.variants',
