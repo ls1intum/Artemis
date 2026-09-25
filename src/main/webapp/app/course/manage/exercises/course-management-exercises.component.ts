@@ -75,6 +75,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 /** Local-storage key under which the last-selected view is remembered, so closing an exercise editor returns to it. */
 const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
@@ -114,6 +115,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly quizExerciseService = inject(QuizExerciseService);
+    private readonly quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly textExerciseService = inject(TextExerciseService);
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
@@ -355,13 +357,13 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     /** Resolves the type-specific deletion request for a single exercise, forwarding the delete dialog's cleanup checks. */
-    private deleteObservableFor(exercise: Exercise, event: { [key: string]: boolean }): Observable<HttpResponse<void>> {
+    private deleteObservableFor(exercise: Exercise, event: { [key: string]: boolean }): Observable<unknown> {
         switch (exercise.type) {
             case ExerciseType.PROGRAMMING:
                 // Preserve omitted LocalCI cleanup flags so the server applies its repository deletion defaults.
                 return this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
             case ExerciseType.QUIZ:
-                return this.quizExerciseService.delete(exercise.id!);
+                return this.quizExerciseDeletionApi.deleteQuizExercise(exercise.id!);
             case ExerciseType.TEXT:
                 return this.textExerciseService.delete(exercise.id!);
             case ExerciseType.FILE_UPLOAD:

@@ -16,11 +16,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
     let fixture: ComponentFixture<QuizExerciseManageButtonsComponent>;
     let quizExerciseService: QuizExerciseService;
+    let quizExerciseDeletionApi: QuizExerciseDeletionApi;
     let exerciseService: ExerciseService;
 
     const course = { id: 123 } as Course;
@@ -49,6 +51,7 @@ describe('QuizExercise Management Buttons Component', () => {
         fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
         comp = fixture.componentInstance;
         quizExerciseService = TestBed.inject(QuizExerciseService);
+        quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
         exerciseService = TestBed.inject(ExerciseService);
     });
 
@@ -72,13 +75,13 @@ describe('QuizExercise Management Buttons Component', () => {
     });
 
     it('should delete quiz', () => {
-        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
         comp.deleteQuizExercise();
-        expect(quizExerciseService.delete).toHaveBeenCalledWith(456);
-        expect(quizExerciseService.delete).toHaveBeenCalledOnce();
+        expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledWith(456);
+        expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledOnce();
     });
 
     it('should export quiz', () => {
@@ -151,14 +154,14 @@ describe('QuizExercise Management Buttons Component', () => {
 
     it('should handle delete quiz exercise error', () => {
         const errorResponse = new HttpErrorResponse({ error: 'Error', status: 500, statusText: 'Server Error' });
-        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(throwError(() => errorResponse));
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(throwError(() => errorResponse));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
 
         comp.deleteQuizExercise();
 
-        expect(quizExerciseService.delete).toHaveBeenCalledWith(456);
+        expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledWith(456);
     });
 
     it('should handle reset quiz exercise error', () => {
@@ -254,10 +257,10 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
     });
 
     it('should navigate after delete in detail page', () => {
-        const quizExerciseService = TestBed.inject(QuizExerciseService);
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
         const router = TestBed.inject(Router);
 
-        vi.spyOn(quizExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
@@ -266,7 +269,7 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
 
         comp.deleteQuizExercise();
 
-        expect(quizExerciseService.delete).toHaveBeenCalledWith(456);
+        expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledWith(456);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 123, 'exercises']);
     });
 });

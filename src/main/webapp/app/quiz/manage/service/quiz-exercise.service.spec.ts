@@ -236,32 +236,8 @@ describe('QuizExercise Service', () => {
         expect((await result)?.body).toEqual(expected);
     });
 
-    it('should return a list of QuizExercise', async () => {
-        const returnedFromService = Object.assign(
-            {
-                description: 'BBBBBB',
-                explanation: 'BBBBBB',
-                randomizeQuestionOrder: true,
-                allowedNumberOfAttempts: 1,
-                isVisibleBeforeStart: true,
-                isPlannedToStart: true,
-                duration: 1,
-            },
-            elemDefault,
-        );
-        const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.query());
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/quiz/quiz-exercises' });
-        req.flush([returnedFromService]);
-        expect((await result)?.body).toEqual([expected]);
-    });
-
     const quizEx = makeQuiz();
     it.each([
-        ['delete', [123], {}, 'DELETE', ''],
-        ['setVisible', [123], quizEx, 'PUT', '/set-visible'],
-        ['end', [123], quizEx, 'PUT', '/end-now'],
-        ['start', [123], quizEx, 'PUT', '/start-now'],
         ['findForStudent', [123], quizEx, 'GET', '/for-student'],
         ['findForExam', [123], [quizEx], 'GET', '/quiz-exercises'],
         ['findForCourse', [123], [quizEx], 'GET', '/quiz-exercises'],

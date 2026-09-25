@@ -13,13 +13,10 @@ import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { FileService } from 'app/foundation/service/file.service';
 import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
-import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
-export type EntityExerciseDateResponseType = HttpResponse<QuizExerciseDates>;
 export type StatisticsOverviewResponseType = HttpResponse<QuizStatisticsOverviewResponse>;
 export type PointStatisticsResponseType = HttpResponse<QuizPointStatisticsResponse>;
 export type QuestionStatisticResponseType = HttpResponse<QuizQuestionStatisticResponse>;
@@ -204,53 +201,6 @@ export class QuizExerciseService {
     }
 
     /**
-     * Start a quiz exercise
-     * @param quizExerciseId the id of the quiz exercise that should be started
-     */
-    start(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
-        return this.http
-            .put<QuizExerciseDates>(`${this.resourceUrl}/${quizExerciseId}/start-now`, null, { observe: 'response' })
-            .pipe(map((res: EntityExerciseDateResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
-    }
-
-    /**
-     * End a quiz exercise
-     * @param quizExerciseId the id of the quiz exercise that should be stopped
-     */
-    end(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
-        return this.http
-            .put<QuizExerciseDates>(`${this.resourceUrl}/${quizExerciseId}/end-now`, null, { observe: 'response' })
-            .pipe(map((res: EntityExerciseDateResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
-    }
-
-    /**
-     * Set a quiz exercise visible
-     * @param quizExerciseId the id of the quiz exercise that should be set visible
-     */
-    setVisible(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
-        return this.http
-            .put<QuizExerciseDates>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, null, { observe: 'response' })
-            .pipe(map((res: EntityExerciseDateResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
-    }
-
-    /**
-     * Load all quiz exercises
-     */
-    query(): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<QuizExercise[]>(this.resourceUrl, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
-    }
-
-    /**
-     * Delete a quiz exercise
-     * @param quizExerciseId the id of the quiz exercise that should be deleted
-     */
-    delete(quizExerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
-    }
-
-    /**
      * Exports given quiz questions into json file
      * @param quizQuestions Quiz questions we want to export
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
@@ -356,14 +306,5 @@ export class QuizExerciseService {
             return QuizStatus.ACTIVE;
         }
         return QuizStatus.VISIBLE;
-    }
-
-    static convertQuizExerciseDatesFromServer(res: EntityExerciseDateResponseType): EntityExerciseDateResponseType {
-        if (res.body) {
-            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
-            res.body.startDate = convertDateFromServer(res.body.startDate);
-            res.body.dueDate = convertDateFromServer(res.body.dueDate);
-        }
-        return res;
     }
 }

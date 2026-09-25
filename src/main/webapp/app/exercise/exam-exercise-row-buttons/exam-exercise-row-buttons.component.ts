@@ -26,6 +26,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 /** setTimeout truncates delays beyond a signed 32-bit millisecond value. */
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
@@ -47,6 +48,7 @@ export class ExamExerciseRowButtonsComponent {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
     private quizExerciseService = inject(QuizExerciseService);
+    private quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
     private exerciseService = inject(ExerciseService);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
@@ -345,7 +347,7 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteQuizExercise() {
-        this.quizExerciseService.delete(this.exercise().id!).subscribe({
+        this.quizExerciseDeletionApi.deleteQuizExercise(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({ name: 'quizExerciseListModification', content: 'Deleted a quiz' });
                 this.dialogErrorSource.next('');
