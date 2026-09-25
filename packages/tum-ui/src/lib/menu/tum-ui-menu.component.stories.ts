@@ -1,6 +1,6 @@
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TumUiButtonDirective } from '../button/tum-ui-button.directive';
 import { TumUiMenuComponent } from './tum-ui-menu.component';
 import { TumUiMenuItemDirective } from './tum-ui-menu-item.directive';
@@ -17,7 +17,7 @@ const meta = {
                 <tum-ui-menu>
                     <button tumUiMenuItem>Add students</button>
                     <button tumUiMenuItem>Add tutors</button>
-                    <button tumUiMenuItem disabled>Add editors</button>
+                    <button tumUiMenuItem [disabled]="true">Add editors</button>
                     <a tumUiMenuItem href="https://docs.artemis.cit.tum.de" target="_blank" rel="noreferrer">Open documentation</a>
                 </tum-ui-menu>
             </ng-template>
@@ -40,5 +40,33 @@ export const Opened: Story = {
         const menu = within(document.body).getByRole('menu');
         await expect(menu).toBeInTheDocument();
         await expect(within(menu).getByRole('menuitem', { name: 'Add students' })).toHaveFocus();
+    },
+};
+
+/**
+ * The arrow keys move through every entry, including a disabled one, which is announced as unavailable, and Escape
+ * returns focus to the trigger.
+ */
+export const KeyboardNavigation: Story = {
+    tags: ['!dev', '!autodocs'],
+    play: async ({ canvasElement }) => {
+        const trigger = within(canvasElement).getByRole('button', { name: 'Course actions' });
+        trigger.focus();
+        await userEvent.keyboard('{ArrowDown}');
+
+        const menu = within(document.body).getByRole('menu');
+        await waitFor(() => expect(within(menu).getByRole('menuitem', { name: 'Add students' })).toHaveFocus());
+        await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+        const disabled = within(menu).getByRole('menuitem', { name: 'Add editors' });
+        await expect(disabled).toHaveFocus();
+        await expect(disabled).toHaveAttribute('aria-disabled', 'true');
+
+        await userEvent.keyboard('{End}');
+        await expect(within(menu).getByRole('menuitem', { name: 'Open documentation' })).toHaveFocus();
+
+        await userEvent.keyboard('{Escape}');
+        await waitFor(() => expect(within(document.body).queryByRole('menu')).not.toBeInTheDocument());
+        await expect(trigger).toHaveFocus();
+        await expect(trigger).toHaveAttribute('aria-expanded', 'false');
     },
 };
