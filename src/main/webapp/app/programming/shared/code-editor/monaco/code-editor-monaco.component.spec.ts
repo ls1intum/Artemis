@@ -959,6 +959,27 @@ describe('CodeEditorMonacoComponent', () => {
         expect(pendingSpy).toHaveBeenCalledExactlyOnceWith([]);
     });
 
+    it('should preserve an unsaved feedback draft when the feedback input changes', () => {
+        fixture.detectChanges();
+        const line = 4;
+        const draft = {
+            reference: `file:file1.java_line:${line}`,
+            gradingInstruction: { id: 3, credits: 1 },
+        } as Feedback;
+        const pendingSpy = vi.fn();
+        comp.onPendingFeedbackChange.subscribe(pendingSpy);
+        comp.newFeedbackLines.set([line]);
+        comp.setPendingFeedback(line, draft);
+        pendingSpy.mockClear();
+
+        fixture.componentRef.setInput('feedbacks', [...exampleFeedbacks]);
+        fixture.detectChanges();
+
+        expect(comp.newFeedbackLines()).toContain(line);
+        expect(comp['pendingFeedbackByLine']().get(line)).toBe(draft);
+        expect(pendingSpy).not.toHaveBeenCalled();
+    });
+
     it('should update existing feedback and notify', () => {
         const feedbackToUpdate: Feedback = { ...exampleFeedbacks[0] };
         const remainingFeedbacks = exampleFeedbacks.slice(1);

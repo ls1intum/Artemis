@@ -149,7 +149,16 @@
                         <fa-icon [icon]="faBan" />
                         <span jhiTranslate="entity.action.cancel"></span>
                     </button>
-                    <button id="feedback-save" type="submit" tumUiButton severity="primary" size="small" [disabled]="!saveEnabled()" (click)="updateFeedback()">
+                    <button
+                        id="feedback-save"
+                        data-testid="feedback-save"
+                        type="submit"
+                        tumUiButton
+                        severity="primary"
+                        size="small"
+                        [disabled]="!saveEnabled()"
+                        (click)="updateFeedback()"
+                    >
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save"></span>
                     </button>

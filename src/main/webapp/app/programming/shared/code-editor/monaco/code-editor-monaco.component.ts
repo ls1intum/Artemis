@@ -317,8 +317,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
 
         if (feedbacksChanged) {
-            this.newFeedbackLines.set([]);
-            this.clearPendingFeedbacks();
             this.renderFeedbackWidgets();
         }
 
