@@ -10,7 +10,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { NgStyle, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
@@ -63,7 +63,6 @@ export enum DetailType {
         ModelingEditorComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         BuildPhasesEditorComponent,
-        NgStyle,
         ExerciseDetailDirective,
         NoDataComponent,
         ArtemisTranslatePipe,

@@ -43,7 +43,6 @@ import { BulletedListAction } from 'app/editor/monaco-editor/model/actions/bulle
 import { OrderedListAction } from 'app/editor/monaco-editor/model/actions/ordered-list.action';
 import { StrikethroughAction } from 'app/editor/monaco-editor/model/actions/strikethrough.action';
 import { PostingContentComponent } from '../posting-content/posting-content.components';
-import { NgStyle } from '@angular/common';
 import { PostingEditType } from '../metis.util';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { FileService } from 'app/foundation/service/file.service';
@@ -61,7 +60,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle],
+    imports: [MarkdownEditorMonacoComponent, PostingContentComponent],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit {
     private metisService = inject(MetisService);

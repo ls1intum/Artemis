@@ -606,6 +606,10 @@ export default tseslint.config(
             '@angular-eslint/template/require-switch-default': 'error',
             // Setting outerHTML replaces the node Angular is bound to, so the next update fails. Use [innerHTML].
             '@angular-eslint/template/no-outerhtml': 'error',
+            // Prefer [style], [style.prop] and [style.prop.unit] bindings (or a static style attribute) over NgStyle,
+            // as the Angular style guide recommends. A bound object is compared by reference, so replace it rather
+            // than mutating it, and write a unit suffix such as `top.px` as its own [style.top.px] binding.
+            '@angular-eslint/template/prefer-style-binding': 'error',
         },
     },
     {

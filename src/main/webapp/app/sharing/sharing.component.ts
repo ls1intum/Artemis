@@ -15,7 +15,6 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgStyle } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { combineLatest, take } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -27,7 +26,7 @@ import { finalize } from 'rxjs/operators';
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
+    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
 })
 export class SharingComponent implements OnInit {
     private route = inject(ActivatedRoute);

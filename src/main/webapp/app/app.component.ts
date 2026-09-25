@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { LtiService } from 'app/foundation/service/lti.service';
@@ -29,7 +29,6 @@ import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recover
         AlertOverlayComponent,
         CdkScrollable,
         NgClass,
-        NgStyle,
         PageRibbonComponent,
         RouterOutlet,
         FooterComponent,
