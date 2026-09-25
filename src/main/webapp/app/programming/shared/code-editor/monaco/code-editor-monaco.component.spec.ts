@@ -312,6 +312,97 @@ describe('CodeEditorMonacoComponent', () => {
         });
     });
 
+    it('should mark a user edit dirty after a same-content state replacement', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<any>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'unchanged', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        stateReplaced$.next({ filePath, text: { toJSON: () => 'unchanged' } });
+        comp.onFileTextChanged({ fileName: filePath, text: 'genuine user edit' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'genuine user edit' });
+    });
+
+    it('marks a late replacement dirty when it diverges from the persisted fallback and suppresses only its echo', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<any>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: vi.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'initial', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        stateReplaced$.next({ filePath, text: { toJSON: () => 'remote replacement' } });
+        comp.onFileTextChanged({ fileName: filePath, text: 'remote replacement' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'remote replacement' });
+
+        comp.onFileTextChanged({ fileName: filePath, text: 'local edit after replacement' });
+
+        expect(onFileContentChangeSpy).toHaveBeenNthCalledWith(2, { fileName: filePath, text: 'local edit after replacement' });
+    });
+
+    it('should mark a user edit dirty when finalized content already matches the hydrated model', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const isAwaitingInitialSync = vi.fn(() => true);
+        const fileSyncServiceMock = {
+            isInitialized: vi.fn(() => true),
+            isFileOpen: vi.fn(() => true),
+            isFileAwaitingInitialSync: isAwaitingInitialSync,
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+        const onFileContentChangeSpy = vi.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        comp.fileSession.set({
+            [filePath]: { code: 'server content', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+
+        comp.onFileTextChanged({ fileName: filePath, text: '' });
+        isAwaitingInitialSync.mockReturnValue(false);
+        initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: false, finalContent: 'line 1\r\nline 2' });
+        comp.onFileTextChanged({ fileName: filePath, text: 'line 1\nline 2' });
+        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
+
+        comp.onFileTextChanged({ fileName: filePath, text: 'genuine user edit' });
+
+        expect(onFileContentChangeSpy).toHaveBeenCalledExactlyOnceWith({ fileName: filePath, text: 'genuine user edit' });
+    });
+
     it('should suppress initial hydration change after initial sync finalizes and emit only user changes afterwards', () => {
         const filePath = 'src/Main.java';
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
@@ -710,6 +801,36 @@ describe('CodeEditorMonacoComponent', () => {
         expect(changeModelSpy).toHaveBeenCalledExactlyOnceWith('file2', 'code2');
     });
 
+    it('rejects a stale same-path load after an A-B-A selection sequence', async () => {
+        const resolvers: Array<() => void> = [];
+        vi.spyOn(comp, 'selectFileInEditor').mockImplementation(() => new Promise<void>((resolve) => resolvers.push(resolve)));
+        const fileLoadSpy = vi.spyOn(comp.onFileLoad, 'emit');
+        const cascade = (previous: string | undefined) =>
+            (comp as any).handleInputChangeCascade({
+                editorWasRefreshed: false,
+                editorWasReset: false,
+                selectedFileChanged: true,
+                feedbacksChanged: false,
+                prevSelectedFile: previous,
+            }) as Promise<void>;
+
+        fixture.componentRef.setInput('selectedFile', 'A.java');
+        const firstA = cascade(undefined);
+        fixture.componentRef.setInput('selectedFile', 'B.java');
+        const b = cascade('A.java');
+        fixture.componentRef.setInput('selectedFile', 'A.java');
+        const latestA = cascade('B.java');
+
+        resolvers[2]();
+        await latestA;
+        resolvers[0]();
+        await firstA;
+        resolvers[1]();
+        await b;
+
+        expect(fileLoadSpy).toHaveBeenCalledExactlyOnceWith('A.java');
+    });
+
     it('should use the code and cursor position of the selected file', async () => {
         const setPositionStub = vi.spyOn(comp.editor(), 'setPosition').mockImplementation(() => {});
         const changeModelStub = vi.spyOn(comp.editor(), 'changeModel').mockImplementation(() => {});
@@ -1042,7 +1163,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         renderReviewCommentWidgetsSpy.mockClear();
-        stateReplaced$.next({ filePath: selectedFile });
+        stateReplaced$.next({ filePath: selectedFile, text: { toJSON: () => '' } });
 
         expect(renderReviewCommentWidgetsSpy).toHaveBeenCalledOnce();
     });
@@ -1075,7 +1196,7 @@ describe('CodeEditorMonacoComponent', () => {
         await new Promise(process.nextTick);
 
         // Replacement arrives for a background file while A is selected.
-        stateReplaced$.next({ filePath: fileB });
+        stateReplaced$.next({ filePath: fileB, text: { toJSON: () => 'B0' } });
 
         // Switch to B and perform first user edit.
         fixture.componentRef.setInput('selectedFile', fileB);
@@ -1145,6 +1266,9 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should commit and mark inline fix as applied after successful code-editor apply', () => {
         fixture.componentRef.setInput('selectedFile', 'src/Foo.java');
+        comp.fileSession.set({
+            'src/Foo.java': { code: 'class Foo {}', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
         fixture.changeDetectorRef.detectChanges();
         vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
         const updateFilesSpy = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(of({} as any));
@@ -1169,6 +1293,31 @@ describe('CodeEditorMonacoComponent', () => {
         expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'src/Foo.java': undefined });
         expect(onInlineFixCommittedSpy).toHaveBeenCalled();
         expect(markAppliedSpy).toHaveBeenCalledWith(42);
+    });
+
+    it('should not report an inline-fix file as saved after a newer edit', () => {
+        const fileName = 'src/Foo.java';
+        const saveResult = new Subject<Record<string, never>>();
+        fixture.componentRef.setInput('selectedFile', fileName);
+        comp.fileSession.set({
+            [fileName]: { code: 'class Foo {}', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.editor(), 'getText').mockReturnValue('class Foo {}');
+        vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(saveResult);
+        const onSavedFilesSpy = vi.fn();
+        comp.onSavedFiles.subscribe(onSavedFilesSpy);
+        const thread = {
+            comments: [{ id: 42, type: CommentType.CONSISTENCY_CHECK, createdDate: '2026-01-01T00:00:00Z' }],
+        } as any;
+
+        internals(comp).persistInlineFixApplication(thread);
+        comp.fileSession.set({
+            [fileName]: { code: 'class Foo { /* newer edit */ }', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        saveResult.next({});
+
+        expect(onSavedFilesSpy).not.toHaveBeenCalled();
     });
 
     it('should clear review comment drafts through the manager', () => {

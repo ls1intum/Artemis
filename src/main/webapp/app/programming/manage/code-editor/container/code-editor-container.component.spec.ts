@@ -81,7 +81,7 @@ describe('CodeEditorContainerComponent', () => {
             highlightLines: vi.fn(),
             editor: vi.fn().mockReturnValue({ revealLine: vi.fn() }),
         };
-        gridStub = { toggleCollapse: vi.fn() };
+        gridStub = { toggleCollapse: vi.fn(), expandBottomPanel: vi.fn(), buildOutputIsCollapsed: vi.fn().mockReturnValue(false) };
         (component as any).monacoEditor = () => monacoEditorStub;
         (component as any).grid = () => gridStub;
     });
@@ -387,11 +387,15 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should clear unsaved files after refresh', () => {
+        const commitStateChanged = vi.fn();
+        component.onCommitStateChange.subscribe(commitStateChanged);
         component.unsavedFiles = { 'src/main/App.java': 'x' };
 
         component.onRefreshFiles();
 
         expect(component.unsavedFiles).toEqual({});
+        expect(component.commitState).toBe(CommitState.CLEAN);
+        expect(commitStateChanged).toHaveBeenCalledWith(CommitState.CLEAN);
     });
 
     it('should keep only files with errors after saving and show alert', () => {
@@ -491,6 +495,23 @@ describe('CodeEditorContainerComponent', () => {
         event.preventDefault.mockClear();
         expect(component.unloadNotification(event)).toBe(true);
         expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('should bypass the unload warning once after an explicit discard confirmation', () => {
+        const event = { preventDefault: vi.fn() } as any;
+        component.unsavedFiles = { 'src/main/App.java': 'x' };
+
+        component.allowNextUnloadWithoutConfirmation();
+
+        expect(component.unloadNotification(event)).toBe(true);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(component.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+    });
+
+    it.each(Object.values(CommitState))('should report whether %s is a verified clean repository state', (commitState) => {
+        component.commitState = commitState;
+        expect(component.hasCleanRepositoryState()).toBe(commitState === CommitState.CLEAN);
     });
 
     it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {
