@@ -49,8 +49,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Write orchestrator tools that mutate or remove an existing competency in the current course:
- * {@code editCompetency} updates scalar fields and {@code deleteCompetency} removes the competency
- * and its links. Split from the former monolithic orchestrator tools service so the edit/delete
+ * {@code editCompetency} updates scalar fields and {@code deleteCompetency} removes an unlinked
+ * competency together with its competency relations. Split from the former monolithic orchestrator tools service so the edit/delete
  * surface is registered as its own {@link org.springframework.ai.tool.ToolCallbackProvider} bean.
  * <p>
  * Both tools are course-scoped through the Spring AI {@link ToolContext}, share the per-run write
@@ -83,7 +83,7 @@ public class EditorToolsService {
      * @param courseCompetencyRepository   repository for competency lookups and scalar updates
      * @param courseCompetencyService      service performing the cascading delete
      * @param competencyValidator          validator enforcing competency update invariants
-     * @param competencyRelationRepository checks whether relations still reference a deletion target
+     * @param competencyRelationRepository counts the relations removed together with a deleted competency
      * @param atlasMLNotificationService   notifies the AtlasML service of competency changes
      */
     public EditorToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService,
@@ -207,14 +207,17 @@ public class EditorToolsService {
 
     /**
      * LLM tool: deletes a competency from the current course and appends a DELETE action.
+     * Refuses while exercise or lecture-unit links remain, because those links carry the evidence the
+     * orchestrator must re-home first. Incoming and outgoing competency relations are removed with the
+     * competency, since no agent tool can remove them beforehand.
      *
      * @param competencyId  id of the competency to delete
      * @param justification one-sentence reason this competency is obsolete (shown to the instructor in the audit log)
      * @param toolContext   Spring AI tool context
-     * @return JSON status on success, or a JSON error
+     * @return JSON status with the number of removed relations on success, or a JSON error
      */
-    @Tool(description = "Delete an unlinked competency from the current course. Refuses deletion while exercise links, lecture-unit links, or competency relations remain. "
-            + "Use only when the competency is no longer needed after the current exercise change.")
+    @Tool(description = "Delete an unlinked competency from the current course. Refuses deletion while exercise links or lecture-unit links remain. "
+            + "Also removes the competency's incoming and outgoing competency relations. Use only when the competency is no longer needed after the current exercise change.")
     public String deleteCompetency(@ToolParam(description = "id of the competency to delete") Long competencyId,
             @ToolParam(description = "one-sentence reason this competency is obsolete — typically that its only linked exercise was deleted or moved") String justification,
             ToolContext toolContext) {
@@ -246,9 +249,8 @@ public class EditorToolsService {
             return mutationErrorJson(objectMapper, "Competency " + competencyId + " still has linked learning objects. Reassign or remove every link before deletion.",
                     toolContext);
         }
-        if (competencyRelationRepository.existsByHeadCompetencyIdOrTailCompetencyId(competencyId, competencyId)) {
-            return mutationErrorJson(objectMapper, "Competency " + competencyId + " still has competency relations. Remove them before deletion.", toolContext);
-        }
+        // Counted before the delete so the audit entry reports which relations went with the competency.
+        long removedRelationCount = competencyRelationRepository.countByHeadCompetencyIdOrTailCompetencyId(competencyId, competencyId);
         String title = competency.getTitle();
         Course course = competency.getCourse();
         // Snapshot the entity for Atlas ML before the cascade wipes it; notification is sent only after the delete commits.
@@ -270,10 +272,14 @@ public class EditorToolsService {
         // Append before the external Atlas ML notification — consistent with the other write
         // tools and ensures the audit DTO is in the buffer even if the downstream notify call
         // throws (the DB delete has already committed).
-        appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, "Deleted competency " + title + ".", justification.trim()));
+        String detail = "Deleted competency " + title + ".";
+        if (removedRelationCount > 0) {
+            detail += " Removed " + removedRelationCount + (removedRelationCount == 1 ? " competency relation." : " competency relations.");
+        }
+        appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, detail, justification.trim()));
         if (competencyForAtlasMl != null) {
             atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "orchestrator competency deletion");
         }
-        return toJson(objectMapper, Map.of("status", "ok", "deletedId", competencyId));
+        return toJson(objectMapper, Map.of("status", "ok", "deletedId", competencyId, "removedRelationCount", removedRelationCount));
     }
 }

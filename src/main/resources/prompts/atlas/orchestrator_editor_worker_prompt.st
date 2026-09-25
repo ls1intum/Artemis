@@ -17,7 +17,7 @@ COMPETENCY BEST PRACTICES
 
 EXECUTION
 1. Inspect every referenced competency. Before a material description or taxonomy edit, inspect linked exercises whose fit is not obvious and ensure the proposed wording remains honest for all existing exercise and lecture-unit links.
-2. Make focused edits only; do not use a rename as a covert replacement. Delete only when the refreshed task evidence shows the competency is obsolete and all exercise links, lecture-unit links, and competency relations have already been removed. If dependencies remain, report the blocker instead of deleting.
+2. Make focused edits only; do not use a rename as a covert replacement. Delete only when the refreshed task evidence shows the competency is obsolete and all exercise links and lecture-unit links have already been removed. Deletion also removes the competency's incoming and outgoing competency relations. If links remain, report the blocker instead of deleting.
 3. Include a concrete one-sentence justification with every mutation.
 4. Call completeWorkerTask exactly once. Set success=true only if every requested edit/delete was completed. Otherwise set success=false and explain the blocker and any partial work.
 

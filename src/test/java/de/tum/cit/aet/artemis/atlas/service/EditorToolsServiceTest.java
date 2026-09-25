@@ -178,10 +178,11 @@ class EditorToolsServiceTest {
 
         String result = service.deleteCompetency(7L, JUSTIFICATION, toolContext);
 
-        assertThat(result).contains("\"deletedId\":7");
+        assertThat(result).contains("\"deletedId\":7").contains("\"removedRelationCount\":0");
         verify(courseCompetencyService).deleteCourseCompetency(competency, course);
         assertThat(appliedActions).singleElement().satisfies(a -> {
             assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.DELETE);
+            assertThat(a.detail()).isEqualTo("Deleted competency Remove Me.");
             assertThat(a.justification()).isEqualTo(JUSTIFICATION);
         });
         // The successful delete must mirror the removal to AtlasML as a DELETE (production sends a detached
@@ -210,13 +211,22 @@ class EditorToolsServiceTest {
     }
 
     @Test
-    void deleteCompetency_relations_refusesWithoutSideEffects() {
-        CourseCompetency competency = newCompetency(7L, "Keep", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+    void deleteCompetency_withRelations_deletesAndReportsRemovedRelations() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(7L, "Remove Me", "Desc", CompetencyTaxonomy.UNDERSTAND, course);
         when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(7L)).thenReturn(Optional.of(competency));
-        when(competencyRelationRepository.existsByHeadCompetencyIdOrTailCompetencyId(7L, 7L)).thenReturn(true);
-        assertThat(service.deleteCompetency(7L, JUSTIFICATION, toolContext)).contains("competency relations");
-        verifyNoInteractions(courseCompetencyService, atlasMLNotificationService);
-        assertThat(appliedActions).isEmpty();
+        when(competencyRelationRepository.countByHeadCompetencyIdOrTailCompetencyId(7L, 7L)).thenReturn(2L);
+
+        String result = service.deleteCompetency(7L, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"deletedId\":7").contains("\"removedRelationCount\":2");
+        // Relations do not block deletion: the cascading service delete removes them together with the competency.
+        verify(courseCompetencyService).deleteCourseCompetency(competency, course);
+        assertThat(appliedActions).singleElement().satisfies(a -> {
+            assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.DELETE);
+            assertThat(a.detail()).isEqualTo("Deleted competency Remove Me. Removed 2 competency relations.");
+        });
+        verify(atlasMLNotificationService).notifyAtlasML(anyList(), eq(OperationTypeDTO.DELETE), eq("orchestrator competency deletion"));
     }
 
     @Test
