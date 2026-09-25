@@ -597,7 +597,7 @@ describe('ModelingEditorComponent', () => {
         await fixture.whenStable();
 
         const overlayContainer = document.body.querySelector('.cdk-overlay-container');
-        expect(overlayContainer?.querySelector('.tum-ui-dialog')).not.toBeNull();
+        expect(overlayContainer?.querySelector('.tumaet-ui-dialog')).not.toBeNull();
         expect(overlayContainer?.parentElement).toBe(document.body);
 
         component.helpVisible.set(false);

@@ -12,7 +12,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { insightsSectionAvailable, isAtlasModuleActive, isIrisModuleActive } from 'app/account/user/settings/learner-profile/learner-profile-availability';
-import { TumUiListComponent, TumUiListItemActionDirective, TumUiListItemDirective } from '@tumaet/ui-angular';
+import { TumAetUiListComponent, TumAetUiListItemActionDirective, TumAetUiListItemDirective } from '@tumaet/ui-angular';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -21,7 +21,7 @@ import { TumUiListComponent, TumUiListItemActionDirective, TumUiListItemDirectiv
     selector: 'jhi-user-settings',
     templateUrl: 'user-settings-container.component.html',
     styleUrls: ['user-settings-container.component.scss'],
-    imports: [NgOptimizedImage, TranslateDirective, RouterModule, FontAwesomeModule, TumUiListComponent, TumUiListItemDirective, TumUiListItemActionDirective],
+    imports: [NgOptimizedImage, TranslateDirective, RouterModule, FontAwesomeModule, TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiListItemActionDirective],
 })
 export class UserSettingsContainerComponent implements OnInit {
     private readonly profileService = inject(ProfileService);

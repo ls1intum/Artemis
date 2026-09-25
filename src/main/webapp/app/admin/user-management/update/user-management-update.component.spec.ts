@@ -33,7 +33,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 
 // Mock Sentry before tests run to prevent actual error reporting
 vi.mock('@sentry/angular', async () => {
@@ -975,7 +975,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
     it('marks every required field with a marker hidden from assistive technology', async () => {
         await render(new User(123, 'test_user', 'Test', 'User', 'test@example.com', true, 'en', [Authority.STUDENT]));
 
-        const markers = Array.from(fixture.nativeElement.querySelectorAll('.tum-ui-form-field-required')) as HTMLElement[];
+        const markers = Array.from(fixture.nativeElement.querySelectorAll('.tumaet-ui-form-field-required')) as HTMLElement[];
 
         expect(markers.length).toBe(4);
         markers.forEach((marker) => expect(marker.getAttribute('aria-hidden')).toBe('true'));
@@ -991,7 +991,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
 
         // The field carries a required marker and points aria-describedby at this region, so leaving it empty
         // would tell a screen reader that something is wrong without ever saying what.
-        const error = fixture.nativeElement.querySelector(`#${controlId}`).closest('tum-ui-form-field').querySelector('.tum-ui-form-field-error');
+        const error = fixture.nativeElement.querySelector(`#${controlId}`).closest('tumaet-ui-form-field').querySelector('.tumaet-ui-form-field-error');
         expect(error.hasAttribute('hidden')).toBe(false);
         expect(error.textContent.trim()).not.toBe('');
     });
@@ -1012,7 +1012,7 @@ describe('UserManagementUpdateComponent credential revocation controls', () => {
         fixture.detectChanges();
 
         const revokeHost = fixture.debugElement.query(By.css('[data-testid="revoke-credentials"]'));
-        const revokeCheckbox = revokeHost.componentInstance as TumUiCheckboxComponent;
+        const revokeCheckbox = revokeHost.componentInstance as TumAetUiCheckboxComponent;
         const revokeInput = checkboxInput('revokeCredentials')!;
         expect(component.useRandomPassword()).toBe(false);
         expect(keepPasswordCheckbox.checked).toBe(false);

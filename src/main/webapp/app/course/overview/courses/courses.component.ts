@@ -22,7 +22,7 @@ import { CourseAccessStorageService } from 'app/course/shared/services/course-ac
 import { addPublicFilePrefix } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-overview',
@@ -38,7 +38,7 @@ import { TumUiButtonDirective } from '@tumaet/ui-angular';
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         SearchFilterPipe,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class CoursesComponent implements OnInit {

@@ -1,0 +1,86 @@
+:host {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    height: calc(var(--tumaet-ui-spacing) * 5);
+    border-radius: var(--tumaet-ui-radius-md);
+}
+
+:host([data-size='small']) {
+    height: calc(var(--tumaet-ui-spacing) * 1.5);
+}
+
+// The slim rail is shorter than the label's line box, so the value has to be rendered next to the bar instead.
+:host([data-size='small']) .tumaet-ui-progress-bar-label {
+    display: none;
+}
+
+.tumaet-ui-progress-bar-value {
+    height: 100%;
+    width: 0;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--tumaet-ui-primary-color);
+    transition: width 1s ease-in-out;
+}
+
+.tumaet-ui-progress-bar-value[data-severity='success'] {
+    background: var(--tumaet-ui-state-success);
+}
+
+.tumaet-ui-progress-bar-value[data-severity='warn'] {
+    background: var(--tumaet-ui-state-warning);
+}
+
+.tumaet-ui-progress-bar-value[data-severity='danger'] {
+    background: var(--tumaet-ui-state-danger);
+}
+
+.tumaet-ui-progress-bar-value[data-severity='info'] {
+    background: var(--tumaet-ui-state-info);
+}
+
+.tumaet-ui-progress-bar-label {
+    font-size: var(--tumaet-ui-font-size-xs);
+    font-weight: 600;
+    color: var(--tumaet-ui-primary-contrast-color);
+}
+
+.tumaet-ui-progress-bar-value[data-severity='success'] .tumaet-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-success-contrast);
+}
+
+.tumaet-ui-progress-bar-value[data-severity='warn'] .tumaet-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-warning-contrast);
+}
+
+.tumaet-ui-progress-bar-value[data-severity='danger'] .tumaet-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-danger-contrast);
+}
+
+.tumaet-ui-progress-bar-value[data-severity='info'] .tumaet-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-info-contrast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tumaet-ui-progress-bar-value {
+        transition: none;
+    }
+}
+
+@media (forced-colors: active) {
+    :host {
+        border: 1px solid CanvasText;
+    }
+
+    .tumaet-ui-progress-bar-value {
+        background: Highlight;
+    }
+
+    .tumaet-ui-progress-bar-label {
+        color: HighlightText;
+    }
+}

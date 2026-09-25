@@ -211,7 +211,7 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         const toggleSpy = vi.spyOn(component, 'toggleExam');
 
         const contentElement = document.createElement('div');
-        contentElement.className = 'tum-ui-panel-content-container';
+        contentElement.className = 'tumaet-ui-panel-content-container';
         const innerChild = document.createElement('span');
         contentElement.appendChild(innerChild);
 
@@ -220,7 +220,7 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         expect(toggleSpy).not.toHaveBeenCalled();
 
         const togglerElement = document.createElement('div');
-        togglerElement.className = 'tum-ui-panel-toggler';
+        togglerElement.className = 'tumaet-ui-panel-toggler';
         const togglerEvent = { target: togglerElement } as unknown as MouseEvent;
         component.onPanelClick(1, togglerEvent);
         expect(toggleSpy).not.toHaveBeenCalled();
@@ -329,7 +329,7 @@ describe('ExamManagementNavigationSidebarComponent', () => {
             expect(emptyMessage).not.toBeNull();
             expect(emptyMessage.nativeElement.textContent).toContain('artemisApp.exam.overview.noExams');
 
-            const panels = fixture.debugElement.queryAll(By.css('tum-ui-panel'));
+            const panels = fixture.debugElement.queryAll(By.css('tumaet-ui-panel'));
             expect(panels).toHaveLength(0);
 
             const subpages = fixture.debugElement.queryAll(By.css('[data-testid^="sidebar-subpage-"]'));

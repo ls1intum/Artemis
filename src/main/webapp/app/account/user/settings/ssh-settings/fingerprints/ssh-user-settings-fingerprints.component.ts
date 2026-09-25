@@ -5,14 +5,14 @@ import { DocumentationLinkComponent } from 'app/shared-ui/components/documentati
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { SshUserSettingsFingerprintsService } from 'app/account/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
-import { TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-fingerprints.component.html',
     styleUrls: ['../ssh-user-settings.component.scss'],
-    imports: [TranslateDirective, DocumentationLinkComponent, RouterLink, TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective, ArtemisTranslatePipe],
+    imports: [TranslateDirective, DocumentationLinkComponent, RouterLink, TumAetUiButtonDirective, TumAetUiListComponent, TumAetUiListItemDirective, ArtemisTranslatePipe],
 })
 export class SshUserSettingsFingerprintsComponent implements OnInit {
     readonly sshUserSettingsService = inject(SshUserSettingsFingerprintsService);

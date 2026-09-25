@@ -16,13 +16,13 @@ import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-length-validator/custom-max-length-validator.directive';
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiInputDirective,
-    TumUiListComponent,
-    TumUiListItemDirective,
-    TumUiTableDirective,
-    TumUiTagComponent,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiListComponent,
+    TumAetUiListItemDirective,
+    TumAetUiTableDirective,
+    TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Authority, IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
@@ -44,13 +44,13 @@ export interface DisplayedPasskey extends PasskeyDTO {
         FormsModule,
         CustomMaxLengthDirective,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiInputDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiTableDirective,
-        TumUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
     ],
     templateUrl: './passkey-settings.component.html',
     styleUrls: ['../user-settings.scss'],

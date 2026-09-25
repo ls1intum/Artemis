@@ -28,7 +28,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
@@ -47,7 +47,7 @@ import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
         CommonModule,
         CourseTitleBarActionsDirective,
         ArtemisTranslatePipe,
-        TumUiEmptyStateComponent,
+        TumAetUiEmptyStateComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {

@@ -1,5 +1,5 @@
 /**
- * Require every TUM UI chart to carry an accessible name (or be explicitly hidden from assistive technology).
+ * Require every TUM AET UI chart to carry an accessible name (or be explicitly hidden from assistive technology).
  *
  * WHY: a chart renders into an `<svg role="img">`, and the accessible name is also the caption of the data table
  * the chart renders alongside it for assistive technology. Without a name a screen reader announces an unlabelled
@@ -15,7 +15,7 @@
  * `.ts` component files — register the rule for both file globs. An empty name (`ariaLabel=""`) and a negated
  * `aria-hidden="false"` are rejected, since neither yields an accessible name.
  */
-const CHART_ELEMENTS = ['tum-ui-bar-chart', 'tum-ui-line-chart', 'tum-ui-doughnut-chart'];
+const CHART_ELEMENTS = ['tumaet-ui-bar-chart', 'tumaet-ui-line-chart', 'tumaet-ui-doughnut-chart'];
 
 const NAME_ATTRIBUTES = new Set(['ariaLabel', 'ariaLabelledBy', 'aria-label', 'aria-labelledby']);
 const HIDDEN_ATTRIBUTE = 'aria-hidden';
@@ -97,7 +97,8 @@ export default {
     meta: {
         type: 'problem',
         docs: {
-            description: 'Require an accessible name (ariaLabel/ariaLabelledBy) or an explicit aria-hidden on every TUM UI chart, whose SVG is otherwise an unlabelled role="img".',
+            description:
+                'Require an accessible name (ariaLabel/ariaLabelledBy) or an explicit aria-hidden on every TUM AET UI chart, whose SVG is otherwise an unlabelled role="img".',
         },
         messages: {
             missingAccessibleName:

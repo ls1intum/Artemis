@@ -7,20 +7,20 @@ import { faEnvelope, faSearch, faSpinner } from '@fortawesome/free-solid-svg-ico
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import {
-    TumUiButtonDirective,
-    TumUiCardComponent,
-    TumUiIconFieldComponent,
-    TumUiInputDirective,
-    TumUiLineChartComponent,
-    TumUiLineChartConfig,
-    TumUiMessageComponent,
-    TumUiSelectButtonComponent,
-    TumUiSelectComponent,
-    TumUiTabComponent,
-    TumUiTabListComponent,
-    TumUiTabsComponent,
-    TumUiTagComponent,
-    TumUiToggleSwitchComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCardComponent,
+    TumAetUiIconFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiLineChartComponent,
+    TumAetUiLineChartConfig,
+    TumAetUiMessageComponent,
+    TumAetUiSelectButtonComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabsComponent,
+    TumAetUiTagComponent,
+    TumAetUiToggleSwitchComponent,
 } from '@tumaet/ui-angular';
 
 import { TranslateService } from '@ngx-translate/core';
@@ -31,7 +31,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { multiSeriesLineChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { multiSeriesLineChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 
 import { FeatureUsageService } from './feature-usage.service';
 import {
@@ -89,19 +89,19 @@ interface TrendTarget {
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiButtonDirective,
-        TumUiCardComponent,
-        TumUiIconFieldComponent,
-        TumUiInputDirective,
-        TumUiLineChartComponent,
-        TumUiMessageComponent,
-        TumUiSelectButtonComponent,
-        TumUiSelectComponent,
-        TumUiTabsComponent,
-        TumUiTabListComponent,
-        TumUiTabComponent,
-        TumUiTagComponent,
-        TumUiToggleSwitchComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCardComponent,
+        TumAetUiIconFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiLineChartComponent,
+        TumAetUiMessageComponent,
+        TumAetUiSelectButtonComponent,
+        TumAetUiSelectComponent,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTagComponent,
+        TumAetUiToggleSwitchComponent,
         FeatureUsageTreeComponent,
         FeatureUsageAttentionComponent,
         FeatureUsageAdoptionComponent,
@@ -246,7 +246,7 @@ export class FeatureUsageComponent implements OnInit {
     });
 
     /** Not a computed: it depends on nothing, so recomputing it would only pretend to be reactive. */
-    readonly trendChartConfig: TumUiLineChartConfig = { yAxis: { min: 0 }, legend: true };
+    readonly trendChartConfig: TumAetUiLineChartConfig = { yAxis: { min: 0 }, legend: true };
 
     ngOnInit(): void {
         this.load();

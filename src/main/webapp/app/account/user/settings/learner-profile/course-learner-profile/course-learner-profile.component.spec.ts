@@ -412,7 +412,7 @@ describe('CourseLearnerProfileComponent', () => {
             fixture.detectChanges();
 
             // Drive the real control so the template's (selectionChange) binding is covered, not just the handler.
-            const trigger = fixture.nativeElement.querySelector('tum-ui-select button[role="combobox"]') as HTMLButtonElement;
+            const trigger = fixture.nativeElement.querySelector('tumaet-ui-select button[role="combobox"]') as HTMLButtonElement;
             expect(trigger).not.toBeNull();
             trigger.click();
             fixture.detectChanges();
