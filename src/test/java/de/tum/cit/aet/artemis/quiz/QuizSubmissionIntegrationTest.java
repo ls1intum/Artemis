@@ -39,6 +39,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.multipart.MultipartFile;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -98,6 +100,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private static final int NUMBER_OF_STUDENTS = 4;
 
     private static final int NUMBER_OF_TUTORS = 1;
+
+    @Autowired
+    private JsonMapper jsonMapper;
 
     @Autowired
     private QuizExerciseService quizExerciseService;
@@ -994,6 +999,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         }
     }
 
+    private JsonNode withStaleSelection(QuizSubmission submission, SubmittedAnswer answer, String field, Object staleSelection) {
+        JsonNode payload = jsonMapper.valueToTree(submission);
+        for (JsonNode submittedAnswer : payload.path("submittedAnswers")) {
+            if (submittedAnswer.path("quizQuestion").path("id").asLong() == answer.getQuizQuestion().getId()) {
+                // Mutate the wire payload after serialization: entity getters intentionally filter unresolved references.
+                ArrayNode selections = (ArrayNode) submittedAnswer.path(field);
+                selections.add(jsonMapper.valueToTree(staleSelection));
+                return payload;
+            }
+        }
+        throw new AssertionError("Submitted answer missing from serialized quiz submission");
+    }
+
     private static JsonNode findNodeByLong(JsonNode nodes, String fieldName, long value) {
         for (JsonNode node : nodes) {
             if (node.hasNonNull(fieldName) && node.path(fieldName).asLong() == value) {
@@ -1136,13 +1154,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             // ObjectNotFoundException; now it must be silently dropped and the remaining valid selections must still be persisted.
             MultipleChoiceSubmittedAnswer mcAnswer = quizSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
                     .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
-            AnswerOption staleOption = new AnswerOption();
-            staleOption.setId(Long.MAX_VALUE);
-            mcAnswer.addSelectedOptions(staleOption);
-            // getSelectedOptions() resolves ids against the question, so the stale (unresolvable) option is already excluded from the count here and from the serialized submission
             int validSelectionCount = mcAnswer.getSelectedOptions().size();
+            JsonNode payload = withStaleSelection(quizSubmission, mcAnswer, "selectedOptions", Map.of("id", Long.MAX_VALUE));
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", payload,
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
@@ -1234,16 +1249,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             DragAndDropSubmittedAnswer dndAnswer = quizSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
                     .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
             DragAndDropQuestion dndQuestion = (DragAndDropQuestion) dndAnswer.getQuizQuestion();
-            DragAndDropMapping staleMapping = new DragAndDropMapping();
-            DragItem staleDragItem = new DragItem();
-            staleDragItem.setId(Long.MAX_VALUE);
-            staleMapping.setDragItem(staleDragItem);
-            staleMapping.setDropLocation(dndQuestion.getDropLocations().getFirst());
-            dndAnswer.addMappings(staleMapping);
-            // getMappings() resolves ids against the question, so the stale (unresolvable) mapping is already excluded from the count here and from the serialized submission
             int validMappingCount = dndAnswer.getMappings().size();
+            JsonNode payload = withStaleSelection(quizSubmission, dndAnswer, "mappings",
+                    Map.of("dragItem", Map.of("id", Long.MAX_VALUE), "dropLocation", Map.of("id", dndQuestion.getDropLocations().getFirst().getId())));
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", payload,
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
@@ -1271,16 +1281,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             DragAndDropSubmittedAnswer dndAnswer = quizSubmission.getSubmittedAnswers().stream().filter(DragAndDropSubmittedAnswer.class::isInstance)
                     .map(DragAndDropSubmittedAnswer.class::cast).findFirst().orElseThrow();
             DragAndDropQuestion dndQuestion = (DragAndDropQuestion) dndAnswer.getQuizQuestion();
-            DragAndDropMapping staleMapping = new DragAndDropMapping();
-            staleMapping.setDragItem(dndQuestion.getDragItems().getFirst());
-            DropLocation staleDropLocation = new DropLocation();
-            staleDropLocation.setId(Long.MAX_VALUE);
-            staleMapping.setDropLocation(staleDropLocation);
-            dndAnswer.addMappings(staleMapping);
-            // getMappings() resolves ids against the question, so the stale (unresolvable) mapping is already excluded from the count here and from the serialized submission
             int validMappingCount = dndAnswer.getMappings().size();
+            JsonNode payload = withStaleSelection(quizSubmission, dndAnswer, "mappings",
+                    Map.of("dragItem", Map.of("id", dndQuestion.getDragItems().getFirst().getId()), "dropLocation", Map.of("id", Long.MAX_VALUE)));
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", payload,
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
@@ -1307,17 +1312,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
             ShortAnswerSubmittedAnswer saAnswer = quizSubmission.getSubmittedAnswers().stream().filter(ShortAnswerSubmittedAnswer.class::isInstance)
                     .map(ShortAnswerSubmittedAnswer.class::cast).findFirst().orElseThrow();
-            ShortAnswerSubmittedText staleText = new ShortAnswerSubmittedText();
-            ShortAnswerSpot staleSpot = new ShortAnswerSpot();
-            staleSpot.setId(Long.MAX_VALUE);
-            staleText.setSpot(staleSpot);
-            staleText.setText("text-with-stale-spot-id");
-            saAnswer.addSubmittedTexts(staleText);
-            // getSubmittedTexts() resolves spot ids against the question, so the stale (unresolvable) text is already excluded from the count here and from the serialized
-            // submission
             int validTextCount = saAnswer.getSubmittedTexts().size();
+            JsonNode payload = withStaleSelection(quizSubmission, saAnswer, "submittedTexts", Map.of("spot", Map.of("id", Long.MAX_VALUE), "text", "text-with-stale-spot-id"));
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
+            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", payload,
                     QuizSubmission.class, HttpStatus.OK);
 
             assertThat(updatedSubmission.isSubmitted()).isTrue();
