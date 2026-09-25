@@ -69,19 +69,32 @@ A guard returns `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, op
 needs `replaceUrl`, `skipLocationChange` or `state`. A resolver returns or emits a
 `RedirectCommand`; a `UrlTree` returned from a resolver becomes route data and does not redirect.
 Inside an RxJS operator or a promise callback, throw the `RedirectCommand` instead. The router
-cancels the running navigation with a redirect, and alerts shown before the throw still appear.
+cancels the running navigation with a redirect that keeps its `replaceUrl` and
+`skipLocationChange`, and alerts shown before the throw still appear. The guards in one
+`canActivate` array run together and the first result that is not `true`, in array order, wins,
+so a redirect applies only after every guard ahead of it returned `true`: a user who fails
+`UserRouteAccessService` is rejected, not redirected.
 
-Never call `router.navigate()` or `navigateByUrl()` in a guard or resolver: it starts a second
-navigation while the first is running, and forces `return false` or `return EMPTY` workarounds.
+Never call `router.navigate()` or `navigateByUrl()` in a guard or resolver. It cancels the running
+navigation on the spot and starts a new one, so the original `replaceUrl` and
+`skipLocationChange` are lost (Back then redirects forward again), a caller awaiting the original
+navigation receives `false`, and the navigation still happens when another guard rejects the
+route. A `return false` or `EMPTY` after the call changes nothing.
+
 `localRules/no-navigation-in-guard-or-resolver` (`rules/no-navigation-in-guard-or-resolver.mjs`)
-enforces this at error level under `src/main/webapp`. It also follows the guard into the helper
-methods it reaches through `this` and into functions of the same file, so moving the call into a
-helper does not silence it. A `catchError` after a thrown redirect must rethrow what it does not
-handle.
+enforces this at error level under `src/main/webapp`. It follows the guard into nested callbacks,
+into methods of its own class reached through `this`, and into functions of the same file. It is
+file-local and does not resolve types, so it misses navigation in an injected service the guard
+calls, a `Router` from a base-class field, `const router = this.router` or `injector.get(Router)`,
+namespace imports, static helper calls and route objects without a marker key such as `path`.
+Moving the call into a service silences the rule without fixing anything. A `catchError` after a
+thrown redirect must rethrow what it does not handle.
 
 In specs, use the real router (`TestBed.inject(Router)`, no `MockRouter`) and assert the result:
 `router.serializeUrl(result as UrlTree)` for a returned redirect, or an `error` callback that
-receives a `RedirectCommand` for a thrown one. Do not assert a `navigate` spy.
+receives a `RedirectCommand` for a thrown one. Do not assert a `navigate` spy. For guard
+combinations and browser history, route with `provideRouter(...)` and `provideLocationMocks()`
+as in `src/main/webapp/app/localci/shared/localci-guard.spec.ts`.
 
 ## Copying objects
 

@@ -427,11 +427,13 @@ export default tseslint.config(
         },
     },
     // Route guards and resolvers redirect by returning or throwing a redirect, never by calling Router.navigate() or
-    // navigateByUrl(). Navigating from inside a guard or resolver starts a second navigation while the first is still
-    // running, and forces workarounds such as `return false` after the call or `return EMPTY` from a resolver. A guard
-    // returns router.createUrlTree(...) or a RedirectCommand; a resolver returns a RedirectCommand; either may throw a
-    // RedirectCommand from inside an RxJS operator or a promise callback. The rule follows a guard into the helper
-    // methods and same-file functions it reaches. Full rationale:
+    // navigateByUrl(). Navigating from inside a guard or resolver cancels the running navigation on the spot and starts
+    // a new one: that loses the original replaceUrl / skipLocationChange (a guarded URL opened directly stays in the
+    // history, so Back redirects forward again), makes a caller awaiting the original navigation receive false, and
+    // still navigates when another guard on the route rejects it. A `return false` or `EMPTY` after the call changes
+    // nothing. A guard returns router.createUrlTree(...) or a RedirectCommand; a resolver returns a RedirectCommand;
+    // either may throw a RedirectCommand from inside an RxJS operator or a promise callback. The rule follows a guard
+    // into the helper methods and same-file functions it reaches, but not into injected services. Full rationale:
     // documentation/docs/developer/guidelines/client-development.mdx ("Redirecting from guards and resolvers").
     {
         files: ['src/main/webapp/**/*.ts'],

@@ -153,6 +153,49 @@ describe('no-navigation-in-guard-or-resolver', () => {
         });
     });
 
+    // The rule is file-local and syntactic. These cases are not reported; they pin the documented limits so that
+    // widening the rule is a deliberate change, and remind the reader that moving a call out of reach is not a fix.
+    it('does not see navigation it cannot reach syntactically (known limits)', () => {
+        ruleTester.run('no-navigation-in-guard-or-resolver', rule, {
+            valid: [
+                // Navigation inside an injected service the guard calls.
+                {
+                    code: `${classImports}
+                        export class LectureGuard implements CanActivate {
+                            private navigation = inject(NavigationService);
+                            canActivate() {
+                                this.navigation.goHome();
+                                return false;
+                            }
+                        }`,
+                },
+                // A Router held in a field of a base class.
+                {
+                    code: `${classImports}
+                        export class LectureGuard extends RoutingGuardBase implements CanActivate {
+                            canActivate() {
+                                void this.router.navigate(['/']);
+                                return false;
+                            }
+                        }`,
+                },
+                // A Router copied from a field into a local.
+                {
+                    code: `${classImports}
+                        export class LectureGuard implements CanActivate {
+                            private router = inject(Router);
+                            canActivate() {
+                                const router = this.router;
+                                void router.navigate(['/']);
+                                return false;
+                            }
+                        }`,
+                },
+            ],
+            invalid: [],
+        });
+    });
+
     it('reports navigation in functional guards and resolvers', () => {
         ruleTester.run('no-navigation-in-guard-or-resolver', rule, {
             valid: [],

@@ -40,13 +40,19 @@ const FUNCTION_TYPES = new Set(['ArrowFunctionExpression', 'FunctionExpression',
 /**
  * Disallows `Router.navigate()` and `Router.navigateByUrl()` inside route guards and resolvers.
  *
- * A guard or resolver runs while the router is in the middle of a navigation. Navigating from there starts a second
- * navigation that supersedes the first, which then has to be cancelled by hand: `return false` from a guard, or
- * `return EMPTY` from a resolver so that it completes without emitting. The router supports redirects directly: a guard
- * returns `router.createUrlTree(...)` or a `RedirectCommand`, a resolver returns a `RedirectCommand`, and since Angular
- * 22.2 a `RedirectCommand` thrown anywhere in the guard or resolver (including inside an RxJS operator or a promise
- * callback) cancels the navigation with a redirect as well. The redirect inherits the options of the navigation it
- * replaces, and a caller awaiting that navigation receives the redirect's outcome.
+ * A guard or resolver runs while the router is in the middle of a navigation. Navigating from there cancels that
+ * navigation on the spot (`SupersededByNewNavigation`) and starts a new one, which costs three things: the new
+ * navigation loses the `replaceUrl` and `skipLocationChange` of the original, so a guarded URL opened from a bookmark,
+ * a reload or the Back button stays in the history and Back redirects forward again; a caller awaiting the original
+ * navigation receives `false`; and the navigation still happens when another guard on the route rejects it, because an
+ * asynchronous guard keeps running after the router stopped waiting for it. A `return false` or `EMPTY` after the call
+ * changes nothing, since the navigation is already cancelled.
+ *
+ * The router supports redirects directly: a guard returns `router.createUrlTree(...)` or a `RedirectCommand`, a
+ * resolver returns a `RedirectCommand`, and since Angular 22.2 a `RedirectCommand` thrown anywhere in the guard or
+ * resolver (including inside an RxJS operator or a promise callback) cancels the navigation with a redirect as well. The
+ * redirect keeps the `replaceUrl` and `skipLocationChange` of the navigation it replaces, a caller awaiting that
+ * navigation receives the redirect's outcome, and it only takes effect once every guard listed before it returned true.
  *
  * What counts as a guard or resolver:
  * - a variable annotated with, an expression asserted (`as` / `satisfies`) to, or a function returning one of the
@@ -63,6 +69,11 @@ const FUNCTION_TYPES = new Set(['ArrowFunctionExpression', 'FunctionExpression',
  * Only calls on an Angular `Router` are reported: `inject(Router)` used directly, or a local, parameter, field or
  * constructor parameter property that holds `inject(Router)` or is annotated `Router`. A component calling
  * `router.navigate(...)` is out of scope, and so is a class whose `canDeactivate()` is not Angular's `CanDeactivate`.
+ *
+ * Known limits: the check is file-local and does not resolve types, so it does not see navigation inside an injected
+ * service the guard calls, a `Router` held in a base-class field, copied into a local (`const router = this.router`) or
+ * obtained through `injector.get(Router)`, types imported through a namespace import, static methods called through the
+ * class name, or route objects without any of the keys in `ROUTE_MARKER_KEYS`.
  */
 const rule = createRule({
     name: 'no-navigation-in-guard-or-resolver',
@@ -71,9 +82,9 @@ const rule = createRule({
         docs: { description: 'Disallow Router navigation inside route guards and resolvers; return or throw a redirect instead' },
         messages: {
             navigateInGuard:
-                'Do not call Router.{{method}}() in a route guard: it starts a second navigation while this one is still running. Return router.createUrlTree(...) or new RedirectCommand(router.createUrlTree(...)) instead, or throw a RedirectCommand inside an observable or promise chain. The router then cancels this navigation and redirects.',
+                'Do not call Router.{{method}}() in a route guard: it cancels this navigation and starts a new one that loses its replaceUrl and skipLocationChange, and it still navigates when another guard rejects the route. Return router.createUrlTree(...) or new RedirectCommand(router.createUrlTree(...)) instead, or throw a RedirectCommand inside an observable or promise chain. The router then cancels this navigation and redirects.',
             navigateInResolver:
-                'Do not call Router.{{method}}() in a route resolver: it starts a second navigation while this one is still running. Return new RedirectCommand(router.createUrlTree(...)) instead, or throw it inside an observable chain. The router then cancels this navigation and redirects. A UrlTree returned from a resolver becomes route data, not a redirect.',
+                'Do not call Router.{{method}}() in a route resolver: it cancels this navigation and starts a new one that loses its replaceUrl and skipLocationChange. Return new RedirectCommand(router.createUrlTree(...)) instead, or throw it inside an observable chain. The router then cancels this navigation and redirects. A UrlTree returned from a resolver becomes route data, not a redirect.',
         },
         schema: [],
     },
