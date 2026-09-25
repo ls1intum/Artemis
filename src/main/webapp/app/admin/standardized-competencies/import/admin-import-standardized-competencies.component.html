@@ -32,7 +32,7 @@
                             <fa-icon
                                 class="me-2"
                                 [icon]="getIcon(competency.taxonomy)"
-                                [tumUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                                 [fixedWidth]="true"
                             />
                             <h6 class="mb-0">{{ competency.title }}</h6>
@@ -55,7 +55,7 @@
         <span jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.empty"></span>
     }
     @if (validationErrors().length) {
-        <tum-ui-message severity="error" class="mt-2 w-full" aria-live="assertive" data-testid="validation-errors">
+        <tumaet-ui-message severity="error" class="mt-2 w-full" aria-live="assertive" data-testid="validation-errors">
             <div class="flex flex-col">
                 <strong jhiTranslate="artemisApp.standardizedCompetency.manage.import.error.fileValidation" [translateValues]="{ count: validationErrors().length }"></strong>
                 <ul class="mb-0 mt-1">
@@ -70,16 +70,16 @@
                     ></span>
                 }
             </div>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
     <div class="mt-3 flex items-center justify-end gap-2">
-        <tum-ui-button severity="secondary" size="small" (clicked)="cancel()">
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="cancel()">
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel"></span>
-        </tum-ui-button>
-        <tum-ui-button size="small" [disabled]="!importData()" [loading]="isLoading()" (clicked)="importCompetencies()">
+        </tumaet-ui-button>
+        <tumaet-ui-button size="small" [disabled]="!importData()" [loading]="isLoading()" (clicked)="importCompetencies()">
             <fa-icon [icon]="faFileImport" />
             <span jhiTranslate="entity.action.to-import"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
 </div>

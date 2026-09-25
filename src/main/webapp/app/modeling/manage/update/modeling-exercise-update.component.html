@@ -1,5 +1,5 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
-    <tum-ui-confirm-dialog key="modeling-diagram-type-change" />
+    <tumaet-ui-confirm-dialog key="modeling-diagram-type-change" />
     <jhi-exercise-group-timeline-lock #variantLock [exercise]="modelingExercise" (exerciseChange)="modelingExercise = $event" />
     <button type="submit" style="display: none" (click)="handleEnterKeyNavigation($event)"></button>
     <div class="d-flex align-items-center gap-2">
@@ -78,7 +78,7 @@
             >
                 <div modelingEditorTopLeft class="modeling-exercise-diagram-type">
                     <label jhiTranslate="artemisApp.modelingExercise.diagramType" for="field_diagramType"></label>
-                    <tum-ui-select
+                    <tumaet-ui-select
                         [disabled]="isImport()"
                         name="diagramType"
                         [options]="diagramTypeOptions()"

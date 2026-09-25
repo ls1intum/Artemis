@@ -12,7 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
@@ -31,9 +31,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         SortDirective,
         SortByDirective,
         ExamStatusComponent,
-        TumUiButtonDirective,
-        TumUiButtonComponent,
-        TumUiEmptyStateComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonComponent,
+        TumAetUiEmptyStateComponent,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
         ExamModeBadgeComponent,

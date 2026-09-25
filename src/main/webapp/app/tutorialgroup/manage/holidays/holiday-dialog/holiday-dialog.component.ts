@@ -1,7 +1,14 @@
 import { ChangeDetectionStrategy, Component, afterRenderEffect, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent, TumUiPopoverComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDatePickerComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPopoverComponent,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -32,12 +39,12 @@ export interface HolidaySubmission {
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumUiButtonDirective,
-        TumUiDatePickerComponent,
-        TumUiPopoverComponent,
-        TumUiFormFieldComponent,
-        TumUiInputDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class HolidayDialogComponent {
@@ -78,7 +85,7 @@ export class HolidayDialogComponent {
     /** The chosen span changed, so the page can count the sessions it covers. */
     readonly selectedSpanChange = output<{ start: dayjs.Dayjs; end: dayjs.Dayjs }>();
 
-    private readonly popover = viewChild<TumUiPopoverComponent>('popover');
+    private readonly popover = viewChild<TumAetUiPopoverComponent>('popover');
 
     private readonly locale = getCurrentLocaleSignal(this.translateService);
 

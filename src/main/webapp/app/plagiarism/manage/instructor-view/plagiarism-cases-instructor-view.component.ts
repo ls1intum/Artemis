@@ -19,7 +19,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -37,7 +37,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
         ArtemisTranslatePipe,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
