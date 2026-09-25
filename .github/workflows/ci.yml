@@ -42,6 +42,7 @@ permissions: {}
 jobs:
 
   detect-changes:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Detect Changed Areas
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -114,6 +115,9 @@ jobs:
               - '.github/workflows/ci-skills.yml'
               - 'skills/**'
               - 'supporting_scripts/check_skill_references.py'
+              - 'AGENTS.md'
+              - 'documentation/docs/developer/work-with-ai.mdx'
+              - '.claude-plugin/**'
             has_docs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
@@ -124,6 +128,7 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'supporting_scripts/generate-tum-ui-reference-page.mjs'
             has_tum_ui:
+              - '.github/workflows/release-tum-ui.yml'
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-quality.yml'
               - 'angular.json'
@@ -136,6 +141,7 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'prebuild.mjs'
               - 'rules/tum-ui-package.spec.mjs'
+              - 'rules/tum-ui-release.spec.mjs'
               - 'src/main/webapp/app/shared-ui/tum-ui-integration/**'
               - 'src/main/webapp/tailwind.css'
               - 'tsconfig.json'
@@ -625,9 +631,9 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
-  # No `if:` at all, unlike every other area job: the terminology rule is repo-wide prose, so a
-  # documentation-only or workflow-only PR has to be checked too. A checkout and a grep, ~15s.
+  # Prose changes need terminology checks regardless of which area changed.
   terminology:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Terminology
     uses: ./.github/workflows/ci-terminology.yml
     permissions:
@@ -635,10 +641,9 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
-  # No `if:` either, for a reason specific to this check: the pull request that creates dead code is
-  # usually one that only *deletes* something, and removing the last caller of a class can orphan it
-  # from any area of the repository. Two checkouts, a source scan and a knip run; no Gradle build.
+  # Deleting the last caller can orphan code in any area of the repository.
   dead-code:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Dead Code
     uses: ./.github/workflows/ci-dead-code.yml
     permissions:
@@ -646,11 +651,9 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
-  # No `if:` either. The baseline under config/liquibase/baseline is generated, so nothing about the
-  # file itself says it matches the changelogs it folded — these checks are what says so, and they are
-  # also what catches a new changelog filed in the wrong directory. Docker containers and a driver
-  # resolution; no Gradle build and no server boot.
+  # Check baseline consistency and misplaced migrations regardless of which area changed.
   liquibase:
+    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Liquibase Schema
     uses: ./.github/workflows/ci-liquibase.yml
     permissions:

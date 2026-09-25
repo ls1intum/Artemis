@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -224,6 +224,46 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeButton).toBeNull();
 
         fixture.destroy();
+    });
+
+    it.each([
+        {
+            outcome: 'success',
+            finish: (subject: Subject<StudentParticipation>) => {
+                subject.next({ id: 3, initializationState: InitializationState.UNINITIALIZED });
+                subject.complete();
+            },
+        },
+        { outcome: 'error', finish: (subject: Subject<StudentParticipation>) => subject.error(new HttpErrorResponse({ status: 500 })) },
+    ])('should keep the start exercise button disabled while the request is pending and enable it again after $outcome', async ({ finish }) => {
+        const participationSubject = new Subject<StudentParticipation>();
+        startExerciseStub.mockReturnValue(participationSubject);
+
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exercise', { ...exercise, studentParticipations: [] });
+        TestBed.tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const startExerciseButton = () => debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton().componentInstance.buttonLoading()).toBe(false);
+
+        startExerciseButton().nativeElement.click();
+        fixture.detectChanges();
+
+        expect(comp.isLoading()).toBe(true);
+        expect(startExerciseButton().componentInstance.buttonLoading()).toBe(true);
+
+        // A second click before the button is rendered as disabled must not send a second request
+        comp.startExercise();
+        expect(startExerciseStub).toHaveBeenCalledOnce();
+
+        finish(participationSubject);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.isLoading()).toBe(false);
+        expect(startExerciseButton().componentInstance.buttonLoading()).toBe(false);
     });
 
     it('should reflect the correct participation state for practice mode', async () => {
