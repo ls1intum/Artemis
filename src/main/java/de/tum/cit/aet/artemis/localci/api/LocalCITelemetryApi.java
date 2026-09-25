@@ -37,6 +37,8 @@ public class LocalCITelemetryApi implements AbstractApi {
         if (clients.isEmpty() && members.isEmpty()) {
             return null;
         }
+        // Hazelcast can successfully observe zero clients. Its address API distinguishes that from an unavailable client service.
+        boolean clientMembershipUnknown = clients.isEmpty() && !provider.buildAgentsAppearInClusterMemberList() && provider.getConnectedClientAddresses().isEmpty();
         int count = 0;
         for (var information : data.getBuildAgentInformationMap().values()) {
             if (information == null || information.buildAgent() == null) {
@@ -46,8 +48,8 @@ public class LocalCITelemetryApi implements AbstractApi {
             if (clients.contains(agent.name()) || clients.contains(agent.memberAddress()) || members.contains(agent.memberAddress())) {
                 count++;
             }
-            else if (clients.isEmpty() && !provider.buildAgentsAppearInClusterMemberList()) {
-                // An empty client view cannot distinguish a disconnected client from an unavailable lookup.
+            else if (clientMembershipUnknown) {
+                // Do not classify unmatched agents as disconnected when the client lookup is unavailable.
                 return null;
             }
         }

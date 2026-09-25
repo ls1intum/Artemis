@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,16 @@ class TelemetryBuildAgentApiTest {
         when(data.getBuildAgentInformationMap())
                 .thenReturn(Map.of("client", agent("client", "client-address"), "core", agent("colocated", "core"), "stale", agent("stale", "gone")));
         assertThat(api.getConnectedBuildAgentCount()).isEqualTo(2);
+    }
+
+    @Test
+    void excludesStaleAgentsWhenHealthyHazelcastHasNoClients() {
+        when(provider.getClusterMembership()).thenReturn(new ClusterMembership(Set.of(), Set.of("core")));
+        when(provider.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        when(data.getBuildAgentInformationMap()).thenReturn(Map.of("core", agent("colocated", "core"), "stale", agent("stale", "gone")));
+        assertThat(api.getConnectedBuildAgentCount()).isEqualTo(1);
+        when(data.getBuildAgentInformationMap()).thenReturn(Map.of("stale", agent("stale", "gone")));
+        assertThat(api.getConnectedBuildAgentCount()).isZero();
     }
 
     @Test

@@ -10,6 +10,7 @@ import java.util.concurrent.ScheduledFuture;
 import jakarta.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
@@ -26,7 +27,8 @@ public class TelemetryService {
 
     private final ProfileService profileService;
 
-    private final TelemetrySendingService telemetrySendingService;
+    // Resolve the lazy sender only when the report runs, keeping its dependencies out of excluded instances' readiness path.
+    private final ApplicationContext applicationContext;
 
     private final TaskScheduler taskScheduler;
 
@@ -40,11 +42,11 @@ public class TelemetryService {
 
     private ScheduledFuture<?> pendingReport;
 
-    public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService, TaskScheduler taskScheduler,
+    public TelemetryService(ProfileService profileService, ApplicationContext applicationContext, TaskScheduler taskScheduler,
             @Value("${artemis.telemetry.enabled:false}") boolean useTelemetry, @Value("${artemis.telemetry.sendAdminDetails:false}") boolean sendAdminDetails,
             @Value("${info.testServer:false}") boolean testServer) {
         this.profileService = profileService;
-        this.telemetrySendingService = telemetrySendingService;
+        this.applicationContext = applicationContext;
         this.taskScheduler = taskScheduler;
         this.useTelemetry = useTelemetry;
         this.sendAdminDetails = sendAdminDetails;
@@ -63,7 +65,8 @@ public class TelemetryService {
         }
         scheduledOrStopped = true;
         String startupId = UUID.randomUUID().toString();
-        pendingReport = taskScheduler.schedule(() -> telemetrySendingService.sendTelemetryByPostRequest(sendAdminDetails, startupId, startedAt), readyAt.plus(STARTUP_DELAY));
+        pendingReport = taskScheduler.schedule(() -> applicationContext.getBean(TelemetrySendingService.class).sendTelemetryByPostRequest(sendAdminDetails, startupId, startedAt),
+                readyAt.plus(STARTUP_DELAY));
     }
 
     @PreDestroy
