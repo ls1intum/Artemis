@@ -35,10 +35,9 @@
                                     #keyboardAction30
                                     role="button"
                                     tabindex="0"
-                                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction30.click()"
-                                    (keydown.space)="
-                                        $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction30.click()
-                                    "
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
                                 >
                                     <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: courseActionItem }" />
                                 </a>
@@ -64,9 +63,9 @@
                             #keyboardAction51
                             role="button"
                             tabindex="0"
-                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction51.click()"
-                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                            (keyup.space)="$event.target === $event.currentTarget && keyboardAction51.click()"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
                         >
                             <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: courseActionItem }" />
                         </a>
@@ -115,10 +114,9 @@
                                 tabindex="0"
                                 [attr.aria-label]="'global.generic.collapseMenu' | artemisTranslate"
                                 [attr.aria-expanded]="!isNavbarCollapsed()"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction93.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction93.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction93.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction93.click() : undefined"
                             >
                                 <div class="double-arrow-icon">
                                     <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
@@ -142,9 +140,9 @@
                     tabindex="0"
                     [attr.aria-label]="(isNavbarCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
                     [attr.aria-expanded]="!isNavbarCollapsed()"
-                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction112.click()"
-                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                    (keyup.space)="$event.target === $event.currentTarget && keyboardAction112.click()"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction112.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction112.click() : undefined"
                 >
                     <div class="double-arrow-icon">
                         <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />

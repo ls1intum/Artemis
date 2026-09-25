@@ -3,6 +3,7 @@
         "notification": {
             "notifications": "Mitteilungen",
             "expandPopup": "Mitteilungen aufklappen",
+            "collapsePopup": "Mitteilungen einklappen",
             "noNotifications": "Keine Mitteilungen verfügbar",
             "title": "Titel",
             "text": "Text",

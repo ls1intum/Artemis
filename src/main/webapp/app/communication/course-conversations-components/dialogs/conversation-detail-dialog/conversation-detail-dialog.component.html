@@ -46,9 +46,9 @@
                         jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.info"
                         #keyboardAction41
                         tabindex="0"
-                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction41.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction41.click()"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
                     ></a>
                 </li>
                 @if (!isOneToOneChat()) {
@@ -61,9 +61,9 @@
                             jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.members"
                             #keyboardAction51
                             tabindex="0"
-                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction51.click()"
-                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                            (keyup.space)="$event.target === $event.currentTarget && keyboardAction51.click()"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
                         ></a>
                     </li>
                     <li class="nav-item settings-tab">
@@ -76,9 +76,9 @@
                             jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.settings"
                             #keyboardAction60
                             tabindex="0"
-                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction60.click()"
-                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                            (keyup.space)="$event.target === $event.currentTarget && keyboardAction60.click()"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
                         ></a>
                     </li>
                 }

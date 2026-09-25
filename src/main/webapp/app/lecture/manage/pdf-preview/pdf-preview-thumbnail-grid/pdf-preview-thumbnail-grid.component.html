@@ -10,36 +10,36 @@
     @if (isAttachmentVideoUnit()) {
         @for (page of orderedPages(); track page.slideId) {
             <div
-                [id]="'pdf-page-' + page.slideId"
                 class="pdf-canvas-container"
                 [class.cdk-drag-preview]="isDragging() && dragSlideId() === page.slideId"
                 [class.cdk-drag-placeholder]="isDragging() && dragSlideId() !== page.slideId"
                 cdkDrag
                 [cdkDragData]="page"
-                (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
-                #keyboardAction12
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction12.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction12.click()"
             >
-                <div class="drag-handle">
-                    <fa-icon [icon]="faGripLines" />
-                </div>
+                <button
+                    type="button"
+                    [id]="'pdf-page-' + page.slideId"
+                    class="relative block w-full border-0 bg-transparent p-0 text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                    [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
+                    (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
+                >
+                    <span class="drag-handle">
+                        <fa-icon [icon]="faGripLines" />
+                    </span>
 
-                @if (hiddenPages()[page.slideId]) {
-                    <ng-container>
-                        <div class="hidden-overlay pdf-overlay" style="opacity: 1">
-                            <span>
-                                <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
+                    @if (hiddenPages()[page.slideId]) {
+                        <ng-container>
+                            <span class="hidden-overlay pdf-overlay" style="opacity: 1">
+                                <span>
+                                    <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
+                                </span>
                             </span>
-                        </div>
-                    </ng-container>
-                }
-                <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
-                    <span>{{ getPageOrder(page.slideId) }}</span>
-                </span>
+                        </ng-container>
+                    }
+                    <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
+                        <span>{{ getPageOrder(page.slideId) }}</span>
+                    </span>
+                </button>
                 @if (loadedPages().has(page.order)) {
                     <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
                 }
@@ -112,29 +112,27 @@
     } @else {
         <!-- Without drag and drop for regular attachments -->
         @for (page of orderedPages(); track page.slideId) {
-            <div
-                [id]="'pdf-page-' + page.slideId"
-                class="pdf-canvas-container"
-                (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
-                #keyboardAction108
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction108.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction108.click()"
-            >
-                @if (hiddenPages()[page.slideId]) {
-                    <ng-container>
-                        <div class="hidden-overlay pdf-overlay" style="opacity: 1">
-                            <span>
-                                <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
+            <div class="pdf-canvas-container">
+                <button
+                    type="button"
+                    [id]="'pdf-page-' + page.slideId"
+                    class="relative block w-full border-0 bg-transparent p-0 text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                    [attr.aria-label]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: getPageOrder(page.slideId) }"
+                    (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
+                >
+                    @if (hiddenPages()[page.slideId]) {
+                        <ng-container>
+                            <span class="hidden-overlay pdf-overlay" style="opacity: 1">
+                                <span>
+                                    <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
+                                </span>
                             </span>
-                        </div>
-                    </ng-container>
-                }
-                <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
-                    <span>{{ getPageOrder(page.slideId) }}</span>
-                </span>
+                        </ng-container>
+                    }
+                    <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
+                        <span>{{ getPageOrder(page.slideId) }}</span>
+                    </span>
+                </button>
                 @if (loadedPages().has(page.order)) {
                     <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
                 }

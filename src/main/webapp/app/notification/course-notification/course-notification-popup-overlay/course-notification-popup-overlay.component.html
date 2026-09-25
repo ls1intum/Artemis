@@ -1,15 +1,11 @@
+<!-- Pointer clicks on notification cards expand the stack; the separate native toggle provides keyboard access.
+     Notification links and close actions must keep their own semantics and are ignored by the delegated handler. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
 <div
-    [ngClass]="{ 'is-expanded': isExpanded(), hidden: notifications().length === 0 }"
+    [ngClass]="{ 'is-expanded': isExpanded(), 'is-expandable': notifications().length > 1, hidden: notifications().length === 0 }"
     [style.height]="isExpanded() ? 5 + notifications().length * 7 + 'rem' : null"
     class="course-notification-popup-overlay"
-    (click)="overlayClicked()"
-    #keyboardAction1
-    [attr.role]="!isExpanded() && notifications().length > 1 ? 'button' : null"
-    [attr.tabindex]="!isExpanded() && notifications().length > 1 ? 0 : -1"
-    [attr.aria-label]="'artemisApp.notification.expandPopup' | artemisTranslate"
-    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction1.click()"
-    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-    (keyup.space)="$event.target === $event.currentTarget && keyboardAction1.click()"
+    (click)="overlayClicked($event)"
 >
     @for (notification of notifications(); track notification.notificationId) {
         <div
@@ -32,11 +28,32 @@
     }
 
     <div class="course-notification-popup-overlay-collapse">
-        <button type="button" pButton [outlined]="true" size="small" [rounded]="true" class="me-2" (click)="collapseOverlayClicked()">
-            <fa-icon [icon]="faTimes" />
+        <button
+            type="button"
+            pButton
+            [outlined]="true"
+            size="small"
+            [rounded]="true"
+            class="me-2"
+            data-testid="notification-popup-toggle"
+            [attr.aria-expanded]="isExpanded()"
+            [attr.aria-label]="(isExpanded() ? 'artemisApp.notification.collapsePopup' : 'artemisApp.notification.expandPopup') | artemisTranslate"
+            [attr.tabindex]="isExpanded() || notifications().length > 1 ? 0 : -1"
+            (click)="$event.stopPropagation(); isExpanded() ? collapseOverlayClicked() : overlayClicked()"
+        >
+            <fa-icon [icon]="isExpanded() ? faTimes : faChevronUp" />
         </button>
 
-        <button type="button" pButton [outlined]="true" size="small" [rounded]="true" (click)="clearAllNotifications()">
+        <button
+            type="button"
+            pButton
+            [outlined]="true"
+            size="small"
+            [rounded]="true"
+            class="notification-popup-clear"
+            [attr.tabindex]="isExpanded() ? 0 : -1"
+            (click)="clearAllNotifications()"
+        >
             <fa-icon [icon]="faTrash" />
         </button>
     </div>

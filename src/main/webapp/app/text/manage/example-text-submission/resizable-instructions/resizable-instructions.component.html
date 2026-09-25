@@ -7,9 +7,9 @@
         #keyboardAction4
         role="button"
         tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-        (keyup.space)="$event.target === $event.currentTarget && keyboardAction4.click()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
     >
         <span class="float-end"><fa-icon [icon]="faChevronRight" /></span>
         <h3 class="card-title">

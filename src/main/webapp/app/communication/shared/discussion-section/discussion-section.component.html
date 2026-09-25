@@ -21,9 +21,9 @@
                         #keyboardAction16
                         role="button"
                         tabindex="0"
-                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction16.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction16.click()"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
                     >
                         <div class="row flex-grow-1">
                             <div class="col">
@@ -113,11 +113,9 @@
                                                         role="button"
                                                         tabindex="0"
                                                         [attr.aria-label]="'artemisApp.metis.discussionSection.defaultSortCriterion' | artemisTranslate"
-                                                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction98.click()"
-                                                        (keydown.space)="
-                                                            $event.target === $event.currentTarget && $event.preventDefault();
-                                                            $event.target === $event.currentTarget && keyboardAction98.click()
-                                                        "
+                                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction98.click() : undefined"
+                                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction98.click() : undefined"
                                                     >
                                                         <fa-icon
                                                             [icon]="faLongArrowRight"
@@ -138,11 +136,9 @@
                                                                 : 'artemisApp.metis.overview.sortDescending'
                                                             ) | artemisTranslate
                                                         "
-                                                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction106.click()"
-                                                        (keydown.space)="
-                                                            $event.target === $event.currentTarget && $event.preventDefault();
-                                                            $event.target === $event.currentTarget && keyboardAction106.click()
-                                                        "
+                                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction106.click() : undefined"
+                                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction106.click() : undefined"
                                                     >
                                                         <fa-icon
                                                             [icon]="currentSortDirection() === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
@@ -227,9 +223,9 @@
                 #keyboardAction183
                 role="button"
                 tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction183.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction183.click()"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction183.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction183.click() : undefined"
             >
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
                 <span class="h5" jhiTranslate="artemisApp.metis.communication.label"></span>

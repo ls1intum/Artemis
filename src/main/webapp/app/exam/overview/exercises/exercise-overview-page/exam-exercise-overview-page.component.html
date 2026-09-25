@@ -42,9 +42,9 @@
                             #keyboardAction39
                             role="button"
                             tabindex="0"
-                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction39.click()"
-                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                            (keyup.space)="$event.target === $event.currentTarget && keyboardAction39.click()"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
                         >
                             {{ item.exercise.exerciseGroup?.title }}
                         </a>

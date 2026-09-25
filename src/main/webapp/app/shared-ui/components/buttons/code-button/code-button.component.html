@@ -46,10 +46,9 @@
                                 #keyboardAction41
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction41.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction41.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
                                 >HTTPS</a
                             >
                         }
@@ -61,10 +60,9 @@
                                 #keyboardAction49
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction49.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction49.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction49.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction49.click() : undefined"
                                 >Token</a
                             >
                         }
@@ -76,10 +74,9 @@
                                 #keyboardAction57
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction57.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction57.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction57.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction57.click() : undefined"
                                 >SSH</a
                             >
                         }
@@ -124,9 +121,9 @@
                 #keyboardAction96
                 role="button"
                 tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction96.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction96.click()"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction96.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction96.click() : undefined"
             >
                 <fa-icon [icon]="faLaptopCode" />
                 <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>

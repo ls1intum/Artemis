@@ -58,9 +58,9 @@
                         #keyboardAction53
                         role="button"
                         tabindex="0"
-                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction53.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction53.click()"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction53.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction53.click() : undefined"
                     ></a>
                     @if (submittedFileExtension()) {
                         <span class="ms-2 badge bg-info">

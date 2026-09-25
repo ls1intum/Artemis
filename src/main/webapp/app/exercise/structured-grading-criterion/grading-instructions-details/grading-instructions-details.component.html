@@ -88,11 +88,9 @@
                                             #keyboardAction83
                                             role="button"
                                             tabindex="0"
-                                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction83.click()"
-                                            (keydown.space)="
-                                                $event.target === $event.currentTarget && $event.preventDefault();
-                                                $event.target === $event.currentTarget && keyboardAction83.click()
-                                            "
+                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction83.click() : undefined"
+                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction83.click() : undefined"
                                         >
                                             <fa-icon [icon]="faTrash" />
                                             <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
@@ -191,11 +189,9 @@
                                                         #keyboardAction173
                                                         role="button"
                                                         tabindex="0"
-                                                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction173.click()"
-                                                        (keydown.space)="
-                                                            $event.target === $event.currentTarget && $event.preventDefault();
-                                                            $event.target === $event.currentTarget && keyboardAction173.click()
-                                                        "
+                                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction173.click() : undefined"
+                                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction173.click() : undefined"
                                                     >
                                                         <fa-icon
                                                             [icon]="faTrash"
@@ -335,11 +331,9 @@
                                             #keyboardAction305
                                             role="button"
                                             tabindex="0"
-                                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction305.click()"
-                                            (keydown.space)="
-                                                $event.target === $event.currentTarget && $event.preventDefault();
-                                                $event.target === $event.currentTarget && keyboardAction305.click()
-                                            "
+                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction305.click() : undefined"
+                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction305.click() : undefined"
                                         >
                                             <fa-icon [icon]="faTrash" />
                                             <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
@@ -380,11 +374,9 @@
                                                     #keyboardAction337
                                                     role="button"
                                                     tabindex="0"
-                                                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction337.click()"
-                                                    (keydown.space)="
-                                                        $event.target === $event.currentTarget && $event.preventDefault();
-                                                        $event.target === $event.currentTarget && keyboardAction337.click()
-                                                    "
+                                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction337.click() : undefined"
+                                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction337.click() : undefined"
                                                 >
                                                     <fa-icon [icon]="faUndo" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}" />
                                                 </span>
@@ -396,11 +388,9 @@
                                                     #keyboardAction340
                                                     role="button"
                                                     tabindex="0"
-                                                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction340.click()"
-                                                    (keydown.space)="
-                                                        $event.target === $event.currentTarget && $event.preventDefault();
-                                                        $event.target === $event.currentTarget && keyboardAction340.click()
-                                                    "
+                                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
+                                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
                                                 >
                                                     <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}" />
                                                 </span>

@@ -10,14 +10,14 @@
     [class.positive-feedback]="textBlockRef().feedback?.credits! > 0"
     [class.negative-feedback]="textBlockRef().feedback?.credits! < 0"
     [class.neutral-feedback]="textBlockRef().feedback?.credits === 0"
-    [class.clickable]="textBlockRef().selectable"
+    [class.clickable]="!readOnly() && textBlockRef().selectable"
     [class.highlighted]="textBlockRef().highlighted"
     #keyboardAction2
-    role="button"
-    tabindex="0"
-    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-    (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
+    [attr.role]="!readOnly() && textBlockRef().selectable ? 'button' : undefined"
+    [attr.tabindex]="!readOnly() && textBlockRef().selectable ? 0 : undefined"
+    (keydown.enter)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    (keydown.space)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+    (keyup.space)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
 ></span>
 <!-- Display Feedback Editor -->
 @if (textBlockRef().feedback || selected()) {

@@ -14,9 +14,9 @@
                         #keyboardAction10
                         role="button"
                         tabindex="0"
-                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction10.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction10.click()"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
                     >
                         <div class="d-flex justify-content-between mb-1 align-items-baseline">
                             <span data-testid="sidebar-card-title" class="small fw-semibold text-truncate me-2">
@@ -39,10 +39,9 @@
                                 #keyboardAction29
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction29.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction29.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction29.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction29.click() : undefined"
                             >
                                 <div class="d-flex justify-content-between mb-1 align-items-baseline">
                                     <span data-testid="sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title">
@@ -87,9 +86,9 @@
         tabindex="0"
         [attr.aria-label]="(isCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
         [attr.aria-expanded]="!isCollapsed()"
-        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction66.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-        (keyup.space)="$event.target === $event.currentTarget && keyboardAction66.click()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction66.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction66.click() : undefined"
     >
         <div class="double-arrow-icon">
             <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />

@@ -14,9 +14,9 @@
         #keyboardAction10
         role="button"
         tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction10.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-        (keyup.space)="$event.target === $event.currentTarget && keyboardAction10.click()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
     >
         <div class="doughnut-chart-text" data-testid="course-chart-values">
             @if (receivedStats()) {

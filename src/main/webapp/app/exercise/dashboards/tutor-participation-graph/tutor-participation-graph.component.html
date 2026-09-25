@@ -9,9 +9,9 @@
             #keyboardAction4
             role="button"
             tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
-            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-            (keyup.space)="$event.target === $event.currentTarget && keyboardAction4.click()"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
         >
             <fa-icon [icon]="faBook" />
         </li>
@@ -23,9 +23,9 @@
                 #keyboardAction13
                 role="button"
                 tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction13.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction13.click()"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
             >
                 <fa-icon [icon]="faChalkboardTeacher" />
             </li>

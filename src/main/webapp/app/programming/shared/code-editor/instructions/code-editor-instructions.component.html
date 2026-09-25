@@ -6,9 +6,9 @@
         role="button"
         [attr.aria-disabled]="disableCollapse()"
         [attr.tabindex]="disableCollapse() ? -1 : 0"
-        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-        (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
     >
         <h3 class="card-title">
             @if (!collapsed()) {

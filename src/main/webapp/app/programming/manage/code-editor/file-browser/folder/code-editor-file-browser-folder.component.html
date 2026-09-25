@@ -1,25 +1,27 @@
 <!--Folder-->
-<li
-    (click)="onCollapseExpand()()"
-    class="list-group-item list-group-item--folder"
-    id="file-browser-folder"
-    #keyboardAction2
-    role="button"
-    tabindex="0"
-    [attr.aria-label]="item().text"
-    [attr.aria-expanded]="!item().collapsed"
-    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-    (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
->
-    <fa-icon aria-hidden="true" [icon]="item().collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs" />
-    <fa-icon aria-hidden="true" [icon]="item().collapsed ? faFolder : faFolderOpen" [fixedWidth]="true" />
-    <span class="file-label-group">
+<li class="list-group-item list-group-item--folder" id="file-browser-folder">
+    <button
+        type="button"
+        (click)="onCollapseExpand()()"
+        [attr.aria-label]="item().text"
+        [attr.aria-expanded]="!item().collapsed"
+        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+        [class.flex-1]="!isBeingRenamed()"
+    >
+        <fa-icon aria-hidden="true" [icon]="item().collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs" />
+        <fa-icon aria-hidden="true" [icon]="item().collapsed ? faFolder : faFolderOpen" [fixedWidth]="true" />
         @if (!isBeingRenamed()) {
-            <span class="ms-1 list-group-item__fileName">{{ item().text }}</span>
+            <span class="file-label-group">
+                <span class="ms-1 list-group-item__fileName">{{ item().text }}</span>
+                @for (badge of badges(); track badges().indexOf(badge)) {
+                    <jhi-file-browser-badge [badge]="badge" />
+                }
+            </span>
         }
-        <!-- Renaming folder tree item -->
-        @if (isBeingRenamed()) {
+    </button>
+    <!-- Renaming folder tree item -->
+    @if (isBeingRenamed()) {
+        <span class="file-label-group">
             <span class="ms-1 rename-input-wrapper"
                 ><input
                     #renamingInput
@@ -29,14 +31,8 @@
                     (keyup.esc)="clearRenamingNode($event)"
                     class="list-group-item__input"
             /></span>
-        }
-        <!-- File badges -->
-        @if (!isBeingRenamed()) {
-            @for (badge of badges(); track badges().indexOf(badge)) {
-                <jhi-file-browser-badge [badge]="badge" />
-            }
-        }
-    </span>
+        </span>
+    }
     <!-- Folder level actions -->
     @if (!disableActions()) {
         <span class="file-icons">

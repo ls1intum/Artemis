@@ -29,10 +29,9 @@
                                     #keyboardAction24
                                     role="button"
                                     tabindex="0"
-                                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction24.click()"
-                                    (keydown.space)="
-                                        $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction24.click()
-                                    "
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction24.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction24.click() : undefined"
                                 >
                                     <b class="fa">DD</b>
                                 </span>
@@ -46,10 +45,9 @@
                                     #keyboardAction34
                                     role="button"
                                     tabindex="0"
-                                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction34.click()"
-                                    (keydown.space)="
-                                        $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction34.click()
-                                    "
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
                                 >
                                     <b class="fa">MC</b>
                                 </span>
@@ -63,10 +61,9 @@
                                     #keyboardAction44
                                     role="button"
                                     tabindex="0"
-                                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction44.click()"
-                                    (keydown.space)="
-                                        $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction44.click()
-                                    "
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction44.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction44.click() : undefined"
                                 >
                                     <b class="fa">SA</b>
                                 </span>

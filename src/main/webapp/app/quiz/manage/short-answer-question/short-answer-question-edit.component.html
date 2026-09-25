@@ -216,9 +216,9 @@
                         #keyboardAction207
                         role="button"
                         tabindex="0"
-                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction207.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction207.click()"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction207.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction207.click() : undefined"
                     >
                         <fa-icon [icon]="faTrash" size="2x" />
                     </div>
@@ -356,11 +356,9 @@
                                                                 #keyboardAction329
                                                                 role="button"
                                                                 tabindex="0"
-                                                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction329.click()"
-                                                                (keydown.space)="
-                                                                    $event.target === $event.currentTarget && $event.preventDefault();
-                                                                    $event.target === $event.currentTarget && keyboardAction329.click()
-                                                                "
+                                                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction329.click() : undefined"
+                                                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction329.click() : undefined"
                                                             >
                                                                 <fa-icon [icon]="faBan" size="lg" />
                                                             </div>
@@ -374,11 +372,9 @@
                                                             #keyboardAction340
                                                             role="button"
                                                             tabindex="0"
-                                                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction340.click()"
-                                                            (keydown.space)="
-                                                                $event.target === $event.currentTarget && $event.preventDefault();
-                                                                $event.target === $event.currentTarget && keyboardAction340.click()
-                                                            "
+                                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
+                                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
                                                         >
                                                             <fa-icon [icon]="faUndo" size="lg" />
                                                         </div>
@@ -391,11 +387,9 @@
                                                             #keyboardAction349
                                                             role="button"
                                                             tabindex="0"
-                                                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction349.click()"
-                                                            (keydown.space)="
-                                                                $event.target === $event.currentTarget && $event.preventDefault();
-                                                                $event.target === $event.currentTarget && keyboardAction349.click()
-                                                            "
+                                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction349.click() : undefined"
+                                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction349.click() : undefined"
                                                         >
                                                             <fa-icon [icon]="faTrash" size="lg" />
                                                         </div>
@@ -451,10 +445,9 @@
                                     #keyboardAction403
                                     role="button"
                                     tabindex="0"
-                                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction403.click()"
-                                    (keydown.space)="
-                                        $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction403.click()
-                                    "
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction403.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction403.click() : undefined"
                                 >
                                     <fa-icon [icon]="faTrash" size="lg" />
                                 </div>
@@ -474,11 +467,9 @@
                                                         #keyboardAction415
                                                         role="button"
                                                         tabindex="0"
-                                                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction415.click()"
-                                                        (keydown.space)="
-                                                            $event.target === $event.currentTarget && $event.preventDefault();
-                                                            $event.target === $event.currentTarget && keyboardAction415.click()
-                                                        "
+                                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction415.click() : undefined"
+                                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction415.click() : undefined"
                                                     >
                                                         <fa-icon [icon]="faUnlink" size="lg" />
                                                     </div>

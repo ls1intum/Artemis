@@ -8,6 +8,7 @@ import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overv
 import { LearningObjectType, LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 
 describe('LearningPathNavOverviewLearningObjectsComponent', () => {
     let component: LearningPathNavOverviewLearningObjectsComponent;
@@ -52,6 +53,35 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
         expect(component).toBeDefined();
         expect(component.learningPathId()).toBe(learningPathId);
         expect(component.competencyId()).toBe(competencyId);
+    });
+
+    it.each([true, false])('should expose navigation only for released learning objects (unreleased: %s)', async (unreleased) => {
+        const learningObject = { ...learningObjects[0], unreleased };
+        component.learningObjects.set([learningObject]);
+        fixture.componentRef.setInput('currentCompetencyIdOnPath', competencyId);
+        fixture.detectChanges();
+        const row = fixture.nativeElement.querySelector('.bg-light > div') as HTMLElement;
+        const navigate = vi.spyOn(TestBed.inject(LearningPathNavigationService), 'loadRelativeLearningPathNavigation').mockResolvedValue();
+        const selected = vi.spyOn(component.onLearningObjectSelected, 'emit');
+
+        expect(row.getAttribute('role')).toBe(unreleased ? null : 'button');
+        expect(row.tabIndex).toBe(unreleased ? -1 : 0);
+        for (const repeat of [false, true, true]) {
+            const event = new KeyboardEvent('keydown', { key: ' ', repeat, bubbles: true, cancelable: true });
+            row.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(!unreleased);
+        }
+        expect(navigate).not.toHaveBeenCalled();
+        row.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        await fixture.whenStable();
+        if (unreleased) {
+            row.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(navigate).not.toHaveBeenCalled();
+            expect(selected).not.toHaveBeenCalled();
+        } else {
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(learningPathId, learningObject);
+            expect(selected).toHaveBeenCalledOnce();
+        }
     });
 
     it('should load learning objects', async () => {

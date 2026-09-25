@@ -34,10 +34,9 @@
                                 #keyboardAction30
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction30.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction30.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 @for (entry of getBuildConfigValues(conflict.currentValue); track entry.labelKey) {
@@ -56,10 +55,9 @@
                                 #keyboardAction45
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction45.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction45.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 @for (entry of getBuildConfigValues(conflict.incomingValue); track entry.labelKey) {
@@ -81,10 +79,9 @@
                                 #keyboardAction63
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction63.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction63.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction63.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction63.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="d-flex flex-wrap gap-2">
@@ -102,10 +99,9 @@
                                 #keyboardAction77
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction77.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction77.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction77.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction77.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="d-flex flex-wrap gap-2">
@@ -126,10 +122,9 @@
                                 #keyboardAction94
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction94.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction94.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction94.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction94.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="d-flex flex-column gap-2">
@@ -150,10 +145,9 @@
                                 #keyboardAction111
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction111.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction111.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="d-flex flex-column gap-2">
@@ -177,10 +171,9 @@
                                 #keyboardAction131
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction131.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction131.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction131.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction131.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 @for (criterion of toGradingCriteriaDisplay(conflict.currentValue); track criterion.title) {
@@ -218,10 +211,9 @@
                                 #keyboardAction165
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction165.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction165.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction165.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction165.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 @for (criterion of toGradingCriteriaDisplay(conflict.incomingValue); track criterion.title) {
@@ -262,10 +254,9 @@
                                 #keyboardAction202
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction202.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction202.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction202.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction202.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="text-break">{{ formatValue(conflict.currentValue) }}</div>
@@ -279,10 +270,9 @@
                                 #keyboardAction212
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction212.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction212.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction212.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction212.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="text-break">{{ formatValue(conflict.incomingValue) }}</div>

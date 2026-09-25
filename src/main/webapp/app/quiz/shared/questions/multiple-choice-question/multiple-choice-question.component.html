@@ -77,9 +77,9 @@
                     [attr.aria-disabled]="clickDisabled()"
                     [attr.tabindex]="clickDisabled() ? -1 : 0"
                     [attr.aria-pressed]="isAnswerOptionSelected(answerOption)"
-                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction70.click()"
-                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                    (keyup.space)="$event.target === $event.currentTarget && keyboardAction70.click()"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction70.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction70.click() : undefined"
                 >
                     <div class="content">
                         <div class="text" [innerHTML]="renderedAnswerText(i)"></div>

@@ -6,9 +6,9 @@
                 #keyboardAction4
                 role="button"
                 tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction4.click()"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
             >
                 {{ headline.translationKey | artemisTranslate }}
             </a>

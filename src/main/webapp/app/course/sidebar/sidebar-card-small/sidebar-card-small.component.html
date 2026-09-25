@@ -11,9 +11,9 @@
     #keyboardAction3
     role="button"
     tabindex="0"
-    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction3.click()"
-    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-    (keyup.space)="$event.target === $event.currentTarget && keyboardAction3.click()"
+    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction3.click() : undefined"
+    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction3.click() : undefined"
 >
     <div class="w-75 align-self-center">
         <jhi-sidebar-card-item

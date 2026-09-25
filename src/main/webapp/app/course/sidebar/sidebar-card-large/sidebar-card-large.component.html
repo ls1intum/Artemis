@@ -7,9 +7,9 @@
     #keyboardAction1
     role="button"
     tabindex="0"
-    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction1.click()"
-    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-    (keyup.space)="$event.target === $event.currentTarget && keyboardAction1.click()"
+    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction1.click() : undefined"
+    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction1.click() : undefined"
 >
     <!-- groupKey is used to determine the display format of channel names in different sidebar sections -->
     <jhi-sidebar-card-item [groupKey]="groupKey()" [sidebarType]="sidebarType()" [sidebarItem]="sidebarItem()" />

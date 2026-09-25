@@ -1,27 +1,32 @@
 <!--File-->
 <li
-    (click)="onNodeSelect.emit(item())"
-    #keyboardAction2
-    role="button"
-    tabindex="0"
-    [attr.aria-label]="item().text"
-    [attr.aria-pressed]="item().checked"
-    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-    (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
     class="list-group-item file-item"
     [class.node-selected]="item().checked"
     [class.text-danger]="!item().checked && hasError()"
     [class.bg-warning]="hasChanges()"
     data-testid="file-browser-file"
 >
-    <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true" />
-    <span class="file-label-group">
+    <button
+        type="button"
+        (click)="onNodeSelect.emit(item())"
+        [attr.aria-label]="item().text"
+        [attr.aria-pressed]="item().checked"
+        class="flex min-w-0 items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+        [class.flex-1]="!isBeingRenamed()"
+    >
+        <fa-icon aria-hidden="true" [icon]="faFile" [fixedWidth]="true" />
         @if (!isBeingRenamed()) {
-            <span class="ms-1 list-group-item__fileName" [ngClass]="item().checked ? 'text-white' : 'primary'">{{ item().text }}</span>
+            <span class="file-label-group">
+                <span class="ms-1 list-group-item__fileName" [ngClass]="item().checked ? 'text-white' : 'primary'">{{ item().text }}</span>
+                @for (badge of badges(); track badges().indexOf(badge)) {
+                    <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
+                }
+            </span>
         }
-        <!-- Renaming file tree item -->
-        @if (isBeingRenamed()) {
+    </button>
+    <!-- Renaming file tree item -->
+    @if (isBeingRenamed()) {
+        <span class="file-label-group">
             <span class="ms-1 rename-input-wrapper"
                 ><input
                     #renamingInput
@@ -31,14 +36,8 @@
                     (keyup.esc)="clearRenamingNode($event)"
                     class="list-group-item__input"
             /></span>
-        }
-        <!-- File badges -->
-        @if (!isBeingRenamed()) {
-            @for (badge of badges(); track badges().indexOf(badge)) {
-                <jhi-file-browser-badge [badge]="badge" [onColoredBackground]="item().checked || hasError() || hasChanges()" />
-            }
-        }
-    </span>
+        </span>
+    }
     <!-- File level actions -->
     @if (!disableActions()) {
         <span class="file-icons" [ngClass]="item().checked ? 'text-white' : 'primary'">

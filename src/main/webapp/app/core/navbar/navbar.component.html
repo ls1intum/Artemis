@@ -43,10 +43,9 @@
                                 #keyboardAction39
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction39.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction39.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
                                 >{{ language | findLanguageFromKey }}</a
                             >
                         </li>
@@ -120,10 +119,9 @@
                                         #keyboardAction104
                                         role="button"
                                         tabindex="0"
-                                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction104.click()"
-                                        (keydown.space)="
-                                            $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction104.click()
-                                        "
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction104.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction104.click() : undefined"
                                         >{{ language | findLanguageFromKey }}</a
                                     >
                                 </li>
@@ -156,10 +154,9 @@
                                 #keyboardAction130
                                 role="button"
                                 tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction130.click()"
-                                (keydown.space)="
-                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction130.click()
-                                "
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction130.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction130.click() : undefined"
                             >
                                 <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.account.logout"></span>
@@ -215,9 +212,9 @@
                     #keyboardAction174
                     role="button"
                     tabindex="0"
-                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction174.click()"
-                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                    (keyup.space)="$event.target === $event.currentTarget && keyboardAction174.click()"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction174.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction174.click() : undefined"
                 >
                     <fa-icon [icon]="faBars" />
                 </a>

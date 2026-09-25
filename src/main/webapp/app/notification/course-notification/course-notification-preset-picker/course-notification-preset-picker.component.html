@@ -16,9 +16,9 @@
                 #keyboardAction11
                 role="button"
                 tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction11.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction11.click()"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
             >
                 <div class="course-notification-preset-picker-item-title">
                     <fa-icon [icon]="getPresetIcon(preset.identifier)" class="course-notification-preset-picker-item-icon" />
@@ -45,9 +45,9 @@
             #keyboardAction34
             role="button"
             tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction34.click()"
-            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-            (keyup.space)="$event.target === $event.currentTarget && keyboardAction34.click()"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction34.click() : undefined"
         >
             <div class="course-notification-preset-picker-item-title">
                 <fa-icon [icon]="getPresetIcon('customUserCourseNotificationSettingPreset')" class="course-notification-preset-picker-item-icon" />

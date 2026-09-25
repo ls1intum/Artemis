@@ -21,9 +21,9 @@
                 #keyboardAction16
                 role="button"
                 [attr.tabindex]="isCurrentUser() ? -1 : 0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction16.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction16.click()"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
             >
                 {{ userLabel() }}
             </a>

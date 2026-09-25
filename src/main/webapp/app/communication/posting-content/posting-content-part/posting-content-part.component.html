@@ -23,9 +23,9 @@
         #keyboardAction20
         role="button"
         tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction20.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-        (keyup.space)="$event.target === $event.currentTarget && keyboardAction20.click()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction20.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction20.click() : undefined"
     >
         <fa-icon class="px-1" [icon]="faAt" />{{ postingContentPart()?.referenceStr }}
     </a>
@@ -37,9 +37,9 @@
         #keyboardAction25
         role="button"
         tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction25.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-        (keyup.space)="$event.target === $event.currentTarget && keyboardAction25.click()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction25.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction25.click() : undefined"
     >
         <fa-icon class="px-1" [icon]="faHashtag" />{{ postingContentPart()?.referenceStr }}
     </a>
@@ -51,9 +51,9 @@
         #keyboardAction30
         role="button"
         tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction30.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-        (keyup.space)="$event.target === $event.currentTarget && keyboardAction30.click()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
     >
         <fa-icon class="px-1" [icon]="faFile" />{{ postingContentPart()?.referenceStr }}
     </a>
@@ -66,9 +66,9 @@
             #keyboardAction36
             role="button"
             tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction36.click()"
-            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-            (keyup.space)="$event.target === $event.currentTarget && keyboardAction36.click()"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
         >
             @if (postingContentPart()?.slideToReference && !imageNotFound()) {
                 <img
@@ -99,9 +99,9 @@
                 #keyboardAction60
                 role="button"
                 tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction60.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction60.click()"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
             >
                 <img
                     class="img-fluid rounded-sm border mt-1 mb-1"

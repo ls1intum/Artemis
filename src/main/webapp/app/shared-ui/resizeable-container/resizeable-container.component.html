@@ -22,9 +22,9 @@
                 #keyboardAction19
                 role="button"
                 tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction19.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                (keyup.space)="$event.target === $event.currentTarget && keyboardAction19.click()"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
             >
                 <fa-icon [icon]="faChevronLeft" />
                 <div class="header">
@@ -50,9 +50,9 @@
                         #keyboardAction38
                         role="button"
                         tabindex="0"
-                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction38.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
-                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction38.click()"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction38.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction38.click() : undefined"
                     >
                         <h3 class="card-title">
                             <span class="me-1">
