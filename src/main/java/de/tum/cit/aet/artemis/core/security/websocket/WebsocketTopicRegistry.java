@@ -118,15 +118,10 @@ public class WebsocketTopicRegistry {
         requireUniqueTemplates(declaredUserTopics.stream().map(WebsocketUserTopic::template).toList());
         this.topics = List.copyOf(declaredTopics);
         this.userTopics = List.copyOf(declaredUserTopics);
-        // Every destination has to resolve to exactly one topic, otherwise the access rule of a topic could be shadowed by another one
-        for (DeclaredTopic declared : topics) {
-            String sample = declared.topic().sampleDestination();
-            requireResolvesTo(declared, findMostSpecific(topics, candidate -> candidate.topic().match(sample), candidate -> candidate.topic().literalCount(), sample), sample);
-        }
-        for (WebsocketUserTopic userTopic : userTopics) {
-            String sample = userTopic.sampleDestination();
-            requireResolvesTo(userTopic, findMostSpecific(userTopics, candidate -> candidate.match(sample), WebsocketUserTopic::literalCount, sample), sample);
-        }
+        // Every destination has to resolve to exactly one topic, otherwise it would be unclear whose access rule applies. Of two topics that match a destination, the
+        // one with more literal segments wins, so two topics with the same number of literal segments must not share any destination. User topics have no access rule,
+        // so a destination that several of them match is still declared.
+        requireNoEqualMatches(topics.stream().map(DeclaredTopic::topic).toList());
         log.debug("Registered {} websocket topics and {} websocket user topics", topics.size(), userTopics.size());
     }
 
@@ -144,8 +139,7 @@ public class WebsocketTopicRegistry {
         if (destination.startsWith(USER_DESTINATION_PREFIX)) {
             // Spring delivers a user destination only to the sessions of the addressed user, so a declared user topic needs no further check.
             String topicDestination = destination.substring(USER_DESTINATION_PREFIX.length() - 1);
-            return findMostSpecific(userTopics, topic -> topic.match(topicDestination), WebsocketUserTopic::literalCount, topicDestination).isPresent() ? Decision.ALLOWED
-                    : Decision.UNDECLARED;
+            return userTopics.stream().anyMatch(topic -> topic.match(topicDestination).isPresent()) ? Decision.ALLOWED : Decision.UNDECLARED;
         }
         var match = findMostSpecific(topics, declared -> declared.topic().match(destination), declared -> declared.topic().literalCount(), destination);
         if (match.isEmpty()) {
@@ -200,8 +194,8 @@ public class WebsocketTopicRegistry {
     }
 
     /**
-     * Finds the matching topic with the most literal segments, so that {@code /topic/iris/struggle-intervention} wins over {@code /topic/iris/{sessionId}}. Two matches
-     * with the same number of literal segments are ambiguous and match nothing.
+     * Finds the matching topic with the most literal segments, so that {@code /topic/things/special} wins over {@code /topic/things/{thingId}}. Two matches with the same
+     * number of literal segments are ambiguous and match nothing; the registry refuses such topics when it is created.
      */
     private static <T> Optional<Match<T>> findMostSpecific(List<T> candidates, Function<T, Optional<Map<String, String>>> matcher, Function<T, Integer> specificity,
             String destination) {
@@ -241,9 +235,19 @@ public class WebsocketTopicRegistry {
         return constants;
     }
 
-    private static <T> void requireResolvesTo(T topic, Optional<Match<T>> match, String sample) {
-        if (match.isEmpty() || match.get().topic() != topic) {
-            throw new IllegalStateException("The websocket destination " + sample + " does not resolve to its topic " + topic + " alone; make the templates distinct");
+    private static void requireNoEqualMatches(List<WebsocketTopic> topics) {
+        for (int i = 0; i < topics.size(); i++) {
+            for (int j = i + 1; j < topics.size(); j++) {
+                WebsocketTopic first = topics.get(i);
+                WebsocketTopic second = topics.get(j);
+                if (first.literalCount() != second.literalCount()) {
+                    continue;
+                }
+                first.commonDestination(second).ifPresent(destination -> {
+                    throw new IllegalStateException(
+                            "The websocket topics " + first.template() + " and " + second.template() + " both match " + destination + " equally well; make the templates distinct");
+                });
+            }
         }
     }
 

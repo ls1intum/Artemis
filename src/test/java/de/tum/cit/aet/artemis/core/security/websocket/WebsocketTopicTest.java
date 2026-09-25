@@ -55,9 +55,23 @@ class WebsocketTopicTest {
 
     @Test
     void testRegistryRejectsOverlappingTopics() {
-        assertThatThrownBy(() -> registryOf(new OverlappingTopics())).isInstanceOf(IllegalStateException.class).hasMessageContaining("does not resolve");
+        assertThatThrownBy(() -> registryOf(new OverlappingTopics())).isInstanceOf(IllegalStateException.class).hasMessageContaining("equally well");
+        // the variables sit at different segments, so neither sample destination reaches the other topic, but /topic/things/items/details matches both
+        assertThatThrownBy(() -> registryOf(new CrossingTopics())).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("both match /topic/things/items/details equally well");
         assertThatThrownBy(() -> registryOf(new DuplicateTopics())).isInstanceOf(IllegalStateException.class).hasMessageContaining("declared twice");
         assertThatThrownBy(() -> registryOf(new NonConstantTopic())).isInstanceOf(IllegalStateException.class).hasMessageContaining("public static final");
+    }
+
+    @Test
+    void testUserTopicsMayShareDestinations() {
+        var registry = registryOf(new CrossingUserTopics());
+        var user = new UsernamePasswordAuthenticationToken("user", "");
+        // user topics have no access rule, so it does not matter which of them a destination belongs to
+        for (String destination : List.of("/user/topic/things/competencies/commands", "/user/topic/things/42/commands", "/user/topic/things/competencies/42")) {
+            assertThat(registry.authorizeSubscription(user, destination)).as(destination).isEqualTo(WebsocketTopicRegistry.Decision.ALLOWED);
+        }
+        assertThat(registry.authorizeSubscription(user, "/user/topic/things/42/other")).isEqualTo(WebsocketTopicRegistry.Decision.UNDECLARED);
     }
 
     @Test
@@ -94,6 +108,20 @@ class WebsocketTopicTest {
         public static final WebsocketTopic BY_COURSE = WebsocketTopic.of("/topic/things/{courseId}/items", WebsocketTopicAccess.atLeastStudentInCourse("courseId"));
 
         public static final WebsocketTopic BY_EXERCISE = WebsocketTopic.of("/topic/things/{exerciseId}/items", WebsocketTopicAccess.atLeastTutorInExercise("exerciseId"));
+    }
+
+    static class CrossingTopics implements WebsocketTopicProvider {
+
+        public static final WebsocketTopic ITEM_DETAILS = WebsocketTopic.of("/topic/things/{courseId}/details", WebsocketTopicAccess.atLeastStudentInCourse("courseId"));
+
+        public static final WebsocketTopic ITEMS = WebsocketTopic.of("/topic/things/items/{exerciseId}", WebsocketTopicAccess.atLeastTutorInExercise("exerciseId"));
+    }
+
+    static class CrossingUserTopics implements WebsocketTopicProvider {
+
+        public static final WebsocketUserTopic SESSION_COMMANDS = WebsocketUserTopic.of("/topic/things/{sessionId}/commands");
+
+        public static final WebsocketUserTopic COMPETENCIES = WebsocketUserTopic.of("/topic/things/competencies/{courseId}");
     }
 
     static class DuplicateTopics implements WebsocketTopicProvider {

@@ -50,7 +50,9 @@ public class ExerciseEditorSyncWebsocketController {
      * Relays a synchronization event to the other editors of the exercise.
      * <p>
      * Only a session that is subscribed to the synchronization topic of the exercise may publish to it. Its subscription passed the access rule of the topic, so the check
-     * needs no database access, although editors send an event for almost every keystroke.
+     * needs no database access, although editors send an event for almost every keystroke. An event cannot overtake the subscription of its own session: the client
+     * subscribes as soon as the connection is up and sends its queued events only afterwards, and the server registers a subscription in the user registry before it
+     * reads the next frame of the same session.
      *
      * @param exerciseId the id of the exercise
      * @param message    the event as sent by the client

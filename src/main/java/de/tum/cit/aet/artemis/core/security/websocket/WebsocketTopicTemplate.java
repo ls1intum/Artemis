@@ -91,12 +91,35 @@ final class WebsocketTopicTemplate {
     }
 
     /**
-     * The number of literal segments, used to prefer {@code /topic/iris/struggle-intervention} over {@code /topic/iris/{sessionId}} when both match.
+     * The number of literal segments, used to prefer {@code /topic/things/special} over {@code /topic/things/{thingId}} when both match.
      *
      * @return the number of literal segments
      */
     int literalCount() {
         return literalCount;
+    }
+
+    /**
+     * Finds a destination that both templates match: they have the same number of segments, and at every segment both hold the same literal or at least one holds a
+     * variable.
+     *
+     * @param other the other template
+     * @return such a destination, or empty if no destination matches both templates
+     */
+    Optional<String> commonDestination(WebsocketTopicTemplate other) {
+        if (literals.size() != other.literals.size()) {
+            return Optional.empty();
+        }
+        StringBuilder destination = new StringBuilder();
+        for (int i = 0; i < literals.size(); i++) {
+            String literal = literals.get(i);
+            String otherLiteral = other.literals.get(i);
+            if (literal != null && otherLiteral != null && !literal.equals(otherLiteral)) {
+                return Optional.empty();
+            }
+            destination.append('/').append(literal != null ? literal : otherLiteral != null ? otherLiteral : "1");
+        }
+        return Optional.of(destination.toString());
     }
 
     /**

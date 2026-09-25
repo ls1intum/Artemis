@@ -56,17 +56,6 @@ public final class WebsocketUserTopic {
         return template.match(destination);
     }
 
-    int literalCount() {
-        return template.literalCount();
-    }
-
-    /**
-     * @return a destination of this topic with the value {@code 1} for every variable, used to check that the declared topics do not overlap
-     */
-    String sampleDestination() {
-        return template.expand(template.variableNames().stream().map(_ -> "1").toArray());
-    }
-
     @Override
     public String toString() {
         return "/user" + template.template();

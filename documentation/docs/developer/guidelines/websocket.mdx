@@ -160,8 +160,8 @@ means that a client subscribes to a topic that nobody declares.
 * Verify sent messages with `WebsocketDestinationMatchers`, which compare the destination as it goes over the wire:
   `verify(websocketMessagingService).sendMessage(topic("/topic/exercise/" + exerciseId + "/newResults"), any())`.
 * `WebsocketTopicArchitectureTest` and `WebsocketSecurityConfigurationTest` guard the model itself. The architecture test
-  also builds the registry from the topics of all modules, so a template whose destinations resolve to another topic fails
-  the build.
+  also builds the registry from the topics of all modules, so two templates that match the same destination equally well,
+  such as `/topic/things/{courseId}/details` and `/topic/things/items/{exerciseId}`, fail the build.
 
 ## Checklist for a new topic
 

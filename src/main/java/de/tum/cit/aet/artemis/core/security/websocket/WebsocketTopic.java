@@ -106,10 +106,11 @@ public final class WebsocketTopic {
     }
 
     /**
-     * @return a destination of this topic with the value {@code 1} for every variable, used to check that the declared topics do not overlap
+     * @param other another topic
+     * @return a destination that both topics match, used to check that the declared topics do not overlap; empty if there is none
      */
-    String sampleDestination() {
-        return template.expand(template.variableNames().stream().map(_ -> "1").toArray());
+    Optional<String> commonDestination(WebsocketTopic other) {
+        return template.commonDestination(other.template);
     }
 
     @Override
