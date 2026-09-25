@@ -933,6 +933,13 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectExerciseSearchWithoutSortedColumn() throws Exception {
+        request.performMvcRequest(get("/api/quiz/quiz-exercises").param("page", "0").param("pageSize", "20").param("sortingOrder", "ASCENDING").param("searchTerm", "quiz"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateQuizQuestionWithMoreSolutions() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
         QuizQuestion question = quizExercise.getQuizQuestions().get(2);
@@ -1671,6 +1678,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asText()).isEqualTo("before-quiz-start");
         assertThat(json.has("quizQuestions")).isFalse();
 
         QuizExerciseWithoutQuestionsDTO dto = objectMapper.readValue(content, QuizExerciseWithoutQuestionsDTO.class);
@@ -1696,6 +1704,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asText()).isEqualTo("after-quiz-end");
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 
@@ -1733,6 +1742,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
+        assertThat(json.get("quizQuestionsType").asText()).isEqualTo("live-quiz");
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 

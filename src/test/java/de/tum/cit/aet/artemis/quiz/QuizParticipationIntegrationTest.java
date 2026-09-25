@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.quiz.web.openapi.QuizParticipationResource;
+import de.tum.cit.aet.artemis.quiz.web.QuizParticipationResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -70,6 +70,8 @@ class QuizParticipationIntegrationTest extends AbstractSpringIntegrationIndepend
         addSubmissionWithResult(participation, false, 50D, ZonedDateTime.now().minusMinutes(1));
 
         String content = request.get(resultUrl(quizExercise, participation), HttpStatus.OK, String.class);
+        JsonNode participationJson = objectMapper.readTree(content);
+        assertThat(participationJson.get("quizQuestionsType").asText()).isEqualTo("after-quiz-end");
 
         JsonNode results = firstSubmissionResults(content);
         assertThat(results.size()).isEqualTo(1);

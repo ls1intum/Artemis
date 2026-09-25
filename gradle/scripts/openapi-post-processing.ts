@@ -1,6 +1,9 @@
-import { Project } from "ts-morph";
+/// <reference types="node" />
+
+import { Node, Project, SourceFile, SyntaxKind } from "ts-morph";
 import { join } from "path";
-import { readdirSync, statSync, writeFileSync } from "fs";
+import { readFileSync, readdirSync, statSync, writeFileSync } from "fs";
+import { parse } from "yaml";
 
 const getAllOpenApiFiles = (dir: string): string[] => {
     let results: string[] = [];
@@ -13,23 +16,300 @@ const getAllOpenApiFiles = (dir: string): string[] => {
             results.push(fullPath);
         }
     }
-    results.push('openapi/openapi.yaml')
     return results;
 };
 
-const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: any, renamedMethodsInFile: number) => {
+const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: SourceFile, renamedMethodsInFile: number) => {
     for (const clazz of sourceFile.getClasses()) {
         for (const method of clazz.getMethods()) {
             const oldName = method.getName();
             const newName = oldName.replace(/^_+/, "").replace(/\d+$/, "");
-            if (newName !== oldName) {
-                method.getNameNode().rename(newName);
+            const nameNode = method.getNameNode();
+            if (newName !== oldName && Node.isIdentifier(nameNode)) {
+                nameNode.rename(newName);
                 renamedMethodsInFile++;
                 console.log(`🔄 [${sourceFile.getBaseName()}] ${oldName} → ${newName}`);
             }
         }
     }
     return renamedMethodsInFile;
+};
+
+const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serializedPartsInFile: number, multipartObjectPartNames: Set<string>) => {
+    const generatedModelTypes = new Set(
+        sourceFile
+            .getImportDeclarations()
+            .filter(declaration => declaration.getModuleSpecifierValue().includes("/model/"))
+            .flatMap(declaration => declaration.getNamedImports().map(namedImport => namedImport.getName())),
+    );
+
+    for (const callExpression of sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+        if (callExpression.getExpression().getText() !== "formData.append") {
+            continue;
+        }
+
+        const [partName, formDataValue] = callExpression.getArguments();
+        if (!Node.isStringLiteral(partName) || !multipartObjectPartNames.has(partName.getLiteralValue())) {
+            continue;
+        }
+
+        const formDataValueText = formDataValue.getText();
+        if (Node.isNewExpression(formDataValue) && formDataValueText.startsWith("new Blob([JSON.stringify(") && formDataValueText.includes("type: 'application/json'")) {
+            serializedPartsInFile++;
+            continue;
+        }
+        if (!Node.isIdentifier(formDataValue)) {
+            throw new Error(`Cannot serialize multipart object part in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        const parameterDeclaration = formDataValue.getSymbol()?.getDeclarations().find(Node.isParameterDeclaration);
+        const parameterType = parameterDeclaration?.getTypeNode()?.getText();
+        if (!parameterType || !generatedModelTypes.has(parameterType)) {
+            throw new Error(`Multipart object part is not a generated model in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        formDataValue.replaceWithText(`new Blob([JSON.stringify(${formDataValue.getText()})], { type: 'application/json' })`);
+        serializedPartsInFile++;
+    }
+
+    return serializedPartsInFile;
+};
+
+interface OpenApiSchema {
+    type?: string;
+    format?: string;
+    $ref?: string;
+    items?: OpenApiSchema;
+    oneOf?: OpenApiSchema[];
+    anyOf?: OpenApiSchema[];
+    allOf?: OpenApiSchema[];
+    properties?: Record<string, OpenApiSchema>;
+}
+
+interface OpenApiOperation {
+    operationId?: string;
+    requestBody?: {
+        content?: Record<string, {
+            schema?: OpenApiSchema;
+        }>;
+    };
+    responses?: Record<string, {
+        headers?: Record<string, unknown>;
+    }>;
+}
+
+interface OpenApiSpecification {
+    paths?: Record<string, Record<string, OpenApiOperation>>;
+    components?: {
+        schemas?: Record<string, OpenApiSchema>;
+    };
+}
+
+const isObjectSchema = (schema: OpenApiSchema): boolean => {
+    return Boolean(
+        schema.$ref ||
+        schema.type === "object" ||
+        (schema.items && isObjectSchema(schema.items)) ||
+        schema.oneOf?.some(isObjectSchema) ||
+        schema.anyOf?.some(isObjectSchema) ||
+        schema.allOf?.some(isObjectSchema),
+    );
+};
+
+const getMultipartObjectPartNames = (openApiSpecification: OpenApiSpecification): string[] => {
+    return Object.values(openApiSpecification.paths ?? {}).flatMap(path =>
+        Object.values(path).flatMap(operation => {
+            const multipartSchema = operation.requestBody?.content?.["multipart/form-data"]?.schema;
+            if (!multipartSchema?.properties) {
+                return [];
+            }
+            return Object.entries(multipartSchema.properties)
+                .filter(([, schema]) => isObjectSchema(schema))
+                .map(([partName]) => partName);
+        }),
+    );
+};
+
+const getMultipartBinaryPartNames = (openApiSpecification: OpenApiSpecification): string[] => {
+    return Object.values(openApiSpecification.paths ?? {}).flatMap(path =>
+        Object.values(path).flatMap(operation => {
+            const multipartSchema = operation.requestBody?.content?.["multipart/form-data"]?.schema;
+            if (!multipartSchema?.properties) {
+                return [];
+            }
+            return Object.entries(multipartSchema.properties)
+                .filter(([, schema]) => {
+                    const valueSchema = schema.items ?? schema;
+                    return valueSchema.type === "string" && valueSchema.format === "binary";
+                })
+                .map(([partName]) => partName);
+        }),
+    );
+};
+
+const getOperationIdsWithResponseHeaders = (openApiSpecification: OpenApiSpecification): string[] => {
+    return Object.values(openApiSpecification.paths ?? {}).flatMap(path =>
+        Object.values(path)
+            .filter(operation => Object.values(operation.responses ?? {}).some(response => response.headers))
+            .flatMap(operation => (operation.operationId ? [operation.operationId] : [])),
+    );
+};
+
+// An operation that declares a response header is useless as a bare Observable<T>: HttpClient only exposes headers
+// when asked to observe the whole response. Opt exactly those operations into observe: 'response' and widen their
+// return type, so a caller can read the header the contract promises.
+const observeFullResponseForHeaderOperations = (sourceFile: SourceFile, observedOperationsInFile: number, operationIdsWithResponseHeaders: Set<string>) => {
+    for (const method of sourceFile.getClasses().flatMap(classDeclaration => classDeclaration.getMethods())) {
+        if (!operationIdsWithResponseHeaders.has(method.getName())) {
+            continue;
+        }
+
+        const returnTypeNode = method.getReturnTypeNode();
+        const returnType = returnTypeNode?.getText();
+        if (!returnType?.startsWith("Observable<")) {
+            throw new Error(`Cannot observe the full response of ${method.getName()} in ${sourceFile.getBaseName()}: ${returnType}`);
+        }
+        if (returnType.startsWith("Observable<HttpResponse<")) {
+            observedOperationsInFile++;
+            continue;
+        }
+
+        const httpCall = method
+            .getDescendantsOfKind(SyntaxKind.CallExpression)
+            .find(callExpression => callExpression.getExpression().getText().startsWith("this.http."));
+        if (!httpCall) {
+            throw new Error(`No HttpClient call to observe in ${method.getName()} in ${sourceFile.getBaseName()}`);
+        }
+
+        returnTypeNode.replaceWithText(`Observable<HttpResponse<${returnType.slice("Observable<".length, -1)}>>`);
+        httpCall.addArgument("{ observe: 'response' }");
+
+        const httpImport = sourceFile.getImportDeclaration(declaration => declaration.getModuleSpecifierValue() === "@angular/common/http");
+        if (httpImport && !httpImport.getNamedImports().some(namedImport => namedImport.getName() === "HttpResponse")) {
+            httpImport.addNamedImport("HttpResponse");
+        }
+
+        observedOperationsInFile++;
+    }
+
+    return observedOperationsInFile;
+};
+
+// The generator types a binary part as Blob. FormData.append then labels it "blob", because only a File carries a
+// name, and the server resolves uploads by their original filename — so two Blobs collide on one key. Retype the
+// parameter to File and pass the name explicitly.
+const nameGeneratedBinaryFormDataParts = (sourceFile: SourceFile, namedPartsInFile: number, multipartBinaryPartNames: Set<string>) => {
+    for (const callExpression of sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression)) {
+        if (callExpression.getExpression().getText() !== "formData.append") {
+            continue;
+        }
+
+        const [partName, formDataValue, fileName] = callExpression.getArguments();
+        if (!Node.isStringLiteral(partName) || !multipartBinaryPartNames.has(partName.getLiteralValue())) {
+            continue;
+        }
+        if (fileName) {
+            namedPartsInFile++;
+            continue;
+        }
+        if (!Node.isIdentifier(formDataValue)) {
+            throw new Error(`Cannot name multipart binary part in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        const method = callExpression.getFirstAncestorByKind(SyntaxKind.MethodDeclaration);
+        const parameter = method?.getParameter(partName.getLiteralValue());
+        const parameterType = parameter?.getTypeNode()?.getText();
+        if (!parameter || !parameterType?.includes("Blob")) {
+            throw new Error(`Multipart binary part is not a Blob parameter in ${sourceFile.getBaseName()}: ${callExpression.getText()}`);
+        }
+
+        parameter.setType(parameterType.replaceAll("Blob", "File"));
+        callExpression.addArgument(`${formDataValue.getText()}.name`);
+        namedPartsInFile++;
+    }
+
+    return namedPartsInFile;
+};
+
+const referencedUnionSchemas = (openApiSpecification: OpenApiSpecification): Array<[string, string[]]> => {
+    return Object.entries(openApiSpecification.components?.schemas ?? {}).flatMap(([schemaName, schema]) => {
+        if (!schema.oneOf || schema.oneOf.length < 2) {
+            return [];
+        }
+
+        const referencedSchemaNames = schema.oneOf.map(branch => branch.$ref?.split("/").at(-1));
+        if (referencedSchemaNames.some(referencedSchemaName => referencedSchemaName === undefined)) {
+            return [];
+        }
+
+        return [[schemaName, referencedSchemaNames.filter(referencedSchemaName => referencedSchemaName !== undefined)]];
+    });
+};
+
+const replaceOneOfModelsWithUnionTypes = (project: Project, openApiSpecification: OpenApiSpecification) => {
+    const modelSourceFilesByName = new Map<string, SourceFile>();
+    for (const sourceFile of project.getSourceFiles()) {
+        if (!sourceFile.getFilePath().replaceAll("\\", "/").includes("/openapi/model/")) {
+            continue;
+        }
+        for (const declaration of [...sourceFile.getInterfaces(), ...sourceFile.getTypeAliases()]) {
+            if (declaration.isExported()) {
+                modelSourceFilesByName.set(declaration.getName(), sourceFile);
+            }
+        }
+    }
+
+    let replacedUnionModels = 0;
+    for (const [schemaName, referencedSchemaNames] of referencedUnionSchemas(openApiSpecification)) {
+        const sourceFile = modelSourceFilesByName.get(schemaName);
+        const referencedSourceFiles = referencedSchemaNames.map(referencedSchemaName => modelSourceFilesByName.get(referencedSchemaName));
+        if (!sourceFile || referencedSourceFiles.some(referencedSourceFile => referencedSourceFile === undefined)) {
+            continue;
+        }
+        for (const [index, referencedSchemaName] of referencedSchemaNames.entries()) {
+            const referencedSourceFile = referencedSourceFiles[index];
+            if (!referencedSourceFile || referencedSourceFile === sourceFile) {
+                continue;
+            }
+
+            const moduleSpecifier = `./${referencedSourceFile.getBaseNameWithoutExtension()}`;
+            const existingImport = sourceFile.getImportDeclaration(declaration => declaration.getModuleSpecifierValue() === moduleSpecifier);
+            if (existingImport) {
+                if (!existingImport.getNamedImports().some(namedImport => namedImport.getName() === referencedSchemaName)) {
+                    existingImport.addNamedImport(referencedSchemaName);
+                }
+            } else {
+                sourceFile.addImportDeclaration({
+                    isTypeOnly: true,
+                    namedImports: [referencedSchemaName],
+                    moduleSpecifier,
+                });
+            }
+        }
+
+        const unionType = referencedSchemaNames.join(" | ");
+        const interfaceDeclaration = sourceFile.getInterface(schemaName);
+        const typeAliasDeclaration = sourceFile.getTypeAlias(schemaName);
+        if (interfaceDeclaration) {
+            interfaceDeclaration.replaceWithText(`export type ${schemaName} = ${unionType};`);
+        } else if (typeAliasDeclaration) {
+            typeAliasDeclaration.setType(unionType);
+        } else {
+            continue;
+        }
+
+        for (const staleTypeAlias of sourceFile.getTypeAliases().filter(declaration => declaration.getName() !== schemaName && declaration.getName().startsWith(schemaName))) {
+            staleTypeAlias.remove();
+        }
+        for (const staleVariableStatement of sourceFile.getVariableStatements().filter(statement =>
+            statement.getDeclarations().every(declaration => declaration.getName().startsWith(schemaName))
+        )) {
+            staleVariableStatement.remove();
+        }
+
+        replacedUnionModels++;
+    }
+    return replacedUnionModels;
 };
 
 const normalizeLineEndings = (text: string, lineEnding: "CRLF" | "LF" = "CRLF") => {
@@ -49,17 +329,43 @@ const main = async () => {
     });
     project.addSourceFilesAtPaths(files);
 
+    // The generator writes its banner as a leading comment on the file's first statement, so removing an unused first
+    // import or replacing a first-statement interface takes the banner with it. Snapshot it up front, restore on write.
+    const leadingBanners = new Map<SourceFile, string>();
+    for (const sourceFile of project.getSourceFiles()) {
+        const banner = /^\/\*\*[\s\S]*?\*\/\r?\n/.exec(sourceFile.getFullText())?.[0];
+        if (banner) {
+            leadingBanners.set(sourceFile, banner);
+        }
+    }
+
+    const openApiSpecification = parse(readFileSync("openapi/openapi.yaml", "utf8")) as OpenApiSpecification;
+    const multipartObjectPartNames = getMultipartObjectPartNames(openApiSpecification);
+    const multipartObjectPartNameSet = new Set(multipartObjectPartNames);
+    const multipartBinaryPartNames = getMultipartBinaryPartNames(openApiSpecification);
+    const multipartBinaryPartNameSet = new Set(multipartBinaryPartNames);
+    const operationIdsWithResponseHeaders = getOperationIdsWithResponseHeaders(openApiSpecification);
+    const operationIdsWithResponseHeaderSet = new Set(operationIdsWithResponseHeaders);
+    const totalReplacedUnionModels = replaceOneOfModelsWithUnionTypes(project, openApiSpecification);
+
     const typeChecker = project.getTypeChecker();
     let totalRemovedImports = 0;
     let totalRenamedMethods = 0;
+    let totalSerializedFormDataParts = 0;
+    let totalNamedBinaryParts = 0;
+    let totalObservedOperations = 0;
 
     for (const sourceFile of project.getSourceFiles()) {
         let removedImportsInFile = 0;
         let renamedMethodsInFile = 0;
+        let serializedFormDataPartsInFile = 0;
+        let namedBinaryPartsInFile = 0;
+        let observedOperationsInFile = 0;
 
         for (const importDeclaration of sourceFile.getImportDeclarations()) {
             for (const namedImport of importDeclaration.getNamedImports()) {
                 const id = namedImport.getNameNode();
+                if (!Node.isIdentifier(id)) continue;
                 const symbol = typeChecker.getSymbolAtLocation(id);
                 if (!symbol) continue;
 
@@ -86,28 +392,57 @@ const main = async () => {
         }
 
         renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
+        serializedFormDataPartsInFile = serializeGeneratedModelFormDataParts(sourceFile, serializedFormDataPartsInFile, multipartObjectPartNameSet);
+        namedBinaryPartsInFile = nameGeneratedBinaryFormDataParts(sourceFile, namedBinaryPartsInFile, multipartBinaryPartNameSet);
+        observedOperationsInFile = observeFullResponseForHeaderOperations(sourceFile, observedOperationsInFile, operationIdsWithResponseHeaderSet);
         const path = sourceFile.getFilePath();
-        const content = sourceFile.getFullText();
+        const leadingBanner = leadingBanners.get(sourceFile);
+        const text = sourceFile.getFullText();
+        const content = (leadingBanner && !text.startsWith(leadingBanner) ? leadingBanner + text : text)
+            .replace(/[ \t]+(?=\r?$)/gm, "")
+            .replace(/(?:\r?\n)+$/, "\n");
         const fixedContent = isWindows ? normalizeLineEndings(content, "CRLF") : content;
 
         writeFileSync(path, fixedContent, "utf8");
-        if (removedImportsInFile + renamedMethodsInFile > 0) {
+        if (removedImportsInFile + renamedMethodsInFile + serializedFormDataPartsInFile + namedBinaryPartsInFile + observedOperationsInFile > 0) {
             totalRemovedImports += removedImportsInFile;
             totalRenamedMethods += renamedMethodsInFile;
+            totalSerializedFormDataParts += serializedFormDataPartsInFile;
+            totalNamedBinaryParts += namedBinaryPartsInFile;
+            totalObservedOperations += observedOperationsInFile;
             console.log(
                 `🧹 Removed ${removedImportsInFile} imports, ` +
-                `renamed ${renamedMethodsInFile} methods in ${sourceFile.getBaseName()}`
+                `renamed ${renamedMethodsInFile} methods, ` +
+                `serialized ${serializedFormDataPartsInFile} multipart model parts, ` +
+                `named ${namedBinaryPartsInFile} multipart binary parts, ` +
+                `observed ${observedOperationsInFile} full responses in ${sourceFile.getBaseName()}`
             );
         }
     }
 
+    if (totalSerializedFormDataParts !== multipartObjectPartNames.length) {
+        throw new Error(`Expected ${multipartObjectPartNames.length} multipart object parts to be serialized, but serialized ${totalSerializedFormDataParts}`);
+    }
+
+    if (totalNamedBinaryParts !== multipartBinaryPartNames.length) {
+        throw new Error(`Expected ${multipartBinaryPartNames.length} multipart binary parts to be named, but named ${totalNamedBinaryParts}`);
+    }
+
+    if (totalObservedOperations !== operationIdsWithResponseHeaders.length) {
+        throw new Error(`Expected ${operationIdsWithResponseHeaders.length} operations to observe the full response, but observed ${totalObservedOperations}`);
+    }
+
     console.log(
         `✅ Done. Total imports removed: ${totalRemovedImports}, ` +
-        `methods renamed: ${totalRenamedMethods}`
+        `methods renamed: ${totalRenamedMethods}, ` +
+        `multipart model parts serialized: ${totalSerializedFormDataParts}, ` +
+        `multipart binary parts named: ${totalNamedBinaryParts}, ` +
+        `full responses observed: ${totalObservedOperations}, ` +
+        `oneOf models converted to union types: ${totalReplacedUnionModels}`
     );
 };
 
-main().catch(err => {
-    console.error("❌ Error:", err);
+main().catch((error: unknown) => {
+    console.error("OpenAPI post-processing failed:", error);
     process.exit(1);
 });
