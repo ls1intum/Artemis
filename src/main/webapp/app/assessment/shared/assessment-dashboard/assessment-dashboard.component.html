@@ -24,9 +24,9 @@
                     <a
                         [routerLink]="['/course-management', course().id, 'scores']"
                         [attr.aria-label]="'entity.action.scores' | artemisTranslate"
-                        [tumUiTooltip]="'entity.action.scores' | artemisTranslate"
-                        tumUiTooltipPlacement="top"
-                        tumUiButton
+                        [tumAetUiTooltip]="'entity.action.scores' | artemisTranslate"
+                        tumAetUiTooltipPlacement="top"
+                        tumAetUiButton
                         severity="secondary"
                         size="small"
                     >
@@ -37,9 +37,9 @@
                     <a
                         [routerLink]="['/course-management', course().id, 'grading']"
                         [attr.aria-label]="'artemisApp.course.gradingSystem' | artemisTranslate"
-                        [tumUiTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
-                        tumUiTooltipPlacement="top"
-                        tumUiButton
+                        [tumAetUiTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
+                        tumAetUiTooltipPlacement="top"
+                        tumAetUiButton
                         severity="secondary"
                         size="small"
                     >
@@ -50,9 +50,9 @@
                         <a
                             [routerLink]="['/course-management', course().id, 'plagiarism-cases']"
                             [attr.aria-label]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
-                            [tumUiTooltip]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
-                            tumUiTooltipPlacement="top"
-                            tumUiButton
+                            [tumAetUiTooltip]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
+                            tumAetUiTooltipPlacement="top"
+                            tumAetUiButton
                             severity="secondary"
                             size="small"
                         >
@@ -66,9 +66,9 @@
                             type="button"
                             [jhiFeatureToggleHide]="FeatureToggle.Deimos"
                             [attr.aria-label]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"
-                            [tumUiTooltip]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"
-                            tumUiTooltipPlacement="top"
-                            tumUiButton
+                            [tumAetUiTooltip]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"
+                            tumAetUiTooltipPlacement="top"
+                            tumAetUiButton
                             severity="primary"
                             size="small"
                             (click)="openDeimosBatchDialog()"
@@ -84,9 +84,9 @@
 </div>
 @if (examNotFinished()) {
     <div class="mt-4">
-        <tum-ui-message severity="info" id="assessment-not-possible-yet">
+        <tumaet-ui-message severity="info" id="assessment-not-possible-yet">
             <span jhiTranslate="error.assessmentNotPossibleExamRunning" [translateValues]="{ date: exam()?.latestIndividualEndDate | artemisDate }"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     </div>
 } @else {
     @if (isExamMode() && !isTestRun()) {
@@ -94,29 +94,29 @@
             <div class="flex flex-wrap items-center gap-x-6 gap-y-1">
                 <span class="inline-flex items-center gap-2">
                     <span class="font-medium text-color" jhiTranslate="artemisApp.exam.endDate"></span>
-                    <tum-ui-tag severity="secondary">
+                    <tumaet-ui-tag severity="secondary">
                         @if (exam()?.endDate; as endDate) {
                             {{ endDate | artemisDate }}
                         } @else {
                             -
                         }
-                    </tum-ui-tag>
+                    </tumaet-ui-tag>
                 </span>
                 <span class="inline-flex items-center gap-2">
                     <span class="font-medium text-color" jhiTranslate="artemisApp.exam.publishResultsDate"></span>
-                    <tum-ui-tag severity="secondary">
+                    <tumaet-ui-tag severity="secondary">
                         @if (exam()?.publishResultsDate; as publishResultsDate) {
                             {{ publishResultsDate | artemisDate }}
                         } @else {
                             -
                         }
-                    </tum-ui-tag>
+                    </tumaet-ui-tag>
                 </span>
             </div>
         </div>
     }
     @if (isTestRun() && exam()?.numberOfCorrectionRoundsInExam && exam()!.numberOfCorrectionRoundsInExam! > 1) {
-        <tum-ui-message class="mt-4 block" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
+        <tumaet-ui-message class="mt-4 block" severity="warn" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint" />
     }
     @if (course()) {
         <div class="space-y-6 pb-6">
@@ -139,13 +139,13 @@
                     [ratings]="ratings()"
                 />
             </div>
-            <tum-ui-panel class="min-w-0 overflow-hidden">
-                <div tumUiPanelHeader class="flex w-full min-w-0 flex-wrap items-center justify-between gap-4">
+            <tumaet-ui-panel class="min-w-0 overflow-hidden">
+                <div tumAetUiPanelHeader class="flex w-full min-w-0 flex-wrap items-center justify-between gap-4">
                     <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></span>
                     @if (!isTestRun() && allExercises().length > 0) {
                         <div class="flex flex-wrap justify-end gap-x-5 gap-y-3">
                             <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideFinishedExercise">
-                                <tum-ui-checkbox
+                                <tumaet-ui-checkbox
                                     inputId="field_hideFinishedExercise"
                                     name="hideFinishedExercise"
                                     [ngModel]="hideFinishedExercises()"
@@ -154,16 +154,16 @@
                                 <span jhiTranslate="artemisApp.assessmentDashboard.hideFinishedExercises"></span>
                             </label>
                             <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-muted-color" for="field_hideOptional">
-                                <tum-ui-checkbox inputId="field_hideOptional" name="hideOptional" [ngModel]="hideOptional()" (ngModelChange)="triggerOptionalExercises()" />
+                                <tumaet-ui-checkbox inputId="field_hideOptional" name="hideOptional" [ngModel]="hideOptional()" (ngModelChange)="triggerOptionalExercises()" />
                                 <span jhiTranslate="artemisApp.assessmentDashboard.hideOptional"></span>
                             </label>
                         </div>
                     }
                 </div>
                 @if (allExercises().length === 0) {
-                    <tum-ui-message class="mt-2 w-full" severity="info" [icon]="faCircleInfo" [text]="'artemisApp.assessmentDashboard.noExercises' | artemisTranslate" />
+                    <tumaet-ui-message class="mt-2 w-full" severity="info" [icon]="faCircleInfo" [text]="'artemisApp.assessmentDashboard.noExercises' | artemisTranslate" />
                 } @else if (currentlyShownExercises().length === 0) {
-                    <tum-ui-message
+                    <tumaet-ui-message
                         class="mt-2 w-full"
                         severity="info"
                         [icon]="faCircleInfo"
@@ -172,7 +172,7 @@
                 } @else {
                     <div class="w-full overflow-x-auto border-t border-surface">
                         <table
-                            tumUiTable
+                            tumAetUiTable
                             size="small"
                             class="min-w-[42rem] xl:min-w-[56rem]"
                             [striped]="true"
@@ -183,25 +183,25 @@
                         >
                             <thead>
                                 <tr>
-                                    <th tumUiSortableColumn="type" class="hidden min-w-12 !whitespace-normal xl:table-cell xl:w-[6%]">
+                                    <th tumAetUiSortableColumn="type" class="hidden min-w-12 !whitespace-normal xl:table-cell xl:w-[6%]">
                                         <span jhiTranslate="artemisApp.assessmentDashboard.exerciseType"></span>
                                     </th>
-                                    <th tumUiSortableColumn="title" class="w-[10rem] min-w-[8rem] xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
+                                    <th tumAetUiSortableColumn="title" class="w-[10rem] min-w-[8rem] xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
                                         <span jhiTranslate="artemisApp.assessmentDashboard.exercise"></span>
                                     </th>
                                     @if (!isTestRun()) {
                                         <th class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
                                     }
-                                    <th tumUiSortableColumn="averageRating" class="hidden min-w-14 !whitespace-normal xl:table-cell xl:w-[7%]">
+                                    <th tumAetUiSortableColumn="averageRating" class="hidden min-w-14 !whitespace-normal xl:table-cell xl:w-[7%]">
                                         <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></span>
                                     </th>
                                     @if (!isExamMode()) {
-                                        <th tumUiSortableColumn="dueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
+                                        <th tumAetUiSortableColumn="dueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
                                             <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>
                                         </th>
                                     }
                                     @if (!isExamMode()) {
-                                        <th tumUiSortableColumn="assessmentDueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
+                                        <th tumAetUiSortableColumn="assessmentDueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
                                             <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>
                                         </th>
                                     }
@@ -221,8 +221,8 @@
                                         <td class="hidden min-w-12 whitespace-normal break-words xl:table-cell xl:w-[6%]">
                                             <fa-icon
                                                 [icon]="getIcon(exercise.type)"
-                                                [tumUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
-                                                tumUiTooltipPlacement="right"
+                                                [tumAetUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
+                                                tumAetUiTooltipPlacement="right"
                                             />
                                         </td>
                                         <td class="w-[10rem] min-w-[8rem] whitespace-normal break-words font-semibold xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
@@ -230,13 +230,13 @@
                                                 <fa-icon
                                                     [icon]="getIcon(exercise.type)"
                                                     class="shrink-0 xl:hidden"
-                                                    [tumUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
-                                                    tumUiTooltipPlacement="right"
+                                                    [tumAetUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
+                                                    tumAetUiTooltipPlacement="right"
                                                 />
                                                 <span class="min-w-0 flex-1 whitespace-normal break-words">{{ exercise.title }}</span>
                                             </div>
                                             <jhi-not-released-tag [exercise]="exercise" />
-                                            <tum-ui-tag severity="success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</tum-ui-tag>
+                                            <tumaet-ui-tag severity="success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</tumaet-ui-tag>
                                         </td>
                                         @if (!isTestRun()) {
                                             <td class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]">
@@ -266,7 +266,7 @@
                                         </td>
                                         @if (!isExamMode()) {
                                             <td class="hidden min-w-16 whitespace-normal break-words xl:table-cell xl:w-[8%]">
-                                                <span [hidden]="!exercise.dueDate" [tumUiTooltip]="exercise.dueDate | artemisDate" tumUiTooltipPlacement="right">
+                                                <span [hidden]="!exercise.dueDate" [tumAetUiTooltip]="exercise.dueDate | artemisDate" tumAetUiTooltipPlacement="right">
                                                     {{ exercise.dueDate | artemisTimeAgo }}
                                                 </span>
                                             </td>
@@ -275,8 +275,8 @@
                                             <td class="hidden min-w-16 whitespace-normal break-words xl:table-cell xl:w-[8%]">
                                                 <span
                                                     [hidden]="!exercise.assessmentDueDate"
-                                                    [tumUiTooltip]="exercise.assessmentDueDate | artemisDate"
-                                                    tumUiTooltipPlacement="right"
+                                                    [tumAetUiTooltip]="exercise.assessmentDueDate | artemisDate"
+                                                    tumAetUiTooltipPlacement="right"
                                                 >
                                                     {{ exercise.assessmentDueDate | artemisTimeAgo }}
                                                 </span>
@@ -286,13 +286,13 @@
                                             <td class="w-28 min-w-24 whitespace-normal break-words text-sm xl:hidden">
                                                 <div class="flex flex-col gap-1">
                                                     @if (exercise.dueDate) {
-                                                        <span [tumUiTooltip]="exercise.dueDate | artemisDate" tumUiTooltipPlacement="right">
+                                                        <span [tumAetUiTooltip]="exercise.dueDate | artemisDate" tumAetUiTooltipPlacement="right">
                                                             <span class="font-medium" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>:<br />
                                                             {{ exercise.dueDate | artemisTimeAgo }}
                                                         </span>
                                                     }
                                                     @if (exercise.assessmentDueDate) {
-                                                        <span [tumUiTooltip]="exercise.assessmentDueDate | artemisDate" tumUiTooltipPlacement="right">
+                                                        <span [tumAetUiTooltip]="exercise.assessmentDueDate | artemisDate" tumAetUiTooltipPlacement="right">
                                                             <span class="font-medium" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>:<br />
                                                             {{ exercise.assessmentDueDate | artemisTimeAgo }}
                                                         </span>
@@ -311,9 +311,9 @@
                                                             data-testid="open-exercise-dashboard"
                                                             [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
                                                             [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
-                                                            [tumUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
-                                                            tumUiTooltipPlacement="top"
-                                                            tumUiButton
+                                                            [tumAetUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
+                                                            tumAetUiTooltipPlacement="top"
+                                                            tumAetUiButton
                                                             size="small"
                                                         >
                                                             <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
@@ -325,9 +325,9 @@
                                                         [routerLink]="['/course-management', courseId(), 'exercises', exercise.id, 'teams']"
                                                         [queryParams]="{ filter: TeamFilterProp.OWN }"
                                                         [attr.aria-label]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
-                                                        [tumUiTooltip]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
-                                                        tumUiTooltipPlacement="top"
-                                                        tumUiButton
+                                                        [tumAetUiTooltip]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
+                                                        tumAetUiTooltipPlacement="top"
+                                                        tumAetUiButton
                                                         size="small"
                                                     >
                                                         <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
@@ -342,9 +342,9 @@
                         </table>
                     </div>
                 }
-            </tum-ui-panel>
+            </tumaet-ui-panel>
             @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
-                <tum-ui-message severity="warn" class="block">
+                <tumaet-ui-message severity="warn" class="block">
                     <span class="flex flex-col gap-2">
                         <span class="flex items-center gap-2">
                             <fa-icon [icon]="faTriangleExclamation" class="shrink-0" />
@@ -385,11 +385,11 @@
                             }
                         </span>
                     </span>
-                </tum-ui-message>
+                </tumaet-ui-message>
             }
             @if (stats().tutorLeaderboardEntries?.length) {
-                <tum-ui-panel class="min-w-0 overflow-hidden">
-                    <div tumUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-4">
+                <tumaet-ui-panel class="min-w-0 overflow-hidden">
+                    <div tumAetUiPanelHeader class="flex w-full min-w-0 items-center justify-between gap-4">
                         @if (!isExamMode()) {
                             <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle"></span>
                         }
@@ -398,7 +398,7 @@
                         }
                     </div>
                     <jhi-tutor-leaderboard [exam]="exam()" [tutorsData]="stats().tutorLeaderboardEntries" [course]="course()" />
-                </tum-ui-panel>
+                </tumaet-ui-panel>
             }
         </div>
     }

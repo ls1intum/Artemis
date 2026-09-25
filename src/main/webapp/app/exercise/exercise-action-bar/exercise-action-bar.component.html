@@ -16,26 +16,26 @@
         </span>
     }
     <button
-        tumUiButton
+        tumAetUiButton
         type="button"
         severity="secondary"
         variant="outlined"
         size="small"
         class="action-more"
         [class.hidden]="!hasOverflow()"
-        [tumUiPopoverTrigger]="menu"
+        [tumAetUiPopoverTrigger]="menu"
         [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
         [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
     >
         <fa-icon [icon]="faEllipsis" />
     </button>
-    <tum-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
+    <tumaet-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
         <div class="action-menu flex flex-col gap-1">
             @for (action of hiddenActions(); track action.id) {
                 <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
             }
         </div>
-    </tum-ui-popover>
+    </tumaet-ui-popover>
 </div>
 
 <ng-template #actionTpl let-action let-inMenu="inMenu">
@@ -45,7 +45,7 @@
                  branch below can show one because it keeps pointer-events enabled. -->
             <button
                 type="button"
-                tumUiButton
+                tumAetUiButton
                 jhiDeleteButton
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [renderButtonText]="false"
@@ -70,7 +70,7 @@
         }
         @case ('button') {
             <button
-                tumUiButton
+                tumAetUiButton
                 type="button"
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [severity]="action.severity"
@@ -84,7 +84,7 @@
         }
         @default {
             <a
-                tumUiButton
+                tumAetUiButton
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [routerLink]="action.disabled ? undefined : action.link"
                 [severity]="action.severity"
@@ -95,8 +95,8 @@
                 [attr.aria-disabled]="action.disabled || undefined"
                 [attr.tabindex]="action.disabled ? -1 : undefined"
                 [style.pointer-events]="action.disabled ? 'auto' : undefined"
-                [tumUiTooltip]="action.disabled && action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
-                tumUiTooltipPlacement="top"
+                [tumAetUiTooltip]="action.disabled && action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
+                tumAetUiTooltipPlacement="top"
                 (click)="closeMenuIfOpen(inMenu)"
             >
                 <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>

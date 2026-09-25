@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiInputDirective, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 /**
  * Component for viewing application configuration.
  * Displays beans and property sources with filtering and sorting.
@@ -21,10 +21,10 @@ import { TumUiInputDirective, TumUiTableDirective, TumUiTableSortEvent, TumUiTab
         JsonPipe,
         KeyValuePipe,
         AdminTitleBarTitleDirective,
-        TumUiInputDirective,
-        TumUiTagComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class ConfigurationComponent implements OnInit {
@@ -81,7 +81,7 @@ export class ConfigurationComponent implements OnInit {
      * the single `prefix` field, so the handler just mirrors the resolved order onto the
      * `beansAscending` signal that drives the client-side sort in `beans()`.
      */
-    onTableSort(event: TumUiTableSortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         this.beansAscending.set(event.order === 1);
     }
 }

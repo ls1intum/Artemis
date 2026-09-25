@@ -1,6 +1,6 @@
 <h5 *adminTitleBarTitle id="cleanup-page-heading" class="mb-0" jhiTranslate="cleanupService.title"></h5>
 
-<table tumUiTable style="min-width: 100%" aria-describedby="cleanup-page-heading" data-testid="cleanup-operations-table" id="cleanupOperations">
+<table tumAetUiTable style="min-width: 100%" aria-describedby="cleanup-page-heading" data-testid="cleanup-operations-table" id="cleanupOperations">
     <thead>
         <tr>
             <th scope="col" jhiTranslate="cleanupService.table.operation"></th>
@@ -38,7 +38,7 @@
                 </td>
                 <td>
                     @if (!operation.ageBased) {
-                        <tum-ui-date-picker
+                        <tumaet-ui-date-picker
                             [inputId]="'deleteFromDate-' + operation.name"
                             [value]="operation.deleteFrom"
                             (valueChange)="onDeleteFromChange(operation, $event)"
@@ -54,7 +54,7 @@
                 </td>
                 <td>
                     @if (!operation.ageBased) {
-                        <tum-ui-date-picker
+                        <tumaet-ui-date-picker
                             [inputId]="'deleteToDate-' + operation.name"
                             [value]="operation.deleteTo"
                             (valueChange)="onDeleteToChange(operation, $event)"
@@ -81,7 +81,7 @@
                 <td>
                     <button
                         type="button"
-                        tumUiButton
+                        tumAetUiButton
                         [severity]="actionPresentation[operation.action].severity"
                         size="small"
                         [disabled]="!operation.datesValid() || !operation.deleteFromValid() || !operation.deleteToValid()"

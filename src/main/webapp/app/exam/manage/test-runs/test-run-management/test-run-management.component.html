@@ -10,7 +10,7 @@
                 <button
                     type="button"
                     id="createTestRunButton"
-                    tumUiButton
+                    tumAetUiButton
                     size="small"
                     (click)="openCreateTestRunModal()"
                     [disabled]="isLoading() || !examContainsExercises()"
@@ -29,7 +29,7 @@
                 @if (course()?.isAtLeastInstructor) {
                     <a
                         [title]="'artemisApp.examManagement.testRun.assess' | artemisTranslate"
-                        tumUiButton
+                        tumAetUiButton
                         size="small"
                         [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
                         [class.disabled]="isLoading() || !testRunCanBeAssessed()"

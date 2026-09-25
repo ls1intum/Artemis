@@ -35,7 +35,7 @@
             <div class="text-primary d-inline-flex">
                 <button
                     id="test-sort"
-                    tumUiButton
+                    tumAetUiButton
                     type="button"
                     variant="text"
                     size="small"
@@ -49,20 +49,20 @@
             <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="my-0" />
             @if (coursesLoaded()) {
                 <div class="flex sm:w-auto">
-                    <a id="course-enrollment" tumUiButton [severity]="canRequestCourse() || isAdmin() ? 'secondary' : 'primary'" [routerLink]="['/courses/enroll']" size="small">
+                    <a id="course-enrollment" tumAetUiButton [severity]="canRequestCourse() || isAdmin() ? 'secondary' : 'primary'" [routerLink]="['/courses/enroll']" size="small">
                         <fa-icon [icon]="faDoorOpen" />
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.studentDashboard.enroll.title"></span>
                     </a>
                 </div>
             }
             @if (canRequestCourse()) {
-                <a tumUiButton id="request-course" [routerLink]="['/course-requests']" size="small">
+                <a tumAetUiButton id="request-course" [routerLink]="['/course-requests']" size="small">
                     <fa-icon [icon]="faBook" />
                     <span jhiTranslate="global.menu.courseRequests"></span>
                 </a>
             }
             @if (isAdmin()) {
-                <a tumUiButton id="create-course" size="small" [routerLink]="['/course-management/new']">
+                <a tumAetUiButton id="create-course" size="small" [routerLink]="['/course-management/new']">
                     <fa-icon [icon]="faPlus" />
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.course.home.createLabel"></span>
                 </a>

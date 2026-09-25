@@ -3,7 +3,7 @@
 <div *adminTitleBarActions class="flex items-center gap-2">
     <button
         type="button"
-        tumUiButton
+        tumAetUiButton
         severity="secondary"
         size="small"
         variant="outlined"
@@ -15,7 +15,7 @@
         <span jhiTranslate="artemisApp.featureUsage.sendDigest"></span>
     </button>
     <span data-testid="window-selector">
-        <tum-ui-select-button
+        <tumaet-ui-select-button
             [attr.aria-label]="'artemisApp.featureUsage.window.label' | artemisTranslate"
             [options]="windowOptions"
             [ngModel]="selectedWindow()"
@@ -55,7 +55,7 @@
     <div class="grid gap-3 mb-4" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))">
         <!-- Every count here is a feature of the catalogue, the unit the tree below lists, so the headline and the rows an
              admin then works through cannot disagree. -->
-        <tum-ui-card data-testid="kpi-used-features">
+        <tumaet-ui-card data-testid="kpi-used-features">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.usedFeatures"></div>
             <div class="text-3xl font-semibold" data-testid="kpi-value">{{ report.usedFeatures }}</div>
             <div
@@ -64,23 +64,23 @@
                 jhiTranslate="artemisApp.featureUsage.kpi.ofAvailable"
                 [translateValues]="{ count: report.availableFeatures }"
             ></div>
-        </tum-ui-card>
-        <tum-ui-card data-testid="kpi-only-automatic">
+        </tumaet-ui-card>
+        <tumaet-ui-card data-testid="kpi-only-automatic">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.onlyAutomatic"></div>
             <div class="text-3xl font-semibold" data-testid="kpi-value" [class.text-state-warning]="report.onlyAutomatic > 0">{{ report.onlyAutomatic }}</div>
             <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.onlyAutomaticDetail"></div>
-        </tum-ui-card>
-        <tum-ui-card data-testid="kpi-unused-features">
+        </tumaet-ui-card>
+        <tumaet-ui-card data-testid="kpi-unused-features">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.unusedFeatures"></div>
             <div class="text-3xl font-semibold" data-testid="kpi-value" [class.text-state-warning]="report.unusedFeatures > 0">{{ report.unusedFeatures }}</div>
             <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.unusedDetail"></div>
-        </tum-ui-card>
-        <tum-ui-card data-testid="kpi-no-actions">
+        </tumaet-ui-card>
+        <tumaet-ui-card data-testid="kpi-no-actions">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.noActions"></div>
             <div class="text-3xl font-semibold" data-testid="kpi-value">{{ report.noActions }}</div>
             <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.noActionsDetail"></div>
-        </tum-ui-card>
-        <tum-ui-card data-testid="kpi-not-available">
+        </tumaet-ui-card>
+        <tumaet-ui-card data-testid="kpi-not-available">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.notAvailable"></div>
             <div class="text-3xl font-semibold" data-testid="kpi-value">{{ report.notAvailable }}</div>
             <div
@@ -89,8 +89,8 @@
                 jhiTranslate="artemisApp.featureUsage.kpi.retiredEndpoints"
                 [translateValues]="{ count: report.retiredEndpoints }"
             ></div>
-        </tum-ui-card>
-        <tum-ui-card data-testid="kpi-calls">
+        </tumaet-ui-card>
+        <tumaet-ui-card data-testid="kpi-calls">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.uses"></div>
             <div class="text-3xl font-semibold" data-testid="kpi-value">{{ useCount() }}</div>
             <div
@@ -99,8 +99,8 @@
                 jhiTranslate="artemisApp.featureUsage.kpi.usesDetail"
                 [translateValues]="{ actions: report.actionCount, views: report.viewCount, automatic: report.automaticCount, system: report.systemCount }"
             ></div>
-        </tum-ui-card>
-        <tum-ui-card data-testid="kpi-recording-since">
+        </tumaet-ui-card>
+        <tumaet-ui-card data-testid="kpi-recording-since">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.recordingSince"></div>
             <!-- Guarded rather than piped straight through: the date pipe turns an absent value into today, which would
                  claim evidence that does not exist. -->
@@ -111,47 +111,47 @@
                     -
                 }
             </div>
-        </tum-ui-card>
+        </tumaet-ui-card>
     </div>
 
     @if (useCount() === 0) {
-        <tum-ui-message class="mb-4 block" severity="info" data-testid="no-usage-message">
+        <tumaet-ui-message class="mb-4 block" severity="info" data-testid="no-usage-message">
             <span jhiTranslate="artemisApp.featureUsage.noUsageYet"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
 
     @if (roleDistribution().length) {
-        <tum-ui-card class="mb-4 block" data-testid="role-distribution">
+        <tumaet-ui-card class="mb-4 block" data-testid="role-distribution">
             <div class="text-sm text-muted-color mb-2" jhiTranslate="artemisApp.featureUsage.roleDistribution"></div>
             <div class="flex flex-wrap gap-2">
                 @for (share of roleDistribution(); track share.callerRole) {
-                    <tum-ui-tag severity="secondary">{{ share.callerRole }}: {{ share.callCount }}</tum-ui-tag>
+                    <tumaet-ui-tag severity="secondary">{{ share.callerRole }}: {{ share.callCount }}</tumaet-ui-tag>
                 }
             </div>
-        </tum-ui-card>
+        </tumaet-ui-card>
     }
 
-    <tum-ui-tabs [value]="activeTab()" (valueChange)="activeTab.set($any($event))">
-        <tum-ui-tab-list>
-            <tum-ui-tab [value]="TAB_FEATURES" jhiTranslate="artemisApp.featureUsage.tab.features" data-testid="tab-features" />
-            <tum-ui-tab [value]="TAB_ATTENTION" jhiTranslate="artemisApp.featureUsage.tab.attention" data-testid="tab-attention" />
-            <tum-ui-tab [value]="TAB_ADOPTION" jhiTranslate="artemisApp.featureUsage.tab.adoption" data-testid="tab-adoption" />
-            <tum-ui-tab [value]="TAB_ENDPOINTS" jhiTranslate="artemisApp.featureUsage.tab.endpoints" data-testid="tab-endpoints" />
-        </tum-ui-tab-list>
-    </tum-ui-tabs>
+    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="activeTab.set($any($event))">
+        <tumaet-ui-tab-list>
+            <tumaet-ui-tab [value]="TAB_FEATURES" jhiTranslate="artemisApp.featureUsage.tab.features" data-testid="tab-features" />
+            <tumaet-ui-tab [value]="TAB_ATTENTION" jhiTranslate="artemisApp.featureUsage.tab.attention" data-testid="tab-attention" />
+            <tumaet-ui-tab [value]="TAB_ADOPTION" jhiTranslate="artemisApp.featureUsage.tab.adoption" data-testid="tab-adoption" />
+            <tumaet-ui-tab [value]="TAB_ENDPOINTS" jhiTranslate="artemisApp.featureUsage.tab.endpoints" data-testid="tab-endpoints" />
+        </tumaet-ui-tab-list>
+    </tumaet-ui-tabs>
 
     <div class="flex flex-wrap items-center gap-2 my-3">
-        <tum-ui-icon-field [icon]="faSearch">
+        <tumaet-ui-icon-field [icon]="faSearch">
             <input
-                tumUiInput
+                tumAetUiInput
                 type="text"
                 [ngModel]="searchTerm()"
                 (ngModelChange)="searchTerm.set($event)"
                 [placeholder]="'artemisApp.featureUsage.search' | artemisTranslate"
                 data-testid="search-input"
             />
-        </tum-ui-icon-field>
-        <tum-ui-select
+        </tumaet-ui-icon-field>
+        <tumaet-ui-select
             [options]="areaOptions()"
             [ngModel]="selectedArea()"
             (ngModelChange)="selectedArea.set($event)"
@@ -162,7 +162,7 @@
             data-testid="area-filter"
         />
         @if (activeTab() !== TAB_ADOPTION) {
-            <tum-ui-select
+            <tumaet-ui-select
                 [options]="callerRoleOptions()"
                 [ngModel]="selectedCallerRole()"
                 (ngModelChange)="onCallerRoleChanged($event)"
@@ -175,7 +175,7 @@
         }
         @if (activeTab() === TAB_FEATURES) {
             <label class="inline-flex items-center gap-2 text-sm">
-                <tum-ui-toggle-switch [ngModel]="showNotAvailable()" (ngModelChange)="showNotAvailable.set($event)" data-testid="show-not-available" />
+                <tumaet-ui-toggle-switch [ngModel]="showNotAvailable()" (ngModelChange)="showNotAvailable.set($event)" data-testid="show-not-available" />
                 <span jhiTranslate="artemisApp.featureUsage.showNotAvailable"></span>
             </label>
         }
@@ -208,7 +208,7 @@
     }
 
     @if (trendTarget(); as target) {
-        <tum-ui-card class="mt-4 block" data-testid="trend-card">
+        <tumaet-ui-card class="mt-4 block" data-testid="trend-card">
             <div class="flex items-center justify-between mb-2">
                 <div>
                     <span class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.trendTitle"></span>
@@ -218,13 +218,13 @@
                         <span class="ms-2 font-mono text-sm">{{ target.title }}</span>
                     }
                 </div>
-                <button type="button" tumUiButton severity="secondary" size="small" variant="outlined" (click)="closeTrend()">
+                <button type="button" tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="closeTrend()">
                     <span jhiTranslate="artemisApp.featureUsage.closeTrend"></span>
                 </button>
             </div>
             @if (trendChartData(); as chart) {
                 <div style="height: 260px">
-                    <tum-ui-line-chart
+                    <tumaet-ui-line-chart
                         [labels]="chart.labels"
                         [series]="chart.series"
                         [config]="trendChartConfig"
@@ -237,6 +237,6 @@
                     <fa-icon [icon]="faSpinner" animation="spin" size="2x" />
                 </div>
             }
-        </tum-ui-card>
+        </tumaet-ui-card>
     }
 }

@@ -6,17 +6,17 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiButtonDirective, TumUiButtonSize } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSize } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-csv-export-button',
     template: ` <button
         type="button"
-        tumUiButton
+        tumAetUiButton
         severity="secondary"
         variant="outlined"
-        [size]="tumUiSize()"
+        [size]="tumAetUiSize()"
         [disabled]="disabled()"
         [title]="title() ? (title() | artemisTranslate) : ''"
         (click)="openExportModal($event)"
@@ -28,7 +28,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
             <span [class.title-bar-collapsible-label]="collapsibleLabel()" [jhiTranslate]="title()"></span>
         }
     </button>`,
-    imports: [TumUiButtonDirective, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ExportButtonComponent {
     private dialogService = inject(DialogService);
@@ -45,7 +45,7 @@ export class ExportButtonComponent {
 
     onExport = output<CsvExportOptions | undefined>();
 
-    tumUiSize = computed<TumUiButtonSize>(() => {
+    tumAetUiSize = computed<TumAetUiButtonSize>(() => {
         switch (this.buttonSize()) {
             case ButtonSize.SMALL:
                 return 'small';

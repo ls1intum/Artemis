@@ -2,7 +2,7 @@
     @if (canArchive()) {
         <button
             [title]="archiveButtonText()"
-            tumUiButton
+            tumAetUiButton
             severity="secondary"
             variant="outlined"
             size="small"
@@ -21,7 +21,7 @@
     @if (displayDownloadArchiveButton()) {
         <button
             [title]="'artemisApp.courseExamArchive.downloadArchive' | artemisTranslate"
-            tumUiButton
+            tumAetUiButton
             severity="secondary"
             variant="outlined"
             size="small"
@@ -39,7 +39,7 @@
         <button
             type="button"
             [title]="'entity.action.cleanup' | artemisTranslate"
-            tumUiButton
+            tumAetUiButton
             severity="danger"
             size="small"
             [disabled]="isBeingArchived()"
@@ -62,7 +62,7 @@
         <button
             type="button"
             [title]="'entity.action.cleanup' | artemisTranslate"
-            tumUiButton
+            tumAetUiButton
             severity="danger"
             size="small"
             [disabled]="isBeingArchived()"

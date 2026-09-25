@@ -15,18 +15,18 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
 import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiCheckboxComponent,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiPaginatorComponent,
-    TumUiRadioButtonComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPaginatorComponent,
+    TumAetUiRadioButtonComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -133,22 +133,22 @@ const MAX_LISTED_DELETION_ACCOUNTS = 10;
         ProfilePictureComponent,
         SearchHighlightComponent,
         ItemCountComponent,
-        TumUiPaginatorComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiTooltipDirective,
-        TumUiInputDirective,
-        TumUiCheckboxComponent,
-        TumUiRadioButtonComponent,
-        TumUiMessageComponent,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiInputDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiRadioButtonComponent,
+        TumAetUiMessageComponent,
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiDialogComponent,
+        TumAetUiDialogComponent,
     ],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
@@ -591,14 +591,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Handles a tum-ui paginator page change by converting the 0-indexed page to the 1-indexed page and navigating. */
+    /** Handles a tumaet-ui paginator page change by converting the 0-indexed page to the 1-indexed page and navigating. */
     onPageChange(page: number): void {
         this.page.set(page + 1);
         this.transition();
     }
 
     /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
-    onTableSort(event: TumUiTableSortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         if (!event.field) {
             return;
         }
