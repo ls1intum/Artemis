@@ -174,6 +174,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getSubmission().getParticipation().getExercise(), null);
         final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
+        checkTextBlocksBelongToSubmissionElseThrow(textBlocks, textSubmission.getId());
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, feedbacks, resultId, textAssessment.assessmentNote());
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -208,6 +209,7 @@ public class TextAssessmentResource extends AssessmentResource {
                         "exerciseId", "exerciseIdMismatch");
             }
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
+            checkTextBlocksBelongToSubmissionElseThrow(textBlocks, exampleSubmission.getSubmission().getId());
         }
         else {
             TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
@@ -292,6 +294,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         checkAuthorization(exercise, null);
         final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
+        checkTextBlocksBelongToSubmissionElseThrow(textBlocks, textSubmission.getId());
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, feedbacks, resultId, textAssessment.assessmentNote());
 
         if (response.getStatusCode().is2xxSuccessful()) {
@@ -329,6 +332,7 @@ public class TextAssessmentResource extends AssessmentResource {
         checkAuthorization(textExercise, user);
         final AssessmentUpdateBaseDTO assessmentUpdateEntities = assessmentUpdateFromDto(assessmentUpdate);
         final Set<TextBlock> textBlocks = textBlocksFromDtos(assessmentUpdate.textBlocks());
+        checkTextBlocksBelongToSubmissionElseThrow(textBlocks, textSubmission.getId());
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdateEntities);
         saveTextBlocks(textBlocks, textSubmission, result.getFeedbacks());
 
@@ -405,7 +409,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // return forbidden if caller is not allowed to assess
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(exercise, user, resultId);
         textSubmissionService.checkThatAssessmentIsPossibleElseThrow(exercise, participation);
-        textSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
+        textSubmissionService.checkCorrectionRoundIsValidElseThrow(exercise, submissionId, correctionRound);
 
         Result result;
         if (resultId != null) {
@@ -647,6 +651,25 @@ public class TextAssessmentResource extends AssessmentResource {
      * assessment-update logic without exposing entities at the REST boundary.
      */
     private record TextAssessmentUpdateAdapter(List<Feedback> feedbacks, ComplaintResponse complaintResponse, String assessmentNote) implements AssessmentUpdateBaseDTO {
+    }
+
+    /**
+     * Checks that an assessment only contains text blocks of the submission it is saved to. A text block id is the id of a stored row, and saving the blocks assigns every row
+     * they name to the assessed submission. Blocks without a stored row are new and are accepted. The blocks are saved last, so this is checked before the assessment is written.
+     *
+     * @param textBlocks   the text blocks received from the client (may be {@code null})
+     * @param submissionId the id of the submission that is assessed
+     */
+    private void checkTextBlocksBelongToSubmissionElseThrow(final Set<TextBlock> textBlocks, final long submissionId) {
+        if (textBlocks == null || textBlocks.isEmpty()) {
+            return;
+        }
+        final Set<String> blockIds = textBlocks.stream().map(TextBlock::getId).filter(Objects::nonNull).collect(toSet());
+        final boolean hasBlockOfOtherSubmission = textBlockService.findAllById(blockIds).stream()
+                .anyMatch(block -> block.getSubmission() == null || !Objects.equals(block.getSubmission().getId(), submissionId));
+        if (hasBlockOfOtherSubmission) {
+            throw new BadRequestAlertException("The assessment contains a text block of another submission", "textBlock", "textBlockSubmissionMismatch");
+        }
     }
 
     /**

@@ -18,7 +18,6 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -43,7 +42,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FontAwesomeModule, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {

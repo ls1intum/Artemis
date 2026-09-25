@@ -5,7 +5,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
@@ -24,7 +24,7 @@ describe('LinkPreviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [LinkPreviewComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ConfirmIconComponent)],
+            imports: [LinkPreviewComponent, MockPipe(ArtemisTranslatePipe), ConfirmIconComponent],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -68,6 +68,27 @@ describe('LinkPreviewComponent', () => {
         expect(previewTitle.textContent).toBe('Test Title');
         expect(previewDescription.textContent).toBe('Test Description');
         expect(previewImage.src).toContain('test-image.jpg');
+    });
+
+    it('should keep the close button reachable and enabled when focused via keyboard', () => {
+        vi.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        fixture.componentRef.setInput('linkPreview', {
+            title: 'Test Title',
+            description: 'Test Description',
+            url: 'https://example.com',
+            shouldPreviewBeShown: true,
+        });
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        const closeButton = fixture.nativeElement.querySelector('.close-button button');
+        expect(closeButton).toBeTruthy();
+
+        closeButton.focus();
+
+        expect(document.activeElement).toBe(closeButton);
+        expect(closeButton.disabled).toBe(false);
+        expect(closeButton.hidden).toBe(false);
     });
 
     it('should render link preview without image when multiple links are provided', () => {

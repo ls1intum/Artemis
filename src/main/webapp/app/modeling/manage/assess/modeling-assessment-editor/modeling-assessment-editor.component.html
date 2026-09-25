@@ -1,7 +1,6 @@
 <main class="modeling-assessment-page">
     <jhi-assessment-layout
         class="modeling-assessment-page__layout"
-        (navigateBack)="navigateBack()"
         [isLoading]="isLoading()"
         [nextSubmissionBusy]="nextSubmissionBusy()"
         [isTeamMode]="!!modelingExercise()?.teamMode"
@@ -82,11 +81,8 @@
                         <jhi-unreferenced-feedback
                             [feedbacks]="unreferencedFeedback()"
                             (feedbacksChange)="unreferencedFeedback.set($event); validateFeedback()"
-                            [feedbackSuggestions]="unreferencedFeedbackSuggestions"
                             [readOnly]="readOnly"
                             [highlightDifferences]="highlightDifferences"
-                            (onAcceptSuggestion)="removeSuggestion($event)"
-                            (onDiscardSuggestion)="removeSuggestion($event)"
                             [resultId]="result()!.id!"
                             [gradingCriteria]="modelingExercise()?.gradingCriteria ?? []"
                             [allFeedbacks]="allAssessmentFeedbacks()"

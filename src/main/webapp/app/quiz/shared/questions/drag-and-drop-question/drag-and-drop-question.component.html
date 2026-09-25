@@ -121,9 +121,6 @@
                                         height: dropLocation.height! / 2 + '%',
                                     }"
                                     (cdkDropListDropped)="onDragDrop(dropLocation, $event)"
-                                    (onDragEnter)="preventDefault($event)"
-                                    (onDragOver)="preventDefault($event)"
-                                    (onDragLeave)="preventDefault($event)"
                                     cdkDropList
                                     [cdkDropListAutoScrollStep]="dragAutoScrollStep"
                                 >
@@ -291,9 +288,6 @@
                         id="drag-items"
                         [ngClass]="dropAllowed() ? 'drop-allowed' : ''"
                         (cdkDropListDropped)="onDragDrop(undefined, $event)"
-                        (onDragEnter)="preventDefault($event)"
-                        (onDragOver)="preventDefault($event)"
-                        (onDragLeave)="preventDefault($event)"
                         cdkDropList
                         [cdkDropListAutoScrollStep]="dragAutoScrollStep"
                     >

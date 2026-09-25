@@ -24,8 +24,6 @@ describe('TumUiToggleSwitchComponent', () => {
     }
 
     it('keeps its identity class while the state classes change around it', () => {
-        // The identity class is static and the state classes are bound, so this is also the check that Angular
-        // merges the two rather than letting the binding replace the static one.
         expect(host.classList.contains('tum-ui-toggle-switch')).toBe(true);
         expect(host.classList.contains('tum:bg-control-border')).toBe(true);
 

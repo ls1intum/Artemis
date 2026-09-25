@@ -40,7 +40,6 @@ let nextDatePickerId = 0;
     templateUrl: './tum-ui-date-picker.component.html',
     styleUrl: './tum-ui-date-picker.component.scss',
     host: {
-        // The application stylesheet excludes TUM UI controls from the JHipster validity accent by this class.
         class: 'tum-ui-date-picker',
     },
     imports: [A11yModule, FaIconComponent, FaStackComponent, FaStackItemSizeDirective, TumUiButtonComponent, TumUiCalendarComponent, TumUiTooltipDirective, TumUiTranslatePipe],
@@ -67,12 +66,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     readonly hideValidationMessage = input(false, { transform: booleanAttribute });
     /** Shows the browser time-zone indicator beside the label. */
     readonly shouldDisplayTimeZoneWarning = input(true, { transform: booleanAttribute });
-    /**
-     * Reduces the field to a time: the text is `HH:mm`, the dialog drops the calendar, and only the clock is
-     * shown. The value stays a full Dayjs — the date is carried over from the value already held, or is
-     * today — so a caller that only cares about the time can read it and one that needs a moment still gets a
-     * complete one.
-     */
+    /** Edit `HH:mm` without a calendar, preserving the value's date or using today when empty. */
     readonly timeOnly = input(false, { transform: booleanAttribute });
 
     /** ID used to associate the input, label, validation message, and dialog. */
@@ -136,8 +130,7 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
                 this.close();
             }
         });
-        // A time-only dialog has no calendar to take focus on open, and a modal dialog the user is not inside
-        // cannot be reached with a keyboard or a screen reader. The hour is where the editing starts.
+        // Time-only mode has no calendar, so focus the hour field when the dialog opens.
         afterRenderEffect(() => {
             const field = this.hourField()?.nativeElement;
             if (field && this.pendingHourFocus) {

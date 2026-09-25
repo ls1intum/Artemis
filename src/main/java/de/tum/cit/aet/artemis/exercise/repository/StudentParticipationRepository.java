@@ -1069,7 +1069,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT p.id
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
-                AND (p.student.firstName LIKE %:partialStudentName% OR p.student.lastName LIKE %:partialStudentName%)
+                AND (LOWER(p.student.firstName) LIKE CONCAT('%', LOWER(CAST(:partialStudentName AS string)), '%') OR LOWER(p.student.lastName) LIKE CONCAT('%', LOWER(CAST(:partialStudentName AS string)), '%'))
                 AND EXISTS (
                     SELECT r.id
                     FROM Result r
@@ -1086,8 +1086,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT COUNT(p)
             FROM StudentParticipation p
             WHERE p.exercise.id = :exerciseId
-                AND (p.student.firstName LIKE %:partialStudentName%
-                    OR p.student.lastName LIKE %:partialStudentName%)
+                AND (LOWER(p.student.firstName) LIKE CONCAT('%', LOWER(CAST(:partialStudentName AS string)), '%')
+                    OR LOWER(p.student.lastName) LIKE CONCAT('%', LOWER(CAST(:partialStudentName AS string)), '%'))
                 AND EXISTS (
                     SELECT r.id
                     FROM Result r
@@ -1810,8 +1810,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHERE t.exercise.id = :exerciseId AND tct.testName = tc.testName
                 ), 'Not assigned to task'),
                 CASE
-                    WHEN MIN(m.text) LIKE 'ARES Security Error%' THEN 'Ares Error'
-                    WHEN MIN(m.text) LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                    WHEN LOWER(MIN(m.text)) LIKE 'ares security error%' THEN 'Ares Error'
+                    WHEN LOWER(MIN(m.text)) LIKE 'unwanted statement found%' THEN 'AST Error'
                     ELSE 'Student Error'
                 END,
                 CASE WHEN MAX(LENGTH(m.text)) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH THEN TRUE ELSE FALSE END
@@ -1838,8 +1838,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         WHERE t.taskName IN (:filterTaskNames)
                     ))
                 AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
-                            WHEN m.text LIKE 'ARES Security Error%' THEN 'Ares Error'
-                            WHEN m.text LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                            WHEN LOWER(m.text) LIKE 'ares security error%' THEN 'Ares Error'
+                            WHEN LOWER(m.text) LIKE 'unwanted statement found%' THEN 'AST Error'
                             ELSE 'Student Error'
                         END IN (:filterErrorCategories))
             GROUP BY m.id, tc.testName
