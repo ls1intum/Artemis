@@ -193,6 +193,7 @@ class WorkerSupervisorTest {
                 assertThat(events).anyMatch(event -> event.type() == WorkerEventType.ERROR);
             });
             assertThat(take(events, WorkerEventType.ERROR).identity()).isEqualTo(id);
+            worker.heartbeat();
             assertThat(take(events, WorkerEventType.HEARTBEAT).capacity().executions()).isEmpty();
             worker.accept(rejected);
             assertThat(calls).hasValue(0);
