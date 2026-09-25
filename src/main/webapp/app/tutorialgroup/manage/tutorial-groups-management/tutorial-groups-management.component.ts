@@ -5,13 +5,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faGear, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faPlus, faUmbrellaBeach, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     CellTemplateRef,
     ColumnDef,
     TumAetUiButtonDirective,
-    TumAetUiMessageComponent,
+    TumAetUiEmptyStateComponent,
     TumAetUiSearchFieldComponent,
     TumAetUiTableComponent,
     TumAetUiTableQueryEvent,
@@ -129,7 +129,7 @@ function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableFi
         CourseTitleBarActionsDirective,
         TumAetUiTableComponent,
         TumAetUiButtonDirective,
-        TumAetUiMessageComponent,
+        TumAetUiEmptyStateComponent,
         TumAetUiSearchFieldComponent,
         TumAetUiTooltipDirective,
         TutorialGroupsImportButtonComponent,
@@ -243,6 +243,7 @@ export class TutorialGroupsManagementComponent {
     protected readonly isOwnGroup = (row: TutorialGroupRow) => row.group.isUserTutor === true;
 
     protected readonly faPlus = faPlus;
+    protected readonly faUsers = faUsers;
     protected readonly faGear = faGear;
     protected readonly faUmbrellaBeach = faUmbrellaBeach;
 

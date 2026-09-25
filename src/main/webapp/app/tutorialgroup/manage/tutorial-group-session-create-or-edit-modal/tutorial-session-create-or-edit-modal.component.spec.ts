@@ -53,19 +53,19 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
     }
 
     function setValidCreateInputs() {
-        component.date.set(new Date(2026, 3, 22));
-        component.startTime.set(new Date(2026, 3, 22, 10, 15));
-        component.endTime.set(new Date(2026, 3, 22, 11, 45));
+        component.date.set(dayjs('2026-04-22'));
+        component.startTime.set(dayjs('2026-04-22T10:15:00'));
+        component.endTime.set(dayjs('2026-04-22T11:45:00'));
         component.location.set('Room 102');
         component.attendance.set(12);
     }
 
     function expectClearedState() {
-        expect(component.date()).toBeNull();
+        expect(component.date()).toBeUndefined();
         expect(component.dateInputTouched()).toBe(false);
-        expect(component.startTime()).toBeNull();
+        expect(component.startTime()).toBeUndefined();
         expect(component.startTimeInputTouched()).toBe(false);
-        expect(component.endTime()).toBeNull();
+        expect(component.endTime()).toBeUndefined();
         expect(component.endTimeInputTouched()).toBe(false);
         expect(component.location()).toBe('');
         expect(component.locationInputTouched()).toBe(false);
@@ -79,9 +79,9 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
 
         expect(component.isOpen()).toBe(true);
         expectDialogHeader('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.header.create');
-        expect(component.date()).toBeNull();
-        expect(component.startTime()).toBeNull();
-        expect(component.endTime()).toBeNull();
+        expect(component.date()).toBeUndefined();
+        expect(component.startTime()).toBeUndefined();
+        expect(component.endTime()).toBeUndefined();
         expect(component.location()).toBe('');
         expect(component.attendance()).toBeNull();
         expect(component.saveButtonDisabled()).toBe(true);
@@ -95,9 +95,9 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
 
         expect(component.isOpen()).toBe(true);
         expectDialogHeader('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.header.edit');
-        expect(component.date()).toEqual(existingSession.start.toDate());
-        expect(component.startTime()).toEqual(existingSession.start.toDate());
-        expect(component.endTime()).toEqual(existingSession.end.toDate());
+        expect(component.date()).toEqual(existingSession.start);
+        expect(component.startTime()).toEqual(existingSession.start);
+        expect(component.endTime()).toEqual(existingSession.end);
         expect(component.location()).toBe('Room 101');
         expect(component.attendance()).toBe(9);
         expect(component.saveButtonDisabled()).toBe(true);
@@ -110,7 +110,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.dateRequired',
         });
 
-        component.date.set(new Date(2026, 3, 22));
+        component.date.set(dayjs('2026-04-22'));
 
         expect(component.dateValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
@@ -121,7 +121,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.startTimeRequired',
         });
 
-        component.startTime.set(new Date(2026, 3, 22, 10, 15));
+        component.startTime.set(dayjs('2026-04-22T10:15:00'));
 
         expect(component.startTimeValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
@@ -132,15 +132,15 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.endTimeRequired',
         });
 
-        component.startTime.set(new Date(2026, 3, 22, 10, 15));
-        component.endTime.set(new Date(2026, 3, 22, 10, 15));
+        component.startTime.set(dayjs('2026-04-22T10:15:00'));
+        component.endTime.set(dayjs('2026-04-22T10:15:00'));
 
         expect(component.endTimeValidationResult()).toEqual({
             status: ValidationStatus.INVALID,
             message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.endTimeNotAfterStartTime',
         });
 
-        component.endTime.set(new Date(2026, 3, 22, 11, 45));
+        component.endTime.set(dayjs('2026-04-22T11:45:00'));
 
         expect(component.endTimeValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
@@ -170,19 +170,30 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
         expect(component.locationValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
+    it('should block saving while the typed date text does not parse, even with a value set', () => {
+        component.open();
+        setValidCreateInputs();
+        expect(component.saveButtonDisabled()).toBe(false);
+
+        // The picker keeps its last value but reports the visible text no longer parses (e.g. a half-typed date).
+        component.dateTextValid.set(false);
+
+        expect(component.saveButtonDisabled()).toBe(true);
+    });
+
     it('should enable the save button in create mode only when all inputs are valid', () => {
         component.open();
 
         expect(component.saveButtonDisabled()).toBe(true);
 
-        component.date.set(new Date(2026, 3, 22));
-        component.startTime.set(new Date(2026, 3, 22, 10, 15));
-        component.endTime.set(new Date(2026, 3, 22, 10, 15));
+        component.date.set(dayjs('2026-04-22'));
+        component.startTime.set(dayjs('2026-04-22T10:15:00'));
+        component.endTime.set(dayjs('2026-04-22T10:15:00'));
         component.location.set('Room 102');
 
         expect(component.saveButtonDisabled()).toBe(true);
 
-        component.endTime.set(new Date(2026, 3, 22, 11, 45));
+        component.endTime.set(dayjs('2026-04-22T11:45:00'));
 
         expect(component.saveButtonDisabled()).toBe(false);
     });

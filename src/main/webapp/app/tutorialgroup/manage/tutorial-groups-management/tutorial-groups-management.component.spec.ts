@@ -371,10 +371,12 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows()[0][0]).toBe('Group-00');
     });
 
-    it('should show the intro message instead of the table when the course has no tutorial groups', async () => {
+    it('should show the empty state with create and import instead of the table when the course has no tutorial groups', async () => {
         await setUp([]);
         expect(fixture.debugElement.query(By.css('[data-testid="tutorial-groups-table"]'))).toBeNull();
         expect(fixture.debugElement.query(By.css('[data-testid="tutorial-groups-intro"]'))).not.toBeNull();
+        // Both calls to action sit in the empty state: create beside import.
+        expect(fixture.debugElement.query(By.css('[data-testid="empty-create-tutorial-group-btn"]'))).not.toBeNull();
         expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
     });
 });

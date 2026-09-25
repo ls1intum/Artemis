@@ -431,6 +431,7 @@
         "controlCenter": "Kontrollzentrum",
         "action": {
             "add": "Hinzufügen",
+            "create": "Erstellen",
             "addblob": "Blob hinzufügen",
             "addimage": "Bild hinzufügen",
             "back": "Zurück",

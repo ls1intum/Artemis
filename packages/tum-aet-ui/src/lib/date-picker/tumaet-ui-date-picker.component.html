@@ -1,76 +1,104 @@
-<div class="tumaet:flex tumaet:flex-col tumaet:gap-1">
-    @if ((!hideLabelName() && labelName()) || shouldDisplayTimeZoneWarning()) {
-        <div class="tumaet:flex tumaet:items-center tumaet:gap-1">
-            @if (!hideLabelName() && labelName()) {
-                <label [attr.for]="inputId()" class="tumaet:font-semibold tumaet:text-text">{{ labelName()! | tumAetUiTranslate }}</label>
-            }
-            @if (shouldDisplayTimeZoneWarning()) {
-                <fa-stack
-                    class="tumaet:h-4 tumaet:w-4"
-                    tabindex="0"
-                    role="img"
-                    [attr.aria-label]="'tumAetUi.datePicker.timeZoneWarning' | tumAetUiTranslate: { timeZone: currentTimeZone }"
-                    [tumAetUiTooltip]="'tumAetUi.datePicker.timeZoneWarning' | tumAetUiTranslate: { timeZone: currentTimeZone }"
-                >
-                    <fa-icon [icon]="faGlobe" stackItemSize="1x" class="tumaet:text-muted" />
-                    <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="tumaet:text-muted" />
-                </fa-stack>
-            }
-        </div>
-    }
+@if (inline()) {
+    <!-- No field, no border box: the controls sit in place at their natural width, aligned to the start. A named
+         group so a screen reader announces the whole stepper set by the field's label, not the bare hour/minute. -->
+    <div
+        class="tumaet:flex tumaet:flex-col tumaet:items-start tumaet:gap-1"
+        role="group"
+        [attr.aria-labelledby]="ariaLabelledBy() || null"
+        [attr.aria-label]="ariaLabelledBy() ? null : ariaLabel()"
+        [attr.aria-required]="ariaRequired() ? 'true' : null"
+    >
+        @if (!hideLabelName() && labelName()) {
+            <label [attr.for]="inputId()" class="tumaet:font-semibold tumaet:text-text">{{ labelName()! | tumAetUiTranslate }}</label>
+        }
+        @if (!timeOnly()) {
+            <tumaet-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
+        }
+        <ng-container [ngTemplateOutlet]="timeControls" />
+        @if (!hideValidationMessage() && showErrorBorder()) {
+            <span [id]="inputId() + '-error'" role="alert" class="tumaet:mt-1 tumaet:block tumaet:text-sm tumaet:text-state-danger">
+                {{ invalidMessageKey() | tumAetUiTranslate }}
+            </span>
+        }
+    </div>
+} @else {
+    <div class="tumaet:flex tumaet:flex-col tumaet:gap-1">
+        @if ((!hideLabelName() && labelName()) || shouldDisplayTimeZoneWarning()) {
+            <div class="tumaet:flex tumaet:items-center tumaet:gap-1">
+                @if (!hideLabelName() && labelName()) {
+                    <label [attr.for]="inputId()" class="tumaet:font-semibold tumaet:text-text">{{ labelName()! | tumAetUiTranslate }}</label>
+                }
+                @if (shouldDisplayTimeZoneWarning()) {
+                    <fa-stack
+                        class="tumaet:h-4 tumaet:w-4"
+                        tabindex="0"
+                        role="img"
+                        [attr.aria-label]="'tumAetUi.datePicker.timeZoneWarning' | tumAetUiTranslate: { timeZone: currentTimeZone }"
+                        [tumAetUiTooltip]="'tumAetUi.datePicker.timeZoneWarning' | tumAetUiTranslate: { timeZone: currentTimeZone }"
+                    >
+                        <fa-icon [icon]="faGlobe" stackItemSize="1x" class="tumaet:text-muted" />
+                        <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="tumaet:text-muted" />
+                    </fa-stack>
+                }
+            </div>
+        }
 
-    <div #triggerWrapper class="tumaet:relative tumaet:flex tumaet:items-center">
-        <input
-            #dateInput
-            [id]="inputId()"
-            type="text"
-            role="combobox"
-            [value]="inputText()"
-            [disabled]="disabled()"
-            [placeholder]="placeholderKey() | tumAetUiTranslate"
-            aria-haspopup="dialog"
-            [attr.aria-expanded]="isOpen()"
-            [attr.aria-controls]="isOpen() ? panelId() : null"
-            [attr.aria-invalid]="showErrorBorder()"
-            [attr.aria-label]="ariaLabel()"
-            [attr.aria-describedby]="!hideValidationMessage() && showErrorBorder() ? inputId() + '-error' : null"
-            (input)="onInput(dateInput.value)"
-            (blur)="onBlur(dateInput.value)"
-            (keydown.arrowdown)="openFromInput($event)"
-            class="tumaet-ui-date-picker-input tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:bg-control-background tumaet:py-2 tumaet:ps-3 tumaet:pe-17 tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
-            [class]="showErrorBorder() ? 'tumaet:border-state-danger' : 'tumaet:border-control-border'"
-        />
-        @if (showClear() && !disabled()) {
+        <div #triggerWrapper class="tumaet:relative tumaet:flex tumaet:items-center">
+            <input
+                #dateInput
+                [id]="inputId()"
+                type="text"
+                role="combobox"
+                [value]="inputText()"
+                [disabled]="disabled()"
+                [placeholder]="placeholderKey() | tumAetUiTranslate"
+                aria-haspopup="dialog"
+                [attr.aria-expanded]="isOpen()"
+                [attr.aria-controls]="isOpen() ? panelId() : null"
+                [attr.aria-invalid]="showErrorBorder()"
+                [attr.aria-required]="ariaRequired() ? 'true' : null"
+                [attr.aria-label]="ariaLabelledBy() ? null : ariaLabel()"
+                [attr.aria-labelledby]="ariaLabelledBy() || null"
+                [attr.aria-describedby]="!hideValidationMessage() && showErrorBorder() ? inputId() + '-error' : null"
+                (input)="onInput(dateInput.value)"
+                (blur)="onBlur(dateInput.value)"
+                (click)="onFieldClick()"
+                (keydown.arrowdown)="openFromInput($event)"
+                class="tumaet-ui-date-picker-input tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:bg-control-background tumaet:py-2 tumaet:ps-3 tumaet:pe-17 tumaet:text-text tumaet:placeholder:text-muted tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
+                [class]="showErrorBorder() ? 'tumaet:border-state-danger' : 'tumaet:border-control-border'"
+            />
+            @if (showClear() && !disabled()) {
+                <button
+                    type="button"
+                    class="tumaet:absolute tumaet:end-9 tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted tumaet:hover:text-text-hover"
+                    (click)="clear()"
+                    [attr.aria-label]="'tumAetUi.datePicker.clear' | tumAetUiTranslate"
+                >
+                    <fa-icon [icon]="faXmark" />
+                </button>
+            }
             <button
                 type="button"
-                class="tumaet:absolute tumaet:end-9 tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted tumaet:hover:text-text-hover"
-                (click)="clear()"
-                [attr.aria-label]="'tumAetUi.datePicker.clear' | tumAetUiTranslate"
+                tabindex="-1"
+                class="tumaet:absolute tumaet:end-2 tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted tumaet:hover:text-accent"
+                [disabled]="disabled()"
+                (click)="toggle()"
+                [attr.aria-label]="openLabelKey() | tumAetUiTranslate"
+                aria-haspopup="dialog"
+                [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
+                [attr.aria-controls]="isOpen() ? panelId() : null"
             >
-                <fa-icon [icon]="faXmark" />
+                <fa-icon [icon]="timeOnly() ? faClock : faCalendar" />
             </button>
-        }
-        <button
-            type="button"
-            tabindex="-1"
-            class="tumaet:absolute tumaet:end-2 tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted tumaet:hover:text-accent"
-            [disabled]="disabled()"
-            (click)="toggle()"
-            [attr.aria-label]="openLabelKey() | tumAetUiTranslate"
-            aria-haspopup="dialog"
-            [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
-            [attr.aria-controls]="isOpen() ? panelId() : null"
-        >
-            <fa-icon [icon]="timeOnly() ? faClock : faCalendar" />
-        </button>
-    </div>
+        </div>
 
-    @if (!hideValidationMessage() && showErrorBorder()) {
-        <span [id]="inputId() + '-error'" role="alert" class="tumaet:text-sm tumaet:text-state-danger">
-            {{ invalidMessageKey() | tumAetUiTranslate }}
-        </span>
-    }
-</div>
+        @if (!hideValidationMessage() && showErrorBorder()) {
+            <span [id]="inputId() + '-error'" role="alert" class="tumaet:text-sm tumaet:text-state-danger">
+                {{ invalidMessageKey() | tumAetUiTranslate }}
+            </span>
+        }
+    </div>
+}
 
 <ng-template #panel>
     <div
@@ -90,82 +118,86 @@
                 (monthChange)="activeMonth.set($event)"
             />
         }
-        <div
-            class="tumaet:flex tumaet:items-center tumaet:justify-center tumaet:gap-2"
-            [class]="timeOnly() ? '' : 'tumaet:mt-3'"
-            role="group"
-            [attr.aria-label]="'tumAetUi.datePicker.time' | tumAetUiTranslate"
-        >
-            <div class="tumaet:flex tumaet:flex-col tumaet:items-center">
-                <button
-                    type="button"
-                    class="tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-muted tumaet:hover:text-accent"
-                    [disabled]="disabled()"
-                    (click)="stepHour(1)"
-                    [attr.aria-label]="'tumAetUi.datePicker.incrementHour' | tumAetUiTranslate"
-                >
-                    <fa-icon [icon]="faChevronUp" />
-                </button>
-                <input
-                    #hourInput
-                    type="text"
-                    inputmode="numeric"
-                    maxlength="2"
-                    [value]="displayHour()"
-                    [disabled]="disabled()"
-                    (change)="onHourInput(hourInput)"
-                    (keydown)="onTimeKeydown($event, hourInput, 'hour')"
-                    class="tumaet:box-border tumaet:w-9 tumaet:appearance-none tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1 tumaet:text-center tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
-                    [attr.aria-label]="'tumAetUi.datePicker.hour' | tumAetUiTranslate"
-                />
-                <button
-                    type="button"
-                    class="tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-muted tumaet:hover:text-accent"
-                    [disabled]="disabled()"
-                    (click)="stepHour(-1)"
-                    [attr.aria-label]="'tumAetUi.datePicker.decrementHour' | tumAetUiTranslate"
-                >
-                    <fa-icon [icon]="faChevronDown" />
-                </button>
-            </div>
-            <span class="tumaet:pb-0.5 tumaet:font-semibold tumaet:text-text">:</span>
-            <div class="tumaet:flex tumaet:flex-col tumaet:items-center">
-                <button
-                    type="button"
-                    class="tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-muted tumaet:hover:text-accent"
-                    [disabled]="disabled()"
-                    (click)="stepMinute(1)"
-                    [attr.aria-label]="'tumAetUi.datePicker.incrementMinute' | tumAetUiTranslate"
-                >
-                    <fa-icon [icon]="faChevronUp" />
-                </button>
-                <input
-                    #minuteInput
-                    type="text"
-                    inputmode="numeric"
-                    maxlength="2"
-                    [value]="displayMinute()"
-                    [disabled]="disabled()"
-                    (change)="onMinuteInput(minuteInput)"
-                    (keydown)="onTimeKeydown($event, minuteInput, 'minute')"
-                    class="tumaet:box-border tumaet:w-9 tumaet:appearance-none tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1 tumaet:text-center tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
-                    [attr.aria-label]="'tumAetUi.datePicker.minute' | tumAetUiTranslate"
-                />
-                <button
-                    type="button"
-                    class="tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-muted tumaet:hover:text-accent"
-                    [disabled]="disabled()"
-                    (click)="stepMinute(-1)"
-                    [attr.aria-label]="'tumAetUi.datePicker.decrementMinute' | tumAetUiTranslate"
-                >
-                    <fa-icon [icon]="faChevronDown" />
-                </button>
-            </div>
-        </div>
+        <ng-container [ngTemplateOutlet]="timeControls" />
         <div class="tumaet:mt-3 tumaet:flex tumaet:justify-end">
             <tumaet-ui-button severity="secondary" variant="text" size="small" (clicked)="close()">
                 <span>{{ 'tumAetUi.datePicker.done' | tumAetUiTranslate }}</span>
             </tumaet-ui-button>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #timeControls>
+    <div
+        class="tumaet:flex tumaet:items-center tumaet:justify-center tumaet:gap-2"
+        [class]="timeOnly() ? '' : 'tumaet:mt-3'"
+        role="group"
+        [attr.aria-label]="'tumAetUi.datePicker.time' | tumAetUiTranslate"
+    >
+        <div class="tumaet:flex tumaet:flex-col tumaet:items-center">
+            <button
+                type="button"
+                class="tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-muted tumaet:hover:text-accent"
+                [disabled]="disabled()"
+                (click)="stepHour(1)"
+                [attr.aria-label]="'tumAetUi.datePicker.incrementHour' | tumAetUiTranslate"
+            >
+                <fa-icon [icon]="faChevronUp" />
+            </button>
+            <input
+                #hourInput
+                type="text"
+                inputmode="numeric"
+                maxlength="2"
+                [value]="displayHour()"
+                [disabled]="disabled()"
+                (change)="onHourInput(hourInput)"
+                (keydown)="onTimeKeydown($event, hourInput, 'hour')"
+                class="tumaet:box-border tumaet:w-9 tumaet:appearance-none tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1 tumaet:text-center tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
+                [attr.aria-label]="'tumAetUi.datePicker.hour' | tumAetUiTranslate"
+            />
+            <button
+                type="button"
+                class="tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-muted tumaet:hover:text-accent"
+                [disabled]="disabled()"
+                (click)="stepHour(-1)"
+                [attr.aria-label]="'tumAetUi.datePicker.decrementHour' | tumAetUiTranslate"
+            >
+                <fa-icon [icon]="faChevronDown" />
+            </button>
+        </div>
+        <span class="tumaet:pb-0.5 tumaet:font-semibold tumaet:text-text">:</span>
+        <div class="tumaet:flex tumaet:flex-col tumaet:items-center">
+            <button
+                type="button"
+                class="tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-muted tumaet:hover:text-accent"
+                [disabled]="disabled()"
+                (click)="stepMinute(1)"
+                [attr.aria-label]="'tumAetUi.datePicker.incrementMinute' | tumAetUiTranslate"
+            >
+                <fa-icon [icon]="faChevronUp" />
+            </button>
+            <input
+                #minuteInput
+                type="text"
+                inputmode="numeric"
+                maxlength="2"
+                [value]="displayMinute()"
+                [disabled]="disabled()"
+                (change)="onMinuteInput(minuteInput)"
+                (keydown)="onTimeKeydown($event, minuteInput, 'minute')"
+                class="tumaet:box-border tumaet:w-9 tumaet:appearance-none tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1 tumaet:text-center tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
+                [attr.aria-label]="'tumAetUi.datePicker.minute' | tumAetUiTranslate"
+            />
+            <button
+                type="button"
+                class="tumaet:flex tumaet:h-6 tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-1 tumaet:text-muted tumaet:hover:text-accent"
+                [disabled]="disabled()"
+                (click)="stepMinute(-1)"
+                [attr.aria-label]="'tumAetUi.datePicker.decrementMinute' | tumAetUiTranslate"
+            >
+                <fa-icon [icon]="faChevronDown" />
+            </button>
         </div>
     </div>
 </ng-template>

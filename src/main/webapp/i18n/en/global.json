@@ -431,6 +431,7 @@
         "controlCenter": "Control Center",
         "action": {
             "add": "Add",
+            "create": "Create",
             "addblob": "Add blob",
             "addimage": "Add image",
             "back": "Back",

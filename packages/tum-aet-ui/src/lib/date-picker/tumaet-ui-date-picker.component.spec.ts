@@ -161,6 +161,20 @@ describe('TumAetUiDatePickerComponent', () => {
         expect(document.querySelector('[role="dialog"]')).not.toBeNull();
     });
 
+    it('opens the calendar when the input itself is clicked and openOnClick is set', () => {
+        fixture.componentRef.setInput('openOnClick', true);
+        fixture.detectChanges();
+        input().dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        fixture.detectChanges();
+        expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    });
+
+    it('does not open on input click by default, so the field can be typed into', () => {
+        input().dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        fixture.detectChanges();
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
+    });
+
     it('rejects trailing garbage on blur', () => {
         input().value = '13.06.2026 08:30 and more';
         input().dispatchEvent(new Event('blur'));
@@ -264,6 +278,52 @@ describe('TumAetUiDatePickerComponent', () => {
         expect(warning.getAttribute('tabindex')).toBe('0');
         expect(warning.getAttribute('role')).toBe('img');
         expect(warning.getAttribute('aria-label')).toBeTruthy();
+    });
+
+    describe('inline', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('inline', true);
+            fixture.componentRef.setInput('timeOnly', true);
+            fixture.detectChanges();
+        });
+
+        const hour = () => document.querySelector('input[aria-label="Hour"]') as HTMLInputElement;
+        const minute = () => document.querySelector('input[aria-label="Minute"]') as HTMLInputElement;
+
+        it('names the inline group and marks it required for assistive technology', () => {
+            fixture.componentRef.setInput('ariaLabelledBy', 'external-label');
+            fixture.componentRef.setInput('ariaRequired', true);
+            fixture.detectChanges();
+
+            const group = document.querySelector('[role="group"][aria-labelledby="external-label"]');
+            expect(group).not.toBeNull();
+            expect(group?.getAttribute('aria-required')).toBe('true');
+        });
+
+        it('shows the steppers with no text field, trigger icon, or overlay', () => {
+            // The date field is the combobox; the numeric stepper inputs are type=text too, so match the role.
+            expect(fixture.debugElement.query(By.css('input[role="combobox"]'))).toBeNull();
+            expect(document.querySelector('button[aria-haspopup="dialog"]')).toBeNull();
+            expect(document.querySelector('[role="dialog"]')).toBeNull();
+            expect(hour()).not.toBeNull();
+            expect(minute()).not.toBeNull();
+        });
+
+        it('reflects an external value in the steppers', () => {
+            fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+
+            expect(hour().value).toBe('08');
+            expect(minute().value).toBe('30');
+        });
+
+        it('emits a value when a stepper is used', () => {
+            (document.querySelector('button[aria-label="Increment hour"]') as HTMLButtonElement).click();
+            fixture.detectChanges();
+
+            // Empty picker starts from the fixed clock's day at midnight, so one step up is 01:00.
+            expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('15.07.2026 01:00');
+        });
     });
 
     describe('timeOnly', () => {
