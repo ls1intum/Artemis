@@ -85,6 +85,44 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(input).toBeTruthy();
     });
 
+    it('should associate feedback labels with their controls and name the dismiss button', () => {
+        const detailLabel = compiled.querySelector('label[for="detailText-1"]') as HTMLLabelElement;
+        const scoreLabel = compiled.querySelector('label[for="score-1"]') as HTMLLabelElement;
+        const dismissButton = compiled.querySelector('#dismiss-icon') as HTMLButtonElement;
+
+        expect(detailLabel.control).toBe(compiled.querySelector('textarea'));
+        expect(scoreLabel.control).toBe(compiled.querySelector('input[type="number"]'));
+        expect(dismissButton.type).toBe('button');
+        expect(dismissButton.getAttribute('aria-label')).toBeTruthy();
+        expect(dismissButton.querySelector('fa-icon')).not.toBeNull();
+
+        const dismiss = vi.spyOn(component, 'dismiss');
+        dismissButton.click();
+        expect(dismiss).toHaveBeenCalledOnce();
+    });
+
+    it('should show the named criteria dropdown only for non-empty criteria', () => {
+        fixture.componentRef.setInput('criteria', []);
+        fixture.detectChanges();
+        expect(compiled.querySelector('[ngbDropdownToggle]')).toBeNull();
+
+        fixture.componentRef.setInput('criteria', [{ title: 'Quality', structuredGradingInstructions: [] }] as GradingCriterion[]);
+        fixture.detectChanges();
+        expect(compiled.querySelector('.dropdown-toggle').getAttribute('aria-label')).toBeTruthy();
+    });
+
+    it('should make titled and untitled criterion submenus keyboard reachable', () => {
+        fixture.componentRef.setInput('criteria', [{ title: 'Quality', structuredGradingInstructions: [] }, { structuredGradingInstructions: [] }] as GradingCriterion[]);
+        fixture.detectChanges();
+
+        const buttons = compiled.querySelectorAll('ul.dropdown-menu > li > button.dropdown-item') as NodeListOf<HTMLButtonElement>;
+        expect(buttons).toHaveLength(2);
+        expect(buttons[0].type).toBe('button');
+        buttons[0].focus();
+        expect(document.activeElement).toBe(buttons[0]);
+        expect(buttons[1].querySelector('[jhitranslate="artemisApp.textAssessment.feedbackEditor.noTitle"]')).not.toBeNull();
+    });
+
     it('should show delete button for empty feedback only', () => {
         let button = compiled.querySelector('#dismiss-icon');
         let confirm = compiled.querySelector('#confirm-icon');
@@ -252,6 +290,8 @@ describe('TextBlockFeedbackEditorComponent', () => {
         fixture.componentRef.setInput('criteria', [criterion]);
         fixture.detectChanges();
 
-        expect(compiled.querySelector('.unified-feedback-detail-row [ngbDropdown]')).toBeTruthy();
+        const inputGroup = compiled.querySelector('.input-group');
+        expect(inputGroup?.querySelector('.input-group-prepend [ngbDropdown]')).toBeTruthy();
+        expect(inputGroup?.querySelector('[data-testid="feedback-editor-text-input"]')).toBeTruthy();
     });
 });

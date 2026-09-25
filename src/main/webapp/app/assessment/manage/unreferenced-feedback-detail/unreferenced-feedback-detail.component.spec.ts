@@ -5,6 +5,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -55,24 +56,30 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(feedbackId);
     });
 
-    it('should clear hasLongFeedbackText on the hydrated clone so a remount does not refetch indefinitely', async () => {
-        const feedbackId = 42;
-        const exampleText = 'This is a long feedback text';
-
-        fixture.componentRef.setInput('feedback', { id: feedbackId, hasLongFeedbackText: true } as Feedback);
+    it('should keep tutor edits when a loaded feedback card remounts', async () => {
+        const feedback = { id: 42, hasLongFeedbackText: true } as Feedback;
+        const getLongFeedbackTextSpy = vi.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue('Original long feedback');
+        fixture.componentRef.setInput('feedback', feedback);
         fixture.componentRef.setInput('resultId', 1);
-        const getLongFeedbackTextSpy = vi.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        await comp.loadLongFeedback();
+        expect(feedback.detailText).toBe('Original long feedback');
+        expect(feedback.hasLongFeedbackText).toBe(false);
+        feedback.detailText = 'Tutor edit';
+        fixture.destroy();
 
-        expect(comp.feedback().hasLongFeedbackText).toBeFalsy();
-        expect(comp.feedback().detailText).toBe(exampleText);
-
-        // Simulate the parent remounting the component with the hydrated feedback it just received.
-        fixture.componentRef.setInput('feedback', comp.feedback());
-        await comp.loadLongFeedback();
+        const remounted = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
+        remounted.componentRef.setInput('feedback', feedback);
+        remounted.componentRef.setInput('resultId', 1);
+        remounted.componentRef.setInput('readOnly', false);
+        remounted.detectChanges();
+        await remounted.whenStable();
 
         expect(getLongFeedbackTextSpy).toHaveBeenCalledOnce();
+        expect(feedback.detailText).toBe('Tutor edit');
+        remounted.destroy();
     });
 
     it('should update feedback with SGI and emit to parent', () => {
@@ -102,39 +109,56 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should mark an accepted suggestion as adapted when a grading instruction is dropped onto it', () => {
-        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+    it('should apply an armed instruction via the dedicated button without a drop event', () => {
+        const instruction: GradingInstruction = {
+            id: 1,
+            credits: 2,
+            feedback: 'test',
+            gradingScale: 'good',
+            instructionDescription: 'description of instruction',
+            usageCount: 0,
+        };
         const feedback = {
             id: 1,
-            text: 'FeedbackSuggestion:accepted:Missing null check',
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback;
         fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', false);
 
-        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((currentFeedback) => {
+        TestBed.inject(GradingInstructionSelectionService).armInstruction(instruction);
+
+        const applySpy = vi.spyOn(sgiService, 'applyArmedInstructionToFeedback').mockImplementation((currentFeedback) => {
             currentFeedback.gradingInstruction = instruction;
             currentFeedback.credits = instruction.credits;
+            return true;
         });
+        const dropSpy = vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent');
         const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
 
-        comp.updateFeedbackOnDrop(new Event(''));
+        comp.applyArmedInstruction();
 
-        expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ text: 'FeedbackSuggestion:adapted:Missing null check' }));
-        expect(comp.feedback().text).toBe('FeedbackSuggestion:adapted:Missing null check');
+        expect(applySpy).toHaveBeenCalledWith(feedback);
+        expect(dropSpy).not.toHaveBeenCalled();
+        expect(feedback.gradingInstruction).toEqual(instruction);
+        expect(feedback.credits).toBe(2);
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('exposes delete() as the sole deletion entry point for the unified feedback card', () => {
-        fixture.componentRef.setInput('feedback', { id: 1, detailText: 'feedback1', credits: 1.5 } as Feedback);
+    it('should emit the assessment change after deletion', () => {
+        fixture.componentRef.setInput('feedback', {
+            id: 1,
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback);
         const emitSpy = vi.spyOn(comp.onFeedbackDelete, 'emit');
-
         comp.delete();
 
-        expect(emitSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledWith(comp.feedback());
+        expect(emitSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should mark automatic feedback as AUTOMATIC_ADAPTED when modified, without touching the suggestion badge text', () => {
+    it('should mark automatic feedback and feedback suggestions as adapted when they are modified', () => {
         fixture.componentRef.setInput('feedback', {
             id: 1,
             type: FeedbackType.AUTOMATIC,
@@ -147,9 +171,127 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledWith({
             id: 1,
             type: FeedbackType.AUTOMATIC_ADAPTED,
-            text: 'FeedbackSuggestion:accepted:feedback1',
+            text: 'FeedbackSuggestion:adapted:feedback1',
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback);
+    });
+
+    it('should preserve suggestion prefix when updating AI title', () => {
+        fixture.componentRef.setInput('feedback', {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: 'FeedbackSuggestion:Model quality',
+            detailText: 'Improve the diagram',
+            credits: 1,
+        } as Feedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        comp.updateHeaderTitle('Updated title');
+        expect(emitSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                text: 'FeedbackSuggestion:Updated title',
+                detailText: 'Improve the diagram',
+            }),
+        );
+    });
+
+    it('should store manual header in feedback text', () => {
+        fixture.componentRef.setInput('feedback', {
+            id: 1,
+            detailText: 'Body',
+            credits: 1,
+        } as Feedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        comp.updateHeaderTitle('Player');
+        expect(emitSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                text: 'Player',
+                detailText: 'Body',
+            }),
+        );
+    });
+
+    it('should update tone when credits change via the stepper', () => {
+        const originalFeedback = {
+            id: 1,
+            detailText: 'feedback',
+            credits: 0.5,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', originalFeedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        fixture.detectChanges();
+
+        const card = () => fixture.nativeElement.querySelector('tum-ui-card') as HTMLElement;
+        expect(card().getAttribute('data-tone')).toBe('positive');
+
+        comp.stepCredits(-comp.CREDITS_STEP);
+        fixture.detectChanges();
+        expect(comp.feedback()).toBe(originalFeedback);
+        expect(comp.feedback().credits).toBe(0);
+        expect(card().getAttribute('data-tone')).toBe('neutral');
+        expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
+
+        comp.stepCredits(-comp.CREDITS_STEP);
+        fixture.detectChanges();
+        expect(comp.feedback().credits).toBe(-0.5);
+        expect(card().getAttribute('data-tone')).toBe('negative');
+    });
+
+    it('should normalize typed credits before emitting feedback', () => {
+        const originalFeedback = { credits: 0 } as Feedback;
+        fixture.componentRef.setInput('feedback', originalFeedback);
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        comp.updateCredits(0.3);
+
+        expect(comp.feedback()).toBe(originalFeedback);
+        expect(comp.feedback().credits).toBe(0.5);
+        expect(emitSpy).toHaveBeenCalledWith(originalFeedback);
+    });
+
+    it('should keep partial negative points until the input loses focus', () => {
+        const feedback = { credits: 1, detailText: 'note' } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('.feedback-card__points-input') as HTMLInputElement;
+        // jsdom sanitizes "-" for number inputs; emulate the partial value a browser displays while typing.
+        Object.defineProperty(input, 'value', { configurable: true, writable: true, value: '-' });
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(input.value).toBe('-');
+        expect(feedback.credits).toBe(1);
+
+        Reflect.deleteProperty(input, 'value');
+        input.value = '-2';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(input.value).toBe('-2');
+        expect(feedback.credits).toBe(1);
+
+        input.dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(feedback.credits).toBe(-2);
+    });
+
+    it('should give each card unique control ids linked to Title and Feedback labels', () => {
+        fixture.componentRef.setInput('feedback', { detailText: 'note', credits: 1 } as Feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.detectChanges();
+
+        const header = fixture.nativeElement.querySelector('.feedback-card__header-input') as HTMLInputElement;
+        const textarea = fixture.nativeElement.querySelector('.feedback-card__textarea') as HTMLTextAreaElement;
+        const points = fixture.nativeElement.querySelector('.feedback-card__points-input') as HTMLInputElement;
+        expect(header?.id).toBeTruthy();
+        expect(textarea?.id).toBeTruthy();
+        expect(points?.id).toBeTruthy();
+        expect(fixture.nativeElement.querySelector(`label[for="${header.id}"]`)).not.toBeNull();
+        expect(fixture.nativeElement.querySelector(`label[for="${textarea.id}"]`)).not.toBeNull();
+        expect(new Set([header.id, textarea.id, points.id]).size).toBe(3);
     });
 });

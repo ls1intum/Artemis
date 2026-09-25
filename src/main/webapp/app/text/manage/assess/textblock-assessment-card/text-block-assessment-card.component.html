@@ -13,6 +13,20 @@
     [class.clickable]="textBlockRef().selectable"
     [class.highlighted]="textBlockRef().highlighted"
 ></span>
+@if (isKeyboardDropTarget()) {
+    <button
+        type="button"
+        tumUiButton
+        severity="secondary"
+        variant="outlined"
+        size="small"
+        class="ms-1"
+        [attr.aria-label]="('artemisApp.exercise.applyArmedInstruction' | artemisTranslate) + ': ' + textBlockRef().block!.text"
+        (click)="applyArmedInstruction()"
+    >
+        <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
+    </button>
+}
 <!-- Display Feedback Editor -->
 @if (textBlockRef().feedback || selected()) {
     <jhi-text-block-feedback-editor

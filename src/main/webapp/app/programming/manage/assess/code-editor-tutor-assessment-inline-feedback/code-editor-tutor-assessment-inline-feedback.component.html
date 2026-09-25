@@ -1,52 +1,173 @@
 @let feedback = currentFeedback();
-@if (!viewOnly()) {
-    <jhi-unified-feedback
-        [editable]="true"
-        [readOnly]="readOnly()"
-        [feedback]="feedback"
-        [title]="isNewOrManual() ? derivedTitle() : undefined"
-        [titleEditable]="Feedback.isFeedbackSuggestion(feedback)"
-        [showReference]="false"
-        [highlightDifferences]="highlightDifferences()"
-        [(feedbackTitle)]="feedback.text"
-        [(feedbackDetail)]="feedback.detailText"
-        [(feedbackCredits)]="feedback.credits!"
-        (feedbackTitleChange)="onFieldChanged()"
-        (feedbackDetailChange)="onFieldChanged()"
-        (feedbackCreditsChange)="onFieldChanged()"
-        (onDelete)="removeFeedback()"
-        (drop)="updateFeedbackOnDrop($event)"
-        (dragover)="$event.preventDefault()"
-        (keydown)="handleKeydown($event)"
-    >
-        <!-- The slot is claimed by the container, not by the div: with preserveWhitespaces the @if has whitespace
-             roots besides the div, so content projection could not match the div inside it to the slot. -->
-        <ng-container ngProjectAs="[unifiedFeedbackExtraControls]">
-            @if (!isNewOrManual()) {
-                <div class="inline-feedback-actions">
-                    <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
-                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+<tum-ui-card id="code-editor-inline-feedback-{{ codeLine() }}" class="inline-feedback" [attr.data-tone]="tone(currentFeedback())">
+    <div class="inline-feedback__content">
+        @if (Feedback.isFeedbackSuggestion(feedback) && !readOnly()) {
+            <div class="inline-feedback__badges">
+                <jhi-feedback-suggestion-badge [feedbackText]="feedback.text" />
+            </div>
+        }
+
+        <div class="inline-feedback__top">
+            <!-- Points of an instruction-linked feedback are owned by that instruction and render as a pill; own
+                 points are edited with a half-point stepper while the feedback is open. -->
+            @if (viewOnly() || currentFeedback().gradingInstruction) {
+                @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+                    <tum-ui-tag
+                        class="inline-feedback__points-pill"
+                        [severity]="pointsSeverity(currentFeedback())"
+                        [value]="roundScoreSpecifiedByCourseSettings(currentFeedback().credits, course()) + 'P'"
+                    />
+                }
+            } @else {
+                <tum-ui-input-group class="inline-feedback__stepper">
+                    <tum-ui-input-group-addon>
+                        <button
+                            type="button"
+                            class="inline-feedback__step"
+                            [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
+                            (click)="stepCredits(-CREDITS_STEP)"
+                        >
+                            <fa-icon [icon]="faMinus" />
+                        </button>
+                    </tum-ui-input-group-addon>
+                    <input
+                        id="feedback-points"
+                        data-testid="feedback-editor-points-input"
+                        tumUiInput
+                        class="inline-feedback__points-input"
+                        type="number"
+                        [step]="CREDITS_STEP"
+                        [value]="currentFeedback().credits ?? ''"
+                        (change)="updateCredits($any($event.target).valueAsNumber)"
+                        [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
+                        (keydown)="handleKeydown($event)"
+                    />
+                    <tum-ui-input-group-addon>
+                        <button
+                            type="button"
+                            class="inline-feedback__step"
+                            [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                            (click)="stepCredits(CREDITS_STEP)"
+                        >
+                            <fa-icon [icon]="faPlus" />
+                        </button>
+                    </tum-ui-input-group-addon>
+                </tum-ui-input-group>
+            }
+
+            <div class="inline-feedback__actions">
+                @if (viewOnly()) {
+                    @if (!readOnly()) {
+                        <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="editFeedback(codeLine())">
+                            <fa-icon [icon]="faPencilAlt" />
+                            <span jhiTranslate="entity.action.edit"></span>
+                        </button>
+                    }
+                    @if (readOnly() && feedback.isSubsequent) {
+                        <fa-icon class="text-muted-color" [icon]="faExclamationTriangle" [tumUiTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
+                    }
+                } @else {
+                    <!-- Only editable feedback offers to unlink its grading instruction. -->
+                    @if (currentFeedback().gradingInstruction) {
+                        <jhi-grading-instruction-link-icon [feedback]="currentFeedback()" (linkRemoved)="onInstructionLinkRemoved()" />
+                    }
+                }
+                @if (!readOnly() && feedback.type === MANUAL) {
+                    <div class="inline-feedback__delete" (click)="$event.stopPropagation()">
+                        <jhi-confirm-icon
+                            [initialIcon]="faTrashAlt"
+                            [confirmIcon]="faTimes"
+                            [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
+                            [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
+                            (confirmEvent)="deleteFeedback()"
+                        />
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (displayTitle(); as title) {
+            <p class="inline-feedback__title">{{ title }}</p>
+        }
+
+        @if (viewOnly()) {
+            <div class="inline-feedback__section">
+                <span class="inline-feedback__label" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
+                <p class="inline-feedback__text" [innerHTML]="buildFeedbackTextForCodeEditor(feedback)"></p>
+            </div>
+        } @else {
+            <div class="inline-feedback__editor" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
+                @if (isKeyboardDropTarget()) {
+                    <button
+                        type="button"
+                        tumUiButton
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        class="self-start"
+                        [attr.aria-label]="'artemisApp.exercise.applyArmedInstruction' | artemisTranslate"
+                        (click)="applyArmedInstruction()"
+                    >
+                        <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
+                    </button>
+                }
+                <!-- Tutor-facing guidance of the linked instruction: says when this score applies. -->
+                @if (currentFeedback().gradingInstruction?.instructionDescription; as instructionDescription) {
+                    <div class="inline-feedback__section">
+                        <span class="inline-feedback__label" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
+                        <p class="inline-feedback__scale">{{ instructionDescription }}</p>
+                    </div>
+                    <hr class="inline-feedback__divider" />
+                }
+
+                <div class="inline-feedback__section">
+                    <label class="inline-feedback__label" [id]="'feedback-label-' + codeLine()" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
+                    @if (currentFeedback().gradingInstruction?.feedback; as instructionFeedback) {
+                        <p class="inline-feedback__instruction-feedback">{{ instructionFeedback }}</p>
+                    }
+                    <textarea
+                        id="feedback-textarea"
+                        data-testid="feedback-editor-text-input"
+                        tumUiTextarea
+                        class="inline-feedback__textarea"
+                        rows="3"
+                        [ngModel]="currentFeedback().detailText"
+                        (ngModelChange)="onDetailTextChange($event)"
+                        #detailText
+                        [attr.aria-labelledby]="'feedback-label-' + codeLine()"
+                        [placeholder]="
+                            currentFeedback().gradingInstruction
+                                ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
+                                : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
+                        "
+                        (keydown)="handleKeydown($event)"
+                    ></textarea>
+                </div>
+
+                <div class="inline-feedback__footer">
+                    <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="cancelFeedback()">
+                        <fa-icon [icon]="faBan" />
+                        <span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                    <button
+                        id="feedback-save"
+                        data-testid="feedback-save"
+                        type="submit"
+                        tumUiButton
+                        severity="primary"
+                        size="small"
+                        [disabled]="!saveEnabled()"
+                        (click)="updateFeedback()"
+                    >
+                        <fa-icon [icon]="faSave" />
+                        <span jhiTranslate="entity.action.save"></span>
                     </button>
                 </div>
-            }
-        </ng-container>
-    </jhi-unified-feedback>
-} @else {
-    <div class="d-flex flex-nowrap align-items-start gap-1 p-1">
-        <div class="flex-grow-1 flex-shrink-1">
-            <jhi-unified-feedback
-                [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
-                [points]="feedback.credits || 0"
-                [feedback]="feedback"
-                [showReference]="false"
-                [scoreAccuracy]="course()?.accuracyOfScores"
-            />
-        </div>
-        @if (!readOnly()) {
-            <button type="submit" (click)="editFeedback(codeLine())" class="btn btn-primary btn-sm">
-                <fa-icon [icon]="faPencilAlt" />
-                <span jhiTranslate="entity.action.edit"></span>
-            </button>
+            </div>
+        }
+
+        @if (highlightDifferences()) {
+            <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="true" />
         }
     </div>
-}
+</tum-ui-card>

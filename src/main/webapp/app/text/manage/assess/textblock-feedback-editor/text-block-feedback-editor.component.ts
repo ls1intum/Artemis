@@ -1,58 +1,123 @@
-import { Component, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostBinding, computed, inject, input, output, viewChild } from '@angular/core';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
-import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight, faEdit, faExclamationTriangle, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
+import { FormsModule } from '@angular/forms';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',
     templateUrl: './text-block-feedback-editor.component.html',
     styleUrls: ['./text-block-feedback-editor.component.scss'],
-    imports: [UnifiedFeedbackComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, TextblockFeedbackDropdownComponent, FaIconComponent, TranslateDirective],
+    imports: [
+        FeedbackSuggestionBadgeComponent,
+        FaIconComponent,
+        NgbTooltip,
+        ConfirmIconComponent,
+        TranslateDirective,
+        GradingInstructionLinkIconComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        TextblockFeedbackDropdownComponent,
+        FormsModule,
+        AssessmentCorrectionRoundBadgeComponent,
+        ArtemisTranslatePipe,
+        TumUiButtonDirective,
+    ],
 })
-export class TextBlockFeedbackEditorComponent {
+export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     private route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
-    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
+    readonly FeedbackType = FeedbackType;
 
     textBlock = input<TextBlock>(new TextBlock());
     feedback = input<Feedback>(new Feedback());
     feedbackChange = output<Feedback>();
+    /** Shows the apply-armed-instruction control while an instruction is armed. */
+    protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && this.selectionService.hasArmedInstruction());
     onClose = output<void>();
     onFocus = output<void>();
+    textareaRef = viewChild.required<ElementRef>('detailText');
+    confirmIconComponent = viewChild.required(ConfirmIconComponent);
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     criteria = input<GradingCriterion[]>();
+    private textareaElement!: HTMLTextAreaElement; // set in ngAfterViewInit() from the required textareaRef viewChild
 
-    private readonly unifiedFeedback = viewChild.required(UnifiedFeedbackComponent);
+    // Expose to template
+    protected readonly Feedback = Feedback;
 
+    @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
+
+    @HostBinding('class.alert-secondary') get neutralFeedbackClass(): boolean {
+        return this.feedback().credits === 0;
+    }
+
+    @HostBinding('class.alert-success') get positiveFeedbackClass(): boolean {
+        return this.feedback().credits! > 0;
+    }
+
+    @HostBinding('class.alert-danger') get negativeFeedbackClass(): boolean {
+        return this.feedback().credits! < 0;
+    }
+
+    // Icons
+    faEdit = faEdit;
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faTimes = faTimes;
+    faTrash = faTrash;
     faAngleRight = faAngleRight;
-
-    readonly connectToInstructionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.connectToInstruction'));
-
-    /**
-     * Suggestion type observed the last time the bound {@link feedback} reference changed, i.e. its value before
-     * the assessor's current round of edits. Used by {@link didChange} to detect the one-time accepted->adapted
-     * transition regardless of which mutation path triggered it.
-     */
-    private lastKnownSuggestionType: FeedbackSuggestionType = FeedbackSuggestionType.NO_SUGGESTION;
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
-        effect(() => {
-            this.lastKnownSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback());
-        });
+    }
+
+    /**
+     * Life cycle hook to indicate component initialization is done
+     */
+    ngAfterViewInit(): void {
+        this.textareaElement = this.textareaRef().nativeElement as HTMLTextAreaElement;
+        setTimeout(() => this.textareaAutogrow());
+    }
+
+    /**
+     * Increase size of text area automatically
+     */
+    textareaAutogrow(): void {
+        this.textareaElement.style.height = '0px';
+        this.textareaElement.style.height = `${this.textareaElement.scrollHeight}px`;
+    }
+
+    get canDismiss(): boolean {
+        const feedbackValue = this.feedback();
+        return feedbackValue.credits === 0 && (feedbackValue.detailText || '').length === 0;
+    }
+
+    /**
+     * Set focus to feedback editor
+     */
+    inFocus(): void {
+        this.onFocus.emit();
     }
 
     /**
@@ -67,44 +132,44 @@ export class TextBlockFeedbackEditorComponent {
      * Hook to indicate pressed Escape key
      */
     escKeyup(): void {
-        this.unifiedFeedback().toggleDeleteConfirm();
+        if (this.canDismiss) {
+            this.dismiss();
+        } else {
+            this.confirmIconComponent().toggle();
+        }
     }
 
     /**
      * Set focus to the text area
      */
     focus(): void {
-        this.unifiedFeedback().focusTextarea();
+        this.textareaElement.focus();
     }
 
     /**
-     * Hook to indicate a score change; resets the correction status because it is now stale
+     * Hook to indicate a score click
      */
+    onScoreClick(event: MouseEvent): void {
+        event.preventDefault();
+        this.onScoreChange();
+    }
+
     onScoreChange(): void {
         this.feedback().correctionStatus = undefined;
-        this.didChange();
     }
 
     /**
-     * Hook to indicate changes in the feedback editor. Single entry point for every assessor mutation on this
-     * feedback (unified title/detail/score inputs, rubric-dropdown selection, connectFeedbackWithInstruction),
-     * so the accepted->adapted transition and its analytics event are centralized here rather than duplicated
-     * per mutation path.
+     * Hook to indicate changes in the feedback editor
      */
     didChange(): void {
         const feedbackValue = this.feedback();
-        // The unified inputs already rewrite an accepted suggestion's prefix to adapted themselves before this
-        // runs; other mutation paths (grading-instruction connect/drop, rubric dropdown) don't, so do it here too.
-        if (feedbackValue.text?.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
-            feedbackValue.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + feedbackValue.text.slice(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER.length);
+        const feedbackTextBefore = feedbackValue.text;
+        if (feedbackValue.text) {
+            feedbackValue.text = Feedback.markAdaptedIfAcceptedSuggestion(feedbackValue.text);
         }
-
-        const suggestionType = Feedback.getFeedbackSuggestionType(feedbackValue);
-        const isFirstAdaptation = this.lastKnownSuggestionType === FeedbackSuggestionType.ACCEPTED && suggestionType === FeedbackSuggestionType.ADAPTED;
-        this.lastKnownSuggestionType = suggestionType;
-
         this.feedbackChange.emit(feedbackValue);
-        if (isFirstAdaptation) {
+        // send event to analytics if the feedback was adapted (=> title text changes to have prefix with "adapted" in it)
+        if (feedbackTextBefore !== feedbackValue.text) {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, feedbackValue.type, this.textBlock().type);
         }
     }
@@ -116,6 +181,19 @@ export class TextBlockFeedbackEditorComponent {
         // Reset the feedback correction status upon setting grading instruction in order to hide it.
         feedbackValue.correctionStatus = undefined;
 
+        this.didChange();
+    }
+
+    /** Applies a previously armed instruction to this feedback. */
+    applyArmedInstruction(): void {
+        if (!this.isKeyboardDropTarget()) {
+            return;
+        }
+        const feedbackValue = this.feedback();
+        if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedbackValue)) {
+            return;
+        }
+        feedbackValue.correctionStatus = undefined;
         this.didChange();
     }
 }
