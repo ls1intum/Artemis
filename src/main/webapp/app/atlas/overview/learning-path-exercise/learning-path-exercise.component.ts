@@ -7,10 +7,10 @@ import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-det
     templateUrl: './learning-path-exercise.component.html',
 })
 export class LearningPathExerciseComponent {
+    private readonly viewContainerRef = inject(ViewContainerRef);
+
     public readonly courseId = input.required<number>();
     public readonly exerciseId = input.required<number>();
-
-    private readonly viewContainerRef = inject(ViewContainerRef);
 
     constructor() {
         effect(() => {

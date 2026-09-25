@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { concatMap, filter, take, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -212,7 +212,7 @@ export function repositoryTypeToSyncTarget(repoType: RepositoryType): ExerciseEd
  * that messages sent during a cold page load (before the STOMP handshake completes) are
  * never silently dropped. Messages are flushed in FIFO order once connected.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseEditorSyncService {
     private websocketService = inject(WebsocketService);
     private browserFingerprintService = inject(BrowserFingerprintService);

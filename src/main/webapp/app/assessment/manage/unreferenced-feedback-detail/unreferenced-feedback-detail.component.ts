@@ -57,6 +57,7 @@ export type FeedbackTone = 'positive' | 'negative' | 'neutral';
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private readonly selectionService = inject(GradingInstructionSelectionService);
+    private feedbackService = inject(FeedbackService);
 
     // Parent matches feedback by reference (`indexOf`); mutate in place on edit.
     public readonly feedback = model.required<Feedback>();
@@ -69,7 +70,6 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     public readonly onFeedbackDelete = output<Feedback>();
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
-    private feedbackService = inject(FeedbackService);
 
     /** Shows the apply-armed-instruction control while an instruction is armed. */
     protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !this.isSuggestion() && this.selectionService.hasArmedInstruction());

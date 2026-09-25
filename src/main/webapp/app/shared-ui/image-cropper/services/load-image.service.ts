@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { CropperSettings } from '../interfaces/cropper.settings';
 import { ExifTransform } from '../interfaces/exif-transform.interface';
 import { getTransformationsFromExifData, supportsAutomaticRotation } from '../utils/exif.utils';
@@ -11,7 +11,7 @@ interface LoadImageBase64 {
     originalBase64: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LoadImageService {
     private autoRotateSupported: Promise<boolean> = supportsAutomaticRotation();
 

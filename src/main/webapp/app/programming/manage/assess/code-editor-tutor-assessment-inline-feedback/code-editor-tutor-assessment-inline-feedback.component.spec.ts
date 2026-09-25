@@ -568,3 +568,24 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.currentFeedback().credits).toBe(2);
     });
 });
+
+describe('CodeEditorTutorAssessmentInlineFeedbackComponent compiled with preserved whitespace', () => {
+    it('should render the save button of a non-manual feedback opened for editing', () => {
+        TestBed.configureTestingModule({
+            imports: [CodeEditorTutorAssessmentInlineFeedbackComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, StructuredGradingCriterionService],
+        });
+        TestBed.overrideComponent(CodeEditorTutorAssessmentInlineFeedbackComponent, { set: { preserveWhitespaces: true } });
+        const fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
+        fixture.componentRef.setInput('feedback', { type: FeedbackType.AUTOMATIC, text: 'SCAFeedbackIdentifier:Rule', credits: 1 } as Feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('selectedFile', 'testFile');
+        fixture.componentRef.setInput('codeLine', 1);
+        fixture.detectChanges();
+
+        fixture.componentInstance.editFeedback(1);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#feedback-save'))).toBeTruthy();
+    });
+});

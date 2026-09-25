@@ -6,7 +6,6 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LtiService } from 'app/foundation/service/lti.service';
-import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -73,7 +72,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview/course-overview.scss'],
-    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, NgStyle, RouterOutlet, TranslateDirective, ArtemisTranslatePipe, TumUiEmptyStateComponent],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective, ArtemisTranslatePipe, TumUiEmptyStateComponent],
 })
 export class CourseExercisesComponent implements SidebarView {
     private courseStorageService = inject(CourseStorageService);

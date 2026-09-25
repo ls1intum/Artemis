@@ -14,10 +14,10 @@ import { ScienceEventType } from 'app/foundation/science/science.model';
     templateUrl: './text-unit.component.html',
 })
 export class TextUnitComponent extends LectureUnitDirective<TextUnit> {
-    protected readonly faScroll = faScroll;
-
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly scienceService = inject(ScienceService);
+
+    protected readonly faScroll = faScroll;
 
     readonly formattedContent = computed(() => {
         if (this.lectureUnit().content) {

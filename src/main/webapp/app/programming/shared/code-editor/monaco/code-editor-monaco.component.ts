@@ -74,10 +74,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
     static readonly CLASS_REVIEW_COMMENT_HOVER_BUTTON = 'monaco-add-review-comment-button';
     static readonly FILE_TIMEOUT = 10000;
-
-    protected readonly Feedback = Feedback;
-    protected readonly CommitState = CommitState;
-
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
     private readonly fileService = inject(CodeEditorFileService);
     private readonly localStorageService = inject(LocalStorageService);
@@ -85,6 +81,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private readonly injector = inject(Injector);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+
+    protected readonly Feedback = Feedback;
+    protected readonly CommitState = CommitState;
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);

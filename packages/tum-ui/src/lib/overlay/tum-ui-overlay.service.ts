@@ -1,4 +1,4 @@
-import { ElementRef, Injectable, inject } from '@angular/core';
+import { ElementRef, Service, inject } from '@angular/core';
 import { ConnectedPosition, FlexibleConnectedPositionStrategy, Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { Directionality } from '@angular/cdk/bidi';
 
@@ -24,7 +24,7 @@ const VERTICAL_POSITIONS: Record<'top' | 'bottom', ConnectedPosition[]> = {
     ],
 };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TumUiOverlayService {
     private readonly overlay = inject(Overlay);
     private readonly directionality = inject(Directionality);

@@ -12,9 +12,10 @@ import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
     imports: [TutorialGroupDetailComponent, LoadingIndicatorOverlayComponent],
 })
 export class CourseTutorialGroupDetailContainerComponent {
-    protected readonly TutorialGroupDetailManagementAccessLevel = TutorialGroupDetailAccessLevel;
     private route = inject(ActivatedRoute);
     private tutorialGroupCourseAndGroupService = inject(TutorialGroupCourseAndGroupService);
+
+    protected readonly TutorialGroupDetailManagementAccessLevel = TutorialGroupDetailAccessLevel;
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
     private course = this.tutorialGroupCourseAndGroupService.course;
 

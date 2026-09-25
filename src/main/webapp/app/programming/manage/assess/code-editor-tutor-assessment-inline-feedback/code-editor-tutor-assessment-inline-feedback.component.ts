@@ -51,6 +51,11 @@ import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail
     ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
+    // Needed for the outer editor to access the DOM node of this component
+    public elementRef = inject(ElementRef);
+
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faPencilAlt = faPencilAlt;
@@ -66,11 +71,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     // Expose the function to the template. The feedback of this widget is edited in place (see currentFeedback), so
     // its presentation is derived per change detection run instead of through computed signals.
     protected readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-
-    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
-    private readonly selectionService = inject(GradingInstructionSelectionService);
-    // Needed for the outer editor to access the DOM node of this component
-    public elementRef = inject(ElementRef);
 
     readonly feedback = input<Feedback>();
 

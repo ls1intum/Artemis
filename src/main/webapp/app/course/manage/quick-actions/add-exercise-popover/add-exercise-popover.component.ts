@@ -26,13 +26,13 @@ interface ExerciseModalRow {
     exportAs: 'addExercisePopover',
 })
 export class AddExercisePopoverComponent {
+    private readonly profileService = inject(ProfileService);
+
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;
     protected readonly faTimes = faTimes;
-
-    private readonly profileService = inject(ProfileService);
 
     private readonly allExerciseTypes: ExerciseModalRow[] = [
         {

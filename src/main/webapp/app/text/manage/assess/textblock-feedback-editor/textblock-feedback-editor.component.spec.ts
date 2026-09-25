@@ -284,4 +284,14 @@ describe('TextBlockFeedbackEditorComponent', () => {
         component.didChange();
         expect(typeSpy).not.toHaveBeenCalled();
     });
+
+    it('should render the grading instruction dropdown next to the feedback detail when criteria exist', () => {
+        const criterion = { id: 1, title: 'Correctness', structuredGradingInstructions: [{ id: 2, credits: 1 } as GradingInstruction] } as GradingCriterion;
+        fixture.componentRef.setInput('criteria', [criterion]);
+        fixture.detectChanges();
+
+        const inputGroup = compiled.querySelector('.input-group');
+        expect(inputGroup?.querySelector('.input-group-prepend [ngbDropdown]')).toBeTruthy();
+        expect(inputGroup?.querySelector('[data-testid="feedback-editor-text-input"]')).toBeTruthy();
+    });
 });

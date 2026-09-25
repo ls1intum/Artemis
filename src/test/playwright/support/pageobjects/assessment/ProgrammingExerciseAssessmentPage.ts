@@ -16,11 +16,13 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
     }
 
     private async typeIntoFeedbackEditor(text: string, index: number) {
-        await this.getInlineFeedback(index).locator('.unified-feedback-detail-input').fill(text);
+        await this.getInlineFeedback(index).getByTestId('feedback-editor-text-input').fill(text);
     }
 
     private async typePointsIntoFeedbackEditor(points: number, index: number) {
-        await this.setPointsViaStepper(this.getInlineFeedback(index), points);
+        const pointsInput = this.getInlineFeedback(index).getByTestId('feedback-editor-points-input');
+        await pointsInput.fill(points.toString());
+        await pointsInput.blur();
     }
 
     private getInlineFeedback(line: number) {

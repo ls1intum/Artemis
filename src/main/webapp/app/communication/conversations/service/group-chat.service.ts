@@ -2,17 +2,17 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class GroupChatService {
-    public resourceUrl = 'api/communication/courses/';
-
     private http = inject(HttpClient);
     private conversationService = inject(ConversationService);
     private accountService = inject(AccountService);
+
+    public resourceUrl = 'api/communication/courses/';
 
     create(courseId: number, loginsOfChatPartners: string[]): Observable<HttpResponse<GroupChatDTO>> {
         return this.http

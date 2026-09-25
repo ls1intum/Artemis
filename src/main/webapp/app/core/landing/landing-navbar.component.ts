@@ -211,13 +211,14 @@ import { MenuItem } from 'primeng/api';
     `,
 })
 export class LandingNavbarComponent {
+    private translateService = inject(TranslateService);
+    private router = inject(Router);
+
     protected readonly faBars = faBars;
     protected readonly faXmark = faXmark;
     protected readonly faFlag = faFlag;
 
-    private translateService = inject(TranslateService);
     private findLanguagePipe = new FindLanguageFromKeyPipe();
-    private router = inject(Router);
 
     languages = LANGUAGES;
     mobileMenuOpen = signal(false);

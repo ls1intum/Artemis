@@ -57,6 +57,12 @@ interface ImportCount {
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
+    private alertService = inject(AlertService);
+    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
+
     /** Whether import is loading */
     protected readonly isLoading = signal(false);
     /** Whether the help section is collapsed */
@@ -107,12 +113,6 @@ export class AdminImportStandardizedCompetenciesComponent {
     }]
 }
 \`\`\``;
-
-    private alertService = inject(AlertService);
-    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
-    private activatedRoute = inject(ActivatedRoute);
-    private router = inject(Router);
-    private translateService = inject(TranslateService);
 
     /**
      * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it
