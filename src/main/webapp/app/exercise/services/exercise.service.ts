@@ -213,15 +213,6 @@ export class ExerciseService {
         return summary;
     }
 
-    /**
-     * Evaluate the quiz exercise
-     * @param quizExerciseId id of the quiz exercise to be evaluated
-     * @returns void
-     */
-    evaluateQuizExercise(quizExerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`api/quiz/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
-    }
-
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exercise[]>(`${this.adminResourceUrl}/upcoming`, { observe: 'response' })
