@@ -102,6 +102,21 @@ class CompetencyExerciseLinkProvenanceTest {
     }
 
     @Test
+    void hyperionIdDoesNotRelabelExistingManualLink() {
+        CourseCompetency existing = competency(5L, "Sorting");
+        CompetencyExerciseLink manualLink = new CompetencyExerciseLink(existing, exercise, 1.0);
+        exercise.setCompetencyLinks(new HashSet<>(Set.of(manualLink)));
+
+        CompetencyLinksHolderDTO dto = () -> Set.of(new CompetencyLinkDTO(new CompetencyDTO(5L, "Sorting"), 0.5));
+        service.updateCompetencyLinks(dto, exercise, Set.of(5L));
+
+        assertThat(exercise.getCompetencyLinks()).singleElement().satisfies(link -> {
+            assertThat(link.getWeight()).isEqualTo(0.5);
+            assertThat(link.isGeneratedByAi()).isFalse();
+        });
+    }
+
+    @Test
     void rejectsHyperionProvenanceForLinkMissingFromSave() {
         CourseCompetency existing = competency(5L, "Sorting");
         CompetencyExerciseLink existingLink = new CompetencyExerciseLink(existing, exercise, 1.0);

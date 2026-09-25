@@ -62,8 +62,8 @@ public class CompetencyExerciseLinkService {
     }
 
     /**
-     * Updates competency links and marks the links selected through Hyperion as AI-generated in the same persistence operation.
-     * Existing AI provenance is never cleared.
+     * Updates competency links and marks new links selected through Hyperion as AI-generated in the same persistence operation.
+     * Existing links keep their recorded origin: AI provenance is never cleared, and Hyperion IDs never relabel an existing link.
      *
      * @param dto                            the DTO containing the new competency link state
      * @param entity                         the exercise entity to update
@@ -111,10 +111,8 @@ public class CompetencyExerciseLinkService {
 
                 var existingLink = existingLinksByCompetencyId.get(competencyId);
                 if (existingLink != null) {
+                    // An edit keeps the recorded origin, so a Hyperion ID cannot relabel an instructor's link.
                     existingLink.setWeight(weight);
-                    if (hyperionGeneratedCompetencyIds.contains(competencyId)) {
-                        existingLink.setGeneratedByAi(true);
-                    }
                     updatedLinks.add(existingLink);
                 }
                 else {
