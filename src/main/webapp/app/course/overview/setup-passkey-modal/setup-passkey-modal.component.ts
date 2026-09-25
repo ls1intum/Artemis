@@ -20,6 +20,13 @@ export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestS
     templateUrl: './setup-passkey-modal.component.html',
 })
 export class SetupPasskeyModalComponent implements OnInit {
+    private readonly webauthnService = inject(WebauthnService);
+    private readonly alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly profileService = inject(ProfileService);
+    private readonly destroyRef = inject(DestroyRef);
+
     protected readonly faKey = faKey;
     protected readonly faShieldHalved = faShieldHalved;
     protected readonly faFingerprint = faFingerprint;
@@ -34,13 +41,6 @@ export class SetupPasskeyModalComponent implements OnInit {
      * authentication state re-emits (e.g. after changing the AI experience). Reset on a full reload.
      */
     private dismissedForCurrentSession = false;
-
-    private readonly webauthnService = inject(WebauthnService);
-    private readonly alertService = inject(AlertService);
-    private readonly accountService = inject(AccountService);
-    private readonly localStorageService = inject(LocalStorageService);
-    private readonly profileService = inject(ProfileService);
-    private readonly destroyRef = inject(DestroyRef);
 
     ngOnInit(): void {
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY)) {

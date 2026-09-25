@@ -99,6 +99,8 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     ],
 })
 export class AttachmentVideoUnitFormComponent {
+    private readonly formBuilder = inject(FormBuilder);
+
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
@@ -128,8 +130,6 @@ export class AttachmentVideoUnitFormComponent {
 
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
-
-    private readonly formBuilder = inject(FormBuilder);
 
     // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
     private appliedFormData?: AttachmentVideoUnitFormData;

@@ -37,15 +37,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     ],
 })
 export class AccountInformationComponent {
-    protected readonly faPen = faPencil;
-    protected readonly faTrash = faTrash;
-    protected readonly faPlus = faPlus;
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
-
     private readonly accountService = inject(AccountService);
     private readonly userSettingsService = inject(UserSettingsService);
     private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
+
+    protected readonly faPen = faPencil;
+    protected readonly faTrash = faTrash;
+    protected readonly faPlus = faPlus;
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
     readonly imageLoadFailed = signal(false);

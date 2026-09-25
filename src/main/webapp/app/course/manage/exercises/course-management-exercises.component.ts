@@ -104,6 +104,22 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
+    private readonly route = inject(ActivatedRoute);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly quizExerciseService = inject(QuizExerciseService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly textExerciseService = inject(TextExerciseService);
+    private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly translateService = inject(TranslateService);
+    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
+    private readonly groupSync = inject(ExerciseGroupSyncService);
+    private readonly deleteDialogService = inject(DeleteDialogService);
+    private readonly alertService = inject(AlertService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly profileService = inject(ProfileService);
+    private readonly destroyRef = inject(DestroyRef);
+
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
@@ -185,22 +201,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     });
     /** The selected exercises narrowed to programming exercises — the mass actions below only apply to those. */
     readonly selectedProgrammingExercises = computed(() => this.selectedExercises().filter((exercise) => exercise.type === ExerciseType.PROGRAMMING) as ProgrammingExercise[]);
-
-    private readonly route = inject(ActivatedRoute);
-    private readonly courseManagementService = inject(CourseManagementService);
-    private readonly quizExerciseService = inject(QuizExerciseService);
-    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly textExerciseService = inject(TextExerciseService);
-    private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
-    private readonly modelingExerciseService = inject(ModelingExerciseService);
-    private readonly translateService = inject(TranslateService);
-    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
-    private readonly groupSync = inject(ExerciseGroupSyncService);
-    private readonly deleteDialogService = inject(DeleteDialogService);
-    private readonly alertService = inject(AlertService);
-    private readonly localStorageService = inject(LocalStorageService);
-    private readonly profileService = inject(ProfileService);
-    private readonly destroyRef = inject(DestroyRef);
 
     /** Under LocalCI repositories and build plans live inside Artemis, so the delete dialog offers no external cleanup checks. */
     protected readonly localCIEnabled = signal(true);

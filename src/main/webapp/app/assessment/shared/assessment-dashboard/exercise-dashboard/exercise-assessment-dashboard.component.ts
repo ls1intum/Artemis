@@ -68,7 +68,6 @@ import { Message } from 'primeng/message';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
-import { NgStyle } from '@angular/common';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
@@ -116,7 +115,6 @@ export interface ExampleSubmissionQueryParams {
         SortDirective,
         SortByDirective,
         LanguageTableCellComponent,
-        NgStyle,
         ResultComponent,
         AssessmentWarningComponent,
         CollapsableAssessmentInstructionsComponent,

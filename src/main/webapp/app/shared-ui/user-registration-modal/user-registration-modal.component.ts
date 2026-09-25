@@ -36,10 +36,9 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 })
 export class UserRegistrationModalComponent {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
+    private readonly alertService = inject(AlertService);
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
-
-    private readonly alertService = inject(AlertService);
 
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 

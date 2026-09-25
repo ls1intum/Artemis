@@ -19,6 +19,9 @@
     "angularCompilerOptions": {
         "strictInjectionParameters": true,
         "strictInputAccessModifiers": true,
-        "strictTemplates": true
+        "strictTemplates": true,
+        // Same as the Artemis tsconfig: a camelCase event binding that no directive emits and that is not a native DOM
+        // event (a misspelled output) fails the build.
+        "strictUnclaimedEventNames": true
     }
 }

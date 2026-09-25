@@ -419,3 +419,27 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);
     });
 });
+
+describe('CodeEditorTutorAssessmentInlineFeedbackComponent compiled with preserved whitespace', () => {
+    // The application compiles templates with `preserveWhitespaces: true` (tsconfig.json), the test compiler does not.
+    // With whitespace kept, a block around the save button has more than one root node and is not projected into the
+    // extra-controls slot of the unified feedback, which has no other slot, so only this setup shows a missing button.
+    it('should render the save button of a non-manual feedback opened for editing', () => {
+        TestBed.configureTestingModule({
+            imports: [CodeEditorTutorAssessmentInlineFeedbackComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+        });
+        TestBed.overrideComponent(CodeEditorTutorAssessmentInlineFeedbackComponent, { set: { preserveWhitespaces: true } });
+        const fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
+        fixture.componentRef.setInput('feedback', { type: FeedbackType.AUTOMATIC, text: 'SCAFeedbackIdentifier:Rule', credits: 1 } as Feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('selectedFile', 'testFile');
+        fixture.componentRef.setInput('codeLine', 1);
+        fixture.detectChanges();
+
+        fixture.componentInstance.editFeedback(1);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="feedback-save"]'))).toBeTruthy();
+    });
+});

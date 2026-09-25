@@ -34,6 +34,7 @@ import { TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 })
 export class ExamManagementNavigationSidebarComponent {
     private router = inject(Router);
+    private elementRef = inject(ElementRef<HTMLElement>);
 
     readonly isCollapsed = input<boolean>(false);
 
@@ -57,8 +58,6 @@ export class ExamManagementNavigationSidebarComponent {
     readonly faVial = faVial;
 
     // State for the accordion
-    private elementRef = inject(ElementRef<HTMLElement>);
-
     readonly expandedExams = signal<Set<number>>(new Set<number>());
 
     constructor() {

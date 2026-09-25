@@ -36,13 +36,14 @@ interface ImportResult {
     styleUrl: './tutorial-registrations-import-modal.component.scss',
 })
 export class TutorialRegistrationsImportModalComponent {
-    protected readonly ImportFlowStep = ImportFlowStep;
-    protected readonly faCircleCheck = faCircleCheck;
-
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
+
+    protected readonly ImportFlowStep = ImportFlowStep;
+    protected readonly faCircleCheck = faCircleCheck;
+
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private parsedStudents = signal<TutorialGroupRegisterStudentRequest[]>([]);
     private importResults = signal<ImportResult[]>([]);

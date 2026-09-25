@@ -193,6 +193,28 @@ export default tseslint.config(
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
+            // Class fields initialize in declaration order, so a getter or method that reads an injected service from
+            // an earlier field initializer sees `undefined` if the inject() field comes later. TypeScript only catches
+            // the direct reference, not the one behind a getter or method, so keep every inject() field first.
+            '@angular-eslint/inject-at-top': 'error',
+            // Angular 22's @Service() is the shorthand for @Injectable({ providedIn: 'root' }) and what `ng generate
+            // service` emits. It also rejects constructor injection at compile time, which matches prefer-inject.
+            // Services with any other provider metadata keep @Injectable. Autofixable, with one trap: a @Pipe that is
+            // also injected as a service is still reported, but @Service() cannot share a class with another Angular
+            // decorator, so the autofix breaks the build with NG1006. Only the AOT compiler (`ng build`) catches that;
+            // Vitest compiles JIT and tsc ignores decorators. Keep @Injectable there with a line-level disable and do
+            // not run the autofix on it.
+            '@angular-eslint/prefer-service-decorator': 'error',
+            // A computed(), linkedSignal(), effect() or afterRenderEffect() that reads no signal never re-runs: either a
+            // signal read is missing (`count` instead of `count()`), or the value is a constant and should be a field.
+            // Version 22.5.0 crashes ("config.args is not iterable") on a bare call named like an Object.prototype
+            // member, such as a destructured Signal Forms `valueOf`; patches/@angular-eslint__eslint-plugin@22.5.0.patch
+            // backports the upstream fix until a release contains it.
+            '@angular-eslint/reactive-context-must-read-signal': 'error',
+            // A computed() whose function returns nothing is always undefined.
+            '@angular-eslint/computed-must-return': 'error',
+            // takeUntilDestroyed() without a DestroyRef throws NG0203 outside an injection context (ngOnInit, methods).
+            '@angular-eslint/no-implicit-take-until-destroyed': 'error',
             // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
             // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
             // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
@@ -593,6 +615,16 @@ export default tseslint.config(
             '@angular-eslint/template/elements-content': 'off',
             '@angular-eslint/template/prefer-control-flow': 'error',
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
+            // A @switch without @default silently renders nothing for an unmatched value. Write `@default never;`
+            // when the cases cover the whole union or enum (the template type check then fails when a member is
+            // added), otherwise `@default {}` to state that nothing is rendered on purpose.
+            '@angular-eslint/template/require-switch-default': 'error',
+            // Setting outerHTML replaces the node Angular is bound to, so the next update fails. Use [innerHTML].
+            '@angular-eslint/template/no-outerhtml': 'error',
+            // Prefer [style], [style.prop] and [style.prop.unit] bindings (or a static style attribute) over NgStyle,
+            // as the Angular style guide recommends. A bound object is compared by reference, so replace it rather
+            // than mutating it, and write a unit suffix such as `top.px` as its own [style.top.px] binding.
+            '@angular-eslint/template/prefer-style-binding': 'error',
         },
     },
     {

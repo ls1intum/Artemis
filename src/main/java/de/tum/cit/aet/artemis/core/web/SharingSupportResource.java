@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
@@ -34,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
  * All endpoints require a shared secret API key sent via the {@code Authorization} header
  * using the {@code Bearer <token>} scheme.
  */
-@FeatureUsage("sharing/sharing-platform")
+@FeatureUsage(UserFeature.SHARING_PLATFORM)
 @RestController
 @RequestMapping("api/core/sharing/")
 @Conditional(SharingEnabled.class)
@@ -86,6 +89,7 @@ public class SharingSupportResource {
      *         {@code 401} on missing/invalid credentials
      * @see <a href="https://sharing-codeability.uibk.ac.at/development/sharing/codeability-sharing-platform/-/wikis/Setup/Connector-Interface-Setup">Connector Interface Setup</a>
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
     public ResponseEntity<SharingPluginConfig> getConfig(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestHeader("Authorization") Optional<String> sharingApiKey,
             @RequestParam String apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestParam Optional<String> installationName) {
@@ -136,6 +140,7 @@ public class SharingSupportResource {
      *
      * @return {@code ResponseEntity<Boolean>} indicating connection status when sharing is enabled
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)
     public ResponseEntity<Boolean> isSharingEnabled() {
         return ResponseEntity.ok(sharingConnectorService.isSharingApiBaseUrlPresent());

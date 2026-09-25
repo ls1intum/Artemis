@@ -105,9 +105,9 @@ interface ExerciseRow {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseTableComponent {
-    protected readonly faBars = faBars;
-
     private readonly translateService = inject(TranslateService);
+
+    protected readonly faBars = faBars;
 
     /** Emits on every language switch, so computeds building translated strings read it to be re-derived. */
     private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
