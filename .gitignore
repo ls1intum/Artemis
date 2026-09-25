@@ -255,9 +255,13 @@ deferredEagerBeanInstantiationViolations.dot
 /.e2e-local-multinode/
 
 ######################
-# Claude Code
+# Local agent installations and working notes
 ######################
 .claude
+/.agents/skills/
+/.ai/
+/.context/
+/skills-lock.json
 
 
 ######################
