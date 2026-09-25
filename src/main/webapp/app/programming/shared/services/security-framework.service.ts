@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -22,7 +22,7 @@ const FRAMEWORK_VERSIONS: SecurityFrameworkVersionOption[] = [
  * The server generates/commits the policy (via the mocked Ares2 integration) and returns the settled config;
  * the component owns the transient GENERATING/DELETING states while these calls are in flight.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SecurityFrameworkService {
     private readonly http = inject(HttpClient);
 
