@@ -5,7 +5,7 @@
  * `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` all beat Tailwind's `@layer utilities`, so
  * `class="m-0 text-sm font-semibold"` on this element set none of the three. A class selector inside an Angular
  * component carries the encapsulation attribute and so outranks a bare element selector without `!important` — the
- * mechanism `tum-ui-card-title` uses, applied locally because the card title is fixed at the L2 size and this is the
+ * mechanism `tumaet-ui-card-title` uses, applied locally because the card title is fixed at the L2 size and this is the
  * heading of an appendix ranked deliberately below it.
  *
  * Sizes are named from the Tailwind type scale emitted at `:root` by the app's `tailwind.css`, so this heading and a

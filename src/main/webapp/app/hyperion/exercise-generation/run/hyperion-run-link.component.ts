@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, exhaustMap, merge, of, startWith, switchMap, timer } from 'rxjs';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -19,11 +19,11 @@ import { runOutcome } from '../model/hyperion-generation-stages';
 @Component({
     selector: 'jhi-hyperion-run-link',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, TumUiButtonDirective, HyperionStatusComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [RouterLink, TumAetUiButtonDirective, HyperionStatusComponent, TranslateDirective, ArtemisTranslatePipe],
     template: `
         @if (status()?.jobId) {
             <a
-                tumUiButton
+                tumAetUiButton
                 severity="primary"
                 variant="outlined"
                 size="small"

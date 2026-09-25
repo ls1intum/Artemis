@@ -1,5 +1,5 @@
 import { hasSupportedProgrammingConfiguration } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
-import { TumUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiTagSeverity } from '@tumaet/ui-angular';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -75,8 +75,8 @@ export function adaptationChips(request: VariantGenerationRequest | undefined, t
     return items;
 }
 
-/** Severity of the `tum-ui-tag` showing an exercise's difficulty. */
-export function difficultySeverity(d: DifficultyLevel | undefined): TumUiTagSeverity {
+/** Severity of the `tumaet-ui-tag` showing an exercise's difficulty. */
+export function difficultySeverity(d: DifficultyLevel | undefined): TumAetUiTagSeverity {
     switch (d) {
         case DifficultyLevel.EASY:
             return 'success';

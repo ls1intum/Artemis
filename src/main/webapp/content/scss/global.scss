@@ -43,7 +43,7 @@ html.modeling-exercise-editor-scroll-snap {
    - Apollon's popovers use a Base UI portal under <body>. It is unpositioned, so it
      needs the position/inset as well as the z-index; pointer events are handed back
      to its children so the transparent full-screen layer never swallows a click.
-   - TUM UI dialogs use Angular CDK, whose overlay container is appended to <html>
+   - TUM AET UI dialogs use Angular CDK, whose overlay container is appended to <html>
      and already positions itself - only the z-index is missing there. */
 html:fullscreen body:has(> .apollon-fullscreen-frame) > [data-base-ui-portal] {
     position: fixed;
@@ -83,7 +83,7 @@ h4 {
     font-weight: 500 !important;
 }
 
-a:not(.btn, .tum-ui-btn, .tum-ui-list-item-action, .tum-ui-menu-item, .dropdown-item, .page-link, .nav-link, .tab-link) {
+a:not(.btn, .tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .dropdown-item, .page-link, .nav-link, .tab-link) {
     color: $link-color;
     cursor: pointer;
 }
@@ -109,7 +109,7 @@ a {
  * separate `:not()` clauses raises this rule past those overrides, and the anchor underline comes back on top of the
  * one they draw themselves — a double underline under the label plus a stray dash beside the icon.
  */
-a:not(.btn, .tum-ui-btn, .tum-ui-list-item-action, .tum-ui-menu-item, .tab-link):hover {
+a:not(.btn, .tumaet-ui-btn, .tumaet-ui-list-item-action, .tumaet-ui-menu-item, .tab-link):hover {
     text-decoration: underline !important;
 }
 
@@ -244,15 +244,15 @@ Generic styles
 /*
  * Error highlight on input fields.
  *
- * TUM UI controls are excluded from both accents (here and on the invalid rule below): they paint their own
- * state through `tum-ui-form-field [invalid]` / `tumUiInputInvalid`, which is a rounded 1px border on the
+ * TUM AET UI controls are excluded from both accents (here and on the invalid rule below): they paint their own
+ * state through `tumaet-ui-form-field [invalid]` / `tumAetUiInputInvalid`, which is a rounded 1px border on the
  * control itself. The JHipster 5px stick does not follow those rounded corners, so it looked detached on an
  * invalid field and — once a migrated field carries a real `required` — put a green bar down every valid one.
- * `[class*='tum-ui-']` matches the package class every TUM UI control root carries, so components migrated
+ * `[class*='tumaet-ui-']` matches the package class every TUM AET UI control root carries, so components migrated
  * later are covered without touching this rule again. Same reasoning as `p-datepicker.ng-invalid` below.
  */
-.ng-valid[required]:not([class*='tum-ui-']),
-.ng-valid.required:not([class*='tum-ui-']) {
+.ng-valid[required]:not([class*='tumaet-ui-']),
+.ng-valid.required:not([class*='tumaet-ui-']) {
     border-left: 5px solid $ng-valid-border;
 
     &.form-check-input {
@@ -266,10 +266,10 @@ Generic styles
  *   before the user has done anything);
  * - a [formGroup]/container element also receives `.ng-invalid`, so `:not(:has(.ng-invalid))` keeps the
  *   accent on the innermost invalid element (the field), never a full-height bar down the wrapper.
- * Applies app-wide, except to TUM UI controls — see the note on the valid rule above.
+ * Applies app-wide, except to TUM AET UI controls — see the note on the valid rule above.
  */
-.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)):not([class*='tum-ui-']),
-.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)):not([class*='tum-ui-']) {
+.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)):not([class*='tumaet-ui-']),
+.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)):not([class*='tumaet-ui-']) {
     border-left: 5px solid $ng-invalid-border;
 
     &.form-check-input {
@@ -316,20 +316,20 @@ p-datepicker.ng-invalid {
 
 jhi-date-time-picker .p-datepicker-input {
     padding-inline-end: calc((var(--p-form-field-padding-x) * 3) + (var(--p-icon-size) * 2)) !important;
-    border-start-start-radius: var(--tum-ui-input-group-start-radius, var(--p-form-field-border-radius));
-    border-end-start-radius: var(--tum-ui-input-group-start-radius, var(--p-form-field-border-radius));
-    border-start-end-radius: var(--tum-ui-input-group-end-radius, var(--p-form-field-border-radius));
-    border-end-end-radius: var(--tum-ui-input-group-end-radius, var(--p-form-field-border-radius));
+    border-start-start-radius: var(--tumaet-ui-input-group-start-radius, var(--p-form-field-border-radius));
+    border-end-start-radius: var(--tumaet-ui-input-group-start-radius, var(--p-form-field-border-radius));
+    border-start-end-radius: var(--tumaet-ui-input-group-end-radius, var(--p-form-field-border-radius));
+    border-end-end-radius: var(--tumaet-ui-input-group-end-radius, var(--p-form-field-border-radius));
 }
 
 jhi-date-time-picker .date-time-picker-warning-border {
     border-color: var(--color-state-warning) !important;
 }
 
-// Host-side compensation for the TUM UI package while Artemis still loads Bootstrap; drop both once it is gone.
+// Host-side compensation for the TUM AET UI package while Artemis still loads Bootstrap; drop both once it is gone.
 
-// Bootstrap Reboot's unlayered `border-width: 0` beats the package's layered `tum:border-b` utility.
-.tum-ui-table {
+// Bootstrap Reboot's unlayered `border-width: 0` beats the package's layered `tumaet:border-b` utility.
+.tumaet-ui-table {
     thead th,
     tbody td {
         border-bottom-width: 1px;
@@ -337,8 +337,8 @@ jhi-date-time-picker .date-time-picker-warning-border {
     }
 }
 
-// `tum:disabled:opacity-60` compiles to `:disabled`, which never matches an `<a>`.
-a[tumUiButton].disabled {
+// `tumaet:disabled:opacity-60` compiles to `:disabled`, which never matches an `<a>`.
+a[tumAetUiButton].disabled {
     opacity: 0.6;
 }
 

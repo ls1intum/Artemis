@@ -6,7 +6,7 @@
  * them beat Tailwind's `@layer utilities`, so `class="m-0 text-xl font-semibold"` on this element set *nothing*: not
  * the size, not the weight, and not even the margin. A class selector inside an Angular component carries the
  * encapsulation attribute, so it outranks a bare element selector on specificity and needs no `!important` at all —
- * which is the same mechanism `tum-ui-card-title` uses, applied here because the card title is fixed at the L2 size
+ * which is the same mechanism `tumaet-ui-card-title` uses, applied here because the card title is fixed at the L2 size
  * and this is the page's L1.
  *
  * The values are named from the Tailwind type scale (`--text-xl`, `--font-weight-semibold`), which is emitted at

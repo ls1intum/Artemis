@@ -1,36 +1,36 @@
 <section aria-labelledby="hyperion-artifacts-title" data-testid="hyperion-artifacts">
     <h2 id="hyperion-artifacts-title" class="hyperion-artifacts-title mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generation.artifacts.title"></h2>
     <p class="mt-0 mb-3 text-sm text-muted-color" [jhiTranslate]="hintKey()"></p>
-    <tum-ui-tabs [value]="selectedTab()" (valueChange)="onTabChange($event)">
-        <tum-ui-tab-list>
+    <tumaet-ui-tabs [value]="selectedTab()" (valueChange)="onTabChange($event)">
+        <tumaet-ui-tab-list>
             @if (showDesign()) {
-                <tum-ui-tab value="spec" data-testid="hyperion-artifacts-tab-spec">
+                <tumaet-ui-tab value="spec" data-testid="hyperion-artifacts-tab-spec">
                     <span [jhiTranslate]="specTitleKey()"></span>
-                </tum-ui-tab>
+                </tumaet-ui-tab>
             }
-            <tum-ui-tab value="files" data-testid="hyperion-artifacts-tab-files">
+            <tumaet-ui-tab value="files" data-testid="hyperion-artifacts-tab-files">
                 <span class="flex items-baseline gap-2">
                     <span jhiTranslate="artemisApp.hyperion.generation.artifacts.filesTitle"></span>
                     @if (fileCount(); as count) {
                         <span class="text-sm text-muted-color tabular-nums">{{ count }}</span>
                     }
                 </span>
-            </tum-ui-tab>
-        </tum-ui-tab-list>
-        <tum-ui-tab-panels class="p-0!">
+            </tumaet-ui-tab>
+        </tumaet-ui-tab-list>
+        <tumaet-ui-tab-panels class="p-0!">
             @if (showDesign()) {
-                <tum-ui-tab-panel value="spec" class="block pt-3" preserveContent>
+                <tumaet-ui-tab-panel value="spec" class="block pt-3" preserveContent>
                     @if (hasSpec()) {
                         <p class="mt-0 mb-3 text-sm text-muted-color" [jhiTranslate]="specHintKey()"></p>
                         <jhi-hyperion-markdown [markdown]="specDocument()" data-testid="hyperion-artifacts-spec" />
                     } @else {
                         <jhi-hyperion-empty [titleKey]="specEmptyTitleKey()" [descriptionKey]="specEmptyHintKey()" data-testid="hyperion-artifacts-spec-empty" />
                     }
-                </tum-ui-tab-panel>
+                </tumaet-ui-tab-panel>
             }
-            <tum-ui-tab-panel value="files" class="block pt-3" preserveContent>
+            <tumaet-ui-tab-panel value="files" class="block pt-3" preserveContent>
                 <jhi-hyperion-file-change-list [files]="artifacts()" [running]="running()" [emptyTitleKey]="filesEmptyTitleKey()" [emptyDescriptionKey]="filesEmptyHintKey()" />
-            </tum-ui-tab-panel>
-        </tum-ui-tab-panels>
-    </tum-ui-tabs>
+            </tumaet-ui-tab-panel>
+        </tumaet-ui-tab-panels>
+    </tumaet-ui-tabs>
 </section>

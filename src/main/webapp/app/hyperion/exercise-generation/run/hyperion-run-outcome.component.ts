@@ -2,7 +2,7 @@ import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.
 import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-status.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiMessageComponent, TumUiMessageSeverity, TumUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent, TumAetUiMessageSeverity, TumAetUiPanelComponent } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -16,7 +16,7 @@ export interface HyperionRunOutcomeCheck {
 
 /** Everything the outcome block renders, resolved by the run page so this component only formats. */
 export interface HyperionRunOutcomeView {
-    severity: TumUiMessageSeverity;
+    severity: TumAetUiMessageSeverity;
     titleKey: string;
     bodyKey: string;
     /** Interpolation for the body; the saved outcome names the number of tests. */
@@ -59,7 +59,7 @@ interface OutcomeCheckLine {
     templateUrl: './hyperion-run-outcome.component.html',
     styleUrl: './hyperion-run-outcome.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, TranslateDirective, TumUiMessageComponent, TumUiPanelComponent, HyperionStatusComponent],
+    imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiMessageComponent, TumAetUiPanelComponent, HyperionStatusComponent],
 })
 export class HyperionRunOutcomeComponent {
     private readonly translateService = inject(TranslateService);

@@ -1,20 +1,20 @@
 <section class="flex flex-col gap-4" aria-labelledby="hyperion-workers-title" [attr.aria-busy]="loading()">
     <h5 *adminTitleBarTitle id="hyperion-workers-title" class="m-0" jhiTranslate="artemisApp.hyperion.workers.title"></h5>
     <div *adminTitleBarActions>
-        <tum-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="hyperion-workers-refresh">
+        <tumaet-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="hyperion-workers-refresh">
             <span jhiTranslate="artemisApp.hyperion.workers.refresh"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
     <p class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.workers.description"></p>
     @if (liveUpdatesPaused()) {
-        <tum-ui-message severity="warn" data-testid="hyperion-live-updates-paused">
+        <tumaet-ui-message severity="warn" data-testid="hyperion-live-updates-paused">
             <span jhiTranslate="artemisApp.hyperion.workers.liveUpdatesPaused"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
     @if (failed()) {
-        <tum-ui-message severity="error" data-testid="hyperion-workers-error">
+        <tumaet-ui-message severity="error" data-testid="hyperion-workers-error">
             <span jhiTranslate="artemisApp.hyperion.workers.loadFailed"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
     @if (generationEnabled) {
         <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-3">
@@ -29,7 +29,7 @@
             }
             @if (generations().length) {
                 <div class="overflow-x-auto">
-                    <table tumUiTable data-testid="hyperion-active-runs">
+                    <table tumAetUiTable data-testid="hyperion-active-runs">
                         <caption class="sr-only" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></caption>
                         <thead>
                             <tr>
@@ -56,7 +56,7 @@
                                     </td>
                                     <td>
                                         <!-- Adaptation rewrites an exercise instructors may already have polished; that is worth seeing before cancelling. -->
-                                        <tum-ui-tag
+                                        <tumaet-ui-tag
                                             [severity]="run.mode === 'ADAPT' ? 'warn' : 'info'"
                                             [value]="'artemisApp.hyperion.workers.mode.' + (run.mode ?? 'GENERATE') | artemisTranslate"
                                             data-testid="hyperion-admin-run-kind"
@@ -79,7 +79,7 @@
                                         <span
                                             class="inline-flex"
                                             [attr.tabindex]="!run.cancellable || run.cancellationRequested ? 0 : undefined"
-                                            [tumUiTooltip]="
+                                            [tumAetUiTooltip]="
                                                 (!run.cancellable
                                                     ? 'artemisApp.hyperion.workers.savingHint'
                                                     : run.cancellationRequested
@@ -88,7 +88,7 @@
                                                 ) | artemisTranslate
                                             "
                                         >
-                                            <tum-ui-button
+                                            <tumaet-ui-button
                                                 severity="danger"
                                                 variant="outlined"
                                                 size="small"
@@ -98,7 +98,7 @@
                                                 data-testid="hyperion-admin-cancel-run"
                                             >
                                                 <span jhiTranslate="artemisApp.hyperion.workers.cancel"></span>
-                                            </tum-ui-button>
+                                            </tumaet-ui-button>
                                         </span>
                                     </td>
                                 </tr>
@@ -112,7 +112,7 @@
     <jhi-ai-workers [workers]="workers()" [loading]="loading()" [failed]="workersFailed()" [updatedAt]="workersUpdatedAt()" />
 </section>
 
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="cancelDialogVisible"
     [header]="'artemisApp.hyperion.workers.cancel' | artemisTranslate"
     size="medium"
@@ -124,7 +124,7 @@
         <label for="hyperion-admin-cancel-reason" jhiTranslate="artemisApp.hyperion.workers.cancelReason"></label>
         <textarea
             id="hyperion-admin-cancel-reason"
-            tumUiTextarea
+            tumAetUiTextarea
             rows="3"
             maxlength="500"
             [ngModel]="cancelReason()"
@@ -133,15 +133,15 @@
             data-testid="hyperion-admin-cancel-reason"
         ></textarea>
         @if (cancelFailed()) {
-            <tum-ui-message severity="error" data-testid="hyperion-admin-cancel-error"><span jhiTranslate="artemisApp.hyperion.workers.cancelFailed"></span></tum-ui-message>
+            <tumaet-ui-message severity="error" data-testid="hyperion-admin-cancel-error"><span jhiTranslate="artemisApp.hyperion.workers.cancelFailed"></span></tumaet-ui-message>
         }
         <div class="flex justify-end gap-2">
-            <tum-ui-button severity="secondary" variant="outlined" [disabled]="cancelling()" (clicked)="cancelDialogVisible.set(false)"
+            <tumaet-ui-button severity="secondary" variant="outlined" [disabled]="cancelling()" (clicked)="cancelDialogVisible.set(false)"
                 ><span jhiTranslate="artemisApp.hyperion.workers.keepRunning"></span
-            ></tum-ui-button>
-            <tum-ui-button severity="danger" [disabled]="!canSubmitCancellation()" (clicked)="cancelGeneration()" data-testid="hyperion-admin-confirm-cancel"
+            ></tumaet-ui-button>
+            <tumaet-ui-button severity="danger" [disabled]="!canSubmitCancellation()" (clicked)="cancelGeneration()" data-testid="hyperion-admin-confirm-cancel"
                 ><span jhiTranslate="artemisApp.hyperion.workers.cancel"></span
-            ></tum-ui-button>
+            ></tumaet-ui-button>
         </div>
     </div>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

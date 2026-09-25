@@ -1,0 +1,15 @@
+<label class="tumaet-ui-form-field-label tumaet:flex tumaet:items-center tumaet:gap-1 tumaet:text-sm tumaet:font-medium tumaet:text-text" [for]="labelTargetId()">
+    {{ label() }}<ng-content select="[tumAetUiFormFieldLabel]" />
+    @if (required()) {
+        <span class="tumaet-ui-form-field-required tumaet:text-state-danger" aria-hidden="true">*</span>
+    }
+</label>
+<div class="tumaet-ui-form-field-control">
+    <ng-content />
+</div>
+@if (showHint()) {
+    <span [id]="hintId" class="tumaet-ui-form-field-hint tumaet:text-sm tumaet:text-muted">{{ hint() }}</span>
+}
+<div [id]="errorId" class="tumaet-ui-form-field-error tumaet:text-sm tumaet:text-state-danger" role="alert" [hidden]="!invalid()">
+    {{ error() }}<ng-content select="[tumAetUiFormFieldError]" />
+</div>

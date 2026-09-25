@@ -8,7 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('FormFooterComponent', () => {
     let fixture: ComponentFixture<FormFooterComponent>;
@@ -35,7 +35,7 @@ describe('FormFooterComponent', () => {
     });
 
     const findSubmitTooltipHost = (): DebugElement => {
-        const host = fixture.debugElement.queryAll(By.directive(TumUiTooltipDirective)).find((candidate) => (candidate.nativeElement as HTMLElement).id === 'save-entity');
+        const host = fixture.debugElement.queryAll(By.directive(TumAetUiTooltipDirective)).find((candidate) => (candidate.nativeElement as HTMLElement).id === 'save-entity');
         if (!host) {
             throw new Error('expected the submit button to carry the tooltip');
         }
@@ -103,7 +103,7 @@ describe('FormFooterComponent', () => {
 
         showTooltip(findSubmitTooltipHost());
 
-        const items = Array.from(document.querySelectorAll('.tum-ui-tooltip-bubble li'));
+        const items = Array.from(document.querySelectorAll('.tumaet-ui-tooltip-bubble li'));
         expect(items.map((item) => item.textContent?.trim())).toEqual(['first.reason', 'second.reason']);
     });
 
@@ -122,7 +122,7 @@ describe('FormFooterComponent', () => {
 
         showTooltip(findSubmitTooltipHost());
 
-        expect(document.querySelector('.tum-ui-tooltip-bubble')).toBeNull();
+        expect(document.querySelector('.tumaet-ui-tooltip-bubble')).toBeNull();
     });
 
     it('should mark the save button aria-disabled but keep it focusable when there are invalid reasons', () => {
@@ -153,7 +153,7 @@ describe('FormFooterComponent', () => {
         TestBed.inject(ApplicationRef).tick();
 
         // The tooltip renders the same reasons, so letting it describe the host too would announce each one twice.
-        expect(document.querySelector('.tum-ui-tooltip-bubble')).not.toBeNull();
+        expect(document.querySelector('.tumaet-ui-tooltip-bubble')).not.toBeNull();
         expect(button.getAttribute('aria-describedby')).toBe('form-footer-invalid-reasons');
     });
 

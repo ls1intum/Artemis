@@ -1,4 +1,4 @@
-<tum-ui-dialog
+<tumaet-ui-dialog
     [header]="headerKey() | artemisTranslate"
     [visible]="visible()"
     (visibleChange)="onClose($event)"
@@ -33,12 +33,12 @@
     @if (programmingRun(); as run) {
         <jhi-hyperion-run-page [showStepCounter]="false" [inspectedExerciseId]="run.exerciseId" [inspectedRunId]="run.jobId" />
         <div class="mt-4 flex justify-end border-t border-border pt-4">
-            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
+            <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
                 {{
                     (programmingRunActive() ? 'artemisApp.exerciseVariantGeneration.wizard.runInBackground' : 'artemisApp.exerciseVariantGeneration.wizard.close')
                         | artemisTranslate
                 }}
-            </tum-ui-button>
+            </tumaet-ui-button>
         </div>
     } @else {
         <!-- ── Source → variant flow card + "what is being adapted" chips (steps 4 and 5) ── -->
@@ -72,7 +72,7 @@
                     <fa-icon [icon]="getIcon(src.type)" class="source-badge__icon" />
                     <span class="source-badge__title">{{ src.title }}</span>
                     @if (src.difficulty) {
-                        <tum-ui-tag [severity]="difficultySeverity(src.difficulty)" [value]="difficultyTranslationKey(src.difficulty) | artemisTranslate" />
+                        <tumaet-ui-tag [severity]="difficultySeverity(src.difficulty)" [value]="difficultyTranslationKey(src.difficulty) | artemisTranslate" />
                     }
                 </div>
             }
@@ -154,9 +154,9 @@
             </div>
 
             <div class="flex justify-end mt-8">
-                <tum-ui-button severity="primary" size="small" [disabled]="!anyCardSelected()" (clicked)="goToStep2()">
+                <tumaet-ui-button severity="primary" size="small" [disabled]="!anyCardSelected()" (clicked)="goToStep2()">
                     {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ml-1" />
-                </tum-ui-button>
+                </tumaet-ui-button>
             </div>
         }
 
@@ -169,7 +169,7 @@
                         <div class="flex gap-4 flex-wrap">
                             @for (d of availableDifficulties(); track d.value) {
                                 <div class="radio-item">
-                                    <tum-ui-radio-button
+                                    <tumaet-ui-radio-button
                                         [inputId]="'wiz-diff-' + d.value"
                                         name="wiz-difficulty"
                                         [value]="d.value"
@@ -187,7 +187,7 @@
                         <label class="field-group__label" for="wiz-domain">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.domain' | artemisTranslate }}</label>
                         <input
                             id="wiz-domain"
-                            tumUiInput
+                            tumAetUiInput
                             class="w-full"
                             [ngModel]="domainText()"
                             (ngModelChange)="domainText.set($event)"
@@ -202,11 +202,11 @@
                             @for (style of narrativeStyles; track style.value) {
                                 <div
                                     class="radio-item"
-                                    [tumUiTooltip]="style.descriptionKey | artemisTranslate"
-                                    tumUiTooltipPlacement="top"
+                                    [tumAetUiTooltip]="style.descriptionKey | artemisTranslate"
+                                    tumAetUiTooltipPlacement="top"
                                     [attr.data-testid]="'variant-narrative-' + style.value"
                                 >
-                                    <tum-ui-radio-button
+                                    <tumaet-ui-radio-button
                                         [inputId]="'wiz-narrative-' + style.value"
                                         name="wiz-narrative"
                                         [value]="style.value"
@@ -224,7 +224,7 @@
                         <label class="field-group__label" for="wiz-custom">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.custom' | artemisTranslate }}</label>
                         <textarea
                             id="wiz-custom"
-                            tumUiTextarea
+                            tumAetUiTextarea
                             rows="4"
                             class="w-full"
                             style="resize: vertical"
@@ -237,12 +237,12 @@
             </div>
 
             <div class="flex justify-between mt-8">
-                <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep1()">
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep1()">
                     <fa-icon [icon]="faArrowLeft" class="mr-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
-                </tum-ui-button>
-                <tum-ui-button severity="primary" size="small" [disabled]="!canProceedToPlacement()" (clicked)="goToPlacement()">
+                </tumaet-ui-button>
+                <tumaet-ui-button severity="primary" size="small" [disabled]="!canProceedToPlacement()" (clicked)="goToPlacement()">
                     {{ 'artemisApp.exerciseVariantGeneration.wizard.next' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ml-1" />
-                </tum-ui-button>
+                </tumaet-ui-button>
             </div>
         }
 
@@ -253,7 +253,7 @@
                 <div class="placement-options">
                     @if (sourceGroup(); as group) {
                         <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'existing-group'">
-                            <tum-ui-radio-button
+                            <tumaet-ui-radio-button
                                 inputId="wiz-place-existing"
                                 name="wiz-placement"
                                 value="existing-group"
@@ -274,7 +274,7 @@
                      and the "with original" promise would silently produce a group holding just the variant. -->
                     @if (canGroupSourceWithVariant()) {
                         <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'new-group'" data-testid="variant-placement-new-group">
-                            <tum-ui-radio-button
+                            <tumaet-ui-radio-button
                                 inputId="wiz-place-new"
                                 name="wiz-placement"
                                 value="new-group"
@@ -296,8 +296,8 @@
                                                     id="wiz-group-title"
                                                     [ngModel]="newGroupTitle()"
                                                     (ngModelChange)="newGroupTitle.set($event)"
-                                                    tumUiInput
-                                                    tumUiInputSize="small"
+                                                    tumAetUiInput
+                                                    tumAetUiInputSize="small"
                                                     class="w-full"
                                                 />
                                             </div>
@@ -310,8 +310,8 @@
                                                     id="wiz-group-max-points"
                                                     [ngModel]="newGroupMaxPoints()"
                                                     (ngModelChange)="newGroupMaxPoints.set($event !== '' ? +$event : undefined)"
-                                                    tumUiInput
-                                                    tumUiInputSize="small"
+                                                    tumAetUiInput
+                                                    tumAetUiInputSize="small"
                                                     class="new-group-settings__pts"
                                                 />
                                             </div>
@@ -326,8 +326,8 @@
                                                     id="wiz-group-release"
                                                     [ngModel]="newGroupReleaseDate()"
                                                     (ngModelChange)="newGroupReleaseDate.set($event)"
-                                                    tumUiInput
-                                                    tumUiInputSize="small"
+                                                    tumAetUiInput
+                                                    tumAetUiInputSize="small"
                                                     class="new-group-settings__date"
                                                 />
                                             </div>
@@ -340,8 +340,8 @@
                                                     id="wiz-group-start"
                                                     [ngModel]="newGroupStartDate()"
                                                     (ngModelChange)="newGroupStartDate.set($event)"
-                                                    tumUiInput
-                                                    tumUiInputSize="small"
+                                                    tumAetUiInput
+                                                    tumAetUiInputSize="small"
                                                     class="new-group-settings__date"
                                                 />
                                             </div>
@@ -354,8 +354,8 @@
                                                     id="wiz-group-due"
                                                     [ngModel]="newGroupDueDate()"
                                                     (ngModelChange)="newGroupDueDate.set($event)"
-                                                    tumUiInput
-                                                    tumUiInputSize="small"
+                                                    tumAetUiInput
+                                                    tumAetUiInputSize="small"
                                                     class="new-group-settings__date"
                                                 />
                                             </div>
@@ -368,8 +368,8 @@
                                                     id="wiz-group-assessment-due"
                                                     [ngModel]="newGroupAssessmentDueDate()"
                                                     (ngModelChange)="newGroupAssessmentDueDate.set($event)"
-                                                    tumUiInput
-                                                    tumUiInputSize="small"
+                                                    tumAetUiInput
+                                                    tumAetUiInputSize="small"
                                                     class="new-group-settings__date"
                                                 />
                                             </div>
@@ -380,7 +380,7 @@
                         </label>
                     }
                     <label class="placement-option" [class.placement-option--selected]="placementChoice() === 'standalone'">
-                        <tum-ui-radio-button
+                        <tumaet-ui-radio-button
                             inputId="wiz-place-standalone"
                             name="wiz-placement"
                             value="standalone"
@@ -396,12 +396,12 @@
             </div>
 
             <div class="flex justify-between mt-8">
-                <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep2()">
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="goToStep2()">
                     <fa-icon [icon]="faArrowLeft" class="mr-1" /> {{ 'artemisApp.exerciseVariantGeneration.wizard.back' | artemisTranslate }}
-                </tum-ui-button>
-                <tum-ui-button severity="primary" size="small" [icon]="faWandMagicSparkles" [disabled]="!canGenerate()" (clicked)="startGeneration()">
+                </tumaet-ui-button>
+                <tumaet-ui-button severity="primary" size="small" [icon]="faWandMagicSparkles" [disabled]="!canGenerate()" (clicked)="startGeneration()">
                     {{ 'artemisApp.exerciseVariantGeneration.wizard.generate' | artemisTranslate }}
-                </tum-ui-button>
+                </tumaet-ui-button>
             </div>
         }
 
@@ -469,19 +469,19 @@
                         </li>
                     }
                 </ol>
-                <tum-ui-message severity="info" styleClass="mt-4 mb-0 text-sm" data-testid="variant-wizard-background-hint">
+                <tumaet-ui-message severity="info" styleClass="mt-4 mb-0 text-sm" data-testid="variant-wizard-background-hint">
                     <fa-icon [icon]="faInfoCircle" class="mr-1" />
                     <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.backgroundHint' | artemisTranslate }}</span>
-                </tum-ui-message>
+                </tumaet-ui-message>
                 @if (isRunning()) {
                     <div class="flex justify-end gap-2 mt-4">
-                        <tum-ui-button severity="danger" variant="outlined" size="small" (clicked)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
+                        <tumaet-ui-button severity="danger" variant="outlined" size="small" (clicked)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
                             <fa-icon [icon]="faBan" class="mr-1" />
                             {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
-                        </tum-ui-button>
-                        <tum-ui-button severity="primary" size="small" [icon]="faWandMagicSparkles" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
+                        </tumaet-ui-button>
+                        <tumaet-ui-button severity="primary" size="small" [icon]="faWandMagicSparkles" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.runInBackground' | artemisTranslate }}
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     </div>
                 }
             </div>
@@ -508,13 +508,13 @@
                 <ng-container *ngTemplateOutlet="nextSteps" />
                 <ng-container *ngTemplateOutlet="stepSummary" />
                 <div class="flex justify-end gap-2">
-                    <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
+                    <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
-                    }}</tum-ui-button>
+                    }}</tumaet-ui-button>
                     @if (generatedVariant()) {
-                        <tum-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
+                        <tumaet-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     }
                 </div>
             } @else if (jobPhase() === 'CANCELLED') {
@@ -530,13 +530,13 @@
                     </div>
                 </div>
                 <div class="flex justify-end gap-2">
-                    <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
+                    <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
-                    }}</tum-ui-button>
+                    }}</tumaet-ui-button>
                     @if (generatedVariant()) {
-                        <tum-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
+                        <tumaet-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     }
                 </div>
             } @else {
@@ -547,7 +547,7 @@
                             <span class="info-chip">{{ 'artemisApp.exerciseVariantGeneration.wizard.points' | artemisTranslate: { points: variant.maxPoints } }}</span>
                         }
                         @if (variant.difficulty) {
-                            <tum-ui-tag [severity]="difficultySeverity(variant.difficulty)" [value]="difficultyTranslationKey(variant.difficulty) | artemisTranslate" />
+                            <tumaet-ui-tag [severity]="difficultySeverity(variant.difficulty)" [value]="difficultyTranslationKey(variant.difficulty) | artemisTranslate" />
                         }
                     </div>
                 }
@@ -587,10 +587,10 @@
                 </div>
 
                 <div class="flex justify-end gap-2 mt-4">
-                    <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
+                    <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
-                    }}</tum-ui-button>
-                    <tum-ui-button
+                    }}</tumaet-ui-button>
+                    <tumaet-ui-button
                         severity="primary"
                         size="small"
                         [icon]="faPenToSquare"
@@ -599,7 +599,7 @@
                         data-testid="variant-wizard-open-editor"
                     >
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 </div>
             }
         }
@@ -665,5 +665,5 @@
             }
         </ng-template>
     }
-    <tum-ui-confirm-dialog />
-</tum-ui-dialog>
+    <tumaet-ui-confirm-dialog />
+</tumaet-ui-dialog>

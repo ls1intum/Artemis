@@ -9,13 +9,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faCheck, faSpinner, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import {
-    TumUiButtonDirective,
-    TumUiConfirmDialogComponent,
-    TumUiConfirmationService,
-    TumUiDialogComponent,
-    TumUiMessageComponent,
-    TumUiPopoverComponent,
-    TumUiPopoverTriggerDirective,
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiDialogComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
 } from '@tumaet/ui-angular';
 import { finalize, timeout } from 'rxjs';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
@@ -35,17 +35,17 @@ import { HyperionActivityRow, authoringActivity, variantActivity } from './hyper
     templateUrl: './hyperion-activity-tray.component.html',
     styleUrl: './hyperion-activity-tray.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     imports: [
-        TumUiDialogComponent,
+        TumAetUiDialogComponent,
         HyperionRunPageComponent,
         FaIconComponent,
         ArtemisTranslatePipe,
-        TumUiButtonDirective,
-        TumUiPopoverComponent,
-        TumUiPopoverTriggerDirective,
-        TumUiMessageComponent,
-        TumUiConfirmDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiMessageComponent,
+        TumAetUiConfirmDialogComponent,
         ExerciseVariantAiModalWizardComponent,
     ],
 })
@@ -57,7 +57,7 @@ export class HyperionActivityTrayComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly location = inject(Location);
-    private readonly confirmations = inject(TumUiConfirmationService);
+    private readonly confirmations = inject(TumAetUiConfirmationService);
     private readonly translate = inject(TranslateService);
     private readonly alerts = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
@@ -67,7 +67,7 @@ export class HyperionActivityTrayComponent {
         this.authoringEnabled() && this.account.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR) ? this.injector.get(HyperionJobRegistryService) : undefined,
     );
     private readonly routedJob = getSignalBasedOnRoute(this.router, (url) => this.router.parseUrl(url).queryParamMap.get('aiRun'));
-    private readonly popover = viewChild(TumUiPopoverComponent);
+    private readonly popover = viewChild(TumAetUiPopoverComponent);
     private readonly login = computed(() => this.account.userIdentity()?.login);
 
     // Dismissal is scoped to the account and survives reloads; it never changes a job.

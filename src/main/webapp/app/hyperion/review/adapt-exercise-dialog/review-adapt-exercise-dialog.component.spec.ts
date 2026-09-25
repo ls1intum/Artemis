@@ -48,7 +48,7 @@ async function setup(findings?: AdaptFinding[]): Promise<{
 
 /** The template renders exactly two kit buttons, cancel first. */
 function actionButtons(fixture: ComponentFixture<ReviewAdaptExerciseDialogComponent>): HTMLButtonElement[] {
-    return Array.from(fixture.nativeElement.querySelectorAll('tum-ui-button button'));
+    return Array.from(fixture.nativeElement.querySelectorAll('tumaet-ui-button button'));
 }
 
 describe('ReviewAdaptExerciseDialogComponent', () => {
@@ -67,7 +67,7 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(items[0]).toContain('sorted-first');
         expect(items[1]).toContain('sorted-second');
         expect(items[2]).toContain('sorted-last');
-        expect(list.querySelectorAll('tum-ui-tag')).toHaveLength(3);
+        expect(list.querySelectorAll('tumaet-ui-tag')).toHaveLength(3);
         // The notice is present from the moment the dialog opens, so it is read in document order rather than
         // announced: this message delegates announcements to its surrounding dialog.
         const notice = fixture.nativeElement.querySelector('[data-testid="adapt-persistence-notice"]');

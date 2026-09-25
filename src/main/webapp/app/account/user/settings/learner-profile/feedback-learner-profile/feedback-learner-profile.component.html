@@ -10,21 +10,21 @@
 </div>
 
 @if (!isProfileSetup()) {
-    <tum-ui-button class="mt-3 inline-block" size="small" (clicked)="openOnboardingModal()">
+    <tumaet-ui-button class="mt-3 inline-block" size="small" (clicked)="openOnboardingModal()">
         <span jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.setPreferencesButton"></span>
-    </tum-ui-button>
+    </tumaet-ui-button>
 } @else {
     <!-- Profile settings section -->
-    <tum-ui-button class="mt-3 inline-block" severity="secondary" variant="outlined" size="small" (clicked)="openOnboardingModal()">
+    <tumaet-ui-button class="mt-3 inline-block" severity="secondary" variant="outlined" size="small" (clicked)="openOnboardingModal()">
         <span jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.replayOnboardingButton"></span>
-    </tum-ui-button>
+    </tumaet-ui-button>
     @if (!disabled()) {
         <div class="grid grid-cols-1 gap-x-12 gap-y-4 xl:grid-cols-2">
             <!-- Brief vs. Detailed setting -->
             <div class="flex flex-col">
                 <div id="feedback-detail-label" class="title" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.label"></div>
                 <div class="description" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.description"></div>
-                <tum-ui-select-button
+                <tumaet-ui-select-button
                     class="mt-auto w-full"
                     aria-labelledby="feedback-detail-label"
                     [options]="feedbackDetailOptions"
@@ -39,7 +39,7 @@
             <div class="flex flex-col">
                 <div id="feedback-formality-label" class="title" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.label"></div>
                 <div class="description" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.description"></div>
-                <tum-ui-select-button
+                <tumaet-ui-select-button
                     class="mt-auto w-full"
                     aria-labelledby="feedback-formality-label"
                     [options]="feedbackFormalityOptions"

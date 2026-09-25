@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiMessageComponent, TumUiProgressBarComponent, TumUiProgressBarSeverity, TumUiTagComponent, TumUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumAetUiProgressBarSeverity, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -36,7 +36,7 @@ interface HeroLine {
 /** The meter, with its ceiling, its share and the word for the threshold it has crossed all already resolved. */
 interface BudgetLine {
     percent: number;
-    severity: TumUiProgressBarSeverity;
+    severity: TumAetUiProgressBarSeverity;
     used: string;
     budget: string;
     share: string;
@@ -66,13 +66,13 @@ const ACCOUNTING_LABEL_KEY: Record<HyperionAccountingState, string> = {
     INCOMPLETE: 'artemisApp.hyperion.generation.usage.state.incomplete',
 };
 
-const ACCOUNTING_SEVERITY: Record<HyperionAccountingState, TumUiTagSeverity> = {
+const ACCOUNTING_SEVERITY: Record<HyperionAccountingState, TumAetUiTagSeverity> = {
     PENDING: 'info',
     COMPLETE: 'secondary',
     INCOMPLETE: 'warn',
 };
 
-const BUDGET_SEVERITY: Record<HyperionBudgetLevel, TumUiProgressBarSeverity> = {
+const BUDGET_SEVERITY: Record<HyperionBudgetLevel, TumAetUiProgressBarSeverity> = {
     within: 'primary',
     near: 'warn',
     over: 'danger',
@@ -107,7 +107,7 @@ const BUDGET_LEVEL_KEY: Record<HyperionBudgetLevel, string> = {
     templateUrl: './hyperion-run-usage.component.html',
     styleUrl: './hyperion-run-usage.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, TranslateDirective, TumUiMessageComponent, TumUiProgressBarComponent, TumUiTagComponent],
+    imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiMessageComponent, TumAetUiProgressBarComponent, TumAetUiTagComponent],
 })
 export class HyperionRunUsageComponent {
     private readonly translateService = inject(TranslateService);

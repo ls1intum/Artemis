@@ -1,12 +1,12 @@
 @if (visibleRows().length || loadFailed()) {
     <button
-        tumUiButton
+        tumAetUiButton
         variant="text"
         severity="secondary"
         size="small"
         class="flex items-center gap-2 whitespace-nowrap"
         data-testid="ai-activity-trigger"
-        [tumUiPopoverTrigger]="tray"
+        [tumAetUiPopoverTrigger]="tray"
     >
         <fa-icon [icon]="icons.facArtemisIntelligence" />
         <span>{{ 'artemisApp.hyperion.activity.title' | artemisTranslate }}</span>
@@ -26,22 +26,29 @@
             >
         }
     </button>
-    <tum-ui-popover #tray placement="bottom" [ariaLabel]="'artemisApp.hyperion.activity.title' | artemisTranslate" (openChange)="refresh($event)">
+    <tumaet-ui-popover #tray placement="bottom" [ariaLabel]="'artemisApp.hyperion.activity.title' | artemisTranslate" (openChange)="refresh($event)">
         <section class="flex w-[min(26rem,calc(100vw-2rem))] flex-col gap-3" data-testid="ai-activity-tray">
             <div class="flex items-center justify-between gap-2">
                 <span role="heading" aria-level="2" class="text-base font-semibold">{{ 'artemisApp.hyperion.activity.title' | artemisTranslate }}</span>
                 @if (hiddenCount()) {
-                    <button tumUiButton variant="text" size="small" [attr.aria-pressed]="showHistory()" data-testid="ai-activity-history" (click)="showHistory.set(!showHistory())">
+                    <button
+                        tumAetUiButton
+                        variant="text"
+                        size="small"
+                        [attr.aria-pressed]="showHistory()"
+                        data-testid="ai-activity-history"
+                        (click)="showHistory.set(!showHistory())"
+                    >
                         {{ 'artemisApp.hyperion.activity.history' | artemisTranslate: { count: hiddenCount() } }}
                     </button>
                 }
             </div>
             <p class="m-0 text-sm text-muted-color">{{ 'artemisApp.hyperion.activity.subtitle' | artemisTranslate }}</p>
             @if (loadFailed()) {
-                <tum-ui-message severity="error" data-testid="ai-activity-load-error">
+                <tumaet-ui-message severity="error" data-testid="ai-activity-load-error">
                     {{ 'artemisApp.hyperion.jobs.loadFailed' | artemisTranslate }}
-                    <button tumUiButton variant="text" size="small" (click)="refresh(true)">{{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}</button>
-                </tum-ui-message>
+                    <button tumAetUiButton variant="text" size="small" (click)="refresh(true)">{{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}</button>
+                </tumaet-ui-message>
             }
             <ul class="m-0 flex max-h-[min(65vh,36rem)] list-none flex-col gap-3 overflow-y-auto p-0" [attr.aria-label]="'artemisApp.hyperion.activity.title' | artemisTranslate">
                 @for (row of visibleRows(); track row.key) {
@@ -55,7 +62,7 @@
                             <span class="text-xs font-semibold tracking-wide text-muted-color">{{ row.kindKey | artemisTranslate }}</span>
                             @if (!row.active) {
                                 <button
-                                    tumUiButton
+                                    tumAetUiButton
                                     variant="text"
                                     size="small"
                                     severity="secondary"
@@ -120,7 +127,7 @@
                         }
                         @if (row.canCancel) {
                             <button
-                                tumUiButton
+                                tumAetUiButton
                                 variant="outlined"
                                 severity="danger"
                                 size="small"
@@ -136,7 +143,7 @@
                 }
             </ul>
             @if (hasMoreHistory()) {
-                <button tumUiButton variant="text" size="small" (click)="loadMoreHistory()" data-testid="ai-activity-load-more">
+                <button tumAetUiButton variant="text" size="small" (click)="loadMoreHistory()" data-testid="ai-activity-load-more">
                     {{ 'artemisApp.hyperion.activity.loadMore' | artemisTranslate }}
                 </button>
             }
@@ -144,14 +151,14 @@
                 <p class="text-sm text-muted-color">{{ 'artemisApp.hyperion.activity.dismissedHint' | artemisTranslate }}</p>
             }
         </section>
-    </tum-ui-popover>
+    </tumaet-ui-popover>
 }
-<tum-ui-confirm-dialog />
+<tumaet-ui-confirm-dialog />
 @for (monitor of quizInspector(); track monitor.key) {
     <jhi-exercise-variant-ai-modal-wizard [visible]="true" (visibleChange)="closeInspector($event)" [monitorJobId]="monitor.runId" />
 }
 @for (monitor of inspector(); track monitor.key) {
-    <tum-ui-dialog size="medium" [visible]="true" (visibleChange)="closeInspector($event)" [header]="'artemisApp.hyperion.activity.title' | artemisTranslate">
+    <tumaet-ui-dialog size="medium" [visible]="true" (visibleChange)="closeInspector($event)" [header]="'artemisApp.hyperion.activity.title' | artemisTranslate">
         <jhi-hyperion-run-page [inspectedExerciseId]="monitor.exerciseId" [inspectedRunId]="monitor.runId" />
-    </tum-ui-dialog>
+    </tumaet-ui-dialog>
 }

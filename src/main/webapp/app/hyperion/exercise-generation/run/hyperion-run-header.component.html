@@ -1,4 +1,4 @@
-<tum-ui-card data-testid="hyperion-run-header">
+<tumaet-ui-card data-testid="hyperion-run-header">
     <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div class="min-w-0 flex-auto">
             <p
@@ -64,12 +64,12 @@
 
     <div class="mt-4 flex flex-wrap items-center gap-2">
         @if (cancelAvailable()) {
-            <tum-ui-button severity="danger" variant="outlined" size="small" [loading]="cancelPending()" (clicked)="confirmCancel()" data-testid="hyperion-run-cancel">
+            <tumaet-ui-button severity="danger" variant="outlined" size="small" [loading]="cancelPending()" (clicked)="confirmCancel()" data-testid="hyperion-run-cancel">
                 <span [jhiTranslate]="cancelPending() ? 'artemisApp.hyperion.generation.actions.cancelling' : 'artemisApp.hyperion.generation.actions.cancel'"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         }
         @if (startAvailable()) {
-            <tum-ui-button
+            <tumaet-ui-button
                 severity="primary"
                 size="small"
                 [loading]="startPending()"
@@ -79,10 +79,10 @@
                 data-testid="hyperion-run-start"
             >
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.start"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         }
         @if (runAgainAvailable()) {
-            <tum-ui-button
+            <tumaet-ui-button
                 severity="secondary"
                 variant="outlined"
                 size="small"
@@ -92,10 +92,10 @@
                 data-testid="hyperion-run-run-again"
             >
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.runAgain"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         }
         @if (terminal() && editorLink(); as link) {
-            <a tumUiButton severity="primary" size="small" [routerLink]="link" data-testid="hyperion-run-open-editor">
+            <a tumAetUiButton severity="primary" size="small" [routerLink]="link" data-testid="hyperion-run-open-editor">
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.openEditor"></span>
             </a>
         }
@@ -104,19 +104,19 @@
             <!--
                 A button-shaped anchor, not a styled one. `global.scss` sets `a { text-decoration: none !important }`
                 and colours every anchor outside its `:not()` list, so a plain `text-muted-color underline` link renders
-                as neither muted nor underlined. `.tum-ui-btn` is in that exclusion list, so this is the one anchor form
+                as neither muted nor underlined. `.tumaet-ui-btn` is in that exclusion list, so this is the one anchor form
                 that keeps the styling it was given.
             -->
-            <a tumUiButton size="small" severity="secondary" variant="text" [routerLink]="link" data-testid="hyperion-run-back">
+            <a tumAetUiButton size="small" severity="secondary" variant="text" [routerLink]="link" data-testid="hyperion-run-back">
                 <span jhiTranslate="artemisApp.hyperion.generation.run.backToExercise"></span>
             </a>
         }
     </div>
     @if ((startAvailable() || runAgainAvailable()) && startBlockedReasonText(); as reason) {
-        <tum-ui-message id="hyperion-run-start-blocker" severity="warn" class="mt-3 block min-w-0" data-testid="hyperion-run-start-blocker">
+        <tumaet-ui-message id="hyperion-run-start-blocker" severity="warn" class="mt-3 block min-w-0" data-testid="hyperion-run-start-blocker">
             <span class="block wrap-anywhere">{{ reason }}</span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
-</tum-ui-card>
+</tumaet-ui-card>
 
-<tum-ui-confirm-dialog [key]="cancelConfirmationKey" />
+<tumaet-ui-confirm-dialog [key]="cancelConfirmationKey" />

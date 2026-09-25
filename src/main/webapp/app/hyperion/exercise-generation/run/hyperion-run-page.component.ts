@@ -11,13 +11,13 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import {
-    TumUiButtonComponent,
-    TumUiCardComponent,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiMessageSeverity,
-    TumUiPanelComponent,
+    TumAetUiButtonComponent,
+    TumAetUiCardComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiMessageSeverity,
+    TumAetUiPanelComponent,
 } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -66,7 +66,7 @@ const OUTCOME_STATUS: Record<HyperionRunOutcome, RunStatus> = {
     cancelled: 'cancelled',
 };
 
-const OUTCOME_SEVERITY: Record<HyperionRunOutcome, TumUiMessageSeverity> = {
+const OUTCOME_SEVERITY: Record<HyperionRunOutcome, TumAetUiMessageSeverity> = {
     saved: 'success',
     needsReview: 'warn',
     partial: 'warn',
@@ -92,8 +92,8 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
     providers: [HyperionGenerationActivityFacade, HyperionRunAnnouncerService],
     imports: [
         FormsModule,
-        TumUiDialogComponent,
-        TumUiInputDirective,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
         HyperionArtifactsComponent,
@@ -102,10 +102,10 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
         HyperionRunOutcomeComponent,
         HyperionRunProgressComponent,
         HyperionRunUsageComponent,
-        TumUiButtonComponent,
-        TumUiCardComponent,
-        TumUiMessageComponent,
-        TumUiPanelComponent,
+        TumAetUiButtonComponent,
+        TumAetUiCardComponent,
+        TumAetUiMessageComponent,
+        TumAetUiPanelComponent,
     ],
 })
 export class HyperionRunPageComponent {

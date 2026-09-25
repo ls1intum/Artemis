@@ -51,7 +51,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     it('offers one outlined AI selection action instead of a second adaptation shortcut', () => {
         reviewCommentService.adaptationOffered.set(true);
         fixture.detectChanges();
-        const button = fixture.nativeElement.querySelector('[tumUiButton]') as HTMLButtonElement;
+        const button = fixture.nativeElement.querySelector('[tumAetUiButton]') as HTMLButtonElement;
         expect(button).not.toBeNull();
         expect(button.getAttribute('variant')).toBe('outlined');
         expect(button.getAttribute('aria-pressed')).toBe('false');
@@ -65,7 +65,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         reviewCommentService.adaptationOffered.set(true);
         fixture.componentRef.setInput('thread', { id: 1, targetType: CommentThreadLocationType.AUXILIARY_REPO, resolved: false, comments: [] });
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[tumUiButton]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[tumAetUiButton]')).toBeNull();
     });
 
     it('should initialize collapsed state', () => {

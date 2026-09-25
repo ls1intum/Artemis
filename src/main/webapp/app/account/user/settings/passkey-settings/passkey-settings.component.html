@@ -1,15 +1,15 @@
 <h2 jhiTranslate="artemisApp.userSettings.passkeys"></h2>
 @if (currentUser()) {
-    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.passkeys' | artemisTranslate">
-        <li tumUiListItem>
+    <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.passkeys' | artemisTranslate">
+        <li tumAetUiListItem>
             <dt>
                 <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></span>
             </dt>
         </li>
 
-        <li tumUiListItem>
+        <li tumAetUiListItem>
             @if (registeredPasskeys().length) {
-                <table tumUiTable [striped]="true" class="w-full">
+                <table tumAetUiTable [striped]="true" class="w-full">
                     <thead>
                         <tr>
                             <th class="text-lg" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.yourPasskeys"></th>
@@ -25,7 +25,7 @@
                                         <fa-icon [icon]="faKey" class="me-1 font-bold" />
                                         <span class="font-bold">{{ passkey.label }}</span>
                                         @if (isAdmin()) {
-                                            <tum-ui-tag
+                                            <tumaet-ui-tag
                                                 class="ms-2"
                                                 [value]="
                                                     passkey.isSuperAdminApproved
@@ -49,9 +49,9 @@
                                             required
                                             [(ngModel)]="passkey.label"
                                             #labelInput="ngModel"
-                                            tumUiInput
+                                            tumAetUiInput
                                             class="w-full"
-                                            [tumUiInputInvalid]="labelInput.invalid ?? false"
+                                            [tumAetUiInputInvalid]="labelInput.invalid ?? false"
                                             [customMaxLength]="MAX_PASSKEY_LABEL_LENGTH"
                                         />
                                         @if (labelInput.invalid) {
@@ -66,7 +66,7 @@
                                 <td>
                                     <div class="flex items-center justify-end gap-2">
                                         @if (!passkey.isEditingLabel) {
-                                            <tum-ui-button
+                                            <tumaet-ui-button
                                                 size="small"
                                                 [icon]="faPencil"
                                                 [ariaLabel]="'entity.action.edit' | artemisTranslate"
@@ -74,7 +74,7 @@
                                             />
                                             <button
                                                 type="button"
-                                                tumUiButton
+                                                tumAetUiButton
                                                 severity="danger"
                                                 size="small"
                                                 jhiDeleteButton
@@ -88,14 +88,14 @@
                                                 <fa-icon [icon]="faTrash" />
                                             </button>
                                         } @else {
-                                            <tum-ui-button
+                                            <tumaet-ui-button
                                                 [disabled]="passkey.label.length > MAX_PASSKEY_LABEL_LENGTH"
                                                 size="small"
                                                 [icon]="faSave"
                                                 [ariaLabel]="'entity.action.save' | artemisTranslate"
                                                 (clicked)="savePasskeyLabel(passkey)"
                                             />
-                                            <tum-ui-button
+                                            <tumaet-ui-button
                                                 severity="danger"
                                                 variant="outlined"
                                                 size="small"
@@ -115,10 +115,10 @@
             }
         </li>
 
-        <li tumUiListItem>
-            <tum-ui-button class="self-start" id="add-new-token-button" size="small" [icon]="faPlus" (clicked)="addPasskey()">
+        <li tumAetUiListItem>
+            <tumaet-ui-button class="self-start" id="add-new-token-button" size="small" [icon]="faPlus" (clicked)="addPasskey()">
                 <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.addNewPasskey"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         </li>
-    </tum-ui-list>
+    </tumaet-ui-list>
 }

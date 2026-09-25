@@ -25,7 +25,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumUiConfirmationService, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -155,7 +155,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
                 const buttonHost = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"]') as HTMLElement;
                 const button = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"] button') as HTMLButtonElement;
-                const tooltipTrigger = fixture.debugElement.query(By.directive(TumUiTooltipDirective)).nativeElement as HTMLElement;
+                const tooltipTrigger = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective)).nativeElement as HTMLElement;
 
                 expect(button.disabled).toBe(true);
                 expect(tooltipTrigger.getAttribute('tabindex')).toBe('0');
@@ -413,7 +413,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         it('should confirm replacement and make no request when confirmation is cancelled', () => {
             exercise.gradingCriteria = [gradingCriterion];
-            const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
             const confirmSpy = vi.spyOn(confirmationService, 'confirm');
 
             component.generateAssessmentCriteria();
@@ -427,7 +427,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.gradingCriteria = [];
             const previousCriteria = [gradingCriterion];
             exercise.gradingCriteria = previousCriteria;
-            const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
             vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => confirmation.accept());
             generationService.generate.mockReturnValue(throwError(() => new Error('generation failed')));
 

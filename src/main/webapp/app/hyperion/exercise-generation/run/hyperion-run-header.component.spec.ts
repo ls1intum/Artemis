@@ -63,7 +63,7 @@ describe('HyperionRunHeaderComponent', () => {
         expect(start.hasAttribute('disabled')).toBe(true);
         expect(fixture.nativeElement.textContent).toContain('artemisApp.hyperion.generation.blocker.released');
         const blocker = fixture.nativeElement.querySelector('[data-testid="hyperion-run-start-blocker"]');
-        expect(blocker.closest('tum-ui-card')).not.toBeNull();
+        expect(blocker.closest('tumaet-ui-card')).not.toBeNull();
         expect(start.getAttribute('aria-describedby')).toBe('hyperion-run-start-blocker');
         expect(runAgain.getAttribute('aria-describedby')).toBe('hyperion-run-start-blocker');
         expect(runAgain.hasAttribute('disabled')).toBe(true);

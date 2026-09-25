@@ -3,7 +3,14 @@ import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-sta
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiCardComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiMessageComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCardComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiMessageComponent,
+} from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -39,21 +46,21 @@ interface RunFact {
     templateUrl: './hyperion-run-header.component.html',
     styleUrl: './hyperion-run-header.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     imports: [
         RouterLink,
         ArtemisTranslatePipe,
         TranslateDirective,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiCardComponent,
-        TumUiConfirmDialogComponent,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCardComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiMessageComponent,
         HyperionStatusComponent,
     ],
 })
 export class HyperionRunHeaderComponent {
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
 
     readonly variant = input(false);

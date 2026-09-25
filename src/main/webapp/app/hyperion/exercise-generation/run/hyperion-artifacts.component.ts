@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
-import { TumUiTabComponent, TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabsComponent } from '@tumaet/ui-angular';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HyperionEmptyComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-empty.component';
 import { HyperionMarkdownComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-markdown.component';
@@ -18,11 +18,11 @@ import { ExerciseGenerationFileChange } from 'app/hyperion/exercise-generation/h
         HyperionEmptyComponent,
         HyperionMarkdownComponent,
         HyperionFileChangeListComponent,
-        TumUiTabComponent,
-        TumUiTabListComponent,
-        TumUiTabPanelComponent,
-        TumUiTabPanelsComponent,
-        TumUiTabsComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabsComponent,
     ],
 })
 export class HyperionArtifactsComponent {

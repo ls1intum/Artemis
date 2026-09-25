@@ -5,14 +5,14 @@ import { RouterLink, UrlTree } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCheckDouble, faChevronDown, faPaperPlane, faSpinner, faTimes, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import {
-    TumUiButtonDirective,
-    TumUiButtonGroupComponent,
-    TumUiInputDirective,
-    TumUiMenuComponent,
-    TumUiMenuItemDirective,
-    TumUiMenuTriggerDirective,
-    TumUiPopoverComponent,
-    TumUiTagComponent,
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiInputDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiPopoverComponent,
+    TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -37,16 +37,16 @@ import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/hyp
         FaIconComponent,
         ArtemisTranslatePipe,
         TranslateDirective,
-        TumUiButtonDirective,
-        TumUiButtonGroupComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
 
-        TumUiMenuComponent,
-        TumUiMenuItemDirective,
-        TumUiMenuTriggerDirective,
-        TumUiPopoverComponent,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiPopoverComponent,
         HyperionStatusComponent,
-        TumUiTagComponent,
-        TumUiInputDirective,
+        TumAetUiTagComponent,
+        TumAetUiInputDirective,
     ],
 })
 export class CodeEditorAiActionsComponent {
@@ -88,8 +88,8 @@ export class CodeEditorAiActionsComponent {
     protected readonly faTimes = faTimes;
     protected readonly faTriangleExclamation = faTriangleExclamation;
 
-    private readonly refinementPopover = viewChild.required<TumUiPopoverComponent>('refinementPopover');
-    // `tumUiButton` is a component, so the reference must be read as the element for the popover to anchor to it.
+    private readonly refinementPopover = viewChild.required<TumAetUiPopoverComponent>('refinementPopover');
+    // `tumAetUiButton` is a component, so the reference must be read as the element for the popover to anchor to it.
     private readonly menuTrigger = viewChild.required('menuTrigger', { read: ElementRef<HTMLElement> });
 
     protected readonly refineLabelKey = computed(() =>

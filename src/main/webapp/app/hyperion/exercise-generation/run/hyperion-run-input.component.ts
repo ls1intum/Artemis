@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TumUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-input';
@@ -8,9 +8,9 @@ import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-i
 @Component({
     selector: 'jhi-hyperion-run-input',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiPanelComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [TumAetUiPanelComponent, ArtemisTranslatePipe, TranslateDirective],
     template: `
-        <tum-ui-panel
+        <tumaet-ui-panel
             toggleable
             [collapsed]="false"
             [header]="(adapting() ? 'artemisApp.hyperion.generation.run.adaptationInput' : 'artemisApp.hyperion.generation.run.generationInput') | artemisTranslate"
@@ -42,7 +42,7 @@ import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-i
                     }
                 </ul>
             }
-        </tum-ui-panel>
+        </tumaet-ui-panel>
     `,
 })
 export class HyperionRunInputComponent {

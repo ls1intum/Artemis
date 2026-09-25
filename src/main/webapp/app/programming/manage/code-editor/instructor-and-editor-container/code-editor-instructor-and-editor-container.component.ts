@@ -47,7 +47,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
@@ -107,7 +107,7 @@ interface ConsistencyIssueNavigationIssue {
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
     // Keep review comment state scoped to each editor container instance.
-    providers: [ExerciseReviewCommentService, TumUiConfirmationService, HyperionGenerationActivityFacade],
+    providers: [ExerciseReviewCommentService, TumAetUiConfirmationService, HyperionGenerationActivityFacade],
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -130,9 +130,9 @@ interface ConsistencyIssueNavigationIssue {
         TooltipModule,
         ButtonModule,
         MessageModule,
-        TumUiButtonDirective,
-        TumUiConfirmDialogComponent,
-        TumUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiDialogComponent,
         ReviewAdaptExerciseDialogComponent,
         CodeEditorAiActionsComponent,
     ],
@@ -144,7 +144,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
     private readonly generationRegistry = inject(HyperionJobRegistryService);
-    private confirmationService = inject(TumUiConfirmationService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private generationService = inject(HyperionExerciseGenerationService);
     private reviewRouter = inject(Router);
     private readonly editorDestroyRef = inject(DestroyRef);

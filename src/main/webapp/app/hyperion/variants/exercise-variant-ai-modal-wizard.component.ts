@@ -1,14 +1,14 @@
 import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
 import {
-    TumUiButtonComponent,
-    TumUiConfirmDialogComponent,
-    TumUiConfirmationService,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiRadioButtonComponent,
-    TumUiTagComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiRadioButtonComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -94,17 +94,17 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
     selector: 'jhi-exercise-variant-ai-modal-wizard',
     templateUrl: './exercise-variant-ai-modal-wizard.component.html',
     styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     imports: [
         HyperionRunPageComponent,
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiRadioButtonComponent,
-        TumUiInputDirective,
-        TumUiTooltipDirective,
-        TumUiTagComponent,
-        TumUiMessageComponent,
-        TumUiConfirmDialogComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiRadioButtonComponent,
+        TumAetUiInputDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiConfirmDialogComponent,
         FormsModule,
         FaIconComponent,
         ArtemisTranslatePipe,
@@ -115,7 +115,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private readonly variantGenerationService = inject(ExerciseVariantGenerationService);
     private readonly variantGroupService = inject(ExerciseVariantGroupService);
     private readonly exerciseService = inject(ExerciseService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
     private readonly injector = inject(Injector);

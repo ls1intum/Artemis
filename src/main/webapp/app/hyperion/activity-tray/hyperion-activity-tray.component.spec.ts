@@ -5,7 +5,7 @@ import { Location } from '@angular/common';
 import { provideLocationMocks } from '@angular/common/testing';
 import { NavigationEnd, Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { MockComponent } from 'ng-mocks';
 import { Subject, filter, firstValueFrom, of, take, throwError } from 'rxjs';
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -256,7 +256,7 @@ describe('HyperionActivityTrayComponent', () => {
         entries.set([running]);
         jobs.set([quiz]);
         open();
-        const confirmations = fixture.debugElement.injector.get(TumUiConfirmationService);
+        const confirmations = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         const confirm = vi.spyOn(confirmations, 'confirm');
         const component = fixture.componentInstance;
         const row = component['rows']().find((item) => item.source.kind === 'authoring')!;
@@ -276,7 +276,7 @@ describe('HyperionActivityTrayComponent', () => {
     it('does not accept an old cancellation confirmation after persistence starts', () => {
         entries.set([running]);
         open();
-        const confirm = vi.spyOn(fixture.debugElement.injector.get(TumUiConfirmationService), 'confirm');
+        const confirm = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
         fixture.componentInstance['cancel'](fixture.componentInstance['rows']()[0]);
         entries.set([{ ...running, phase: 'SAVING' }]);
         confirm.mock.calls[0][0].accept!();
@@ -287,7 +287,7 @@ describe('HyperionActivityTrayComponent', () => {
         entries.set([running]);
         jobs.set([quiz]);
         open();
-        const confirm = vi.spyOn(fixture.debugElement.injector.get(TumUiConfirmationService), 'confirm');
+        const confirm = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
         fixture.componentInstance['cancel'](fixture.componentInstance['rows']()[0]);
         fixture.componentInstance['dismiss'](fixture.componentInstance['rows']()[0]);
         identity.set(undefined);

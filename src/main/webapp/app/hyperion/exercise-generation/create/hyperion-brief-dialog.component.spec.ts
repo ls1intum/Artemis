@@ -89,7 +89,7 @@ describe('HyperionBriefDialogComponent', () => {
     it('renders one brief field and a timing/review note without optional panels or background model calls', () => {
         expect(query('hyperion-brief-input')).not.toBeNull();
         expect(document.body.querySelectorAll('textarea')).toHaveLength(1);
-        expect(document.body.querySelector('tum-ui-panel')).toBeNull();
+        expect(document.body.querySelector('tumaet-ui-panel')).toBeNull();
         expect(query('hyperion-brief-derived-metadata')).toBeNull();
         expect(query('hyperion-brief-commitment')?.tagName).toBe('P');
         expect(document.body.querySelector('#hyperion-brief-label')?.getAttribute('for')).toBe('hyperion-brief');
@@ -97,7 +97,7 @@ describe('HyperionBriefDialogComponent', () => {
         expect(query('hyperion-title-input')).toBeNull();
         expect(query('hyperion-short-name-input')).toBeNull();
         expect(query('hyperion-brief-suggest')).toBeNull();
-        expect(document.body.querySelector('tum-ui-select-button')).toBeNull();
+        expect(document.body.querySelector('tumaet-ui-select-button')).toBeNull();
         expect(suggestMetadataSpy).not.toHaveBeenCalled();
     });
 

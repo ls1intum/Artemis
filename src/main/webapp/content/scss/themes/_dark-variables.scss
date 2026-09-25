@@ -624,7 +624,7 @@ $apollon-border-subtle: $neutral-dark-l-10;
 // inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
 // of Artemis uses — not the legacy Bootstrap $border-radius-* values, which are
 // roughly half the size and made the editor's buttons read as visibly squarer
-// than every other TUM UI button on the page.
+// than every other TUM AET UI button on the page.
 $apollon-radius: var(--tumaet-ui-radius-md);
 $apollon-radius-sm: var(--tumaet-ui-radius-sm);
 $apollon-radius-md: var(--tumaet-ui-radius-md);

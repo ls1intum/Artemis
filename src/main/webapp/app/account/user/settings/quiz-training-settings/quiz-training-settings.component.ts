@@ -6,12 +6,12 @@ import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumUiCardComponent, TumUiMessageComponent, TumUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-quiz-training-settings',
     templateUrl: './quiz-training-settings.component.html',
-    imports: [TranslateDirective, FormsModule, HelpIconComponent, TumUiCardComponent, TumUiMessageComponent, TumUiToggleSwitchComponent],
+    imports: [TranslateDirective, FormsModule, HelpIconComponent, TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiToggleSwitchComponent],
 })
 export class QuizTrainingSettingsComponent implements OnInit {
     quizService = inject(QuizTrainingSettingsService);

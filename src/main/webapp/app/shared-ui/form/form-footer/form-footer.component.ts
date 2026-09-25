@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { translateValidationReasons } from 'app/exercise/util/exercise-validation.util';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -25,8 +25,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         ExerciseUpdateNotificationComponent,
         TranslateDirective,
         FaIconComponent,
-        TumUiButtonDirective,
-        TumUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
     ],
 })

@@ -1,6 +1,6 @@
 <div class="flex items-center gap-2" data-testid="code-editor-ai-actions">
     @if (progressLink(); as link) {
-        <a tumUiButton severity="primary" variant="outlined" [routerLink]="link" data-testid="hyperion-editor-open-generation">
+        <a tumAetUiButton severity="primary" variant="outlined" [routerLink]="link" data-testid="hyperion-editor-open-generation">
             @if (progressRunning()) {
                 <jhi-hyperion-status state="running" [label]="'artemisApp.hyperion.generation.status.running' | artemisTranslate" />
             } @else {
@@ -10,22 +10,22 @@
         </a>
     }
 
-    <tum-ui-button-group [attr.aria-label]="'artemisApp.programmingExercise.artemisIntelligence.title' | artemisTranslate">
+    <tumaet-ui-button-group [attr.aria-label]="'artemisApp.programmingExercise.artemisIntelligence.title' | artemisTranslate">
         @if (adaptOffered()) {
             <button
-                tumUiButton
+                tumAetUiButton
                 type="button"
                 severity="primary"
                 variant="outlined"
                 [disabled]="!!adaptBlockedReason()"
-                tumUiTooltipPlacement="bottom"
+                tumAetUiTooltipPlacement="bottom"
                 (click)="requestAdapt()"
                 data-testid="hyperion-adapt-with-feedback"
             >
                 <fa-icon [icon]="facArtemisIntelligence" />
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.adapt"></span>
                 @if (selectedFeedbackCount()) {
-                    <tum-ui-tag severity="info" rounded [value]="'' + selectedFeedbackCount()" data-testid="hyperion-adapt-selected-count" />
+                    <tumaet-ui-tag severity="info" rounded [value]="'' + selectedFeedbackCount()" data-testid="hyperion-adapt-selected-count" />
                 }
             </button>
             @if (adaptBlockedReason(); as reason) {
@@ -34,11 +34,11 @@
         }
         <button
             #menuTrigger
-            tumUiButton
+            tumAetUiButton
             type="button"
             severity="primary"
             variant="outlined"
-            [tumUiMenuTrigger]="aiMenu"
+            [tumAetUiMenuTrigger]="aiMenu"
             [attr.aria-label]="adaptOffered() ? ('artemisApp.hyperion.generation.actions.moreActions' | artemisTranslate) : undefined"
             data-testid="hyperion-ai-menu"
         >
@@ -51,14 +51,14 @@
                 <span jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.title"></span>
             }
             @if (issueCount()) {
-                <tum-ui-tag severity="warn" rounded [value]="issueCountLabel()" data-testid="hyperion-issue-count" />
+                <tumaet-ui-tag severity="warn" rounded [value]="issueCountLabel()" data-testid="hyperion-issue-count" />
             }
             <fa-icon [icon]="faChevronDown" size="xs" />
         </button>
-    </tum-ui-button-group>
+    </tumaet-ui-button-group>
 
     @if (cancelAvailable()) {
-        <button tumUiButton type="button" severity="secondary" variant="outlined" (click)="cancelRequested.emit()" data-testid="hyperion-cancel-ai-operation">
+        <button tumAetUiButton type="button" severity="secondary" variant="outlined" (click)="cancelRequested.emit()" data-testid="hyperion-cancel-ai-operation">
             <fa-icon [icon]="faBan" />
             <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
         </button>
@@ -66,8 +66,8 @@
 </div>
 
 <ng-template #aiMenu>
-    <tum-ui-menu>
-        <button tumUiMenuItem [disabled]="!!refineBlockedReason()" (triggered)="openRefinement()" data-testid="hyperion-refine-problem-statement">
+    <tumaet-ui-menu>
+        <button tumAetUiMenuItem [disabled]="!!refineBlockedReason()" (triggered)="openRefinement()" data-testid="hyperion-refine-problem-statement">
             <fa-icon [icon]="facArtemisIntelligence" />
             <span class="flex flex-col">
                 <span [jhiTranslate]="refineLabelKey()"></span>
@@ -76,7 +76,7 @@
                 }
             </span>
         </button>
-        <button tumUiMenuItem [disabled]="!!consistencyBlockedReason()" (triggered)="consistencyRequested.emit()" data-testid="hyperion-check-consistency">
+        <button tumAetUiMenuItem [disabled]="!!consistencyBlockedReason()" (triggered)="consistencyRequested.emit()" data-testid="hyperion-check-consistency">
             <fa-icon [icon]="faCheckDouble" />
             <span class="flex flex-col">
                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
@@ -86,22 +86,22 @@
             </span>
         </button>
         @if (issueCount()) {
-            <button tumUiMenuItem (triggered)="issuesToggled.emit()" data-testid="hyperion-show-issues">
+            <button tumAetUiMenuItem (triggered)="issuesToggled.emit()" data-testid="hyperion-show-issues">
                 <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" />
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.showIssues"></span>
                 <span class="text-muted-color">({{ issueCount() }})</span>
             </button>
         }
-    </tum-ui-menu>
+    </tumaet-ui-menu>
 </ng-template>
 
 <!-- The prompt is kept on dismiss so typed text is not lost. -->
-<tum-ui-popover #refinementPopover [ariaLabel]="refineLabelKey() | artemisTranslate">
+<tumaet-ui-popover #refinementPopover [ariaLabel]="refineLabelKey() | artemisTranslate">
     <div class="flex w-[min(28rem,80vw)] flex-col gap-3" data-testid="hyperion-refinement-panel">
         <div class="flex items-center justify-between gap-3">
             <span class="text-sm font-semibold" [jhiTranslate]="refineLabelKey()"></span>
             <button
-                tumUiButton
+                tumAetUiButton
                 type="button"
                 severity="secondary"
                 variant="text"
@@ -113,7 +113,7 @@
             </button>
         </div>
         <textarea
-            tumUiTextarea
+            tumAetUiTextarea
             class="w-full resize-y"
             rows="5"
             [ngModel]="prompt()"
@@ -125,10 +125,10 @@
         ></textarea>
         <div class="flex items-center justify-between gap-3">
             <span class="text-xs text-muted-color" [class.text-state-danger]="promptNearLimit()">{{ prompt().length }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
-            <button tumUiButton type="button" size="small" [disabled]="!promptSubmittable()" (click)="submitRefinement()" data-testid="hyperion-refine-submit">
+            <button tumAetUiButton type="button" size="small" [disabled]="!promptSubmittable()" (click)="submitRefinement()" data-testid="hyperion-refine-submit">
                 <fa-icon [icon]="faPaperPlane" />
                 <span [jhiTranslate]="refineSubmitKey()"></span>
             </button>
         </div>
     </div>
-</tum-ui-popover>
+</tumaet-ui-popover>
