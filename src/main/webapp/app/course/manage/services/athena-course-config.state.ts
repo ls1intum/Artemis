@@ -1,4 +1,4 @@
-import { Injectable, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -418,7 +418,7 @@ export class AthenaCourseConfigState {
  * answer forever, though: {@link AthenaCourseConfigState#ensureLoaded} revalidates against the server on every mount,
  * it just shows the cached values while that request is on its way instead of a loading placeholder.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AthenaCourseConfigStore {
     private readonly athenaCourseConfigService = inject(AthenaCourseConfigService);
     private readonly alertService = inject(AlertService);
