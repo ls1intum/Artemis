@@ -96,7 +96,8 @@ public class AutomaticAfterDueDateService {
         else if (relevantData.programmingExerciseId() != null) { // has not been overwritten but exercise exists
             final ProgrammingExerciseBuildConfig programmingExerciseBuildConfig = programmingExerciseBuildConfigRepository
                     .getProgrammingExerciseBuildConfigElseThrow(relevantData.programmingExerciseId());
-            final List<BuildPhaseDTO> phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExerciseBuildConfig.getBuildPlanConfiguration()).phases();
+            // an after due date phase is relevant regardless of the container it runs in
+            final List<BuildPhaseDTO> phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExerciseBuildConfig.getBuildPlanConfiguration()).allPhases();
             hasAfterDueDatePhase = hasAfterDueDatePhase(phases);
         }
         else { // check once user saves, after due date phase would be set
@@ -249,7 +250,9 @@ public class AutomaticAfterDueDateService {
                 ? getLatestExamEndDateWithGrace(examApi.orElseThrow().findByExerciseId(exercise.getId()).orElseThrow())
                 : newLatestWithGraceExamEndDate : exercise.getDueDate();
 
-        final boolean hasAfterDueDatePhase = hasAfterDueDatePhase(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration).phases());
+        // an after due date phase is relevant regardless of the container it runs in, and a multi-container configuration
+        // leaves the flat list of phases empty, so the phases of every container have to be considered here
+        final boolean hasAfterDueDatePhase = hasAfterDueDatePhase(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration).allPhases());
 
         if (!hasAfterDueDatePhase || dueDate == null) {
             return null;
