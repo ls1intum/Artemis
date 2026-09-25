@@ -1,6 +1,6 @@
 @import './themes.css' layer(tumaet-ui-theme);
-@import 'tailwindcss/theme.css' prefix(tum);
-@import 'tailwindcss/utilities.css' prefix(tum) source(none);
+@import 'tailwindcss/theme.css' prefix(tumaet);
+@import 'tailwindcss/utilities.css' prefix(tumaet) source(none);
 @import '@angular/cdk/overlay-prebuilt.css' layer(tumaet-ui-cdk);
 @import './tailwind-theme.css';
 
@@ -132,11 +132,11 @@
 }
 
 .tumaet-ui-input-group > :not(:first-child) {
-    --tumaet-ui-input-group-start-radius: 0;
+    --_tumaet-ui-input-group-start-radius: 0;
 }
 
 .tumaet-ui-input-group > :not(:last-child) {
-    --tumaet-ui-input-group-end-radius: 0;
+    --_tumaet-ui-input-group-end-radius: 0;
 }
 
 .tumaet-ui-input-group > :is(.tumaet-ui-input, tumaet-ui-input-number) {
