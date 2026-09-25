@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -29,10 +31,11 @@ public class QuizWebsocketTopics implements WebsocketTopicProvider {
             WebsocketTopicAccess.atLeastStudentInCourse("courseId"));
 
     /**
-     * The start of one batch of a quiz in batched mode, carrying the questions. Only the students who joined that batch may subscribe, and the course staff.
+     * The start of one batch of a quiz in batched mode, carrying the questions. Only the students who joined that batch may subscribe, and the course staff. Students of a
+     * synchronized quiz also wait on the topic of its single batch, although the server announces the start of such a quiz on the course topic.
      */
     public static final WebsocketTopic QUIZ_BATCH = WebsocketTopic.of("/topic/courses/{courseId}/quizExercises/{quizBatchId}",
-            WebsocketTopicAccess.custom(QuizWebsocketTopics.class, QuizWebsocketTopics::hasJoinedQuizBatchOrIsTutor));
+            WebsocketTopicAccess.custom(QuizWebsocketTopics.class, QuizWebsocketTopics::mayFollowQuizBatch));
 
     /**
      * A signal that the statistics of a quiz changed, so the statistics pages reload them.
@@ -53,12 +56,18 @@ public class QuizWebsocketTopics implements WebsocketTopicProvider {
         this.userRepository = userRepository;
     }
 
-    private boolean hasJoinedQuizBatchOrIsTutor(WebsocketSubscription subscription) {
+    private boolean mayFollowQuizBatch(WebsocketSubscription subscription) {
         long quizBatchId = subscription.id("quizBatchId");
         if (quizBatchRepository.existsByIdAndJoinedStudentLogin(quizBatchId, subscription.login())) {
             return true;
         }
-        return quizBatchRepository.findQuizExerciseIdById(quizBatchId).filter(exerciseId -> userRepository.isAtLeastTeachingAssistantInExercise(subscription.login(), exerciseId))
-                .isPresent() || subscription.hasAdministratorAccess();
+        Optional<Long> quizExerciseId = quizBatchRepository.findQuizExerciseIdById(quizBatchId);
+        if (quizExerciseId.isEmpty()) {
+            return subscription.hasAdministratorAccess();
+        }
+        boolean allowed = quizBatchRepository.existsByIdAndSynchronizedQuizExercise(quizBatchId)
+                ? userRepository.isAtLeastStudentInExercise(subscription.login(), quizExerciseId.get())
+                : userRepository.isAtLeastTeachingAssistantInExercise(subscription.login(), quizExerciseId.get());
+        return allowed || subscription.hasAdministratorAccess();
     }
 }

@@ -116,7 +116,8 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
         // broker-internal topics, the session-specific destinations user topics resolve to, and destinations nobody declares
         for (String destination : List.of("/topic/unresolved-user", "/topic/user-registry", "/topic/newResults-user1a2b3c4d", "/topic/newResults", "/topic", "/topic/",
                 "/queue/anything", "/app/iris/command-ack", "/topic/communication/courses", "/topic/communication/courses/" + course.getId() + "/extra",
-                "/topic//communication/courses/" + course.getId(), "/user/topic/unknown", "/user/" + TEST_PREFIX + "student2/topic/newResults")) {
+                "/topic//communication/courses/" + course.getId(), "/user/topic/unknown", "/user/" + TEST_PREFIX + "student2/topic/newResults",
+                "/topic/quizExercise/42/submission")) {
             assertThat(registry.authorizeSubscription(student, destination)).as("undeclared destination %s", destination).isEqualTo(UNDECLARED);
         }
     }
@@ -219,8 +220,14 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
         assertThat(decide("student2", Role.STUDENT, examEvents)).as("student without a student exam").isEqualTo(DENIED);
         assertThat(decide("instructor1", Role.INSTRUCTOR, examEvents)).isEqualTo(ALLOWED);
 
-        for (String instructorTopic : List.of("/topic/exam/" + exam.getId() + "/started", "/topic/exam/" + exam.getId() + "/submitted",
-                "/topic/exams/" + exam.getId() + "/exercise-start-status", "/topic/exams/" + exam.getId() + "/export")) {
+        // the exam overview of the course staff counts started and submitted exams
+        for (String staffTopic : List.of("/topic/exam/" + exam.getId() + "/started", "/topic/exam/" + exam.getId() + "/submitted")) {
+            assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, staffTopic)).as(staffTopic).isEqualTo(ALLOWED);
+            assertThat(decide("student1", Role.STUDENT, staffTopic)).as(staffTopic).isEqualTo(DENIED);
+            assertThat(decide("outsider1", Role.STUDENT, staffTopic)).as(staffTopic).isEqualTo(DENIED);
+        }
+
+        for (String instructorTopic : List.of("/topic/exams/" + exam.getId() + "/exercise-start-status", "/topic/exams/" + exam.getId() + "/export")) {
             assertThat(decide("instructor1", Role.INSTRUCTOR, instructorTopic)).as(instructorTopic).isEqualTo(ALLOWED);
             assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, instructorTopic)).as(instructorTopic).isEqualTo(DENIED);
             assertThat(decide("admin", Role.ADMIN, instructorTopic)).as(instructorTopic).isEqualTo(ALLOWED);
@@ -243,6 +250,15 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
         assertThat(decide("student2", Role.STUDENT, batchTopic)).as("student who did not join the batch").isEqualTo(DENIED);
         assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, batchTopic)).isEqualTo(ALLOWED);
         assertThat(decide("outsider1", Role.STUDENT, batchTopic)).isEqualTo(DENIED);
+
+        // all students of the course wait for the single batch of a synchronized quiz
+        QuizExercise synchronizedQuiz = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
+                QuizMode.SYNCHRONIZED);
+        QuizBatch synchronizedBatch = new QuizBatch();
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(synchronizedBatch, synchronizedQuiz);
+        String synchronizedBatchTopic = "/topic/courses/" + synchronizedQuiz.getCourseViaExerciseGroupOrCourseMember().getId() + "/quizExercises/" + synchronizedBatch.getId();
+        assertThat(decide("student2", Role.STUDENT, synchronizedBatchTopic)).isEqualTo(ALLOWED);
+        assertThat(decide("outsider1", Role.STUDENT, synchronizedBatchTopic)).isEqualTo(DENIED);
 
         String statistics = "/topic/statistic/" + quizExercise.getId();
         assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, statistics)).isEqualTo(ALLOWED);

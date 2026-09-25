@@ -26,6 +26,8 @@ import org.springframework.security.messaging.access.intercept.MessageMatcherDel
 @Lazy
 public class WebsocketSecurityConfiguration {
 
+    private static final String ANDROID_QUIZ_SUBMISSION_DESTINATION = "/topic/quizExercise/*/submission";
+
     @Bean
     AuthorizationManager<Message<?>> authorizationManager(MessageMatcherDelegatingAuthorizationManager.Builder messages) {
         // @formatter:off
@@ -36,6 +38,9 @@ public class WebsocketSecurityConfiguration {
             .simpSubscribeDestMatchers("/topic/**", "/user/topic/**").authenticated()
             // Client messages only reach the @MessageMapping handlers, which check the permissions of the sender themselves
             .simpMessageDestMatchers(APPLICATION_DESTINATION_PREFIX + "/**").authenticated()
+            // The Android app sends the answers of a live quiz here and shows an error until the broker acknowledges them. The server does not read these messages,
+            // and no topic is declared for this destination, so nobody can subscribe to it and the broker delivers them to no one.
+            .simpMessageDestMatchers(ANDROID_QUIZ_SUBMISSION_DESTINATION).authenticated()
             // Everything else, in particular messages sent directly to a broker destination
             .anyMessage().denyAll();
         return messages.build();

@@ -35,16 +35,16 @@ public class ExamWebsocketTopics implements WebsocketTopicProvider {
             WebsocketTopicAccess.custom(ExamWebsocketTopics.class, ExamWebsocketTopics::isParticipantOrInstructorOfExam));
 
     /**
-     * A signal for the instructor's exam checklist whenever a student starts the exam.
+     * A signal without content whenever a student starts the exam, counted by the exam overview of the course staff.
      */
     public static final WebsocketTopic EXAM_STARTED = WebsocketTopic.of("/topic/exam/{examId}/started",
-            WebsocketTopicAccess.custom(ExamWebsocketTopics.class, ExamWebsocketTopics::isInstructorOfExam));
+            WebsocketTopicAccess.custom(ExamWebsocketTopics.class, ExamWebsocketTopics::isAtLeastTutorOfExam));
 
     /**
-     * A signal for the instructor's exam checklist whenever a student hands in the exam.
+     * A signal without content whenever a student hands in the exam, counted by the exam overview of the course staff.
      */
     public static final WebsocketTopic EXAM_SUBMITTED = WebsocketTopic.of("/topic/exam/{examId}/submitted",
-            WebsocketTopicAccess.custom(ExamWebsocketTopics.class, ExamWebsocketTopics::isInstructorOfExam));
+            WebsocketTopicAccess.custom(ExamWebsocketTopics.class, ExamWebsocketTopics::isAtLeastTutorOfExam));
 
     /**
      * Progress of preparing the exercises of all student exams.
@@ -80,6 +80,11 @@ public class ExamWebsocketTopics implements WebsocketTopicProvider {
 
     private boolean isInstructorOfExam(WebsocketSubscription subscription) {
         return isInstructorInCourseOfExam(subscription.id("examId"), subscription);
+    }
+
+    private boolean isAtLeastTutorOfExam(WebsocketSubscription subscription) {
+        return examRepository.findCourseIdById(subscription.id("examId")).filter(courseId -> userRepository.isAtLeastTeachingAssistantInCourse(subscription.login(), courseId))
+                .isPresent() || subscription.hasAdministratorAccess();
     }
 
     private boolean isInstructorInCourseOfExam(long examId, WebsocketSubscription subscription) {

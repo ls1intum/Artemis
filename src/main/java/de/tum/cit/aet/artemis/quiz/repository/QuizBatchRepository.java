@@ -74,6 +74,14 @@ public interface QuizBatchRepository extends ArtemisJpaRepository<QuizBatch, Lon
             """)
     Optional<Long> findQuizExerciseIdById(@Param("quizBatchId") long quizBatchId);
 
+    @Query("""
+            SELECT COUNT(quizBatch) > 0
+            FROM QuizBatch quizBatch
+            WHERE quizBatch.id = :quizBatchId
+                AND quizBatch.quizExercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED
+            """)
+    boolean existsByIdAndSynchronizedQuizExercise(@Param("quizBatchId") long quizBatchId);
+
     /**
      * Clamp every batch's startTime so it cannot start later than the last moment compatible with the new dueDate,
      * used by END_NOW. Mirrors {@link de.tum.cit.aet.artemis.quiz.service.QuizBatchService#quizBatchStartDate} but

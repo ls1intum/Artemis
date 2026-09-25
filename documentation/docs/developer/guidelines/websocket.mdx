@@ -140,7 +140,10 @@ Every frame a client sends passes two checks on the inbound channel, both config
 
 1. **Spring Security** (`WebsocketSecurityConfiguration`) authenticates every frame and restricts what a client may send:
    subscriptions to `/topic/**` and `/user/topic/**`, messages to `/app/**`, nothing else. A SEND or SUBSCRIBE frame
-   that breaks these rules is dropped, so the client keeps its connection; an unauthenticated CONNECT is refused.
+   that breaks these rules is dropped, so the client keeps its connection; an unauthenticated CONNECT is refused. The one
+   exception is `/topic/quizExercise/{id}/submission`: the Android app sends the answers of a live quiz there and waits
+   for the broker to acknowledge them. The server does not read these messages, and no topic is declared for this
+   destination, so the broker delivers them to no one.
 2. **The subscription check** (`WebsocketSubscriptionInterceptor` with `WebsocketTopicRegistry`) resolves the
    destination of every subscription to exactly one declared topic and applies its access rule. A rejected
    subscription is dropped silently, so the client keeps its connection and its other subscriptions. Destinations

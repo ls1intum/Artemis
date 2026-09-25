@@ -100,9 +100,15 @@ class WebsocketSecurityConfigurationTest extends AbstractSpringIntegrationIndepe
         assertThat(isGranted(user, StompCommand.SEND, "/app/iris/command-ack")).isTrue();
         assertThat(isGranted(anonymous, StompCommand.SEND, "/app/iris/command-ack")).isFalse();
         for (String brokerDestination : List.of("/topic/notification/system-notification", "/topic/exercises/1/synchronization", "/user/student/topic/newResults",
-                "/topic/unresolved-user")) {
+                "/topic/unresolved-user", "/topic/quizExercise/42/other")) {
             assertThat(isGranted(user, StompCommand.SEND, brokerDestination)).as("client message to %s", brokerDestination).isFalse();
+            // a MESSAGE frame of a client is a message as well, which the broker would forward like one of the server
+            assertThat(isGranted(user, StompCommand.MESSAGE, brokerDestination)).as("client MESSAGE frame to %s", brokerDestination).isFalse();
         }
+
+        // the quiz answers of the Android app, which the broker acknowledges but delivers to no one
+        assertThat(isGranted(user, StompCommand.SEND, "/topic/quizExercise/42/submission")).isTrue();
+        assertThat(isGranted(anonymous, StompCommand.SEND, "/topic/quizExercise/42/submission")).isFalse();
     }
 
     private boolean isGranted(Authentication authentication, StompCommand command, String destination) {
