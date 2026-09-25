@@ -293,6 +293,58 @@ describe('TumUiTabs family (string values)', () => {
 
 @Component({
     template: `
+        <tum-ui-tabs [value]="value()" (valueChange)="value.set($event ?? 1)">
+            <tum-ui-tab-list>
+                <tum-ui-tab [value]="1">One</tum-ui-tab>
+                @if (showTwo()) {
+                    <tum-ui-tab [value]="2">Two</tum-ui-tab>
+                }
+            </tum-ui-tab-list>
+            <tum-ui-tab-panels>
+                <tum-ui-tab-panel [value]="1">Panel One</tum-ui-tab-panel>
+                <tum-ui-tab-panel [value]="2">Panel Two</tum-ui-tab-panel>
+                <tum-ui-tab-panel value="1">Panel String One</tum-ui-tab-panel>
+            </tum-ui-tab-panels>
+        </tum-ui-tabs>
+    `,
+    imports: TABS_IMPORTS,
+})
+class PanelWithoutTabHostComponent {
+    readonly value = signal<number | string>(1);
+    readonly showTwo = signal(false);
+}
+
+/** A panel whose value matches no tab, because its tab is inside a false `@if` or the types differ, stays hidden. */
+describe('TumUiTabs family (panels without a tab)', () => {
+    it('shows only the panel of the active value', async () => {
+        const fixture = TestBed.createComponent(PanelWithoutTabHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const panels = () => fixture.debugElement.queryAll(By.css('tum-ui-tab-panel [role="tabpanel"]')).map((debug) => debug.nativeElement as HTMLElement);
+        const text = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+        expect(panels().map((panel) => panel.hidden)).toEqual([false, true, true]);
+        expect(text()).toContain('Panel One');
+        expect(text()).not.toContain('Panel Two');
+        expect(text()).not.toContain('Panel String One');
+
+        fixture.componentInstance.showTwo.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        (fixture.debugElement.queryAll(By.css('tum-ui-tab'))[1].nativeElement as HTMLElement).click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.value()).toBe(2);
+        expect(panels().map((panel) => panel.hidden)).toEqual([true, false, true]);
+        expect(text()).toContain('Panel Two');
+        expect(text()).not.toContain('Panel One');
+        expect(text()).not.toContain('Panel String One');
+    });
+});
+
+@Component({
+    template: `
         <tum-ui-tabs [value]="value()" (valueChange)="value.set($event ?? 'general')">
             <tum-ui-tab-list>
                 <tum-ui-tab value="general">General</tum-ui-tab>

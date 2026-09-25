@@ -51,7 +51,8 @@ export class TumUiTabsService {
 
     /**
      * Keys of the tabs that have no panel. A tab list without panels is a supported way to switch a view the host renders
-     * itself; the container gives each such tab an empty, hidden panel so that aria's tab contract still holds.
+     * itself; the container gives each such tab an empty, hidden placeholder panel, which only keeps aria from reporting
+     * a missing panel in development mode.
      */
     readonly keysWithoutPanel = computed(() => {
         const panelKeys = new Set([...this.panelSet()].map((panel) => panel.key()));

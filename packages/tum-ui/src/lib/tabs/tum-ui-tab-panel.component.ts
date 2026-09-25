@@ -5,8 +5,9 @@ import { TumUiTabsService, tabKey } from './tum-ui-tabs.service';
 /**
  * Content panel shown when its value matches the containing tabs value.
  *
- * The panel element inside is an Angular Aria tab panel: it owns the `tabpanel` role, `aria-labelledby`, and renders the
- * projected content only while its tab is selected.
+ * The panel element inside is an Angular Aria tab panel: it owns the `tabpanel` role and `aria-labelledby`, and renders
+ * the projected content only while its tab is selected. A panel whose value matches no tab stays hidden unless its value
+ * is the active one, as before; aria on its own would show it, because it only hides a panel whose tab is unselected.
  */
 @Component({
     selector: 'tum-ui-tab-panel',
@@ -17,9 +18,13 @@ import { TumUiTabsService, tabKey } from './tum-ui-tabs.service';
             #panel="ngTabPanel"
             class="tum-ui-tab-panel-content tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus"
             [value]="key()"
-            [hidden]="!panel.visible()"
+            [hidden]="!panel.visible() || !active()"
         >
-            <ng-template ngTabContent><ng-content /></ng-template>
+            <ng-template ngTabContent>
+                @if (active()) {
+                    <ng-content />
+                }
+            </ng-template>
         </div>
     `,
     host: {
@@ -35,6 +40,7 @@ export class TumUiTabPanelComponent implements OnInit, OnDestroy {
     readonly value = input.required<number | string>();
 
     protected readonly key = computed(() => tabKey(this.value()));
+    protected readonly active = computed(() => this.tabsService.active() === this.value());
 
     ngOnInit(): void {
         this.removeFromTabs = this.tabsService.addPanel({ key: this.key });

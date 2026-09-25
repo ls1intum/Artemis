@@ -29,6 +29,11 @@ export class TumUiTabComponent extends Tab implements OnInit, OnDestroy {
      * Aria identifies a tab by a string. This input also accepts a number and hands aria the typed key from
      * {@link tabKey}, so `1` and `'1'` stay two tabs. TypeScript rejects the wider input type of the override, although
      * Angular's template type checker and runtime both use it; every aria read of `value` goes through the key.
+     *
+     * The override relies on how aria reads the input. Aria builds its tab pattern in a field initializer from a copy
+     * of `this`, which still holds aria's own, never bound `value` input, and reads `value` only lazily through
+     * `this.value()`, in the tab and panel maps and when looking up the selected tab. If an aria update starts reading
+     * `value` from that copy, the tabs lose their panels and selection.
      */
     // @ts-expect-error -- the override accepts numbers too and narrows them to aria's string key, see above.
     override readonly value = input.required<string, number | string>({ transform: tabKey });
