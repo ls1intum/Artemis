@@ -1,15 +1,6 @@
 package de.tum.cit.aet.artemis.core.config.websocket;
 
-import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
-import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
-import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.isParticipationTeamDestination;
-import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildAgentDestination;
-import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildJobAdminDestination;
-import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildJobCourseDestination;
-import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
-import static de.tum.cit.aet.artemis.localci.service.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
 
 import java.net.InetSocketAddress;
 import java.security.Principal;
@@ -20,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -28,53 +18,58 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompReactorNettyCodec;
-import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
+import org.springframework.messaging.simp.user.UserDestinationMessageHandler;
+import org.springframework.messaging.simp.user.UserDestinationResolver;
+import org.springframework.messaging.support.AbstractSubscribableChannel;
+import org.springframework.messaging.support.ExecutorSubscribableChannel;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
+import org.springframework.web.socket.messaging.DefaultSimpUserRegistry;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
+import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
+import org.springframework.web.socket.messaging.StompSubProtocolErrorHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
-import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketSubscriptionInterceptor;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketTopicRegistry;
 
 @Profile(PROFILE_CORE)
 @Configuration
@@ -85,13 +80,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private static final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
 
-    private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
-
-    private static final Pattern EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN = Pattern.compile("^/topic/exercises/(\\d+)/synchronization$");
-
-    private static final Pattern HYPERION_EXERCISE_STATE_TOPIC_PATTERN = Pattern.compile("^/topic/hyperion/exercise-generation/exercises/(\\d+)/state$");
-
     public static final String IP_ADDRESS = "IP_ADDRESS";
+
+    /**
+     * The prefix of the destinations clients send messages to. They are handled by {@code @MessageMapping} methods, which check the permissions of the sender themselves,
+     * and never reach the broker, so a client cannot publish to a {@code /topic} destination.
+     */
+    public static final String APPLICATION_DESTINATION_PREFIX = "/app";
 
     private final JsonMapper jsonMapper;
 
@@ -99,20 +94,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final TaskScheduler messageBrokerTaskScheduler;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
-    private final UserRepository userRepository;
-
     /**
-     * Resolved when a subscription arrives rather than injected: this class is eager, so reaching for the service
-     * directly would pull it into the startup graph, past the bean-count budget. Nothing here needs administrator
-     * elevation until somebody subscribes, which is long after startup.
+     * Resolved when the first subscription arrives rather than injected: this class is eager, so reaching for the registry directly would pull it and the topic providers
+     * with their repositories into the startup graph.
      */
-    private final ObjectProvider<ElevatedAccessService> elevatedAccessService;
-
-    private final ExerciseRepository exerciseRepository;
-
-    private final Optional<ExamRepositoryApi> examRepositoryApi;
+    private final ObjectProvider<WebsocketTopicRegistry> websocketTopicRegistry;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -125,20 +111,19 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(JsonMapper jsonMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
-            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, ObjectProvider<ElevatedAccessService> elevatedAccessService,
-            ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
+            ObjectProvider<WebsocketTopicRegistry> websocketTopicRegistry) {
         this.jsonMapper = jsonMapper;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.userRepository = userRepository;
-        this.elevatedAccessService = elevatedAccessService;
-        this.exerciseRepository = exerciseRepository;
-        this.examRepositoryApi = examRepositoryApi;
+        this.websocketTopicRegistry = websocketTopicRegistry;
     }
 
     @Override
     protected void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
+        // Client messages only go to the @MessageMapping handlers. Without a prefix they would also reach the broker, which forwards them to every subscriber.
+        config.setApplicationDestinationPrefixes(APPLICATION_DESTINATION_PREFIX);
+        // The user registry has to know a subscription before other listeners of the subscribe event ask it, e.g. for the online members of a team
+        config.setUserRegistryOrder(Ordered.HIGHEST_PRECEDENCE);
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = websocketBrokerTcpClientSupplier().get();
@@ -185,6 +170,78 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     /**
+     * Registers only authorized subscriptions. With receive ordering enabled, Spring publishes a subscribe event after enqueueing the frame, even if an inbound
+     * interceptor rejects it or has not checked it yet. Recheck the declared topic here so consumers can safely use registry membership for authorization and presence.
+     * This check runs per subscription, never per editor keystroke.
+     *
+     * @param order the listener order, before consumers of subscription events
+     * @return the local registry, which Spring also uses in its multi-server registry
+     */
+    @Override
+    protected SimpUserRegistry createLocalUserRegistry(@Nullable Integer order) {
+        var registry = new DefaultSimpUserRegistry() {
+
+            @Override
+            public void onApplicationEvent(ApplicationEvent event) {
+                if (event instanceof SessionSubscribeEvent subscription) {
+                    var headers = StompHeaderAccessor.wrap(subscription.getMessage());
+                    if (headers.getSessionId() == null || headers.getSubscriptionId() == null) {
+                        return;
+                    }
+                    // A rejected reuse of an id must not retain the authorization of an earlier subscription.
+                    super.onApplicationEvent(new SessionUnsubscribeEvent(this, subscription.getMessage(), subscription.getUser()));
+                    try {
+                        if (websocketTopicRegistry.getObject().authorizeSubscription(subscription.getUser(), headers.getDestination()) != WebsocketTopicRegistry.Decision.ALLOWED) {
+                            return;
+                        }
+                    }
+                    catch (RuntimeException e) {
+                        log.error("Could not authorize the subscription event for {}, rejecting it", headers.getDestination(), e);
+                        return;
+                    }
+                }
+                super.onApplicationEvent(event);
+            }
+        };
+        if (order != null) {
+            registry.setOrder(order);
+        }
+        return registry;
+    }
+
+    /**
+     * Keeps user-destination forwarding synchronous with the inbound handler. Spring 7.0.9 otherwise adds another ordered queue when receive ordering is enabled,
+     * reuses a message across user sessions, and drops all but the first delivery once its headers become immutable. The broker channel has no executor, so the
+     * inbound ordering already covers forwarding subscriptions to the broker; another queue is unnecessary. The delegating channel only prevents that second queue
+     * from being selected and keeps subscriptions on the original, ordered inbound channel.
+     */
+    @Override
+    @Bean
+    public UserDestinationMessageHandler userDestinationMessageHandler(AbstractSubscribableChannel clientInboundChannel, AbstractSubscribableChannel clientOutboundChannel,
+            AbstractSubscribableChannel brokerChannel, UserDestinationResolver userDestinationResolver) {
+        Assert.state(brokerChannel instanceof ExecutorSubscribableChannel channel && channel.getExecutor() == null,
+                "User-destination forwarding requires a synchronous broker channel");
+        var inboundDelegate = new AbstractSubscribableChannel() {
+
+            @Override
+            public boolean subscribe(MessageHandler handler) {
+                return clientInboundChannel.subscribe(handler);
+            }
+
+            @Override
+            public boolean unsubscribe(MessageHandler handler) {
+                return clientInboundChannel.unsubscribe(handler);
+            }
+
+            @Override
+            protected boolean sendInternal(Message<?> message, long timeout) {
+                return clientInboundChannel.send(message, timeout);
+            }
+        };
+        return super.userDestinationMessageHandler(inboundDelegate, clientOutboundChannel, brokerChannel, userDestinationResolver);
+    }
+
+    /**
      * Create a TCP client that will connect to the broker defined in the config.
      * If multiple brokers are configured, the client will connect to the first one and fail over to the next one in case a broker goes down.
      * If the last broker goes down, the first one is retried.
@@ -225,6 +282,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Process frames from the same session in order: an editor's SUBSCRIBE must reach the user registry before a subsequent synchronization SEND is checked.
+        registry.setPreserveReceiveOrder(true);
         DefaultHandshakeHandler handshakeHandler = defaultHandshakeHandler();
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
         // @formatter:off
@@ -237,17 +296,49 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             .setTransportHandlers(webSocketTransportHandler)
             .setInterceptors(httpSessionHandshakeInterceptor());
         // @formatter:on
+        registry.setErrorHandler(new DroppingAccessDeniedErrorHandler());
+    }
+
+    /**
+     * Drops a SEND or SUBSCRIBE frame that the frame-level rules in {@link WebsocketSecurityConfiguration} reject, instead of answering with an ERROR frame, which closes
+     * the connection. A client that still sends to an old destination, e.g. an open tab from before a deployment, would otherwise lose all its live updates and reconnect
+     * over and over. Every other error keeps the default handling.
+     */
+    private static class DroppingAccessDeniedErrorHandler extends StompSubProtocolErrorHandler {
+
+        @Override
+        public @Nullable Message<byte[]> handleClientMessageProcessingError(@Nullable Message<byte[]> clientMessage, @NonNull Throwable exception) {
+            StompCommand command = clientMessage != null ? StompHeaderAccessor.wrap(clientMessage).getCommand() : null;
+            if ((command == StompCommand.SEND || command == StompCommand.SUBSCRIBE) && isAccessDenied(exception)) {
+                log.warn("Dropped a {} frame to {} that the websocket rules do not allow", command, StompHeaderAccessor.wrap(clientMessage).getDestination());
+                return null;
+            }
+            return super.handleClientMessageProcessingError(clientMessage, exception);
+        }
+
+        private static boolean isAccessDenied(Throwable exception) {
+            for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+                if (cause instanceof AccessDeniedException) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new TopicSubscriptionInterceptor());
+        // Applies the other configurers first, among them Spring Security's, which authenticates every frame and restricts the message types and destinations a client
+        // may use (see WebsocketSecurityConfiguration).
+        super.configureClientInboundChannel(registration);
+        // Decides which subscriptions are allowed, based on the declared websocket topics (see WebsocketTopic)
+        registration.interceptors(new WebsocketSubscriptionInterceptor(websocketTopicRegistry::getObject));
         registration.taskExecutor(createExecutor("ws-inbound-"));
     }
 
     @Override
     protected void configureClientOutboundChannel(ChannelRegistration registration) {
-        int cores = Runtime.getRuntime().availableProcessors();
+        super.configureClientOutboundChannel(registration);
         registration.taskExecutor(createExecutor("ws-outbound-"));
     }
 
@@ -327,204 +418,5 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return principal;
             }
         };
-    }
-
-    public class TopicSubscriptionInterceptor implements ChannelInterceptor {
-
-        /**
-         * Method is called before the user's message is sent to the controller
-         *
-         * @param message Message that the websocket client is sending (e.g. SUBSCRIBE, MESSAGE, UNSUBSCRIBE)
-         * @param channel Current message channel
-         * @return message that gets sent along further
-         */
-        @Override
-        public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
-            log.debug("preSend: {}, channel: {}", message, channel);
-            StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
-            Principal principal = headerAccessor.getUser();
-            String destination = headerAccessor.getDestination();
-
-            StompCommand command = headerAccessor.getCommand();
-            if (StompCommand.SUBSCRIBE.equals(command) || StompCommand.SEND.equals(command)) {
-                try {
-                    boolean allowed = StompCommand.SUBSCRIBE.equals(command) ? allowSubscription(principal, destination) : allowSend(principal, destination);
-                    if (!allowed) {
-                        logUnauthorizedDestinationAccess(principal, destination);
-                        return null;
-                    }
-                }
-                catch (EntityNotFoundException e) {
-                    log.warn("An error occurred while authorizing user {} for destination {}: {}", principal != null ? principal.getName() : "null", destination, e.getMessage());
-                    return null;
-                }
-            }
-
-            return message;
-        }
-
-        /**
-         * Returns whether the subscription of the given principal to the given destination is permitted
-         * Database calls should be avoided as much as possible in this method.
-         * Only for very specific topics, database calls are allowed.
-         *
-         * @param principal   User principal of the user who wants to subscribe
-         * @param destination Destination topic to which the user wants to subscribe
-         * @return flag whether subscription is allowed
-         */
-        private boolean allowSubscription(@Nullable Principal principal, @Nullable String destination) {
-            log.debug("{} wants to subscribe to {}", principal != null ? principal.getName() : "Anonymous", destination);
-            /*
-             * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
-             * is an instructor in a course)
-             * This method is called for every subscription request, so it should be as fast as possible.
-             * If you need to do a database call, make sure to first check if the destination is valid for your specific
-             * use case.
-             */
-            if (principal == null || destination == null) {
-                log.warn("Anonymous user tried to access the protected topic: {}", destination);
-                return false;
-            }
-
-            Optional<Long> hyperionExerciseId = getExerciseIdFromHyperionStateDestination(destination);
-            if (hyperionExerciseId.isPresent()) {
-                return userRepository.isAtLeastEditorInExercise(principal.getName(), hyperionExerciseId.get()) || hasAdministratorAccess(principal);
-            }
-            if (destination.equals("/topic/user-registry") || destination.equals("/topic/unresolved-user") || destination.equals("/topic/hyperion")
-                    || destination.startsWith("/topic/hyperion/")) {
-                return false;
-            }
-            if (destination.startsWith("/user/topic/hyperion/")) {
-                return true;
-            }
-
-            final var login = principal.getName();
-
-            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
-                // Request-bound elevation rather than account classification: the session the handshake established
-                // has to prove the configured passkey requirement, so an administrator who signed in with a password
-                // must not reach the admin build queue, job and agent topics on their persisted role alone.
-                return hasAdministratorAccess(principal);
-            }
-
-            Optional<Long> courseId = isBuildQueueCourseDestination(destination);
-            if (courseId.isPresent()) {
-                return userRepository.isAtLeastInstructorInCourse(login, courseId.get()) || hasAdministratorAccess(principal);
-            }
-
-            Optional<Long> buildJobCourseId = isBuildJobCourseDestination(destination);
-            if (buildJobCourseId.isPresent()) {
-                return userRepository.isAtLeastInstructorInCourse(login, buildJobCourseId.get()) || hasAdministratorAccess(principal);
-            }
-
-            if (isParticipationTeamDestination(destination)) {
-                Long participationId = getParticipationIdFromDestination(destination);
-                return isParticipationOwnedByUser(principal, participationId);
-            }
-            if (isNonPersonalExerciseResultDestination(destination)) {
-                final long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination).orElseThrow();
-
-                // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
-                if (exerciseRepository.isExamExercise(exerciseId)) {
-                    return userRepository.isAtLeastInstructorInExercise(login, exerciseId) || hasAdministratorAccess(principal);
-                }
-                else {
-                    return userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId) || hasAdministratorAccess(principal);
-                }
-            }
-
-            var examId = getExamIdFromExamRootDestination(destination);
-            if (examId.isPresent()) {
-                ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
-                var exam = api.findByIdElseThrow(examId.get());
-                return userRepository.isAtLeastInstructorInCourse(login, exam.getCourse().getId()) || hasAdministratorAccess(principal);
-            }
-
-            var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
-            if (synchronizationExerciseId.isPresent()) {
-                return userRepository.isAtLeastEditorInExercise(login, synchronizationExerciseId.get()) || hasAdministratorAccess(principal);
-            }
-
-            return true;
-        }
-
-        private boolean hasAdministratorAccess(Principal principal) {
-            // Use the WebSocket session's authentication, never an unrelated or absent thread SecurityContext.
-            return principal instanceof Authentication authentication && elevatedAccessService.getObject().isAdminElevationActive(authentication);
-        }
-
-        /**
-         * Clients may publish directly to collaboration topics after the same authorization checks used for subscriptions. Application destinations retain their existing Spring
-         * Security handling. Direct publication to user destinations or any other broker topic is rejected.
-         */
-        private boolean allowSend(@Nullable Principal principal, @Nullable String destination) {
-            if (destination == null) {
-                return true;
-            }
-            if (destination.startsWith("/user/")) {
-                return false;
-            }
-            if (!destination.startsWith("/topic/")) {
-                return true;
-            }
-            if (principal == null) {
-                return false;
-            }
-
-            if (isParticipationTeamDestination(destination)) {
-                return isParticipationOwnedByUser(principal, getParticipationIdFromDestination(destination));
-            }
-
-            return getExerciseIdFromSynchronizationDestination(destination)
-                    .map(exerciseId -> userRepository.isAtLeastEditorInExercise(principal.getName(), exerciseId) || hasAdministratorAccess(principal)).orElse(false);
-        }
-
-        private void logUnauthorizedDestinationAccess(Principal principal, String destination) {
-            if (principal == null) {
-                log.warn("Anonymous user tried to access the protected topic: {}", destination);
-            }
-            else {
-                log.warn("User with login '{}' tried to access the protected topic: {}", principal.getName(), destination);
-            }
-        }
-    }
-
-    private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
-        return participation.isOwnedBy(principal.getName());
-    }
-
-    /**
-     * Returns the exam id if the given destination belongs to a topic for a whole exam.
-     * Only instructors and admins should be allowed to subscribe to this topic.
-     *
-     * @param destination Websocket destination topic which to check
-     * @return an optional that contains the exam id if this is a topic for a whole exam; an empty optional otherwise
-     */
-    public static Optional<Long> getExamIdFromExamRootDestination(String destination) {
-        var matcher = EXAM_TOPIC_PATTERN.matcher(destination);
-        if (matcher.matches()) {
-            return Optional.of(Long.valueOf(matcher.group(1)));
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Returns the exercise id if the given destination belongs to the exercise synchronization topic.
-     *
-     * @param destination websocket destination topic to inspect
-     * @return an optional containing the exercise id for synchronization topics; empty otherwise
-     */
-    public static Optional<Long> getExerciseIdFromSynchronizationDestination(String destination) {
-        var matcher = EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN.matcher(destination);
-        if (matcher.matches()) {
-            return Optional.of(Long.valueOf(matcher.group(1)));
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<Long> getExerciseIdFromHyperionStateDestination(String destination) {
-        var matcher = HYPERION_EXERCISE_STATE_TOPIC_PATTERN.matcher(destination);
-        return matcher.matches() ? Optional.of(Long.valueOf(matcher.group(1))) : Optional.empty();
     }
 }

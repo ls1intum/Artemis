@@ -4,12 +4,12 @@ import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSe
 import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredModelingExercise;
 import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredProgrammingExercise;
 import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredTextExercise;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -1113,7 +1113,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // Verify that the sendMessage method was called with the expected WebSocket event
         var expectedTopic = examWide ? "/topic/exam-participation/exam/" + studentExamOrExamId + "/events"
                 : "/topic/exam-participation/studentExam/" + studentExamOrExamId + "/events";
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq(expectedTopic), websocketEventCaptor.capture());
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic(expectedTopic), websocketEventCaptor.capture());
 
         // Get the captured WebSocket event
         return websocketEventCaptor.getValue();

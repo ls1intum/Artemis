@@ -38,6 +38,7 @@ A single class while iterating:
 | Anything at all in a large file        | Counted gates                                       |
 | Anything that lowercases or uppercases | Case conversion                                     |
 | Anything that serializes JSON          | Jackson version                                     |
+| A websocket topic or message handler   | Websocket topics                                    |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
@@ -100,6 +101,15 @@ default locale, so the same input gives a different answer depending on where th
 `Locale.ROOT` for machine-facing values and `Locale.ENGLISH` only where the surrounding code already
 does for that kind of value. Enforced by `testNoLocaleLessCaseConversion` in `ArchitectureTest.java`,
 over production and test classes both.
+
+**Every websocket destination is a declared topic.** Declare a `WebsocketTopic` with its
+`WebsocketTopicAccess` rule, or a `WebsocketUserTopic` for data of one user, as a `public static final`
+constant of the module's `web/<Module>WebsocketTopics` class, and send with
+`websocketMessagingService.sendMessage(TOPIC.at(id), dto)`. A subscription to an undeclared destination
+is rejected, so a topic that is sent but not declared silently reaches nobody. Clients send only to
+`/app/...` destinations handled by `@MessageMapping` methods, which check the sender themselves.
+Enforced by `WebsocketTopicArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`.
 
 ## Before adding a cache
 

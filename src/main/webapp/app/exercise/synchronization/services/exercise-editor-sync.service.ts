@@ -235,6 +235,16 @@ export class ExerciseEditorSyncService {
     }
 
     /**
+     * Constructs the STOMP destination the client sends its synchronization events to. The server relays them to the topic of {@link getTopic}.
+     *
+     * @param exerciseId - the ID of the exercise
+     * @returns the destination (e.g. `/app/exercises/42/synchronization`)
+     */
+    private getSendDestination(exerciseId: number): string {
+        return `/app/exercises/${exerciseId}/synchronization`;
+    }
+
+    /**
      * The unique session identifier for this browser tab/window.
      *
      * Used to filter out messages that originated from this client so that
@@ -317,7 +327,7 @@ export class ExerciseEditorSyncService {
         if (!this.outgoing$) {
             throw new Error('Cannot send synchronization message: outgoing message buffer not initialized');
         }
-        const topic = this.getTopic(exerciseId);
+        const topic = this.getSendDestination(exerciseId);
         this.outgoing$.next({ topic, payload: cloneWith(message, { timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId }) });
     }
 
