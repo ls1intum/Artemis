@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.AuthoringRunPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
@@ -37,7 +38,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 @Lazy
 @Conditional(HyperionExerciseGenerationEnabled.class)
 @RequestMapping("api/hyperion/")
-@FeatureUsage("authoring-assistance/exercise-generation")
+@FeatureUsage(UserFeature.HYPERION_EXERCISE_GENERATION)
 public class HyperionAuthoringRunResource {
 
     private final GenerationHistoryService history;

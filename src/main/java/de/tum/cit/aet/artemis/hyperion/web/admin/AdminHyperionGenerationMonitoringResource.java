@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.hyperion.dto.ActiveGenerationDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationMonitoringService;
 
@@ -31,7 +32,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Profile(PROFILE_CORE)
 @RequestMapping("api/hyperion/admin/")
 @EnforceAdmin
-@FeatureUsage("authoring-assistance/generation-monitoring")
+@FeatureUsage(UserFeature.HYPERION_GENERATION_MONITORING)
 public class AdminHyperionGenerationMonitoringResource {
 
     private static final Pattern CONTROL_CHARACTERS = Pattern.compile("[\\p{Cntrl}]+");

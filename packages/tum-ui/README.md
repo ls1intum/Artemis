@@ -1,20 +1,21 @@
 # @tumaet/ui-angular
 
-Reusable Angular components and precompiled styles for the TUM UI design system, currently
-maintained in the Artemis workspace. The built artifact exposes package-owned APIs and assets;
-application-specific integration remains in the host.
+Angular components and precompiled styles for the TUM UI design system. See the
+[component reference](https://docs.artemis.tum.de/developer/tum-ui-reference) for examples and APIs.
 
-## Consumer setup
+## Getting started
 
-Import supported symbols from the package entry point:
+Install in an Angular application whose dependencies satisfy the package's `peerDependencies`:
 
-```ts
-import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+```sh
+npm install @tumaet/ui-angular
 ```
 
-Deep imports are not supported.
+Use the Angular CLI or another build that runs Angular's linker. Zone.js is not required.
+Server-side rendering is not supported.
 
-Load the precompiled stylesheet once, globally, after resets and framework styles:
+In `angular.json`, add the stylesheet to `projects.<app>.architect.build.options.styles`, after
+existing global styles. Keep your application's current `.css` or `.scss` path:
 
 ```json
 {
@@ -22,18 +23,49 @@ Load the precompiled stylesheet once, globally, after resets and framework style
 }
 ```
 
-The stylesheet includes complete light and dark defaults in a low-priority cascade layer. Set
-`data-theme="dark"` on the document element to activate dark mode. The theme also sets the matching
-`color-scheme` and a system font stack. No Tailwind dependency, configuration, or package source
-scanning is required.
+The package includes precompiled styles and overlay styles. No Tailwind setup or icon registration
+is required for built-in controls.
+
+For a minimal standalone application, use this `src/main.ts` with `<app-root></app-root>` in
+`src/index.html`:
+
+```ts
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+
+@Component({
+    selector: 'app-root',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TumUiButtonComponent, TumUiDialogComponent],
+    template: `
+        <tum-ui-button (clicked)="dialogOpen.set(true)">Open dialog</tum-ui-button>
+        <tum-ui-dialog header="Welcome" [(visible)]="dialogOpen">
+            <p>Your first TUM UI dialog.</p>
+        </tum-ui-dialog>
+    `,
+})
+class App {
+    readonly dialogOpen = signal(false);
+}
+
+void bootstrapApplication(App);
+```
+
+In an existing application, add the components to the consuming component's `imports` instead of
+replacing its bootstrap. Import supported symbols from `@tumaet/ui-angular`; deep imports are
+not supported. See the [component reference](https://docs.artemis.tum.de/developer/tum-ui-reference)
+for forms, tables, charts, and keyboard interactions.
 
 ## Host theme integration
 
-Override only the semantic roles the application owns in an unlayered host stylesheet. Define
-overrides on the document element so package components and overlay content inherit them. The
-package defaults remain as fallbacks because unlayered application declarations take precedence
-over the package theme layer. Set `data-theme` and the standard `color-scheme` property on the same
-root so package and browser-owned controls use the same scheme.
+Theme defaults use a low-priority cascade layer. Set `data-theme="dark"` on `<html>` to activate
+dark mode, or remove it to return to light mode. The theme sets the matching CSS `color-scheme`
+and a system font stack.
+
+Override semantic custom properties in an unlayered stylesheet on the document element so
+components and overlays inherit them. Unlayered declarations take precedence over the package's
+layered defaults. Supply light and dark values when overriding colors.
 
 Foundations:
 
@@ -62,47 +94,55 @@ Colors:
   `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
   `--tumaet-ui-tooltip-color`.
 
-Color values must remain valid for each active color scheme. The default palette uses a cool-slate
-surface hierarchy with restrained control boundaries and visible focus states. Contrast tokens must
-remain readable on their matching background. Primary is the brand fill; accent is the accessible brand foreground for
-content and controls. Each state token is a solid fill or border, its `-contrast` token is text on
-that fill, and its `-foreground` token is text on content or a tinted state surface. Focus must remain
-distinguishable from adjacent content and control surfaces. The package exposes semantic roles
-rather than a numbered color ramp. Artemis inherits the default foundations and surfaces, then
-overrides its font family, brand, application surfaces, and status roles in its own stylesheet.
+Primary is the brand fill; accent is the brand foreground for content and controls. Each state
+token is a fill or border, its `-contrast` token is text on that fill, and its `-foreground` token
+is text on content or a tinted state surface. Maintain readable contrast in both themes and keep
+focus indicators distinguishable from adjacent surfaces.
 
-The component stylesheet uses `tum:`-prefixed Tailwind class names to avoid selector collisions and
-does not depend on the host's source scanner. The prefix and package Tailwind configuration are
-internal implementation details. Theme changes flow through the custom properties, and package
-components do not contain light/dark palette branches. Responsive component thresholds are
-package-owned compile-time values at 40rem, 48rem, 64rem, 80rem, and 96rem; they do not follow a
-host's Tailwind breakpoints.
+Responsive thresholds are fixed at 40rem, 48rem, 64rem, 80rem, and 96rem; host Tailwind
+configuration does not change them.
 
-Apply host-owned layout classes with the native `class` attribute on a package component. Those
-classes style the component host; they do not cause the package Tailwind build to generate
-utilities. Use component inputs and theme tokens for supported internal customization instead of
-targeting implementation elements.
+Apply host-owned layout classes with the native `class` attribute on a package component. These
+classes style the host element. Use component inputs and theme tokens to customize its contents.
 
-Package text defaults to English. A translated host can replace it with an adapter:
+## Icons
 
-```ts
-import { provideTumUiTranslator } from '@tumaet/ui-angular';
+Built-in controls import individual solid icons through the official Font Awesome Angular
+component. Applications do not need to register these icons or load an icon font.
 
-bootstrapApplication(AppComponent, {
-    providers: [provideTumUiTranslator(ApplicationTranslator)],
-});
-```
+For an `icon` input, prefer an explicit icon definition such as `faDownload` from
+`@fortawesome/free-solid-svg-icons`, passed through `[icon]`. Declare any icon pack your own
+application imports as its dependency. Explicit references support tree shaking and avoid
+string-name lookup; see
+[Font Awesome's explicit-reference guide](https://github.com/FortAwesome/angular-fontawesome/blob/main/docs/usage/explicit-reference.md).
 
-`ApplicationTranslator` must implement `TumUiTranslator`. Its optional `translationChanges` and
-`locale` signals keep translations and locale-sensitive formatting reactive. Register one
-translator adapter when the application starts.
+## Translations
+
+Package-owned text defaults to English. To connect an application's translation service,
+implement `TumUiTranslator` and register `provideTumUiTranslator(YourTranslator)` in the
+application's providers.
+
+The adapter replaces the default translator. Its `translate(key, params)` method must resolve
+package `tumUi.*` keys, application-owned keys passed to components, and supplied interpolation
+parameters. Optional `translationChanges` and `locale` signals update translated text and
+locale-sensitive formatting. See the
+[translation contract](https://docs.artemis.tum.de/developer/guidelines/tum-ui-kit#translation-contract).
+
+## Releases and support
+
+[GitHub release notes](https://github.com/ls1intum/Artemis/releases) use
+`@tumaet/ui-angular@<version>` tags and include migration instructions. Before 1.0, incompatible
+changes increment the minor version; compatible changes increment the patch version.
+
+[Report an issue](https://github.com/ls1intum/Artemis/issues) with the package and Angular versions,
+expected behavior, and a minimal reproduction.
 
 ## Contributing
 
 Contributors working in the Artemis repository should follow the
-[TUM UI package guide](https://docs.artemis.tum.de/developer/guidelines/tum-ui-kit). It defines
-the ownership boundary, supported workflow, testing expectations, and Storybook conventions.
+[TUM UI package guide](https://docs.artemis.tum.de/developer/guidelines/tum-ui-kit). It covers
+contribution, testing, and publishing.
 
 ## License
 
-MIT
+[MIT](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/LICENSE).

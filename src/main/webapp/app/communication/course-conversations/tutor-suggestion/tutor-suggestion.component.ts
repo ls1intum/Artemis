@@ -37,6 +37,13 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, NgbTooltip],
 })
 export class TutorSuggestionComponent implements OnInit, OnDestroy {
+    protected readonly chatService = inject(IrisChatService);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly accountService = inject(AccountService);
+    private readonly statusService = inject(IrisStatusService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+
     private initialized = false;
 
     constructor() {
@@ -63,13 +70,6 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowsRotate = faArrowsRotate;
     protected readonly faArrowDown = faArrowDown;
-
-    protected readonly chatService = inject(IrisChatService);
-    private readonly profileService = inject(ProfileService);
-    private readonly irisSettingsService = inject(IrisSettingsService);
-    private readonly accountService = inject(AccountService);
-    private readonly statusService = inject(IrisStatusService);
-    private readonly featureToggleService = inject(FeatureToggleService);
 
     irisActive$ = this.statusService.getActiveStatus().pipe(shareReplay(1));
 

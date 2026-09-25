@@ -120,6 +120,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private readonly router = inject(Router);
     private readonly injector = inject(Injector);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly alertService = inject(AlertService);
 
     readonly visible = input<boolean>(false);
     /** Required for the wizard flow (steps 1–3); may be absent in monitor mode (tray host has no exercise). */
@@ -339,8 +340,6 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     protected readonly durationDays = durationDays;
     protected readonly difficultySeverity = difficultySeverity;
     protected readonly difficultyTranslationKey = difficultyTranslationKey;
-
-    private readonly alertService = inject(AlertService);
 
     private eventsSubscription?: Subscription;
 

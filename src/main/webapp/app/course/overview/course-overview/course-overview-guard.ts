@@ -1,13 +1,11 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
 import { Observable, catchError, map, of } from 'rxjs';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseOverviewGuard implements CanActivate {
     private courseAvailableTabsService = inject(CourseAvailableTabsService);
     private router = inject(Router);

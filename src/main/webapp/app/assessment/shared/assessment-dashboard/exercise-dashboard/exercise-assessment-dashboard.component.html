@@ -437,7 +437,6 @@
                                                                         [class.disabled]="openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()"
                                                                         [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
                                                                         [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
-                                                                        [ngStyle]="{}"
                                                                     >
                                                                         @if (openingAssessmentEditorForNewSubmission()) {
                                                                             <fa-icon [icon]="faSpinner" animation="spin" />

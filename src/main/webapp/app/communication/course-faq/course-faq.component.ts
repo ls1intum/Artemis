@@ -39,6 +39,12 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
     ],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private faqService = inject(FaqService);
+    private alertService = inject(AlertService);
+    private renderer = inject(Renderer2);
+
     faqElements = viewChildren<ElementRef>('faqElement');
 
     courseId!: number; // set in ngOnInit() from the parent route paramMap
@@ -58,12 +64,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
     readonly faFilter = faFilter;
 
-    private route = inject(ActivatedRoute);
-    private courseTabRefreshService = inject(CourseTabRefreshService);
     private tabReselectionSubscription?: Subscription;
-    private faqService = inject(FaqService);
-    private alertService = inject(AlertService);
-    private renderer = inject(Renderer2);
 
     constructor() {
         effect(() => {

@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { Observable, Subject, UnaryFunction, of, pipe, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import {
@@ -77,7 +77,7 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
         }),
     );
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorRepositoryService extends DomainDependentEndpointService implements ICodeEditorRepositoryService {
     private conflictService = inject(CodeEditorConflictStateService);
 
@@ -115,7 +115,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
     };
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorBuildLogService extends DomainDependentEndpointService {
     private buildLogService = inject(BuildLogService);
 
@@ -133,7 +133,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
     };
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     private conflictService = inject(CodeEditorConflictStateService);
 

@@ -113,6 +113,7 @@
         "exerciseNotDefined": "The exercise is not defined.",
         "exerciseIdMismatch": "The exercise IDs do not match.",
         "feedbackIdMismatch": "The assessment contains feedback of another result.",
+        "resultParticipationMismatch": "The result is not a manual result of this participation.",
         "textBlockSubmissionMismatch": "The assessment contains a text block of another submission.",
         "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
         "systemNotificationNeedsBothDates": "Both notification date and expiration date must be set.",

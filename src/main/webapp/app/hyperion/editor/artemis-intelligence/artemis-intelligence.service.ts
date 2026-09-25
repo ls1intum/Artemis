@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Service, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
 import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
@@ -15,7 +15,7 @@ import { RewriteFaqResponse } from 'app/openapi/model/rewrite-faq-response';
  * Service providing shared functionality for Artemis Intelligence of the markdown editor.
  * This service is intended to be used by the AI actions of the Monaco editors.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ArtemisIntelligenceService {
     private alertService = inject(AlertService);
     private hyperionProblemStatementApiService = inject(HyperionProblemStatementApi);

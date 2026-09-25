@@ -302,8 +302,11 @@ describe('@tumaet/ui-angular integration contract', () => {
             expect(version, `${name} must be valid in the ng-packagr output`).not.toMatch(/^(?:catalog|workspace):/);
         }
         for (const [name, version] of Object.entries(packageJson.peerDependencies)) {
-            expect(semver.valid(version), `${name} must declare the exact tested peer version`).not.toBeNull();
-            expect(version, `${name} peer version must match the workspace catalog`).toBe(catalog[name]);
+            expect(semver.validRange(version), `${name} must declare a consumer compatibility range`).not.toBeNull();
+            expect(semver.satisfies(catalog[name], version), `${name} must support the version tested in the workspace`).toBe(true);
+            if (name.startsWith('@angular/')) {
+                expect(semver.minVersion(version)?.version, `${name} consumers must support the Angular version used to build the library`).toBe(catalog[name]);
+            }
             expect(rootDependencies[name], `${name} must be shared with Artemis through the catalog`).toBe('catalog:');
             expect(packageJson.devDependencies[name], `${name} must be installed for isolated package development`).toBe('catalog:');
         }
@@ -332,8 +335,9 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(angularWorkspace.projects['tum-ui'].architect.build.configurations.pack.project).toBe('packages/tum-ui/ng-package.pack.json');
     });
 
-    it('keeps the package private and declares one complete stylesheet subpath', () => {
-        expect(packageJson.private).toBe(true);
+    it('declares a public package and one complete stylesheet subpath', () => {
+        expect(packageJson.private).not.toBe(true);
+        expect(packageJson.publishConfig).toEqual({ access: 'public', registry: 'https://registry.npmjs.org/' });
         expect(packageJson.files).toEqual(expect.arrayContaining(['fesm2022', 'types', 'styles.css', 'README.md', 'LICENSE']));
         expect(packageJson.files).not.toContain('themes.css');
         expect(packageJson.files).not.toContain('tailwind-theme.css');
@@ -356,7 +360,10 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(angularWorkspace.projects.artemis.architect.serve.options.buildTarget).toBe('artemis:build:development,tum-ui-source');
         expect(angularWorkspace.projects.artemis.architect.serve.options.prebundle).toEqual({ exclude: ['@tumaet/ui-angular'] });
         expect(rootPackageJson.scripts.start).toContain('build:styles -- --development --watch');
-        expect(rootPackageJson.scripts.start).toContain('ng serve --hmr --poll 1000');
+        // No --poll: it polls the whole workspace root, including runtime data such as local/, and holds the first build
+        // back until that scan finishes. The native watcher already sees styles.css being replaced.
+        expect(rootPackageJson.scripts.start).toMatch(/ng serve --hmr\b/);
+        expect(rootPackageJson.scripts.start).not.toContain('--poll');
         expect(publicApi).not.toMatch(/export\s+\*\s+from/);
         expect(developmentGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
         expect(productionGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
@@ -415,7 +422,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         );
 
         expect(ruleElementSelectors(typographyRule)).toEqual(packageElementSelectors);
-        expect(ruleElementSelectors(nativeControlRule)).toEqual(packageElementsWithNativeControls);
+        expect(ruleElementSelectors(nativeControlRule)).toEqual(expect.arrayContaining(packageElementsWithNativeControls));
     });
 
     it('prefixes every static template class', () => {

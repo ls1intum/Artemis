@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, Signal, computed, inject, signal } from '@angular/core';
+import { OnDestroy, Service, Signal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
@@ -28,13 +28,13 @@ export interface ReviewAdaptationAvailability {
     blockedReason: Signal<string | undefined>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseReviewCommentService implements OnDestroy {
-    public readonly resourceUrl = 'api/exercise/exercises';
-
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
     private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
+
+    public readonly resourceUrl = 'api/exercise/exercises';
     private activeExerciseId?: number;
     private synchronizationSubscription?: Subscription;
     private subscribedExerciseId?: number;

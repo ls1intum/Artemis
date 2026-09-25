@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
@@ -24,7 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.Genera
 @Lazy
 @Conditional(HyperionExerciseGenerationEnabled.class)
 @RequestMapping("api/hyperion/")
-@FeatureUsage("authoring-assistance/variant-generation")
+@FeatureUsage(UserFeature.HYPERION_VARIANT_GENERATION)
 public class HyperionProgrammingVariantResource {
 
     private final UserRepository users;

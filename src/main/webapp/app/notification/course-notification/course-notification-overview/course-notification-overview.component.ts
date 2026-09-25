@@ -47,14 +47,14 @@ import { CourseNotificationPresetPickerComponent } from 'app/notification/course
     styleUrls: ['./course-notification-overview.component.scss'],
 })
 export class CourseNotificationOverviewComponent implements AfterViewInit {
-    readonly courseId = input.required<number>();
-
     private elementRef = inject(ElementRef);
     private courseNotificationService = inject(CourseNotificationService);
     private accountService = inject(AccountService);
     private courseStorageService = inject(CourseStorageService);
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
     private destroyRef = inject(DestroyRef);
+
+    readonly courseId = input.required<number>();
 
     // Icons
     protected readonly faBell = faBell;
@@ -354,7 +354,11 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
      * both in the local state and on the server.
      */
     protected markAllAsReadClicked() {
-        this.updateCurrentCategoryNotificationsToSeenOnServer();
+        const visibleUnseenNotificationIds = this.getVisibleUnseenNotificationIds();
+        if (visibleUnseenNotificationIds.length > 0) {
+            // An explicit action of the user, so not the automatic update the overview sends when it displays notifications
+            this.courseNotificationService.setNotificationStatus(this.courseId(), visibleUnseenNotificationIds, CourseNotificationViewingStatus.SEEN);
+        }
         this.updateCurrentCategoryNotificationsToSeenOnClient();
     }
 
@@ -401,7 +405,7 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
             return;
         }
 
-        this.courseNotificationService.setNotificationStatus(this.courseId(), visibleUnseenNotificationIds, CourseNotificationViewingStatus.SEEN);
+        this.courseNotificationService.markDisplayedNotificationsAsSeen(this.courseId(), visibleUnseenNotificationIds);
     }
 
     /**

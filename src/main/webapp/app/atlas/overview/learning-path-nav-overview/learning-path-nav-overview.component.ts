@@ -23,13 +23,13 @@ import { ScienceService } from 'app/foundation/science/science.service';
     styleUrl: './learning-path-nav-overview.component.scss',
 })
 export class LearningPathNavOverviewComponent {
-    protected readonly faCheckCircle = faCheckCircle;
-
     private readonly alertService = inject(AlertService);
     private readonly dialogService = inject(DialogService);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly scienceService = inject(ScienceService);
+
+    protected readonly faCheckCircle = faCheckCircle;
 
     readonly learningPathId = input.required<number>();
 

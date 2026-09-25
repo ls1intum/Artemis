@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -39,7 +39,7 @@ export interface IAccountService {
     getImageUrl: () => string | undefined;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AccountService implements IAccountService {
     private readonly translateService = inject(TranslateService);
     private readonly sessionStorageService = inject(SessionStorageService);

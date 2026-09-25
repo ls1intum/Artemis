@@ -388,7 +388,7 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should show the translated doughnut chart label as tooltip title and the value as body', () => {
-        const tooltip = comp.doughnutConfig().tooltip as TumUiChartTooltipConfig;
+        const tooltip = comp.doughnutConfig.tooltip as TumUiChartTooltipConfig;
         const datum = { seriesIndex: 0, index: 0, label: 'artemisApp.courseOverview.statistics.missingPointsLabel', value: 400 };
 
         expect(tooltip.title!([datum])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');

@@ -1,4 +1,4 @@
-import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { Service, effect, inject, signal, untracked } from '@angular/core';
 import { Observable, Subscription, map, tap } from 'rxjs';
 import { HyperionExerciseVariantApi } from 'app/openapi/api/hyperion-exercise-variant-api';
 import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
@@ -18,7 +18,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
  *    client-side copy of the user's job list, kept live by the per-job websocket topics and re-synced from
  *    REST on demand (events are fire-and-forget; the server-side job record is authoritative).
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseVariantGenerationService {
     private readonly api = inject(HyperionExerciseVariantApi);
     private readonly websocketService = inject(ExerciseVariantWebsocketService);

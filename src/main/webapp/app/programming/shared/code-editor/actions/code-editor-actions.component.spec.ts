@@ -623,6 +623,36 @@ describe('CodeEditorActionsComponent', () => {
         expect(executeRefreshStub).toHaveBeenCalledOnce();
     });
 
+    it('should send only one reset request while a reset is in flight', () => {
+        const onClose = new Subject<boolean | undefined>();
+        const resetObservable = new Subject<void>();
+        const openStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
+        vi.spyOn(comp, 'executeRefresh').mockReturnValue(of(true));
+        resetRepositoryStub.mockReturnValue(resetObservable);
+
+        comp.resetRepository();
+        // e.g. a double click on the submit button of the dialog
+        onClose.next(true);
+        onClose.next(true);
+
+        expect(resetRepositoryStub).toHaveBeenCalledOnce();
+        expect(comp.isResolvingConflict()).toBe(true);
+
+        // opening the dialog again is ignored while the reset runs
+        comp.resetRepository();
+        expect(openStub).toHaveBeenCalledOnce();
+
+        resetObservable.error(new Error('reset failed'));
+        expect(comp.isResolvingConflict()).toBe(false);
+
+        const onCloseAfterError = new Subject<boolean | undefined>();
+        openStub.mockReturnValue({ onClose: onCloseAfterError, close: vi.fn() } as any);
+        resetRepositoryStub.mockReturnValue(of(undefined));
+        comp.resetRepository();
+        onCloseAfterError.next(true);
+        expect(resetRepositoryStub).toHaveBeenCalledTimes(2);
+    });
+
     it('should not reset repository when the modal is dismissed', () => {
         const onClose = new Subject<boolean | undefined>();
         vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
