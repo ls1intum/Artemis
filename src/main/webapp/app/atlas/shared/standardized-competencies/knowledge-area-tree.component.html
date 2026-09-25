@@ -15,6 +15,7 @@
                 #keyboardAction12
                 role="button"
                 tabindex="0"
+                [attr.aria-expanded]="isExpanded(node.data)"
                 (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction12.click() : undefined"
                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction12.click() : undefined"

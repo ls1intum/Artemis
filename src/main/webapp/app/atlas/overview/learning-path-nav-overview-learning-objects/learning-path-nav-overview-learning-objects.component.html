@@ -11,6 +11,9 @@
                 #keyboardAction4
                 [attr.role]="!learningObject.unreleased ? 'button' : undefined"
                 [attr.tabindex]="!learningObject.unreleased ? 0 : undefined"
+                [attr.aria-current]="
+                    !learningObject.unreleased && currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type ? true : null
+                "
                 (keydown.enter)="!learningObject.unreleased && $event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
                 (keydown.space)="!learningObject.unreleased && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                 (keyup.space)="!learningObject.unreleased && $event.target === $event.currentTarget ? keyboardAction4.click() : undefined"

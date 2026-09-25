@@ -15,6 +15,7 @@
     #keyboardAction2
     [attr.role]="!readOnly() && textBlockRef().selectable ? 'button' : undefined"
     [attr.tabindex]="!readOnly() && textBlockRef().selectable ? 0 : undefined"
+    [attr.aria-pressed]="!readOnly() && textBlockRef().selectable ? selected() : null"
     (keydown.enter)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
     (keydown.space)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
     (keyup.space)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"

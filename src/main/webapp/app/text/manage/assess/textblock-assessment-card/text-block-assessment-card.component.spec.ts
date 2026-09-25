@@ -83,6 +83,7 @@ describe('TextblockAssessmentCardComponent', () => {
         const didSelect = vi.spyOn(component.didSelect, 'emit');
 
         expect(block.hasAttribute('role')).toBe(false);
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
         expect(block.tabIndex).toBe(-1);
         for (const [type, key] of [
             ['keydown', 'Enter'],
@@ -136,6 +137,32 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(didSelectSpy).toHaveBeenCalledWith(textBlockRef);
+    });
+
+    it('should expose selected state only while the block is interactive', () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+        expect(block.getAttribute('aria-pressed')).toBe('false');
+
+        fixture.componentRef.setInput('selected', true);
+        fixture.detectChanges();
+        expect(block.getAttribute('aria-pressed')).toBe('true');
+
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+
+        fixture.componentRef.setInput('readOnly', false);
+        textBlockRef.selectable = false;
+        reapplyTextBlockRef(textBlockRef);
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+
+        textBlockRef.selectable = true;
+        reapplyTextBlockRef(textBlockRef);
+        expect(block.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('should show text block', () => {

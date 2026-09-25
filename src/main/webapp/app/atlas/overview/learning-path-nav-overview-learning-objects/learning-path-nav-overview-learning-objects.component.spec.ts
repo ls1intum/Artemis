@@ -95,6 +95,25 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
         expect(component.learningObjects()).toEqual(learningObjects);
     });
 
+    it('should mark only the released current learning object with matching id and type', () => {
+        const exercise = learningObjects[0];
+        const lecture = { ...exercise, type: LearningObjectType.LECTURE };
+        const otherExercise = { ...exercise, id: 2 };
+        const unreleasedExercise = { ...exercise, unreleased: true };
+        component.learningObjects.set([exercise, lecture, otherExercise, unreleasedExercise]);
+        fixture.componentRef.setInput('currentCompetencyIdOnPath', competencyId);
+        const navigation = TestBed.inject(LearningPathNavigationService).learningPathNavigation;
+        navigation.set({ currentLearningObject: exercise, progress: 0 });
+        fixture.detectChanges();
+        const rows = fixture.nativeElement.querySelectorAll('.bg-light > div') as NodeListOf<HTMLElement>;
+
+        expect(Array.from(rows, (row) => row.getAttribute('aria-current'))).toEqual(['true', null, null, null]);
+
+        navigation.set({ currentLearningObject: lecture, progress: 0 });
+        fixture.detectChanges();
+        expect(Array.from(rows, (row) => row.getAttribute('aria-current'))).toEqual([null, 'true', null, null]);
+    });
+
     it('should show error message when loading learning objects fails', async () => {
         const error = 'Failed to load learning objects';
         vi.spyOn(learningPathApiService, 'getLearningPathCompetencyLearningObjects').mockRejectedValue(error);
