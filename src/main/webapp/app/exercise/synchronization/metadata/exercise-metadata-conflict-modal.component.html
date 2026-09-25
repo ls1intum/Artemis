@@ -30,6 +30,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
                                 #keyboardAction30
                                 role="button"
@@ -51,6 +52,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
                                 #keyboardAction45
                                 role="button"
@@ -75,6 +77,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
                                 #keyboardAction63
                                 role="button"
@@ -95,6 +98,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
                                 #keyboardAction77
                                 role="button"
@@ -118,6 +122,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
                                 #keyboardAction94
                                 role="button"
@@ -141,6 +146,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
                                 #keyboardAction111
                                 role="button"
@@ -167,6 +173,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
                                 #keyboardAction131
                                 role="button"
@@ -207,6 +214,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
                                 #keyboardAction165
                                 role="button"
@@ -250,6 +258,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-2 px-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
                                 #keyboardAction202
                                 role="button"
@@ -266,6 +275,7 @@
                             <div
                                 class="conflict-tile rounded-3 p-2 px-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
                                 #keyboardAction212
                                 role="button"

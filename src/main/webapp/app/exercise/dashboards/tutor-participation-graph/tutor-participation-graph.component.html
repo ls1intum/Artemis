@@ -6,12 +6,13 @@
             [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)"
             (click)="navigate()"
             [pTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
             #keyboardAction4
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
-            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+            [attr.role]="routerLink() ? 'button' : null"
+            [attr.tabindex]="routerLink() ? 0 : null"
+            (keydown.enter)="routerLink() && $event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+            (keydown.space)="routerLink() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="routerLink() && $event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
         >
             <fa-icon [icon]="faBook" />
         </li>
@@ -20,12 +21,13 @@
                 [ngClass]="calculateClasses(TRAINED)"
                 (click)="navigate()"
                 [pTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
+                [attr.aria-label]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
                 #keyboardAction13
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
+                [attr.role]="routerLink() ? 'button' : null"
+                [attr.tabindex]="routerLink() ? 0 : null"
+                (keydown.enter)="routerLink() && $event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
+                (keydown.space)="routerLink() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="routerLink() && $event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
             >
                 <fa-icon [icon]="faChalkboardTeacher" />
             </li>

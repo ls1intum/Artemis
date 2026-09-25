@@ -6,6 +6,7 @@
                 <div class="d-flex flex-column align-items-center" id="status-bar-section-item-{{ index }}">
                     <div
                         class="form-status-circle border rounded-circle"
+                        [attr.aria-label]="formStatusSection.title | artemisTranslate"
                         (click)="scrollToHeadline(formStatusSection.title)"
                         #keyboardAction7
                         role="button"

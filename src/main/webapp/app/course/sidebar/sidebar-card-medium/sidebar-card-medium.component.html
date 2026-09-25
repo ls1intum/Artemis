@@ -17,7 +17,7 @@
     <div class="item-border rounded-3 col-12">
         <div
             id="test-sidebar-card-medium"
-            class="pointer rounded-3 col-12 px-1 py-2 border-start border-5 highlight-card bg-module hover-effect"
+            class="flex rounded-3 col-12 border-start border-5 highlight-card bg-module hover-effect"
             [ngClass]="{
                 'border-success': sidebarItem()?.difficulty === DifficultyLevel.EASY,
                 'border-warning': sidebarItem()?.difficulty === DifficultyLevel.MEDIUM,
@@ -26,22 +26,29 @@
                 'border-module': !sidebarItem()?.difficulty && !isVariantGroup(),
                 'bg-group-selected': containsActiveVariant(),
             }"
-            [routerLink]="sidebarItem()?.targetComponentSubRoute ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id] : ['./', sidebarItem().id]"
-            (click)="onNonExamCardClicked()"
             [routerLinkActive]="'bg-selected border-selected'"
-            #keyboardAction12
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction12.click() : undefined"
-            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction12.click() : undefined"
         >
-            <jhi-sidebar-card-item
-                [unreadCount]="this.sidebarItem().conversation?.unreadMessagesCount ?? 0"
-                [groupKey]="groupKey()"
-                [sidebarType]="sidebarType()"
-                [sidebarItem]="sidebarItem()"
-            />
+            <a
+                class="block min-w-0 flex-1 px-1 py-2 text-inherit no-underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                [routerLink]="sidebarItem()?.targetComponentSubRoute ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id] : ['./', sidebarItem().id]"
+                (click)="onNonExamCardClicked($event)"
+            >
+                <jhi-sidebar-card-item
+                    [unreadCount]="this.sidebarItem().conversation?.unreadMessagesCount ?? 0"
+                    [groupKey]="groupKey()"
+                    [sidebarType]="sidebarType()"
+                    [sidebarItem]="sidebarItem()"
+                    [showTriggerBuildButton]="sidebarType() !== 'exercise'"
+                />
+            </a>
+            @if (sidebarType() === 'exercise' && sidebarItem().exercise?.type === ExerciseType.PROGRAMMING && sidebarItem().studentParticipation) {
+                <jhi-programming-exercise-student-trigger-build-button
+                    class="self-end pb-2 pe-1 empty:hidden"
+                    [exercise]="sidebarItem().exercise!"
+                    [participation]="sidebarItem().studentParticipation!"
+                    [triggerLastGraded]="false"
+                />
+            }
         </div>
     </div>
 }
