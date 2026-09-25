@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -304,6 +305,19 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
         catch (UnsupportedOperationException e) {
             // Client service not available
             return Set.of();
+        }
+    }
+
+    @Override
+    public Optional<Set<String>> getConnectedClientNamesIfAvailable() {
+        if (!isInstanceRunning() || hazelcastInstance instanceof HazelcastClientProxy) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(hazelcastInstance.getClientService().getConnectedClients().stream().map(Client::getName).collect(Collectors.toSet()));
+        }
+        catch (UnsupportedOperationException e) {
+            return Optional.empty();
         }
     }
 

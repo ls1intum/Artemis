@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.local;
 
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
@@ -76,6 +77,11 @@ public class LocalDataProviderService implements DistributedDataProvider {
     public Set<String> getConnectedClientNames() {
         // Local provider doesn't support client tracking - assume all registered agents are connected
         return Set.of();
+    }
+
+    @Override
+    public Optional<Set<String>> getConnectedClientNamesIfAvailable() {
+        return Optional.of(Set.of());
     }
 
     @Override

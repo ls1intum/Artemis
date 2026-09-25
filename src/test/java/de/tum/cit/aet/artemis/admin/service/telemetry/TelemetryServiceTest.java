@@ -1,104 +1,71 @@
 package de.tum.cit.aet.artemis.admin.service.telemetry;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.spy;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.net.URI;
+import java.time.Instant;
+import java.util.concurrent.ScheduledFuture;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.client.ExpectedCount;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-@ExtendWith(MockitoExtension.class)
-class TelemetryServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
+class TelemetryServiceTest {
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final ProfileService profiles = mock(ProfileService.class);
 
-    @Autowired
-    private TelemetrySendingService telemetrySendingService;
+    private final TelemetrySendingService sender = mock(TelemetrySendingService.class);
 
-    @Autowired
-    private ProfileService profileService;
+    private final ApplicationContext applicationContext = mock(ApplicationContext.class);
 
-    private MockRestServiceServer mockServer;
+    private final TaskScheduler scheduler = mock(TaskScheduler.class);
 
-    private final ObjectMapper mapper = JsonObjectMapper.get();
+    private final Instant startedAt = Instant.parse("2026-09-25T10:00:00Z");
 
-    private TelemetryService telemetryServiceSpy;
+    private final Instant readyAt = startedAt.plusSeconds(60);
 
-    @Value("${artemis.telemetry.destination}")
-    private String destination;
-
-    @BeforeEach
-    void setUp() {
-        mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
+    @Test
+    void collectsOnceTenMinutesAfterReadiness() {
+        when(applicationContext.getBean(TelemetrySendingService.class)).thenReturn(sender);
+        var future = mock(ScheduledFuture.class);
+        org.mockito.Mockito.doReturn(future).when(scheduler).schedule(any(Runnable.class), any(Instant.class));
+        var service = new TelemetryService(profiles, applicationContext, scheduler, true, false, false);
+        service.scheduleTelemetry(startedAt, readyAt);
+        service.scheduleTelemetry(startedAt, readyAt);
+        var task = ArgumentCaptor.forClass(Runnable.class);
+        verify(scheduler).schedule(task.capture(), eq(readyAt.plusSeconds(600)));
+        verify(sender, never()).sendTelemetryByPostRequest(org.mockito.ArgumentMatchers.anyBoolean(), any(), any());
+        verify(applicationContext, never()).getBean(TelemetrySendingService.class);
+        task.getValue().run();
+        var startupId = ArgumentCaptor.forClass(String.class);
+        verify(sender).sendTelemetryByPostRequest(eq(false), startupId.capture(), eq(startedAt));
+        assertThat(startupId.getValue()).matches("[a-f0-9-]{36}");
+        service.cancelTelemetry();
+        verify(future).cancel(false);
     }
 
     @Test
-    void testSendTelemetry_TelemetryEnabled() throws Exception {
-        TelemetryService telemetryService = new TelemetryService(profileService, telemetrySendingService, true, true);
-        telemetryServiceSpy = spy(telemetryService);
-        mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
-                .andExpect(request -> assertThat(request.getBody().toString()).contains("adminName"))
-                .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
-        telemetryServiceSpy.sendTelemetry();
-
-        await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
+    void skipsDisabledDevelopmentAndTestServers() {
+        new TelemetryService(profiles, applicationContext, scheduler, false, true, false).scheduleTelemetry(startedAt, readyAt);
+        new TelemetryService(profiles, applicationContext, scheduler, true, true, true).scheduleTelemetry(startedAt, readyAt);
+        when(profiles.isDevActive()).thenReturn(true);
+        new TelemetryService(profiles, applicationContext, scheduler, true, true, false).scheduleTelemetry(startedAt, readyAt);
+        verify(scheduler, never()).schedule(any(Runnable.class), any(Instant.class));
     }
 
     @Test
-    void testSendTelemetry_TelemetryEnabledWithoutPersonalData() throws Exception {
-        TelemetryService telemetryService = new TelemetryService(profileService, telemetrySendingService, true, false);
-        telemetryServiceSpy = spy(telemetryService);
-        mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
-                .andExpect(request -> assertThat(request.getBody().toString()).doesNotContain("adminName"))
-                .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
-        telemetryServiceSpy.sendTelemetry();
-
-        await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
-    }
-
-    @Test
-    void testSendTelemetry_TelemetryDisabled() throws Exception {
-        TelemetryService telemetryService = new TelemetryService(profileService, telemetrySendingService, false, true);
-        telemetryServiceSpy = spy(telemetryService);
-
-        mockServer.expect(ExpectedCount.never(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess().contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
-        telemetryServiceSpy.sendTelemetry();
-        await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
-    }
-
-    @Test
-    void testSendTelemetry_ExceptionHandling() throws Exception {
-        TelemetryService telemetryService = new TelemetryService(profileService, telemetrySendingService, true, true);
-        telemetryServiceSpy = spy(telemetryService);
-
-        mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
-                .andRespond(withServerError().body(mapper.writeValueAsString("Failure!")));
-
-        telemetryServiceSpy.sendTelemetry();
-        await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
+    void shutdownBeforeReadinessPreventsScheduling() {
+        var service = new TelemetryService(profiles, applicationContext, scheduler, true, true, false);
+        service.cancelTelemetry();
+        service.scheduleTelemetry(startedAt, readyAt);
+        verify(scheduler, never()).schedule(any(Runnable.class), any(Instant.class));
     }
 }

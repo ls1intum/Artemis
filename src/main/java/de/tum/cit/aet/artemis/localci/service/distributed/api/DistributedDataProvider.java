@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.api;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -103,6 +104,17 @@ public interface DistributedDataProvider {
      * @return a set of connected client names, or empty set if running as a client or not supported
      */
     Set<String> getConnectedClientNames();
+
+    /**
+     * Gets connected client names while distinguishing an unavailable lookup from a healthy empty result.
+     * Providers whose existing lookup hides failures can only establish connectivity from a nonempty result.
+     *
+     * @return connected client names, or empty when connectivity cannot be determined
+     */
+    default Optional<Set<String>> getConnectedClientNamesIfAvailable() {
+        var clients = getConnectedClientNames();
+        return clients.isEmpty() ? Optional.empty() : Optional.of(clients);
+    }
 
     /**
      * Checks if the distributed data provider is connected and ready to use.

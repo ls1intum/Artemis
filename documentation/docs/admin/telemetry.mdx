@@ -6,22 +6,35 @@ sidebar_label: Telemetry
 
 # Telemetry
 
-To help to improve Artemis, we collect some data when the application starts.
-This feature can be disabled by setting `telemetry.enabled` in the `application-prod.yml` to `false`.
-When this is set to false, no data is sent to the Artemis maintainer team.
-By setting `telemetry.sendAdminDetails` to false, personal information of the instance's admin (i.e. contact email and name) is excluded from the telemetry data.
-This includes the contact email and the administrator's name.
+Artemis sends one startup report from the core node with the `scheduling` profile, ten minutes after that node becomes ready.
+The delay lets other core nodes and build agents connect before their counts are collected.
+Only one core node in a deployment should use the `scheduling` profile.
+Development instances and servers configured with `info.testServer: true` do not send reports.
 
-Artemis collects the following data at the startup of an instance:
+Set `artemis.telemetry.enabled: false` to disable telemetry entirely.
+Set `artemis.telemetry.sendAdminDetails: false` to exclude the administrator's name and contact email from reports.
+The university and operator names are included independently of this flag.
 
-* The used Artemis version
-* The contact email address of the admin, which is set in `info.contact`
-* The name of the admin, set in `info.operatorAdminName` (optional)
-* The server's URL
-* The operator's name
-* The used profiles (e.g. Jenkins, LocalVC, Aeolus, ...)
+Startup reports contain:
+
+- The Artemis version, server URL, active profiles, and enabled module features
+- The operator's name and optional university or institution name (`info.universityName`)
+- The optional administrator name (`info.operatorAdminName`) and contact email (`info.contact`), when `sendAdminDetails` is enabled
+- The database type, production/test flags, and local LLM deployment flag
+- The number of connected core nodes, the number of connected Local CI build agents, and whether multiple core nodes are connected
+- A unique startup identifier and the scheduling node's application start time
+
+On `9.9.x`, core-node counts use live Hazelcast data members; dedicated build-agent clients and legacy lite members are excluded.
+Build-agent counts match registered agents against connected clients and cluster members, including paused and colocated agents while excluding stale entries.
+Unavailable counts are omitted rather than reported as zero. Instances without Local CI report zero Local CI build agents.
+The collector groups startups by the canonical server URL and keeps a separate startup history.
+
+This release backport introduces no new mandatory metadata or placeholder validation.
+`info.universityName` and `info.operatorAdminName` remain optional, and the existing operator-name startup check is unchanged.
+Configure meaningful values to improve the usefulness of telemetry.
 
 Example configuration in `application-prod.yml`:
+
 ```yaml
 artemis:
     telemetry:
@@ -31,9 +44,11 @@ artemis:
 
 info:
     contact: contactMailAddress@cit.tum.de
-    operatorName: Technical University of Munich
+    operatorName: Research group of Applied Education Technologies
+    universityName: Technical University of Munich
     operatorAdminName: Stephan Krusche
+    testServer: false
 ```
 
-We collect this data to enhance Artemis by understanding how it is used, ensuring compatibility with different configurations, and providing better support to our users.
-Collecting admin contact information allows us to communicate important updates or address critical issues directly.
+We collect this data to understand how Artemis is used, ensure compatibility with different configurations, and support its operators.
+Administrator contact information allows us to communicate important updates or address critical issues directly.
