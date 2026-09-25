@@ -56,15 +56,15 @@ export const TUM_UI_MENU_TRIGGER = new InjectionToken<TumUiMenuTriggerDirective>
     },
 })
 export class TumUiMenuTriggerDirective extends MenuTrigger<unknown> {
+    private readonly injector = inject(Injector);
+    private readonly viewContainerRef = inject(ViewContainerRef);
+    private readonly directionality = inject(Directionality, { optional: true });
+
     /**
      * Aria soft-disables a trigger by default, which keeps it focusable and drops the native `disabled` attribute. A
      * menu button in Artemis is an ordinary button, so `disabled` keeps its native meaning.
      */
     override readonly softDisabled = input(false, { transform: booleanAttribute });
-
-    private readonly injector = inject(Injector);
-    private readonly viewContainerRef = inject(ViewContainerRef);
-    private readonly directionality = inject(Directionality, { optional: true });
 
     /** The `ng-template` holding the `tum-ui-menu` to open. */
     readonly menuTemplate = input.required<TemplateRef<unknown>>({ alias: 'tumUiMenuTrigger' });
