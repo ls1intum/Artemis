@@ -1,14 +1,11 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { downloadFile, downloadZipFromFilePromises } from 'app/foundation/util/download.util';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { FileService } from 'app/foundation/service/file.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -21,101 +18,51 @@ import {
     toQuizQuestionStatistic,
     toQuizStatisticsOverview,
 } from 'app/quiz/shared/util/generated-quiz-exercise.util';
-import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
-import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
+import { toUpdateQuizExercise } from 'app/quiz/shared/util/quiz-exercise-update-request.util';
+import { toNamedFiles, toQuizExerciseCreate } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
+import { QuizExerciseCreationUpdateApi } from 'app/openapi/api/quiz-exercise-creation-update-api';
+import { QuizExerciseDetails } from 'app/openapi/model/quiz-exercise-details';
 import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
-
-export type EntityResponseType = HttpResponse<QuizExercise>;
 
 @Service()
 export class QuizExerciseService {
-    private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
     private fileService = inject(FileService);
     private accountService = inject(AccountService);
     private quizExerciseRetrievalApi = inject(QuizExerciseRetrievalApi);
     private quizStatisticsApi = inject(QuizStatisticsApi);
-    private resourceUrl = 'api/quiz/quiz-exercises';
-    private quizBaseURL = 'api/quiz';
+    private quizExerciseCreationUpdateApi = inject(QuizExerciseCreationUpdateApi);
 
     /**
      * Create the given quiz exercise
      * @param quizExercise the quiz exercise that should be created
-     * @param files the files that should be uploaded
+     * @param files the files that should be uploaded, keyed by the file name the questions reference
      */
-    create(quizExercise: QuizExercise, files: Map<string, Blob>): Observable<EntityResponseType> {
-        const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
-        ExerciseService.stringifyExerciseCategories(copy);
-
-        const exerciseDTO = convertQuizExerciseToCreationDTO(copy);
-
-        const formData = new FormData();
-        formData.append('exercise', objectToJsonBlob(exerciseDTO));
-        files.forEach((file, fileName) => {
-            formData.append('files', file, fileName);
-        });
-
-        const hasExerciseGroup = quizExercise.exerciseGroup?.id;
-        const hasCourse = quizExercise.course?.id;
-
-        let url: string;
-        if (hasExerciseGroup) {
-            url = `${this.quizBaseURL}/exercise-groups/${quizExercise.exerciseGroup!.id}/quiz-exercises`;
-        } else if (hasCourse) {
-            url = `${this.quizBaseURL}/courses/${quizExercise.course!.id}/quiz-exercises`;
+    create(quizExercise: QuizExercise, files: Map<string, Blob>): Observable<QuizExercise> {
+        const exercise = toQuizExerciseCreate(quizExercise);
+        const namedFiles = toNamedFiles(files);
+        let request: Observable<QuizExerciseDetails>;
+        if (quizExercise.exerciseGroup?.id) {
+            request = this.quizExerciseCreationUpdateApi.createExamQuizExercise(quizExercise.exerciseGroup.id, exercise, namedFiles);
+        } else if (quizExercise.course?.id) {
+            request = this.quizExerciseCreationUpdateApi.createCourseQuizExercise(quizExercise.course.id, exercise, namedFiles);
         } else {
             throw new Error('Quiz exercise must belong to a course or an exercise group');
         }
-
-        return this.http.post<QuizExercise>(url, formData, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
-    }
-
-    /**
-     * Imports a quiz exercise by cloning the entity itself plus example solutions and example submissions
-     *
-     * @param adaptedSourceQuizExercise The exercise that should be imported, including adapted values for the
-     * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
-     * (like the old ID) will be handled by the server.
-     * @param files The files that should be uploaded
-     */
-    import(adaptedSourceQuizExercise: QuizExercise, files: Map<string, Blob>) {
-        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceQuizExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
-
-        const formData = new FormData();
-        formData.append('exercise', objectToJsonBlob(copy));
-        files.forEach((file, fileName) => {
-            formData.append('files', file, fileName);
-        });
-
-        return this.http
-            .post<QuizExercise>(`${this.resourceUrl}/import/${adaptedSourceQuizExercise.id}`, formData, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+        return request.pipe(map((created) => this.prepareForClient(toQuizExercise(created))));
     }
 
     /**
      * Update the given quiz exercise
      * @param id the id of the quiz exercise that should be updated
      * @param quizExercise the quiz exercise that should be updated
-     * @param files the files that should be uploaded
-     * @param req Additional parameters that should be passed to the server when updating the exercise
+     * @param files the files that should be uploaded, keyed by the file name the questions reference
+     * @param notificationText the text students are notified with, if any
      */
-    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: { notificationText?: string }): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
-        const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
-        ExerciseService.stringifyExerciseCategories(copy);
-
-        const exerciseDTO = toQuizExerciseUpdateDTO(copy);
-        const formData = new FormData();
-        formData.append('exercise', objectToJsonBlob(exerciseDTO));
-        files.forEach((file, fileName) => {
-            formData.append('files', file, fileName);
-        });
-
-        return this.http
-            .put<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, notificationText?: string): Observable<QuizExercise> {
+        return this.quizExerciseCreationUpdateApi
+            .updateQuizExercise(id, toUpdateQuizExercise(quizExercise), notificationText, toNamedFiles(files))
+            .pipe(map((updated) => this.prepareForClient(toQuizExercise(updated))));
     }
 
     /**

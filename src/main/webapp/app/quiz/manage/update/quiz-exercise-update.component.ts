@@ -697,18 +697,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isSaving.set(true);
         this.quizQuestionListEditComponent().parseAllQuestions();
         if (this.quizExercise().id !== undefined) {
-            const requestOptions: { notificationText?: string } = {};
-            if (this.notificationText) {
-                requestOptions.notificationText = this.notificationText;
-            }
-            this.quizExerciseService.update(this.quizExercise().id!, this.quizExercise(), files, requestOptions).subscribe({
-                next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+            this.quizExerciseService.update(this.quizExercise().id!, this.quizExercise(), files, this.notificationText || undefined).subscribe({
+                next: (updatedQuizExercise) => {
                     this.notificationText = undefined;
-                    if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body, false);
-                    } else {
-                        this.onSaveError();
-                    }
+                    this.onSaveSuccess(updatedQuizExercise, false);
                 },
                 error: (error) => this.onSaveError(error),
             });
@@ -721,13 +713,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 }
             }
             this.quizExerciseService.create(this.quizExercise(), files).subscribe({
-                next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                    if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body, true);
-                    } else {
-                        this.onSaveError();
-                    }
-                },
+                next: (createdQuizExercise) => this.onSaveSuccess(createdQuizExercise, true),
                 error: (error) => this.onSaveError(error),
             });
         }
