@@ -2,7 +2,7 @@
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
-                <span class="unified-feedback-reference-text" [tumUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
+                <span class="unified-feedback-reference-text" [tumAetUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
             </div>
         }
 
@@ -25,7 +25,7 @@
                             [disabled]="readOnly()"
                         ></textarea>
                     } @else if (inferredTitle()) {
-                        <span class="unified-feedback-title" [tumUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
+                        <span class="unified-feedback-title" [tumAetUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
                     }
                 </div>
                 <div class="unified-feedback-header-right">
@@ -93,7 +93,7 @@
                     } @else if (showPoints()) {
                         <div class="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">{{ pointsLabel() }}</div>
                         @if (isSubsequentFeedback()) {
-                            <fa-icon class="unified-feedback-subsequent-icon" [icon]="faExclamationTriangle" [tumUiTooltip]="subsequentFeedbackTooltip()" />
+                            <fa-icon class="unified-feedback-subsequent-icon" [icon]="faExclamationTriangle" [tumAetUiTooltip]="subsequentFeedbackTooltip()" />
                         }
                     }
                 </div>
@@ -103,7 +103,7 @@
                 @if (gradingInstructionText()) {
                     <div class="unified-feedback-rubric-label">
                         <span>{{ gradingInstructionText() }}</span>
-                        <fa-icon [icon]="faQuestionCircle" [tumUiTooltip]="rubricHint()" />
+                        <fa-icon [icon]="faQuestionCircle" [tumAetUiTooltip]="rubricHint()" />
                     </div>
                 }
                 <div class="unified-feedback-detail-row">

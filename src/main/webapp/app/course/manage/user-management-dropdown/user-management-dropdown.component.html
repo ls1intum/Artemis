@@ -5,23 +5,23 @@
     id="user-management-dropdown"
     data-testid="user-management-dropdown"
     type="button"
-    tumUiButton
+    tumAetUiButton
     severity="secondary"
     variant="outlined"
     size="small"
     [attr.aria-label]="'global.menu.admin.userManagement' | artemisTranslate"
-    [tumUiMenuTrigger]="userAddMenu"
+    [tumAetUiMenuTrigger]="userAddMenu"
 >
     <fa-icon [icon]="faUser" />
     <span class="hidden sm:inline">{{ 'global.menu.admin.userManagement' | artemisTranslate }}</span>
 </button>
 <ng-template #userAddMenu>
-    <tum-ui-menu aria-labelledby="user-management-dropdown">
+    <tumaet-ui-menu aria-labelledby="user-management-dropdown">
         @for (userAddAction of userAddActions(); track userAddAction.id) {
-            <a tumUiMenuItem [routerLink]="userAddAction.routerLink" [id]="userAddAction.id">
+            <a tumAetUiMenuItem [routerLink]="userAddAction.routerLink" [id]="userAddAction.id">
                 <fa-icon [fixedWidth]="true" [icon]="userAddAction.icon" />
                 <span [jhiTranslate]="userAddAction.label"></span>
             </a>
         }
-    </tum-ui-menu>
+    </tumaet-ui-menu>
 </ng-template>

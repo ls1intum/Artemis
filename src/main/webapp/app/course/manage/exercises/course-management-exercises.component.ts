@@ -7,7 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiEmptyStateComponent, TumUiPanelComponent, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiEmptyStateComponent,
+    TumAetUiPanelComponent,
+    TumAetUiSelectButtonComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -78,12 +85,12 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
     styleUrl: './course-management-exercises.component.scss',
     imports: [
         FormsModule,
-        TumUiSelectButtonComponent,
-        TumUiPanelComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiEmptyStateComponent,
-        TumUiTooltipDirective,
+        TumAetUiSelectButtonComponent,
+        TumAetUiPanelComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiEmptyStateComponent,
+        TumAetUiTooltipDirective,
         FaIconComponent,
         ExerciseTableComponent,
         ExerciseAddModalComponent,
