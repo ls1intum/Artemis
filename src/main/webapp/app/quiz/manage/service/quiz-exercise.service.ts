@@ -2,7 +2,7 @@ import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -234,22 +234,6 @@ export class QuizExerciseService {
     }
 
     /**
-     * Start a quiz batch
-     * @param quizBatchId the id of the quiz batch that should be started
-     */
-    startBatch(quizBatchId: number): Observable<HttpResponse<QuizBatch>> {
-        return this.http.put<QuizBatch>(`api/quiz/quiz-batches/${quizBatchId}/start-batch`, null, { observe: 'response' });
-    }
-
-    /**
-     * Start a quiz batch
-     * @param quizExerciseId the id of the quiz exercise that should be started
-     */
-    addBatch(quizExerciseId: number): Observable<HttpResponse<QuizBatch>> {
-        return this.http.put<QuizBatch>(`${this.resourceUrl}/${quizExerciseId}/add-batch`, null, { observe: 'response' });
-    }
-
-    /**
      * Load all quiz exercises
      */
     query(): Observable<EntityArrayResponseType> {
@@ -264,10 +248,6 @@ export class QuizExerciseService {
      */
     delete(quizExerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
-    }
-
-    join(quizExerciseId: number, password: string): Observable<HttpResponse<QuizBatch>> {
-        return this.http.post<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/join`, { password }, { observe: 'response' });
     }
 
     /**

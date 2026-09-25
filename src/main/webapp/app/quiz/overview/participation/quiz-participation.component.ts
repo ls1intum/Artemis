@@ -21,7 +21,15 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
 import { QuizParticipationApi } from 'app/openapi/api/quiz-participation-api';
-import { toQuizSubmission, toQuizSubmissionFromLiveClient, toQuizSubmissionFromStudent, toResult, toStudentParticipation } from 'app/quiz/shared/util/generated-quiz-exercise.util';
+import { QuizExerciseBatchApi } from 'app/openapi/api/quiz-exercise-batch-api';
+import {
+    toQuizBatch,
+    toQuizSubmission,
+    toQuizSubmissionFromLiveClient,
+    toQuizSubmissionFromStudent,
+    toResult,
+    toStudentParticipation,
+} from 'app/quiz/shared/util/generated-quiz-exercise.util';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { LiveQuizParticipationStatus, QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
@@ -83,6 +91,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     private alertService = inject(AlertService);
     private quizSubmissionApi = inject(QuizSubmissionApi);
     private quizParticipationApi = inject(QuizParticipationApi);
+    private quizExerciseBatchApi = inject(QuizExerciseBatchApi);
     private translateService = inject(TranslateService);
     private quizService = inject(ArtemisQuizService);
     private serverDateService = inject(ArtemisServerDateService);
@@ -1181,15 +1190,13 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     }
 
     joinBatch() {
-        this.quizExerciseService.join(this.quizId, this.password).subscribe({
-            next: (res: HttpResponse<QuizBatch>) => {
-                if (res.body) {
-                    this.quizBatch.set(res.body);
-                    if (this.quizBatch()?.started) {
-                        this.refreshQuiz();
-                    } else {
-                        this.subscribeToWebsocketChannels();
-                    }
+        this.quizExerciseBatchApi.joinBatch(this.quizId, { password: this.password }).subscribe({
+            next: (batch) => {
+                this.quizBatch.set(toQuizBatch(batch));
+                if (this.quizBatch()?.started) {
+                    this.refreshQuiz();
+                } else {
+                    this.subscribeToWebsocketChannels();
                 }
             },
             error: (error: HttpErrorResponse) => {

@@ -18,6 +18,8 @@ import { QuizSubmissionFromStudent } from 'app/openapi/model/quiz-submission-fro
 import { ResultAfterEvaluation } from 'app/openapi/model/result-after-evaluation';
 import { ResultAfterEvaluationWithSubmission } from 'app/openapi/model/result-after-evaluation-with-submission';
 import { StudentQuizParticipation } from 'app/openapi/model/student-quiz-participation';
+import type { QuizBatch as GeneratedQuizBatch } from 'app/openapi/model/quiz-batch';
+import { QuizBatchWithPassword } from 'app/openapi/model/quiz-batch-with-password';
 
 /**
  * Bridges the generated models of the quiz participation endpoints and the quiz class graph.
@@ -36,6 +38,18 @@ type GeneratedQuizExercise = QuizExerciseWithSolution | QuizExerciseWithQuestion
 type GeneratedQuizSubmission = QuizSubmissionAfterEvaluation | QuizSubmissionBeforeEvaluation | QuizSubmissionForResult;
 
 /**
+ * Converts a generated quiz batch into a {@link QuizBatch} instance.
+ *
+ * @param batch the generated batch, with or without the join password an instructor may read
+ * @returns a class instance with a dayjs start time
+ */
+export function toQuizBatch(batch: GeneratedQuizBatch | QuizBatchWithPassword): QuizBatch {
+    const quizBatch: QuizBatch = hydrate(new QuizBatch(), batch);
+    quizBatch.startTime = convertDateStringFromServer(batch.startTime);
+    return quizBatch;
+}
+
+/**
  * Converts a generated quiz exercise into a {@link QuizExercise} instance.
  *
  * @param exercise the generated exercise in any of its three question-visibility states
@@ -50,11 +64,7 @@ export function toQuizExercise(exercise: GeneratedQuizExercise): QuizExercise {
     quizExercise.dueDate = convertDateStringFromServer(exercise.dueDate);
     quizExercise.assessmentDueDate = convertDateStringFromServer(exercise.assessmentDueDate);
     quizExercise.course = exercise.course ? hydrate(new Course(), exercise.course) : undefined;
-    quizExercise.quizBatches = exercise.quizBatches?.map((batch) => {
-        const quizBatch: QuizBatch = hydrate(new QuizBatch(), batch);
-        quizBatch.startTime = convertDateStringFromServer(batch.startTime);
-        return quizBatch;
-    });
+    quizExercise.quizBatches = exercise.quizBatches?.map(toQuizBatch);
     // Absent while the quiz has not started yet; the server withholds the questions until then.
     quizExercise.quizQuestions = 'quizQuestions' in exercise ? exercise.quizQuestions?.map(toQuizQuestion) : undefined;
     return quizExercise;

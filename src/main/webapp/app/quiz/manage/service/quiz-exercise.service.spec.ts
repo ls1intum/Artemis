@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -256,13 +256,9 @@ describe('QuizExercise Service', () => {
         expect((await result)?.body).toEqual([expected]);
     });
 
-    const batch = new QuizBatch();
     const quizEx = makeQuiz();
     it.each([
         ['delete', [123], {}, 'DELETE', ''],
-        ['join', [123, '12345678'], batch, 'POST', '/join'],
-        ['addBatch', [123], batch, 'PUT', '/add-batch'],
-        ['startBatch', [123], batch, 'PUT', '/start-batch'],
         ['setVisible', [123], quizEx, 'PUT', '/set-visible'],
         ['end', [123], quizEx, 'PUT', '/end-now'],
         ['start', [123], quizEx, 'PUT', '/start-now'],
