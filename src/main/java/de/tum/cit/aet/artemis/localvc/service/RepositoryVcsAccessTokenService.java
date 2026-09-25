@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -176,34 +177,64 @@ public class RepositoryVcsAccessTokenService {
     }
 
     /**
+     * Asynchronously provisions the repository tokens for several staff users that just joined a course (see {@code ensureTokensForStaffUsersInCourse}).
+     * <p>
+     * Used by the bulk registration path so a single background task (and a single exercise fetch) covers the whole batch instead of one task per added user.
+     *
+     * @param users  the staff users that just joined the course
+     * @param course the course the users joined
+     */
+    @Async
+    public void ensureTokensForStaffUsersInCourseAsync(Collection<User> users, Course course) {
+        ensureTokensForStaffUsersInCourse(users, course);
+    }
+
+    /**
      * Eagerly creates the missing repository tokens for a single staff user across all (non-exam) programming exercises of the given course.
      * <p>
-     * Exam programming exercises and staff added through paths other than the course-management add endpoint (e.g. admin user management, CSV import) are intentionally not covered
-     * here; the lazy clone-dialog fallback creates their tokens on first use.
+     * Exam programming exercises and staff added through paths other than {@code CourseAccessService} (e.g. admin user management) are intentionally not covered here; the lazy
+     * clone-dialog fallback creates their tokens on first use.
      *
      * @param user   the staff user that just joined the course
      * @param course the course the user joined
      */
     public void ensureTokensForStaffUserInCourse(User user, Course course) {
+        ensureTokensForStaffUsersInCourse(List.of(user), course);
+    }
+
+    /**
+     * Eagerly creates the missing repository tokens for several staff users across all (non-exam) programming exercises of the given course. The course's exercises are loaded
+     * once for the whole batch.
+     *
+     * @param users  the staff users that just joined the course
+     * @param course the course the users joined
+     * @see #ensureTokensForStaffUserInCourse
+     */
+    private void ensureTokensForStaffUsersInCourse(Collection<User> users, Course course) {
+        if (users.isEmpty()) {
+            return;
+        }
         // Load all programming exercises of the course together with their template/solution participations and auxiliary repositories in a single batch query (instead of one
-        // fetch per exercise), so adding a staff member to a course with many exercises stays cheap.
+        // fetch per exercise), so adding staff to a course with many exercises stays cheap.
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesByCourseId(course.getId());
         if (exercises.isEmpty()) {
             return;
         }
         Set<Long> exerciseIds = exercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
-        Set<String> existingUris = repositoryVCSAccessTokenRepository.findRepositoryUrisByUserIdAndExerciseIdIn(user.getId(), exerciseIds);
-        List<RepositoryVCSAccessToken> toCreate = new ArrayList<>();
-        for (ProgrammingExercise exercise : exercises) {
-            for (BaseRepository baseRepository : baseRepositoriesOf(exercise)) {
-                if (!existingUris.contains(baseRepository.repositoryUri())) {
-                    toCreate.add(buildToken(user, exercise, baseRepository));
+        for (User user : users) {
+            Set<String> existingUris = repositoryVCSAccessTokenRepository.findRepositoryUrisByUserIdAndExerciseIdIn(user.getId(), exerciseIds);
+            List<RepositoryVCSAccessToken> toCreate = new ArrayList<>();
+            for (ProgrammingExercise exercise : exercises) {
+                for (BaseRepository baseRepository : baseRepositoriesOf(exercise)) {
+                    if (!existingUris.contains(baseRepository.repositoryUri())) {
+                        toCreate.add(buildToken(user, exercise, baseRepository));
+                    }
                 }
             }
-        }
-        if (!toCreate.isEmpty()) {
-            repositoryVCSAccessTokenRepository.saveAll(toCreate);
-            log.debug("Created {} repository VCS access tokens for staff user {} in course {}", toCreate.size(), user.getLogin(), course.getId());
+            if (!toCreate.isEmpty()) {
+                repositoryVCSAccessTokenRepository.saveAll(toCreate);
+                log.debug("Created {} repository VCS access tokens for staff user {} in course {}", toCreate.size(), user.getLogin(), course.getId());
+            }
         }
     }
 

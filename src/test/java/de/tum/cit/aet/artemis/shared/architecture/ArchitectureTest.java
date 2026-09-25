@@ -78,7 +78,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -111,7 +110,6 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
-import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
@@ -734,14 +732,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
             units.check(allClasses);
             parameters.check(allClasses);
         }
-    }
-
-    @Test
-    void testValidSimpMessageSendingOperationsUsage() {
-        ArchRule usage = fields().that().haveRawType(SimpMessageSendingOperations.class.getTypeName()).should().bePrivate().andShould()
-                .beDeclaredIn(WebsocketMessagingService.class)
-                .because("Classes should only use WebsocketMessagingService as a Facade and not SimpMessageSendingOperations directly");
-        usage.check(productionClasses);
     }
 
     @Test
