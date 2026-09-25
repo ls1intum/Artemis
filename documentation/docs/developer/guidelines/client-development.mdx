@@ -229,7 +229,7 @@ set course(course: Course) {
 
 **Never navigate, and avoid writing template-bound signals, from an `effect()` — it can crash the client.** Both are imperative side effects that feed back into change detection and can form an infinite loop:
 
-- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory ([PR #12976](https://github.com/ls1intum/Artemis/pull/12976)). Drive navigation from explicit user actions or route guards/resolvers. If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
+- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory. Drive navigation from explicit user actions, or from a route guard or resolver that returns a redirect (see [Redirecting from guards and resolvers](#redirecting-from-guards-and-resolvers)). If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
 - **Writing a signal in an effect** carries the same loop risk (an effect that writes a signal it also reads re-triggers itself forever). Prefer `computed()` for derived state; if a write is truly necessary, never write a signal the effect reads and wrap the write in `untracked()`. This case cannot be linted reliably (`.set()` / `.update()` are indistinguishable from `Map`/`Set` mutations at the syntax level), so it is on the author and reviewer to avoid it.
 
 ```ts
@@ -1017,6 +1017,140 @@ addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
     }
 }
 ```
+
+### Redirecting from guards and resolvers
+
+A route guard or resolver runs while the router is in the middle of a navigation. To send the user somewhere else, it
+hands the router a redirect and never navigates itself:
+
+- **A guard** — a `CanActivateFn`, `CanActivateChildFn`, `CanMatchFn` or `CanDeactivateFn`, or a class implementing
+  `CanActivate`, `CanActivateChild`, `CanMatch` or `CanDeactivate` — returns or emits `router.createUrlTree(...)`. When the
+  redirect needs navigation options such as `replaceUrl`, `skipLocationChange` or `state`, it returns
+  `new RedirectCommand(router.createUrlTree(...), options)` instead.
+- **A resolver** — a `ResolveFn` or a class implementing `Resolve` — returns or emits a `RedirectCommand`. A `UrlTree`
+  returned from a resolver becomes the resolved route data; it does not redirect.
+- **Inside a resolver's observable or promise chain**, such as an RxJS `map` callback or a helper the resolver calls,
+  it can throw the `RedirectCommand`, which extends `Error`. The router handles it as a redirect.
+  **Guards must return or emit their redirect, including inside callbacks.** Throwing a `RedirectCommand` bypasses
+  guard-result ordering and can redirect before an earlier guard rejects the route.
+
+The router then cancels the running navigation with a `NavigationCancel` event whose code is
+`NavigationCancellationCode.Redirect`, not with a `NavigationError`, and navigates to the target. The redirect keeps
+the `replaceUrl` and `skipLocationChange` of the navigation it replaces, unless the `RedirectCommand` sets them. It
+does not keep the `state`; pass it in the `RedirectCommand` options when the target needs it. The first navigation
+after the page loads and every back or forward navigation run with `replaceUrl`, so a redirect from a bookmark, a
+reload or the **Back** button replaces the guarded URL in the browser history instead of adding an entry after it. A
+caller awaiting `router.navigate(...)` for the original navigation receives the redirect's result.
+
+Calling `router.navigate(...)` or `router.navigateByUrl(...)` from a guard or resolver cancels the running navigation
+on the spot, with the code `NavigationCancellationCode.SupersededByNewNavigation`, and starts a new one. That has
+three costs:
+
+- **The options of the original navigation are lost.** The new navigation has neither its `replaceUrl` nor its
+  `skipLocationChange`. For a bookmark, a reload or the **Back** button, the target is therefore added after the
+  guarded URL, so **Back** leads to the guarded URL, which redirects forward again and traps the user.
+- **The caller is told the navigation failed.** A caller awaiting `router.navigate(...)` for the original navigation
+  receives `false`, although the user ends up on the target.
+- **The navigation happens even when another guard rejects the route.** Once one guard rejects, the router stops
+  waiting for the others, but an asynchronous guard keeps running and still navigates when it finishes. A
+  synchronous guard navigates before the guards listed ahead of it have decided.
+
+A `return false` after the call, or a resolver completing with `EMPTY`, changes none of this: the navigation is
+already cancelled when the guard or resolver returns, so those values only satisfy the return type.
+
+```ts
+// Don't - navigate from the guard; the returned false has no effect any more
+canActivate(): boolean {
+    if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE)) {
+        void this.router.navigate(['/']);
+        return false;
+    }
+    return true;
+}
+
+// Do - return the redirect
+canActivate(): true | UrlTree {
+    if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE)) {
+        return this.router.createUrlTree(['/']);
+    }
+    return true;
+}
+```
+
+In a resolver that decides inside its RxJS pipeline, throwing the redirect keeps the resolver's type
+`Observable<Course>`, because a redirect is never emitted as data:
+
+```ts
+// Don't - navigate from the resolver; completing with EMPTY has no effect any more
+switchMap((course: Course) => {
+    if (!course.isAtLeastTutor) {
+        this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
+        void this.router.navigate(['/courses']);
+        return EMPTY;
+    }
+    return of(course);
+}),
+
+// Do - throw the redirect; the alert is shown before the router redirects
+map((course: Course) => {
+    if (!course.isAtLeastTutor) {
+        this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
+        throw new RedirectCommand(this.router.createUrlTree(['/courses']));
+    }
+    return course;
+}),
+```
+
+A thrown `RedirectCommand` travels through the rest of the pipeline like any other error, so a `catchError` after it
+must pass on what it does not handle (`return throwError(() => error)`) rather than swallow it.
+
+**Several guards on one route.** The guards in one `canActivate` array run together, and the router applies the first
+emitted result that is not `true`, in array order, waiting for the guards ahead of it. A returned or emitted redirect
+therefore takes effect only when every guard before it returns `true`. A thrown redirect bypasses this ordering.
+On a route guarded by `[UserRouteAccessService, LocalCIGuard]`, a user who lacks the route's authority is rejected and
+stays where they were, and only a user who passes the authority check is redirected. List the guard whose outcome takes precedence first.
+
+To test a guard or resolver, inject the real `Router` with `TestBed.inject(Router)` and assert the redirect itself,
+not a spy on `navigate`:
+
+```ts
+const result = guard.canActivate();
+expect(result).toBeInstanceOf(UrlTree);
+expect(router.serializeUrl(result as UrlTree)).toBe('/');
+```
+
+For a thrown redirect, subscribe with an `error` callback and check that it receives a `RedirectCommand` whose
+`redirectTo` serializes to the expected URL. To test how guards combine, or what ends up in the browser history,
+configure the routes with `provideRouter(...)` and `provideLocationMocks()`, navigate, and assert `router.url` and the
+`urlChanges` of the `SpyLocation`; `localci-guard.spec.ts` shows both.
+
+The `localRules/no-navigation-in-guard-or-resolver` ESLint rule enforces this under `src/main/webapp` at error level.
+It checks:
+
+- functional guards and resolvers declared with one of the types above, whether as a variable annotation, an `as` or
+  `satisfies` assertion, or the return type of a function that creates them;
+- the `canActivate`, `canActivateChild`, `canMatch`, `canDeactivate` and `resolve` methods of classes implementing the
+  matching interface;
+- guards and resolvers declared in a route, inline or by the name of a function or class in the same file.
+
+The check follows the guard or resolver into nested callbacks, into the methods of its own class that it reaches
+through `this`, and into functions of the same file that it references. It reports calls on a `Router` obtained with
+`inject(Router)` or through constructor injection. Navigation from components is unaffected, and so is a component's
+own `canDeactivate()` method, which is not one of Angular's guard interfaces. A navigation sequence that a single
+redirect cannot express needs a line-level `eslint-disable-next-line` with the reason.
+
+The check reads one file at a time and does not resolve types, so it does not report:
+
+- navigation inside an injected service that the guard or resolver calls;
+- a `Router` held in a field of a base class, copied into a local (`const router = this.router`), or obtained through
+  `injector.get(Router)`;
+- guard types and the `Router` imported through a namespace import (`import * as router from '@angular/router'`);
+- static methods called through the class name;
+- route objects that have none of `path`, `matcher`, `component`, `loadComponent`, `children`, `loadChildren` and
+  `redirectTo`.
+
+Moving the call into a service therefore silences the rule without solving the problem. Return the redirect from the
+guard or resolver itself.
 
 ## Advanced Topics
 

@@ -63,6 +63,43 @@ Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, never `[ngSty
 (`@angular-eslint/template/prefer-style-binding`); a constant is a static `style` attribute. Never
 bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
 
+## Redirecting from guards and resolvers
+
+A guard returns or emits `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)`
+when it needs `replaceUrl`, `skipLocationChange` or `state`. This also applies inside RxJS and
+promise callbacks: return the redirect rather than throw it. The guards in one `canActivate`
+array run together, and the first emitted result that is not `true`, in array order, wins.
+A returned or emitted redirect waits for every guard ahead of it to return `true`; a thrown
+`RedirectCommand` bypasses that ordering and can redirect before an earlier authority check
+rejects the route.
+
+A resolver returns or emits a `RedirectCommand`; a `UrlTree` returned from a resolver becomes
+route data and does not redirect. Inside a resolver's RxJS operator or promise callback, it can
+throw the `RedirectCommand` instead. The router cancels the running navigation with a redirect
+that keeps its `replaceUrl` and `skipLocationChange`, and alerts shown before the throw still
+appear.
+
+Never call `router.navigate()` or `navigateByUrl()` in a guard or resolver. It cancels the running
+navigation on the spot and starts a new one, so the original `replaceUrl` and
+`skipLocationChange` are lost (Back then redirects forward again), a caller awaiting the original
+navigation receives `false`, and the navigation still happens when another guard rejects the
+route. A `return false` or `EMPTY` after the call changes nothing.
+
+`localRules/no-navigation-in-guard-or-resolver` (`rules/no-navigation-in-guard-or-resolver.mjs`)
+enforces this at error level under `src/main/webapp`. It follows the guard into nested callbacks,
+into methods of its own class reached through `this`, and into functions of the same file. It is
+file-local and does not resolve types, so it misses navigation in an injected service the guard
+calls, a `Router` from a base-class field, `const router = this.router` or `injector.get(Router)`,
+namespace imports, static helper calls and route objects without a marker key such as `path`.
+Moving the call into a service silences the rule without fixing anything. A `catchError` after a
+thrown redirect must rethrow what it does not handle.
+
+In specs, use the real router (`TestBed.inject(Router)`, no `MockRouter`) and assert the result:
+`router.serializeUrl(result as UrlTree)` for a returned redirect, or an `error` callback that
+receives a `RedirectCommand` for a thrown one. Do not assert a `navigate` spy. For guard
+combinations and browser history, route with `provideRouter(...)` and `provideLocationMocks()`
+as in `src/main/webapp/app/localci/shared/localci-guard.spec.ts`.
+
 ## Copying objects
 
 In production `src/main/webapp/app/**/*.ts`, use the wrappers in

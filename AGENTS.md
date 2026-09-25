@@ -57,6 +57,9 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   Bind styles with `[style]`, not `[ngStyle]`. [client development](documentation/docs/developer/guidelines/client-development.mdx)
 - Declare root services with `@Service()`, not `@Injectable({ providedIn: 'root' })`, and declare
   `inject()` fields before any other member. [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- Route guards return or emit a `UrlTree` or `RedirectCommand`; resolvers return, emit or throw a
+  `RedirectCommand`. Never call `router.navigate()` in either, or throw a redirect from a guard.
+  `localRules/no-navigation-in-guard-or-resolver` bans the navigation calls. [client development](documentation/docs/developer/guidelines/client-development.mdx#redirecting-from-guards-and-resolvers)
 - In production client TypeScript, do not copy objects with spread, `Object.assign` or
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)

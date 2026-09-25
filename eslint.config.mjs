@@ -426,6 +426,22 @@ export default tseslint.config(
             'localRules/prefer-deep-clone': 'error',
         },
     },
+    // Route guards and resolvers use router-native redirects, never by calling Router.navigate() or
+    // navigateByUrl(). Navigating from inside a guard or resolver cancels the running navigation on the spot and starts
+    // a new one: that loses the original replaceUrl / skipLocationChange (a guarded URL opened directly stays in the
+    // history, so Back redirects forward again), makes a caller awaiting the original navigation receive false, and
+    // still navigates when another guard on the route rejects it. A `return false` or `EMPTY` after the call changes
+    // nothing. A guard returns or emits router.createUrlTree(...) or a RedirectCommand; a resolver may also throw a
+    // RedirectCommand from inside an RxJS operator or a promise callback. Throwing from a guard bypasses guard-result
+    // ordering, so guards must return or emit their redirect. The rule follows a guard
+    // into the helper methods and same-file functions it reaches, but not into injected services. Full rationale:
+    // documentation/docs/developer/guidelines/client-development.mdx ("Redirecting from guards and resolvers").
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        rules: {
+            'localRules/no-navigation-in-guard-or-resolver': 'error',
+        },
+    },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
     // foundation/ is the base layer (no DOM/UI), shared-ui/ holds generic UI primitives,
     // editor/ holds the code/markdown editor stacks. The intent:
