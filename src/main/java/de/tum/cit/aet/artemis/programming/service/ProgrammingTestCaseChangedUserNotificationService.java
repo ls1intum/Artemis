@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.TEST_CASES_CHANGED;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -26,10 +27,6 @@ public class ProgrammingTestCaseChangedUserNotificationService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
-    public static String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
-    }
-
     /**
      * Notifies editors and instructors about test case changes for the updated programming exercise
      *
@@ -37,7 +34,7 @@ public class ProgrammingTestCaseChangedUserNotificationService {
      * @param updatedProgrammingExercise the programming exercise for which tests have been changed
      */
     public void notifyUserAboutTestCaseChanged(boolean testCasesChanged, ProgrammingExercise updatedProgrammingExercise) {
-        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(updatedProgrammingExercise.getId()), testCasesChanged);
+        websocketMessagingService.sendMessage(TEST_CASES_CHANGED.at(updatedProgrammingExercise.getId()), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
         if (testCasesChanged) {
             groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);

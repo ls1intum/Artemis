@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.admin.management;
 
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -141,7 +143,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
         request.put("/api/admin/feature-toggle", features, HttpStatus.OK);
-        verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
+        verify(this.websocketMessagingService).sendMessage(topic("/topic/management/feature-toggles"), eq(featureToggleService.enabledFeatures()));
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled
