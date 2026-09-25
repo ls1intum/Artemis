@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 describe('ExportButtonComponent', () => {
     let fixture: ComponentFixture<ExportButtonComponent>;
@@ -40,41 +40,41 @@ describe('ExportButtonComponent', () => {
 
         fixture.detectChanges();
         comp.openExportModal(new MouseEvent('click'));
-        const csvExportButton = fixture.debugElement.query(By.css('button[tumUiButton]'));
+        const csvExportButton = fixture.debugElement.query(By.css('button[tumAetUiButton]'));
         expect(csvExportButton).not.toBeNull();
         expect(csvExportButton.nativeElement.getAttribute('type')).toBe('button');
         expect(dialogOpenStub).toHaveBeenCalledOnce();
     });
 
-    describe('buttonSize mapping to tumUiSize', () => {
-        it('should map default buttonSize (MEDIUM) to default tumUiSize', () => {
+    describe('buttonSize mapping to tumAetUiSize', () => {
+        it('should map default buttonSize (MEDIUM) to default tumAetUiSize', () => {
             fixture.detectChanges();
-            expect(comp.tumUiSize()).toBe('default');
-            const buttonDir = fixture.debugElement.query(By.directive(TumUiButtonDirective)).injector.get(TumUiButtonDirective);
+            expect(comp.tumAetUiSize()).toBe('default');
+            const buttonDir = fixture.debugElement.query(By.directive(TumAetUiButtonDirective)).injector.get(TumAetUiButtonDirective);
             expect(buttonDir.size()).toBe('default');
         });
 
-        it('should map SMALL buttonSize to small tumUiSize', () => {
+        it('should map SMALL buttonSize to small tumAetUiSize', () => {
             fixture.componentRef.setInput('buttonSize', ButtonSize.SMALL);
             fixture.detectChanges();
-            expect(comp.tumUiSize()).toBe('small');
-            const buttonDir = fixture.debugElement.query(By.directive(TumUiButtonDirective)).injector.get(TumUiButtonDirective);
+            expect(comp.tumAetUiSize()).toBe('small');
+            const buttonDir = fixture.debugElement.query(By.directive(TumAetUiButtonDirective)).injector.get(TumAetUiButtonDirective);
             expect(buttonDir.size()).toBe('small');
         });
 
-        it('should map LARGE buttonSize to large tumUiSize', () => {
+        it('should map LARGE buttonSize to large tumAetUiSize', () => {
             fixture.componentRef.setInput('buttonSize', ButtonSize.LARGE);
             fixture.detectChanges();
-            expect(comp.tumUiSize()).toBe('large');
-            const buttonDir = fixture.debugElement.query(By.directive(TumUiButtonDirective)).injector.get(TumUiButtonDirective);
+            expect(comp.tumAetUiSize()).toBe('large');
+            const buttonDir = fixture.debugElement.query(By.directive(TumAetUiButtonDirective)).injector.get(TumAetUiButtonDirective);
             expect(buttonDir.size()).toBe('large');
         });
 
-        it('should map explicit MEDIUM buttonSize to default tumUiSize', () => {
+        it('should map explicit MEDIUM buttonSize to default tumAetUiSize', () => {
             fixture.componentRef.setInput('buttonSize', ButtonSize.MEDIUM);
             fixture.detectChanges();
-            expect(comp.tumUiSize()).toBe('default');
-            const buttonDir = fixture.debugElement.query(By.directive(TumUiButtonDirective)).injector.get(TumUiButtonDirective);
+            expect(comp.tumAetUiSize()).toBe('default');
+            const buttonDir = fixture.debugElement.query(By.directive(TumAetUiButtonDirective)).injector.get(TumAetUiButtonDirective);
             expect(buttonDir.size()).toBe('default');
         });
     });

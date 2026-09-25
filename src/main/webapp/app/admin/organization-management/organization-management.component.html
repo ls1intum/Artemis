@@ -1,13 +1,13 @@
 <div class="flex flex-col h-full">
     <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
     <div *adminTitleBarActions>
-        <button tumUiButton size="small" [routerLink]="['./new']" data-testid="add-organization-btn">
+        <button tumAetUiButton size="small" [routerLink]="['./new']" data-testid="add-organization-btn">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
     </div>
     <div class="flex-1 min-h-0">
-        <tum-ui-table
+        <tumaet-ui-table
             [columns]="columns()"
             [rows]="organizations()"
             [totalRecords]="totalCount()"
@@ -31,7 +31,7 @@
 <ng-template #organizationActions let-organization>
     <div class="flex items-center justify-end gap-2" data-testid="organization-row-actions">
         <button
-            tumUiButton
+            tumAetUiButton
             size="small"
             severity="warn"
             type="button"
@@ -45,7 +45,7 @@
             <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>
         </button>
         <button
-            tumUiButton
+            tumAetUiButton
             severity="danger"
             size="small"
             [renderButtonStyle]="false"

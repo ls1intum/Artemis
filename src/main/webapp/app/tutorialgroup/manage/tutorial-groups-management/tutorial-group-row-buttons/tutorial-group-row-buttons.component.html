@@ -3,7 +3,7 @@
 <div class="flex items-center justify-end gap-2">
     @if (isAtLeastInstructor() || group.isUserTutor) {
         <a
-            tumUiButton
+            tumAetUiButton
             size="small"
             severity="secondary"
             variant="outlined"
@@ -17,7 +17,7 @@
     }
     @if (isAtLeastInstructor()) {
         <a
-            tumUiButton
+            tumAetUiButton
             size="small"
             severity="secondary"
             variant="outlined"
@@ -28,7 +28,7 @@
             <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>
         </a>
         <button
-            tumUiButton
+            tumAetUiButton
             size="small"
             severity="danger"
             variant="outlined"
