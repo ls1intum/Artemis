@@ -471,7 +471,9 @@ public class ProgrammingExerciseGradingService {
      * @param participation         the student participation the result belongs to
      * @param processedResult       the scored automatic result
      * @param programmingSubmission the submission the result belongs to
-     * @param latestOtherResult     the submission's latest result apart from the new one, or null if there is none
+     * @param latestOtherResult     the result the feedback merges into when it is manual: the submission's latest result apart
+     *                                  from the new one on the single-container path, its latest manual result on the
+     *                                  multi-container path, or null if there is none
      * @return the manual result the feedback was merged into, or empty if the automatic result stands on its own
      */
     private Optional<Result> applyStudentResultPolicies(ProgrammingExerciseParticipation participation, Result processedResult, ProgrammingSubmission programmingSubmission,
@@ -555,8 +557,12 @@ public class ProgrammingExerciseGradingService {
         // SUCCESSFUL job. The build outcome itself is what the containers reported, recorded on their jobs and derived
         // for this group by the caller, so the result is successful only when both agree. It is written to the
         // submission only now, with a targeted update as on the single-container path: written per container, a
-        // container of an overlapping build of the same commit could overwrite it before this build finalizes.
-        if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission) {
+        // container of an overlapping build of the same commit could overwrite it before this build finalizes. Two such
+        // builds can finalize in either order, so the flag follows the newest of their aggregates: an older build that
+        // finalizes last leaves what the newer build wrote.
+        List<Result> resultsOfSubmission = aggregatedResult.getSubmission() == null ? List.of()
+                : resultRepository.findAllBySubmissionIdOrderByIdDesc(aggregatedResult.getSubmission().getId());
+        if (aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission && isNewestAutomaticResult(resultsOfSubmission, resultId)) {
             programmingSubmissionRepository.updateBuildFailed(submission.getId(), anyContainerFailedToBuild);
             submission.setBuildFailed(anyContainerFailedToBuild);
         }
@@ -597,14 +603,14 @@ public class ProgrammingExerciseGradingService {
             // The same student policies as after a single-container result. Unlike there, the aggregated result already
             // exists (the containers' build jobs link to it), so it stays; when the submission is under manual
             // assessment its feedback is additionally merged into that manual result, which is then the one to report.
-            // Read through the repository, not the submission's lazy result collection: the submission is detached, so
-            // its collection cannot be initialized.
-            // An automatic result still in progress is the leftover of an attempt whose merge was interrupted between the
-            // aggregate's insert and its job's link (nothing refers to it any more); it must not hide a tutor's assessment.
-            Result latestOtherResult = resultRepository.findAllBySubmissionIdOrderByIdDesc(programmingSubmission.getId()).stream()
-                    .filter(candidate -> !candidate.getId().equals(resultId)).filter(candidate -> candidate.isManual() || candidate.getCompletionDate() != null).findFirst()
-                    .orElse(null);
-            mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestOtherResult);
+            // The stored aggregate of an earlier build is automatic and completed, so once a build merged into the
+            // assessment, that aggregate is the submission's newest result and would hide the assessment from the next
+            // build; on the single-container path a merged automatic result is not stored, so the assessment stays the
+            // latest result there. Selecting the latest manual result keeps the two paths alike: every later build
+            // merges into the assessment as well. Read through the repository, not the submission's lazy result
+            // collection: the submission is detached, so its collection cannot be initialized.
+            Result latestManualResult = resultsOfSubmission.stream().filter(Result::isManual).findFirst().orElse(null);
+            mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestManualResult);
         }
         // Saved after the policies, as on the single-container path: the lock-repository policy marks the result unrated
         // without saving it, so saving earlier would lose that flag. The instance handed back is the one that was scored,
@@ -615,6 +621,21 @@ public class ProgrammingExerciseGradingService {
         insertNewFeedback(aggregatedResult);
         resultRepository.save(aggregatedResult);
         return mergedIntoManualResult.orElse(aggregatedResult);
+    }
+
+    /**
+     * Whether the aggregated result being finalized is the newest automatic result of its submission among those that
+     * have completed or are completing now. An automatic result that is newer but still in progress is either an
+     * overlapping build that has not finalized yet, whose own finalization writes the submission's state afterwards, or
+     * the leftover of an interrupted merge that nothing refers to; neither takes precedence.
+     *
+     * @param resultsOfSubmissionNewestFirst the submission's results, newest first
+     * @param resultId                       the id of the aggregated result being finalized
+     * @return true if no completed automatic result of the submission is newer than the one being finalized
+     */
+    private static boolean isNewestAutomaticResult(List<Result> resultsOfSubmissionNewestFirst, long resultId) {
+        return resultsOfSubmissionNewestFirst.stream().filter(result -> !result.isManual()).filter(result -> result.getCompletionDate() != null || result.getId().equals(resultId))
+                .findFirst().map(result -> result.getId().equals(resultId)).orElse(true);
     }
 
     /**

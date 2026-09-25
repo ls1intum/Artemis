@@ -523,6 +523,65 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
                 .hasSize(1);
     }
 
+    /**
+     * The aggregate of a multi-container build stays stored after its feedback was merged into a tutor's assessment
+     * (its jobs link to it), which makes it the submission's newest result. The next build has to find the assessment
+     * anyway and merge into it, as on the single-container path, where a merged automatic result is not stored.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testEveryLaterBuildMergesIntoTheAssessmentAlthoughEarlierAggregatesAreNewer() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        ProgrammingSubmission submission = submissionOf(participation, "0000000000000000000000000000000000000011");
+        Result assessment = new Result();
+        assessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        assessment.setCompletionDate(ZonedDateTime.now().minusMinutes(10));
+        assessment.setSubmission(submission);
+        assessment.setExerciseId(programmingExercise.getId());
+        assessment = resultRepository.save(assessment);
+        String commitHash = submission.getCommitHash();
+
+        for (int build = 1; build <= 2; build++) {
+            var passingJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("testClass[SortStrategy]", List.of())));
+            BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
+            Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, true, "container_a", null).result();
+            buildJobRepository.save(
+                    new BuildJob(buildJobFor("assess-" + build + "-0", "assess-" + build, participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
+
+            Result reportedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now());
+
+            assertThat(reportedResult.getId()).as("build %d merges into the assessment", build).isEqualTo(assessment.getId());
+        }
+    }
+
+    /**
+     * Two builds of the same commit that overlap can finalize in either order. The submission's build-failed flag
+     * follows the newest of their aggregates, so an older build that finalizes last does not overwrite what the newer
+     * build wrote.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAnOlderBuildFinalizingLastDoesNotOverwriteTheNewerBuildsOutcome() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000012";
+        long submissionId = submissionOf(participation, commitHash).getId();
+
+        // the older build: its container failed to build; the newer build of the same commit: its container built fine
+        var older = programmingExerciseGradingService.appendContainerResult(participation, failedResult(commitHash, "older build failed"), false, "container_a", null);
+        buildJobRepository.save(new BuildJob(buildJobFor("order-a-0", "order-a", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, older.result(), true));
+        var newer = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null);
+        buildJobRepository.save(new BuildJob(buildJobFor("order-b-0", "order-b", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, newer.result(), false));
+
+        programmingExerciseGradingService.finalizeContainerResult(newer.result().getId(), participation, true, anyContainerFailedToBuild("order-b"), ZonedDateTime.now());
+        assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).isFalse();
+
+        programmingExerciseGradingService.finalizeContainerResult(older.result().getId(), participation, true, anyContainerFailedToBuild("order-a"), ZonedDateTime.now());
+        assertThat(programmingSubmissionRepository.findById(submissionId).orElseThrow().isBuildFailed()).as("the older build does not overwrite the newer build's outcome")
+                .isFalse();
+    }
+
     /** what the result processing derives for a group when it finalizes it, see LocalCIResultProcessingService#finalizeIfGroupComplete */
     private boolean anyContainerFailedToBuild(String buildGroupId) {
         return buildJobRepository.findAllByBuildGroupId(buildGroupId).stream().anyMatch(BuildJob::isBuildFailed);
