@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumUiMessageComponent, TumUiSelectComponent, TumUiToggleSwitchComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent, TumAetUiSelectComponent, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faQuestionCircle, faRotateRight, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Observable } from 'rxjs';
@@ -40,10 +40,10 @@ import { SecurityFrameworkService } from 'app/programming/shared/services/securi
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumUiToggleSwitchComponent,
-        TumUiSelectComponent,
-        TumUiMessageComponent,
-        TumUiTooltipDirective,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiSelectComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         FaIconComponent,
     ],
 })

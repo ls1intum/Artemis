@@ -4,18 +4,18 @@
         <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
 
         @if (loadFailed()) {
-            <tum-ui-message severity="error" class="sf-warning block" data-testid="security-load-error">
+            <tumaet-ui-message severity="error" class="sf-warning block" data-testid="security-load-error">
                 <span jhiTranslate="artemisApp.programmingExercise.security.loadError"></span>
                 <button type="button" class="sf-retry" (click)="retryLoadConfig()" data-testid="security-load-retry">
                     <fa-icon [icon]="faRotateRight" />
                     <span jhiTranslate="artemisApp.programmingExercise.security.retry"></span>
                 </button>
-            </tum-ui-message>
+            </tumaet-ui-message>
         } @else {
             <div class="sf-card" [class]="'sf-card--' + statusVariant()" data-testid="security-card">
                 <div class="sf-card__main">
                     <div class="sf-card__left">
-                        <tum-ui-toggle-switch
+                        <tumaet-ui-toggle-switch
                             inputId="securityActivateToggle"
                             [ngModel]="isToggleOn()"
                             [ngModelOptions]="{ standalone: true }"
@@ -71,11 +71,11 @@
                             <fa-icon
                                 [icon]="faQuestionCircle"
                                 class="cursor-help text-[10px]"
-                                [tumUiTooltip]="'artemisApp.programmingExercise.security.frameworkVersionHelp' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.programmingExercise.security.frameworkVersionHelp' | artemisTranslate"
                                 data-testid="security-framework-version-help"
                             />
                         </span>
-                        <tum-ui-select
+                        <tumaet-ui-select
                             inputId="securityFrameworkVersion"
                             [ariaLabel]="'artemisApp.programmingExercise.security.frameworkVersion' | artemisTranslate"
                             [options]="frameworkVersions()"
@@ -123,9 +123,9 @@
                 </div>
 
                 @if (showDeactivateWarning()) {
-                    <tum-ui-message severity="warn" class="sf-warning block" data-testid="security-deactivate-warning">
+                    <tumaet-ui-message severity="warn" class="sf-warning block" data-testid="security-deactivate-warning">
                         {{ 'artemisApp.programmingExercise.security.deactivateWarning' | artemisTranslate }}
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
             </div>
         }
