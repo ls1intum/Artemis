@@ -20,6 +20,7 @@ import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exe
 
 import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/create-variant-modal/create-variant-with-ai-button.component';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
@@ -29,6 +30,7 @@ import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-
 export class QuizExerciseManageButtonsComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
     private quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
+    private quizExerciseEvaluationApi = inject(QuizExerciseEvaluationApi);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
     private exerciseService = inject(ExerciseService);
@@ -130,7 +132,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
 
     evaluateQuizExercise() {
         this.isEvaluatingQuizExercise.set(true);
-        this.exerciseService.evaluateQuizExercise(this.quizExercise().id!).subscribe({
+        this.quizExerciseEvaluationApi.evaluateQuizExercise(this.quizExercise().id!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
                 this.isEvaluatingQuizExercise.set(false);

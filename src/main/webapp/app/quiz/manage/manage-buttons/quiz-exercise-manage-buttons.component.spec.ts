@@ -17,6 +17,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -106,13 +107,7 @@ describe('QuizExercise Management Buttons Component', () => {
     });
 
     it('should evaluate quiz exercise successfully', () => {
-        vi.spyOn(exerciseService, 'evaluateQuizExercise').mockReturnValue(
-            of(
-                new HttpResponse<void>({
-                    status: 200,
-                }),
-            ),
-        );
+        vi.spyOn(TestBed.inject(QuizExerciseEvaluationApi), 'evaluateQuizExercise').mockReturnValue(of(undefined));
         const alertService = TestBed.inject(AlertService);
         const successSpy = vi.spyOn(alertService, 'success');
 
@@ -122,21 +117,21 @@ describe('QuizExercise Management Buttons Component', () => {
         expect(comp.isEvaluatingQuizExercise()).toBeFalsy();
         comp.evaluateQuizExercise();
 
-        expect(exerciseService.evaluateQuizExercise).toHaveBeenCalledWith(456);
+        expect(TestBed.inject(QuizExerciseEvaluationApi).evaluateQuizExercise).toHaveBeenCalledWith(456);
         expect(successSpy).toHaveBeenCalledWith('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
         expect(comp.isEvaluatingQuizExercise()).toBe(false);
     });
 
     it('should handle evaluate quiz exercise error', () => {
         const errorResponse = new HttpErrorResponse({ error: 'Error', status: 500, statusText: 'Server Error' });
-        vi.spyOn(exerciseService, 'evaluateQuizExercise').mockReturnValue(throwError(() => errorResponse));
+        vi.spyOn(TestBed.inject(QuizExerciseEvaluationApi), 'evaluateQuizExercise').mockReturnValue(throwError(() => errorResponse));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
 
         comp.evaluateQuizExercise();
 
-        expect(exerciseService.evaluateQuizExercise).toHaveBeenCalledWith(456);
+        expect(TestBed.inject(QuizExerciseEvaluationApi).evaluateQuizExercise).toHaveBeenCalledWith(456);
         expect(comp.isEvaluatingQuizExercise()).toBe(false);
     });
 

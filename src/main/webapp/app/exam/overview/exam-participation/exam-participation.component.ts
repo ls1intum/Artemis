@@ -63,6 +63,8 @@ import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { Message } from 'primeng/message';
 import { ButtonDirective } from 'primeng/button';
 import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -101,6 +103,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private examParticipationService = inject(ExamParticipationService);
+    private quizSubmissionApi = inject(QuizSubmissionApi);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private textSubmissionService = inject(TextSubmissionService);
@@ -1178,7 +1181,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
-                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission).subscribe({
+                        this.quizSubmissionApi.submitQuizForExam(submissionToSync.exercise.id!, toQuizSubmissionFromLiveClient(submissionToSync.submission)).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
