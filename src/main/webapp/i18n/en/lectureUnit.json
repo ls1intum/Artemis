@@ -136,6 +136,10 @@
                 "lectureFileToolTip": "Please select to enable automatic separation of lecture content.",
                 "processUnits": "Process content",
                 "processAutomatically": "Automatic content processing",
+                "processingUnit": "PDF to process",
+                "processingUnitPlaceholder": "Select a PDF of this lecture",
+                "noPdfUnit": "This lecture has no PDF yet. Add the lecture PDF as content above, for example by dropping it onto the upload area, and then select it here.",
+                "hiddenSlidesWarning": "This PDF has hidden slides. The new content contains every page of the PDF, so check the page ranges or remove these slides before you submit.",
                 "removeSlides": "Remove slides",
                 "removeSlidesInfo": {
                     "firstLine": "All slides that contain any of the following key phrases will be removed from all content.",

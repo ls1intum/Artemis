@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,7 +8,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCircleInfo, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/foundation/constants/file-extensions.constants';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.utils';
@@ -33,6 +33,8 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumUiFormFieldComponent, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -58,6 +60,9 @@ interface CreateLectureOption {
         LectureTimelineComponent,
         FaIconComponent,
         LectureUpdateUnitsComponent,
+        TumUiFormFieldComponent,
+        TumUiSelectComponent,
+        TumUiMessageComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
         SelectButtonModule,
@@ -74,8 +79,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
     protected readonly faCircleInfo = faCircleInfo;
-    protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
-    protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     private readonly alertService = inject(AlertService);
@@ -85,6 +88,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     private readonly calendarService = inject(CalendarService);
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly destroyRef = inject(DestroyRef);
 
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -101,9 +106,14 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     readonly processUnitMode = signal<boolean>(undefined!);
     readonly formStatusSections = signal<FormSectionStatus[]>(undefined!);
     domainActionsDescription = [new FormulaAction()];
-    file?: File;
-    readonly fileName = signal<string>(undefined!);
-    fileInputTouched = false;
+    /** PDF units of this lecture, kept up to date with the unit list above, including PDFs dropped there. */
+    readonly processingUnits = computed(() => this.unitSection()?.pdfUnits() ?? []);
+    readonly selectedProcessingUnitId = signal<number | undefined>(undefined);
+    /** The unit to process; a lecture with a single PDF unit needs no selection, and a removed unit drops out. */
+    readonly selectedProcessingUnit = computed(() => {
+        const units = this.processingUnits();
+        return units.find((unit) => unit.id === this.selectedProcessingUnitId()) ?? (units.length === 1 ? units[0] : undefined);
+    });
     isNewlyCreatedExercise = false;
     readonly isChangeMadeToTitleOrPeriodSection = signal(false);
     readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true, invalidItems: [] });
@@ -268,14 +278,37 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         this.processUnitMode.update((value) => !value);
     }
 
-    onFileChange(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        if (!input.files?.length) {
-            this.fileName.set('');
+    /**
+     * Loads the PDF of the unit selected for the automatic content processing and opens the processing page with it.
+     * The processing page uploads the file again as a temporary file, so the selected unit itself stays unchanged.
+     */
+    private proceedWithSelectedUnit(courseId: number, lectureId: number) {
+        const unit = this.selectedProcessingUnit();
+        if (!unit?.id) {
+            this.isProcessing.set(false);
             return;
         }
-        this.file = input.files[0];
-        this.fileName.set(this.file.name);
+        this.attachmentVideoUnitService
+            .getAttachmentFile(courseId, unit.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (pdf) => {
+                    this.isProcessing.set(false);
+                    // processing may have been switched off while the PDF was loading
+                    if (!this.processUnitMode()) {
+                        return;
+                    }
+                    // the processing upload only accepts file names that end in a lowercase ".pdf"
+                    const file = new File([pdf], `${unit.name || 'lecture'}.pdf`, { type: 'application/pdf' });
+                    void this.router.navigate(['course-management', courseId, 'lectures', lectureId, 'unit-management', 'attachment-video-units', 'process'], {
+                        state: { file },
+                    });
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isProcessing.set(false);
+                    onError(this.alertService, error);
+                },
+            });
     }
 
     /**
@@ -301,11 +334,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         }
 
         if (this.processUnitMode()) {
-            this.isProcessing.set(false);
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
-            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
-                state: { file: this.file, fileName: this.fileName() },
-            });
+            this.proceedWithSelectedUnit(lecture.course.id, lecture.id!);
         } else if (this.isEditMode()) {
             void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
         } else {
@@ -329,6 +359,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving.set(false);
+        // otherwise the processing controls stay disabled after a failed "Process content" save
+        this.isProcessing.set(false);
 
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);

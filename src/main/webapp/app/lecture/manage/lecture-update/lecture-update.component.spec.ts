@@ -1,4 +1,4 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,7 +15,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -28,7 +28,7 @@ import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lect
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
-import { signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -36,6 +36,11 @@ import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { TumUiSelectComponent } from '@tumaet/ui-angular';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -46,12 +51,16 @@ describe('LectureUpdateComponent', () => {
     let lectureUpdateComponentFixture: ComponentFixture<LectureUpdateComponent>;
     let lectureUpdateComponent: LectureUpdateComponent;
     let router: Router;
+    let pdfUnits: WritableSignal<AttachmentVideoUnit[]>;
+
+    const pdfUnit = (id: number, name: string) => ({ id, name }) as AttachmentVideoUnit;
 
     let pastLecture: Lecture;
 
     beforeEach(() => {
         // Mock scrollIntoView which is not available in the test environment
         HTMLElement.prototype.scrollIntoView = vi.fn();
+        pdfUnits = signal<AttachmentVideoUnit[]>([]);
         const yesterday = dayjs().subtract(1, 'day');
 
         pastLecture = new Lecture();
@@ -145,6 +154,7 @@ describe('LectureUpdateComponent', () => {
         } as any);
         lectureUpdateComponent.unitSection = signal({
             isUnitConfigurationValid: () => true,
+            pdfUnits,
         } as any);
         lectureUpdateComponentFixture.detectChanges();
         await lectureUpdateComponentFixture.whenStable();
@@ -240,50 +250,10 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
     });
 
-    it('should create a lecture and then redirect to unit split', async () => {
-        await configureActiveRouteMockAndCompileComponents();
-        // Ensure ngOnInit runs first (which sets processUnitMode = false)
-        lectureUpdateComponentFixture.detectChanges();
-        await lectureUpdateComponentFixture.whenStable();
-
-        lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
-        lectureUpdateComponent.fileName.set('testFile');
-        // Set processUnitMode after initialization to prevent ngOnInit from resetting it
-        lectureUpdateComponent.processUnitMode.set(true);
-        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1', isTutorialLecture: false } as Lecture);
-        const navigateSpy = vi.spyOn(router, 'navigate');
-
-        const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(
-            of<HttpResponse<Lecture>>(
-                new HttpResponse({
-                    body: {
-                        id: 3,
-                        title: 'test1',
-                        course: {
-                            id: 1,
-                        },
-                    } as Lecture,
-                }),
-            ),
-        );
-
-        const proceedToUnitSplitSpy = vi.spyOn(lectureUpdateComponent, 'proceedToUnitSplit');
-        lectureUpdateComponent.proceedToUnitSplit();
-        await lectureUpdateComponentFixture.whenStable();
-
-        expect(createSpy).toHaveBeenCalledTimes(1);
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1', isTutorialLecture: false });
-        expect(proceedToUnitSplitSpy).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.processUnitMode()).toBe(true);
-
-        const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-video-units', 'process'];
-        expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName() } });
-    });
-
     it('should disable automatic content processing when the timeline is invalid', async () => {
         await configureValidLectureUpdateForm();
 
-        lectureUpdateComponent.fileName.set('testFile.pdf');
+        pdfUnits.set([pdfUnit(11, 'Week 1')]);
         lectureUpdateComponent.processUnitMode.set(true);
         lectureUpdateComponentFixture.detectChanges();
 
@@ -313,24 +283,156 @@ describe('LectureUpdateComponent', () => {
         expect(saveButton.disabled).toBe(true);
     });
 
-    it('should call onFileChange on changed file', async () => {
-        await configureActiveRouteMockAndCompileComponents();
-        lectureUpdateComponent.processUnitMode.set(false);
-        await lectureUpdateComponentFixture.whenStable();
-        expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
+    describe('automatic content processing', () => {
+        const processButton = () => lectureUpdateComponentFixture.debugElement.query(By.css('#process-units-entity')).nativeElement as HTMLButtonElement;
+        const unitSelect = () => lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="processing-unit-select"]'));
+        const noPdfHint = () => lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="processing-no-pdf-hint"]'));
 
-        const onFileChangeStub = vi.spyOn(lectureUpdateComponent, 'onFileChange');
+        async function enableProcessing(units: AttachmentVideoUnit[]) {
+            await configureValidLectureUpdateForm();
+            pdfUnits.set(units);
+            lectureUpdateComponent.processUnitMode.set(true);
+            lectureUpdateComponentFixture.detectChanges();
+        }
 
-        const processUnit = lectureUpdateComponentFixture.debugElement.query(By.css('input[name="processUnit"]')).nativeElement;
-        processUnit.checked = true;
-        processUnit.dispatchEvent(new Event('change'));
-        lectureUpdateComponentFixture.detectChanges();
-        lectureUpdateComponent.processUnitMode.set(true);
-        lectureUpdateComponentFixture.autoDetectChanges();
-        const fileInput = lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
-        expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
-        fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalledTimes(1);
+        it('should point to the content section instead of asking for a file when the lecture has no PDF yet', async () => {
+            await enableProcessing([]);
+
+            expect(noPdfHint()).not.toBeNull();
+            expect(unitSelect()).toBeNull();
+            expect(processButton().disabled).toBe(true);
+        });
+
+        it('should preselect the only PDF of the lecture', async () => {
+            const unit = pdfUnit(11, 'Week 1');
+            await enableProcessing([unit]);
+
+            expect(noPdfHint()).toBeNull();
+            expect(lectureUpdateComponent.selectedProcessingUnit()).toBe(unit);
+            expect((unitSelect().componentInstance as TumUiSelectComponent).options()).toEqual([unit]);
+            expect(processButton().disabled).toBe(false);
+        });
+
+        it('should ask which PDF to process when the lecture has several', async () => {
+            const first = pdfUnit(11, 'Week 1');
+            const second = pdfUnit(12, 'Week 2');
+            await enableProcessing([first, second]);
+
+            expect(lectureUpdateComponent.selectedProcessingUnit()).toBeUndefined();
+            expect(processButton().disabled).toBe(true);
+
+            unitSelect().triggerEventHandler('ngModelChange', second.id);
+            lectureUpdateComponentFixture.detectChanges();
+
+            expect(lectureUpdateComponent.selectedProcessingUnit()).toBe(second);
+            expect(processButton().disabled).toBe(false);
+        });
+
+        it('should drop the selection when the selected PDF is removed from the lecture', async () => {
+            const first = pdfUnit(11, 'Week 1');
+            const second = pdfUnit(12, 'Week 2');
+            const third = pdfUnit(13, 'Week 3');
+            await enableProcessing([first, second, third]);
+            lectureUpdateComponent.selectedProcessingUnitId.set(second.id);
+
+            pdfUnits.set([first, third]);
+            lectureUpdateComponentFixture.detectChanges();
+
+            expect(lectureUpdateComponent.selectedProcessingUnit()).toBeUndefined();
+            expect(processButton().disabled).toBe(true);
+        });
+
+        it('should save the lecture and open the processing page with the PDF of the selected unit', async () => {
+            const unit = pdfUnit(11, 'Week 1');
+            await enableProcessing([unit]);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const updateSpy = vi.spyOn(lectureService, 'update').mockReturnValue(of(new HttpResponse({ body: { id: 6, title: 'Test Lecture', course: { id: 1 } } as Lecture })));
+            const getAttachmentFileSpy = vi
+                .spyOn(TestBed.inject(AttachmentVideoUnitService), 'getAttachmentFile')
+                .mockReturnValue(of(new Blob(['%PDF-1.7'], { type: 'application/pdf' })));
+
+            lectureUpdateComponent.proceedToUnitSplit();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(getAttachmentFileSpy).toHaveBeenCalledExactlyOnceWith(1, unit.id);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['course-management', 1, 'lectures', 6, 'unit-management', 'attachment-video-units', 'process'], {
+                state: { file: expect.any(File) },
+            });
+            const file = (navigateSpy.mock.calls[0][1]!.state as { file: File }).file;
+            expect(file.name).toBe('Week 1.pdf');
+            expect(file.type).toBe('application/pdf');
+            expect(await file.text()).toBe('%PDF-1.7');
+            expect(lectureUpdateComponent.isProcessing()).toBe(false);
+        });
+
+        it('should stay on the page when the PDF of the selected unit cannot be loaded', async () => {
+            await enableProcessing([pdfUnit(11, 'Week 1')]);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            vi.spyOn(lectureService, 'update').mockReturnValue(of(new HttpResponse({ body: { id: 6, title: 'Test Lecture', course: { id: 1 } } as Lecture })));
+            vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'getAttachmentFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            const alertErrorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            lectureUpdateComponent.proceedToUnitSplit();
+            lectureUpdateComponentFixture.detectChanges();
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(alertErrorSpy).toHaveBeenCalledWith('error.http.404');
+            expect(lectureUpdateComponent.isProcessing()).toBe(false);
+            expect(processButton().disabled).toBe(false);
+        });
+
+        it('should not open the processing page when processing is switched off while the PDF loads', async () => {
+            await enableProcessing([pdfUnit(11, 'Week 1')]);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            vi.spyOn(lectureService, 'update').mockReturnValue(of(new HttpResponse({ body: { id: 6, title: 'Test Lecture', course: { id: 1 } } as Lecture })));
+            const pdf = new Subject<Blob>();
+            vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'getAttachmentFile').mockReturnValue(pdf);
+
+            lectureUpdateComponent.proceedToUnitSplit();
+            lectureUpdateComponent.processUnitMode.set(false);
+            pdf.next(new Blob(['%PDF-1.7'], { type: 'application/pdf' }));
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(lectureUpdateComponent.isProcessing()).toBe(false);
+        });
+
+        it('should warn that hidden slides end up in the new content', async () => {
+            const withHiddenSlides = { ...pdfUnit(11, 'Week 1'), attachment: { studentVersion: 'student.pdf' } as Attachment } as AttachmentVideoUnit;
+            const withoutHiddenSlides = { ...pdfUnit(12, 'Week 2'), attachment: {} as Attachment } as AttachmentVideoUnit;
+            await enableProcessing([withHiddenSlides, withoutHiddenSlides]);
+            const warning = () => lectureUpdateComponentFixture.debugElement.query(By.css('[data-testid="processing-hidden-slides-warning"]'));
+
+            lectureUpdateComponent.selectedProcessingUnitId.set(withoutHiddenSlides.id);
+            lectureUpdateComponentFixture.detectChanges();
+            expect(warning()).toBeNull();
+
+            lectureUpdateComponent.selectedProcessingUnitId.set(withHiddenSlides.id);
+            lectureUpdateComponentFixture.detectChanges();
+            expect(warning()).not.toBeNull();
+        });
+
+        it('should re-enable processing when saving the lecture before processing fails', async () => {
+            await enableProcessing([pdfUnit(11, 'Week 1')]);
+            const getAttachmentFileSpy = vi.spyOn(TestBed.inject(AttachmentVideoUnitService), 'getAttachmentFile');
+            const saveResponse = new Subject<HttpResponse<Lecture>>();
+            vi.spyOn(lectureService, 'update').mockReturnValue(saveResponse);
+
+            lectureUpdateComponent.proceedToUnitSplit();
+            lectureUpdateComponentFixture.detectChanges();
+
+            expect(lectureUpdateComponent.isProcessing()).toBe(true);
+            expect((unitSelect().componentInstance as TumUiSelectComponent).disabled()).toBe(true);
+            expect(processButton().disabled).toBe(true);
+
+            saveResponse.error(new HttpErrorResponse({ status: 500 }));
+            lectureUpdateComponentFixture.detectChanges();
+
+            expect(getAttachmentFileSpy).not.toHaveBeenCalled();
+            expect(lectureUpdateComponent.isProcessing()).toBe(false);
+            expect(lectureUpdateComponent.isSaving()).toBe(false);
+            expect((unitSelect().componentInstance as TumUiSelectComponent).disabled()).toBe(false);
+            expect(processButton().disabled).toBe(false);
+        });
     });
 
     describe('isChangeMadeToTitleSection', () => {

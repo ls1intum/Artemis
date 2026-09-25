@@ -88,33 +88,40 @@
                     </div>
                 }
                 @if (processUnitMode()) {
-                    <div class="form-group">
-                        <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}*</label>
-                        <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            [ngbTooltip]="
-                                'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }
-                            "
-                        />
-                        <div class="input-group background-file">
-                            <div class="custom-file overflow-ellipsis">
-                                <input
-                                    id="fileInput"
-                                    type="file"
-                                    class="custom-file-input file-input-margin"
-                                    [accept]="acceptedFileExtensionsFileBrowser"
-                                    (change)="onFileChange($event)"
-                                    aria-describedby="fileHelp"
-                                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
-                                    (click)="fileInputTouched = true"
-                                />
-                            </div>
-                        </div>
-                        @if (!fileName() && fileInputTouched) {
-                            <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
+                    @if (processingUnits().length) {
+                        <tum-ui-form-field class="mb-3 block" controlId="processing-unit-select">
+                            <span tumUiFormFieldLabel jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processingUnit"></span>
+                            <tum-ui-select
+                                class="w-full"
+                                inputId="processing-unit-select"
+                                data-testid="processing-unit-select"
+                                [options]="processingUnits()"
+                                optionLabel="name"
+                                optionValue="id"
+                                [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processingUnitPlaceholder' | artemisTranslate"
+                                [ngModel]="selectedProcessingUnit()?.id"
+                                [ngModelOptions]="{ standalone: true }"
+                                (ngModelChange)="selectedProcessingUnitId.set($event)"
+                                [disabled]="isSaving() || isProcessing()"
+                            />
+                        </tum-ui-form-field>
+                        @if (selectedProcessingUnit()?.attachment?.studentVersion) {
+                            <tum-ui-message
+                                class="mb-3 block"
+                                severity="warn"
+                                data-testid="processing-hidden-slides-warning"
+                                [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.hiddenSlidesWarning' | artemisTranslate"
+                            />
                         }
-                    </div>
+                    } @else {
+                        <tum-ui-message
+                            class="mb-3 block"
+                            severity="info"
+                            data-testid="processing-no-pdf-hint"
+                            [icon]="faCircleInfo"
+                            [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noPdfUnit' | artemisTranslate"
+                        />
+                    }
                 }
                 <div class="d-flex">
                     @if (processUnitMode()) {
@@ -123,7 +130,7 @@
                                 <button
                                     type="button"
                                     id="process-units-entity"
-                                    [disabled]="editForm.form.invalid || isSaving() || !processUnitMode() || isProcessing() || !fileName() || !areSectionsValid()"
+                                    [disabled]="editForm.form.invalid || isSaving() || !processUnitMode() || isProcessing() || !selectedProcessingUnit() || !areSectionsValid()"
                                     class="btn btn-success"
                                     (click)="proceedToUnitSplit()"
                                 >

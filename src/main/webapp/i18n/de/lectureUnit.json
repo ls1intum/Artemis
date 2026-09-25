@@ -135,6 +135,10 @@
                 "addUnit": "Inhalt hinzufügen",
                 "processUnits": "Inhalte festlegen",
                 "processAutomatically": "Automatische Inhaltsverarbeitung",
+                "processingUnit": "Zu verarbeitendes PDF",
+                "processingUnitPlaceholder": "PDF dieser Vorlesung auswählen",
+                "noPdfUnit": "Diese Vorlesung hat noch kein PDF. Füge das Vorlesungs-PDF oben als Inhalt hinzu, zum Beispiel indem du es auf die Upload-Fläche ziehst, und wähle es dann hier aus.",
+                "hiddenSlidesWarning": "Dieses PDF hat ausgeblendete Folien. Die neuen Inhalte enthalten jede Seite des PDFs, prüfe also die Seitenbereiche oder entferne diese Folien, bevor du absendest.",
                 "removeSlides": "Entferne Folien",
                 "removeSlidesInfo": {
                     "firstLine": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt.",
