@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Observable } from 'rxjs';
@@ -7,9 +7,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 
 type EntityResponseType = HttpResponse<TextUnit>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class TextUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);

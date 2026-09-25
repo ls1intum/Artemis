@@ -352,7 +352,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             fixture.detectChanges();
 
             // Covers the template's (changed) binding, which a direct handler call cannot.
-            const options = fixture.nativeElement.querySelectorAll('tum-ui-select-button button');
+            const options = fixture.nativeElement.querySelectorAll('tumaet-ui-select-button button');
             expect(options.length).toBeGreaterThan(1);
             (options[2] as HTMLButtonElement).click();
 

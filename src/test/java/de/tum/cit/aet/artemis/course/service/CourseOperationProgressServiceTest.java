@@ -26,6 +26,7 @@ import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
@@ -201,7 +202,7 @@ class CourseOperationProgressServiceTest {
         @SuppressWarnings("unchecked")
         ScheduledFuture<Void> renewal = mock(ScheduledFuture.class);
         when(taskScheduler.scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class))).thenAnswer(_ -> renewal);
-        doThrow(new AssertionError("publication failed")).when(websocketMessagingService).sendMessage(any(String.class), any(Object.class));
+        doThrow(new AssertionError("publication failed")).when(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(Object.class));
         var service = new CourseOperationProgressService(cacheManager, websocketMessagingService, distributedDataProvider, taskScheduler);
 
         assertThatThrownBy(() -> service.startOperation(COURSE_ID, CourseOperationType.RESET, "Resetting exercises", 11, STARTED_AT)).isInstanceOf(AssertionError.class);

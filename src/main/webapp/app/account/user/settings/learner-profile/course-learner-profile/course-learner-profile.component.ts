@@ -6,7 +6,7 @@ import { LearnerProfileApiService } from 'app/account/user/settings/learner-prof
 import { CourseLearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/course-learner-profile-dto.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { TumUiSelectButtonComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiSelectButtonComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/account/user/settings/learner-profile/entities/course-learner-profile-options.model';
 import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
@@ -20,7 +20,7 @@ import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['../learner-profile.component.scss'],
-    imports: [TranslateDirective, FormsModule, TumUiSelectComponent, TumUiSelectButtonComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, TumAetUiSelectComponent, TumAetUiSelectButtonComponent, ArtemisTranslatePipe],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private readonly alertService = inject(AlertService);

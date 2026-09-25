@@ -38,10 +38,11 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, DialogModule, ButtonModule, HelpIconComponent],
 })
 export class StudentsReseatingDialogComponent implements OnInit {
+    private readonly studentsRoomDistributionService = inject(StudentsRoomDistributionService);
+
     protected readonly faBan = faBan;
     protected readonly faChair = faChair;
 
-    private readonly studentsRoomDistributionService = inject(StudentsRoomDistributionService);
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
     examUser: WritableSignal<ExamUser | undefined> = signal(undefined);

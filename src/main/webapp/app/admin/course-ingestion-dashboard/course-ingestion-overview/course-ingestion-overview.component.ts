@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumUiButtonComponent, TumUiCardComponent, TumUiMessageComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -28,7 +28,7 @@ const COLLECTION_CONTENTS: Record<string, string> = {
 @Component({
     selector: 'jhi-course-ingestion-overview',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiCardComponent, TumUiMessageComponent, TumUiTableDirective, TumUiTagComponent, TumUiButtonComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiTableDirective, TumAetUiTagComponent, TumAetUiButtonComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './course-ingestion-overview.component.html',
 })
 export class CourseIngestionOverviewComponent implements OnInit {

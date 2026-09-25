@@ -27,7 +27,7 @@ import {
     faUser,
     faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -53,11 +53,13 @@ export interface AdminSidebarGroup {
     selector: 'jhi-admin-sidebar',
     templateUrl: './admin-sidebar.component.html',
     styleUrls: ['./admin-sidebar.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiTooltipDirective, RouterLink, RouterLinkActive],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiTooltipDirective, RouterLink, RouterLinkActive],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'flex h-full flex-col bg-[var(--module-bg)]' },
 })
 export class AdminSidebarComponent {
+    layoutService = inject(LayoutService);
+
     protected readonly faChevronRight = faChevronRight;
     protected readonly faUserShield = faUserShield;
 
@@ -74,7 +76,6 @@ export class AdminSidebarComponent {
 
     toggleCollapseState = output<void>();
 
-    layoutService = inject(LayoutService);
     activeBreakpoints = toSignal(this.layoutService.subscribeToLayoutChanges(), { initialValue: [] as string[] });
     canExpand = computed(() => {
         this.activeBreakpoints();

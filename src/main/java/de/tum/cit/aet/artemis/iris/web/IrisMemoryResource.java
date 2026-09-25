@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDataDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 @Conditional(IrisEnabled.class)
 @FeatureToggle(Feature.Memiris)
 @Lazy
-@FeatureUsage("memory/memory")
+@FeatureUsage(UserFeature.IRIS_MEMORY)
 @RestController
 @RequestMapping("api/iris/")
 public class IrisMemoryResource {

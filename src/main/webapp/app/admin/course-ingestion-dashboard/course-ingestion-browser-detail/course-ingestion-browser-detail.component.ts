@@ -3,7 +3,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonComponent, TumUiMessageComponent, TumUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import { faArrowUpRightFromSquare, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -54,9 +54,9 @@ interface LabelledContentObject {
     selector: 'jhi-course-ingestion-browser-detail',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        TumUiButtonComponent,
-        TumUiMessageComponent,
-        TumUiPaginatorComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiPaginatorComponent,
         FaIconComponent,
         CourseIngestionStoredFieldsComponent,
         TranslateDirective,

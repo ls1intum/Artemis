@@ -4,13 +4,13 @@ import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs'
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
-    TumUiButtonComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiPaginatorComponent,
-    TumUiPanelComponent,
-    TumUiSelectButtonComponent,
-    TumUiTableDirective,
+    TumAetUiButtonComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPaginatorComponent,
+    TumAetUiPanelComponent,
+    TumAetUiSelectButtonComponent,
+    TumAetUiTableDirective,
 } from '@tumaet/ui-angular';
 import { IconDefinition, faSort, faSortDown, faSortUp, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -71,13 +71,13 @@ interface SelectOption {
     imports: [
         FormsModule,
         FaIconComponent,
-        TumUiPanelComponent,
-        TumUiTableDirective,
-        TumUiInputDirective,
-        TumUiMessageComponent,
-        TumUiButtonComponent,
-        TumUiPaginatorComponent,
-        TumUiSelectButtonComponent,
+        TumAetUiPanelComponent,
+        TumAetUiTableDirective,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiPaginatorComponent,
+        TumAetUiSelectButtonComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
@@ -86,7 +86,7 @@ interface SelectOption {
     // The tum-ui input already turns its border to the focus colour on focus; drop the kit's extra offset outline so
     // the search box shows a single clean focus ring instead of a border plus a detached outer ring.
     styles: `
-        input[tumUiInput]:focus-visible {
+        input[tumAetUiInput]:focus-visible {
             outline: none;
         }
     `,

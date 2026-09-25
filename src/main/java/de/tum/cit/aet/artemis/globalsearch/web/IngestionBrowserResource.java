@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateRead
 @Lazy
 @RestController
 @RequestMapping("api/global-search/admin/")
-@FeatureUsage("monitoring/ingestion-dashboard")
+@FeatureUsage(UserFeature.INGESTION_DASHBOARD)
 public class IngestionBrowserResource {
 
     private static final String ENTITY_NAME = "ingestionBrowser";

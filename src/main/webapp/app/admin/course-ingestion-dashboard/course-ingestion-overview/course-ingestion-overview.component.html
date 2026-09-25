@@ -1,7 +1,7 @@
 <div class="course-ingestion-overview" data-testid="course-ingestion-overview">
     <div class="flex justify-between items-center mb-3">
         <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.overview.title"></h4>
-        <tum-ui-button
+        <tumaet-ui-button
             severity="secondary"
             variant="outlined"
             size="small"
@@ -18,13 +18,13 @@
     }
 
     @if (error()) {
-        <tum-ui-message severity="error" class="w-full">{{ 'artemisApp.courseIngestionDashboard.overview.error' | artemisTranslate }}</tum-ui-message>
+        <tumaet-ui-message severity="error" class="w-full">{{ 'artemisApp.courseIngestionDashboard.overview.error' | artemisTranslate }}</tumaet-ui-message>
     }
 
     @if (overview(); as o) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <!-- Services -->
-            <tum-ui-card [header]="'artemisApp.courseIngestionDashboard.services.title' | artemisTranslate">
+            <tumaet-ui-card [header]="'artemisApp.courseIngestionDashboard.services.title' | artemisTranslate">
                 <div class="flex flex-col gap-3">
                     <div class="flex flex-col gap-1">
                         <div
@@ -72,11 +72,11 @@
                         }
                     </div>
                 </div>
-            </tum-ui-card>
+            </tumaet-ui-card>
 
             <!-- Indexed collections -->
-            <tum-ui-card [header]="'artemisApp.courseIngestionDashboard.collections.title' | artemisTranslate">
-                <table tumUiTable size="small" data-testid="collections-table">
+            <tumaet-ui-card [header]="'artemisApp.courseIngestionDashboard.collections.title' | artemisTranslate">
+                <table tumAetUiTable size="small" data-testid="collections-table">
                     <thead>
                         <tr>
                             <th jhiTranslate="artemisApp.courseIngestionDashboard.collections.collection"></th>
@@ -103,7 +103,7 @@
                         }
                     </tbody>
                 </table>
-            </tum-ui-card>
+            </tumaet-ui-card>
         </div>
     }
 </div>

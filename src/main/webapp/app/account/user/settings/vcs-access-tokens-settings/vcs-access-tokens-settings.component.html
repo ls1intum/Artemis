@@ -1,15 +1,15 @@
 <h2 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h2>
 @if (currentUser(); as currentUser) {
-    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.vcsAccessTokenSettings' | artemisTranslate">
-        <li tumUiListItem>
+    <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.vcsAccessTokenSettings' | artemisTranslate">
+        <li tumAetUiListItem>
             <dt>
                 <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.infoText"></span>
             </dt>
         </li>
         @if (!edit()) {
-            <li tumUiListItem>
+            <li tumAetUiListItem>
                 @if (currentUser.vcsAccessToken) {
-                    <table tumUiTable [striped]="true" class="w-full">
+                    <table tumAetUiTable [striped]="true" class="w-full">
                         <thead>
                             <tr>
                                 <th>
@@ -35,7 +35,7 @@
                                 <td>
                                     <button
                                         type="button"
-                                        tumUiButton
+                                        tumAetUiButton
                                         severity="danger"
                                         size="small"
                                         id="delete-vcs-token-button"
@@ -58,14 +58,14 @@
                 }
             </li>
             @if (!currentUser.vcsAccessToken) {
-                <li tumUiListItem>
-                    <tum-ui-button class="self-start" id="add-new-token-button" size="small" [icon]="faPlus" (clicked)="addNewVcsAccessToken()">
+                <li tumAetUiListItem>
+                    <tumaet-ui-button class="self-start" id="add-new-token-button" size="small" [icon]="faPlus" (clicked)="addNewVcsAccessToken()">
                         <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken"></span>
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 </li>
             }
         } @else {
-            <li tumUiListItem>
+            <li tumAetUiListItem>
                 <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>
 
                 <div class="mb-3 sm:w-1/2">
@@ -81,14 +81,14 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <tum-ui-button id="create-vcs-token-button" size="small" [disabled]="!validExpiryDate()" [icon]="faSave" (clicked)="sendTokenCreationRequest()">
+                    <tumaet-ui-button id="create-vcs-token-button" size="small" [disabled]="!validExpiryDate()" [icon]="faSave" (clicked)="sendTokenCreationRequest()">
                         <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken"></span>
-                    </tum-ui-button>
-                    <tum-ui-button id="cancel-vcs-token-creation-button" severity="secondary" size="small" [icon]="faBan" (clicked)="cancelTokenCreation()">
+                    </tumaet-ui-button>
+                    <tumaet-ui-button id="cancel-vcs-token-creation-button" severity="secondary" size="small" [icon]="faBan" (clicked)="cancelTokenCreation()">
                         <span jhiTranslate="entity.action.cancel"></span>
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 </div>
             </li>
         }
-    </tum-ui-list>
+    </tumaet-ui-list>
 }

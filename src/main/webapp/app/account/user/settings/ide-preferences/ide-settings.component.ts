@@ -5,14 +5,14 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiListComponent,
-    TumUiListItemDirective,
-    TumUiMenuComponent,
-    TumUiMenuItemDirective,
-    TumUiMenuTriggerDirective,
-    TumUiSelectButtonComponent,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiListComponent,
+    TumAetUiListItemDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiSelectButtonComponent,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -32,14 +32,14 @@ import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
         NgTemplateOutlet,
         FaIconComponent,
         FormsModule,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiMenuComponent,
-        TumUiMenuItemDirective,
-        TumUiMenuTriggerDirective,
-        TumUiSelectButtonComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiSelectButtonComponent,
         ArtemisTranslatePipe,
     ],
 })

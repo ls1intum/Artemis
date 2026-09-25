@@ -1,10 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { KnowledgeAreaDTO, Source, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class StandardizedCompetencyService {
     private httpClient = inject(HttpClient);
 

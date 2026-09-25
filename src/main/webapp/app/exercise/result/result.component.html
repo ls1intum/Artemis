@@ -130,6 +130,7 @@
                             jhiTranslate="artemisApp.result.missing.programmingFailedSubmission.message"
                         ></span>
                     }
+                    @default {}
                 }
                 @if (result(); as missingResult) {
                     @if (resolvedExercise()?.type !== ExerciseType.QUIZ) {

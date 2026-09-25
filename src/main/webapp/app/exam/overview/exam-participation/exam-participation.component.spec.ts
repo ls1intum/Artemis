@@ -52,7 +52,7 @@ import { ArtemisServerDateService } from 'app/foundation/service/server-date.ser
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
-import { Subject, of, throwError } from 'rxjs';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 import { skip } from 'rxjs/operators';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
@@ -205,6 +205,12 @@ describe('ExamParticipationComponent', () => {
     it('should initialize', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(ExamParticipationComponent).toBeTruthy();
+    });
+
+    it('should stop handling live events when the exam is left', () => {
+        const resetSpy = vi.spyOn(examParticipationLiveEventsService, 'reset');
+        comp.ngOnDestroy();
+        expect(resetSpy).toHaveBeenCalledOnce();
     });
 
     describe('ExamParticipationSummaryComponent for TestRuns', () => {
@@ -972,6 +978,22 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam()?.submitted).toBe(true);
     });
 
+    it('should stop handling live events again if the submission response arrives after the exam was left', () => {
+        comp.studentExam.set(new StudentExam());
+        comp.studentExam().submitted = false;
+        comp.exam.set(new Exam());
+        const submissionResponse = new Subject<void>();
+        vi.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(submissionResponse);
+        const resetSpy = vi.spyOn(examParticipationLiveEventsService, 'reset');
+
+        comp.onExamEndConfirmed();
+        comp.ngOnDestroy();
+        expect(resetSpy).toHaveBeenCalledOnce();
+        submissionResponse.next();
+
+        expect(resetSpy).toHaveBeenCalledTimes(2);
+    });
+
     it('should leave the hand-in-early view after a successful early submission so the confirmation panel can show', () => {
         // Regression for the delayed-summary flow: after handing in early the student stayed on the hand-in-early cover with a
         // disabled Finish button, because handInEarly was never reset. With a publication date in the future there is also no
@@ -1664,6 +1686,22 @@ describe('ExamParticipationComponent', () => {
             summarySpy.mockClear();
             retryButton.nativeElement.click();
             expect(summarySpy).toHaveBeenCalledOnce();
+        });
+
+        it('should stop handling the live events of the previous exam when the reused component navigates to another exam', () => {
+            const params = new Subject<{ [key: string]: string }>();
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.params = params;
+            setRouteStudentExamId(activatedRoute, undefined);
+            // the next exam never finishes loading
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(NEVER);
+            const resetSpy = vi.spyOn(examParticipationLiveEventsService, 'reset');
+            comp.ngOnInit();
+
+            params.next({ courseId: '1', examId: '2' });
+            params.next({ courseId: '1', examId: '7' });
+
+            expect(resetSpy).toHaveBeenCalledTimes(2);
         });
 
         it('should clear the error state when the reused component navigates to another exam', () => {

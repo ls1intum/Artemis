@@ -1,4 +1,4 @@
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="visible"
     size="large"
     [closable]="true"
@@ -27,7 +27,9 @@
     }
 
     @if (error()) {
-        <tum-ui-message severity="error" class="w-full" data-testid="browser-error">{{ 'artemisApp.courseIngestionDashboard.browser.error' | artemisTranslate }}</tum-ui-message>
+        <tumaet-ui-message severity="error" class="w-full" data-testid="browser-error">{{
+            'artemisApp.courseIngestionDashboard.browser.error' | artemisTranslate
+        }}</tumaet-ui-message>
     }
 
     @if (!loading() && !error() && data()) {
@@ -53,4 +55,4 @@
             </div>
         }
     }
-</tum-ui-dialog>
+</tumaet-ui-dialog>

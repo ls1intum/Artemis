@@ -4,8 +4,8 @@ title: Client Tests
 sidebar_label: Client Tests
 ---
 
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 **If you are new to client testing, it is highly recommended that you work through the** [testing part](https://angular.dev/guide/testing) **of the angular tutorial.**
 
@@ -34,13 +34,14 @@ The following sections outline **best practices** for writing client tests in Ar
 
 ## Test Isolation
 
-* Always test a component in isolation.
-* Do not import entire production modules.
-* Use **mock pipes, directives, and components** where possible.
-* Only use real dependencies if absolutely necessary.
-* Prefer [stubs for child components](https://angular.dev/guide/testing/components-scenarios#stubbing-unneeded-components).
+- Always test a component in isolation.
+- Do not import entire production modules.
+- Use **mock pipes, directives, and components** where possible.
+- Only use real dependencies if absolutely necessary.
+- Prefer [stubs for child components](https://angular.dev/guide/testing/components-scenarios#stubbing-unneeded-components).
 
 **Example: Bad practice**
+
 ```ts
 describe('ParticipationSubmissionComponent', () => {
     ...
@@ -73,8 +74,8 @@ Imports large modules → test runtime: 313.931s:
 PASS  src/test/javascript/spec/component/participation-submission/participation-submission.component.spec.ts (313.931 s, 625 MB heap size)
 ```
 
-
 **Example: Good practice**
+
 ```ts
 describe('ParticipationSubmissionComponent', () => {
     ...
@@ -113,7 +114,7 @@ Now the whole testing suite is running **~25 times faster**!
 
 Here are the improvements for the test above:
 
-* **Removed** production module imports:
+- **Removed** production module imports:
 
 ```text
 - ArtemisResultModule
@@ -121,7 +122,7 @@ Here are the improvements for the test above:
 - TranslateModule.forRoot()
 ```
 
-* **Mocked** pipes, directives and components that are not supposed to be tested:
+- **Mocked** pipes, directives and components that are not supposed to be tested:
 
 ```text
 + MockTranslateValuesDirective
@@ -135,14 +136,86 @@ Here are the improvements for the test above:
 
 More examples on test speed improvement can be found in the [following PR](https://github.com/ls1intum/Artemis/pull/3879/files).
 
+## Testing Directives
+
+Test a directive that acts on its own element with `TestBed.createDirective` instead of declaring a host component
+only to apply it. TestBed creates the host element, applies the directive to it and returns a `DirectiveFixture`. The
+fixture exposes the directive as `directiveInstance` and the host element as `nativeElement`, and offers
+`detectChanges()`, `whenStable()` and `destroy()` like a component fixture. Inputs, outputs and models are bound with
+`inputBinding`, `outputBinding` and `twoWayBinding` from `@angular/core`: `inputBinding` reads a signal or a getter
+function, `outputBinding` calls a handler, and `twoWayBinding` writes a `model()` back into a writable signal.
+
+```ts
+import { WritableSignal, inputBinding, outputBinding, signal } from '@angular/core';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
+
+describe('MarkdownDirective', () => {
+    let fixture: DirectiveFixture<MarkdownDirective>;
+    let text: WritableSignal<string | undefined>;
+    let renderCount: number;
+
+    beforeEach(() => {
+        text = signal<string | undefined>(undefined);
+        renderCount = 0;
+        fixture = TestBed.createDirective(MarkdownDirective, {
+            tagName: 'div',
+            bindings: [inputBinding('jhiMarkdown', text), outputBinding('markdownRendered', () => renderCount++)],
+        });
+    });
+
+    it('renders markdown into the host element', async () => {
+        text.set('some **bold** text');
+        fixture.detectChanges();
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.innerHTML).toContain('<strong>bold</strong>');
+        });
+        expect(renderCount).toBe(1);
+    });
+});
+```
+
+Pass `tagName` whenever the selector does not name exactly one element: `createDirective` throws for `[jhiMarkdown]`,
+which names none, and for a selector that names two different tags. `table[tumAetUiTable]` creates a `<table>` on its
+own. Bind an input by its public name, which is the alias where the directive declares one; a name the directive does
+not have throws `NG0315` in development mode. Register providers with `TestBed.configureTestingModule` before calling
+`createDirective`; `compileComponents()` is not needed.
+
+Output bindings are subscribed as soon as the directive exists, but input bindings are applied on the first
+`fixture.detectChanges()`. Until then an input holds its default value, and reading a required input throws. After
+that, a changed signal reaches the directive on the next `fixture.detectChanges()`.
+
+The host element starts out empty, directly under `<body>`, and the directive's constructor has already run when
+`createDirective` returns. That is no different from a template: Angular creates a directive before the child elements
+of its host, so a constructor sees no children there either. Content the directive reads in `ngOnInit` or later can be
+appended to `fixture.nativeElement` before the first `fixture.detectChanges()`. `fixture.debugElement` is the host
+element, and it belongs to an internal empty component, so `debugElement.query()` does not find elements inside it.
+Query them through `fixture.nativeElement` instead.
+
+Keep a host component where the directive needs a template around it:
+
+- Structural directives, which inject a `TemplateRef`, such as `*jhiHasAnyAuthority` and `*jhiExtensionPoint`.
+- Directives that need something around or beside them, or content Angular keeps rendering inside them: `jhiSortBy`
+  needs `jhiSort` on an enclosing element and reads the icon projected into it, a validator tested through `ngModel`
+  needs the `NgModel` beside it, and `infinite-scroll` has to keep its sentinels around a `@for` list.
+- Directives whose constructor reads a static attribute the template writes on the host, such as the `href` that
+  `jhiSecureLink` must leave alone. Angular writes static attributes before it creates the directive, which
+  `createDirective` cannot do.
+- Inputs that take a `TemplateRef` or a component instance declared in the same template, such as
+  `jhiStickyPopover` and `tumAetUiPopoverTrigger`.
+
+An abstract base directive is still tested through a concrete subclass. One spec can use both: `createDirective` for
+the cases that fit, and a small host component, with a comment saying why, for the case that needs a template.
+`secure-link.directive.spec.ts` does this for its `href` case.
 
 ## Mocking Rules
 
 ### Services
 
-* Mock services if they just return data from the server.
-* If the service has important logic → keep the real service but mock **HTTP requests and responses** instead.
-* This allows us to test the interaction of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the [official angular documentation](https://angular.dev/guide/http/testing).
+- Mock services if they just return data from the server.
+- If the service has important logic → keep the real service but mock **HTTP requests and responses** instead.
+- This allows us to test the interaction of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the [official angular documentation](https://angular.dev/guide/http/testing).
 
 ```ts
 import { provideHttpClient } from '@angular/common/http';
@@ -180,23 +253,22 @@ describe('SomeComponent', () => {
 });
 ```
 
-* **Never use** `NO_ERRORS_SCHEMA` ([angular documentation](https://angular.dev/guide/testing/components-scenarios#noerrorsschema)). Use stubs/mocks instead.
+- **Never use** `NO_ERRORS_SCHEMA` ([angular documentation](https://angular.dev/guide/testing/components-scenarios#noerrorsschema)). Use stubs/mocks instead.
 
-* **Reset mocks** with `vi.restoreAllMocks()` in `afterEach`.
-    * This is important if they get defined across multiple tests
-    * Only works if mocks are created with `vi.spyOn`.
-    * Avoid manually assigning `vi.fn()`.
-
+- **Reset mocks** with `vi.restoreAllMocks()` in `afterEach`.
+    - This is important if they get defined across multiple tests
+    - Only works if mocks are created with `vi.spyOn`.
+    - Avoid manually assigning `vi.fn()`.
 
 ## Coverage & Quality
 
-* Ensure at least **80% line coverage**.
-    * Run `pnpm test` for coverage report.
-    * Or [run the tests in IntelliJ IDEA with coverage activated](https://www.jetbrains.com/help/idea/running-test-with-coverage.html).
+- Ensure at least **80% line coverage**.
+    - Run `pnpm test` for coverage report.
+    - Or [run the tests in IntelliJ IDEA with coverage activated](https://www.jetbrains.com/help/idea/running-test-with-coverage.html).
 
-* Prefer **user-interaction tests** instead of testing internal methods directly.
-    * Example: If you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click, and then assert that the data has been loaded and that the expected template changes have occurred.
-    * Here is an example of such a test for [exercise-update-warning component](https://github.com/ls1intum/Artemis/blob/6e44346c77ce4c817e24269f0150b4118bc12f50/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L46)
+- Prefer **user-interaction tests** instead of testing internal methods directly.
+    - Example: If you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click, and then assert that the data has been loaded and that the expected template changes have occurred.
+    - Here is an example of such a test for [exercise-update-warning component](https://github.com/ls1intum/Artemis/blob/6e44346c77ce4c817e24269f0150b4118bc12f50/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L46)
 
 ```ts
 it('should trigger saveExerciseWithoutReevaluation once', () => {
@@ -213,9 +285,9 @@ it('should trigger saveExerciseWithoutReevaluation once', () => {
 });
 ```
 
-* **Do not** use `overrideTemplate()` to remove templates.
-    * The template is part of the component and must be tested.
-    * Do not do this:
+- **Do not** use `overrideTemplate()` to remove templates.
+    - The template is part of the component and must be tested.
+    - Do not do this:
 
 ```ts
 describe('SomeComponent', () => {
@@ -242,9 +314,9 @@ describe('SomeComponent', () => {
 
 Use clear terminology for test doubles:
 
-* `Spy` → observes calls, no replacement.
-* `Mock` → spy + returns custom values for specific inputs.
-* `Stub` → spy + returns fixed values regardless of input.
+- `Spy` → observes calls, no replacement.
+- `Mock` → spy + returns custom values for specific inputs.
+- `Stub` → spy + returns fixed values regardless of input.
 
 Example:
 
@@ -253,16 +325,15 @@ const clearSpy = vi.spyOn(component, 'clear');
 const getNumberStub = vi.spyOn(component, 'getNumber').mockReturnValue(42);
 ```
 
-
 ## Expectations
 
-* Make expectations as **specific** as possible.
-  * `expect(value).toBe(5)` is better than `expect(value).not.toBeUndefined()`.
+- Make expectations as **specific** as possible.
+    - `expect(value).toBe(5)` is better than `expect(value).not.toBeUndefined()`.
 
-* Always follow `expect` with a matcher.
-    * Use meaningful, specific assertions instead of generic booleans.
-    * Extract as much as possible from the `expect` statement
-    * For example, instead of
+- Always follow `expect` with a matcher.
+    - Use meaningful, specific assertions instead of generic booleans.
+    - Extract as much as possible from the `expect` statement
+    - For example, instead of
 
 ```ts
 expect(course == undefined).toBeTrue();
@@ -276,12 +347,12 @@ expect(course).toBeUndefined();
 expect(courseList).toHaveLength(4);
 ```
 
-* If you have minimized `expect`, use the verification function that provides the most meaningful error message in case the verification fails.
+- If you have minimized `expect`, use the verification function that provides the most meaningful error message in case the verification fails.
 
-* Use a **uniform style** for common cases to keep the codebase as consistent as possible:
+- Use a **uniform style** for common cases to keep the codebase as consistent as possible:
 
 | Situation                                  | Solution                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-|--------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Expecting a boolean value                  | `expect(value).toBeTrue();`<br/>`expect(value).toBeFalse();`                                                                                                                                                                                                                                                                                                                                                                                          |
 | Two objects should be the same reference   | `expect(object).toBe(referenceObject);`                                                                                                                                                                                                                                                                                                                                                                                                               |
 | A CSS element should exist                 | `expect(element).not.toBeNull();`                                                                                                                                                                                                                                                                                                                                                                                                                     |

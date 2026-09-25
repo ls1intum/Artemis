@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
@@ -38,7 +38,7 @@ export interface StoredCoverageRequest extends LiveCoverageRequest {
  * The paged endpoints return the array body plus a total count read from the `X-Total-Count` response header, which is
  * why they observe the full response.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseIngestionDashboardService {
     private http = inject(HttpClient);
 

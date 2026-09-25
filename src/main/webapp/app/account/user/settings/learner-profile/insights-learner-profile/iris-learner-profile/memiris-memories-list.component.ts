@@ -7,7 +7,7 @@ import { MemirisMemory, MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } fr
 import { firstValueFrom } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiListComponent, TumUiListItemDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 import { MemirisMemoryDetailsComponent } from './memiris-memory-details.component';
@@ -19,13 +19,13 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         CommonModule,
         TranslateDirective,
         FaIconComponent,
-        TumUiButtonComponent,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiMessageComponent,
         ArtemisTranslatePipe,
         MemirisMemoryDetailsComponent,
-        TumUiDialogComponent,
+        TumAetUiDialogComponent,
         ResolveMemoriesConflictsModalComponent,
     ],
     templateUrl: './memiris-memories-list.component.html',

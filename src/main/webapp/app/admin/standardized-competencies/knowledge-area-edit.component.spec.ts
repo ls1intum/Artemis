@@ -17,7 +17,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 describe('KnowledgeAreaEditComponent', () => {
     let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
     let component: KnowledgeAreaEditComponent;
@@ -60,11 +60,11 @@ describe('KnowledgeAreaEditComponent', () => {
                     MockComponent(MarkdownEditorMonacoComponent),
                     MockDirective(TranslateDirective),
                     MockDirective(DeleteButtonDirective),
-                    MockComponent(TumUiButtonComponent),
-                    MockComponent(TumUiButtonDirective),
-                    MockDirective(TumUiInputDirective),
-                    MockComponent(TumUiSelectComponent),
-                    MockComponent(TumUiMessageComponent),
+                    MockComponent(TumAetUiButtonComponent),
+                    MockComponent(TumAetUiButtonDirective),
+                    MockDirective(TumAetUiInputDirective),
+                    MockComponent(TumAetUiSelectComponent),
+                    MockComponent(TumAetUiMessageComponent),
                 ],
             },
         });

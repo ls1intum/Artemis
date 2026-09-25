@@ -11,7 +11,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiDialogComponent, TumUiInputDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -61,11 +61,11 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         QueuedJobsTableComponent,
         FinishedJobsTableComponent,
         FinishedBuildsFilterModalComponent,
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiButtonGroupComponent,
-        TumUiInputDirective,
-        TumUiTagComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {

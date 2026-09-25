@@ -1,9 +1,9 @@
-<tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.matrix.title' | artemisTranslate">
+<tumaet-ui-panel [header]="'artemisApp.courseIngestionDashboard.matrix.title' | artemisTranslate">
     <div class="flex flex-wrap items-center gap-3 mb-3">
         <input
             #searchBox
-            tumUiInput
-            [tumUiInputSize]="'small'"
+            tumAetUiInput
+            [tumAetUiInputSize]="'small'"
             type="text"
             class="w-64"
             [placeholder]="'artemisApp.courseIngestionDashboard.matrix.search' | artemisTranslate"
@@ -11,7 +11,7 @@
             (input)="onSearchInput(searchBox.value)"
             data-testid="coverage-search"
         />
-        <tum-ui-select-button
+        <tumaet-ui-select-button
             [options]="statusOptions()"
             optionLabel="label"
             optionValue="value"
@@ -20,7 +20,7 @@
             (ngModelChange)="onStatusChange($event)"
             [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.filterByStatus' | artemisTranslate"
         />
-        <tum-ui-select-button
+        <tumaet-ui-select-button
             [options]="activeOptions()"
             optionLabel="label"
             optionValue="value"
@@ -35,7 +35,7 @@
                     <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.lastUpdatedLabel"></span>: {{ updated | artemisDate }}
                 </span>
             }
-            <tum-ui-button
+            <tumaet-ui-button
                 severity="secondary"
                 variant="outlined"
                 size="small"
@@ -53,12 +53,12 @@
     }
 
     @if (error()) {
-        <tum-ui-message severity="error" class="w-full">{{ 'artemisApp.courseIngestionDashboard.matrix.error' | artemisTranslate }}</tum-ui-message>
+        <tumaet-ui-message severity="error" class="w-full">{{ 'artemisApp.courseIngestionDashboard.matrix.error' | artemisTranslate }}</tumaet-ui-message>
     }
 
     @if (!loading() && !error()) {
         <div class="overflow-x-auto">
-            <table tumUiTable size="small" rowHover>
+            <table tumAetUiTable size="small" rowHover>
                 <thead>
                     <tr>
                         <th colspan="2"></th>
@@ -165,7 +165,7 @@
 
         <p class="text-xs text-muted-color mt-2 mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.legend"></p>
 
-        <tum-ui-paginator
+        <tumaet-ui-paginator
             class="block mt-2"
             [totalRecords]="totalRecords()"
             [page]="page()"
@@ -175,4 +175,4 @@
             [ariaLabel]="'artemisApp.courseIngestionDashboard.matrix.title' | artemisTranslate"
         />
     }
-</tum-ui-panel>
+</tumaet-ui-panel>

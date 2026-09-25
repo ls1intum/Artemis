@@ -2,7 +2,14 @@
     "artemisApp": {
         "featureUsage": {
             "title": "Feature-Nutzung",
-            "description": "Wie häufig die einzelnen Teile von Artemis im gewählten Zeitraum tatsächlich genutzt wurden. Die Zahlen stammen vom Server selbst, werden pro Tag zusammengefasst und enthalten keine Angaben zu einzelnen Nutzenden. Features ohne jede Nutzung werden ebenfalls aufgeführt, denn genau dort lohnt sich eine Entscheidung. Features, die diese Version nicht mehr anbietet, werden separat gezählt und verwässern diese Liste daher nicht.",
+            "description": "Wie die Funktionen von Artemis im gewählten Zeitraum genutzt wurden, gruppiert in Produktbereiche so, wie Nutzer:innen sie kennen. Die Zahlen stammen vom Server selbst, werden pro Tag zusammengefasst und enthalten nichts über einzelne Nutzer:innen. Auch ungenutzte Funktionen werden aufgeführt, denn über sie lohnt sich eine Entscheidung.",
+            "limitations": "Die Rolle ist die höchste Rolle der aufrufenden Person in irgendeinem Kurs, nicht ihre Rolle in dem Kurs, den der Aufruf betraf. Git- und Hintergrundfunktionen haben keine aufrufende Person und zählen als anonym. WebSocket-Verkehr wird nicht gezählt, deshalb erscheinen Funktionen, die überwiegend über den Websocket kommunizieren, seltener genutzt als sie es sind.",
+            "legend": {
+                "action": "die Person hat etwas getan, etwa abgegeben, erstellt oder erzeugt",
+                "view": "die Person hat sich etwas angesehen, das die Funktion anzeigt",
+                "automatic": "die Seite hat den Server von sich aus aufgerufen, etwa für eine Statusabfrage oder ein Badge; zählt nicht als Nutzung",
+                "system": "ein anderes System hat den Server aufgerufen, etwa ein Build-Agent oder ein KI-Dienst mit einem Ergebnis; zählt nicht als Nutzung"
+            },
             "window": {
                 "label": "Zeitraum",
                 "days7": "7 Tage",
@@ -11,54 +18,719 @@
                 "days180": "180 Tage"
             },
             "kpi": {
-                "trackedFeatures": "Erfasste Features",
-                "unusedFeatures": "In diesem Zeitraum ungenutzt",
-                "totalCalls": "Aufrufe insgesamt",
-                "retiredFeatures": "Nicht mehr vorhanden",
-                "recordingSince": "Erfassung seit",
-                "endpointDetail": "{{ count }} Endpunkte"
+                "usedFeatures": "Genutzte Funktionen",
+                "ofAvailable": "von {{ count }} hier angebotenen",
+                "onlyAutomatic": "Nur automatische oder Systemaufrufe",
+                "onlyAutomaticDetail": "von Seiten oder anderen Systemen aufgerufen, aber von niemandem genutzt",
+                "unusedFeatures": "Ungenutzt",
+                "unusedDetail": "angeboten, aber kein einziger Aufruf",
+                "noActions": "Angesehen, keine Aktionen",
+                "noActionsDetail": "angesehen, aber nie verwendet",
+                "notAvailable": "Hier nicht angeboten",
+                "retiredEndpoints": "{{ count }} Endpunkte nicht mehr angeboten",
+                "uses": "Nutzungen",
+                "usesDetail": "{{ actions }} Aktionen, {{ views }} Ansichten, {{ automatic }} automatische und {{ system }} Systemaufrufe",
+                "recordingSince": "Erfassung seit"
             },
             "tab": {
-                "tree": "Erkunden",
-                "allFeatures": "Alle Features",
-                "unused": "Ungenutzt",
-                "adoption": "Verbreitung"
+                "features": "Funktionen",
+                "attention": "Handlungsbedarf",
+                "adoption": "Verbreitung",
+                "endpoints": "Endpunkte"
             },
             "column": {
-                "module": "Modul",
-                "feature": "Feature",
-                "calls": "Aufrufe",
+                "area": "Bereich",
+                "feature": "Funktion",
+                "status": "Status",
+                "actions": "Aktionen",
+                "views": "Ansichten",
+                "automatic": "Automatisch",
+                "system": "System",
                 "activeDays": "Aktive Tage",
+                "lastUsed": "Zuletzt genutzt",
                 "errorRate": "Fehler",
                 "meanDuration": "Mittel (ms)",
-                "maxDuration": "Max (ms)",
-                "lastUsed": "Zuletzt genutzt",
+                "maxDuration": "Max. (ms)",
                 "trend": "Verlauf anzeigen",
+                "modules": "Module",
+                "endpoint": "Endpunkt",
+                "interaction": "Zählt als",
+                "calls": "Aufrufe",
+                "setting": "Einstellung",
                 "enabledOn": "Aktiviert bei",
-                "share": "Anteil",
-                "unusedBelow": "Ungenutzt"
+                "share": "Anteil"
             },
-            "search": "Nach Feature oder Modul filtern",
-            "moduleFilter": "Modul",
+            "status": {
+                "USED": "Genutzt",
+                "ONLY_AUTOMATIC": "Nur automatische oder Systemaufrufe",
+                "UNUSED": "Ungenutzt",
+                "NOT_AVAILABLE": "Hier nicht angeboten"
+            },
+            "interaction": {
+                "ACTION": "Aktion",
+                "VIEW": "Ansicht",
+                "AUTOMATIC": "Automatisch",
+                "SYSTEM": "System"
+            },
+            "kind": {
+                "REST": "REST",
+                "GIT": "Git",
+                "BACKGROUND": "Hintergrund"
+            },
+            "attention": {
+                "onlyAutomatic": {
+                    "title": "Nur automatische oder Systemaufrufe",
+                    "hint": "Den Server erreichen Aufrufe dieser Funktionen, weil Seiten, die Nutzer:innen öffnen, sie von sich aus aufrufen oder weil ein anderes System es tut, genutzt hat sie aber niemand. Allein nach Aufrufen gezählt, wirkten sie wie die meistgenutzten Funktionen."
+                },
+                "unused": {
+                    "title": "Ungenutzt",
+                    "hint": "In diesem System angeboten, aber im Zeitraum kein einziger Aufruf."
+                },
+                "noActions": {
+                    "title": "Angesehen, keine Aktionen",
+                    "hint": "Nutzer:innen sehen sich an, was diese Funktionen anzeigen, führen aber nie den Schritt aus, für den sie gedacht sind. Bei einer Funktion, die vor allem gelesen wird, kann das in Ordnung sein, bei einer Hilfe für Lehrende meist nicht."
+                },
+                "none": "Keine in diesem Zeitraum."
+            },
+            "noActionsTag": "Angesehen, keine Aktionen",
+            "noActionsHint": "Die Funktion hat Endpunkte, die etwas tun, und keiner davon wurde in diesem Zeitraum aufgerufen.",
+            "adoptionTag": "Aktiviert bei {{ count }} von {{ total }}",
+            "featuresUsed": "{{ used }} von {{ available }} genutzt",
+            "retiredTag": "nicht mehr angeboten",
+            "uncatalogued": "Keine Funktion",
+            "showNotAvailable": "Hier nicht angebotene Funktionen anzeigen",
+            "search": "Funktionen, Module, Ressourcen oder Pfade suchen",
+            "areaFilter": "Nach Bereich filtern",
+            "allAreas": "Alle Bereiche",
+            "moduleFilter": "Nach Modul filtern",
             "allModules": "Alle Module",
-            "endpointCount": "{{ count }} Endpunkte",
-            "unusedTag": "ungenutzt",
-            "roleDistribution": "Aufrufe nach Rolle der aufrufenden Person. Gemeint ist die globale Rolle, nicht die Rolle in einem bestimmten Kurs. Git- und Hintergrund-Features haben keine aufrufende Person und zählen als anonym.",
-            "noUsageYet": "Für diesen Zeitraum wurde noch keine Nutzung erfasst. Die Zähler werden alle paar Minuten geschrieben, ein frisch gestarteter Server braucht also einen Moment, bis die ersten Zahlen erscheinen.",
-            "noMatches": "Kein Feature entspricht dem aktuellen Filter.",
-            "noAdoptionData": "Kein Modul hat Daten zur Verbreitung gemeldet.",
-            "trendTitle": "Aufrufe pro Tag",
-            "closeTrend": "Schließen",
-            "limitations": "Zwei Dinge bleiben unsichtbar. WebSocket-Verkehr wird nicht gezählt, deshalb erscheinen Features, die überwiegend über den Websocket kommunizieren (Live-Quiz, Nachrichten, Klausur-Synchronisation), seltener genutzt als sie es sind. Von der Authentifizierung abgewiesene Anfragen erreichen keinen Handler und werden gar nicht gezählt.",
+            "roleFilter": "Nach Rolle der aufrufenden Person filtern",
             "allRoles": "Alle Rollen",
-            "roleFilter": "Rolle der aufrufenden Person",
-            "retiredTag": "nicht mehr vorhanden",
+            "roleDistribution": "Aktionen und Ansichten pro Rolle",
+            "noUsageYet": "In diesem Zeitraum wurde noch keine Aktion und keine Ansicht erfasst. Die Zähler werden alle paar Minuten geschrieben, deshalb zeigt ein frisch gestarteter Server zunächst nichts an.",
+            "noMatches": "Keine passenden Einträge.",
+            "noAdoptionData": "Keine Daten zur Verbreitung verfügbar.",
+            "trendTitle": "Täglicher Verlauf",
+            "closeTrend": "Schließen",
             "sendDigest": "Wöchentliche E-Mail jetzt senden",
-            "digestSent": "Die E-Mail zur Feature-Nutzung wurde gesendet.",
-            "digestFailed": "Die E-Mail konnte nicht gesendet werden. Prüfe, ob ein Empfänger konfiguriert und der Versand aktiviert ist.",
-            "expandAll": "Alle ausklappen",
-            "collapseAll": "Alle einklappen",
-            "featureCount": "{{ count }} Features"
+            "digestSent": "Die wöchentliche E-Mail zur Feature-Nutzung wurde gesendet.",
+            "digestFailed": "Die wöchentliche E-Mail zur Feature-Nutzung konnte nicht gesendet werden. Prüfe, ob der Bericht aktiviert und ein Empfänger konfiguriert ist.",
+            "expandAll": "Alle aufklappen",
+            "collapseAll": "Alle zuklappen",
+            "catalog": {
+                "area": {
+                    "COURSES": "Kurse",
+                    "COURSE_MANAGEMENT": "Kursverwaltung",
+                    "EXERCISES": "Aufgaben",
+                    "PROGRAMMING": "Programmieraufgaben",
+                    "QUIZ": "Quizze",
+                    "TEXT_MODELING_UPLOAD": "Text-, Modellierungs- und Datei-Upload-Aufgaben",
+                    "ASSESSMENT": "Bewertung und Benotung",
+                    "EXAMS": "Klausuren",
+                    "LECTURES": "Vorlesungen",
+                    "COMMUNICATION": "Kommunikation",
+                    "NOTIFICATIONS": "Benachrichtigungen",
+                    "TUTORIAL_GROUPS": "Übungsgruppen",
+                    "COMPETENCIES": "Kompetenzen und Lernpfade",
+                    "AI_LEARNERS": "KI für Lernende",
+                    "AI_AUTHORING": "KI für Lehrende und Tutor:innen",
+                    "INTEGRITY": "Akademische Integrität",
+                    "ACCOUNT": "Konto und Sicherheit",
+                    "INTEGRATIONS": "Integrationen",
+                    "BUILD_SYSTEM": "Build-System",
+                    "ADMINISTRATION": "Administration und Betrieb"
+                },
+                "feature": {
+                    "COURSE_DASHBOARD": {
+                        "name": "Meine Kurse",
+                        "description": "Die Kurskarten auf der Startseite und das Archiv vergangener Kurse."
+                    },
+                    "COURSE_OVERVIEW": {
+                        "name": "Kursseite",
+                        "description": "Die Studierendenansicht eines Kurses mit Seitenleiste und Aufgabenliste."
+                    },
+                    "COURSE_ENROLLMENT": {
+                        "name": "Einschreibung",
+                        "description": "Selbsteinschreibung in offene Kurse und das Verlassen eines Kurses."
+                    },
+                    "STUDENT_COURSE_STATISTICS": {
+                        "name": "Meine Statistiken und Notenschlüssel",
+                        "description": "Die eigenen Punkte je Aufgabentyp und der Notenschlüssel des Kurses."
+                    },
+                    "CALENDAR": {
+                        "name": "Kurskalender",
+                        "description": "Monats-, Wochen- und Tagesansicht der Kurstermine sowie das Kalenderabonnement."
+                    },
+                    "GLOBAL_SEARCH": {
+                        "name": "Globale Suche",
+                        "description": "Der Suchdialog für Kurse, Aufgaben, Vorlesungen und Vorlesungsinhalte."
+                    },
+                    "COURSE_CREATION": {
+                        "name": "Kurserstellung und Kursanfragen",
+                        "description": "Kurse anlegen und neue Kurse bei der Administration anfragen."
+                    },
+                    "COURSE_MANAGEMENT_OVERVIEW": {
+                        "name": "Kursverwaltungsübersicht",
+                        "description": "Die Liste der verwalteten Kurse und die Kursdetailseite für Lehrende."
+                    },
+                    "COURSE_SETTINGS": {
+                        "name": "Kurseinstellungen",
+                        "description": "Kurskonfiguration, Onboarding und die Schalter für optionale Funktionen."
+                    },
+                    "COURSE_MEMBERS": {
+                        "name": "Kursmitglieder",
+                        "description": "Verwaltung der Studierenden, Tutor:innen, Editor:innen und Lehrenden eines Kurses."
+                    },
+                    "COURSE_MATERIAL_IMPORT": {
+                        "name": "Import aus anderem Kurs",
+                        "description": "Import von Aufgaben, Vorlesungen, Klausuren und mehr aus einem früheren Kurs."
+                    },
+                    "COURSE_STATISTICS": {
+                        "name": "Kursstatistiken",
+                        "description": "Aktivitäts- und Leistungsdiagramme eines Kurses."
+                    },
+                    "COURSE_SCORES": {
+                        "name": "Kurspunkte",
+                        "description": "Die Tabelle der Punkte aller Studierenden über alle Aufgaben."
+                    },
+                    "COURSE_ARCHIVE": {
+                        "name": "Kursarchiv und Bereinigung",
+                        "description": "Archivierung eines abgeschlossenen Kurses und Bereinigung seiner Daten."
+                    },
+                    "COURSE_RESET_DELETE": {
+                        "name": "Kurs zurücksetzen und löschen",
+                        "description": "Zurücksetzen oder Löschen eines Kurses einschließlich Fortschrittsanzeige."
+                    },
+                    "MARKDOWN_UPLOADS": {
+                        "name": "Bilder in Markdown",
+                        "description": "Hochladen und Anzeigen von Bildern und Dateien in Markdown-Texten."
+                    },
+                    "EXERCISE_DETAILS": {
+                        "name": "Aufgabendetailseite",
+                        "description": "Die Seite, die Studierende für eine Aufgabe öffnen, mit der Aufgabenstellung."
+                    },
+                    "EXERCISE_PARTICIPATION": {
+                        "name": "Starten und Üben",
+                        "description": "Starten, Fortsetzen und Üben einer Aufgabe."
+                    },
+                    "EXERCISE_FEEDBACK": {
+                        "name": "Ergebnisse und Feedback",
+                        "description": "Das Ergebnis und Feedback, das Studierende zu einer Abgabe sehen."
+                    },
+                    "TEAM_EXERCISES": {
+                        "name": "Teamaufgaben",
+                        "description": "Teams anlegen und importieren und eine Aufgabe im Team bearbeiten."
+                    },
+                    "EXERCISE_VARIANT_GROUPS": {
+                        "name": "Aufgabenvariantengruppen",
+                        "description": "Austauschbare Aufgabenvarianten mit gemeinsamem Zeitplan und gemeinsamer Punktzahl."
+                    },
+                    "EXERCISE_MANAGEMENT": {
+                        "name": "Aufgabenverwaltung",
+                        "description": "Die Aufgabenliste eines Kurses für Lehrende und die gemeinsamen Aufgabenaktionen."
+                    },
+                    "EXERCISE_VERSION_HISTORY": {
+                        "name": "Versionsverlauf",
+                        "description": "Frühere Versionen einer Aufgabe ansehen."
+                    },
+                    "EXERCISE_REVIEW": {
+                        "name": "Review-Kommentare",
+                        "description": "Review-Threads zu Aufgabeninhalten und deren Auflösung."
+                    },
+                    "EXERCISE_PARTICIPATIONS_STAFF": {
+                        "name": "Teilnahmen",
+                        "description": "Die Ansicht der Teilnahmen, individuellen Abgabefristen und Abgaben für Lehrende."
+                    },
+                    "EXERCISE_SCORES": {
+                        "name": "Aufgabenpunkte und -statistiken",
+                        "description": "Ergebnisse je Studierendem, externe Ergebnisse und Aufgabenstatistiken."
+                    },
+                    "PROGRAMMING_ONLINE_EDITOR": {
+                        "name": "Online-Code-Editor",
+                        "description": "Code im Browser bearbeiten, committen und abgeben."
+                    },
+                    "PROGRAMMING_LOCAL_IDE": {
+                        "name": "Lokale IDE und Git",
+                        "description": "Repositories klonen und pushen, um in einer lokalen IDE zu arbeiten."
+                    },
+                    "PROGRAMMING_ONLINE_IDE": {
+                        "name": "Online-IDE",
+                        "description": "Eine Programmieraufgabe in der Cloud-IDE bearbeiten."
+                    },
+                    "PROGRAMMING_REPOSITORY_HISTORY": {
+                        "name": "Repository und Commit-Verlauf",
+                        "description": "Ein Repository, seine Commits und sein Zugriffsprotokoll ansehen."
+                    },
+                    "PROGRAMMING_RESULTS": {
+                        "name": "Build-Ergebnisse und Logs",
+                        "description": "Automatische Testergebnisse, Build-Status und Build-Logs."
+                    },
+                    "PROGRAMMING_AUTHORING": {
+                        "name": "Programmieraufgaben erstellen und bearbeiten",
+                        "description": "Programmieraufgaben anlegen, aktualisieren und löschen."
+                    },
+                    "PROGRAMMING_REPOSITORY_EDITING": {
+                        "name": "Aufgabenrepositories bearbeiten",
+                        "description": "Test- und Hilfsrepositories im Editor sowie Vorlagen-, Lösungs- und Testrepositories über Git bearbeiten."
+                    },
+                    "PROGRAMMING_BUILD_CONFIGURATION": {
+                        "name": "Build-Plan und Konfiguration",
+                        "description": "Den Build-Plan und die Build-Einstellungen einer Aufgabe bearbeiten."
+                    },
+                    "PROGRAMMING_GRADING_CONFIGURATION": {
+                        "name": "Testgewichte und statische Codeanalyse",
+                        "description": "Testgewichte, Bonuspunkte und Kategorien der Codeanalyse konfigurieren."
+                    },
+                    "PROGRAMMING_REEVALUATION": {
+                        "name": "Neu bewerten und Builds auslösen",
+                        "description": "Ergebnisse neu bewerten und die Builds aller Teilnehmenden auslösen."
+                    },
+                    "PROGRAMMING_SUBMISSION_POLICY": {
+                        "name": "Abgaberichtlinien",
+                        "description": "Grenzen und Abzüge für die Anzahl der Abgaben."
+                    },
+                    "PROGRAMMING_CONSISTENCY_CHECK": {
+                        "name": "Strukturelle Konsistenzprüfung",
+                        "description": "Repositories und Build-Pläne einer Aufgabe auf Fehler prüfen."
+                    },
+                    "PROGRAMMING_IMPORT_EXPORT": {
+                        "name": "Programmieraufgaben importieren und exportieren",
+                        "description": "Aufgaben importieren, exportieren und Repositories herunterladen."
+                    },
+                    "QUIZ_LIVE": {
+                        "name": "Live-Quiz",
+                        "description": "Teilnahme an einem synchronisierten, gruppierten oder individuellen Quiz."
+                    },
+                    "QUIZ_PRACTICE": {
+                        "name": "Quiz üben",
+                        "description": "Ein Quiz nach dessen Ende erneut bearbeiten."
+                    },
+                    "QUIZ_TRAINING": {
+                        "name": "Quiz-Training",
+                        "description": "Training mit dem Fragenpool des Kurses und der Bestenliste."
+                    },
+                    "QUIZ_AUTHORING": {
+                        "name": "Quiz-Editor",
+                        "description": "Quizfragen erstellen, auch Drag-and-Drop aus UML-Diagrammen."
+                    },
+                    "QUIZ_LIFECYCLE": {
+                        "name": "Quiz-Start und Gruppen",
+                        "description": "Ein Quiz starten und beenden und seine Gruppen verwalten."
+                    },
+                    "QUIZ_EVALUATION": {
+                        "name": "Quiz-Statistiken und Neubewertung",
+                        "description": "Fragestatistiken sowie Korrektur und Neubewertung eines Quiz."
+                    },
+                    "TEXT_EXERCISES": {
+                        "name": "Textaufgaben",
+                        "description": "Eine Textantwort schreiben und abgeben."
+                    },
+                    "TEXT_AUTHORING": {
+                        "name": "Textaufgaben erstellen",
+                        "description": "Textaufgaben anlegen, importieren und exportieren."
+                    },
+                    "MODELING_EXERCISES": {
+                        "name": "Modellierungsaufgaben",
+                        "description": "Ein UML-Diagramm zeichnen und abgeben."
+                    },
+                    "MODELING_AUTHORING": {
+                        "name": "Modellierungsaufgaben erstellen",
+                        "description": "Modellierungsaufgaben anlegen, importieren und exportieren."
+                    },
+                    "FILE_UPLOAD_EXERCISES": {
+                        "name": "Datei-Upload-Aufgaben",
+                        "description": "Dateien als Antwort auf eine Aufgabe hochladen."
+                    },
+                    "FILE_UPLOAD_AUTHORING": {
+                        "name": "Datei-Upload-Aufgaben erstellen",
+                        "description": "Datei-Upload-Aufgaben anlegen, importieren und exportieren."
+                    },
+                    "ASSESSMENT_DASHBOARD": {
+                        "name": "Bewertungs-Dashboard",
+                        "description": "Die Tutor-Dashboards von Kursen, Klausuren und Aufgaben sowie Bewertungssperren."
+                    },
+                    "MANUAL_ASSESSMENT": {
+                        "name": "Manuelle Bewertung",
+                        "description": "Bewertung von Text-, Modellierungs-, Datei-Upload- und Programmierabgaben."
+                    },
+                    "COMPLAINTS": {
+                        "name": "Beschwerden und Feedbackanfragen",
+                        "description": "Beschwerden der Studierenden über eine Bewertung und die Antworten der Tutor:innen."
+                    },
+                    "FEEDBACK_RATINGS": {
+                        "name": "Feedback-Bewertungen",
+                        "description": "Studierende bewerten das erhaltene Feedback."
+                    },
+                    "TUTOR_TRAINING": {
+                        "name": "Tutor:innen-Training",
+                        "description": "Beispielabgaben mit Beispielbewertungen zur Schulung der Tutor:innen."
+                    },
+                    "TUTOR_EFFORT": {
+                        "name": "Aufwand der Tutor:innen",
+                        "description": "Statistiken zur Zeit, die Tutor:innen für Bewertungen aufwenden."
+                    },
+                    "GRADING_KEYS": {
+                        "name": "Notenschlüssel",
+                        "description": "Notenstufen von Kursen und Klausuren."
+                    },
+                    "BONUS": {
+                        "name": "Bonus",
+                        "description": "Bonuspunkte aus einem anderen Kurs oder einer anderen Klausur."
+                    },
+                    "RESULTS_AND_FEEDBACK_ANALYSIS": {
+                        "name": "Ergebnisse und Feedbackanalyse",
+                        "description": "Zusammengefasstes Feedback über alle Abgaben einer Aufgabe."
+                    },
+                    "EXAM_TAKE": {
+                        "name": "Klausur schreiben",
+                        "description": "Eine Klausur beginnen, bearbeiten und abgeben."
+                    },
+                    "EXAM_TEST_EXAMS": {
+                        "name": "Testklausuren",
+                        "description": "Übungsklausuren mit mehreren Versuchen."
+                    },
+                    "EXAM_RESULTS": {
+                        "name": "Klausurergebnisse und Einsicht",
+                        "description": "Die Klausurzusammenfassung, die Note und die Einsichtnahme."
+                    },
+                    "EXAM_AUTHORING": {
+                        "name": "Klausuren erstellen und konfigurieren",
+                        "description": "Klausuren und Aufgabengruppen anlegen, importieren und konfigurieren."
+                    },
+                    "EXAM_REGISTRATION": {
+                        "name": "Klausuranmeldung",
+                        "description": "Studierende für eine Klausur anmelden."
+                    },
+                    "EXAM_ROOMS": {
+                        "name": "Räume und Sitzplätze",
+                        "description": "Klausurräume und die Verteilung der Studierenden auf Sitzplätze."
+                    },
+                    "EXAM_ATTENDANCE": {
+                        "name": "Anwesenheitskontrolle",
+                        "description": "Prüfung von Identität und Unterschrift während der Klausur."
+                    },
+                    "EXAM_CONDUCTION_MANAGEMENT": {
+                        "name": "Klausurdurchführung",
+                        "description": "Erzeugen der Klausuren, Testläufe, Bearbeitungszeit und Ankündigungen."
+                    },
+                    "EXAM_SUSPICIOUS_BEHAVIOR": {
+                        "name": "Verdächtiges Verhalten",
+                        "description": "Verdächtige Klausursitzungen und möglicher Plagiatsverdacht in einer Klausur."
+                    },
+                    "EXAM_SCORES": {
+                        "name": "Klausurpunkte und -statistiken",
+                        "description": "Die Punkte und Statistiken einer Klausur."
+                    },
+                    "EXAM_ARCHIVE": {
+                        "name": "Klausurarchiv, Zurücksetzen und Löschen",
+                        "description": "Archivieren, Zurücksetzen, Bereinigen und Löschen einer Klausur."
+                    },
+                    "LECTURE_PAGES": {
+                        "name": "Vorlesungsseiten",
+                        "description": "Die Liste der Vorlesungen und die Detailseite einer Vorlesung."
+                    },
+                    "LECTURE_UNITS": {
+                        "name": "Vorlesungseinheiten und Folien",
+                        "description": "Anhänge und Folien ansehen und Vorlesungseinheiten abschließen."
+                    },
+                    "LECTURE_VIDEO": {
+                        "name": "Vorlesungsvideos und Transkripte",
+                        "description": "Vorlesungsvideos ansehen und ihre Transkripte lesen."
+                    },
+                    "LECTURE_AUTHORING": {
+                        "name": "Vorlesungen erstellen und verwalten",
+                        "description": "Vorlesungen und ihre Einheiten anlegen und Vorlesungen importieren."
+                    },
+                    "LECTURE_SLIDE_PROCESSING": {
+                        "name": "Foliensplitting und versteckte Seiten",
+                        "description": "Einen Foliensatz in Einheiten aufteilen und Seiten für Studierende ausblenden."
+                    },
+                    "LECTURE_CONTENT_PROCESSING": {
+                        "name": "Automatische Inhaltsverarbeitung",
+                        "description": "Transkription und Verarbeitung von Vorlesungsinhalten."
+                    },
+                    "MESSAGING": {
+                        "name": "Nachrichten und Threads",
+                        "description": "Nachrichten in beliebigen Unterhaltungen schreiben, lesen und beantworten."
+                    },
+                    "CHANNELS": {
+                        "name": "Kanäle",
+                        "description": "Kanäle durchsuchen, anlegen und moderieren."
+                    },
+                    "DIRECT_MESSAGES": {
+                        "name": "Direktnachrichten und Gruppenchats",
+                        "description": "Einzel- und Gruppenunterhaltungen beginnen."
+                    },
+                    "CONVERSATION_ORGANIZATION": {
+                        "name": "Unterhaltungsliste",
+                        "description": "Favoriten, Stummschalten, ungelesene Nachrichten und der Verhaltenskodex."
+                    },
+                    "MESSAGE_INTERACTIONS": {
+                        "name": "Reaktionen, gespeicherte und weitergeleitete Nachrichten",
+                        "description": "Auf Nachrichten reagieren, sie speichern und weiterleiten."
+                    },
+                    "LINK_PREVIEWS": {
+                        "name": "Link-Vorschauen",
+                        "description": "Vorschauen von Links in Nachrichten."
+                    },
+                    "FAQ": {
+                        "name": "FAQs",
+                        "description": "Die häufig gestellten Fragen eines Kurses lesen, vorschlagen und verwalten."
+                    },
+                    "COURSE_NOTIFICATIONS": {
+                        "name": "In-App-Benachrichtigungen",
+                        "description": "Die Benachrichtigungsglocke mit den Benachrichtigungen jedes Kurses."
+                    },
+                    "NOTIFICATION_DELIVERY": {
+                        "name": "Zustellung von Benachrichtigungen",
+                        "description": "Zustellung von Benachrichtigungen in der App, per E-Mail und per Push."
+                    },
+                    "NOTIFICATION_SETTINGS": {
+                        "name": "Benachrichtigungseinstellungen",
+                        "description": "Auswahl, welche Benachrichtigungen empfangen werden."
+                    },
+                    "SYSTEM_NOTIFICATIONS": {
+                        "name": "Systembenachrichtigungen",
+                        "description": "Wartungs- und Informationsbanner für alle Nutzer:innen."
+                    },
+                    "TUTORIAL_GROUPS": {
+                        "name": "Meine Übungsgruppen",
+                        "description": "Die Übungsgruppen eines Kurses mit Terminplan und Sitzungen."
+                    },
+                    "TUTORIAL_GROUP_MANAGEMENT": {
+                        "name": "Übungsgruppenverwaltung",
+                        "description": "Gruppen anlegen, Studierende anmelden und freie Tage konfigurieren."
+                    },
+                    "TUTORIAL_GROUP_SESSIONS": {
+                        "name": "Übungsgruppensitzungen",
+                        "description": "Sitzungen anlegen, absagen und aktivieren."
+                    },
+                    "COMPETENCY_PROGRESS": {
+                        "name": "Kompetenzfortschritt",
+                        "description": "Fortschritt und Beherrschung der Studierenden je Kompetenz."
+                    },
+                    "COMPETENCY_MANAGEMENT": {
+                        "name": "Kompetenzverwaltung",
+                        "description": "Kompetenzen und Voraussetzungen anlegen, verknüpfen und importieren."
+                    },
+                    "STANDARDIZED_COMPETENCIES": {
+                        "name": "Katalog standardisierter Kompetenzen",
+                        "description": "Der gemeinsame Katalog standardisierter Kompetenzen."
+                    },
+                    "LEARNING_PATHS": {
+                        "name": "Lernpfade",
+                        "description": "Die persönliche Abfolge von Lernobjekten für Studierende."
+                    },
+                    "LEARNING_PATH_MANAGEMENT": {
+                        "name": "Lernpfadverwaltung",
+                        "description": "Lernpfade aktivieren und ihren Zustand überwachen."
+                    },
+                    "LEARNER_PROFILE": {
+                        "name": "Lernprofil",
+                        "description": "Die Lernpräferenzen von Studierenden."
+                    },
+                    "SCIENCE": {
+                        "name": "Forschungsdatenerhebung",
+                        "description": "Erfassung von Lernereignissen für die Forschung mit Widerspruchsmöglichkeit."
+                    },
+                    "IRIS_CHAT": {
+                        "name": "Iris-Chat",
+                        "description": "Mit Iris über einen Kurs, eine Aufgabe oder eine Vorlesung chatten."
+                    },
+                    "IRIS_MEMORY": {
+                        "name": "Iris-Erinnerungen",
+                        "description": "Was Iris sich über Studierende merkt, und das Löschen davon."
+                    },
+                    "IRIS_STRUGGLE_INTERVENTION": {
+                        "name": "Iris-Hilfe bei Schwierigkeiten",
+                        "description": "Iris bietet Hilfe an, wenn Studierende nicht weiterkommen."
+                    },
+                    "IRIS_SEARCH_ANSWER": {
+                        "name": "Iris-Antworten in der Suche",
+                        "description": "Eine KI-Antwort in der globalen Suche."
+                    },
+                    "IRIS_SETTINGS": {
+                        "name": "Iris-Kurseinstellungen",
+                        "description": "Iris für einen Kurs konfigurieren."
+                    },
+                    "IRIS_CONTENT_INGESTION": {
+                        "name": "Iris-Inhaltsübernahme",
+                        "description": "FAQs an Iris senden, damit Iris sie in Antworten nutzt."
+                    },
+                    "AI_FEEDBACK_REQUEST": {
+                        "name": "KI-Feedback auf Anfrage",
+                        "description": "Studierende fordern formatives KI-Feedback zu ihrer Arbeit an."
+                    },
+                    "HYPERION_PROBLEM_STATEMENT": {
+                        "name": "KI-Aufgabenstellungserstellung",
+                        "description": "Eine Aufgabenstellung erzeugen, verfeinern und umformulieren."
+                    },
+                    "HYPERION_CHECKLIST": {
+                        "name": "KI-Checkliste für Lehrende",
+                        "description": "Eine Aufgabenstellung anhand einer Qualitätscheckliste analysieren."
+                    },
+                    "HYPERION_CONSISTENCY_CHECK": {
+                        "name": "KI-Konsistenzprüfung",
+                        "description": "Die Aufgabenstellung mit dem Code einer Aufgabe abgleichen."
+                    },
+                    "HYPERION_CODE_GENERATION": {
+                        "name": "KI-Codegenerierung",
+                        "description": "Lösungs-, Vorlagen- oder Testcode einer Aufgabe erzeugen."
+                    },
+                    "HYPERION_VARIANT_GENERATION": {
+                        "name": "KI-Aufgabenvarianten",
+                        "description": "Varianten einer bestehenden Aufgabe erzeugen."
+                    },
+                    "HYPERION_QUIZ_GENERATION": {
+                        "name": "KI-Quizfragen",
+                        "description": "Quizfragen erzeugen und verfeinern."
+                    },
+                    "HYPERION_ASSESSMENT_CRITERIA": {
+                        "name": "KI-Bewertungskriterien",
+                        "description": "Strukturierte Bewertungskriterien erzeugen."
+                    },
+                    "HYPERION_FAQ_REWRITE": {
+                        "name": "KI-FAQ-Umformulierung",
+                        "description": "Den Text einer FAQ umformulieren."
+                    },
+                    "ATHENA_FEEDBACK_SUGGESTIONS": {
+                        "name": "KI-Feedbackvorschläge",
+                        "description": "Feedbackvorschläge für Tutor:innen während der Bewertung."
+                    },
+                    "IRIS_TUTOR_SUGGESTIONS": {
+                        "name": "KI-Antwortvorschläge für Tutor:innen",
+                        "description": "Antwortvorschläge, wenn Tutor:innen auf eine Frage antworten."
+                    },
+                    "ATLAS_AGENT": {
+                        "name": "Atlas-Agent",
+                        "description": "Ein Chat-Assistent zur Verwaltung von Kompetenzen."
+                    },
+                    "COMPETENCY_ORCHESTRATION": {
+                        "name": "Automatische Kompetenzverknüpfung",
+                        "description": "Aufgaben automatisch mit Kompetenzen verknüpfen."
+                    },
+                    "AI_COMPETENCY_GENERATION": {
+                        "name": "KI-Kompetenzerstellung",
+                        "description": "Kompetenzen erzeugen und ihre Beziehungen vorschlagen."
+                    },
+                    "PLAGIARISM_CHECKS": {
+                        "name": "Plagiatsprüfungen",
+                        "description": "Plagiatsprüfungen ausführen und die Treffer untersuchen."
+                    },
+                    "CONTINUOUS_PLAGIARISM_CONTROL": {
+                        "name": "Kontinuierliche Plagiatskontrolle",
+                        "description": "Automatisch ausgeführte Plagiatsprüfungen."
+                    },
+                    "PLAGIARISM_CASES": {
+                        "name": "Plagiatsfälle",
+                        "description": "Entscheidungen zu Plagiatsfällen und die Diskussion mit Studierenden."
+                    },
+                    "DEIMOS": {
+                        "name": "Analyse bösartiger Teilnahmen",
+                        "description": "Programmierteilnahmen auf bösartigen Code analysieren."
+                    },
+                    "SIGN_IN": {
+                        "name": "Anmeldung",
+                        "description": "An- und Abmelden, einschließlich Single Sign-on."
+                    },
+                    "REGISTRATION_PASSWORD": {
+                        "name": "Registrierung und Passwort",
+                        "description": "Ein Konto registrieren und das Passwort ändern oder zurücksetzen."
+                    },
+                    "ACCOUNT_SETTINGS": {
+                        "name": "Kontoeinstellungen",
+                        "description": "Profil, Sprache, Profilbild und KI-Präferenzen."
+                    },
+                    "PASSKEYS": {
+                        "name": "Passkeys",
+                        "description": "Passkeys registrieren und verwalten."
+                    },
+                    "GIT_CREDENTIALS": {
+                        "name": "SSH-Schlüssel und Zugriffstoken",
+                        "description": "SSH-Schlüssel und persönliche Zugriffstoken für Git."
+                    },
+                    "PERSONAL_DATA_EXPORT": {
+                        "name": "Export persönlicher Daten",
+                        "description": "Export der eigenen Daten."
+                    },
+                    "LTI": {
+                        "name": "LTI",
+                        "description": "Artemis-Inhalte aus einem Lernmanagementsystem öffnen."
+                    },
+                    "SHARING_PLATFORM": {
+                        "name": "Sharing-Plattform",
+                        "description": "Programmieraufgaben mit der Sharing-Plattform austauschen."
+                    },
+                    "MOBILE_APPS": {
+                        "name": "Mobile Apps",
+                        "description": "Deep Links und Push-Benachrichtigungen der iOS- und Android-Apps."
+                    },
+                    "VS_CODE_EXTENSION": {
+                        "name": "VS-Code-Erweiterung",
+                        "description": "Anmeldung bei Artemis aus der VS-Code-Erweiterung."
+                    },
+                    "BUILD_OVERVIEW": {
+                        "name": "Build-Übersicht",
+                        "description": "Die Build-Jobs eines Kurses mit ihren Logs."
+                    },
+                    "BUILD_AGENTS": {
+                        "name": "Build-Agenten",
+                        "description": "Alle Build-Jobs und die Build-Agenten des Servers."
+                    },
+                    "USER_MANAGEMENT": {
+                        "name": "Benutzerverwaltung",
+                        "description": "Nutzer:innen anlegen, importieren, bearbeiten und löschen."
+                    },
+                    "ORGANIZATIONS": {
+                        "name": "Organisationen",
+                        "description": "Organisationen, die Nutzer:innen und Kurse gruppieren."
+                    },
+                    "FEATURE_TOGGLES": {
+                        "name": "Feature-Schalter",
+                        "description": "Funktionen zur Laufzeit ein- und ausschalten."
+                    },
+                    "MONITORING": {
+                        "name": "Monitoring",
+                        "description": "Metriken, Logs, Audits, Websocket und geplante Jobs."
+                    },
+                    "USAGE_STATISTICS": {
+                        "name": "Nutzungsstatistiken",
+                        "description": "Nutzung der Plattform im Zeitverlauf."
+                    },
+                    "FEATURE_USAGE": {
+                        "name": "Funktionsnutzung",
+                        "description": "Diese Seite."
+                    },
+                    "DATA_CLEANUP": {
+                        "name": "Bereinigungsdienst",
+                        "description": "Verwaiste und veraltete Daten löschen."
+                    },
+                    "ADMIN_DATA_EXPORTS": {
+                        "name": "Datenexporte",
+                        "description": "Datenexporte für Nutzer:innen erstellen."
+                    },
+                    "LEGAL_PAGES": {
+                        "name": "Impressum und Datenschutzerklärung",
+                        "description": "Impressum und Datenschutzerklärung ansehen und bearbeiten."
+                    },
+                    "DEPENDENCIES": {
+                        "name": "Abhängigkeiten und Schwachstellen",
+                        "description": "Die Softwarestückliste und bekannte Schwachstellen."
+                    },
+                    "IRIS_ADMIN_DASHBOARD": {
+                        "name": "Iris-Dashboard",
+                        "description": "Nutzung, Kosten und Warnungen von Iris."
+                    },
+                    "INGESTION_DASHBOARD": {
+                        "name": "Index-Dashboard",
+                        "description": "Abdeckung des Global-Search-Index im Vergleich zu den Erwartungen der Datenbank."
+                    },
+                    "UPCOMING_EXAMS_AND_EXERCISES": {
+                        "name": "Anstehende Klausuren und Aufgaben",
+                        "description": "Eine Übersicht über das Anstehende in allen Kursen."
+                    }
+                }
+            }
         }
     }
 }

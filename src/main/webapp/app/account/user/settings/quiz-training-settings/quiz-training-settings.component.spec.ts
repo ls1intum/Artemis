@@ -100,7 +100,7 @@ describe('QuizTrainingSettingsComponent', () => {
         await firstValueFrom(mockService.getSettings());
         fixture.detectChanges();
 
-        const infoMessage = fixture.debugElement.query(By.css('tum-ui-message'));
+        const infoMessage = fixture.debugElement.query(By.css('tumaet-ui-message'));
         expect(infoMessage).toBeTruthy();
         expect(component.isVisibleInLeaderboard()).toBeUndefined();
     });

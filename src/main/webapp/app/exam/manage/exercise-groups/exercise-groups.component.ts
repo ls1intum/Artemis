@@ -1,4 +1,4 @@
-import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
 import { Component, OnInit, Type, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
@@ -44,8 +44,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         TranslateDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
-        TumUiPanelComponent,
-        TumUiButtonComponent,
+        TumAetUiPanelComponent,
+        TumAetUiButtonComponent,
         ExamExerciseTableComponent,
         ExamExerciseGroupEditModalComponent,
         ExamExerciseTypePickerComponent,

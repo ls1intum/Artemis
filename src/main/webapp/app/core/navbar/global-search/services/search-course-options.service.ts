@@ -1,4 +1,4 @@
-import { Injectable, Signal, inject, signal } from '@angular/core';
+import { Service, Signal, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, of, shareReplay } from 'rxjs';
@@ -24,7 +24,7 @@ const COURSES_FOR_DROPDOWN_URL = 'api/course/courses/for-dropdown';
  * response is fetched at most once and shared by every later subscriber, so opening the course filter repeatedly costs
  * one request in total and never opening it costs none.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SearchCourseOptionsService {
     private readonly http = inject(HttpClient);
     private readonly accountService = inject(AccountService);

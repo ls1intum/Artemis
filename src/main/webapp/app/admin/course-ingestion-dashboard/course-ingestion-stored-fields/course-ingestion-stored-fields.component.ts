@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /** One stored property, prepared for display. */
@@ -18,7 +18,7 @@ interface StoredField {
 @Component({
     selector: 'jhi-course-ingestion-stored-fields',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiTableDirective, TranslateDirective],
+    imports: [TumAetUiTableDirective, TranslateDirective],
     templateUrl: './course-ingestion-stored-fields.component.html',
 })
 export class CourseIngestionStoredFieldsComponent {
