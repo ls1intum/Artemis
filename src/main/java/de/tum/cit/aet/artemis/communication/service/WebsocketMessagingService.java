@@ -61,6 +61,23 @@ public class WebsocketMessagingService {
     }
 
     /**
+     * Relays a prebuilt message to all subscribers of a declared topic in the calling thread, so the messages one client relays through the same handler keep their
+     * order.
+     *
+     * @param destination the destination of a declared {@link WebsocketTopic}
+     * @param message     a prebuilt message
+     */
+    public void relayMessage(WebsocketDestination destination, Message<?> message) {
+        try {
+            messagingTemplate.send(destination.value(), message);
+        }
+        // Note: explicitly catch ALL kinds of exceptions here and do NOT rethrow, because the actual task should NEVER be interrupted when the server cannot send WS messages
+        catch (Exception ex) {
+            log.error("Error when relaying message {} to topic {}", message, destination, ex);
+        }
+    }
+
+    /**
      * Sends a payload to all subscribers of a declared topic. The message is sent asynchronously.
      *
      * @param destination the destination of a declared {@link WebsocketTopic}; who may subscribe to it is declared with the topic

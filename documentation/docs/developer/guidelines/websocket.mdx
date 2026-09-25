@@ -91,6 +91,7 @@ lecture rules read the id from a template variable and also admit an administrat
 | `atLeastStudentInCourse("courseId")`, `...Tutor...`, `...Editor...`, `...Instructor...` | the role in the course                                                                    |
 | `atLeastTutorInExercise("exerciseId")`, `...Editor...`, `...Instructor...`             | the role in the course of the exercise                                                    |
 | `atLeastTutorInExerciseAndInstructorInExamExercise("exerciseId")` | tutors for course exercises, instructors for exam exercises                            |
+| `atLeastTutorInExerciseAndEditorInExamExercise("exerciseId")`  | tutors for course exercises, editors for exam exercises                                  |
 | `atLeastEditorInLecture("lectureId")`                          | editors and instructors of the course of the lecture                                     |
 | `custom(Provider.class, Provider::check)`                      | whatever the check method of the provider decides                                        |
 
@@ -107,7 +108,7 @@ private boolean isOwnerOfStudentExam(WebsocketSubscription subscription) {
 }
 ```
 
-A subscription is checked once, when the client subscribes. Keep the checks to one indexed query.
+A subscription is checked once, when the client subscribes. Keep the checks to one or two indexed queries.
 
 ## Messages from the client
 
@@ -138,8 +139,8 @@ for subscriptions that passed the access rule of their topic.
 Every frame a client sends passes two checks on the inbound channel, both configured in `WebsocketConfiguration`:
 
 1. **Spring Security** (`WebsocketSecurityConfiguration`) authenticates every frame and restricts what a client may send:
-   subscriptions to `/topic/**` and `/user/topic/**`, messages to `/app/**`, nothing else. A frame that breaks these
-   rules is answered with an ERROR frame.
+   subscriptions to `/topic/**` and `/user/topic/**`, messages to `/app/**`, nothing else. A SEND or SUBSCRIBE frame
+   that breaks these rules is dropped, so the client keeps its connection; an unauthenticated CONNECT is refused.
 2. **The subscription check** (`WebsocketSubscriptionInterceptor` with `WebsocketTopicRegistry`) resolves the
    destination of every subscription to exactly one declared topic and applies its access rule. A rejected
    subscription is dropped silently, so the client keeps its connection and its other subscriptions. Destinations
@@ -156,7 +157,8 @@ means that a client subscribes to a topic that nobody declares.
 * Verify sent messages with `WebsocketDestinationMatchers`, which compare the destination as it goes over the wire:
   `verify(websocketMessagingService).sendMessage(topic("/topic/exercise/" + exerciseId + "/newResults"), any())`.
 * `WebsocketTopicArchitectureTest` and `WebsocketSecurityConfigurationTest` guard the model itself. The architecture test
-  also builds the registry from the topics of all modules, so two templates that match the same destination fail the build.
+  also builds the registry from the topics of all modules, so a template whose destinations resolve to another topic fails
+  the build.
 
 ## Checklist for a new topic
 

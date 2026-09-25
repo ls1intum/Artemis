@@ -185,6 +185,16 @@ public sealed interface WebsocketTopicAccess {
     }
 
     /**
+     * For topics about the template and solution of an exercise, which the editors of an exam exercise work on as well.
+     *
+     * @param exerciseIdVariable the template variable holding the exercise id
+     * @return a rule admitting tutors of a course exercise, and editors of an exam exercise
+     */
+    static WebsocketTopicAccess atLeastTutorInExerciseAndEditorInExamExercise(String exerciseIdVariable) {
+        return new AtLeastRoleInExercise(CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR, exerciseIdVariable);
+    }
+
+    /**
      * @param exerciseIdVariable the template variable holding the exercise id
      * @return a rule admitting editors and instructors of the exercise's course
      */

@@ -155,7 +155,7 @@ public abstract class PostingService {
                 else {
                     // Staff discuss an exercise or exam in its channel before students can see it. The course-wide topic reaches every
                     // student of the course, so the post goes to the personal topic of each staff member instead.
-                    getNotificationRecipients(channel).filter(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse)
+                    userRepository.findStaffNotificationRecipientsInCourseForConversation(channel.getId(), courseId)
                             .forEach(recipient -> websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), broadcastPayload));
                 }
             }

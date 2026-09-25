@@ -8,18 +8,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.AbstractSubscribableChannel;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.messaging.access.intercept.AuthorizationChannelInterceptor;
+import org.springframework.web.socket.messaging.StompSubProtocolHandler;
+import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketSubscriptionInterceptor;
@@ -40,6 +44,9 @@ class WebsocketSecurityConfigurationTest extends AbstractSpringIntegrationIndepe
     @Autowired
     private AuthorizationManager<Message<?>> authorizationManager;
 
+    @Autowired
+    private SubProtocolWebSocketHandler subProtocolWebSocketHandler;
+
     @Test
     void testInboundChannelAppliesSpringSecurityAndTheSubscriptionCheck() {
         List<Class<?>> interceptorTypes = clientInboundChannel.getInterceptors().stream().<Class<?>>map(ChannelInterceptor::getClass).toList();
@@ -51,6 +58,28 @@ class WebsocketSecurityConfigurationTest extends AbstractSpringIntegrationIndepe
     @Test
     void testClientMessagesOnlyReachMessageHandlers() {
         assertThat(annotationMethodMessageHandler.getDestinationPrefixes()).containsExactly("/app/");
+    }
+
+    @Test
+    void testRejectedFramesAreDroppedWithoutClosingTheConnection() {
+        var stompHandler = subProtocolWebSocketHandler.getProtocolHandlers().stream().filter(StompSubProtocolHandler.class::isInstance).map(StompSubProtocolHandler.class::cast)
+                .findFirst().orElseThrow();
+        var errorHandler = stompHandler.getErrorHandler();
+        assertThat(errorHandler).isNotNull();
+        var denied = new MessageDeliveryException(frame(StompCommand.SEND, "/topic/x"), "denied", new AccessDeniedException("denied"));
+
+        // no ERROR frame, so the connection stays open
+        assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.SEND, "/topic/participations/1/team/trigger"), denied)).isNull();
+        assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.SUBSCRIBE, "/queue/anything"), denied)).isNull();
+        // everything else keeps the default ERROR frame
+        assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.CONNECT, null), denied)).isNotNull();
+        assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.SEND, "/app/iris/command-ack"), new IllegalStateException("broken"))).isNotNull();
+    }
+
+    private static Message<byte[]> frame(StompCommand command, String destination) {
+        var headers = StompHeaderAccessor.create(command);
+        headers.setDestination(destination);
+        return MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
     }
 
     @Test

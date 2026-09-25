@@ -36,14 +36,14 @@ public class PlagiarismCaseApi extends AbstractPlagiarismApi {
     }
 
     /**
-     * Whether the user takes part in the discussion of a plagiarism case: the student the case is about, or an instructor of its course.
+     * Whether the user takes part in the discussion of a plagiarism case: the student or a member of the team the case is about, or an instructor of its course.
      *
      * @param plagiarismCaseId the id of the plagiarism case
      * @param login            the login of the user
-     * @return true if the user is the student of the case or at least instructor in its course
+     * @return true if the case is about the user or the user's team, or the user is at least instructor in its course
      */
     public boolean isStudentOrInstructorOfPlagiarismCase(long plagiarismCaseId, String login) {
-        if (plagiarismCaseRepository.existsByIdAndStudentLogin(plagiarismCaseId, login)) {
+        if (plagiarismCaseRepository.existsByIdAndStudentOrTeamMemberLogin(plagiarismCaseId, login)) {
             return true;
         }
         return plagiarismCaseRepository.findCourseIdById(plagiarismCaseId).filter(courseId -> userRepository.isAtLeastInstructorInCourse(login, courseId)).isPresent();

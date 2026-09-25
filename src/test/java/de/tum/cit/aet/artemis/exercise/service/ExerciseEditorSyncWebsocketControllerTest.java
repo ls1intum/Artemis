@@ -57,7 +57,7 @@ class ExerciseEditorSyncWebsocketControllerTest {
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Message<?>> relayed = ArgumentCaptor.forClass(Message.class);
-        verify(websocketMessagingService).sendMessage(topic("/topic/exercises/" + EXERCISE_ID + "/synchronization"), relayed.capture());
+        verify(websocketMessagingService).relayMessage(topic("/topic/exercises/" + EXERCISE_ID + "/synchronization"), relayed.capture());
         assertThat(relayed.getValue().getPayload()).isEqualTo(payload);
         assertThat(StompHeaderAccessor.wrap(relayed.getValue()).getFirstNativeHeader(GzipMessageConverter.COMPRESSION_HEADER_KEY)).isEqualTo("true");
     }
@@ -70,7 +70,7 @@ class ExerciseEditorSyncWebsocketControllerTest {
         controller.relaySynchronizationEvent(EXERCISE_ID, clientMessage("unknown-session", new byte[0], false), editor);
         controller.relaySynchronizationEvent(EXERCISE_ID, clientMessage("session-1", new byte[0], false), null);
 
-        verify(websocketMessagingService, never()).sendMessage(any(WebsocketDestination.class), any(Message.class));
+        verify(websocketMessagingService, never()).relayMessage(any(WebsocketDestination.class), any(Message.class));
     }
 
     private void sessionWithSubscriptions(String sessionId, String destination) {

@@ -177,6 +177,11 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
         assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, examResults)).as("tutor on the results of an exam exercise").isEqualTo(DENIED);
         assertThat(decide("instructor1", Role.INSTRUCTOR, examResults)).isEqualTo(ALLOWED);
 
+        String examSubmissions = "/topic/exercise/" + examExercise.getId() + "/newSubmissions";
+        assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, examSubmissions)).as("tutor on the template and solution builds of an exam exercise").isEqualTo(DENIED);
+        assertThat(decide("editor1", Role.EDITOR, examSubmissions)).as("editor on the template and solution builds of an exam exercise").isEqualTo(ALLOWED);
+        assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, "/topic/exercise/" + courseExercise.getId() + "/submissionProcessing")).isEqualTo(ALLOWED);
+
         String testCases = "/topic/programming-exercises/" + courseExercise.getId() + "/test-cases";
         assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, testCases)).isEqualTo(ALLOWED);
         assertThat(decide("student1", Role.STUDENT, testCases)).isEqualTo(DENIED);
@@ -256,6 +261,19 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
         assertThat(decide("student2", Role.STUDENT, topic)).as("another student").isEqualTo(DENIED);
         assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, topic)).isEqualTo(DENIED);
         assertThat(decide("instructor1", Role.INSTRUCTOR, topic)).isEqualTo(ALLOWED);
+
+        // a case about a team belongs to all members of the team
+        courseExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepository.save(courseExercise);
+        Team team = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student2")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
+                courseExercise, TEST_PREFIX + "plagiarismteam");
+        PlagiarismCase teamCase = new PlagiarismCase();
+        teamCase.setExercise(courseExercise);
+        teamCase.setTeam(team);
+        teamCase = plagiarismCaseRepository.save(teamCase);
+        String teamTopic = "/topic/communication/plagiarismCase/" + teamCase.getId();
+        assertThat(decide("student2", Role.STUDENT, teamTopic)).as("a member of the team the case is about").isEqualTo(ALLOWED);
+        assertThat(decide("student1", Role.STUDENT, teamTopic)).as("a student outside the team").isEqualTo(DENIED);
     }
 
     @Test

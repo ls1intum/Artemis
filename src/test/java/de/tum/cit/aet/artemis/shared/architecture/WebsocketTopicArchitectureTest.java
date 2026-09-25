@@ -17,7 +17,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -69,6 +71,15 @@ class WebsocketTopicArchitectureTest extends AbstractArchitectureTest {
     void noSubscribeMappings() {
         noMethods().should().beAnnotatedWith(SubscribeMapping.class)
                 .because("subscriptions go to the broker; react to a subscription with a SessionSubscribeEvent listener, and declare who may subscribe with the WebsocketTopic")
+                .check(productionClasses);
+    }
+
+    @Test
+    void messageHandlersDoNotPublishReturnValues() {
+        methods().that().areAnnotatedWith(MessageMapping.class).should().haveRawReturnType(void.class)
+                .because("a return value would be published straight to a broker destination, past the declared topics; send with WebsocketMessagingService instead")
+                .check(productionClasses);
+        noMethods().should().beAnnotatedWith(SendTo.class).orShould().beAnnotatedWith(SendToUser.class).because("messages go to declared topics through WebsocketMessagingService")
                 .check(productionClasses);
     }
 

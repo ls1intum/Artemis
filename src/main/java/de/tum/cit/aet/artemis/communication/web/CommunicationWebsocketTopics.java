@@ -35,7 +35,7 @@ public class CommunicationWebsocketTopics implements WebsocketTopicProvider {
     public static final WebsocketTopic USER_CONVERSATION_POSTS = WebsocketTopic.of("/topic/user/{userId}/notifications/conversations", WebsocketTopicAccess.ownUser("userId"));
 
     /**
-     * The discussion of a plagiarism case between the instructors and the student the case is about.
+     * The discussion of a plagiarism case between the instructors and the student or team the case is about.
      */
     public static final WebsocketTopic PLAGIARISM_CASE_POSTS = WebsocketTopic.of("/topic/communication/plagiarismCase/{plagiarismCaseId}",
             WebsocketTopicAccess.custom(CommunicationWebsocketTopics.class, CommunicationWebsocketTopics::isPartyOfPlagiarismCase));

@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketTopicAccess.AnyAuthenticatedUser;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketTopicAccess.AtLeastRoleInCourse;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketTopicAccess.AtLeastRoleInExercise;
@@ -42,7 +44,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * <p>
  * The decision is deny by default: a subscription is only accepted for a destination that exactly one declared topic matches, and for a {@link WebsocketTopic} only if its
  * {@link WebsocketTopicAccess} rule admits the subscriber. Destinations of internal broker topics, destinations another session's user topic resolves to, and pattern
- * subscriptions are therefore all rejected without any rule for them.
+ * subscriptions are therefore rejected without any rule for them, as long as no declared topic matches them.
  * <p>
  * The topics are collected from the {@link WebsocketTopicProvider} beans the first time the registry is used, which is the first subscription after startup.
  */
@@ -99,7 +101,9 @@ public class WebsocketTopicRegistry {
 
         List<DeclaredTopic> declaredTopics = new ArrayList<>();
         List<WebsocketUserTopic> declaredUserTopics = new ArrayList<>();
-        for (WebsocketTopicProvider provider : providers) {
+        for (WebsocketTopicProvider injectedProvider : providers) {
+            // Custom checks are private methods of the provider, so they have to run on the provider itself, not on a proxy of it
+            WebsocketTopicProvider provider = AopProxyUtils.getSingletonTarget(injectedProvider) instanceof WebsocketTopicProvider target ? target : injectedProvider;
             Class<?> providerClass = AopUtils.getTargetClass(provider);
             for (WebsocketTopic topic : constantsOf(providerClass, WebsocketTopic.class)) {
                 if (topic.access() instanceof Custom<?> custom && !custom.provider().isAssignableFrom(providerClass)) {
@@ -152,9 +156,13 @@ public class WebsocketTopicRegistry {
         try {
             return isAllowed(declared, subscription) ? Decision.ALLOWED : Decision.DENIED;
         }
-        catch (RuntimeException e) {
+        catch (IllegalArgumentException | EntityNotFoundException e) {
             // A malformed id, or an entity that does not exist. Neither may open the topic.
             log.debug("The access check of the websocket topic {} failed for {}: {}", declared.topic().template(), destination, e.getMessage());
+            return Decision.DENIED;
+        }
+        catch (RuntimeException e) {
+            log.warn("The access check of the websocket topic {} failed for {}", declared.topic().template(), destination, e);
             return Decision.DENIED;
         }
     }
@@ -206,7 +214,8 @@ public class WebsocketTopicRegistry {
         }
         matches.sort(Comparator.comparing((Match<T> match) -> specificity.apply(match.topic())).reversed());
         if (specificity.apply(matches.get(0).topic()).equals(specificity.apply(matches.get(1).topic()))) {
-            log.error("The websocket destination {} matches several declared topics equally well: {} and {}", destination, matches.get(0).topic(), matches.get(1).topic());
+            // Clients choose the destination, so this is logged quietly; the declared topics themselves are checked for this when the registry is created
+            log.debug("The websocket destination {} matches several declared topics equally well: {} and {}", destination, matches.get(0).topic(), matches.get(1).topic());
             return Optional.empty();
         }
         return Optional.of(matches.getFirst());

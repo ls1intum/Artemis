@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -21,24 +22,30 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompReactorNettyCodec;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
+import org.springframework.web.socket.messaging.StompSubProtocolErrorHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
@@ -104,6 +111,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     protected void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
         // Client messages only go to the @MessageMapping handlers. Without a prefix they would also reach the broker, which forwards them to every subscriber.
         config.setApplicationDestinationPrefixes(APPLICATION_DESTINATION_PREFIX);
+        // The user registry has to know a subscription before other listeners of the subscribe event ask it, e.g. for the online members of a team
+        config.setUserRegistryOrder(Ordered.HIGHEST_PRECEDENCE);
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
         TcpOperations<byte[]> tcpClient = websocketBrokerTcpClientSupplier().get();
@@ -202,6 +211,34 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             .setTransportHandlers(webSocketTransportHandler)
             .setInterceptors(httpSessionHandshakeInterceptor());
         // @formatter:on
+        registry.setErrorHandler(new DroppingAccessDeniedErrorHandler());
+    }
+
+    /**
+     * Drops a SEND or SUBSCRIBE frame that the frame-level rules in {@link WebsocketSecurityConfiguration} reject, instead of answering with an ERROR frame, which closes
+     * the connection. A client that still sends to an old destination, e.g. an open tab from before a deployment, would otherwise lose all its live updates and reconnect
+     * over and over. Every other error keeps the default handling.
+     */
+    private static class DroppingAccessDeniedErrorHandler extends StompSubProtocolErrorHandler {
+
+        @Override
+        public @Nullable Message<byte[]> handleClientMessageProcessingError(@Nullable Message<byte[]> clientMessage, @NonNull Throwable exception) {
+            StompCommand command = clientMessage != null ? StompHeaderAccessor.wrap(clientMessage).getCommand() : null;
+            if ((command == StompCommand.SEND || command == StompCommand.SUBSCRIBE) && isAccessDenied(exception)) {
+                log.warn("Dropped a {} frame to {} that the websocket rules do not allow", command, StompHeaderAccessor.wrap(clientMessage).getDestination());
+                return null;
+            }
+            return super.handleClientMessageProcessingError(clientMessage, exception);
+        }
+
+        private static boolean isAccessDenied(Throwable exception) {
+            for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+                if (cause instanceof AccessDeniedException) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     @Override

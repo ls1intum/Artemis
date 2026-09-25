@@ -39,7 +39,15 @@ public class WebsocketSubscriptionInterceptor implements ChannelInterceptor {
         }
         Principal subscriber = headerAccessor.getUser();
         String destination = headerAccessor.getDestination();
-        var decision = registry.get().authorizeSubscription(subscriber, destination);
+        WebsocketTopicRegistry.Decision decision;
+        try {
+            decision = registry.get().authorizeSubscription(subscriber, destination);
+        }
+        catch (RuntimeException e) {
+            // Fail closed, but keep the connection and the other subscriptions of the client
+            log.error("Could not check the subscription to {}, rejecting it", destination, e);
+            return null;
+        }
         if (decision == WebsocketTopicRegistry.Decision.ALLOWED) {
             return message;
         }

@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 /**
  * Relays the synchronization events of collaborative exercise editing between the editors of an exercise.
  * <p>
- * An editor sends its changes to {@code /app/exercises/{exerciseId}/synchronization}, and this controller publishes them unchanged, including their compression header, to
+ * An editor sends its changes to {@code /app/exercises/{exerciseId}/synchronization}, and this controller publishes their payload and compression header to
  * {@link ExerciseWebsocketTopics#EDITOR_SYNCHRONIZATION}. Clients never publish to the topic themselves.
  */
 @Profile(PROFILE_CORE)
@@ -70,7 +70,7 @@ public class ExerciseEditorSyncWebsocketController {
             headers.setNativeHeader(COMPRESSION_HEADER_KEY, compressed);
         }
         headers.setLeaveMutable(true);
-        websocketMessagingService.sendMessage(destination, MessageBuilder.createMessage(message.getPayload(), headers.getMessageHeaders()));
+        websocketMessagingService.relayMessage(destination, MessageBuilder.createMessage(message.getPayload(), headers.getMessageHeaders()));
     }
 
     private boolean isSubscribed(String login, String sessionId, String destination) {

@@ -17,7 +17,8 @@ import org.springframework.security.messaging.access.intercept.MessageMatcherDel
  * The frame-level rules of the websocket connection. Spring Security applies them to every frame a client sends, before {@code WebsocketSubscriptionInterceptor} decides
  * which subscriptions are allowed based on the declared websocket topics (see {@code WebsocketTopic}).
  * <p>
- * A frame that breaks these rules is answered with a STOMP ERROR frame. A legitimate client never sends one.
+ * A SEND or SUBSCRIBE frame that breaks these rules is dropped (see {@code WebsocketConfiguration}); an unauthenticated CONNECT is refused. A legitimate client never
+ * sends such a frame.
  */
 @Profile(PROFILE_CORE)
 @Configuration
@@ -43,7 +44,7 @@ public class WebsocketSecurityConfiguration {
 
     /**
      * Replaces Spring Security's CSRF check of the STOMP CONNECT frame, which expects a token from an HTTP session that Artemis does not use. The websocket handshake is
-     * authenticated with the same JWT as the REST API, so it follows the same cross-site policy.
+     * authenticated with the JWT, whose cookie is {@code SameSite=Lax}, so a cross-site page cannot open an authenticated connection.
      *
      * @return an interceptor that lets every frame pass
      */
