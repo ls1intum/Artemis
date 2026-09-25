@@ -136,6 +136,67 @@ Here are the improvements for the test above:
 More examples on test speed improvement can be found in the [following PR](https://github.com/ls1intum/Artemis/pull/3879/files).
 
 
+## Testing Directives
+
+Test a directive that acts on its own element with `TestBed.createDirective` instead of declaring a host component
+only to apply it. TestBed creates the host element, applies the directive to it and returns a `DirectiveFixture`. The
+fixture exposes the directive as `directiveInstance` and the host element as `nativeElement`, and offers
+`detectChanges()`, `whenStable()` and `destroy()` like a component fixture. Inputs, outputs and models are bound with
+`inputBinding`, `outputBinding` and `twoWayBinding` from `@angular/core`, fed by signals or getter functions:
+
+```ts
+describe('MarkdownDirective', () => {
+    let fixture: DirectiveFixture<MarkdownDirective>;
+    let text: WritableSignal<string | undefined>;
+    let renderCount: number;
+
+    beforeEach(() => {
+        text = signal<string | undefined>(undefined);
+        renderCount = 0;
+        fixture = TestBed.createDirective(MarkdownDirective, {
+            tagName: 'div',
+            bindings: [inputBinding('jhiMarkdown', text), outputBinding('markdownRendered', () => renderCount++)],
+        });
+    });
+
+    it('renders markdown into the host element', async () => {
+        text.set('some **bold** text');
+        fixture.detectChanges();
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(fixture.nativeElement.innerHTML).toContain('<strong>bold</strong>');
+        });
+        expect(renderCount).toBe(1);
+    });
+});
+```
+
+Pass `tagName` whenever the selector does not name an element. `[jhiMarkdown]` needs it and `createDirective` throws
+without it, while `table[tumUiTable]` creates a `<table>` on its own. Bind an input by its public name, which is the
+alias where the directive declares one. Register providers with `TestBed.configureTestingModule` before calling
+`createDirective`; `compileComponents()` is not needed. A changed signal reaches the directive on the next
+`fixture.detectChanges()`.
+
+The host element starts out empty, directly under `<body>`, and the directive's constructor has already run when
+`createDirective` returns. `fixture.debugElement` is that host element, and it belongs to an internal empty component,
+so `debugElement.query()` does not find elements the directive inserts into it. Query them through
+`fixture.nativeElement` instead.
+
+Keep a host component where the directive needs a template around it:
+
+* Structural directives, which inject a `TemplateRef`, such as `*jhiHasAnyAuthority` and `*jhiExtensionPoint`.
+* Directives that need another directive or content on the same element: `jhiSortBy` needs `jhiSort` on an enclosing
+  element and reads the icon projected into it, a validator tested through `ngModel` needs the `NgModel` beside it,
+  and `jhiResizable` finds its drag handles among its children.
+* Directives whose constructor reads markup the template provides, such as the child elements `fitText` counts or the
+  `href` that `jhiSecureLink` must leave alone.
+* Inputs that take a `TemplateRef` or a component instance declared in the same template, such as
+  `jhiStickyPopover` and `tumUiPopoverTrigger`.
+
+An abstract base directive is still tested through a concrete subclass. One spec can use both: `createDirective` for
+the cases that fit, and a small host component, with a comment saying why, for the case that needs a template.
+
+
 ## Mocking Rules
 
 ### Services

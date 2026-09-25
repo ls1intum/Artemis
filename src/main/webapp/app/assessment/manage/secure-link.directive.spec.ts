@@ -1,15 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Component, DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DirectiveFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 
-@Component({
-    template: '<a jhiSecureLink href="https://example.com">Test Link</a>',
-    imports: [SecureLinkDirective],
-})
-class TestHostComponent {}
-
+/**
+ * The directive does its work in its constructor, so checking that it leaves an existing href alone needs the attribute
+ * in the DOM before the directive is created. Only a template can arrange that; this one also puts two links on a page.
+ */
 @Component({
     template: `
         <a jhiSecureLink href="https://example1.com">Link 1</a>
@@ -21,39 +19,29 @@ class MultiLinkTestHostComponent {}
 
 describe('SecureLinkDirective', () => {
     describe('single link', () => {
-        let fixture: ComponentFixture<TestHostComponent>;
-        let linkElement: DebugElement;
+        let fixture: DirectiveFixture<SecureLinkDirective>;
+        let linkElement: HTMLAnchorElement;
 
         beforeEach(() => {
-            return TestBed.configureTestingModule({
-                imports: [TestHostComponent],
-            })
-                .compileComponents()
-                .then(() => {
-                    fixture = TestBed.createComponent(TestHostComponent);
-                    fixture.detectChanges();
-                    linkElement = fixture.debugElement.query(By.directive(SecureLinkDirective));
-                });
+            fixture = TestBed.createDirective(SecureLinkDirective, { tagName: 'a' });
+            fixture.detectChanges();
+            linkElement = fixture.nativeElement as HTMLAnchorElement;
         });
 
         it('should create directive', () => {
-            expect(linkElement).toBeTruthy();
+            expect(fixture.directiveInstance).toBeInstanceOf(SecureLinkDirective);
         });
 
         it('should set target to _blank', () => {
-            expect(linkElement.nativeElement.target).toBe('_blank');
+            expect(linkElement.target).toBe('_blank');
         });
 
         it('should set rel to noopener noreferrer', () => {
-            expect(linkElement.nativeElement.rel).toBe('noopener noreferrer');
-        });
-
-        it('should preserve the original href attribute', () => {
-            expect(linkElement.nativeElement.href).toBe('https://example.com/');
+            expect(linkElement.rel).toBe('noopener noreferrer');
         });
     });
 
-    describe('multiple links', () => {
+    describe('links written in a template', () => {
         let fixture: ComponentFixture<MultiLinkTestHostComponent>;
         let linkElements: DebugElement[];
 
@@ -67,6 +55,11 @@ describe('SecureLinkDirective', () => {
                     fixture.detectChanges();
                     linkElements = fixture.debugElement.queryAll(By.directive(SecureLinkDirective));
                 });
+        });
+
+        it('should preserve the original href attribute', () => {
+            expect(linkElements[0].nativeElement.href).toBe('https://example1.com/');
+            expect(linkElements[1].nativeElement.href).toBe('https://example2.com/');
         });
 
         it('should apply directive to all links', () => {

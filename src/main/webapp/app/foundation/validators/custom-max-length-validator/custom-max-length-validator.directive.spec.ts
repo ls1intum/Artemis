@@ -1,40 +1,28 @@
-import { Component } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, FormsModule } from '@angular/forms';
-import { By } from '@angular/platform-browser';
+import { WritableSignal, inputBinding, signal } from '@angular/core';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
+import { FormControl } from '@angular/forms';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { CustomMaxLengthDirective } from './custom-max-length-validator.directive';
 
-@Component({
-    template: `<input [customMaxLength]="maxLength" ngModel />`,
-    standalone: true,
-    imports: [CustomMaxLengthDirective, FormsModule],
-})
-class TestHostComponent {
-    maxLength = 10;
-}
-
 describe('CustomMaxLengthDirective', () => {
-    let fixture: ComponentFixture<TestHostComponent>;
-    let host: TestHostComponent;
+    let fixture: DirectiveFixture<CustomMaxLengthDirective>;
+    let maxLength: WritableSignal<number>;
 
     function getDirective(): CustomMaxLengthDirective {
-        const inputDe = fixture.debugElement.query(By.css('input'));
-        return inputDe.injector.get(CustomMaxLengthDirective);
+        return fixture.directiveInstance;
     }
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [TestHostComponent],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(TestHostComponent);
-        host = fixture.componentInstance;
+    beforeEach(() => {
+        maxLength = signal(10);
+        fixture = TestBed.createDirective(CustomMaxLengthDirective, {
+            tagName: 'input',
+            bindings: [inputBinding('customMaxLength', maxLength)],
+        });
     });
 
     it('should return null if the input length is within the limit', () => {
-        host.maxLength = 10;
+        maxLength.set(10);
         fixture.detectChanges();
 
         const directive = getDirective();
@@ -44,7 +32,7 @@ describe('CustomMaxLengthDirective', () => {
     });
 
     it('should return an error object if the input length exceeds the limit', () => {
-        host.maxLength = 5;
+        maxLength.set(5);
         fixture.detectChanges();
 
         const directive = getDirective();
@@ -54,7 +42,7 @@ describe('CustomMaxLengthDirective', () => {
     });
 
     it('should return null if the input is null', () => {
-        host.maxLength = 5;
+        maxLength.set(5);
         fixture.detectChanges();
 
         const directive = getDirective();
@@ -64,7 +52,7 @@ describe('CustomMaxLengthDirective', () => {
     });
 
     it('should return null if the input is undefined', () => {
-        host.maxLength = 5;
+        maxLength.set(5);
         fixture.detectChanges();
 
         const directive = getDirective();
@@ -74,7 +62,7 @@ describe('CustomMaxLengthDirective', () => {
     });
 
     it('should return null if the input is an empty string', () => {
-        host.maxLength = 5;
+        maxLength.set(5);
         fixture.detectChanges();
 
         const directive = getDirective();

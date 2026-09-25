@@ -1,28 +1,21 @@
-import { Component, ElementRef, viewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component, inputBinding } from '@angular/core';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FitTextDirective } from './fit-text.directive';
 
-@Component({
-    template: `
-        <div style="width: 200px; height: 100px; padding: 10px;" id="parent">
-            <div fitText #fitTextEl>test content</div>
-        </div>
-    `,
-    imports: [FitTextDirective],
-})
-class TestFitTextComponent {
-    fitTextEl = viewChild.required<ElementRef>('fitTextEl');
+/** Applies the directive to a bare <div> that TestBed creates, binding each given input to a constant value. */
+function createFitText(inputs: Record<string, unknown> = {}): DirectiveFixture<FitTextDirective> {
+    return TestBed.createDirective(FitTextDirective, {
+        tagName: 'div',
+        bindings: Object.entries(inputs).map(([name, value]) => inputBinding(name, () => value)),
+    });
 }
 
 describe('FitTextDirective', () => {
-    let fixture: ComponentFixture<TestFitTextComponent>;
-    let component: TestFitTextComponent;
+    let fixture: DirectiveFixture<FitTextDirective>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({});
-        fixture = TestBed.createComponent(TestFitTextComponent);
-        component = fixture.componentInstance;
+        fixture = createFitText();
     });
 
     afterEach(() => {
@@ -30,13 +23,13 @@ describe('FitTextDirective', () => {
     });
 
     it('should create an instance', () => {
-        expect(fixture).toBeTruthy();
+        expect(fixture.directiveInstance).toBeInstanceOf(FitTextDirective);
     });
 
     it('should have the fittext directive element', () => {
         fixture.detectChanges();
-        const element = fixture.nativeElement.querySelector('[fittext]');
-        expect(element).toBeTruthy();
+        expect(fixture.nativeElement.tagName).toBe('DIV');
+        expect(fixture.debugElement.injector.get(FitTextDirective)).toBe(fixture.directiveInstance);
     });
 
     it('should clear timeout on destroy', () => {
@@ -53,14 +46,19 @@ describe('FitTextDirective', () => {
 
     it('should initialize with default values', () => {
         fixture.detectChanges();
-        // Directive should be attached without errors
-        expect(component.fitTextEl()).toBeTruthy();
+        const directive = fixture.directiveInstance;
+        expect(directive.fitText()).toBe(true);
+        expect(directive.compression()).toBe(1);
+        expect(directive.activateOnResize()).toBe(true);
+        expect(directive.minFontSize()).toBe(0);
+        expect(directive.maxFontSize()).toBe(Number.POSITIVE_INFINITY);
+        expect(directive.delay()).toBe(100);
+        expect(directive.fontUnit()).toBe('px');
     });
 
     it('should support activateOnResize input', () => {
         // Test that directive can be instantiated with activateOnResize
-        const element = fixture.nativeElement.querySelector('[fittext]');
-        expect(element).toBeTruthy();
+        expect(fixture.directiveInstance.activateOnResize()).toBe(true);
     });
 });
 
@@ -69,112 +67,20 @@ describe('FitTextDirective - Input configurations', () => {
         vi.restoreAllMocks();
     });
 
-    it('should accept minFontSize input', () => {
-        @Component({
-            template: `<div><div fitText [minFontSize]="20">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestMinFontSizeComponent {}
-
-        const fixture = TestBed.createComponent(TestMinFontSizeComponent);
+    it.each([
+        ['minFontSize', 20],
+        ['maxFontSize', 10],
+        ['fontUnit', 'em'],
+        ['delay', 500],
+        ['compression', 0.5],
+        ['minFontSize', 'inherit'],
+        ['maxFontSize', 'inherit'],
+        ['activateOnResize', true],
+        ['activateOnResize', false],
+    ] as const)('should accept %s input %p', (name, value) => {
+        const fixture = createFitText({ [name]: value });
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-    });
-
-    it('should accept maxFontSize input', () => {
-        @Component({
-            template: `<div><div fitText [maxFontSize]="10">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestMaxFontSizeComponent {}
-
-        const fixture = TestBed.createComponent(TestMaxFontSizeComponent);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-    });
-
-    it('should accept fontUnit input', () => {
-        @Component({
-            template: `<div><div fitText [fontUnit]="'em'">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestFontUnitComponent {}
-
-        const fixture = TestBed.createComponent(TestFontUnitComponent);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-    });
-
-    it('should accept delay input', () => {
-        @Component({
-            template: `<div><div fitText [delay]="500">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestDelayComponent {}
-
-        const fixture = TestBed.createComponent(TestDelayComponent);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-    });
-
-    it('should accept compression input', () => {
-        @Component({
-            template: `<div><div fitText [compression]="0.5">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestCompressionComponent {}
-
-        const fixture = TestBed.createComponent(TestCompressionComponent);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-    });
-
-    it('should accept inherit as minFontSize', () => {
-        @Component({
-            template: `<div><div fitText [minFontSize]="'inherit'">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestInheritMinComponent {}
-
-        const fixture = TestBed.createComponent(TestInheritMinComponent);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-    });
-
-    it('should accept inherit as maxFontSize', () => {
-        @Component({
-            template: `<div><div fitText [maxFontSize]="'inherit'">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestInheritMaxComponent {}
-
-        const fixture = TestBed.createComponent(TestInheritMaxComponent);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-    });
-
-    it('should accept activateOnResize input', () => {
-        @Component({
-            template: `<div><div fitText [activateOnResize]="true">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestResizeComponent {}
-
-        const fixture = TestBed.createComponent(TestResizeComponent);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-    });
-
-    it('should handle activateOnResize false', () => {
-        @Component({
-            template: `<div><div fitText [activateOnResize]="false">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestNoResizeComponent {}
-
-        const fixture = TestBed.createComponent(TestNoResizeComponent);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
+        expect(fixture.directiveInstance[name]()).toBe(value);
     });
 });
 
@@ -186,20 +92,15 @@ describe('FitTextDirective - Resize Behavior', () => {
     it('should handle window resize when activateOnResize is true', () => {
         vi.useFakeTimers();
 
-        @Component({
-            template: `<div style="width: 200px;"><div fitText [activateOnResize]="true">test content</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestResizeComponent {}
-
-        const fixture = TestBed.createComponent(TestResizeComponent);
+        const fixture = createFitText({ activateOnResize: true });
         fixture.detectChanges();
+        const setFontSizeSpy = vi.spyOn(fixture.directiveInstance as any, 'setFontSize');
 
         // Trigger resize event
         window.dispatchEvent(new Event('resize'));
         vi.advanceTimersByTime(150);
 
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
+        expect(setFontSizeSpy).toHaveBeenCalledOnce();
 
         vi.useRealTimers();
     });
@@ -207,25 +108,15 @@ describe('FitTextDirective - Resize Behavior', () => {
     it('should not call setFontSize on resize when activateOnResize is false', () => {
         vi.useFakeTimers();
 
-        @Component({
-            template: `<div style="width: 200px;"><div fitText [activateOnResize]="false">test content</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestNoResizeComponent {}
-
-        const fixture = TestBed.createComponent(TestNoResizeComponent);
+        const fixture = createFitText({ activateOnResize: false });
         fixture.detectChanges();
-
-        // Get the element and check initial state
-        const element = fixture.nativeElement.querySelector('[fittext]');
-        expect(element).toBeTruthy();
+        const setFontSizeSpy = vi.spyOn(fixture.directiveInstance as any, 'setFontSize');
 
         // Trigger resize event - should not affect font size
         window.dispatchEvent(new Event('resize'));
         vi.advanceTimersByTime(150);
 
-        // Element should still be rendered
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
+        expect(setFontSizeSpy).not.toHaveBeenCalled();
 
         vi.useRealTimers();
     });
@@ -236,95 +127,22 @@ describe('FitTextDirective - Font Size Calculation', () => {
         vi.restoreAllMocks();
     });
 
-    it('should set font size after view init with delay', () => {
+    it.each([
+        ['set font size after view init with delay', { delay: 200 }, 250],
+        ['respect minFontSize constraint', { minFontSize: 12 }, 150],
+        ['respect maxFontSize constraint', { maxFontSize: 24 }, 150],
+        ['use compression factor in calculation', { compression: 0.5 }, 150],
+        ['use em font unit', { fontUnit: 'em' }, 150],
+    ])('should %s', (_, inputs, elapsedMs) => {
         vi.useFakeTimers();
 
-        @Component({
-            template: `<div style="width: 300px; padding: 10px;"><div fitText [delay]="200">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestDelayComponent {}
-
-        const fixture = TestBed.createComponent(TestDelayComponent);
+        const fixture = createFitText(inputs);
         fixture.detectChanges();
 
         // Allow the delayed font size calculation
-        vi.advanceTimersByTime(250);
+        vi.advanceTimersByTime(elapsedMs);
 
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-
-        vi.useRealTimers();
-    });
-
-    it('should respect minFontSize constraint', () => {
-        vi.useFakeTimers();
-
-        @Component({
-            template: `<div style="width: 50px;"><div fitText [minFontSize]="12">very long text that would shrink too much</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestMinFontComponent {}
-
-        const fixture = TestBed.createComponent(TestMinFontComponent);
-        fixture.detectChanges();
-        vi.advanceTimersByTime(150);
-
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-
-        vi.useRealTimers();
-    });
-
-    it('should respect maxFontSize constraint', () => {
-        vi.useFakeTimers();
-
-        @Component({
-            template: `<div style="width: 1000px;"><div fitText [maxFontSize]="24">x</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestMaxFontComponent {}
-
-        const fixture = TestBed.createComponent(TestMaxFontComponent);
-        fixture.detectChanges();
-        vi.advanceTimersByTime(150);
-
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-
-        vi.useRealTimers();
-    });
-
-    it('should use compression factor in calculation', () => {
-        vi.useFakeTimers();
-
-        @Component({
-            template: `<div style="width: 200px;"><div fitText [compression]="0.5">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestCompressionCalcComponent {}
-
-        const fixture = TestBed.createComponent(TestCompressionCalcComponent);
-        fixture.detectChanges();
-        vi.advanceTimersByTime(150);
-
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
-
-        vi.useRealTimers();
-    });
-
-    it('should use em font unit', () => {
-        vi.useFakeTimers();
-
-        @Component({
-            template: `<div style="width: 200px;"><div fitText [fontUnit]="'em'">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestEmUnitComponent {}
-
-        const fixture = TestBed.createComponent(TestEmUnitComponent);
-        fixture.detectChanges();
-        vi.advanceTimersByTime(150);
-
-        const element = fixture.nativeElement.querySelector('[fittext]');
-        expect(element).toBeTruthy();
+        expect(fixture.directiveInstance).toBeInstanceOf(FitTextDirective);
 
         vi.useRealTimers();
     });
@@ -338,21 +156,11 @@ describe('FitTextDirective - innerHTML Changes', () => {
     it('should set initial innerHTML content', () => {
         vi.useFakeTimers();
 
-        @Component({
-            template: `<div style="width: 200px;"><div fitText [innerHTML]="content"></div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestInnerHTMLComponent {
-            content = 'initial content';
-        }
-
-        const fixture = TestBed.createComponent(TestInnerHTMLComponent);
+        const fixture = createFitText({ innerHTML: 'initial content' });
         fixture.detectChanges();
         vi.advanceTimersByTime(150);
 
-        const element = fixture.nativeElement.querySelector('[fittext]');
-        expect(element).toBeTruthy();
-        expect(element.innerHTML).toBe('initial content');
+        expect(fixture.nativeElement.innerHTML).toBe('initial content');
 
         vi.useRealTimers();
     });
@@ -360,21 +168,11 @@ describe('FitTextDirective - innerHTML Changes', () => {
     it('should handle HTML content in innerHTML', () => {
         vi.useFakeTimers();
 
-        @Component({
-            template: `<div style="width: 200px;"><div fitText [innerHTML]="htmlContent"></div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestHTMLContentComponent {
-            htmlContent = '<strong>bold text</strong>';
-        }
-
-        const fixture = TestBed.createComponent(TestHTMLContentComponent);
+        const fixture = createFitText({ innerHTML: '<strong>bold text</strong>' });
         fixture.detectChanges();
         vi.advanceTimersByTime(150);
 
-        const element = fixture.nativeElement.querySelector('[fittext]');
-        expect(element).toBeTruthy();
-        expect(element.querySelector('strong')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('strong')).toBeTruthy();
 
         vi.useRealTimers();
     });
@@ -389,19 +187,13 @@ describe('FitTextDirective - Lifecycle', () => {
         vi.useFakeTimers();
         const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
 
-        @Component({
-            template: `<div><div fitText>test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestLifecycleComponent {}
-
-        const fixture = TestBed.createComponent(TestLifecycleComponent);
+        const fixture = createFitText();
         fixture.detectChanges();
 
         // Advance time to trigger timeout
         vi.advanceTimersByTime(150);
 
-        // Destroy the component
+        // Destroy the directive
         fixture.destroy();
 
         expect(clearTimeoutSpy).toHaveBeenCalled();
@@ -412,6 +204,8 @@ describe('FitTextDirective - Lifecycle', () => {
     it('should handle element with child elements', () => {
         vi.useFakeTimers();
 
+        // The directive counts the host's child elements in its constructor, so they have to exist before it is
+        // created. Only a template can guarantee that; TestBed.createDirective starts from an empty host.
         @Component({
             template: `
                 <div style="width: 200px;">
@@ -438,15 +232,9 @@ describe('FitTextDirective - Lifecycle', () => {
     });
 
     it('should not crash when fitText is false', () => {
-        @Component({
-            template: `<div><div fitText [fitText]="false">test</div></div>`,
-            imports: [FitTextDirective],
-        })
-        class TestDisabledComponent {}
-
-        const fixture = TestBed.createComponent(TestDisabledComponent);
+        const fixture = createFitText({ fitText: false });
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('[fittext]')).toBeTruthy();
+        expect(fixture.directiveInstance.fitText()).toBe(false);
     });
 });
