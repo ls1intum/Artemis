@@ -343,6 +343,10 @@ export class ExerciseHeaderActionsComponent {
     });
 
     startExercise() {
+        // The button is only disabled after the next render, so ignore a second click that arrives before that
+        if (this._isLoading()) {
+            return;
+        }
         this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
         this.courseExerciseService
