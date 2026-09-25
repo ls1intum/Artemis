@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -77,6 +79,18 @@ describe('FeatureOverviewComponent', () => {
         fixture.nativeElement.querySelector('[data-testid="feature-card-checklist"]').click();
 
         expect(detail.scrollIntoView).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'start' });
+    });
+
+    it('shows the screenshots of a feature below its description', async () => {
+        await render('students');
+
+        const images = Array.from<HTMLImageElement>(fixture.nativeElement.querySelectorAll('[data-testid="feature-detail-exerciseUpdateNotification"] img'));
+        expect(images.map((image) => image.getAttribute('src'))).toEqual(STUDENT_FEATURES.find((feature) => feature.key === 'exerciseUpdateNotification')!.images);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="feature-detail-offline"] img')).toHaveLength(0);
+    });
+
+    it.each([...STUDENT_FEATURES, ...INSTRUCTOR_FEATURES].flatMap((feature) => feature.images ?? []))('ships the screenshot %s', (image) => {
+        expect(existsSync(join('src/main/webapp', image))).toBe(true);
     });
 
     describe.each([

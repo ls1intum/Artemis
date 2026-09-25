@@ -69,4 +69,17 @@
     &__description {
         white-space: pre-line;
     }
+
+    &__screenshot {
+        display: block;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+
+        img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+    }
 }

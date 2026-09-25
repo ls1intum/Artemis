@@ -58,6 +58,17 @@
                     <span>{{ 'featureOverview.' + audience + '.feature.' + feature.key + '.title' | artemisTranslate }}</span>
                 </h3>
                 <p class="feature-overview__description">{{ 'featureOverview.' + audience + '.feature.' + feature.key + '.descriptionTextOne' | artemisTranslate }}</p>
+                @for (image of feature.images ?? []; track image) {
+                    <a class="feature-overview__screenshot" [href]="image" target="_blank" rel="noopener noreferrer">
+                        <img
+                            [src]="image"
+                            [alt]="'featureOverview.' + audience + '.feature.' + feature.key + '.title' | artemisTranslate"
+                            width="1200"
+                            height="750"
+                            loading="lazy"
+                        />
+                    </a>
+                }
             </article>
         }
     </section>
