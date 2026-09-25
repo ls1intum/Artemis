@@ -7,7 +7,8 @@
         tabindex="0"
         [attr.aria-expanded]="!isCardContentCollapsed()"
         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+        (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
     >
         <ng-content select=".header" />
         <span class="btn rotate-icon" [class.rotated]="!isCardContentCollapsed()" aria-hidden="true">

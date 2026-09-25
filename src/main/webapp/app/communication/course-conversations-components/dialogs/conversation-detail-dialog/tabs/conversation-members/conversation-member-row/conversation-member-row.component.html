@@ -22,7 +22,8 @@
                 role="button"
                 [attr.tabindex]="isCurrentUser() ? -1 : 0"
                 (keydown.enter)="$event.target === $event.currentTarget && keyboardAction16.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction16.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                (keyup.space)="$event.target === $event.currentTarget && keyboardAction16.click()"
             >
                 {{ userLabel() }}
             </a>

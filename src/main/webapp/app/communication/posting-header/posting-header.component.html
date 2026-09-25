@@ -24,7 +24,8 @@
                             role="button"
                             tabindex="0"
                             (keydown.enter)="$event.target === $event.currentTarget && keyboardAction19.click()"
-                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction19.click()"
+                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                            (keyup.space)="$event.target === $event.currentTarget && keyboardAction19.click()"
                             >{{ authorOfPosting.name }}</span
                         >
                         @if (isUnverifiedIris()) {

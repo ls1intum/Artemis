@@ -47,7 +47,8 @@
                         #keyboardAction41
                         tabindex="0"
                         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction41.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction41.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction41.click()"
                     ></a>
                 </li>
                 @if (!isOneToOneChat()) {
@@ -61,7 +62,8 @@
                             #keyboardAction51
                             tabindex="0"
                             (keydown.enter)="$event.target === $event.currentTarget && keyboardAction51.click()"
-                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction51.click()"
+                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                            (keyup.space)="$event.target === $event.currentTarget && keyboardAction51.click()"
                         ></a>
                     </li>
                     <li class="nav-item settings-tab">
@@ -75,7 +77,8 @@
                             #keyboardAction60
                             tabindex="0"
                             (keydown.enter)="$event.target === $event.currentTarget && keyboardAction60.click()"
-                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction60.click()"
+                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                            (keyup.space)="$event.target === $event.currentTarget && keyboardAction60.click()"
                         ></a>
                     </li>
                 }

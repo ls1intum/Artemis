@@ -64,7 +64,8 @@
                 role="button"
                 tabindex="0"
                 (keydown.enter)="$event.target === $event.currentTarget && keyboardAction54.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction54.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                (keyup.space)="$event.target === $event.currentTarget && keyboardAction54.click()"
             ></div>
         }
         @if (filteredSegments().length === 0 && transcriptSegments().length > 0) {

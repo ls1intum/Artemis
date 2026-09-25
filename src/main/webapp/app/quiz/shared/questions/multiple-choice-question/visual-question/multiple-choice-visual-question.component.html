@@ -41,8 +41,11 @@
                     #keyboardAction37
                     role="button"
                     tabindex="0"
+                    [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.correctnessOfAnswer' | artemisTranslate: { number: i + 1 }"
+                    [attr.aria-pressed]="answerOption.isCorrect"
                     (keydown.enter)="$event.target === $event.currentTarget && keyboardAction37.click()"
-                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction37.click()"
+                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                    (keyup.space)="$event.target === $event.currentTarget && keyboardAction37.click()"
                 >
                     <fa-icon [icon]="answerOption.isCorrect ? faCheck : faXmark" />
                 </div>
@@ -60,18 +63,22 @@
                     #keyboardAction51
                     role="button"
                     tabindex="0"
+                    [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.deleteAnswer' | artemisTranslate: { number: i + 1 }"
                     (keydown.enter)="$event.target === $event.currentTarget && keyboardAction51.click()"
-                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction51.click()"
+                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                    (keyup.space)="$event.target === $event.currentTarget && keyboardAction51.click()"
                 >
                     <fa-icon [icon]="faTrash" />
                 </div>
                 @if (reEvaluationInProgress() && !answerOption.invalid) {
                     <button type="button" id="answer-option-{{ i }}-invalid" class="btn btn-outline-secondary visual-answer-reset-container" (click)="setInvalid(i)">
+                        <span class="visually-hidden">{{ 'artemisApp.multipleChoiceQuestion.visualEditor.invalidateAnswer' | artemisTranslate: { number: i + 1 } }}</span>
                         <fa-icon [icon]="faBan" />
                     </button>
                 }
                 @if (reEvaluationInProgress()) {
                     <button type="button" id="answer-option-{{ i }}-reset" class="btn btn-outline-secondary visual-answer-reset-container" (click)="resetAnswer(i)">
+                        <span class="visually-hidden">{{ 'artemisApp.multipleChoiceQuestion.visualEditor.resetAnswer' | artemisTranslate: { number: i + 1 } }}</span>
                         <fa-icon [icon]="faUndo" />
                     </button>
                 }

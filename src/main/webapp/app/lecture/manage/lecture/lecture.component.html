@@ -81,7 +81,8 @@
                         role="button"
                         tabindex="0"
                         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction75.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction75.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction75.click()"
                     >
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>

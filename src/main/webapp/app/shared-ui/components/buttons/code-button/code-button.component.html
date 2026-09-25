@@ -125,7 +125,8 @@
                 role="button"
                 tabindex="0"
                 (keydown.enter)="$event.target === $event.currentTarget && keyboardAction96.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction96.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                (keyup.space)="$event.target === $event.currentTarget && keyboardAction96.click()"
             >
                 <fa-icon [icon]="faLaptopCode" />
                 <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>

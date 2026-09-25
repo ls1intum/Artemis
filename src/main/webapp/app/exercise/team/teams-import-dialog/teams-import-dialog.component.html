@@ -7,6 +7,7 @@
                     class="btn"
                     [ngClass]="{ 'btn-primary': showImportFromExercise(), 'btn-default': !showImportFromExercise() }"
                     (click)="setShowImportFromExercise(true)"
+                    [attr.aria-pressed]="showImportFromExercise()"
                 >
                     <span jhiTranslate="artemisApp.team.importTeams.fromAnExercise"></span>
                 </button>
@@ -15,6 +16,7 @@
                     class="btn"
                     [ngClass]="{ 'btn-primary': !showImportFromExercise(), 'btn-default': showImportFromExercise() }"
                     (click)="setShowImportFromExercise(false)"
+                    [attr.aria-pressed]="!showImportFromExercise()"
                 >
                     <span jhiTranslate="artemisApp.team.importTeams.fromAFile"></span>
                 </button>

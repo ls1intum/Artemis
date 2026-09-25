@@ -8,7 +8,8 @@
         role="button"
         tabindex="0"
         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+        (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
     >
         <jhi-sidebar-card-item [groupKey]="groupKey()" [sidebarType]="sidebarType()" [sidebarItem]="sidebarItem()" />
     </div>
@@ -32,7 +33,8 @@
             role="button"
             tabindex="0"
             (keydown.enter)="$event.target === $event.currentTarget && keyboardAction12.click()"
-            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction12.click()"
+            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+            (keyup.space)="$event.target === $event.currentTarget && keyboardAction12.click()"
         >
             <jhi-sidebar-card-item
                 [unreadCount]="this.sidebarItem().conversation?.unreadMessagesCount ?? 0"

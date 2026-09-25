@@ -8,6 +8,7 @@
                         class="btn"
                         [ngClass]="{ 'btn-primary': currentState() === state.value, 'btn-default': currentState() !== state.value }"
                         (click)="setCurrentState(state.value)"
+                        [attr.aria-pressed]="currentState() === state.value"
                     >
                         <span [jhiTranslate]="stateTexts[i]"></span>
                     </button>

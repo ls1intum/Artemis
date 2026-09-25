@@ -83,7 +83,8 @@
                     role="button"
                     tabindex="0"
                     (keydown.enter)="$event.target === $event.currentTarget && keyboardAction76.click()"
-                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction76.click()"
+                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                    (keyup.space)="$event.target === $event.currentTarget && keyboardAction76.click()"
                 >
                     <span [pTooltip]="resultTooltip() | artemisTranslate">{{ resultString() }}</span>
                     @if (short() && currentResult.codeIssueCount) {
@@ -154,7 +155,8 @@
                             role="button"
                             tabindex="0"
                             (keydown.enter)="$event.target === $event.currentTarget && keyboardAction137.click()"
-                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction137.click()"
+                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                            (keyup.space)="$event.target === $event.currentTarget && keyboardAction137.click()"
                         ></span>
                     }
                 }

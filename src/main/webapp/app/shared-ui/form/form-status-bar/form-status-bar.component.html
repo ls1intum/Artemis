@@ -11,7 +11,8 @@
                         role="button"
                         tabindex="0"
                         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction7.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction7.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction7.click()"
                     >
                         <jhi-checklist-check
                             [checkAttribute]="formStatusSection.valid"
@@ -26,7 +27,8 @@
                         role="button"
                         tabindex="0"
                         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction14.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction14.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction14.click()"
                     >
                         {{ formStatusSection.title | artemisTranslate }}
                     </a>

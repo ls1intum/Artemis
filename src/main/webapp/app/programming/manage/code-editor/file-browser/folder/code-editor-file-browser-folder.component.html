@@ -9,7 +9,8 @@
     [attr.aria-label]="item().text"
     [attr.aria-expanded]="!item().collapsed"
     (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
+    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+    (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
 >
     <fa-icon aria-hidden="true" [icon]="item().collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs" />
     <fa-icon aria-hidden="true" [icon]="item().collapsed ? faFolder : faFolderOpen" [fixedWidth]="true" />

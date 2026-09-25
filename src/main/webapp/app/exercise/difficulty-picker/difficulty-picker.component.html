@@ -5,6 +5,7 @@
         class="btn"
         [ngClass]="{ 'btn-primary selected': !exercise().difficulty, 'btn-default': exercise().difficulty }"
         (click)="setDifficulty(undefined)"
+        [attr.aria-pressed]="!exercise().difficulty"
         jhiTranslate="artemisApp.exercise.noLevel"
     ></button>
     <button
@@ -13,6 +14,7 @@
         class="btn"
         [ngClass]="{ 'btn-success selected': exercise().difficulty === DifficultyLevel.EASY, 'btn-default': exercise().difficulty !== DifficultyLevel.EASY }"
         (click)="setDifficulty(DifficultyLevel.EASY)"
+        [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.EASY"
         jhiTranslate="artemisApp.exercise.easy"
     ></button>
     <button
@@ -21,6 +23,7 @@
         class="btn btn-default"
         [ngClass]="{ 'btn-warning selected': exercise().difficulty === DifficultyLevel.MEDIUM, 'btn-default': exercise().difficulty !== DifficultyLevel.MEDIUM }"
         (click)="setDifficulty(DifficultyLevel.MEDIUM)"
+        [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.MEDIUM"
         jhiTranslate="artemisApp.exercise.medium"
     ></button>
     <button
@@ -29,6 +32,7 @@
         class="btn btn-default"
         [ngClass]="{ 'btn-danger selected': exercise().difficulty === DifficultyLevel.HARD, 'btn-default': exercise().difficulty !== DifficultyLevel.HARD }"
         (click)="setDifficulty(DifficultyLevel.HARD)"
+        [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.HARD"
         jhiTranslate="artemisApp.exercise.hard"
     ></button>
 </div>

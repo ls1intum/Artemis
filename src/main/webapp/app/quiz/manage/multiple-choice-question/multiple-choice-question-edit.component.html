@@ -196,7 +196,8 @@
                         role="button"
                         tabindex="0"
                         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction186.click()"
-                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction186.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                        (keyup.space)="$event.target === $event.currentTarget && keyboardAction186.click()"
                     >
                         <fa-icon [icon]="faTrash" size="2x" />
                     </div>

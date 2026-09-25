@@ -93,6 +93,24 @@ describe('QuizVisualEditorComponent', () => {
         expect(answerOption.isCorrect).toBe(false);
     });
 
+    it('toggles correctness only once after repeated Space keydown events', () => {
+        const answerOption = new AnswerOption();
+        answerOption.text = 'Answer';
+        answerOption.isCorrect = false;
+        comp.question().answerOptions = [answerOption];
+        fixture.detectChanges();
+
+        const correctnessButton = fixture.nativeElement.querySelector('.visual-answer') as HTMLElement;
+        correctnessButton.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+        correctnessButton.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true, repeat: true }));
+        expect(answerOption.isCorrect).toBe(false);
+
+        correctnessButton.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(answerOption.isCorrect).toBe(true);
+        expect(correctnessButton.getAttribute('aria-pressed')).toBe('true');
+    });
+
     it('does not toggle the if single mode and already has correct answer', () => {
         fixture.detectChanges();
 

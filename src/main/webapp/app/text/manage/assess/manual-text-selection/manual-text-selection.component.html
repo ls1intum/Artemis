@@ -8,7 +8,8 @@
             #keyboardAction4
             role="button"
             (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
-            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction4.click()"
+            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+            (keyup.space)="$event.target === $event.currentTarget && keyboardAction4.click()"
             >{{ ' ' + word }}</span
         >
     }

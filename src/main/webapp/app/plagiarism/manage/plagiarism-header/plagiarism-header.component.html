@@ -54,7 +54,8 @@
                 role="button"
                 tabindex="0"
                 (keydown.enter)="$event.target === $event.currentTarget && keyboardAction45.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction45.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                (keyup.space)="$event.target === $event.currentTarget && keyboardAction45.click()"
             >
                 <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H15V20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" fill="#E4E5E6" />
@@ -70,7 +71,8 @@
                 role="button"
                 tabindex="0"
                 (keydown.enter)="$event.target === $event.currentTarget && keyboardAction51.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction51.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                (keyup.space)="$event.target === $event.currentTarget && keyboardAction51.click()"
             >
                 <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H11V20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" fill="#E4E5E6" />
@@ -86,7 +88,8 @@
                 role="button"
                 tabindex="0"
                 (keydown.enter)="$event.target === $event.currentTarget && keyboardAction57.click()"
-                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction57.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                (keyup.space)="$event.target === $event.currentTarget && keyboardAction57.click()"
             >
                 <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20 18.5C20 19.3284 19.3284 20 18.5 20L9 20L9 4L18.5 4C19.3284 4 20 4.67157 20 5.5L20 18.5Z" fill="#E4E5E6" />

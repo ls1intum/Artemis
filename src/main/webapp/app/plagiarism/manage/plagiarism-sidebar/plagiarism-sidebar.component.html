@@ -7,7 +7,8 @@
         role="button"
         tabindex="0"
         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+        (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
     >
         <span>Run details</span>
         <fa-icon [icon]="faChevronRight" />
@@ -36,7 +37,8 @@
                     role="button"
                     tabindex="0"
                     (keydown.enter)="$event.target === $event.currentTarget && keyboardAction22.click()"
-                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction22.click()"
+                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                    (keyup.space)="$event.target === $event.currentTarget && keyboardAction22.click()"
                 >
                     <div class="plagiarism-list-item-content">
                         <span
@@ -73,7 +75,8 @@
             role="button"
             [attr.tabindex]="currentPage() === 0 ? -1 : 0"
             (keydown.enter)="$event.target === $event.currentTarget && keyboardAction48.click()"
-            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction48.click()"
+            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+            (keyup.space)="$event.target === $event.currentTarget && keyboardAction48.click()"
         >
             <fa-icon [icon]="faArrowLeft" />
         </div>
@@ -88,7 +91,8 @@
             role="button"
             [attr.tabindex]="currentPage() + 1 >= numberOfPages() ? -1 : 0"
             (keydown.enter)="$event.target === $event.currentTarget && keyboardAction52.click()"
-            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction52.click()"
+            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+            (keyup.space)="$event.target === $event.currentTarget && keyboardAction52.click()"
         >
             <fa-icon [icon]="faArrowRight" />
         </div>

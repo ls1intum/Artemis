@@ -8,7 +8,8 @@
         role="button"
         tabindex="0"
         (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
-        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+        (keyup.space)="$event.target === $event.currentTarget && keyboardAction2.click()"
     >
         @if (hasActiveFile()) {
             <div class="split-pane-header-file-name">
@@ -31,7 +32,8 @@
                     role="button"
                     tabindex="0"
                     (keydown.enter)="$event.target === $event.currentTarget && keyboardAction14.click()"
-                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction14.click()"
+                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault()"
+                    (keyup.space)="$event.target === $event.currentTarget && keyboardAction14.click()"
                 >
                     <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
                 </li>
