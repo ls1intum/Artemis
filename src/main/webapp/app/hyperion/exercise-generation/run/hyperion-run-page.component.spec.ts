@@ -668,6 +668,9 @@ describe('HyperionRunPageComponent', () => {
             }),
         );
 
+        testId('hyperion-artifacts-tab-files')!.click();
+        fixture.detectChanges();
+
         const groups = [...fixture.nativeElement.querySelectorAll('[data-repo]')].map((group: Element) => group.getAttribute('data-repo'));
         // Solution first, then template, tests, other — the same order every surface uses.
         expect(groups).toEqual(['solution', 'tests']);
