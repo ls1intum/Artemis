@@ -83,17 +83,18 @@ class PropertiesConfigurationGuardTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "core,scheduling", "core", "buildagent", "dev,core", "prod,core,buildagent" })
-    void rejectsInvalidMetadataOnEveryCoreNodeAndBuildAgent(String profiles) {
+    @ValueSource(strings = { "core,scheduling", "core", "dev,core", "prod,core,buildagent" })
+    void rejectsInvalidMetadataOnEveryCoreNode(String profiles) {
         try (var context = contextWithOperatorNameOnly(profiles)) {
             assertThatThrownBy(context::refresh).hasRootCauseInstanceOf(IllegalArgumentException.class).hasStackTraceContaining("info.operatorAdminName")
                     .hasStackTraceContaining("info.universityName");
         }
     }
 
-    @Test
-    void isNotRegisteredOnNodesThatAreNeitherCoreNorBuildAgent() {
-        try (var context = contextWithOperatorNameOnly("prod,scheduling")) {
+    @ParameterizedTest
+    @ValueSource(strings = { "buildagent", "prod,buildagent", "prod,scheduling" })
+    void isNotRegisteredOnNodesWithoutTheCoreProfile(String profiles) {
+        try (var context = contextWithOperatorNameOnly(profiles)) {
             context.refresh();
             assertThat(context.getBeansOfType(PropertiesConfigurationGuard.class)).isEmpty();
         }

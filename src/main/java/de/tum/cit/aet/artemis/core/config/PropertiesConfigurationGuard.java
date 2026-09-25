@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
@@ -14,9 +13,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+/**
+ * Refuses to start a core node without meaningful installation metadata, which the About page shows and the scheduling node reports as telemetry. Build agents
+ * neither show nor report it, so they are not checked.
+ */
 @Component
 @Lazy(false)
-@Profile(PROFILE_CORE + " | " + PROFILE_BUILDAGENT)
+@Profile(PROFILE_CORE)
 public class PropertiesConfigurationGuard implements InitializingBean {
 
     /**
@@ -37,7 +40,7 @@ public class PropertiesConfigurationGuard implements InitializingBean {
     @Value("${info.operatorName:#{null}}")
     private String operatorName;
 
-    /** Rejects incomplete installation metadata on every core and build-agent node before readiness. */
+    /** Rejects incomplete installation metadata on every core node before readiness. */
     @Override
     public void afterPropertiesSet() {
         List<String> invalid = new ArrayList<>();
@@ -52,7 +55,7 @@ public class PropertiesConfigurationGuard implements InitializingBean {
         }
         if (!invalid.isEmpty()) {
             throw new IllegalArgumentException("Configure meaningful values for " + String.join(", ", invalid)
-                    + "; these installation properties are required on every server start, independently of telemetry settings, and displayed on the About page.");
+                    + "; these installation properties are required on every core node, independently of telemetry settings, and displayed on the About page.");
         }
     }
 

@@ -99,8 +99,8 @@ alongside the server and point the mail configuration at it. See
 
 ## When it will not start
 
-**"Configure meaningful values for info.operatorName ...".** Every core node and build agent,
-development included, refuses to start without `info.operatorName`, `info.operatorAdminName` and
+**"Configure meaningful values for info.operatorName ...".** Every core node, development
+included, refuses to start without `info.operatorName`, `info.operatorAdminName` and
 `info.universityName`, even with telemetry off. Set all three in `application-local.yml`; empty and
 template values (`Admin`, `Your University`, `<name>`) are rejected. The repository's E2E runners,
 Docker dev env files and test profiles already set their own, so this only hits a plain `bootRun`.
