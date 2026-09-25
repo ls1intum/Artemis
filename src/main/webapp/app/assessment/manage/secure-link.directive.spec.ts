@@ -6,7 +6,8 @@ import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive
 
 /**
  * The directive does its work in its constructor, so checking that it leaves an existing href alone needs the attribute
- * in the DOM before the directive is created. Only a template can arrange that; this one also puts two links on a page.
+ * on the element before the directive is created. Angular writes a template's static attributes first, which
+ * TestBed.createDirective cannot do; this template also puts two links on a page.
  */
 @Component({
     template: `

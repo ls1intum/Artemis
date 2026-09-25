@@ -15,7 +15,6 @@ import type {
     TextDetail,
 } from 'app/shared-ui/detail-overview-list/detail.model';
 import { TextDetailComponent } from 'app/shared-ui/detail-overview-list/components/text-detail/text-detail.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DateDetailComponent } from 'app/shared-ui/detail-overview-list/components/date-detail/date-detail.component';
 import { LinkDetailComponent } from 'app/shared-ui/detail-overview-list/components/link-detail/link-detail.component';
@@ -24,7 +23,6 @@ import { ProgrammingRepositoryButtonsDetailComponent } from 'app/shared-ui/detai
 import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
 import { ProgrammingTestStatusDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { vi } from 'vitest';
 
 describe('ExerciseDetailDirective', () => {
@@ -32,10 +30,6 @@ describe('ExerciseDetailDirective', () => {
     let detail: WritableSignal<Detail>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockDirective(TranslateDirective), MockComponent(TextDetailComponent), MockComponent(ProgrammingDiffReportDetailComponent)],
-        });
-
         detail = signal<Detail>(undefined);
         fixture = TestBed.createDirective(ExerciseDetailDirective, { tagName: 'div', bindings: [inputBinding('detail', detail)] });
         fixture.detectChanges();

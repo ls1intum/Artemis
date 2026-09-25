@@ -9,10 +9,6 @@ describe('CustomMaxLengthDirective', () => {
     let fixture: DirectiveFixture<CustomMaxLengthDirective>;
     let maxLength: WritableSignal<number>;
 
-    function getDirective(): CustomMaxLengthDirective {
-        return fixture.directiveInstance;
-    }
-
     beforeEach(() => {
         maxLength = signal(10);
         fixture = TestBed.createDirective(CustomMaxLengthDirective, {
@@ -25,9 +21,8 @@ describe('CustomMaxLengthDirective', () => {
         maxLength.set(10);
         fixture.detectChanges();
 
-        const directive = getDirective();
         const control = new FormControl('12345');
-        const result = directive.validate(control);
+        const result = fixture.directiveInstance.validate(control);
         expect(result).toBeNull();
     });
 
@@ -35,9 +30,8 @@ describe('CustomMaxLengthDirective', () => {
         maxLength.set(5);
         fixture.detectChanges();
 
-        const directive = getDirective();
         const control = new FormControl('123456');
-        const result = directive.validate(control);
+        const result = fixture.directiveInstance.validate(control);
         expect(result).toEqual({ customMaxLength: true });
     });
 
@@ -45,9 +39,8 @@ describe('CustomMaxLengthDirective', () => {
         maxLength.set(5);
         fixture.detectChanges();
 
-        const directive = getDirective();
         const control = new FormControl(null);
-        const result = directive.validate(control);
+        const result = fixture.directiveInstance.validate(control);
         expect(result).toBeNull();
     });
 
@@ -55,9 +48,8 @@ describe('CustomMaxLengthDirective', () => {
         maxLength.set(5);
         fixture.detectChanges();
 
-        const directive = getDirective();
         const control = new FormControl(undefined);
-        const result = directive.validate(control);
+        const result = fixture.directiveInstance.validate(control);
         expect(result).toBeNull();
     });
 
@@ -65,9 +57,8 @@ describe('CustomMaxLengthDirective', () => {
         maxLength.set(5);
         fixture.detectChanges();
 
-        const directive = getDirective();
         const control = new FormControl('');
-        const result = directive.validate(control);
+        const result = fixture.directiveInstance.validate(control);
         expect(result).toBeNull();
     });
 });

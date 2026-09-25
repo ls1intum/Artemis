@@ -1,4 +1,4 @@
-import { Component, inputBinding } from '@angular/core';
+import { inputBinding } from '@angular/core';
 import { DirectiveFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FitTextDirective } from './fit-text.directive';
@@ -124,25 +124,42 @@ describe('FitTextDirective - Resize Behavior', () => {
 
 describe('FitTextDirective - Font Size Calculation', () => {
     afterEach(() => {
+        document.body.style.removeProperty('padding');
         vi.restoreAllMocks();
     });
 
+    /**
+     * jsdom does no layout, so every offset size is 0 and the directive skips the calculation. Report a host that is
+     * 10px wide at the directive's 10px probe font size, inside a parent of the given width (the <body> TestBed attaches
+     * the host to). The uncapped font size is then the parent width minus the directive's 6px allowance: 200 for 206.
+     */
+    function stubLayout(host: Element, parentWidth: number): void {
+        document.body.style.padding = '0px';
+        vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+            return this === host ? 10 : this === document.body ? parentWidth : 0;
+        });
+        vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+            return this === host ? 10 : 0;
+        });
+    }
+
     it.each([
-        ['set font size after view init with delay', { delay: 200 }, 250],
-        ['respect minFontSize constraint', { minFontSize: 12 }, 150],
-        ['respect maxFontSize constraint', { maxFontSize: 24 }, 150],
-        ['use compression factor in calculation', { compression: 0.5 }, 150],
-        ['use em font unit', { fontUnit: 'em' }, 150],
-    ])('should %s', (_, inputs, elapsedMs) => {
+        ['set font size after view init with delay', { delay: 200 }, 250, 206, '200px'],
+        ['respect minFontSize constraint', { minFontSize: 12 }, 150, 16, '12px'],
+        ['respect maxFontSize constraint', { maxFontSize: 24 }, 150, 206, '24px'],
+        ['use compression factor in calculation', { compression: 0.5 }, 150, 206, '100px'],
+        ['use em font unit', { fontUnit: 'em' }, 150, 206, '200em'],
+    ])('should %s', (_, inputs, elapsedMs, parentWidth, expectedFontSize) => {
         vi.useFakeTimers();
 
         const fixture = createFitText(inputs);
+        stubLayout(fixture.nativeElement, parentWidth);
         fixture.detectChanges();
 
         // Allow the delayed font size calculation
         vi.advanceTimersByTime(elapsedMs);
 
-        expect(fixture.directiveInstance).toBeInstanceOf(FitTextDirective);
+        expect((fixture.nativeElement as HTMLElement).style.fontSize).toBe(expectedFontSize);
 
         vi.useRealTimers();
     });
@@ -204,29 +221,18 @@ describe('FitTextDirective - Lifecycle', () => {
     it('should handle element with child elements', () => {
         vi.useFakeTimers();
 
-        // The directive counts the host's child elements in its constructor, so they have to exist before it is
-        // created. Only a template can guarantee that; TestBed.createDirective starts from an empty host.
-        @Component({
-            template: `
-                <div style="width: 200px;">
-                    <div fitText>
-                        <p>Line 1</p>
-                        <p>Line 2</p>
-                        <p>Line 3</p>
-                    </div>
-                </div>
-            `,
-            imports: [FitTextDirective],
-        })
-        class TestMultilineComponent {}
-
-        const fixture = TestBed.createComponent(TestMultilineComponent);
+        const fixture = createFitText();
+        // Content added before the first change detection is in place for ngOnInit and every later hook.
+        for (const line of ['Line 1', 'Line 2', 'Line 3']) {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = line;
+            fixture.nativeElement.appendChild(paragraph);
+        }
         fixture.detectChanges();
         vi.advanceTimersByTime(150);
 
-        const element = fixture.nativeElement.querySelector('[fittext]');
-        expect(element).toBeTruthy();
-        expect(element.childElementCount).toBe(3);
+        // Without a bound innerHTML input the directive leaves the host content alone.
+        expect(fixture.nativeElement.childElementCount).toBe(3);
 
         vi.useRealTimers();
     });
