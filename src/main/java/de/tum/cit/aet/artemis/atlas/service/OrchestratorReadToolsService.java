@@ -57,7 +57,7 @@ public class OrchestratorReadToolsService {
      * oversized exercise (e.g. a quiz whose assembled questions + answers are large) cannot inflate
      * per-call tokens now that this tool extracts real content for every exercise type.
      */
-    private static final int MAX_EXERCISE_CONTENT_LENGTH = 8_000;
+    private static final int MAX_EXERCISE_CONTENT_LENGTH = 16_000;
 
     /** Cap on the title returned by {@link #getExerciseContent}; matches the batch path's {@code EXERCISE_TITLE_MAX}. */
     private static final int MAX_EXERCISE_TITLE_LENGTH = 200;
@@ -148,10 +148,9 @@ public class OrchestratorReadToolsService {
             return errorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.");
         }
         try {
-            // Skip the LLM flavor-strip on this read path: it costs an extra model round-trip per call, so a repeated
-            // lookup would burn tokens on the strip model. The raw problem statement is complete enough for the
-            // orchestrator to judge fit; the batch's system prompt already carries the stripped versions.
-            ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "exercise:" + exerciseId, () -> contentExtractionService.extractContent(exercise, false));
+            // Prepare content on the first detail read, including flavor reduction for narrative fields.
+            // The invocation cache shares this representation with subsequent orchestrator and worker reads.
+            ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "exercise:" + exerciseId, () -> contentExtractionService.extractContent(exercise, true));
             // Neutralize prompt-injection fences and cap length before this instructor-authored content re-enters the
             // model as a tool result — the same hardening the batch path applies via CompetencyOrchestrationService.sanitizeForPrompt.
             String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);

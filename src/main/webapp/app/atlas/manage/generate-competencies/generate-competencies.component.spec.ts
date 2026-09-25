@@ -28,16 +28,19 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 
 describe('GenerateCompetenciesComponent', () => {
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
     let comp: GenerateCompetenciesComponent;
-    let mockWebSocketSubject: Subject<any>;
-    let dialogClose: Subject<any>;
+    type GenerationUpdate = { runState: IrisRunState; result?: CompetencyRecommendation[] };
+    let mockWebSocketSubject: Subject<GenerationUpdate>;
+    let dialogClose: Subject<{ confirmed: boolean } | undefined>;
 
     beforeEach(() => {
-        mockWebSocketSubject = new Subject<any>();
-        dialogClose = new Subject<any>();
+        mockWebSocketSubject = new Subject<GenerationUpdate>();
+        dialogClose = new Subject<{ confirmed: boolean } | undefined>();
 
         TestBed.configureTestingModule({
             imports: [
@@ -81,39 +84,12 @@ describe('GenerateCompetenciesComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(comp).toBeDefined();
-    });
-
-    it('should handle description submit', () => {
-        fixture.detectChanges();
-        const getCompetencyRecommendationsSpy = vi.spyOn(comp, 'getCompetencyRecommendations').mockReturnValue();
-
-        const courseDescriptionComponent: CourseDescriptionFormComponent = fixture.debugElement.query(By.directive(CourseDescriptionFormComponent)).componentInstance;
-        courseDescriptionComponent.formSubmitted.emit('');
-
-        expect(getCompetencyRecommendationsSpy).toHaveBeenCalledOnce();
-    });
-
     it('should initialize the form with the course description', async () => {
-        fixture.detectChanges();
         const courseDescription = 'Course Description';
-
-        const courseDescriptionComponent: CourseDescriptionFormComponent = fixture.debugElement.query(By.directive(CourseDescriptionFormComponent)).componentInstance;
-        const setCourseDescriptionSpy = vi.spyOn(courseDescriptionComponent, 'setCourseDescription');
-
-        // mock the course returned by CourseManagementService
-        const course = { description: courseDescription };
-        const courseManagementService = TestBed.inject(CourseManagementService);
-        const getCourseSpy = vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-
-        comp.ngOnInit();
-        await Promise.resolve();
-        await Promise.resolve();
-
-        expect(getCourseSpy).toHaveBeenCalledOnce();
-        expect(setCourseDescriptionSpy).toHaveBeenCalledWith(courseDescription);
+        vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: { description: courseDescription } })));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe(courseDescription);
     });
 
     it('should add competency recommendations', () => {
@@ -255,6 +231,97 @@ describe('GenerateCompetenciesComponent', () => {
         comp.isLoading.set(true);
         const canDeactivate = comp.canDeactivate();
         expect(canDeactivate).toBeFalsy();
+    });
+
+    describe('Route and generation lifetime', () => {
+        let route: MockActivatedRoute;
+        let a: Subject<GenerationUpdate>;
+        let b: Subject<GenerationUpdate>;
+
+        beforeEach(() => {
+            route = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+            a = new Subject<GenerationUpdate>();
+            b = new Subject<GenerationUpdate>();
+            const streams: Record<string, Subject<GenerationUpdate>> = { '/user/topic/iris/competencies/1': a, '/user/topic/iris/competencies/2': b };
+            vi.spyOn(TestBed.inject(WebsocketService), 'subscribe').mockImplementation((destination) => streams[destination]);
+            vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockImplementation((id) => of(new HttpResponse({ body: { id, description: `Course ${id}` } })));
+            vi.spyOn(TestBed.inject(CourseCompetencyService), 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(TestBed.inject(CourseCompetencyService), 'generateCompetenciesFromCourseDescription').mockReturnValue(of(new HttpResponse<void>()));
+        });
+
+        it('cancels the old competency fetch before another course can receive its description', () => {
+            const pending = new Subject<HttpResponse<Competency[]>>();
+            vi.mocked(TestBed.inject(CourseCompetencyService).getAllForCourse).mockReturnValue(pending);
+            fixture.detectChanges();
+            comp.getCompetencyRecommendations('Course A description');
+            route.setParameters({ courseId: 2 });
+            pending.next(new HttpResponse({ body: [] }));
+            expect(TestBed.inject(CourseCompetencyService).generateCompetenciesFromCourseDescription).not.toHaveBeenCalled();
+            expect(comp.courseId).toBe(2);
+            expect(comp.isLoading()).toBe(false);
+        });
+
+        it('cancels a pending generation response without creating a subscription for the new course', () => {
+            const pending = new Subject<HttpResponse<void>>();
+            vi.mocked(TestBed.inject(CourseCompetencyService).generateCompetenciesFromCourseDescription).mockReturnValue(pending);
+            fixture.detectChanges();
+            comp.getCompetencyRecommendations('Course A description');
+            route.setParameters({ courseId: 2 });
+            pending.next(new HttpResponse<void>());
+            expect(TestBed.inject(WebsocketService).subscribe).not.toHaveBeenCalled();
+            expect(comp.competencies.length).toBe(0);
+        });
+
+        it('drops old results and recommendations while the new course can finish normally', () => {
+            fixture.detectChanges();
+            comp.getCompetencyRecommendations('A');
+            a.next({ runState: IrisRunState.RUNNING, result: [{ title: 'A recommendation' }] });
+            expect(comp.competencies.getRawValue()[0].competency.title).toBe('A recommendation');
+            route.setParameters({ courseId: 2 });
+            expect(comp.competencies.length).toBe(0);
+            comp.getCompetencyRecommendations('B');
+            a.next({ runState: IrisRunState.FINISHED, result: [{ title: 'Late A' }] });
+            expect(comp.competencies.length).toBe(0);
+            expect(comp.isLoading()).toBe(true);
+            b.next({ runState: IrisRunState.FINISHED, result: [{ title: 'B recommendation' }] });
+            expect(comp.competencies.getRawValue().map((value) => value.competency.title)).toEqual(['B recommendation']);
+            expect(comp.isLoading()).toBe(false);
+        });
+
+        it('ignores a stale description response after navigation', async () => {
+            const oldDescription = new Subject<HttpResponse<Course>>();
+            const newDescription = new Subject<HttpResponse<Course>>();
+            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
+            fixture.detectChanges();
+            route.setParameters({ courseId: 2 });
+            newDescription.next(new HttpResponse({ body: { description: 'B' } }));
+            await Promise.resolve();
+            oldDescription.next(new HttpResponse({ body: { description: 'A' } }));
+            await Promise.resolve();
+            expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe('B');
+        });
+
+        it('ignores duplicate submissions and same-course route emissions during generation', () => {
+            fixture.detectChanges();
+            comp.getCompetencyRecommendations('A');
+            route.setParameters({ courseId: 1 });
+            comp.getCompetencyRecommendations('Duplicate');
+            expect(TestBed.inject(CourseCompetencyService).generateCompetenciesFromCourseDescription).toHaveBeenCalledExactlyOnceWith(1, 'A', []);
+            a.next({ runState: IrisRunState.FINISHED, result: [{ title: 'A' }] });
+            expect(comp.competencies.getRawValue().map((value) => value.competency.title)).toEqual(['A']);
+        });
+
+        it('silences pending generation and route callbacks on destruction', () => {
+            const pending = new Subject<HttpResponse<void>>();
+            vi.mocked(TestBed.inject(CourseCompetencyService).generateCompetenciesFromCourseDescription).mockReturnValue(pending);
+            fixture.detectChanges();
+            comp.getCompetencyRecommendations('A');
+            fixture.destroy();
+            pending.next(new HttpResponse<void>());
+            route.setParameters({ courseId: 2 });
+            expect(TestBed.inject(WebsocketService).subscribe).not.toHaveBeenCalled();
+            expect(comp.courseId).toBe(1);
+        });
     });
 
     function createCompetencyFormGroup(title?: string, description?: string, taxonomy?: CompetencyTaxonomy, viewed = false): FormGroup<CompetencyFormControlsWithViewed> {

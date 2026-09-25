@@ -96,6 +96,48 @@ class ContentExtractionServiceFlavorStripTest {
     }
 
     @Test
+    void stripFlavorText_ambiguousExact_preservesSource() {
+        String raw = "Repeat. Task. Repeat.";
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("remove narrative", "Repeat.", ""))));
+        assertThat(service.stripFlavorText(raw)).isEqualTo(raw);
+    }
+
+    @Test
+    void stripFlavorText_ambiguousWhitespace_preservesSource() {
+        String raw = "Repeated flavor. Task. Repeated\nflavor.";
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("remove narrative", "Repeated  flavor.", ""))));
+        assertThat(service.stripFlavorText(raw)).isEqualTo(raw);
+    }
+
+    @Test
+    void stripFlavorText_exactAndWhitespaceEquivalent_preservesSource() {
+        String raw = "Repeated flavor. Task. Repeated\nflavor.";
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("remove narrative", "Repeated flavor.", ""))));
+        assertThat(service.stripFlavorText(raw)).isEqualTo(raw);
+    }
+
+    @Test
+    void stripFlavorText_overlappingMatches_preservesSource() {
+        String raw = "aba ba ba constraint";
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("remove narrative", "ba ba", ""))));
+        assertThat(service.stripFlavorText(raw)).isEqualTo(raw);
+    }
+
+    @Test
+    void stripFlavorText_wholeContentDeletion_preservesSource() {
+        String raw = "Required task.";
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("remove narrative", "Required task.", ""))));
+        assertThat(service.stripFlavorText(raw)).isEqualTo(raw);
+    }
+
+    @Test
+    void stripFlavorText_whitespaceOnlyResult_preservesSource() {
+        String raw = " \nRequired task.\n ";
+        stubLlm(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("remove narrative", "Required task.", ""))));
+        assertThat(service.stripFlavorText(raw)).isEqualTo(raw);
+    }
+
+    @Test
     void stripFlavorText_nullInput_returnsEmptyAndNeverCallsClient() {
         assertThat(service.stripFlavorText(null)).isEmpty();
         verifyNoInteractions(chatClient);

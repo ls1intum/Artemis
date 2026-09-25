@@ -33,7 +33,11 @@ export class AutoOrchestrationNotificationService implements OnDestroy {
             return;
         }
         const topic = `/topic/atlas/orchestrator/${courseId}`;
-        const sub = this.websocketService.subscribe<AutoOrchestrationSummary>(topic).subscribe((summary) => this.handleSummary(summary));
+        const sub = this.websocketService.subscribe<AutoOrchestrationSummary>(topic).subscribe((summary) => {
+            if (summary && summary.courseId === courseId) {
+                this.handleSummary(summary);
+            }
+        });
         this.subscriptions.set(courseId, sub);
     }
 
@@ -51,9 +55,6 @@ export class AutoOrchestrationNotificationService implements OnDestroy {
     }
 
     private handleSummary(summary: AutoOrchestrationSummary): void {
-        if (!summary) {
-            return;
-        }
         const params = { count: summary.exerciseCount, success: summary.successCount, failure: summary.failureCount };
         if (summary.failureCount === 0) {
             this.alertService.success('artemisApp.atlasOrchestrator.autoToast.success', params);

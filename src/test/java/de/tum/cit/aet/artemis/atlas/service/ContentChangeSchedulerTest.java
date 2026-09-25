@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
@@ -80,6 +81,38 @@ class ContentChangeSchedulerTest {
         // with concrete resolved values.
         lenient().when(accumulator.resolveDebounceWindowSeconds(config)).thenReturn(RESOLVED_WINDOW_SECONDS);
         lenient().when(accumulator.resolveDailyCap(config)).thenReturn(RESOLVED_DAILY_CAP);
+    }
+
+    @Test
+    void tick_twoCourses_keepDestinationsAndSummariesIsolated() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(42L, 43L));
+        var config = new CourseAutoOrchestrationConfigDTO(true, null, null);
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(42L)).thenReturn(Optional.of(config));
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(43L)).thenReturn(Optional.of(config));
+        when(accumulator.resolveDebounceWindowSeconds(config)).thenReturn(RESOLVED_WINDOW_SECONDS);
+        when(accumulator.resolveDailyCap(config)).thenReturn(RESOLVED_DAILY_CAP);
+        when(accumulator.claimDueBatch(42L, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(Set.of(10L))));
+        when(accumulator.claimDueBatch(43L, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(Set.of(20L, 21L))));
+        when(orchestrationService.runBatch(42L, Set.of(10L))).thenReturn(CompetencyOrchestrationResultDTO.success("A", List.of()));
+        when(orchestrationService.runBatch(43L, Set.of(20L, 21L)))
+                .thenReturn(CompetencyOrchestrationResultDTO.failed("B", CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED));
+
+        scheduler.tick();
+
+        var courseA = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        var courseB = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/42"), courseA.capture());
+        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/43"), courseB.capture());
+        assertThat(courseA.getValue().courseId()).isEqualTo(42L);
+        assertThat(courseA.getValue().exerciseCount()).isEqualTo(1);
+        assertThat(courseA.getValue().successCount()).isEqualTo(1);
+        assertThat(courseA.getValue().failureCount()).isZero();
+        assertThat(courseB.getValue().courseId()).isEqualTo(43L);
+        assertThat(courseB.getValue().exerciseCount()).isEqualTo(2);
+        assertThat(courseB.getValue().successCount()).isZero();
+        assertThat(courseB.getValue().failureCount()).isEqualTo(2);
+        verifyNoMoreInteractions(websocketMessagingService);
     }
 
     @Test

@@ -78,6 +78,23 @@ describe('AutoOrchestrationNotificationService', () => {
         expect(websocketSubscribeSpy).toHaveBeenCalledTimes(2);
     });
 
+    it('isolates course switches and rejects mismatched summaries on the active topic', () => {
+        const a = new Subject<AutoOrchestrationSummary>();
+        const b = new Subject<AutoOrchestrationSummary>();
+        const streams: Record<string, Subject<AutoOrchestrationSummary>> = { '/topic/atlas/orchestrator/42': a, '/topic/atlas/orchestrator/43': b };
+        websocketSubscribeSpy.mockImplementation((destination: string) => streams[destination]);
+        service.subscribeToCourse(42);
+        service.unsubscribeFromCourse(42);
+        service.subscribeToCourse(43);
+        a.next(summary({ courseId: 42, exerciseCount: 1, successCount: 1 }));
+        b.next(summary({ courseId: 42, exerciseCount: 1, successCount: 1 }));
+        expect(alertSuccessSpy).not.toHaveBeenCalled();
+        expect(alertWarningSpy).not.toHaveBeenCalled();
+        expect(alertErrorSpy).not.toHaveBeenCalled();
+        b.next(summary({ courseId: 43, exerciseCount: 2, successCount: 2 }));
+        expect(alertSuccessSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.atlasOrchestrator.autoToast.success', { count: 2, success: 2, failure: 0 });
+    });
+
     function summary(overrides: Partial<AutoOrchestrationSummary>): AutoOrchestrationSummary {
         return {
             courseId: 42,
