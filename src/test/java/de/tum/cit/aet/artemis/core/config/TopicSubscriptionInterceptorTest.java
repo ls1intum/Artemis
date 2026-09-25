@@ -142,6 +142,62 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
+    void testUserTopicSubscriptionIsLimitedToTheUserItNames() {
+        userUtilService.addAdmin(TEST_PREFIX);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        long student1Id = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
+        long student2Id = userUtilService.getUserByLogin(TEST_PREFIX + "student2").getId();
+        String student1Topic = "/topic/user/" + student1Id + "/notifications/conversations";
+
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var channel = mock(MessageChannel.class);
+
+        var message = subscribeMessage(student1Topic, authenticationFor(TEST_PREFIX + "student1", Role.STUDENT));
+        assertThat(interceptor.preSend(message, channel)).as("the user the topic names").isSameAs(message);
+
+        message = subscribeMessage("/topic/user/" + student2Id + "/notifications/conversations", authenticationFor(TEST_PREFIX + "student1", Role.STUDENT));
+        assertThat(interceptor.preSend(message, channel)).as("another user's topic").isNull();
+
+        message = subscribeMessage(student1Topic, authenticationFor(TEST_PREFIX + "admin", Role.ADMIN));
+        assertThat(interceptor.preSend(message, channel)).as("administrator on another user's topic").isNull();
+
+        for (String destination : List.of("/topic/user/0" + student1Id + "/notifications/conversations", "/topic/user/" + student1Id, "/topic/user/" + student1Id + "/",
+                "/topic/user/login/notifications/conversations", "/topic/user/99999999999999999999/notifications/conversations")) {
+            message = subscribeMessage(destination, authenticationFor(TEST_PREFIX + "student1", Role.STUDENT));
+            assertThat(interceptor.preSend(message, channel)).as("malformed user topic %s", destination).isNull();
+        }
+    }
+
+    @Test
+    void testPatternSubscriptionIsRejected() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        long student1Id = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
+
+        var interceptor = websocketConfiguration.new TopicSubscriptionInterceptor();
+        var channel = mock(MessageChannel.class);
+        var student = authenticationFor(TEST_PREFIX + "student1", Role.STUDENT);
+
+        var message = subscribeMessage("/topic/management/feature-toggles", student);
+        assertThat(interceptor.preSend(message, channel)).as("a topic without a pattern").isSameAs(message);
+
+        for (String destination : List.of("/topic/**", "/topic/*/" + student1Id + "/notifications/conversations", "/topic/user/" + student1Id + "/**",
+                "/topic/user/{userId}/notifications/conversations", "/topic/user/" + student1Id + "/notifications/conversation?", "/topic/#", "/topic/>", "/user/topic/**")) {
+            message = subscribeMessage(destination, student);
+            assertThat(interceptor.preSend(message, channel)).as("pattern subscription %s", destination).isNull();
+        }
+
+        message = subscribeMessage(null, student);
+        assertThat(interceptor.preSend(message, channel)).as("subscription without destination").isNull();
+    }
+
+    private static Message<byte[]> subscribeMessage(String destination, Principal user) {
+        var headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+        headers.setDestination(destination);
+        headers.setUser(user);
+        return MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+    }
+
+    @Test
     void testAllowSubscription() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         var course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);

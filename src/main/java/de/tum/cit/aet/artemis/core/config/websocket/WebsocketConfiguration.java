@@ -89,6 +89,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private static final Pattern EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN = Pattern.compile("^/topic/exercises/(\\d+)/synchronization$");
 
+    /**
+     * Characters that turn a subscription destination into a pattern over many topics: {@code *}, {@code ?} and
+     * {@code {}} for the Ant-style matching of the simple broker, {@code *}, {@code #} and {@code >} for the topic
+     * wildcards of an external STOMP broker.
+     */
+    private static final Pattern DESTINATION_WILDCARD_PATTERN = Pattern.compile("[*?{}#>]");
+
+    private static final String USER_TOPIC_PREFIX = "/topic/user/";
+
+    private static final Pattern USER_TOPIC_PATTERN = Pattern.compile("^/topic/user/(\\d+)/.+$");
+
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final JsonMapper jsonMapper;
@@ -383,7 +394,18 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 return false;
             }
 
+            if (destination == null || DESTINATION_WILDCARD_PATTERN.matcher(destination).find()) {
+                // A subscription has to name exactly one topic. A pattern would match topics the checks below never see.
+                return false;
+            }
+
             final var login = principal.getName();
+
+            if (destination.startsWith(USER_TOPIC_PREFIX)) {
+                // A personal topic is addressed by user id and only ever subscribed by that user; no course role or
+                // administrator override applies.
+                return isOwnUserTopic(login, destination);
+            }
 
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
                 // Request-bound elevation rather than account classification: the session the handshake established
@@ -451,6 +473,24 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private boolean isParticipationOwnedByUser(Principal principal, Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         return participation.isOwnedBy(principal.getName());
+    }
+
+    /**
+     * Returns whether the given destination is a personal topic of the user with the given login, e.g.
+     * {@code /topic/user/{userId}/notifications/conversations}. The id is compared as text, so a destination whose id
+     * has leading zeros or does not fit into a long never matches.
+     *
+     * @param login       the login of the user who wants to subscribe
+     * @param destination a destination that starts with {@code /topic/user/}
+     * @return true if the destination names the id of the user with the given login
+     */
+    private boolean isOwnUserTopic(String login, String destination) {
+        var matcher = USER_TOPIC_PATTERN.matcher(destination);
+        if (!matcher.matches()) {
+            return false;
+        }
+        String requestedUserId = matcher.group(1);
+        return userRepository.findIdByLogin(login).map(String::valueOf).filter(requestedUserId::equals).isPresent();
     }
 
     /**
