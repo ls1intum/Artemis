@@ -81,7 +81,14 @@
                             (click)="itemsDrop?.close()"
                         >
                             <div class="d-flex align-items-center">
-                                @if (bottomItem.icon) {
+                                @if (bottomItem.iconImage) {
+                                    <span
+                                        class="sidebar-icon-image"
+                                        [style.mask-image]="'url(' + bottomItem.iconImage + ')'"
+                                        [style.color]="bottomItem.iconColor"
+                                        aria-hidden="true"
+                                    ></span>
+                                } @else if (bottomItem.icon) {
                                     <fa-icon [fixedWidth]="true" [icon]="bottomItem.icon" [style.color]="bottomItem.iconColor" />
                                 }
                                 @if (!isNavbarCollapsed()) {
@@ -127,7 +134,9 @@
 
     <!-- TEMPLATES -->
     <ng-template #navIconAndText let-sidebarItem>
-        @if (sidebarItem.icon) {
+        @if (sidebarItem.iconImage) {
+            <span class="sidebar-icon-image" [style.mask-image]="'url(' + sidebarItem.iconImage + ')'" [style.color]="sidebarItem.iconColor" aria-hidden="true"></span>
+        } @else if (sidebarItem.icon) {
             <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" [style.color]="sidebarItem.iconColor" />
         }
         @if (!isNavbarCollapsed()) {
@@ -136,7 +145,10 @@
     </ng-template>
 
     <ng-template #navIconAndTextHidden let-sidebarItem>
-        @if (sidebarItem.icon) {
+        @if (sidebarItem.iconImage) {
+            <span class="sidebar-icon-image" [style.mask-image]="'url(' + sidebarItem.iconImage + ')'" [style.color]="sidebarItem.iconColor" aria-hidden="true"></span>
+            <span class="ms-2" [jhiTranslate]="sidebarItem.translation"></span>
+        } @else if (sidebarItem.icon) {
             <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" [style.color]="sidebarItem.iconColor" />
             <span class="ms-2" [jhiTranslate]="sidebarItem.translation"></span>
         }

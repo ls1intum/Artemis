@@ -37,6 +37,11 @@ export const MAX_SIDEBAR_ITEM_LABEL_LENGTH = 17;
 export interface SidebarItem {
     routerLink: string;
     icon?: IconDefinition;
+    /**
+     * Path of a monochrome image on a transparent background, shown instead of {@link icon}. It is drawn as a mask in
+     * the current text colour, so it follows hover, active and dark-theme colours the same way an icon does.
+     */
+    iconImage?: string;
     iconColor?: string;
     title: string;
     testId?: string;

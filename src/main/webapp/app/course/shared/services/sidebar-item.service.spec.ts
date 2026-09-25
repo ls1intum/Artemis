@@ -18,9 +18,9 @@ import {
     faTableCells,
     faUserCheck,
     faUsers,
-    faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
+import { ATHENA_LOGO_PATH } from 'app/shared-ui/athena-logo/athena-logo.component';
 
 describe('CourseSidebarItemService', () => {
     let service: CourseSidebarItemService;
@@ -297,7 +297,7 @@ describe('CourseSidebarItemService', () => {
 
             expect(item).toEqual({
                 routerLink: `${courseId}/athena-settings`,
-                icon: faWandMagicSparkles,
+                iconImage: ATHENA_LOGO_PATH,
                 title: 'Athena Settings',
                 translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
                 testId: 'athena-settings',
