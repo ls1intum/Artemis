@@ -13,15 +13,19 @@ import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { FileService } from 'app/foundation/service/file.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseRetrievalApi } from 'app/openapi/api/quiz-exercise-retrieval-api';
-import { toQuizExercise, toQuizExerciseFromListRow } from 'app/quiz/shared/util/generated-quiz-exercise.util';
+import { QuizStatisticsApi } from 'app/openapi/api/quiz-statistics-api';
+import {
+    toQuizExercise,
+    toQuizExerciseFromListRow,
+    toQuizPointStatistics,
+    toQuizQuestionStatistic,
+    toQuizStatisticsOverview,
+} from 'app/quiz/shared/util/generated-quiz-exercise.util';
 import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
-export type StatisticsOverviewResponseType = HttpResponse<QuizStatisticsOverviewResponse>;
-export type PointStatisticsResponseType = HttpResponse<QuizPointStatisticsResponse>;
-export type QuestionStatisticResponseType = HttpResponse<QuizQuestionStatisticResponse>;
 
 @Service()
 export class QuizExerciseService {
@@ -30,6 +34,7 @@ export class QuizExerciseService {
     private fileService = inject(FileService);
     private accountService = inject(AccountService);
     private quizExerciseRetrievalApi = inject(QuizExerciseRetrievalApi);
+    private quizStatisticsApi = inject(QuizStatisticsApi);
     private resourceUrl = 'api/quiz/quiz-exercises';
     private quizBaseURL = 'api/quiz';
 
@@ -127,8 +132,8 @@ export class QuizExerciseService {
      * @param quizExerciseId the ID of the quiz exercise
      * @return the quiz exercise overview and its calculated statistics
      */
-    findStatisticsOverview(quizExerciseId: number): Observable<StatisticsOverviewResponseType> {
-        return this.getStatistics<QuizStatisticsOverviewResponse>(quizExerciseId, 'overview');
+    findStatisticsOverview(quizExerciseId: number): Observable<QuizStatisticsOverviewResponse> {
+        return this.quizStatisticsApi.getQuizStatisticsOverview(quizExerciseId).pipe(map((overview) => this.prepareForClient(toQuizStatisticsOverview(overview))));
     }
 
     /**
@@ -137,8 +142,8 @@ export class QuizExerciseService {
      * @param quizExerciseId the ID of the quiz exercise
      * @return the quiz exercise and its calculated point distribution
      */
-    findPointStatistic(quizExerciseId: number): Observable<PointStatisticsResponseType> {
-        return this.getStatistics<QuizPointStatisticsResponse>(quizExerciseId, 'points');
+    findPointStatistic(quizExerciseId: number): Observable<QuizPointStatisticsResponse> {
+        return this.quizStatisticsApi.getQuizPointStatistic(quizExerciseId).pipe(map((pointStatistics) => this.prepareForClient(toQuizPointStatistics(pointStatistics))));
     }
 
     /**
@@ -148,24 +153,10 @@ export class QuizExerciseService {
      * @param questionId the ID of the quiz question
      * @return the quiz exercise, question, and calculated question statistic
      */
-    findQuestionStatistic(quizExerciseId: number, questionId: number): Observable<QuestionStatisticResponseType> {
-        return this.getStatistics<QuizQuestionStatisticResponse>(quizExerciseId, `questions/${questionId}`);
-    }
-
-    /**
-     * Loads a page-specific statistics response and converts its quiz exercise dates.
-     *
-     * @param quizExerciseId the ID of the quiz exercise
-     * @param path the statistics endpoint path relative to the quiz exercise
-     * @return the converted statistics response
-     */
-    private getStatistics<T extends QuizExercise>(quizExerciseId: number, path: string): Observable<HttpResponse<T>> {
-        return this.http.get<T>(`${this.resourceUrl}/${quizExerciseId}/statistics/${path}`, { observe: 'response' }).pipe(
-            map((res) => {
-                this.exerciseService.processExerciseEntityResponse(res);
-                return res;
-            }),
-        );
+    findQuestionStatistic(quizExerciseId: number, questionId: number): Observable<QuizQuestionStatisticResponse> {
+        return this.quizStatisticsApi
+            .getQuizQuestionStatistic(quizExerciseId, questionId)
+            .pipe(map((questionStatistic) => this.prepareForClient(toQuizQuestionStatistic(questionStatistic))));
     }
 
     /**
@@ -314,7 +305,7 @@ export class QuizExerciseService {
      * @param quizExercise the converted exercise
      * @returns the same exercise, prepared
      */
-    private prepareForClient(quizExercise: QuizExercise): QuizExercise {
+    private prepareForClient<T extends Omit<QuizExercise, 'quizQuestions'>>(quizExercise: T): T {
         ExerciseService.parseExerciseCategories(quizExercise);
         this.accountService.setAccessRightsForExerciseAndReferencedCourse(quizExercise);
         this.exerciseService.sendExerciseTitleToTitleService(quizExercise);
