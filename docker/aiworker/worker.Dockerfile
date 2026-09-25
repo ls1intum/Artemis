@@ -4,4 +4,4 @@ ARG ARTEMIS_WAR
 WORKDIR /opt/aiworker
 COPY --chown=1000:1000 ${ARTEMIS_WAR} worker.war
 USER 1000:1000
-ENTRYPOINT ["java", "-Dloader.main=de.tum.cit.aet.artemis.aiworker.config.AiWorkerApplication", "-Dloader.path=WEB-INF/classes,WEB-INF/lib,WEB-INF/lib-provided", "-cp", "/opt/aiworker/worker.war", "org.springframework.boot.loader.launch.PropertiesLauncher"]
+ENTRYPOINT ["java", "-jar", "/opt/aiworker/worker.war", "--spring.profiles.active=prod,aiworker"]

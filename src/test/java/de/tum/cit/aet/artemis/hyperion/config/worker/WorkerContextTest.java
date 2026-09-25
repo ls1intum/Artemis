@@ -25,8 +25,8 @@ import org.springframework.web.servlet.DispatcherServlet;
 
 import com.github.dockerjava.api.DockerClient;
 
+import de.tum.cit.aet.artemis.ArtemisApp;
 import de.tum.cit.aet.artemis.aiworker.api.AiWorkerApi;
-import de.tum.cit.aet.artemis.aiworker.config.AiWorkerApplication;
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerClientService;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
@@ -41,10 +41,10 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.HyperionWorkloadService;
 class WorkerContextTest {
 
     @ParameterizedTest
-    @ValueSource(strings = { "aiworker,aiworker-standalone", "prod,aiworker,aiworker-standalone" })
+    @ValueSource(strings = { "aiworker", "prod,aiworker" })
     void standaloneWorkerDoesNotLoadServerModules(String profiles) {
         new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.split(",")))
-                .withInitializer(new ConfigDataApplicationContextInitializer()).withUserConfiguration(AiWorkerApplication.class, ExternalServices.class)
+                .withInitializer(new ConfigDataApplicationContextInitializer()).withUserConfiguration(ArtemisApp.class, ExternalServices.class)
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
                 .withPropertyValues("artemis.aiworker.workload=hyperion-generation", "artemis.aiworker.profile=java-gradle", "artemis.aiworker.id=context-test",
                         "artemis.aiworker.image=sha256:" + "a".repeat(64), "artemis.aiworker.max-concurrent-executions=4", "artemis.distributed-data.provider=local",
@@ -54,6 +54,8 @@ class WorkerContextTest {
                 .run(context -> {
                     assertThat(context).hasNotFailed().hasSingleBean(WorkerSupervisorService.class).hasSingleBean(DockerSandboxService.class)
                             .hasSingleBean(WorkerCommandListener.class).hasSingleBean(HyperionWorkloadService.class);
+                    assertThat(context.getEnvironment().getProperty("spring.main.web-application-type")).isEqualTo("none");
+                    assertThat(context.getEnvironment().getProperty("spring.hazelcast.localInstances")).isEqualTo("false");
                     assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
                             .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel");
                     assertThat(context.getBean(WorkerSettings.class).maxConcurrentExecutions()).isEqualTo(4);

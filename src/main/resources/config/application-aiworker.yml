@@ -1,8 +1,10 @@
-# Only the separate worker process loads this profile. A combined core + worker node
-# uses the aiworker profile without these server exclusions.
+# An aiworker-only Artemis node has no HTTP server or database. Do not combine
+# this profile with core; run a separate worker process for production.
 spring:
     application:
         name: Artemis
+    hazelcast:
+        localInstances: false
     main:
         web-application-type: none
     liquibase:

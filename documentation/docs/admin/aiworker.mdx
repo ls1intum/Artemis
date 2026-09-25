@@ -41,7 +41,7 @@ the same Eureka registry as a Build Agent. It does not register itself. Set
 The addresses that core nodes publish must be reachable from the worker host.
 Do not configure a fixed list of core addresses on the worker.
 For Redis/Valkey, configure the same `spring.data.redis.*` endpoint and credentials
-used by the core deployment. Redis turns Eureka off. The standalone entry point
+used by the core deployment. Redis turns Eureka off. The normal Artemis entry point in worker-only mode
 rejects `local`: process-local state cannot carry worker messages.
 
 Keep the provider port private to trusted hosts. A host-loopback Docker port map
@@ -87,13 +87,13 @@ Never flush or replace the store under running writers.
 
 Build the normal Artemis WAR with `./gradlew -Pprod -Pwar bootWar -x webapp`.
 The [worker image recipe](https://github.com/ls1intum/Artemis/blob/develop/docker/aiworker/worker.Dockerfile)
-uses that exact WAR and runs as UID 1000. Its entry point loads only AI Worker and
-selected workload services; it does not start the Artemis HTTP server. The
-`aiworker-standalone` profile excludes database services and loads only the selected
-distributed-data client.
-Do not pass `core`, `localci`, `localvc`, or `buildagent` to this entry point.
-For a combined test node, use the normal Artemis entry point with `aiworker`; keep
-the core container away from the host Docker socket.
+uses that exact WAR and runs as UID 1000. It starts the normal `ArtemisApp` with
+`prod,aiworker`. On a worker-only node, component scanning loads only AI Worker
+services and the selected workload. The `aiworker` profile disables the HTTP
+server and database services and loads only the selected distributed-data client.
+Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
+and rejects any attempt to turn the HTTP server back on. Do not run this profile
+on a core node. Keep the core container away from the worker's Docker socket.
 Preload a qualified, digest-pinned sandbox image on the isolated daemon.
 Configuration files containing secrets must be readable only by the deployment account
 and worker UID, and mounted read-only.
@@ -141,6 +141,9 @@ resource policy and credentials operator-controlled, not selectable by models or
 The shipped workload is `hyperion-generation`, schema `1`, profile `java-gradle`.
 Configure its worker-local Spring AI chat model with `spring.ai.model.chat=openai` and
 `spring.ai.openai.*`, as described in [Hyperion setup](/admin/hyperion#configure-spring-ai).
+Hyperion generation sends model requests from the worker process directly to the
+configured provider. Core sends the assignment and receives evidence through the
+distributed-data provider; it does not proxy generation model requests.
 Chat is disabled by default in the generic executable. Other workloads do not need model
 credentials unless their implementation uses a model. Use `max-retries: 0` when exact
 provider accounting is required. Content telemetry stays off unless explicitly approved.
@@ -208,8 +211,10 @@ whether a retained result is usable and whether persistence requires operator re
 ## Ansible and staging qualification
 
 The `ls1intum.artemis.ai_worker` role deploys the supervisor. Select workload/profile
-explicitly; enable `artemis_aiworker_enabled` on core and provision `artemis_aiworker`
-provider access and worker IDs. Hyperion's two feature flags remain separate.
+explicitly and provision provider access through `ai_worker_provider` and its
+connection settings. Set `artemis_aiworker_ids` on eligible core nodes. Hyperion's
+two feature flags start coordination automatically; set `artemis_aiworker_enabled`
+only for other worker workloads.
 The role validates inputs, protects rendered secrets, preloads the sandbox image and
 requires an explicit maintenance confirmation before replacing a running worker.
 It does not provision the provider, firewall or isolation boundary.
