@@ -155,15 +155,6 @@ export class DragAndDropQuestionComponent {
     }
 
     /**
-     * Prevent scrolling when dragging elements on mobile devices
-     * @param event the native drag event emitted by the drop location element
-     */
-    preventDefault(event: Event) {
-        event.preventDefault();
-        return false;
-    }
-
-    /**
      * react to the drop event of a drag item
      *
      * @param dropLocation {object | undefined} the dropLocation that the drag item was dropped on.
