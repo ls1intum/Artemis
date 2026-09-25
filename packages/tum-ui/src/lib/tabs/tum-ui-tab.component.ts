@@ -1,61 +1,69 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, booleanAttribute, computed, effect, inject, input } from '@angular/core';
-import type { FocusOrigin } from '@angular/cdk/a11y';
-import { TumUiTabsService } from './tum-ui-tabs.service';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, input, model, untracked } from '@angular/core';
+import { Tab } from '@angular/aria/tabs';
+import { TumUiTabsService, tabKey } from './tum-ui-tabs.service';
 
-/** Selectable tab associated with the panel that has the same value. */
+/**
+ * Selectable tab associated with the panel that has the same value.
+ *
+ * An Angular Aria tab: it owns the `tab` role, `aria-selected`, `aria-controls`, `aria-disabled`, and the roving
+ * `tabindex`. A disabled tab stays focusable with the arrow keys and is announced as unavailable, but cannot be selected.
+ */
 @Component({
     selector: 'tum-ui-tab',
     template: '<ng-content />',
     styleUrl: './tum-ui-tab.component.scss',
     host: {
-        role: 'tab',
+        // Lets the Angular Aria test harnesses (`@angular/aria/tabs/testing`) find the tab.
+        ngTab: '',
         '[class]': 'hostClasses()',
-        '[id]': 'id()',
-        '[attr.aria-selected]': 'active()',
-        '[attr.aria-controls]': 'panelId()',
-        '[attr.aria-disabled]': 'disabled || undefined',
-        '[attr.tabindex]': 'active() && !disabled ? 0 : -1',
-        '(click)': 'onClick()',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TumUiTabComponent {
+export class TumUiTabComponent extends Tab implements OnInit, OnDestroy {
     private readonly tabsService = inject(TumUiTabsService);
-
-    readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+    private removeFromTabs?: () => void;
 
     /** Value that associates this tab with a tab panel. */
-    readonly value = input.required<number | string>();
-    // eslint-disable-next-line @angular-eslint/no-input-rename -- FocusKeyManager requires disabled to be a boolean property.
-    readonly disabledInput = input(false, { alias: 'disabled', transform: booleanAttribute });
+    // eslint-disable-next-line @angular-eslint/no-input-rename -- the public name must stay `value`; see `value` below.
+    readonly tabValue = input.required<number | string>({ alias: 'value' });
 
-    get disabled(): boolean {
-        return this.disabledInput();
-    }
+    /**
+     * The key aria identifies this tab by: `tabValue` passed through {@link tabKey}, so `1` and `'1'` stay two tabs.
+     *
+     * Aria keys a tab by the string in its `value` input, while this tab accepts numbers as well. Overriding `value` with
+     * a wider input type would break the type of the aria class for every consumer that checks library types, so this
+     * override keeps aria's type and moves the input to an internal name that nobody binds; the tab sets it itself.
+     *
+     * The override relies on how aria reads the input. Aria builds its tab pattern in a field initializer from a copy of
+     * `this`, which still holds aria's own, never bound `value` input, and reads `value` only lazily through
+     * `this.value()`, in the tab and panel maps and when looking up the selected tab. If an aria update starts reading
+     * `value` from that copy, the tabs lose their panels and selection.
+     */
+    override readonly value = model('', { alias: 'tumUiTabKey' });
 
     constructor() {
-        effect(() => this.tabsService.publish(this, this.value()));
-        inject(DestroyRef).onDestroy(() => this.tabsService.unpublish(this));
+        super();
+        effect(() => {
+            const key = tabKey(this.tabValue());
+            untracked(() => this.value.set(key));
+        });
     }
 
-    protected readonly active = computed(() => this.tabsService.active() === this.value());
-    protected readonly id = computed(() => this.tabsService.tabId(this.value()));
-    protected readonly panelId = computed(() => this.tabsService.panelId(this.value()));
-
     protected readonly hostClasses = computed(() => {
-        const state = this.active() ? 'tum:text-accent' : 'tum:text-muted tum:hover:text-text';
-        const disabled = this.disabled ? 'tum-ui-tab-disabled' : '';
+        const state = this.selected() ? 'tum:text-accent' : 'tum:text-muted tum:hover:text-text';
+        const disabled = this.disabled() ? 'tum-ui-tab-disabled' : '';
         return `tum-ui-tab tum:focus-visible:outline tum:focus-visible:outline-2 tum:focus-visible:outline-focus ${state} ${disabled}`.trim();
     });
 
-    protected onClick(): void {
-        if (!this.disabled) {
-            this.tabsService.select(this.value());
-        }
+    override ngOnInit(): void {
+        // Bindings are applied by now, so aria sees the key from its first read on; the effect follows later changes.
+        this.value.set(tabKey(this.tabValue()));
+        super.ngOnInit();
+        this.removeFromTabs = this.tabsService.addTab({ key: this.value, element: this.element, disabled: this.disabled, selected: this.selected });
     }
 
-    focus(_origin?: FocusOrigin): void {
-        this.elementRef.nativeElement.focus();
-        this.elementRef.nativeElement.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    override ngOnDestroy(): void {
+        this.removeFromTabs?.();
+        super.ngOnDestroy();
     }
 }
