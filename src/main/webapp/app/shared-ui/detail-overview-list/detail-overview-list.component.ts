@@ -71,13 +71,13 @@ export enum DetailType {
     ],
 })
 export class DetailOverviewListComponent {
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly alertService = inject(AlertService);
+
     protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
-
-    private readonly modelingExerciseService = inject(ModelingExerciseService);
-    private readonly alertService = inject(AlertService);
 
     sections = input.required<DetailOverviewSection[]>();
 

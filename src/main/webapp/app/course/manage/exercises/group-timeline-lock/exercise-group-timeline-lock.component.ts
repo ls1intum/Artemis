@@ -21,14 +21,14 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseGroupTimelineLockComponent {
+    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
+    private readonly alertService = inject(AlertService);
+
     readonly exercise = input.required<Exercise>();
     /** Owning course id; falls back to {@code exercise.course?.id} when not provided by the host form. */
     readonly courseId = input<number | undefined>(undefined);
     /** Emits the exercise with the group's timeline applied after a successful group save, so the form can refresh. */
     readonly exerciseChange = output<Exercise>();
-
-    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
-    private readonly alertService = inject(AlertService);
 
     /** Visibility of the declarative group-edit modal rendered in this component's template. */
     readonly showModal = signal(false);

@@ -47,14 +47,14 @@ import { CourseNotificationPresetPickerComponent } from 'app/notification/course
     styleUrls: ['./course-notification-overview.component.scss'],
 })
 export class CourseNotificationOverviewComponent implements AfterViewInit {
-    readonly courseId = input.required<number>();
-
     private elementRef = inject(ElementRef);
     private courseNotificationService = inject(CourseNotificationService);
     private accountService = inject(AccountService);
     private courseStorageService = inject(CourseStorageService);
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
     private destroyRef = inject(DestroyRef);
+
+    readonly courseId = input.required<number>();
 
     // Icons
     protected readonly faBell = faBell;

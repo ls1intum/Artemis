@@ -8,9 +8,9 @@ type EntityResponseType = HttpResponse<ForwardedMessageDTO>;
 
 @Injectable({ providedIn: 'root' })
 export class ForwardedMessageService {
-    public resourceUrl = 'api/communication/forwarded-messages';
-
     private http = inject(HttpClient);
+
+    public resourceUrl = 'api/communication/forwarded-messages';
 
     /**
      * Sends a request to create a new forwarded message.

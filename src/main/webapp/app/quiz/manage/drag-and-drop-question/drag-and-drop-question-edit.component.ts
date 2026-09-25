@@ -103,6 +103,10 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit, OnDestroy {
+    private translateService = inject(TranslateService);
+    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    private fileService = inject(FileService);
+
     protected readonly faBan = faBan;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -123,8 +127,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
-    private translateService = inject(TranslateService);
-    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly scoringTypeOptions = computed(() => {
@@ -135,7 +137,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
             { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
         ];
     });
-    private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
     private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');

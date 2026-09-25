@@ -20,17 +20,17 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
     imports: [IrisLogoComponent, NgClass, FaIconComponent],
 })
 export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
-    buttonLoading = input<boolean>(false);
-    disabled = input<boolean>(false);
-    question = input<string>();
-    course = input<Course>();
-    extraClass = input<string | string[] | Set<string> | { [klass: string]: boolean }>();
-
     metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
     irisSettingsService = inject(IrisSettingsService);
     profileService = inject(ProfileService);
     router = inject(Router);
+
+    buttonLoading = input<boolean>(false);
+    disabled = input<boolean>(false);
+    question = input<string>();
+    course = input<Course>();
+    extraClass = input<string | string[] | Set<string> | { [klass: string]: boolean }>();
 
     private conversationServiceSubscription?: Subscription;
     private settingsSubscription: Subscription | undefined;

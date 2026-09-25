@@ -17,10 +17,10 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     providedIn: 'root',
 })
 export class CourseNotificationSettingService implements OnDestroy {
-    private readonly apiEndpoint = '/api/notification/courses/';
-
     private http = inject(HttpClient);
     private readonly accountService = inject(AccountService);
+
+    private readonly apiEndpoint = '/api/notification/courses/';
 
     private settingInfoSubjects: Record<number, BehaviorSubject<CourseNotificationSettingInfo | undefined>> = {};
 

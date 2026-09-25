@@ -75,6 +75,10 @@ function widthOf(element: HTMLElement): number {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseActionBarComponent {
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly translateService = inject(TranslateService);
+
     readonly items = input.required<ActionItem[]>();
     /** Whether the `[actionBarReserved]`-projected prefix renders anything, so the separator next to it only shows when needed. */
     readonly hasReservedContent = input<boolean>(false);
@@ -92,10 +96,6 @@ export class ExerciseActionBarComponent {
     readonly columnMinWidthChange = output<number>();
 
     protected readonly faEllipsis = faEllipsis;
-
-    private readonly destroyRef = inject(DestroyRef);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
-    private readonly translateService = inject(TranslateService);
 
     private readonly menu = viewChild<TumUiPopoverComponent>('menu');
     /** The full-width action row; its width minus the reserved content is the budget for the collapsible main buttons. */

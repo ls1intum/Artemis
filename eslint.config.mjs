@@ -191,6 +191,10 @@ export default tseslint.config(
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
+            // Class fields initialize in declaration order, so a getter or method that reads an injected service from
+            // an earlier field initializer sees `undefined` if the inject() field comes later. TypeScript only catches
+            // the direct reference, not the one behind a getter or method, so keep every inject() field first.
+            '@angular-eslint/inject-at-top': 'error',
             // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
             // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
             // is allowed only with a description. Specs relax this to 'off' in the test-file block below.

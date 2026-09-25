@@ -5,9 +5,10 @@ import { isPlatformBrowser } from '@angular/common';
     providedIn: 'root',
 })
 export class OsDetectorService {
+    private platformId = inject(PLATFORM_ID);
+
     private _isMac = signal(false);
     private _isIos = signal(false);
-    private platformId = inject(PLATFORM_ID);
     constructor() {
         if (isPlatformBrowser(this.platformId)) {
             this.detectOs();

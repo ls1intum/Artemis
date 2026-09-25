@@ -46,11 +46,12 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
-    protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
+
+    protected readonly IrisLogoSize = IrisLogoSize;
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
     readonly course = input.required<Course>();

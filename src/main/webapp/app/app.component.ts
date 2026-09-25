@@ -40,8 +40,6 @@ import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recover
     ],
 })
 export class AppComponent implements OnInit, OnDestroy {
-    protected readonly FeatureToggle = FeatureToggle;
-
     private jhiLanguageHelper = inject(JhiLanguageHelper);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -54,6 +52,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private featureToggleService = inject(FeatureToggleService);
     private embedPdfPreloadService = inject(EmbedPdfPreloadService);
     private lazyRouteRecoveryService = inject(LazyRouteRecoveryService);
+
+    protected readonly FeatureToggle = FeatureToggle;
 
     readonly globalSearchEnabled = signal(false);
     private examStartedSubscription?: Subscription;

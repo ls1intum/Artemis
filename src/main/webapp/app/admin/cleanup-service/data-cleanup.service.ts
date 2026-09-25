@@ -116,8 +116,9 @@ type CleanupConfigurationDateField =
 
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
-    private readonly adminResourceUrl = 'api/admin/cleanup';
     private http = inject(HttpClient);
+
+    private readonly adminResourceUrl = 'api/admin/cleanup';
 
     /**
      * Send DELETE request to delete orphaned data.

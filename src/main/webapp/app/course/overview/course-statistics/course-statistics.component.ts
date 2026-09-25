@@ -131,17 +131,18 @@ enum ChartBarTitle {
     ],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
-    controlsRendered = new EventEmitter<void>();
     private courseStorageService = inject(CourseStorageService);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
     private courseTabRefreshService = inject(CourseTabRefreshService);
-    private tabReselectionSubscription?: Subscription;
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
     private gradingService = inject(GradingService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     categoryFilter = inject(ChartCategoryFilter);
+
+    controlsRendered = new EventEmitter<void>();
+    private tabReselectionSubscription?: Subscription;
 
     readonly documentationType: DocumentationType = 'StudentStatistics';
 

@@ -55,6 +55,11 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     },
 })
 export class ExerciseDetailsStudentActionsComponent {
+    private alertService = inject(AlertService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private participationService = inject(ParticipationService);
+    private profileService = inject(ProfileService);
+
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -66,11 +71,6 @@ export class ExerciseDetailsStudentActionsComponent {
     protected readonly InitializationState = InitializationState;
     protected readonly ButtonType = ButtonType;
     protected readonly AssessmentType = AssessmentType;
-
-    private alertService = inject(AlertService);
-    private courseExerciseService = inject(CourseExerciseService);
-    private participationService = inject(ParticipationService);
-    private profileService = inject(ProfileService);
 
     constructor() {
         effect(() => {

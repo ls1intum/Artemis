@@ -28,14 +28,14 @@ interface ParticipationWithCircularReferences {
 /** the programming exercise sharing service */
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSharingService {
+    private readonly http = inject(HttpClient);
+    private readonly profileService = inject(ProfileService);
+
     protected readonly baseSharingConfigUrl = 'api/core/sharing/config';
     protected readonly resourceUrl = 'api/programming/sharing/import';
     protected readonly resourceUrlBasket = 'api/programming/sharing/import/basket/';
     protected readonly resourceUrlExport = 'api/programming/sharing/export';
     protected readonly resourceUrlSetupImport = 'api/programming/sharing/setup-import';
-
-    private readonly http = inject(HttpClient);
-    private readonly profileService = inject(ProfileService);
 
     /**
      * loads the Shopping Basket via the Service

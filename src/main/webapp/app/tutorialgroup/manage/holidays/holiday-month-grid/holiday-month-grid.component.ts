@@ -117,6 +117,9 @@ export interface HolidayCalendarWeek {
     imports: [FaIconComponent, TumUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
 })
 export class HolidayMonthGridComponent {
+    private readonly gridElement = inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly translateService = inject(TranslateService);
+
     /** Any day of the month to display; the grid derives the month from it. */
     readonly displayedMonth = input.required<dayjs.Dayjs>();
     readonly holidays = input.required<readonly Holiday[]>();
@@ -143,9 +146,6 @@ export class HolidayMonthGridComponent {
      */
     readonly rangeSelected = output<{ start: dayjs.Dayjs; end: dayjs.Dayjs; origin: HTMLElement }>();
 
-    private readonly gridElement = inject<ElementRef<HTMLElement>>(ElementRef);
-
-    private readonly translateService = inject(TranslateService);
     private readonly locale = getCurrentLocaleSignal(this.translateService);
 
     /** Reused from the course calendar so both grids label their columns identically. */

@@ -83,12 +83,11 @@ export class CourseNotificationService implements OnDestroy {
 
     // Parameter keys that should be rendered as markdown
     public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent', 'replyMarkdownContent'];
+    private http = inject(HttpClient);
+    private readonly accountService = inject(AccountService);
 
     private readonly apiEndpoint = '/api/notification/courses/';
     public readonly pageSize = 10;
-
-    private http = inject(HttpClient);
-    private readonly accountService = inject(AccountService);
 
     private courseNotificationMap: Record<number, CourseNotification[]> = {};
     private courseNotificationPageMap: Record<number, boolean> = {};

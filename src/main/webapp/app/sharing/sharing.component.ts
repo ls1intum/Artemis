@@ -30,6 +30,14 @@ import { finalize } from 'rxjs/operators';
     imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
 })
 export class SharingComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private userRouteAccessService = inject(UserRouteAccessService);
+    private courseService = inject(CourseManagementService);
+    private sortService = inject(SortService);
+    private programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
+    private alertService = inject(AlertService);
+
     // Icons
     protected readonly faPlus = faPlus;
     protected readonly faSort = faSort;
@@ -50,14 +58,6 @@ export class SharingComponent implements OnInit {
     readonly selectedCourse = signal<Course | undefined>(undefined);
 
     readonly isInstructorOrEditor = signal(false);
-
-    private route = inject(ActivatedRoute);
-    private router = inject(Router);
-    private userRouteAccessService = inject(UserRouteAccessService);
-    private courseService = inject(CourseManagementService);
-    private sortService = inject(SortService);
-    private programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
-    private alertService = inject(AlertService);
 
     getBasketTokenExpiryDate(): Date {
         const tokenValidUntil = this.shoppingBasket()?.tokenValidUntil;

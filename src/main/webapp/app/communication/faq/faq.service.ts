@@ -12,9 +12,9 @@ type EntityArrayResponseType = HttpResponse<Faq[]>;
 
 @Injectable({ providedIn: 'root' })
 export class FaqService {
-    public resourceUrl = 'api/communication/courses';
-
     private http = inject(HttpClient);
+
+    public resourceUrl = 'api/communication/courses';
 
     create(courseId: number, createFaqDTO: CreateFaqDTO): Observable<EntityResponseType> {
         const copy = FaqService.convertCreateFaqFromClient(createFaqDTO);

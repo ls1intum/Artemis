@@ -12,9 +12,9 @@ import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
  */
 @Pipe({ name: 'meetingPattern' })
 export class MeetingPatternPipe implements PipeTransform {
-    removeSecondsPipe = new RemoveSecondsPipe();
-
     private translateService = inject(TranslateService);
+
+    removeSecondsPipe = new RemoveSecondsPipe();
 
     /**
      * Transforms a tutorial group schedule to a translated meeting pattern.

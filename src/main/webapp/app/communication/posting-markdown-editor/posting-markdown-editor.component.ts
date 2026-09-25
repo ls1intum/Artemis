@@ -73,6 +73,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     private emojiSearch = inject(EmojiSearch);
     viewContainerRef = inject(ViewContainerRef);
     private positionBuilder = inject(OverlayPositionBuilder);
+    private overlay = inject(Overlay);
 
     readonly markdownEditor = viewChild.required(MarkdownEditorMonacoComponent);
 
@@ -102,7 +103,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-    private overlay = inject(Overlay);
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings

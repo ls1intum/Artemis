@@ -5,9 +5,9 @@ import { GlobalNotificationType } from 'app/account/user/settings/global-notific
 
 @Injectable({ providedIn: 'root' })
 export class GlobalNotificationSettingsService {
-    private resourceUrl = 'api/notification/global-notification-settings';
-
     private httpClient = inject(HttpClient);
+
+    private resourceUrl = 'api/notification/global-notification-settings';
 
     getAll(): Observable<{ [key: string]: boolean }> {
         return this.httpClient.get<{ [key: string]: boolean }>(`${this.resourceUrl}`);

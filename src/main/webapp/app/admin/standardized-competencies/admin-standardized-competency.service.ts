@@ -6,9 +6,9 @@ import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyCat
     providedIn: 'root',
 })
 export class AdminStandardizedCompetencyService {
-    private resourceURL = 'api/atlas/admin/standardized-competencies';
-
     private httpClient = inject(HttpClient);
+
+    private resourceURL = 'api/atlas/admin/standardized-competencies';
 
     createStandardizedCompetency(competency: StandardizedCompetencyDTO) {
         return this.httpClient.post<StandardizedCompetencyDTO>(`${this.resourceURL}`, competency, { observe: 'response' });

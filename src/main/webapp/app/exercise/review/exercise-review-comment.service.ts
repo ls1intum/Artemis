@@ -22,11 +22,12 @@ type ReviewCommentSuccessCallback = () => void;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseReviewCommentService implements OnDestroy {
-    public readonly resourceUrl = 'api/exercise/exercises';
-
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
     private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
+
+    public readonly resourceUrl = 'api/exercise/exercises';
+
     private activeExerciseId?: number;
     private synchronizationSubscription?: Subscription;
     private subscribedExerciseId?: number;

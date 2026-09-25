@@ -7,10 +7,10 @@ import { ConversationService } from 'app/communication/conversations/service/con
 
 @Injectable({ providedIn: 'root' })
 export class OneToOneChatService {
-    public resourceUrl = '/api/communication/courses/';
-
     private http = inject(HttpClient);
     private conversationService = inject(ConversationService);
+
+    public resourceUrl = '/api/communication/courses/';
 
     create(courseId: number, loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> {
         return this.http

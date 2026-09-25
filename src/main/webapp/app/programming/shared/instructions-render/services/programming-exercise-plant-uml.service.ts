@@ -6,11 +6,11 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
-    private resourceUrl = 'api/programming/plantuml';
-    private encoder = new HttpUrlCustomEncoder();
-
     private readonly themeService = inject(ThemeService);
     private readonly http = inject(HttpClient);
+
+    private resourceUrl = 'api/programming/plantuml';
+    private encoder = new HttpUrlCustomEncoder();
 
     /**
      * Requests the plantuml png file as arraybuffer and converts it to base64.

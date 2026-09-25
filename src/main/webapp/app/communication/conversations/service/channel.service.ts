@@ -8,10 +8,10 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class ChannelService {
-    public resourceUrl = '/api/communication/courses/';
-
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
+
+    public resourceUrl = '/api/communication/courses/';
 
     getChannelsOfCourse(courseId: number): Observable<HttpResponse<ChannelDTO[]>> {
         return this.http.get<ChannelDTO[]>(`${this.resourceUrl}${courseId}/channels/overview`, {

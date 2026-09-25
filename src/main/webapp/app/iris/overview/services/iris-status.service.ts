@@ -16,10 +16,11 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
  */
 @Injectable({ providedIn: 'root' })
 export class IrisStatusService implements OnDestroy {
-    private readonly HEARTBEAT_INTERVAL_MS = 60 * 1000 * 5; // 5 minutes
     private websocketService = inject(WebsocketService);
     private httpClient = inject(HttpClient);
     private profileService = inject(ProfileService);
+
+    private readonly HEARTBEAT_INTERVAL_MS = 60 * 1000 * 5; // 5 minutes
 
     /**
      * Whether this instance does anything at all. Without the iris module the iris REST controllers are not registered, so

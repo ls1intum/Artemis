@@ -8,12 +8,12 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
-    logoutWasForceful = false;
-
     private accountService = inject(AccountService);
     private authServerProvider = inject(AuthServerProvider);
     private router = inject(Router);
     private alertService = inject(AlertService);
+
+    logoutWasForceful = false;
 
     /**
      * Login the user with the given credentials.

@@ -8,11 +8,11 @@ import { ConversationService } from 'app/communication/conversations/service/con
 
 @Injectable({ providedIn: 'root' })
 export class GroupChatService {
-    public resourceUrl = 'api/communication/courses/';
-
     private http = inject(HttpClient);
     private conversationService = inject(ConversationService);
     private accountService = inject(AccountService);
+
+    public resourceUrl = 'api/communication/courses/';
 
     create(courseId: number, loginsOfChatPartners: string[]): Observable<HttpResponse<GroupChatDTO>> {
         return this.http

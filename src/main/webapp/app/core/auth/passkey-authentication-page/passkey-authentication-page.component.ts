@@ -15,15 +15,15 @@ import { Subscription } from 'rxjs';
     templateUrl: './passkey-authentication-page.component.html',
 })
 export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
-    protected readonly faKey = faKey;
-    protected readonly faLock = faLock;
-    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly webauthnService = inject(WebauthnService);
     private readonly alertService = inject(AlertService);
     protected readonly accountService = inject(AccountService);
+
+    protected readonly faKey = faKey;
+    protected readonly faLock = faLock;
+    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
 
     returnUrl: string | undefined = undefined;
 

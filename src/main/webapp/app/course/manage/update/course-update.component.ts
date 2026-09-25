@@ -104,6 +104,7 @@ export class CourseUpdateComponent implements OnInit {
     private readonly accountService = inject(AccountService);
     private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly destroyRef = inject(DestroyRef);
+    private courseStorageService = inject(CourseStorageService);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -171,8 +172,6 @@ export class CourseUpdateComponent implements OnInit {
     // (or if the fetch fails) — the template falls back to a plain "Use default" label.
     readonly debounceWindowSecondsDefault = signal<number | undefined>(undefined);
     readonly maxDailyOrchestrationDefault = signal<number | undefined>(undefined);
-
-    private courseStorageService = inject(CourseStorageService);
 
     // Bound directly in the template, so it must be a signal for zoneless change detection to pick up the
     // ngOnInit assignment (the course, and therefore the semester list, is only known once ngOnInit runs).

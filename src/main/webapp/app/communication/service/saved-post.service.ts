@@ -13,9 +13,9 @@ import { hydrate } from 'app/foundation/util/deep-clone.util';
     providedIn: 'root',
 })
 export class SavedPostService {
-    private resourceUrl = 'api/communication/saved-posts';
-
     private readonly http: HttpClient = inject(HttpClient);
+
+    private resourceUrl = 'api/communication/saved-posts';
 
     /**
      * saves a post
