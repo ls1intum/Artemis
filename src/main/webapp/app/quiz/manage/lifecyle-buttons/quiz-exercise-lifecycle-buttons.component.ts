@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -13,6 +13,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { QuizExerciseBatchApi } from 'app/openapi/api/quiz-exercise-batch-api';
+import { toQuizBatch } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
@@ -36,6 +38,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 })
 export class QuizExerciseLifecycleButtonsComponent {
     private quizExerciseService = inject(QuizExerciseService);
+    private quizExerciseBatchApi = inject(QuizExerciseBatchApi);
     private alertService = inject(AlertService);
 
     protected readonly QuizMode = QuizMode;
@@ -142,7 +145,9 @@ export class QuizExerciseLifecycleButtonsComponent {
      * @param quizBatchId the quiz batch id to start
      */
     startBatch(quizBatchId: number) {
-        this.quizExerciseService.startBatch(quizBatchId).subscribe({
+        // The server maps this operation to two paths, so the generated client exposes it twice; the trailing
+        // underscore is the `api/quiz/quiz-batches/{id}/start-batch` path this client has always used.
+        this.quizExerciseBatchApi.startBatch_(quizBatchId).subscribe({
             next: () => {
                 const updatedExercise = deepClone(this.quizExercise());
                 if (updatedExercise.quizBatches) {
@@ -165,10 +170,10 @@ export class QuizExerciseLifecycleButtonsComponent {
      * Adds a new batch to the given quiz
      */
     addBatch() {
-        this.quizExerciseService.addBatch(this.quizExercise().id!).subscribe({
-            next: (res: HttpResponse<QuizBatch>) => {
+        this.quizExerciseBatchApi.addBatch(this.quizExercise().id!).subscribe({
+            next: (batch) => {
                 const updatedExercise = deepClone(this.quizExercise());
-                const newBatch = res.body!;
+                const newBatch = toQuizBatch(batch);
 
                 const currentBatches = updatedExercise.quizBatches ? [...updatedExercise.quizBatches] : [];
                 currentBatches.push(newBatch);
