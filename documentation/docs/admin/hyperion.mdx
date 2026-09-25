@@ -227,15 +227,11 @@ management:
 
 ## Whole-exercise generation workers
 
-> This core-coordination layer does not yet include the deployable worker-only
-> profile or the Java Gradle generation workload. Use the following deployment
-> settings only after the dependent worker layer is installed.
-
-Whole-exercise generation uses a separate worker process and the selected
-`DistributedDataProvider`. It does not execute generated code in the core JVM or
-on ordinary LocalCI build agents. Deploy the worker with the normal Artemis WAR and
-`aiworker` profile as described in [AI Worker operations](/admin/aiworker).
-A reachable worker without an installed generation workload advertises no capacity.
+Whole-exercise generation uses a separate worker supervisor and the application
+DistributedDataProvider. It does not execute generated code in the core JVM or
+on ordinary LocalCI build agents. Provision the worker's access to the selected
+provider following the [AI Worker deployment instructions](/admin/aiworker).
+A reachable worker without a generation engine advertises no capacity.
 
 Enable the core integration only on nodes with the `core`, `localci`, and
 `localvc` profiles:
@@ -251,9 +247,9 @@ artemis:
         ids: [worker-1]
 ```
 
-Core and worker must use the same distributed-data provider. With Hazelcast, the
-worker connects as a client through Eureka; with Redis/Valkey, it connects to the
-same store as core. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
+Core and worker use the same selected distributed-data provider. A standalone
+worker connects as a Hazelcast client or to Redis/Valkey; it does not join the
+core Hazelcast cluster as a member. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
 starting a supervisor process is not evidence that generation is available.
 
 Generation accepts only unreleased Java Gradle exercises (`PLAIN_GRADLE` or
@@ -265,7 +261,7 @@ exercise metadata again before writing.
 
 Use identical generation settings on generation-capable core nodes. The
 exercise-mutation guard also runs on `core` and `localvc` writer nodes where
-Hyperion is disabled; it does not load a model or connect to the worker transport.
+Hyperion is disabled; it does not load a model or connect to a worker.
 Every writer must run this version of Artemis and use the same distributed data
 provider. Do not mix guarded and older, unguarded nodes while generation is enabled.
 
@@ -362,8 +358,8 @@ Budget RAM for all simultaneously active sandboxes plus the worker JVM and host
 services. Sandbox CPU, RAM and PID limits remain per execution. Slots are a bounded
 concurrency setting, not automatic host scaling. Keep generation outside the core
 JVM: a single-host installation can run a separate isolated worker, while a
-multi-host installation uses the same selected distributed-data provider. The worker
-requires neither database access nor Hazelcast cluster membership; it connects as a client.
+multi-host installation uses the same selected provider. The worker requires
+neither database access nor Hazelcast cluster membership; it connects as a client.
 Deploy matching core and worker protocol versions together after draining runs.
 Protocol version 4 uses the shared AI Worker envelope and explicit workload schema/profile;
 core and worker must be upgraded together after draining.
@@ -383,18 +379,20 @@ See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
 
 | Environment | Worker placement                                           | Operational requirement                                                                                                                                                         |
 | ----------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Staging     | Dedicated generation VM or host                            | Separate distributed-data and model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                             |
+| Staging     | Dedicated generation VM or host                            | Use separate distributed-data, model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                            |
 | Production  | Dedicated generation VM or host                            | Start with one slot, monitor actual resource use, and increase only within host and provider limits. Keep generation off exam-critical hosts.                                   |
 | Test server | Dedicated generation VM, which may share physical hardware | Use a separate Docker daemon inside the VM. Sharing the core or LocalCI Docker socket is not an isolation boundary. Leave generation disabled if no isolated host is available. |
 
 The supervisor's Docker socket is host-level authority even when the supervisor
-container is unprivileged. Provision outbound access only to the selected distributed-data provider, Eureka when Hazelcast is used, the approved model provider, image registry and approved telemetry endpoint.
+container is unprivileged. Provision outbound access only to the configured
+distributed-data provider, Eureka when Hazelcast is used, the approved model
+provider, image registry and approved telemetry endpoint.
 Deny access to databases, repository/NFS services, core management interfaces and
 cloud metadata. Generated-code containers retain network isolation and receive
 neither provider credentials nor the Docker socket.
 
-Before enabling admission, preload the immutable sandbox image, configure distributed-data
-access and per-worker permissions, and confirm the administrator view
+Before enabling admission, preload the immutable sandbox image, configure
+distributed-data access and per-worker permissions, and confirm the administrator view
 reports the intended toolchain and capacity. Then run a controlled generation,
 verify solution/starter grading and persistence, cancel a second run, and verify
 undo. Test an interrupted worker and exact-run recovery in staging before
@@ -507,18 +505,18 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Control                                                                          | Effect                                                                                                                          |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `artemis.hyperion.enabled=false`                                                 | Disables Hyperion, including generation.                                                                                        |
-| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans are required.                                              |
-| Both properties true and profiles `core,localci,localvc`                         | Enables generation coordination and advertises its module feature. A compatible worker and provider configuration are required. |
-| Missing any required profile                                                     | Generation remains disabled even when both properties are true.                                                                 |
-| No ready worker or no free slot                                                  | Enabled but unavailable; capacity errors do not turn off the module flag.                                                       |
+| Control                                                                                             | Effect                                                                                                                          |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `artemis.hyperion.enabled=false`                                                                    | Disables Hyperion, including generation.                                                                                        |
+| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent                    | Other Hyperion tools remain available; no generation transport beans or worker configuration are required.                      |
+| Both Hyperion properties true, `artemis.aiworker.enabled=true`, and profiles `core,localci,localvc` | Enables generation coordination and advertises its module feature. A compatible worker and provider configuration are required. |
+| Missing a required profile or AI Worker coordination flag                                           | Generation remains unavailable even when both Hyperion properties are true.                                                     |
+| No ready worker or no free slot                                                                     | Enabled but unavailable; capacity errors do not turn off the module flag.                                                       |
 
-The standalone worker uses the normal Artemis WAR with the `aiworker` profile,
-not a core profile. Its component scan contains only worker code, and it starts without an
-HTTP server. Provision access to the selected distributed-data provider, an immutable sandbox
-image and positive resource limits. An
+The standalone worker is a separate process of the normal Artemis WAR, not an additional core
+profile. Its component scan contains only worker code, and it starts without an
+HTTP server. Provision access to the selected provider, an immutable sandbox image and positive
+resource limits. An
 unconfigured worker fails startup; a transport-only worker without a generation
 engine does not advertise usable capacity. Core module flags do not stop a
 worker process. Drain active runs before changing profiles, disabling
@@ -532,11 +530,11 @@ not promise automatic continuation or resampling of interrupted runs.
 
 ### Build-agent and worker deployment boundaries
 
-| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                                       |
-| ------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                                         |
-| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                                         |
-| Hyperion generation worker            | Normal Artemis WAR      | No core or database services, Hazelcast membership, or incoming web server. It uses the distributed-data provider as a client. Adding server profile names does not turn it into a core or LocalCI build agent. |
+| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                 |
+| ------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                   |
+| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                   |
+| Hyperion generation worker            | Normal Artemis WAR      | The `aiworker` profile loads worker services and the selected workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
 
 The generation worker uses chat models only; its bundled configuration excludes
 OpenAI embedding, image, speech, transcription, and moderation auto-configuration.

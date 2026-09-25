@@ -5,7 +5,9 @@ import org.redisson.spring.starter.RedissonAutoConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.BackwardCompatibleSerializationCodec;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentity;
@@ -65,4 +67,14 @@ public class RedissonCodecConfiguration {
             ConfigSupport.getConfig(config).setClientName(identity.connectionName());
         };
     }
+
+    /** Starts the existing Redisson client only in a standalone worker that selected Redis. */
+    @Configuration(proxyBeanMethods = false)
+    @Lazy
+    @Profile("aiworker & !core")
+    @Conditional(RedisCondition.class)
+    @Import(org.redisson.spring.starter.RedissonAutoConfigurationV4.class)
+    public static class WorkerRedisClientConfiguration {
+    }
+
 }

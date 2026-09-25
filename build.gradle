@@ -739,7 +739,6 @@ dependencies {
 apply from: "gradle/test.gradle"
 apply from: "gradle/openapi.gradle"
 
-
 dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
