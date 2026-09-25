@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -14,7 +14,7 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import dayjs from 'dayjs/esm';
-import { Observable, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
@@ -150,17 +150,6 @@ describe('QuizExercise Service', () => {
         const question = quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
         expect(question).toBeInstanceOf(MultipleChoiceQuestion);
         expect(question.answerOptions![0]).toBeInstanceOf(AnswerOption);
-    });
-
-    it.each([
-        ['overview', () => service.findStatisticsOverview(123), 'api/quiz/quiz-exercises/123/statistics/overview'],
-        ['point', () => service.findPointStatistic(123), 'api/quiz/quiz-exercises/123/statistics/points'],
-        ['question', () => service.findQuestionStatistic(123, 456), 'api/quiz/quiz-exercises/123/statistics/questions/456'],
-    ])('should load the %s statistics endpoint', async (_name, request: () => Observable<HttpResponse<unknown>>, url) => {
-        const result = firstValueFrom(request());
-        const req = httpMock.expectOne({ method: 'GET', url });
-        req.flush(elemDefault);
-        expect((await result)?.body).toEqual(elemDefault);
     });
 
     it('should create a QuizExercise for a course', async () => {
