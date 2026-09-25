@@ -208,7 +208,15 @@
 
 <ng-template #imageTemplate let-cell>
     @let dto = cell.data;
-    <img style="max-width: 60px" [id]="dto.id" class="img-fluid" [src]="dto.studentImagePath ? addPublicFilePrefix(dto.studentImagePath) : missingImage" [alt]="dto.name || ''" />
+    <img
+        style="max-width: 60px"
+        [id]="dto.id"
+        class="img-fluid"
+        [src]="dto.studentImagePath ? addPublicFilePrefix(dto.studentImagePath) : missingImage"
+        [alt]="dto.name || ''"
+        loading="lazy"
+        decoding="async"
+    />
 </ng-template>
 
 <ng-template #studentDetailsTemplate let-cell>

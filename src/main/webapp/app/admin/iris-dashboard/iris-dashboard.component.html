@@ -97,7 +97,7 @@
         </div>
 
         <!-- Breakdown Tables -->
-        <tum-ui-tabs [value]="activeBreakdownTab()" (valueChange)="activeBreakdownTab.set($any($event))">
+        <tum-ui-tabs [value]="activeBreakdownTab()" (valueChange)="onBreakdownTabChange($event)">
             <tum-ui-tab-list>
                 <tum-ui-tab [value]="0" jhiTranslate="artemisApp.irisDashboard.breakdown.byChatMode" />
                 <tum-ui-tab [value]="1" jhiTranslate="artemisApp.irisDashboard.breakdown.byCourse" />

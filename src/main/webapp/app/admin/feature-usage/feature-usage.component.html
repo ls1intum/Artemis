@@ -122,7 +122,7 @@
         </tum-ui-card>
     }
 
-    <tum-ui-tabs [value]="activeTab()" (valueChange)="activeTab.set($any($event))">
+    <tum-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
         <tum-ui-tab-list>
             <tum-ui-tab [value]="TAB_FEATURES" jhiTranslate="artemisApp.featureUsage.tab.features" data-testid="tab-features" />
             <tum-ui-tab [value]="TAB_ATTENTION" jhiTranslate="artemisApp.featureUsage.tab.attention" data-testid="tab-attention" />

@@ -1,3 +1,4 @@
+import { NgOptimizedImage } from '@angular/common';
 import { Component, OnInit, Signal, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
@@ -20,7 +21,7 @@ import { TumUiListComponent, TumUiListItemActionDirective, TumUiListItemDirectiv
     selector: 'jhi-user-settings',
     templateUrl: 'user-settings-container.component.html',
     styleUrls: ['user-settings-container.component.scss'],
-    imports: [TranslateDirective, RouterModule, FontAwesomeModule, TumUiListComponent, TumUiListItemDirective, TumUiListItemActionDirective],
+    imports: [NgOptimizedImage, TranslateDirective, RouterModule, FontAwesomeModule, TumUiListComponent, TumUiListItemDirective, TumUiListItemActionDirective],
 })
 export class UserSettingsContainerComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
