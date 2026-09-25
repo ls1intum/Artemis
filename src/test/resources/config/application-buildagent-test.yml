@@ -7,3 +7,8 @@ artemis:
     checked-out-repos-path: ./local/server-integration-test/checked-out-repos
     repo-clone-path: ./local/server-integration-test/repos
     repo-download-clone-path: ./local/server-integration-test/repos-download
+
+info:
+    operatorName: Artemis Test Operations
+    operatorAdminName: Artemis Test Administrator
+    universityName: Artemis Test University

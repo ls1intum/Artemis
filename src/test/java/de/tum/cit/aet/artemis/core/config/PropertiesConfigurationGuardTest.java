@@ -13,9 +13,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class PropertiesConfigurationGuardTest {
 
-    private PropertiesConfigurationGuard guard(boolean enabled, String operator, String admin, String university) {
+    private PropertiesConfigurationGuard guard(String operator, String admin, String university) {
         var guard = new PropertiesConfigurationGuard();
-        ReflectionTestUtils.setField(guard, "telemetryEnabled", enabled);
         ReflectionTestUtils.setField(guard, "operatorName", operator);
         ReflectionTestUtils.setField(guard, "operatorAdminName", admin);
         ReflectionTestUtils.setField(guard, "universityName", university);
@@ -26,26 +25,30 @@ class PropertiesConfigurationGuardTest {
     @NullAndEmptySource
     @ValueSource(strings = { "  ", "Admin", "Some Artemis Operator", "Your University", "<university>", "TODO" })
     void rejectsMissingAndPlaceholderMetadata(String invalid) {
-        var guard = guard(true, invalid, invalid, invalid);
-        assertThatIllegalArgumentException().isThrownBy(guard::afterPropertiesSet).withMessageContaining("info.operatorName").withMessageContaining("info.operatorAdminName")
-                .withMessageContaining("info.universityName");
+        assertThatIllegalArgumentException().isThrownBy(guard(invalid, "Erika Muster", "Technical University of Munich")::afterPropertiesSet)
+                .withMessageContaining("info.operatorName");
+        assertThatIllegalArgumentException().isThrownBy(guard("AET", invalid, "Technical University of Munich")::afterPropertiesSet)
+                .withMessageContaining("info.operatorAdminName");
+        assertThatIllegalArgumentException().isThrownBy(guard("AET", "Erika Muster", invalid)::afterPropertiesSet).withMessageContaining("info.universityName");
     }
 
     @Test
-    void allowsValidMetadataAndDoesNotRequireNewFieldsWhenDisabled() {
-        assertThatNoException().isThrownBy(guard(true, "AET", "Erika Muster", "Technical University of Munich")::afterPropertiesSet);
-        assertThatNoException().isThrownBy(guard(false, "Some Artemis Operator", null, null)::afterPropertiesSet);
-        assertThatIllegalArgumentException().isThrownBy(guard(false, " ", null, null)::afterPropertiesSet);
+    void allowsValidMetadata() {
+        assertThatNoException().isThrownBy(guard("AET", "Erika Muster", "Technical University of Munich")::afterPropertiesSet);
     }
 
-    @Test
-    void failsDuringContextStartupEvenWithLazyInitializationAndPersonalDataDisabled() {
-        try (var context = new AnnotationConfigApplicationContext()) {
-            context.getEnvironment().setActiveProfiles("core", "scheduling");
-            context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("test",
-                    java.util.Map.of("artemis.telemetry.enabled", "true", "artemis.telemetry.sendAdminDetails", "false", "info.operatorName", "University")));
-            context.register(PropertiesConfigurationGuard.class);
-            org.assertj.core.api.Assertions.assertThatThrownBy(context::refresh).hasRootCauseInstanceOf(IllegalArgumentException.class);
+    @ParameterizedTest
+    @ValueSource(strings = { "core,scheduling", "core", "buildagent", "dev,core", "prod,core,buildagent" })
+    void rejectsInvalidMetadataOnEveryNodeRegardlessOfTelemetry(String profiles) {
+        for (boolean enabled : new boolean[] { true, false }) {
+            try (var context = new AnnotationConfigApplicationContext()) {
+                context.getEnvironment().setActiveProfiles(profiles.split(","));
+                context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("test",
+                        java.util.Map.of("artemis.telemetry.enabled", enabled, "artemis.telemetry.sendAdminDetails", false, "info.operatorName", "AET")));
+                context.register(PropertiesConfigurationGuard.class);
+                org.assertj.core.api.Assertions.assertThatThrownBy(context::refresh).hasRootCauseInstanceOf(IllegalArgumentException.class)
+                        .hasStackTraceContaining("info.operatorAdminName").hasStackTraceContaining("info.universityName");
+            }
         }
     }
 }

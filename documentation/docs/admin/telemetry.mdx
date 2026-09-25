@@ -26,8 +26,8 @@ startup supplies the current installation snapshot, even if an older report arri
 
 ## Required configuration
 
-When `artemis.telemetry.enabled: true`, the scheduling node refuses to start unless these
-properties contain meaningful values:
+Every core node and dedicated build agent refuses to start unless these properties contain
+meaningful values, independently of telemetry settings:
 
 - `info.operatorName`: the organization operating Artemis.
 - `info.operatorAdminName`: the administrator's name.
@@ -35,13 +35,13 @@ properties contain meaningful values:
 
 Empty, whitespace-only, and known template values such as `Admin`, `Some Artemis Operator`,
 `Your University`, and angle-bracket placeholders are rejected. The error lists the settings
-to correct. Configure all three values before starting an installation with telemetry enabled.
+to correct. Configure all three values on every core node and dedicated build agent, including development
+and test installations. Disabling telemetry does not bypass this startup check.
+All three values are displayed on the About page.
 The university and operator are independent; neither is inferred from the other.
 
 `artemis.telemetry.sendAdminDetails: false` omits the administrator's name and contact email
-from transmission. It does not bypass local configuration validation. When telemetry is
-disabled, the existing operator-name requirement for the about page still applies; administrator
-and university names are not required by the telemetry check.
+from transmission. It does not bypass local configuration validation or hide the administrator name from the About page.
 
 ```yaml
 artemis:
@@ -52,7 +52,7 @@ artemis:
 
 info:
     testServer: false
-    operatorName: Chair of Applied Software Engineering
+    operatorName: Research group of Applied Education Technologies
     universityName: Technical University of Munich
     operatorAdminName: Stephan Krusche
     contact: contactMailAddress@cit.tum.de

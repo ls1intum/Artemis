@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,14 +16,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Lazy(false)
-@Profile(PROFILE_CORE_AND_SCHEDULING)
+@Profile(PROFILE_CORE + " | " + PROFILE_BUILDAGENT)
 public class PropertiesConfigurationGuard implements InitializingBean {
 
     private static final Set<String> PLACEHOLDERS = Set.of("admin", "some artemis operator", "some universities admin", "your university", "your name", "your operator",
             "university name", "operator name", "admin name", "todo", "tbd", "changeme");
-
-    @Value("${artemis.telemetry.enabled:false}")
-    private boolean telemetryEnabled;
 
     @Value("${info.operatorAdminName:#{null}}")
     private String operatorAdminName;
@@ -33,28 +31,22 @@ public class PropertiesConfigurationGuard implements InitializingBean {
     @Value("${info.operatorName:#{null}}")
     private String operatorName;
 
-    /** Rejects incomplete telemetry metadata before the application becomes ready. */
+    /** Rejects incomplete installation metadata on every core and build-agent node before readiness. */
     @Override
     public void afterPropertiesSet() {
         List<String> invalid = new ArrayList<>();
-        if (telemetryEnabled) {
-            if (isInvalid(operatorName)) {
-                invalid.add("info.operatorName");
-            }
-            if (isInvalid(operatorAdminName)) {
-                invalid.add("info.operatorAdminName");
-            }
-            if (isInvalid(universityName)) {
-                invalid.add("info.universityName");
-            }
-        }
-        else if (operatorName == null || operatorName.isBlank()) {
+        if (isInvalid(operatorName)) {
             invalid.add("info.operatorName");
+        }
+        if (isInvalid(operatorAdminName)) {
+            invalid.add("info.operatorAdminName");
+        }
+        if (isInvalid(universityName)) {
+            invalid.add("info.universityName");
         }
         if (!invalid.isEmpty()) {
             throw new IllegalArgumentException("Configure meaningful values for " + String.join(", ", invalid)
-                    + (telemetryEnabled ? "; these properties are required when artemis.telemetry.enabled=true, even when sendAdminDetails=false."
-                            : "; the operator is required for the about page."));
+                    + "; these installation properties are required on every server start, independently of telemetry settings, and displayed on the About page.");
         }
     }
 
