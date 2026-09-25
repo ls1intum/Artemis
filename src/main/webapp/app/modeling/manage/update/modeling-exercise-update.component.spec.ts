@@ -45,7 +45,7 @@ import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
-import { TumUiConfirmDialogComponent, TumUiConfirmationRequest, TumUiConfirmationService, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
@@ -275,8 +275,8 @@ describe('ModelingExerciseUpdateComponent', () => {
                         ExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
-                        MockComponent(TumUiConfirmDialogComponent),
-                        TumUiSelectComponent,
+                        MockComponent(TumAetUiConfirmDialogComponent),
+                        TumAetUiSelectComponent,
                         StubModelingMarkdownExplanationEditorComponent,
                         ExerciseGroupTimelineLockStubComponent,
                         MockComponent(ExerciseGroupDateNoticeComponent),
@@ -323,7 +323,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         await fixture.whenStable();
 
         const selector = fixture.nativeElement.querySelector('[modelingEditorTopLeft] #field_diagramType') as HTMLButtonElement;
-        const selectComponent = fixture.debugElement.query(By.directive(TumUiSelectComponent)).componentInstance as TumUiSelectComponent;
+        const selectComponent = fixture.debugElement.query(By.directive(TumAetUiSelectComponent)).componentInstance as TumAetUiSelectComponent;
 
         expect(selector).not.toBeNull();
         expect(selector.closest('jhi-modeling-editor')).not.toBeNull();
@@ -369,8 +369,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             relationships: {},
         } as unknown as UMLModel;
 
-        const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
-        let request: TumUiConfirmationRequest | undefined;
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        let request: TumAetUiConfirmationRequest | undefined;
         vi.spyOn(confirmationService, 'confirm').mockImplementation((nextRequest) => {
             request = nextRequest;
         });
@@ -406,7 +406,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         comp = fixture.componentInstance;
         fixture.detectChanges();
         await fixture.whenStable();
-        const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         const confirmationSpy = vi.spyOn(confirmationService, 'confirm');
 
         selectDiagramTypeOption(1);
