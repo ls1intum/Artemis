@@ -49,10 +49,11 @@ const FUNCTION_TYPES = new Set(['ArrowFunctionExpression', 'FunctionExpression',
  * changes nothing, since the navigation is already cancelled.
  *
  * The router supports redirects directly: a guard returns `router.createUrlTree(...)` or a `RedirectCommand`, a
- * resolver returns a `RedirectCommand`, and since Angular 22.2 a `RedirectCommand` thrown anywhere in the guard or
- * resolver (including inside an RxJS operator or a promise callback) cancels the navigation with a redirect as well. The
- * redirect keeps the `replaceUrl` and `skipLocationChange` of the navigation it replaces, a caller awaiting that
- * navigation receives the redirect's outcome, and it only takes effect once every guard listed before it returned true.
+ * resolver returns a `RedirectCommand`, and since Angular 22.2 a resolver can also throw a `RedirectCommand`, including
+ * inside an RxJS operator or a promise callback. The redirect keeps the `replaceUrl` and `skipLocationChange` of the
+ * navigation it replaces, and a caller awaiting that navigation receives the redirect's outcome. A guard must return
+ * or emit its redirect, including inside callbacks, so it waits until every guard listed before it returned true.
+ * Throwing a redirect from a guard bypasses that ordering.
  *
  * What counts as a guard or resolver:
  * - a variable annotated with, an expression asserted (`as` / `satisfies`) to, or a function returning one of the
@@ -79,10 +80,10 @@ const rule = createRule({
     name: 'no-navigation-in-guard-or-resolver',
     meta: {
         type: 'problem',
-        docs: { description: 'Disallow Router navigation inside route guards and resolvers; return or throw a redirect instead' },
+        docs: { description: 'Disallow Router navigation inside route guards and resolvers; use router-native redirects instead' },
         messages: {
             navigateInGuard:
-                'Do not call Router.{{method}}() in a route guard: it cancels this navigation and starts a new one that loses its replaceUrl and skipLocationChange, and it still navigates when another guard rejects the route. Return router.createUrlTree(...) or new RedirectCommand(router.createUrlTree(...)) instead, or throw a RedirectCommand inside an observable or promise chain. The router then cancels this navigation and redirects.',
+                'Do not call Router.{{method}}() in a route guard: it cancels this navigation and starts a new one that loses its replaceUrl and skipLocationChange, and it still navigates when another guard rejects the route. Return or emit router.createUrlTree(...) or new RedirectCommand(router.createUrlTree(...)) instead, including inside an observable or promise chain. Do not throw the redirect from a guard: that bypasses guard-result ordering. The router then cancels this navigation and redirects.',
             navigateInResolver:
                 'Do not call Router.{{method}}() in a route resolver: it cancels this navigation and starts a new one that loses its replaceUrl and skipLocationChange. Return new RedirectCommand(router.createUrlTree(...)) instead, or throw it inside an observable chain. The router then cancels this navigation and redirects. A UrlTree returned from a resolver becomes route data, not a redirect.',
         },

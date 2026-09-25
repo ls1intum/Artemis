@@ -65,15 +65,19 @@ bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
 
 ## Redirecting from guards and resolvers
 
-A guard returns `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)` when it
-needs `replaceUrl`, `skipLocationChange` or `state`. A resolver returns or emits a
-`RedirectCommand`; a `UrlTree` returned from a resolver becomes route data and does not redirect.
-Inside an RxJS operator or a promise callback, throw the `RedirectCommand` instead. The router
-cancels the running navigation with a redirect that keeps its `replaceUrl` and
-`skipLocationChange`, and alerts shown before the throw still appear. The guards in one
-`canActivate` array run together and the first result that is not `true`, in array order, wins,
-so a redirect applies only after every guard ahead of it returned `true`: a user who fails
-`UserRouteAccessService` is rejected, not redirected.
+A guard returns or emits `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)`
+when it needs `replaceUrl`, `skipLocationChange` or `state`. This also applies inside RxJS and
+promise callbacks: return the redirect rather than throw it. The guards in one `canActivate`
+array run together, and the first emitted result that is not `true`, in array order, wins.
+A returned or emitted redirect waits for every guard ahead of it to return `true`; a thrown
+`RedirectCommand` bypasses that ordering and can redirect before an earlier authority check
+rejects the route.
+
+A resolver returns or emits a `RedirectCommand`; a `UrlTree` returned from a resolver becomes
+route data and does not redirect. Inside a resolver's RxJS operator or promise callback, it can
+throw the `RedirectCommand` instead. The router cancels the running navigation with a redirect
+that keeps its `replaceUrl` and `skipLocationChange`, and alerts shown before the throw still
+appear.
 
 Never call `router.navigate()` or `navigateByUrl()` in a guard or resolver. It cancels the running
 navigation on the spot and starts a new one, so the original `replaceUrl` and
