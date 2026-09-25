@@ -118,7 +118,7 @@
                     }
                     @case (DetailType.DefaultProfilePicture) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <strong class="details-default-profile-picture rounded-3" [ngStyle]="{ 'background-color': detail.data.color }">{{ detail.data.initials }}</strong>
+                            <strong class="details-default-profile-picture rounded-3" [style.background-color]="detail.data.color">{{ detail.data.initials }}</strong>
                         </dd>
                     }
                     @default {

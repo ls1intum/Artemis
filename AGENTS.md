@@ -49,7 +49,10 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Use signal APIs. `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild` and
   `@ContentChildren` are banned in application and test support code; `ngOnChanges` is banned.
   [client development](documentation/docs/developer/guidelines/client-development.mdx)
-- Use `@if`, `@for` and `@switch`, not structural directives. [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- Use `@if`, `@for` and `@switch`, not structural directives, and give every `@switch` a `@default`.
+  Bind styles with `[style]`, not `[ngStyle]`. [client development](documentation/docs/developer/guidelines/client-development.mdx)
+- Declare root services with `@Service()`, not `@Injectable({ providedIn: 'root' })`, and declare
+  `inject()` fields before any other member. [client development](documentation/docs/developer/guidelines/client-development.mdx)
 - In production client TypeScript, do not copy objects with spread, `Object.assign` or
   `structuredClone`; use the repository's deep-clone helpers. Array spread and object rest are
   allowed. [client development](documentation/docs/developer/guidelines/client-development.mdx)

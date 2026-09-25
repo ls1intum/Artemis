@@ -22,16 +22,17 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
     styleUrl: './tutorial-registrations-register-search-bar.component.scss',
 })
 export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestroy {
-    private readonly PAGE_SIZE = 25;
-
     private translateService = inject(TranslateService);
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
     private overlay = inject(Overlay);
+    private viewContainerRef = inject(ViewContainerRef);
+
+    private readonly PAGE_SIZE = 25;
+
     private overlayRef: OverlayRef | undefined = undefined;
     private viewportScrollSubscription: Subscription | undefined = undefined;
     private loadFirstPageSubscription: Subscription | undefined = undefined;
-    private viewContainerRef = inject(ViewContainerRef);
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
     private viewport = viewChild<CdkVirtualScrollViewport>(CdkVirtualScrollViewport);

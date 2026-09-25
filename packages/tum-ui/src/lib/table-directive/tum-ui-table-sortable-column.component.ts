@@ -17,11 +17,11 @@ type TumUiSortDirection = 'asc' | 'desc' | 'none';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTableSortableColumnComponent {
+    private readonly table = inject(TumUiTableDirective);
+
     readonly field = input.required<string>({ alias: 'tumUiSortableColumn' });
 
     readonly disabled = input(false, { transform: booleanAttribute });
-
-    private readonly table = inject(TumUiTableDirective);
 
     protected readonly direction = computed<TumUiSortDirection>(() => {
         if (this.table.sortField() !== this.field()) {

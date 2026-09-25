@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 
@@ -12,7 +12,7 @@ interface IdleWindow {
  * first lecture-PDF open is instant. Best-effort: if it never runs, the engine still initializes lazily on
  * first use. Gated to authenticated users so the login page does not pay the download.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class EmbedPdfPreloadService {
     private readonly pdfEngineService = inject(PdfEngineService);
     private readonly accountService = inject(AccountService);

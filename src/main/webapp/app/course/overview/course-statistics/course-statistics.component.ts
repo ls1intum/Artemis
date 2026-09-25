@@ -131,17 +131,18 @@ enum ChartBarTitle {
     ],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
-    controlsRendered = new EventEmitter<void>();
     private courseStorageService = inject(CourseStorageService);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
     private courseTabRefreshService = inject(CourseTabRefreshService);
-    private tabReselectionSubscription?: Subscription;
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
     private gradingService = inject(GradingService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     categoryFilter = inject(ChartCategoryFilter);
+
+    controlsRendered = new EventEmitter<void>();
+    private tabReselectionSubscription?: Subscription;
 
     readonly documentationType: DocumentationType = 'StudentStatistics';
 
@@ -252,7 +253,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     // colors of the doughnut chart slices (depend on the displayed entries)
     private readonly doughnutColors = computed(() => this.doughnutChartEntries().map((entry) => entry.color));
     // segment colors of the stacked bar charts: no due date, included, not included, bonus, not graded, missed
-    private readonly barColors = computed(() => [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED]);
+    private readonly barColors = [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED];
 
     readonly doughnutData = computed(() => {
         // The entries carry translation keys, and the chart renders its labels into the data table a screen
@@ -262,13 +263,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const translated = this.doughnutChartEntries().map((entry) => cloneWith(entry, { name: this.translateService.instant(entry.name) }));
         return singleSeriesChart(translated, this.doughnutColors());
     });
-    readonly doughnutConfig = computed<TumUiDoughnutChartConfig>(() => ({
+    readonly doughnutConfig: TumUiDoughnutChartConfig = {
         legend: false,
         tooltip: {
             title: (items) => items[0]?.label ?? '',
             label: (item) => `${item.value}`,
         },
-    }));
+    };
 
     readonly groupChartData = computed(() => {
         const dataPerGroup = new Map<ExerciseType, TumUiChartData>();
@@ -279,7 +280,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 name: ngxExercise.name ?? '',
                 series: ngxExercise.series,
             }));
-            dataPerGroup.set(exerciseType, stackedBarChart(entries, this.barColors()));
+            dataPerGroup.set(exerciseType, stackedBarChart(entries, this.barColors));
         }
         return dataPerGroup;
     });

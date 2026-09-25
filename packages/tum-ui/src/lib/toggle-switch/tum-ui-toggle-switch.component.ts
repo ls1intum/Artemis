@@ -6,7 +6,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     templateUrl: './tum-ui-toggle-switch.component.html',
     styleUrl: './tum-ui-toggle-switch.component.scss',
     host: {
-        // The identity class is static so it is always present; only the state classes are bound.
         class: 'tum-ui-toggle-switch',
         '[class]': 'hostClasses()',
         '[attr.data-checked]': 'checked()',

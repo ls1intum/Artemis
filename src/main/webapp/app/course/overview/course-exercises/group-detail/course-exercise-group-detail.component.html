@@ -20,7 +20,7 @@
             -->
             <div class="flex items-center gap-2 shrink-0">
                 @if (exerciseSumMaxPoints() > 0) {
-                    <jhi-information-box [informationBoxData]="pointsInfoBoxData()" layout="inline">
+                    <jhi-information-box [informationBoxData]="pointsInfoBoxData" layout="inline">
                         <span contentComponent class="d-flex align-items-center gap-1">
                             <span>{{ achievedGroupPoints() }} / {{ effectiveGroupMaxPoints() }}</span>
                             @if (capReducesMaxPoints()) {
@@ -57,6 +57,7 @@
                             @case ('dateTime') {
                                 <span contentComponent>{{ dateBox.content.value | artemisDate }}</span>
                             }
+                            @default {}
                         }
                     </jhi-information-box>
                 }

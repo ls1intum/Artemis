@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationWedgedSlotDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
@@ -31,7 +32,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Profile(PROFILE_CORE)
 @RequestMapping("api/hyperion/admin/exercises/")
 @EnforceAdmin
-@FeatureUsage("authoring-assistance/generation-recovery")
+@FeatureUsage(UserFeature.HYPERION_GENERATION_RECOVERY)
 public class AdminHyperionGenerationResource {
 
     private static final Pattern CONTROL_CHARACTERS = Pattern.compile("[\\p{Cntrl}]+");

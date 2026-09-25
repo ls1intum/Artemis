@@ -286,7 +286,6 @@ describe('TumUiDatePickerComponent', () => {
             input().value = '09:15';
             input().dispatchEvent(new Event('input'));
 
-            // The value stays a full moment: only the clock moved.
             expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 09:15');
             expect(component.isValid()).toBe(true);
         });
@@ -295,7 +294,6 @@ describe('TumUiDatePickerComponent', () => {
             input().value = '07:45';
             input().dispatchEvent(new Event('input'));
 
-            // The suite runs with the clock fixed to 15.07.2026.
             expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('15.07.2026 07:45');
         });
 
@@ -332,7 +330,6 @@ describe('TumUiDatePickerComponent', () => {
             // The focus trap waits for the overlay content to settle before it captures focus.
             await fixture.whenStable();
 
-            // A modal dialog the user is not inside is a dialog a keyboard or screen reader user cannot reach.
             expect(document.activeElement).toBe(timeField('Hour'));
         });
 

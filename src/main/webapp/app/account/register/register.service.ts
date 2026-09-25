@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/account/user/user.model';
@@ -7,7 +7,7 @@ import { User } from 'app/account/user/user.model';
  * Service for registering new user accounts.
  * Handles the HTTP communication with the registration endpoint.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class RegisterService {
     private http = inject(HttpClient);
 

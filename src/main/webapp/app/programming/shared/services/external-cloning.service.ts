@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExternalCloningService {
     /**
      * Build source tree url.

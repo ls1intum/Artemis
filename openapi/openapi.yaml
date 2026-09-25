@@ -1219,26 +1219,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ChecklistActionResponse'}
-  /api/hyperion/courses/{courseId}/assessment-criteria/generate:
-    post:
-      tags: [hyperion-assessment-criteria-generation]
-      operationId: generateAssessmentCriteria
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/AssessmentCriteriaGenerationRequest'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/AssessmentCriteriaGenerationResponse'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -3856,51 +3836,6 @@ components:
           maxLength: 2000
           minLength: 0
         placement: {$ref: '#/components/schemas/VariantPlacement'}
-    DragAndDropSubmittedAnswerAfterEvaluation:
-      required: [type]
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        scoreInPoints: {type: number, format: double}
-        quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
-        mappings:
-          type: array
-          items: {$ref: '#/components/schemas/DragAndDropMapping'}
-          uniqueItems: true
-        type:
-          type: string
-          default: drag-and-drop
-          enum: [drag-and-drop]
-    MultipleChoiceSubmittedAnswerAfterEvaluation:
-      required: [type]
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        scoreInPoints: {type: number, format: double}
-        quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
-        selectedOptions:
-          type: array
-          items: {$ref: '#/components/schemas/AnswerOptionWithSolution'}
-          uniqueItems: true
-        type:
-          type: string
-          default: multiple-choice
-          enum: [multiple-choice]
-    ShortAnswerSubmittedAnswerAfterEvaluation:
-      required: [type]
-      type: object
-      properties:
-        id: {type: integer, format: int64}
-        scoreInPoints: {type: number, format: double}
-        quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithSolution'}
-        submittedTexts:
-          type: array
-          items: {$ref: '#/components/schemas/ShortAnswerSubmittedText'}
-          uniqueItems: true
-        type:
-          type: string
-          default: short-answer
-          enum: [short-answer]
     WorkerStatus:
       type: object
       properties:

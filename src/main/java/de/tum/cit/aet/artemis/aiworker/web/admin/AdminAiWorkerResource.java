@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerStatusDTO;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /** Read-only operational visibility for standalone generation workers. */
 @Lazy
@@ -23,7 +24,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 @Profile(PROFILE_CORE)
 @RequestMapping("api/aiworker/admin/")
 @EnforceAdmin
-@FeatureUsage("aiworker/workers")
+@FeatureUsage(UserFeature.AI_WORKERS)
 public class AdminAiWorkerResource {
 
     private final Optional<WorkerRegistryService> workers;

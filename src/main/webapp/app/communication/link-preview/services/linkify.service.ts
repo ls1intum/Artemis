@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 
 export interface Link {
     type: string;
@@ -13,7 +13,7 @@ export interface Link {
 // Regular expression pattern to match URLs
 export const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\])]|$)/g;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LinkifyService {
     /**
      * Find any links in a given text as a string

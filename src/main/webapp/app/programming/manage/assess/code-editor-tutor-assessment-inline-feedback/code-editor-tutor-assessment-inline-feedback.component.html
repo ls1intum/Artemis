@@ -19,13 +19,17 @@
         (dragover)="$event.preventDefault()"
         (keydown)="handleKeydown($event)"
     >
-        @if (!isNewOrManual()) {
-            <div unifiedFeedbackExtraControls class="inline-feedback-actions">
-                <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                </button>
-            </div>
-        }
+        <!-- The slot is claimed by the container, not by the div: with preserveWhitespaces the @if has whitespace
+             roots besides the div, so content projection could not match the div inside it to the slot. -->
+        <ng-container ngProjectAs="[unifiedFeedbackExtraControls]">
+            @if (!isNewOrManual()) {
+                <div class="inline-feedback-actions">
+                    <button data-testid="feedback-save" type="submit" [disabled]="feedback.credits === undefined" class="btn btn-primary btn-sm" (click)="updateFeedback()">
+                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                    </button>
+                </div>
+            }
+        </ng-container>
     </jhi-unified-feedback>
 } @else {
     <div class="d-flex flex-nowrap align-items-start gap-1 p-1">

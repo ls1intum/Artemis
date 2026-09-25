@@ -1,12 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_LECTURE } from 'app/app.constants';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LectureGuard implements CanActivate {
     private profileService = inject(ProfileService);
     private router = inject(Router);

@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -317,7 +317,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     resetRepository() {
-        if (this.disableActions()) {
+        if (this.disableActions() || this.isResolvingConflict()) {
             return;
         }
         this.conflictModalRef =
@@ -330,18 +330,22 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 dismissableMask: false,
             }) ?? undefined;
         this.conflictModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            if (!confirmed || this.disableActions()) {
+            if (!confirmed || this.disableActions() || this.isResolvingConflict()) {
                 return;
             }
-            this.repositoryService.resetRepository().subscribe({
-                next: () => {
-                    this.conflictService.notifyConflictState(GitConflictState.OK);
-                    this.executeRefresh().subscribe();
-                },
-                error: () => {
-                    this.onError.emit('resetFailed');
-                },
-            });
+            this.isResolvingConflict.set(true);
+            this.repositoryService
+                .resetRepository()
+                .pipe(finalize(() => this.isResolvingConflict.set(false)))
+                .subscribe({
+                    next: () => {
+                        this.conflictService.notifyConflictState(GitConflictState.OK);
+                        this.executeRefresh().subscribe();
+                    },
+                    error: () => {
+                        this.onError.emit('resetFailed');
+                    },
+                });
         });
     }
 }
