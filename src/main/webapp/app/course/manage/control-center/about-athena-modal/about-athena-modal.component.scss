@@ -2,6 +2,47 @@
     display: block;
 }
 
+// Matches the About Iris dialog (about-iris-modal.component.scss and the width it is opened with in
+// control-center.component.ts): 40rem wide, the content at most 40rem tall and scrolling beyond that. The dialog panel
+// caps its width at 90dvw on narrow screens. The negative margin cancels the dialog content's own padding, so this box
+// is the whole panel just as Iris's is.
+.about-athena-panel {
+    position: relative;
+    width: 40rem;
+    max-width: 90dvw;
+    margin: 0 -1rem -1rem;
+}
+
+.close-btn-container {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 3;
+}
+
+.close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: var(--bs-body-color);
+    line-height: 1;
+
+    &:hover {
+        opacity: 0.7;
+    }
+}
+
+.modal-content-wrapper {
+    padding: 2.5rem;
+    max-height: 40rem;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
 .header-section {
     display: flex;
     flex-direction: row;

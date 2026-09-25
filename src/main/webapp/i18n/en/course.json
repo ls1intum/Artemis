@@ -265,7 +265,7 @@
                 "aboutAthenaModal": {
                     "close": "Close",
                     "meetAthena": "Meet Athena",
-                    "subtitle": "Your course's AI feedback assistant",
+                    "subtitle": "AI feedback for your tutors and students",
                     "description": "Athena drafts feedback for text, programming, and modeling submissions, helping tutors grade faster and letting students get a first read on their work before the deadline.",
                     "whatAthenaCanDo": "What Athena can do",
                     "gradingFeedbackTitle": "Grading feedback suggestions",
@@ -273,12 +273,12 @@
                     "formativeFeedbackTitle": "Formative feedback requests",
                     "formativeFeedbackDesc": "Students can request preliminary AI feedback on their own submission before the due date.",
                     "exerciseTypesTitle": "Works across exercise types",
-                    "exerciseTypesDesc": "The same two switches apply uniformly to text, programming, and modeling exercises.",
+                    "exerciseTypesDesc": "Grading suggestions cover text, programming, and modeling exercises. Formative feedback requests do too, but a programming exercise must be assessed semi-automatically.",
                     "whatToExpect": "What to expect",
                     "suggestionsNotGradesTitle": "Suggestions, not final grades",
-                    "suggestionsNotGradesDesc": "Tutors review and adjust every suggestion before it reaches a student; Athena never publishes a grade on its own.",
+                    "suggestionsNotGradesDesc": "Tutors accept, edit, or discard every grading suggestion before they submit an assessment. Formative feedback comes with a provisional score that never counts toward the student's grade.",
                     "requestLimitTitle": "A limited number of requests",
-                    "requestLimitDesc": "Each exercise participation allows only a limited number of automatic feedback results.",
+                    "requestLimitDesc": "Students receive only a limited number of AI feedback results per exercise participation; failed requests do not count.",
                     "configurablePerFeatureTitle": "Configurable per feature",
                     "configurablePerFeatureDesc": "Grading and formative feedback can be switched independently from the settings page."
                 }

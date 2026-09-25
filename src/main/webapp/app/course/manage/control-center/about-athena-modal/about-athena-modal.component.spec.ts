@@ -43,6 +43,14 @@ describe('AboutAthenaModalComponent', () => {
         expect(component.visible()).toBe(false);
     });
 
+    it('should hide itself when closed', () => {
+        component.visible.set(true);
+
+        component.close();
+
+        expect(component.visible()).toBe(false);
+    });
+
     it.each([
         ['whatAthenaCanDo', 3],
         ['whatToExpect', 3],
