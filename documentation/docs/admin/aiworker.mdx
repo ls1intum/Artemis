@@ -11,6 +11,11 @@ through Artemis' distributed-data provider. Artemis core uses the same provider.
 the owning feature; [Hyperion](/admin/hyperion#whole-exercise-generation-workers) owns
 exercise generation and its teaching-quality review.
 
+> This coordination layer is not a deployable worker by itself. The worker-only
+> `ArtemisApp` profile, image recipe, and Hyperion generation workload arrive with
+> the dependent Java Gradle worker layer. The deployment steps below apply only to
+> the complete stack; do not start a worker from this branch alone.
+
 ## Deployment topology
 
 | Environment             | Recommended placement                                 | Required separation                                                                              |
