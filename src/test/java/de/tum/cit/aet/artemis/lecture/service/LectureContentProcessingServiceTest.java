@@ -28,6 +28,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.dao.CannotAcquireLockException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -1000,7 +1001,7 @@ class LectureContentProcessingServiceTest {
 
             // Then: WebSocket notification must include the transcription status (not null)
             ArgumentCaptor<LectureUnitCombinedStatusDTO> dtoCaptor = ArgumentCaptor.forClass(LectureUnitCombinedStatusDTO.class);
-            verify(websocketMessagingService).sendMessage(anyString(), dtoCaptor.capture());
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), dtoCaptor.capture());
 
             LectureUnitCombinedStatusDTO sentDto = dtoCaptor.getValue();
             assertThat(sentDto.transcriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
@@ -1072,7 +1073,7 @@ class LectureContentProcessingServiceTest {
             assertThat(ingestingState.getStartedAt()).isNull();
 
             verify(processingStateRepository, times(2)).save(any());
-            verify(websocketMessagingService, times(2)).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
+            verify(websocketMessagingService, times(2)).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
 
         @Test
@@ -1088,7 +1089,7 @@ class LectureContentProcessingServiceTest {
             assertThat(orphanedState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
             verify(processingStateRepository, never()).save(any());
             verify(transcriptionRepository, never()).findByLectureUnit_Id(anyLong());
-            verify(websocketMessagingService, never()).sendMessage(anyString(), any());
+            verify(websocketMessagingService, never()).sendMessage(any(WebsocketDestination.class), any());
         }
 
         @Test
@@ -1114,7 +1115,7 @@ class LectureContentProcessingServiceTest {
             assertThat(failingState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
             assertThat(recoverableState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             verify(processingStateRepository).save(recoverableState);
-            verify(websocketMessagingService).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
     }
 }

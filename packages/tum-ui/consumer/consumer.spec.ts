@@ -41,3 +41,28 @@ test('links the published library and supplies forms, overlays, icons, typograph
     await expect(trigger).toHaveCSS('background-color', 'rgb(12, 34, 56)');
     expect(errors).toEqual([]);
 });
+
+test('runs the menu and tabs on the Angular Aria peer the consumer installed', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.goto('/');
+
+    const trigger = page.getByRole('button', { name: 'Course actions' });
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menuitem', { name: 'Add students' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menu')).toHaveCount(0);
+    await expect(page.getByText('Chosen: tutors')).toBeVisible();
+    await expect(trigger).toBeFocused();
+
+    const overview = page.getByRole('tab', { name: 'Overview' });
+    await expect(overview).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel')).toHaveText('Overview panel');
+    await overview.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'Settings' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel')).toHaveText('Settings panel');
+    expect(errors).toEqual([]);
+});

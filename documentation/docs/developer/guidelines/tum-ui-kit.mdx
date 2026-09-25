@@ -40,15 +40,64 @@ npm organization maintainers approve releases.
 
 Follow the [component decision order](/developer/guidelines/client-development#ui-components). A
 new package API needs a reusable design-system responsibility and a concrete Artemis consumer;
-keep application policy in Artemis. Document unsupported public behavior beside the API declaration.
+keep application policy in Artemis. Build reusable behavior on native HTML, Angular Aria, or stable
+Angular CDK primitives. Document unsupported public behavior beside the API declaration.
 
 Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`,
-native input coercion, and semantic Tailwind utilities. Prefer stable native controls and CDK
-behavior over custom keyboard, focus, overlay, or selection machinery.
+native input coercion, and semantic Tailwind utilities. Prefer stable native controls, Angular Aria,
+and CDK behavior over custom keyboard, focus, overlay, or selection machinery.
 
 Tests should assert public behavior: accessible role and name, keyboard interaction, focus changes,
 disabled behavior, emitted values, and forms integration. Avoid tests that restate implementation
 details or static class maps.
+
+### Accessibility foundation
+
+Composite widgets build on [Angular Aria](https://angular.dev/guide/aria/overview) (`@angular/aria`),
+Angular's headless accessibility directives. Aria owns the roles, the ARIA state, roving focus,
+keyboard navigation, and typeahead; the package adds the styling and the TUM UI API on top. The
+menu and the tabs are built this way. Aria ships the same widgets for accordions, comboboxes, grids,
+listboxes, toolbars, and trees, so reach for it before writing keyboard handling for one of those.
+The CDK still provides what aria leaves to the host, such as the overlay that positions an open
+menu.
+
+A package component composes an aria directive in one of two ways. It applies the directive as a
+host directive when the component never has to set one of the directive's inputs itself: the tab
+list, the tabs container, the menu surface, and the menu item work this way. Angular cannot bind a
+host directive's input from the host, so when the component must supply or reshape an input, it
+extends the aria class instead and overrides that input. The menu trigger extends the aria trigger
+because the menu it opens only exists once its template has been rendered, and because a disabled
+menu button stays natively disabled. The tab extends the aria tab because aria keys tabs by string
+while `tum-ui-tab` accepts numbers as well. An override keeps the type of the aria member, because
+the external consumer test compiles the published declarations without skipping library checks;
+`tum-ui-tab` therefore moves aria's `value` input to an internal name and binds its own `value`
+under the public one. Such an override works only because aria reads its inputs lazily through
+`this`; each subclass states in a comment what it relies on, so a test that fails after an aria
+update points at the cause.
+
+Aria's other inputs keep their defaults unless an application binds them, and two of those
+defaults shape the behavior. A disabled menu item or tab stays focusable: the arrow keys reach it,
+assistive technology announces it as unavailable, and it cannot be chosen, as the
+[WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/#kbd_disabled_controls)
+recommend. A tab is selected as soon as it receives focus. A tab list without panels remains
+supported for switching a view the application renders itself; `tum-ui-tabs` then gives each tab an
+empty, hidden placeholder panel, which only keeps aria from reporting a missing panel in
+development mode.
+
+Aria opens a menu from Enter and Space on keydown and cancels the key, so a keyboard user produces
+no `click` on the trigger. React to a menu with the trigger's `menuOpened` output and to a chosen
+entry with its `triggered` output, never with a `(click)` handler on the trigger.
+
+Each host carries the attribute aria's test harnesses look for, so tests in the package and in
+Artemis can drive TUM UI menus and tabs with `MenuHarness` from `@angular/aria/menu/testing` and
+`TabsHarness` from `@angular/aria/tabs/testing`. A closed TUM UI menu is not in the document, and
+`MenuHarness` finds a trigger through the rendered menu, so `MenuHarness.open()` and the
+`triggerText` filter only work once the menu is open: click the trigger first, then load the
+harness. Prefer the harness over hand-written DOM queries when it covers the interaction.
+
+`@angular/aria` requires exactly the `@angular/cdk` version it was released with. The package
+declares both as peers with the same minimum, so an application installs one copy of each; keep
+them on the same version when upgrading. The workspace catalog pins both, and they move together.
 
 ### Stories
 

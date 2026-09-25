@@ -1,12 +1,13 @@
 package de.tum.cit.aet.artemis.communication;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topicMatching;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -62,6 +63,8 @@ import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepo
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -111,6 +114,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private Long courseId;
 
+    private Channel exerciseChannel;
+
     private static final int NUMBER_OF_POSTS = 5;
 
     private static final int HIGHER_PAGE_SIZE = NUMBER_OF_POSTS + 10;
@@ -149,7 +154,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .filter(coursePost -> (coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null)).toList();
 
         // filter existing posts with first exercise context
-        Channel exerciseChannel = ((Channel) existingExercisePosts.getFirst().getConversation());
+        exerciseChannel = ((Channel) existingExercisePosts.getFirst().getConversation());
         Exercise exercise = exerciseChannel.getExercise();
 
         course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -200,11 +205,35 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via a single course-wide broadcast, not per user
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
         // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
         // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
-        verify(websocketMessagingService, after(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, after(2000).times(1)).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreatePostInChannelOfUnreleasedExerciseOnlyReachesStaff() throws Exception {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseChannel.getExercise().getId());
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        Post postToSave = new Post();
+        postToSave.setAuthor(instructor);
+        postToSave.setConversation(exerciseChannel);
+        postToSave.setContent("message about the unreleased exercise");
+        createPostAndAwaitAsyncCode(postToSave);
+
+        // Students cannot see the channel yet, so the post must not go to the course-wide topic, but staff still receive it live.
+        // Other tests of this class send to the same topics in parallel, so only posts of this channel count.
+        long channelId = exerciseChannel.getId();
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic("/topic/user/" + tutor.getId() + "/notifications/conversations"), postInChannel(channelId));
+        verify(websocketMessagingService, after(1000).never()).sendMessage(topic("/topic/communication/courses/" + courseId), postInChannel(channelId));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/user/" + student.getId() + "/notifications/conversations"), postInChannel(channelId));
     }
 
     @Test
@@ -225,7 +254,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified individually
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -267,8 +296,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         if (!isUserMentionValid) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
-            verify(websocketMessagingService, never()).sendMessage(anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -276,11 +305,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via a single course-wide broadcast, not per user
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
         // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
         // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
-        verify(websocketMessagingService, after(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, after(2000).times(1)).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
     }
 
     @ParameterizedTest
@@ -302,9 +331,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedMessagePost(postToSave, createdPost);
 
         // both users are updated
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + author.getUser().getId() + "/notifications/conversations"),
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic("/topic/user/" + author.getUser().getId() + "/notifications/conversations"),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications/conversations"),
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications/conversations"),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
     }
 
@@ -324,7 +353,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + course.getId()),
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic("/topic/communication/courses/" + course.getId()),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
     }
 
@@ -412,7 +441,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -441,7 +470,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -671,7 +700,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         if (!isUserMentionValid) {
             request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), toUpdatePostingDTO(postToUpdate), PostResponseDTO.class,
                     HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -699,7 +728,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(notUpdatedPost).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -724,7 +753,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -1476,8 +1505,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      *
      * @return a Mockito matcher for a canonical post broadcast destination
      */
-    private static String aCanonicalPostBroadcastTopic() {
-        return argThat((String topic) -> topic != null && (topic.matches("/topic/user/\\d+/notifications/conversations") || topic.matches("/topic/communication/courses/\\d+")));
+    private static Object postInChannel(long channelId) {
+        return argThat(payload -> payload instanceof PostBroadcastDTO dto && dto.post().conversation() != null && dto.post().conversation().id() == channelId);
+    }
+
+    private static WebsocketDestination aCanonicalPostBroadcastTopic() {
+        return topicMatching("/topic/user/\\d+/notifications/conversations|/topic/communication/courses/\\d+");
     }
 
 }

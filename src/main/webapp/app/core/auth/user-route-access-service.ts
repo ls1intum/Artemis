@@ -81,12 +81,16 @@ export class UserRouteAccessService implements CanActivate {
                     });
                 }
 
+                // The user is not logged in.
                 this.sessionStorageService.store('previousUrl', url);
+                // Two navigations in sequence: the user sees the access denied page and is then sent to the sign-in
+                // page, and both stay in the browser history. A redirect returned from a guard has exactly one target,
+                // so replacing this with a redirect to the sign-in page would drop the access denied page and its
+                // history entry. It therefore stays imperative until that change is decided on its own.
+                // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- first of two chained navigations, see above
                 void this.router.navigate(['accessdenied']).then(() => {
-                    // only show the login dialog, if the user hasn't logged in yet
-                    if (!account) {
-                        void this.router.navigate(['/sign-in']);
-                    }
+                    // eslint-disable-next-line localRules/no-navigation-in-guard-or-resolver -- runs after the access denied navigation has finished
+                    void this.router.navigate(['/sign-in']);
                 });
                 return false;
             }),
