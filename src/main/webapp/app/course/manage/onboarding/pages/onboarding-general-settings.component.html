@@ -31,7 +31,8 @@
                 <button
                     type="button"
                     class="color-preview"
-                    [ngStyle]="{ backgroundColor: course().color || ARTEMIS_DEFAULT_COLOR, width: '36px', height: '36px', borderRadius: '4px', cursor: 'pointer' }"
+                    style="width: 36px; height: 36px; border-radius: 4px; cursor: pointer"
+                    [style.background-color]="course().color || ARTEMIS_DEFAULT_COLOR"
                     (click)="openColorSelector($event)"
                 ></button>
                 <jhi-color-selector (selectedColor)="onSelectedColor($event)" />

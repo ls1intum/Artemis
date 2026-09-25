@@ -43,10 +43,6 @@ const SIMPLE_EMAIL_REGEX = '^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$';
     ],
 })
 export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
-    protected readonly faCircleNotch = faCircleNotch;
-    protected readonly faKey = faKey;
-    protected readonly faArrowLeft = faArrowLeft;
-
     private readonly router = inject(Router);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly accountService = inject(AccountService);
@@ -60,6 +56,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly webauthnService = inject(WebauthnService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly http = inject(HttpClient);
+
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faKey = faKey;
+    protected readonly faArrowLeft = faArrowLeft;
 
     readonly usernameInput = viewChild<ElementRef<HTMLInputElement>>('usernameInput');
     readonly passwordInput = viewChild<ElementRef<HTMLInputElement>>('passwordInput');

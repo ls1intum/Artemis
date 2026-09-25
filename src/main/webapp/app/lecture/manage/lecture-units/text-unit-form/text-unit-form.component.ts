@@ -47,6 +47,7 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private translateService = inject(TranslateService);
     private localStorageService = inject(LocalStorageService);
+    private readonly formBuilder = inject(FormBuilder);
 
     protected readonly faTimes = faTimes;
 
@@ -70,8 +71,6 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     }
     contentLoadedFromCache = false;
     firstMarkdownChangeHappened = false;
-
-    private readonly formBuilder = inject(FormBuilder);
 
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],

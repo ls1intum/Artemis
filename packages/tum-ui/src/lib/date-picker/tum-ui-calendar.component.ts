@@ -29,8 +29,9 @@ import { TUM_UI_TRANSLATOR } from '../i18n/tum-ui-translations';
 export class TumUiCalendarComponent {
     private readonly translator = inject(TUM_UI_TRANSLATOR);
     private readonly directionality = inject(Directionality);
-    private readonly direction = signal(this.directionality.value);
     private readonly destroyRef = inject(DestroyRef);
+
+    private readonly direction = signal(this.directionality.value);
 
     readonly selected = input<dayjs.Dayjs | undefined>(undefined);
     readonly activeMonth = input.required<dayjs.Dayjs>();

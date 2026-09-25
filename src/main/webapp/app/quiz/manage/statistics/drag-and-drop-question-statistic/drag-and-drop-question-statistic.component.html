@@ -83,7 +83,7 @@
                                                 <div
                                                     id="drop-location"
                                                     class="drop-location"
-                                                    [ngStyle]="{
+                                                    [style]="{
                                                         top: dropLocation.posY! / 2 + '%',
                                                         left: dropLocation.posX! / 2 + '%',
                                                         width: dropLocation.width! / 2 + '%',
@@ -107,7 +107,7 @@
                                             @for (dropLocation of question.dropLocations; track dropLocation; let i = $index) {
                                                 <div
                                                     class="drop-location solution"
-                                                    [ngStyle]="{
+                                                    [style]="{
                                                         top: dropLocation.posY! / 2 + '%',
                                                         left: dropLocation.posX! / 2 + '%',
                                                         width: dropLocation.width! / 2 + '%',

@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
-@FeatureUsage("management/configuration")
+@FeatureUsage(UserFeature.TUTORIAL_GROUP_MANAGEMENT)
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupsConfigurationResource {
@@ -73,6 +74,7 @@ public class TutorialGroupsConfigurationResource {
      * @param courseId the id of the course to which the tutorial groups configuration belongs
      * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
      */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
     @GetMapping({ "courses/{courseId}/tutorial-groups-configurations", "courses/{courseId}/tutorial-groups-configuration" })
     @EnforceAtLeastStudent
     public ResponseEntity<TutorialGroupConfigurationDTO> getOneOfCourse(@PathVariable Long courseId) {

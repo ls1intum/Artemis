@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -54,6 +55,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -82,7 +85,7 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
  */
 @Conditional(LectureEnabled.class)
 @Lazy
-@FeatureUsage("authoring/lectures")
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
 @RestController
 @RequestMapping("api/lecture/")
 public class LectureResource {
@@ -310,6 +313,7 @@ public class LectureResource {
      * @param courseId the courseId of the course for which the lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
     @GetMapping("courses/{courseId}/tutorial-lectures")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<SimpleLectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
@@ -333,6 +337,7 @@ public class LectureResource {
      * @param courseId the courseId of the course for which the lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
      */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
     @GetMapping("courses/{courseId}/lectures-for-overview")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<LectureForOverviewDTO>> getLecturesForCourseOverview(@PathVariable Long courseId) {
@@ -347,6 +352,7 @@ public class LectureResource {
      * @param courseId the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
      */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
     @GetMapping("courses/{courseId}/lectures-with-slides")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<GetLecturesDTO>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
@@ -463,6 +469,7 @@ public class LectureResource {
      * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
     @GetMapping("lectures/{lectureId}")
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<SimpleLectureDTO> getLecture(@PathVariable Long lectureId) {
@@ -513,6 +520,7 @@ public class LectureResource {
      * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
     @GetMapping("lectures/{lectureId}/details")
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<LectureDetailsDTO> getLectureWithDetails(@PathVariable Long lectureId) {
@@ -527,6 +535,8 @@ public class LectureResource {
      * @param lectureId the id of the lecture
      * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
      */
+    @FeatureUsage(UserFeature.LECTURE_PAGES)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("lectures/{lectureId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {

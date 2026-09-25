@@ -36,13 +36,13 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
     ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+
     protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
-
-    private accountService = inject(AccountService);
-    private alertService = inject(AlertService);
 
     // `equal: () => false` so re-setting the same reference emits after the token fields are assigned in place.
     readonly currentUser = signal<User | undefined>(undefined, { equal: () => false });

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -52,7 +54,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizer
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("assessment/manual-assessment")
+@FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingAssessmentResource extends AssessmentResource {
@@ -150,10 +152,20 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         User user = userRepository.getUserWithAuthorities();
 
-        // based on the locking mechanism we take the most recent manual result
-        Result existingManualResult = participation.getSubmissions().stream()
-                .flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull).filter(Result::isManual)).max(Comparator.comparing(Result::getId))
-                .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
+        // Write the manual result the tutor loaded. A submission can hold several manual results (correction rounds, overlapping
+        // lock requests), and the feedback ids in the request only belong to the loaded one. Without an id, the most recent one is used.
+        List<Result> manualResults = participation.getSubmissions().stream()
+                .flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull).filter(Result::isManual)).toList();
+        Result existingManualResult;
+        if (newManualResult.getId() != null) {
+            Long requestedResultId = newManualResult.getId();
+            existingManualResult = manualResults.stream().filter(result -> requestedResultId.equals(result.getId())).findFirst()
+                    .orElseThrow(() -> new BadRequestAlertException("The result is not a manual result of this participation", ENTITY_NAME, "resultParticipationMismatch"));
+        }
+        else {
+            existingManualResult = manualResults.stream().max(Comparator.comparing(Result::getId))
+                    .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
+        }
 
         // prevent that tutors create multiple manual results
         newManualResult.setId(existingManualResult.getId());

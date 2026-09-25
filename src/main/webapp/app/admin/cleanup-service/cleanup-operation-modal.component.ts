@@ -23,6 +23,9 @@ import { TumUiButtonDirective, TumUiDialogComponent, TumUiMessageComponent } fro
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupOperationModalComponent {
+    private readonly dataCleanupService = inject(DataCleanupService);
+    private readonly destroyRef = inject(DestroyRef);
+
     /** Whether the dialog is visible */
     readonly visible = model<boolean>(false);
 
@@ -43,9 +46,6 @@ export class CleanupOperationModalComponent {
 
     /** The in-flight count request, so it can be superseded/cancelled to avoid stale, out-of-order responses. */
     private countSubscription?: Subscription;
-
-    private readonly dataCleanupService = inject(DataCleanupService);
-    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faTimes = faTimes;
     protected readonly actionPresentation = CLEANUP_ACTION_PRESENTATION;

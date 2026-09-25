@@ -50,10 +50,10 @@
         "./styles.css": "./styles.css"
     },
     "peerDependencies": {
-        "@angular/cdk": "^22.1.7",
-        "@angular/common": "^22.1.7",
-        "@angular/core": "^22.1.7",
-        "@angular/forms": "^22.1.7",
+        "@angular/cdk": "^22.2.0",
+        "@angular/common": "^22.2.0",
+        "@angular/core": "^22.2.0",
+        "@angular/forms": "^22.2.0",
         "@fortawesome/angular-fontawesome": "^5.1.0",
         "@fortawesome/fontawesome-svg-core": "^7.3.1",
         "rxjs": "^7.8.2"

@@ -22,11 +22,11 @@ import { isManualResult } from 'app/exercise/result/result.utils';
     template: '',
 })
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnDestroy {
-    FeatureToggle = FeatureToggle;
-    ButtonType = ButtonType;
-
     private submissionService = inject(ProgrammingSubmissionService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
+
+    FeatureToggle = FeatureToggle;
+    ButtonType = ButtonType;
 
     readonly exercise = input.required<ProgrammingExercise>();
     // Optional: the button is rendered for repositories that may have no participation (e.g. an auxiliary
