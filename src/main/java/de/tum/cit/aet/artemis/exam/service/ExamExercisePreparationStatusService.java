@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXERCISE_START_STATUS;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -24,8 +25,6 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 public class ExamExercisePreparationStatusService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamExercisePreparationStatusService.class);
-
-    private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
     private final CacheManager cacheManager;
 
@@ -71,7 +70,7 @@ public class ExamExercisePreparationStatusService {
             else {
                 log.warn("Unable to add exam exercise start status to distributed cache because it is null");
             }
-            websocketMessagingService.sendMessage(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status);
+            websocketMessagingService.sendMessage(EXERCISE_START_STATUS.at(examId), status);
         }
         catch (Exception e) {
             log.warn("Failed to send exercise preparation status", e);
