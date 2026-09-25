@@ -101,7 +101,7 @@ describe('ExerciseAddModalComponent', () => {
 
         const cards = document.body.querySelectorAll<HTMLButtonElement>('.exercise-grid > .exercise-card');
         expect(cards).toHaveLength(count);
-        expect(document.body.querySelector('tum-ui-card')).toBeNull();
+        expect(document.body.querySelector('tumaet-ui-card')).toBeNull();
         for (const card of cards) {
             expect(card.tagName).toBe('BUTTON');
             expect(card.type).toBe('button');
@@ -161,7 +161,7 @@ describe('ExerciseAddModalComponent', () => {
             fixture.componentRef.setInput('visible', true);
             fixture.detectChanges();
             // The dialog is appended to the body, so it is not reachable from the fixture element.
-            expect(document.body.querySelector('.tum-ui-dialog-title')?.textContent?.trim()).toBe('artemisApp.exerciseManagement.addModal.header');
+            expect(document.body.querySelector('.tumaet-ui-dialog-title')?.textContent?.trim()).toBe('artemisApp.exerciseManagement.addModal.header');
         });
     });
 

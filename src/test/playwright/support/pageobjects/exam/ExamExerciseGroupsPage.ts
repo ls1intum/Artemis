@@ -40,7 +40,7 @@ export class ExamExerciseGroupsPage {
         }
         // The action collapsed into the row's ellipsis overflow menu, which the kit renders in an overlay popover.
         await overflowTrigger.click();
-        await this.page.locator('.tum-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
+        await this.page.locator('.tumaet-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
     }
 
     /**

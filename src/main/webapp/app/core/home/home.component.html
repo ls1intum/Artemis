@@ -22,7 +22,7 @@
                                     [ngModelOptions]="{ updateOn: 'change' }"
                                     [pattern]="identifierRegexPattern()"
                                     autocomplete="username webauthn"
-                                    tumUiInput
+                                    tumAetUiInput
                                     class="w-100"
                                     id="username"
                                     name="username"
@@ -39,7 +39,7 @@
                             </div>
 
                             <div class="btn-toolbar mt-3">
-                                <tum-ui-button
+                                <tumaet-ui-button
                                     id="continue-button"
                                     type="submit"
                                     severity="primary"
@@ -52,7 +52,7 @@
                                         <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
                                     }
                                     <span jhiTranslate="entity.action.continue">Continue</span>
-                                </tum-ui-button>
+                                </tumaet-ui-button>
                             </div>
                         </form>
                     }
@@ -62,7 +62,7 @@
                         <!-- Disabled Login/Email Field -->
                         <div class="form-group pb-2">
                             <label class="mb-2" for="usernameDisabled" jhiTranslate="global.form.username">Login or email</label>
-                            <input tumUiInput class="w-100" id="usernameDisabled" name="usernameDisabled" [value]="username" disabled type="text" />
+                            <input tumAetUiInput class="w-100" id="usernameDisabled" name="usernameDisabled" [value]="username" disabled type="text" />
                         </div>
 
                         <!-- Option A: Password Flow -->
@@ -70,9 +70,9 @@
                             <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
                                 <div class="form-group">
                                     @if (authenticationError()) {
-                                        <tum-ui-message severity="error" class="my-3 w-100" aria-live="assertive">
+                                        <tumaet-ui-message severity="error" class="my-3 w-100" aria-live="assertive">
                                             <span [jhiTranslate]="'home.errors.failedToLogin'"> Failed to sign in! Please check your login and password and try again. </span>
-                                        </tum-ui-message>
+                                        </tumaet-ui-message>
                                     }
                                 </div>
 
@@ -88,7 +88,7 @@
                                         #passwordForm="ngModel"
                                         [(ngModel)]="password"
                                         autocomplete="current-password webauthn"
-                                        tumUiInput
+                                        tumAetUiInput
                                         class="w-100"
                                         id="password"
                                         name="password"
@@ -102,7 +102,7 @@
                                 <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'password' }" />
 
                                 <div class="d-flex flex-column gap-3 mt-4">
-                                    <tum-ui-button
+                                    <tumaet-ui-button
                                         id="login-button"
                                         type="submit"
                                         severity="primary"
@@ -115,12 +115,12 @@
                                             <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
                                         }
                                         <span jhiTranslate="login.form.button">Sign in</span>
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
 
-                                    <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()" tabindex="3">
+                                    <tumaet-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()" tabindex="3">
                                         <fa-icon [icon]="faArrowLeft" class="me-1" />
                                         <span jhiTranslate="entity.action.back">Back</span>
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 </div>
                             </form>
                         }
@@ -130,7 +130,7 @@
                             <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'oidc' }" />
 
                             <div class="d-flex flex-column gap-3 mt-4">
-                                <tum-ui-button
+                                <tumaet-ui-button
                                     id="oidc-login-button"
                                     type="button"
                                     severity="primary"
@@ -145,12 +145,12 @@
                                     <span [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() || 'OIDC' }">
                                         Sign in with {{ externalIdpName() || 'OIDC' }}
                                     </span>
-                                </tum-ui-button>
+                                </tumaet-ui-button>
 
-                                <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()">
+                                <tumaet-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()">
                                     <fa-icon [icon]="faArrowLeft" class="me-1" />
                                     <span jhiTranslate="entity.action.back">Back</span>
-                                </tum-ui-button>
+                                </tumaet-ui-button>
                             </div>
                         }
 
@@ -167,16 +167,16 @@
                                         class="d-block w-100"
                                     />
                                 } @else {
-                                    <tum-ui-button id="saml2-fallback-button" type="button" severity="primary" variant="solid" class="w-100" [disabled]="true">
+                                    <tumaet-ui-button id="saml2-fallback-button" type="button" severity="primary" variant="solid" class="w-100" [disabled]="true">
                                         <span [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() || 'SAML2' }">
                                             Sign in with {{ externalIdpName() || 'SAML2 Login' }}
                                         </span>
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 }
-                                <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()">
+                                <tumaet-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()">
                                     <fa-icon [icon]="faArrowLeft" class="me-1" />
                                     <span jhiTranslate="entity.action.back">Back</span>
-                                </tum-ui-button>
+                                </tumaet-ui-button>
                             </div>
                         }
                     }
@@ -190,7 +190,7 @@
                         </div>
 
                         <div class="d-flex flex-column gap-2">
-                            <tum-ui-button
+                            <tumaet-ui-button
                                 data-testid="passkey-login-button"
                                 type="button"
                                 severity="primary"
@@ -200,7 +200,7 @@
                                 (clicked)="loginWithPasskey()"
                             >
                                 <span jhiTranslate="global.menu.account.loginWithPasskey">Sign in with a passkey</span>
-                            </tum-ui-button>
+                            </tumaet-ui-button>
                         </div>
                     }
 
@@ -218,12 +218,12 @@
             <ng-template #termsAndRememberMe let-prefix>
                 <div class="form-group my-3">
                     <div class="form-check d-flex align-items-center gap-2 ps-0">
-                        <tum-ui-checkbox [inputId]="'rememberMe_' + prefix" name="rememberMe" [(checked)]="rememberMe" />
+                        <tumaet-ui-checkbox [inputId]="'rememberMe_' + prefix" name="rememberMe" [(checked)]="rememberMe" />
                         <label class="form-check-label cursor-pointer" [for]="'rememberMe_' + prefix" jhiTranslate="login.form.rememberme">Remember me</label>
                     </div>
                     @if (needsToAcceptTerms()) {
                         <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
-                            <tum-ui-checkbox [inputId]="'acceptTerms_' + prefix" name="acceptTerms" [(checked)]="userAcceptedTerms" />
+                            <tumaet-ui-checkbox [inputId]="'acceptTerms_' + prefix" name="acceptTerms" [(checked)]="userAcceptedTerms" />
                             <label class="form-check-label cursor-pointer" [for]="'acceptTerms_' + prefix">
                                 <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept terms of use</a>
                             </label>

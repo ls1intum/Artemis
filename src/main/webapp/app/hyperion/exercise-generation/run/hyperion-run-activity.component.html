@@ -10,7 +10,7 @@
                     The dot carries the state word for assistive technology and stops pulsing the moment the run stalls,
                     because a busy animation on a stuck run is the animation contradicting the sentence beside it.
                 -->
-                <tum-ui-status-dot
+                <tumaet-ui-status-dot
                     class="shrink-0"
                     [state]="line.dotState"
                     [label]="(line.stalled ? 'artemisApp.hyperion.generation.activity.stalledState' : 'artemisApp.hyperion.generation.activity.workingState') | artemisTranslate"
@@ -19,7 +19,7 @@
                 <span class="min-w-0 tabular-nums wrap-anywhere">{{ line.labelKey | artemisTranslate: { duration: line.duration } }}</span>
                 @if (promoteCancel()) {
                     <!-- The escape action moves to where the reader is already looking, rather than staying in the header. -->
-                    <tum-ui-button
+                    <tumaet-ui-button
                         severity="danger"
                         variant="outlined"
                         size="small"
@@ -28,7 +28,7 @@
                         data-testid="hyperion-run-activity-cancel"
                     >
                         <span [jhiTranslate]="cancelPending() ? 'artemisApp.hyperion.generation.actions.cancelling' : 'artemisApp.hyperion.generation.actions.cancel'"></span>
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 }
             </p>
         }

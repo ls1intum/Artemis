@@ -228,7 +228,7 @@
                         severity="secondary"
                         size="small"
                         class="monaco-review-comment-adapt-button"
-                        [tumUiDisabledReason]="adaptBlockedReason() ? (adaptBlockedReason()! | artemisTranslate) : ''"
+                        [tumAetUiDisabledReason]="adaptBlockedReason() ? (adaptBlockedReason()! | artemisTranslate) : ''"
                         (click)="requestAdapt()"
                     >
                         <fa-icon [icon]="faScrewdriverWrench" class="monaco-review-comment-button-icon" />

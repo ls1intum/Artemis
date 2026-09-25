@@ -2,19 +2,19 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
-    TumUiEmptyComponent,
-    TumUiEmptyContentComponent,
-    TumUiEmptyDescriptionComponent,
-    TumUiEmptyHeaderComponent,
-    TumUiEmptyMediaComponent,
-    TumUiEmptySize,
-    TumUiEmptyTitleComponent,
+    TumAetUiEmptyComponent,
+    TumAetUiEmptyContentComponent,
+    TumAetUiEmptyDescriptionComponent,
+    TumAetUiEmptyHeaderComponent,
+    TumAetUiEmptyMediaComponent,
+    TumAetUiEmptySize,
+    TumAetUiEmptyTitleComponent,
 } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
- * A `tum-ui-empty` with Artemis' translation keys already wired in.
+ * A `tumaet-ui-empty` with Artemis' translation keys already wired in.
  *
  * The package component is slot-only on purpose - a design system must not decide what an application says - and
  * the generation surfaces need the same eight-line composition in seven places. This is that composition, once,
@@ -27,29 +27,29 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-hyperion-empty',
     template: `
-        <tum-ui-empty [size]="size()">
-            <tum-ui-empty-header>
+        <tumaet-ui-empty [size]="size()">
+            <tumaet-ui-empty-header>
                 @if (icon(); as emptyIcon) {
-                    <tum-ui-empty-media variant="icon"><fa-icon [icon]="emptyIcon" /></tum-ui-empty-media>
+                    <tumaet-ui-empty-media variant="icon"><fa-icon [icon]="emptyIcon" /></tumaet-ui-empty-media>
                 }
-                <tum-ui-empty-title>{{ titleKey() | artemisTranslate: titleParams() }}</tum-ui-empty-title>
+                <tumaet-ui-empty-title>{{ titleKey() | artemisTranslate: titleParams() }}</tumaet-ui-empty-title>
                 @if (descriptionKey(); as description) {
-                    <tum-ui-empty-description>{{ description | artemisTranslate: descriptionParams() }}</tum-ui-empty-description>
+                    <tumaet-ui-empty-description>{{ description | artemisTranslate: descriptionParams() }}</tumaet-ui-empty-description>
                 }
-            </tum-ui-empty-header>
-            <tum-ui-empty-content><ng-content /></tum-ui-empty-content>
-        </tum-ui-empty>
+            </tumaet-ui-empty-header>
+            <tumaet-ui-empty-content><ng-content /></tumaet-ui-empty-content>
+        </tumaet-ui-empty>
     `,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         ArtemisTranslatePipe,
         FaIconComponent,
-        TumUiEmptyComponent,
-        TumUiEmptyContentComponent,
-        TumUiEmptyDescriptionComponent,
-        TumUiEmptyHeaderComponent,
-        TumUiEmptyMediaComponent,
-        TumUiEmptyTitleComponent,
+        TumAetUiEmptyComponent,
+        TumAetUiEmptyContentComponent,
+        TumAetUiEmptyDescriptionComponent,
+        TumAetUiEmptyHeaderComponent,
+        TumAetUiEmptyMediaComponent,
+        TumAetUiEmptyTitleComponent,
     ],
 })
 export class HyperionEmptyComponent {
@@ -60,5 +60,5 @@ export class HyperionEmptyComponent {
     readonly descriptionParams = input<Record<string, unknown> | undefined>();
     readonly icon = input<IconDefinition | undefined>();
     /** `small` is the docked-panel tier; `medium` is the page tier. Density is an input, never a second component. */
-    readonly size = input<TumUiEmptySize>('medium');
+    readonly size = input<TumAetUiEmptySize>('medium');
 }

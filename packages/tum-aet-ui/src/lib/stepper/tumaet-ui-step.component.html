@@ -1,0 +1,19 @@
+<span class="tumaet-ui-step-marker-track" aria-hidden="true">
+    <span class="tumaet-ui-step-marker">
+        @if (markerIcon(); as icon) {
+            <fa-icon [icon]="icon" />
+        } @else if (isRunning()) {
+            <span class="tumaet-ui-step-running-indicator"></span>
+            <span class="tumaet-ui-step-running-fallback"></span>
+        }
+    </span>
+    <span class="tumaet-ui-step-connector"></span>
+</span>
+<div class="tumaet-ui-step-content">
+    <span class="tumaet-ui-step-label">
+        {{ label() }}<ng-content select="[tumAetUiStepLabel]" />&ngsp;<span class="tumaet:sr-only">{{ stateWord() }}</span>
+    </span>
+    <div class="tumaet-ui-step-detail">
+        <ng-content />
+    </div>
+</div>

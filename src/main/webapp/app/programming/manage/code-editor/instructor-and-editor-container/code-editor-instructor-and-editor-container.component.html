@@ -186,7 +186,7 @@
                         data-testid="consistency-issue-navigation"
                     >
                         <button
-                            tumUiButton
+                            tumAetUiButton
                             type="button"
                             size="small"
                             severity="secondary"
@@ -201,7 +201,7 @@
                             <span class="ml-1 tabular-nums">{{ currentGlobalIndex }} / {{ totalLocationsCount() }}</span>
                         </span>
                         <button
-                            tumUiButton
+                            tumAetUiButton
                             type="button"
                             size="small"
                             severity="secondary"
@@ -212,7 +212,7 @@
                             <fa-icon [icon]="faArrowRight" />
                         </button>
                         <button
-                            tumUiButton
+                            tumAetUiButton
                             type="button"
                             size="small"
                             severity="secondary"
@@ -338,13 +338,13 @@
             />
         </jhi-code-editor-container>
         @if (generationSupported()) {
-            <tum-ui-confirm-dialog key="hyperionReloadSavedExerciseConfirmation" />
+            <tumaet-ui-confirm-dialog key="hyperionReloadSavedExerciseConfirmation" />
             @if (generationRefreshFailed()) {
-                <button tumUiButton severity="secondary" variant="outlined" (click)="retryHyperionRefresh()" data-testid="hyperion-editor-reload-saved">
+                <button tumAetUiButton severity="secondary" variant="outlined" (click)="retryHyperionRefresh()" data-testid="hyperion-editor-reload-saved">
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
                 </button>
             }
-            <tum-ui-dialog
+            <tumaet-ui-dialog
                 [(visible)]="adaptDialogVisible"
                 [dismissableMask]="!generationStartPending()"
                 [closable]="!generationStartPending()"
@@ -365,7 +365,7 @@
                         (cancelled)="adaptDialogVisible.set(false)"
                     />
                 }
-            </tum-ui-dialog>
+            </tumaet-ui-dialog>
         }
     </div>
 }

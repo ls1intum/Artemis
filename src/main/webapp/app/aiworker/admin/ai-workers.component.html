@@ -1,15 +1,15 @@
 <section class="flex flex-col gap-4" aria-labelledby="ai-workers-title" [attr.aria-busy]="loading()">
     <h5 *adminTitleBarTitle id="ai-workers-title" class="m-0" jhiTranslate="artemisApp.aiworker.title"></h5>
     <div *adminTitleBarActions>
-        <tum-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="ai-workers-refresh">
+        <tumaet-ui-button severity="secondary" variant="outlined" size="small" [disabled]="loading()" (clicked)="refresh()" data-testid="ai-workers-refresh">
             <span jhiTranslate="artemisApp.aiworker.refresh"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
     <p class="m-0 text-muted-color" jhiTranslate="artemisApp.aiworker.description"></p>
     @if (failed()) {
-        <tum-ui-message severity="error" data-testid="ai-workers-error">
+        <tumaet-ui-message severity="error" data-testid="ai-workers-error">
             <span jhiTranslate="artemisApp.aiworker.loadFailed"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
     }
     @if (updatedAt(); as updated) {
         <p class="m-0 text-xs text-muted-color" data-testid="ai-workers-updated"><span jhiTranslate="artemisApp.aiworker.updated"></span> {{ updated | date: 'mediumTime' }}</p>
@@ -34,16 +34,16 @@
             </div>
         </dl>
         @if (retainedReservations()) {
-            <tum-ui-message severity="warn" data-testid="ai-workers-retained-reservations">
+            <tumaet-ui-message severity="warn" data-testid="ai-workers-retained-reservations">
                 <span jhiTranslate="artemisApp.aiworker.retainedReservations" [translateValues]="{ count: retainedReservations() }"></span>
-            </tum-ui-message>
+            </tumaet-ui-message>
         }
         @if (!workers().length) {
-            <tum-ui-message severity="info"><span jhiTranslate="artemisApp.aiworker.empty"></span></tum-ui-message>
+            <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.aiworker.empty"></span></tumaet-ui-message>
         }
     }
     <div class="overflow-x-auto">
-        <table tumUiTable data-testid="ai-workers-table">
+        <table tumAetUiTable data-testid="ai-workers-table">
             <caption class="sr-only" jhiTranslate="artemisApp.aiworker.title"></caption>
             <thead>
                 <tr>
@@ -60,12 +60,12 @@
                     @let worker = row.worker;
                     <tr [attr.data-state]="worker.state">
                         <td>{{ worker.workerId }}</td>
-                        <td><tum-ui-tag [severity]="row.severity" [value]="'artemisApp.aiworker.state.' + worker.state | artemisTranslate" /></td>
+                        <td><tumaet-ui-tag [severity]="row.severity" [value]="'artemisApp.aiworker.state.' + worker.state | artemisTranslate" /></td>
                         <td class="tabular-nums" data-testid="ai-worker-capacity">
                             @if (row.capacityKnown) {
                                 {{ worker.availableSlots }} / {{ worker.capacity }}
                             } @else {
-                                <span [tumUiTooltip]="'artemisApp.aiworker.unknownCapacity' | artemisTranslate" tabindex="0">—</span>
+                                <span [tumAetUiTooltip]="'artemisApp.aiworker.unknownCapacity' | artemisTranslate" tabindex="0">—</span>
                             }
                         </td>
                         <td>{{ (worker.lastHeartbeat | date: 'medium') ?? '—' }}</td>

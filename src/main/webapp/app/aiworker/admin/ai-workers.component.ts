@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { DOCUMENT, DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, interval } from 'rxjs';
-import { TumUiButtonComponent, TumUiMessageComponent, TumUiTableDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTableDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { AdminAiWorkerApi } from 'app/openapi/api/admin-ai-worker-api';
@@ -17,11 +17,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         DatePipe,
-        TumUiButtonComponent,
-        TumUiMessageComponent,
-        TumUiTableDirective,
-        TumUiTagComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         TranslateDirective,

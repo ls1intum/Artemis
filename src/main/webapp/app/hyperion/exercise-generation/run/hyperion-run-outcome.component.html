@@ -1,5 +1,5 @@
 <!--
-    The verdict is a `tum-ui-card-title [level]`, not an `<h2>`: Bootstrap's unlayered `h1`-`h6` and `global.scss`'s
+    The verdict is a `tumaet-ui-card-title [level]`, not an `<h2>`: Bootstrap's unlayered `h1`-`h6` and `global.scss`'s
     `body, h1, h2, h3, h4 { font-weight: 400 }` beat Tailwind's `@layer utilities`, so a plain `text-lg font-semibold`
     on a heading is silently ignored. The card title owns the typography of its own heading at a specificity Bootstrap
     cannot reach, and publishes `role="heading"` with `aria-level`, which is why the section still labels itself by id.
@@ -8,7 +8,7 @@
     and wrong for a heading inside it - so it takes the same treatment from this component's own stylesheet instead.
 -->
 <section aria-labelledby="hyperion-run-outcome-title" data-testid="hyperion-run-outcome" [attr.data-severity]="view().severity">
-    <tum-ui-message [severity]="view().severity" class="block">
+    <tumaet-ui-message [severity]="view().severity" class="block">
         <div class="flex min-w-0 flex-col gap-2">
             <!-- The verdict is the answer, so it is the largest thing on the page once a run is over. -->
             <h2 class="text-xl font-medium" id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</h2>
@@ -23,7 +23,7 @@
                 <p class="m-0 text-sm wrap-anywhere" jhiTranslate="artemisApp.hyperion.generation.outcome.nothingRetained" data-testid="hyperion-run-nothing-retained"></p>
             }
         </div>
-    </tum-ui-message>
+    </tumaet-ui-message>
 
     @if (checks().length) {
         <div class="mt-3" data-testid="hyperion-run-outcome-checks">
@@ -33,11 +33,11 @@
                     <li class="flex items-center gap-2 text-sm">
                         <!--
                             A status dot rather than a coloured check glyph. The `text-state-*` utilities alias the raw
-                            Bootstrap fills, so a green tick beside a `tum-ui-message` renders a *different* green from
+                            Bootstrap fills, so a green tick beside a `tumaet-ui-message` renders a *different* green from
                             the message's own foreground - three reds were visible at once in dark. The dot resolves the
                             design system's corrected colours, and its label carries the state as a word.
                         -->
-                        <tum-ui-status-dot class="shrink-0" [state]="check.dotState" [label]="check.stateKey | artemisTranslate" [showLabel]="false" />
+                        <tumaet-ui-status-dot class="shrink-0" [state]="check.dotState" [label]="check.stateKey | artemisTranslate" [showLabel]="false" />
                         <span [jhiTranslate]="check.labelKey"></span>
                     </li>
                 }
@@ -57,7 +57,7 @@
             transcript is a reasoning trace rather than output - and the count on the header means collapsing it hides
             no statement about the run.
         -->
-        <tum-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="technicalDetailsHeader()" data-testid="hyperion-run-outcome-technical">
+        <tumaet-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="technicalDetailsHeader()" data-testid="hyperion-run-outcome-technical">
             @for (message of view().serverMessages; track message) {
                 <p class="m-0 text-sm wrap-anywhere text-muted-color" lang="en">{{ message }}</p>
             }
@@ -77,6 +77,6 @@
                     </li>
                 }
             </ul>
-        </tum-ui-panel>
+        </tumaet-ui-panel>
     }
 </section>

@@ -46,7 +46,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
@@ -106,7 +106,7 @@ interface ConsistencyIssueNavigationIssue {
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
     // Keep review comment state scoped to each editor container instance.
-    providers: [ExerciseReviewCommentService, TumUiConfirmationService, HyperionGenerationActivityFacade],
+    providers: [ExerciseReviewCommentService, TumAetUiConfirmationService, HyperionGenerationActivityFacade],
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -129,18 +129,36 @@ interface ConsistencyIssueNavigationIssue {
         TooltipModule,
         ButtonModule,
         MessageModule,
-        TumUiButtonDirective,
-        TumUiConfirmDialogComponent,
-        TumUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiDialogComponent,
         ReviewAdaptExerciseDialogComponent,
         CodeEditorAiActionsComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
+    protected readonly generationActivity = inject(HyperionGenerationActivityFacade);
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+    private readonly generationRegistry = inject(HyperionJobRegistryService);
+    private confirmationService = inject(TumAetUiConfirmationService);
+    private generationService = inject(HyperionExerciseGenerationService);
+    private reviewRouter = inject(Router);
+    private readonly editorDestroyRef = inject(DestroyRef);
+    /** Shared helper that encapsulates all AI-powered problem statement operations. */
+    readonly aiOps = new ProblemStatementAiOperationsHelper(
+        inject(ProblemStatementService),
+        inject(AlertService),
+        inject(ArtemisIntelligenceService),
+        inject(ProfileService),
+        inject(DestroyRef),
+        inject(Injector),
+    );
+
     readonly resultComp = viewChild(UpdatingResultComponent);
     readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
-    protected readonly generationActivity = inject(HyperionGenerationActivityFacade);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
@@ -151,16 +169,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
             .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
             .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER['MEDIUM']) - (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER['MEDIUM']) || a.threadId - b.threadId),
-    );
-
-    /** Shared helper that encapsulates all AI-powered problem statement operations. */
-    readonly aiOps = new ProblemStatementAiOperationsHelper(
-        inject(ProblemStatementService),
-        inject(AlertService),
-        inject(ArtemisIntelligenceService),
-        inject(ProfileService),
-        inject(DestroyRef),
-        inject(Injector),
     );
 
     // Delegate signals for template binding compatibility
@@ -181,10 +189,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private readonly aiActions = viewChild(CodeEditorAiActionsComponent);
     /** The refinement prompt the AI actions edit; aliased to aiOps.userPrompt so the helper reads what was typed. */
     readonly refinementPrompt = this.aiOps.userPrompt;
-
-    private consistencyCheckService = inject(ConsistencyCheckService);
-    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
@@ -217,7 +221,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private pendingGenerationRefreshJobId?: string;
     /** Present exactly while an adapt dialog opened by {@link openAdaptDialog} is still awaiting the user's decision. */
     private pendingAdaptDialog?: { exerciseId: number; onCancel?: () => void };
-    private readonly generationRegistry = inject(HyperionJobRegistryService);
     private readonly exerciseChanged = new Subject<void>();
 
     // Icons
@@ -239,10 +242,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
-    private confirmationService = inject(TumUiConfirmationService);
-    private generationService = inject(HyperionExerciseGenerationService);
-    private reviewRouter = inject(Router);
-    private readonly editorDestroyRef = inject(DestroyRef);
     private appliedGenerationRefresh: AppliedGenerationRefresh | undefined = (() => {
         const value: unknown = this.reviewRouter.currentNavigation()?.extras.state?.[APPLIED_GENERATION_REFRESH_STATE];
         return isAppliedGenerationRefresh(value) ? value : undefined;

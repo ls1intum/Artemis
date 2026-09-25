@@ -1,4 +1,4 @@
-<tum-ui-dialog
+<tumaet-ui-dialog
     [header]="'artemisApp.hyperion.generation.brief.header' | artemisTranslate"
     [(visible)]="visible"
     [closable]="!busy()"
@@ -11,20 +11,20 @@
         <p id="hyperion-brief-intro" class="text-muted-color m-0" jhiTranslate="artemisApp.hyperion.generation.brief.intro"></p>
 
         @if (setupFailed()) {
-            <tum-ui-message severity="error" live class="block" data-testid="hyperion-brief-setup-failed">
+            <tumaet-ui-message severity="error" live class="block" data-testid="hyperion-brief-setup-failed">
                 <span jhiTranslate="artemisApp.hyperion.generation.brief.setupFailed"></span>
-            </tum-ui-message>
+            </tumaet-ui-message>
         }
 
         @if (startFailed()) {
-            <tum-ui-message severity="error" live class="block" data-testid="hyperion-brief-start-failed">
+            <tumaet-ui-message severity="error" live class="block" data-testid="hyperion-brief-start-failed">
                 <div class="flex flex-col gap-2">
                     <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailed"></span>
                     @if (capacityUnavailable()) {
                         <span jhiTranslate="error.generationCapacityUnavailable"></span>
                     }
                     <div class="flex flex-wrap items-center gap-2">
-                        <tum-ui-button
+                        <tumaet-ui-button
                             size="small"
                             [severity]="capacityUnavailable() ? 'primary' : 'secondary'"
                             [variant]="capacityUnavailable() ? 'solid' : 'outlined'"
@@ -34,8 +34,8 @@
                             data-testid="hyperion-brief-start-retry"
                         >
                             <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailedRetry"></span>
-                        </tum-ui-button>
-                        <tum-ui-button
+                        </tumaet-ui-button>
+                        <tumaet-ui-button
                             size="small"
                             severity="danger"
                             variant="outlined"
@@ -45,13 +45,13 @@
                             data-testid="hyperion-brief-start-delete"
                         >
                             <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailedDelete"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     </div>
                     @if (deleteFailed()) {
                         <span jhiTranslate="artemisApp.hyperion.generation.brief.deleteFailed"></span>
                     }
                 </div>
-            </tum-ui-message>
+            </tumaet-ui-message>
         }
 
         <section aria-labelledby="hyperion-brief-label">
@@ -59,7 +59,7 @@
             <p id="hyperion-brief-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.hint"></p>
             <textarea
                 id="hyperion-brief"
-                tumUiTextarea
+                tumAetUiTextarea
                 class="min-h-56 w-full resize-y"
                 rows="9"
                 [attr.maxlength]="maximumBriefLength"
@@ -67,8 +67,8 @@
                 [ngModel]="brief()"
                 (ngModelChange)="brief.set($event)"
                 (blur)="briefTouched.set(true)"
-                [tumUiInputInvalid]="showBriefError()"
-                [tumUiInputDescribedBy]="showBriefError() ? 'hyperion-brief-hint hyperion-brief-error' : 'hyperion-brief-hint'"
+                [tumAetUiInputInvalid]="showBriefError()"
+                [tumAetUiInputDescribedBy]="showBriefError() ? 'hyperion-brief-hint hyperion-brief-error' : 'hyperion-brief-hint'"
                 data-testid="hyperion-brief-input"
             ></textarea>
             <div class="mt-2 flex items-start justify-between gap-4 text-sm">
@@ -100,11 +100,11 @@
     </div>
 
     <ng-template #footer>
-        <tum-ui-button severity="secondary" variant="outlined" size="small" [disabled]="busy()" (clicked)="back()" data-testid="hyperion-brief-back">
+        <tumaet-ui-button severity="secondary" variant="outlined" size="small" [disabled]="busy()" (clicked)="back()" data-testid="hyperion-brief-back">
             <span jhiTranslate="entity.action.back"></span>
-        </tum-ui-button>
-        <tum-ui-button severity="primary" size="small" [disabled]="!canGenerate()" [loading]="provisioning()" (clicked)="generate()" data-testid="hyperion-brief-generate">
+        </tumaet-ui-button>
+        <tumaet-ui-button severity="primary" size="small" [disabled]="!canGenerate()" [loading]="provisioning()" (clicked)="generate()" data-testid="hyperion-brief-generate">
             <span jhiTranslate="artemisApp.hyperion.generation.brief.generate"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

@@ -349,7 +349,7 @@ describe('HyperionRunPageComponent', () => {
         expect(testId('hyperion-run-outcome-reason')!.textContent).toContain('artemisApp.hyperion.generation.terminationReason.ENVIRONMENT_UNAVAILABLE');
         expect(outcome!.textContent).toContain('artemisApp.hyperion.generation.outcome.failedTitle');
         // The English server sentence belongs behind the disclosure, never in the headline.
-        expect(outcome!.querySelector('tum-ui-message')!.textContent).not.toContain('gradle exited with code 1');
+        expect(outcome!.querySelector('tumaet-ui-message')!.textContent).not.toContain('gradle exited with code 1');
         // The disclosure keeps its content in the DOM so `aria-controls` always resolves, but out of the a11y tree.
         const technical = testId('hyperion-run-outcome-technical')!;
         expect(technical.getAttribute('data-collapsed')).toBe('true');

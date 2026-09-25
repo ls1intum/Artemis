@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiCardComponent,
-    TumUiConfirmDialogComponent,
-    TumUiConfirmationService,
-    TumUiStatusDotComponent,
-    TumUiStatusDotState,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCardComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiStatusDotComponent,
+    TumAetUiStatusDotState,
 } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -45,27 +45,27 @@ interface RunFact {
     templateUrl: './hyperion-run-header.component.html',
     styleUrl: './hyperion-run-header.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     imports: [
         RouterLink,
         ArtemisTranslatePipe,
         TranslateDirective,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiCardComponent,
-        TumUiConfirmDialogComponent,
-        TumUiStatusDotComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCardComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiStatusDotComponent,
     ],
 })
 export class HyperionRunHeaderComponent {
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
 
     readonly adapting = input(false);
     readonly exerciseTitle = input<string | undefined>();
     /** Translation keys for the meta line, e.g. Java · Gradle · Medium. Never raw enum values. */
     readonly metaLabelKeys = input<readonly string[]>([]);
-    readonly statusState = input.required<TumUiStatusDotState>();
+    readonly statusState = input.required<TumAetUiStatusDotState>();
     readonly statusLabelKey = input.required<string>();
     /** ISO timestamp of the run's STARTED event; without one there is nothing to count from. */
     readonly startedAt = input<string | undefined>();

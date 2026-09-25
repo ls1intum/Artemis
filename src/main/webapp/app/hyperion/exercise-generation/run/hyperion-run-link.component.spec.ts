@@ -48,7 +48,7 @@ describe('HyperionRunLinkComponent', () => {
         await render();
         expect(link()?.textContent).toContain('viewRun');
         expect(link()?.textContent).toContain('generation.status.running');
-        expect(link()?.querySelector('tum-ui-status-dot')).not.toBeNull();
+        expect(link()?.querySelector('tumaet-ui-status-dot')).not.toBeNull();
         expect(link()?.getAttribute('href')).toBe('/generation');
         expect(service.getStatus).toHaveBeenCalledWith(42);
     });

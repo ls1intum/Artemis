@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, exhaustMap, merge, of, startWith, switchMap, timer } from 'rxjs';
-import { TumUiButtonDirective, TumUiStatusDotComponent, TumUiStatusDotState } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiStatusDotComponent, TumAetUiStatusDotState } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -17,20 +17,20 @@ import { runOutcome } from '../model/hyperion-generation-stages';
 @Component({
     selector: 'jhi-hyperion-run-link',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, TumUiButtonDirective, TumUiStatusDotComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [RouterLink, TumAetUiButtonDirective, TumAetUiStatusDotComponent, TranslateDirective, ArtemisTranslatePipe],
     template: `
         @if (status()?.jobId) {
-            <a tumUiButton severity="primary" variant="outlined" size="small" [routerLink]="['generation']" data-testid="hyperion-exercise-open-generation">
-                <tum-ui-status-dot [state]="dotState()" [label]="statusLabelKey() | artemisTranslate" />
+            <a tumAetUiButton severity="primary" variant="outlined" size="small" [routerLink]="['generation']" data-testid="hyperion-exercise-open-generation">
+                <tumaet-ui-status-dot [state]="dotState()" [label]="statusLabelKey() | artemisTranslate" />
                 <span [jhiTranslate]="labelKey()"></span>
             </a>
         }
     `,
 })
 export class HyperionRunLinkComponent {
-    readonly exercise = input.required<ProgrammingExercise>();
     private readonly service = inject(HyperionExerciseGenerationService);
     private readonly profile = inject(ProfileService);
+    readonly exercise = input.required<ProgrammingExercise>();
     private readonly exerciseId = computed(() => {
         const exercise = this.exercise();
         return exercise.isAtLeastEditor &&
@@ -53,7 +53,7 @@ export class HyperionRunLinkComponent {
         ),
     );
     protected readonly runStatus = computed(() => (this.status()?.running ? 'running' : (runOutcome(this.status()?.events ?? []) ?? 'unknown')));
-    protected readonly dotState = computed<TumUiStatusDotState>(() => {
+    protected readonly dotState = computed<TumAetUiStatusDotState>(() => {
         switch (this.runStatus()) {
             case 'running':
                 return 'running';

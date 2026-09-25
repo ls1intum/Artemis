@@ -10,13 +10,13 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ActiveGeneration } from 'app/openapi/model/active-generation';
 import { AdminHyperionGenerationMonitoringApi } from 'app/openapi/api/admin-hyperion-generation-monitoring-api';
 import {
-    TumUiButtonComponent,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiTableDirective,
-    TumUiTagComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { AdminAiWorkerApi } from 'app/openapi/api/admin-ai-worker-api';
 import { WorkerStatus } from 'app/openapi/model/worker-status';
@@ -33,16 +33,16 @@ const MAX_CANCELLATION_REASON_LENGTH = 500;
     imports: [
         RouterLink,
         FormsModule,
-        TumUiDialogComponent,
-        TumUiInputDirective,
-        TumUiTooltipDirective,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiTooltipDirective,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         DatePipe,
-        TumUiButtonComponent,
-        TumUiMessageComponent,
-        TumUiTableDirective,
-        TumUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
@@ -51,6 +51,7 @@ export class HyperionGenerationsComponent implements OnInit {
     private readonly document = inject(DOCUMENT);
     private readonly api = inject(AdminAiWorkerApi);
     private readonly generationApi = inject(AdminHyperionGenerationMonitoringApi);
+    private readonly destroyRef = inject(DestroyRef);
     protected readonly generations = signal<ActiveGeneration[]>([]);
     protected readonly generationRows = computed(() =>
         this.generations().map((run) => {
@@ -81,7 +82,6 @@ export class HyperionGenerationsComponent implements OnInit {
             !this.cancelTarget()?.cancellationRequested,
     );
     protected readonly cancelFailed = signal(false);
-    private readonly destroyRef = inject(DestroyRef);
     protected readonly workers = signal<WorkerStatus[]>([]);
     protected readonly loading = signal(false);
     protected readonly failed = signal(false);

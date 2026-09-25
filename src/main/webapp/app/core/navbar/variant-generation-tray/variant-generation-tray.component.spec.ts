@@ -1,4 +1,4 @@
-import { TumUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { computed, signal } from '@angular/core';
@@ -162,7 +162,7 @@ describe('VariantGenerationTrayComponent', () => {
     it('cancels a job only after the confirmation is accepted', () => {
         jobs.set([runningJob]);
         fixture.detectChanges();
-        const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((options) => options.accept());
 
         component.cancelJob(runningJob, new Event('click'));

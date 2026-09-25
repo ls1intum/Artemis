@@ -5,18 +5,18 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import {
-    TumUiButtonDirective,
-    TumUiEmptyComponent,
-    TumUiEmptyDescriptionComponent,
-    TumUiEmptyHeaderComponent,
-    TumUiEmptyTitleComponent,
-    TumUiMessageComponent,
-    TumUiPopoverComponent,
-    TumUiPopoverTriggerDirective,
-    TumUiStatusDotComponent,
-    TumUiStatusDotState,
-    TumUiTagComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiEmptyComponent,
+    TumAetUiEmptyDescriptionComponent,
+    TumAetUiEmptyHeaderComponent,
+    TumAetUiEmptyTitleComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiStatusDotComponent,
+    TumAetUiStatusDotState,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -29,7 +29,7 @@ import {
 } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 
 /** How the aggregate indicator state is shown in the navbar dot. */
-const INDICATOR_DOT_STATE: Record<HyperionJobIndicatorState, TumUiStatusDotState> = {
+const INDICATOR_DOT_STATE: Record<HyperionJobIndicatorState, TumAetUiStatusDotState> = {
     idle: 'neutral',
     running: 'running',
     attention: 'warning',
@@ -37,7 +37,7 @@ const INDICATOR_DOT_STATE: Record<HyperionJobIndicatorState, TumUiStatusDotState
 };
 
 /** How a single run's status is shown in the tray. */
-const ENTRY_DOT_STATE: Record<HyperionJobStatus, TumUiStatusDotState> = {
+const ENTRY_DOT_STATE: Record<HyperionJobStatus, TumAetUiStatusDotState> = {
     queued: 'queued',
     running: 'running',
     cancelling: 'running',
@@ -59,7 +59,7 @@ export interface HyperionJobRow {
     jobId: string;
     title: string;
     status: HyperionJobStatus;
-    dotState: TumUiStatusDotState;
+    dotState: TumAetUiStatusDotState;
     /** The status word, which is also the dot's accessible name. */
     statusLabel: string;
     /** `running for 7 min` / `ran for 21 min`, or absent when no duration can honestly be derived. */
@@ -89,17 +89,17 @@ export interface HyperionJobRow {
         FaIconComponent,
         ArtemisTranslatePipe,
         TranslateDirective,
-        TumUiButtonDirective,
-        TumUiEmptyComponent,
-        TumUiEmptyDescriptionComponent,
-        TumUiEmptyHeaderComponent,
-        TumUiEmptyTitleComponent,
-        TumUiMessageComponent,
-        TumUiPopoverComponent,
-        TumUiPopoverTriggerDirective,
-        TumUiStatusDotComponent,
-        TumUiTagComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiEmptyComponent,
+        TumAetUiEmptyDescriptionComponent,
+        TumAetUiEmptyHeaderComponent,
+        TumAetUiEmptyTitleComponent,
+        TumAetUiMessageComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiStatusDotComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
     ],
 })
 export class HyperionJobsIndicatorComponent {
@@ -115,7 +115,7 @@ export class HyperionJobsIndicatorComponent {
 
     protected readonly indicatorDotState = computed(() => INDICATOR_DOT_STATE[this.indicatorState()]);
 
-    private readonly popover = viewChild(TumUiPopoverComponent);
+    private readonly popover = viewChild(TumAetUiPopoverComponent);
 
     /** Whether the tray is on screen, which is the only time the elapsed clock is worth running. */
     private readonly trayOpen = signal(false);

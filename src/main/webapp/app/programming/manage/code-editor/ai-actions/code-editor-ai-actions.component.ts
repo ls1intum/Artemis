@@ -4,16 +4,16 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCheckDouble, faChevronDown, faPaperPlane, faSpinner, faTimes, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import {
-    TumUiButtonDirective,
-    TumUiButtonGroupComponent,
-    TumUiDisabledReasonDirective,
-    TumUiInputDirective,
-    TumUiMenuComponent,
-    TumUiMenuItemDirective,
-    TumUiMenuTriggerDirective,
-    TumUiPopoverComponent,
-    TumUiStatusDotComponent,
-    TumUiTagComponent,
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiDisabledReasonDirective,
+    TumAetUiInputDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiPopoverComponent,
+    TumAetUiStatusDotComponent,
+    TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -38,16 +38,16 @@ import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/pro
         FaIconComponent,
         ArtemisTranslatePipe,
         TranslateDirective,
-        TumUiButtonDirective,
-        TumUiButtonGroupComponent,
-        TumUiDisabledReasonDirective,
-        TumUiMenuComponent,
-        TumUiMenuItemDirective,
-        TumUiMenuTriggerDirective,
-        TumUiPopoverComponent,
-        TumUiStatusDotComponent,
-        TumUiTagComponent,
-        TumUiInputDirective,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiDisabledReasonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiStatusDotComponent,
+        TumAetUiTagComponent,
+        TumAetUiInputDirective,
     ],
 })
 export class CodeEditorAiActionsComponent {
@@ -89,8 +89,8 @@ export class CodeEditorAiActionsComponent {
     protected readonly faTimes = faTimes;
     protected readonly faTriangleExclamation = faTriangleExclamation;
 
-    private readonly refinementPopover = viewChild.required<TumUiPopoverComponent>('refinementPopover');
-    // `tumUiButton` is a component, so the reference must be read as the element for the popover to anchor to it.
+    private readonly refinementPopover = viewChild.required<TumAetUiPopoverComponent>('refinementPopover');
+    // `tumAetUiButton` is a component, so the reference must be read as the element for the popover to anchor to it.
     private readonly menuTrigger = viewChild.required('menuTrigger', { read: ElementRef<HTMLElement> });
 
     protected readonly refineLabelKey = computed(() =>

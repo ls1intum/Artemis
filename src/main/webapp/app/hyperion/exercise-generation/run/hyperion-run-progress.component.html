@@ -1,6 +1,6 @@
-<tum-ui-stepper [ariaLabel]="'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate" data-testid="hyperion-run-progress">
+<tumaet-ui-stepper [ariaLabel]="'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate" data-testid="hyperion-run-progress">
     @for (step of steps(); track step.key) {
-        <tum-ui-step [state]="step.state" [label]="step.labelKey | artemisTranslate" [attr.data-stage]="step.key" [attr.data-state]="step.state">
+        <tumaet-ui-step [state]="step.state" [label]="step.labelKey | artemisTranslate" [attr.data-stage]="step.key" [attr.data-state]="step.state">
             <!--
                 Before the substeps rather than after them: this is the stage's own clock, and a duration printed under the
                 last substep reads as that substep's, which is wrong whenever the substep it lands under has not started.
@@ -22,11 +22,11 @@
 
             @if (step.substeps; as substeps) {
                 <!-- The same visual language one level down, so the pieces of the design stage read as part of it. -->
-                <tum-ui-stepper class="mt-1 block" [ariaLabel]="step.labelKey | artemisTranslate" data-testid="hyperion-run-substeps">
+                <tumaet-ui-stepper class="mt-1 block" [ariaLabel]="step.labelKey | artemisTranslate" data-testid="hyperion-run-substeps">
                     @for (substep of substeps; track substep.key) {
-                        <tum-ui-step [state]="substep.state" [label]="substep.labelKey | artemisTranslate" [attr.data-substep]="substep.key" [attr.data-state]="substep.state" />
+                        <tumaet-ui-step [state]="substep.state" [label]="substep.labelKey | artemisTranslate" [attr.data-substep]="substep.key" [attr.data-state]="substep.state" />
                     }
-                </tum-ui-stepper>
+                </tumaet-ui-stepper>
             }
 
             @if (step.detail) {
@@ -76,6 +76,6 @@
                     }
                 </div>
             }
-        </tum-ui-step>
+        </tumaet-ui-step>
     }
-</tum-ui-stepper>
+</tumaet-ui-stepper>

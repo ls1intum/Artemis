@@ -313,7 +313,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             vi.advanceTimersByTime(200);
             fixture.detectChanges();
 
-            expect(document.querySelector('.tum-ui-tooltip-bubble')?.textContent).toContain('artemisApp.review.adaptExercise.runInProgress');
+            expect(document.querySelector('.tumaet-ui-tooltip-bubble')?.textContent).toContain('artemisApp.review.adaptExercise.runInProgress');
             adaptButton.dispatchEvent(new Event('focusout', { bubbles: true }));
             vi.advanceTimersByTime(200);
         } finally {

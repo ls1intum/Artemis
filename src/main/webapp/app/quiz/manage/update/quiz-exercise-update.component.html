@@ -411,8 +411,8 @@
                                 type="button"
                                 class="footer-save-btn aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                                 (click)="onSaveClick()"
-                                [tumUiTooltip]="saveBlockedReasons()"
-                                [tumUiTooltipDescribesHost]="false"
+                                [tumAetUiTooltip]="saveBlockedReasons()"
+                                [tumAetUiTooltipDescribesHost]="false"
                                 [attr.aria-disabled]="isSaveDisabled()"
                                 [attr.aria-describedby]="isSaveTooltipDisabled() ? null : saveReasonsId"
                             >

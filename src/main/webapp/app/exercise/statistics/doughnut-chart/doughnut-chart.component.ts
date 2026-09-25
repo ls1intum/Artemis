@@ -6,8 +6,8 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-doughnut-chart',
     templateUrl: './doughnut-chart.component.html',
     styleUrls: ['./doughnut-chart.component.scss'],
-    imports: [RouterLink, NgClass, FaIconComponent, TumUiDoughnutChartComponent, ArtemisTranslatePipe],
+    imports: [RouterLink, NgClass, FaIconComponent, TumAetUiDoughnutChartComponent, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnInit {
     private readonly router = inject(Router);
@@ -46,7 +46,7 @@ export class DoughnutChartComponent implements OnInit {
     ]);
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]));
-    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiDoughnutChartConfig>(() => ({
         legend: false,
         tooltip: { label: (item) => `${this.valueFormatting({ value: item.value })}` },
     }));

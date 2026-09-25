@@ -139,7 +139,7 @@ export function threadLocationLabel(thread: CommentThread, translate: TranslateS
  */
 type AdaptFindingTagSeverity = 'danger' | 'warn' | 'info';
 
-/** Maps a finding severity to its {@code tum-ui-tag} severity. Called once at build time so the template binds a plain field, not a per-change-detection method. */
+/** Maps a finding severity to its {@code tumaet-ui-tag} severity. Called once at build time so the template binds a plain field, not a per-change-detection method. */
 export function adaptFindingTagSeverity(severity: ConsistencyIssueCommentContent['severity']): AdaptFindingTagSeverity {
     switch (severity) {
         case ConsistencyIssueSeverityEnum.High:
@@ -163,7 +163,7 @@ export interface AdaptFinding {
     authorName?: string;
     category?: ConsistencyIssueCommentContent['category'];
     severity?: ConsistencyIssueCommentContent['severity'];
-    /** The {@code tum-ui-tag} severity for the coloured severity tag, precomputed so the template binds a field rather than a per-change-detection method. */
+    /** The {@code tumaet-ui-tag} severity for the coloured severity tag, precomputed so the template binds a field rather than a per-change-detection method. */
     tagSeverity: AdaptFindingTagSeverity;
     /** A short {@code Repository: file:line} label, absent when the thread has no concrete line. */
     locationLabel?: string;

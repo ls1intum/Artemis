@@ -39,20 +39,20 @@ describe('HyperionMarkdownComponent', () => {
             expect(host.querySelector('pre')).toBeNull();
         });
 
-        it('hands the rendered document to tum-ui-prose, which owns the typography', () => {
+        it('hands the rendered document to tumaet-ui-prose, which owns the typography', () => {
             const host = render('# Heading');
 
-            const prose = host.querySelector('.tum-ui-prose');
+            const prose = host.querySelector('.tumaet-ui-prose');
             expect(prose).not.toBeNull();
             expect(prose!.getAttribute('data-slot')).toBe('prose');
             expect(prose!.querySelector('h1')).not.toBeNull();
         });
 
         it('makes the prose element the direct parent of every block, which is what its rhythm rules need', () => {
-            // `.tum-ui-prose > * + *` and `.tum-ui-prose > * + h2` set the entire vertical rhythm. One wrapper element
+            // `.tumaet-ui-prose > * + *` and `.tumaet-ui-prose > * + h2` set the entire vertical rhythm. One wrapper element
             // between the class and the document silently removes the spacing from every heading, paragraph and list,
             // so the relationship is asserted rather than assumed.
-            const prose = render('# Heading\n\nA paragraph.\n\n- item').querySelector('.tum-ui-prose')!;
+            const prose = render('# Heading\n\nA paragraph.\n\n- item').querySelector('.tumaet-ui-prose')!;
 
             expect([...prose.children].map((child) => child.tagName)).toEqual(['H1', 'P', 'UL']);
         });
@@ -62,7 +62,7 @@ describe('HyperionMarkdownComponent', () => {
             fixture.componentRef.setInput('density', 'compact');
             fixture.detectChanges();
 
-            expect((fixture.nativeElement as HTMLElement).querySelector('.tum-ui-prose')?.getAttribute('data-density')).toBe('compact');
+            expect((fixture.nativeElement as HTMLElement).querySelector('.tumaet-ui-prose')?.getAttribute('data-density')).toBe('compact');
         });
 
         it('renders every block a generated document actually uses', () => {
@@ -97,8 +97,8 @@ describe('HyperionMarkdownComponent', () => {
         });
 
         it('renders nothing at all for absent or empty markdown, leaving the empty state to the caller', () => {
-            expect(render(undefined).querySelector('.tum-ui-prose')?.textContent?.trim()).toBe('');
-            expect(render('').querySelector('.tum-ui-prose')?.textContent?.trim()).toBe('');
+            expect(render(undefined).querySelector('.tumaet-ui-prose')?.textContent?.trim()).toBe('');
+            expect(render('').querySelector('.tumaet-ui-prose')?.textContent?.trim()).toBe('');
         });
 
         it('re-renders when the source document changes', () => {

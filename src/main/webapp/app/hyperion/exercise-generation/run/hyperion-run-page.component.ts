@@ -9,14 +9,14 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import {
-    TumUiButtonComponent,
-    TumUiCardComponent,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiMessageSeverity,
-    TumUiPanelComponent,
-    TumUiStatusDotState,
+    TumAetUiButtonComponent,
+    TumAetUiCardComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiMessageSeverity,
+    TumAetUiPanelComponent,
+    TumAetUiStatusDotState,
 } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -42,7 +42,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 /** The status word shown next to the dot, and the dot state that goes with it. */
 type RunStatus = 'queued' | 'running' | 'cancelling' | 'saved' | 'needsReview' | 'partial' | 'failed' | 'cancelled' | 'notStarted' | 'unknown';
 
-const STATUS_DOT_STATE: Record<RunStatus, TumUiStatusDotState> = {
+const STATUS_DOT_STATE: Record<RunStatus, TumAetUiStatusDotState> = {
     queued: 'queued',
     running: 'running',
     cancelling: 'running',
@@ -63,7 +63,7 @@ const OUTCOME_STATUS: Record<HyperionRunOutcome, RunStatus> = {
     cancelled: 'cancelled',
 };
 
-const OUTCOME_SEVERITY: Record<HyperionRunOutcome, TumUiMessageSeverity> = {
+const OUTCOME_SEVERITY: Record<HyperionRunOutcome, TumAetUiMessageSeverity> = {
     saved: 'success',
     needsReview: 'warn',
     partial: 'warn',
@@ -89,8 +89,8 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
     providers: [HyperionGenerationActivityFacade, HyperionRunAnnouncerService],
     imports: [
         FormsModule,
-        TumUiDialogComponent,
-        TumUiInputDirective,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
         HyperionArtifactsComponent,
@@ -99,10 +99,10 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
         HyperionRunOutcomeComponent,
         HyperionRunProgressComponent,
         HyperionRunUsageComponent,
-        TumUiButtonComponent,
-        TumUiCardComponent,
-        TumUiMessageComponent,
-        TumUiPanelComponent,
+        TumAetUiButtonComponent,
+        TumAetUiCardComponent,
+        TumAetUiMessageComponent,
+        TumAetUiPanelComponent,
     ],
 })
 export class HyperionRunPageComponent {
@@ -111,6 +111,10 @@ export class HyperionRunPageComponent {
     private readonly translateService = inject(TranslateService);
     private readonly announcer = inject(HyperionRunAnnouncerService);
     private readonly facade = inject(HyperionGenerationActivityFacade);
+    private readonly registry = inject(HyperionJobRegistryService);
+    private readonly generationService = inject(HyperionExerciseGenerationService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly destroyRef = inject(DestroyRef);
     protected readonly jobId = this.facade.jobId;
     protected readonly canRevert = this.facade.canRevert;
     protected readonly reverting = this.facade.reverting;
@@ -118,10 +122,6 @@ export class HyperionRunPageComponent {
     protected readonly confirmRevertVisible = this.facade.confirmRevertVisible;
     protected readonly revertPartialRepositories = this.facade.revertPartialRepositories;
     protected readonly undoKey = computed(() => (this.facade.effectiveRevertMode() === 'ADAPT' ? 'undoAdaptation' : 'undoGeneration'));
-    private readonly registry = inject(HyperionJobRegistryService);
-    private readonly generationService = inject(HyperionExerciseGenerationService);
-    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly destroyRef = inject(DestroyRef);
 
     private readonly routeParams = toSignal(this.route.params, { initialValue: this.route.snapshot.params });
     private readonly resolvedExercise = toSignal(this.route.data, { initialValue: this.route.snapshot.data });

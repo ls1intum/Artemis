@@ -53,7 +53,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
-import { TumUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
@@ -158,7 +158,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: ParticipationService, useClass: MockParticipationService },
         { provide: ActivatedRoute, useValue: { params: of({}) } },
         { provide: NgbModal, useValue: { open: vi.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
-        { provide: TumUiConfirmationService, useValue: { confirm: vi.fn(), close: vi.fn() } },
+        { provide: TumAetUiConfirmationService, useValue: { confirm: vi.fn(), close: vi.fn() } },
         { provide: CodeEditorRepositoryService, useValue: { pull: vi.fn(() => of(void 0)) } },
         { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: vi.fn(() => of({})) } },
         { provide: TranslateService, useClass: MockTranslateService },
@@ -1416,7 +1416,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         await configureTestBed([
             { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
             { provide: HyperionExerciseGenerationService, useValue: generationService },
-            { provide: TumUiConfirmationService, useValue: { confirm, close: vi.fn() } },
+            { provide: TumAetUiConfirmationService, useValue: { confirm, close: vi.fn() } },
         ]);
 
         const adaptProfileService = TestBed.inject(ProfileService);
@@ -1446,7 +1446,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         vi.clearAllMocks();
     });
 
-    // The specs run with an empty template, so these stand in for what the rendered tum-ui-dialog emits.
+    // The specs run with an empty template, so these stand in for what the rendered tumaet-ui-dialog emits.
     const confirmAdaptDialog = (instructions?: string) => (comp as any).onAdaptDialogConfirmed({ instructions });
     const dismissAdaptDialog = () => {
         comp.adaptDialogVisible.set(false);

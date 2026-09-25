@@ -22,10 +22,10 @@ describe('HyperionArtifactsComponent', () => {
         fixture.detectChanges();
     });
     const host = () => fixture.nativeElement as HTMLElement;
-    const active = () => host().querySelector('tum-ui-tab-panel[data-state="active"]');
+    const active = () => host().querySelector('tumaet-ui-tab-panel[data-state="active"]');
 
     it('opens Exercise design first, before the specification is available', () => {
-        expect(host().querySelector('tum-ui-tab')?.getAttribute('data-testid')).toBe('hyperion-artifacts-tab-spec');
+        expect(host().querySelector('tumaet-ui-tab')?.getAttribute('data-testid')).toBe('hyperion-artifacts-tab-spec');
         expect(active()?.querySelector('[data-testid="hyperion-artifacts-spec-empty"]')).not.toBeNull();
         expect(host().querySelector('[data-testid="hyperion-artifacts-tab-statement"]')).toBeNull();
     });

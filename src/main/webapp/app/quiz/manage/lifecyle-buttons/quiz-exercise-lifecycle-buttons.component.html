@@ -1,13 +1,13 @@
-<button id="instructor-quiz-start-{{ quizExercise().id }}" tumUiButton type="submit" severity="success" size="small" (click)="startQuiz()" [hidden]="!showStartButton()">
+<button id="instructor-quiz-start-{{ quizExercise().id }}" tumAetUiButton type="submit" severity="success" size="small" (click)="startQuiz()" [hidden]="!showStartButton()">
     <fa-icon [icon]="faPlayCircle" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
 </button>
 <button
     id="instructor-quiz-batches-{{ quizExercise().id }}"
-    tumUiButton
+    tumAetUiButton
     type="button"
     severity="primary"
     size="small"
-    [tumUiPopoverTrigger]="batchMenu"
+    [tumAetUiPopoverTrigger]="batchMenu"
     [hidden]="!showBatchMenu()"
 >
     <fa-icon [icon]="faBoxesStacked" /><span
@@ -16,27 +16,27 @@
         [translateValues]="{ count: quizExercise().quizBatches?.length ?? 0 }"
     ></span>
 </button>
-<tum-ui-popover #batchMenu placement="bottom" [ariaLabel]="'artemisApp.quizExercise.batches' | artemisTranslate: { count: quizExercise().quizBatches?.length ?? 0 }">
+<tumaet-ui-popover #batchMenu placement="bottom" [ariaLabel]="'artemisApp.quizExercise.batches' | artemisTranslate: { count: quizExercise().quizBatches?.length ?? 0 }">
     <div class="batch-menu d-flex flex-column gap-2 small">
         <div class="batch-menu__list d-flex flex-column gap-2">
             @for (batch of quizExercise().quizBatches ?? []; track batch.id) {
                 <div class="d-flex align-items-center gap-2">
                     <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.batch.label" [translateValues]="{ id: batch.id }"></span>
                     @if (!batch.ended && batch.password) {
-                        <tum-ui-tag
+                        <tumaet-ui-tag
                             class="batch-password"
                             severity="secondary"
                             [value]="'artemisApp.exerciseManagement.batch.password' | artemisTranslate: { password: batch.password }"
                         />
                     }
                     @if (batch.ended) {
-                        <tum-ui-tag class="batch-state ms-auto" severity="secondary" [value]="'artemisApp.exerciseManagement.batch.done' | artemisTranslate" />
+                        <tumaet-ui-tag class="batch-state ms-auto" severity="secondary" [value]="'artemisApp.exerciseManagement.batch.done' | artemisTranslate" />
                     } @else if (batch.started) {
-                        <tum-ui-tag class="batch-state ms-auto" severity="success" [value]="'artemisApp.exerciseManagement.batch.running' | artemisTranslate" />
+                        <tumaet-ui-tag class="batch-state ms-auto" severity="success" [value]="'artemisApp.exerciseManagement.batch.running' | artemisTranslate" />
                     } @else {
                         <button
                             id="instructor-quiz-start-{{ quizExercise().id }}-{{ batch.id }}"
-                            tumUiButton
+                            tumAetUiButton
                             type="button"
                             severity="success"
                             size="small"
@@ -51,14 +51,14 @@
                 <span class="text-muted fst-italic" jhiTranslate="artemisApp.exerciseManagement.batch.empty"></span>
             }
         </div>
-        <button id="instructor-quiz-add-{{ quizExercise().id }}" tumUiButton type="button" severity="primary" size="small" (click)="addBatch()">
+        <button id="instructor-quiz-add-{{ quizExercise().id }}" tumAetUiButton type="button" severity="primary" size="small" (click)="addBatch()">
             <fa-icon [icon]="faPlus" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.addBatch"></span>
         </button>
     </div>
-</tum-ui-popover>
+</tumaet-ui-popover>
 <button
     id="quiz-set-end-{{ quizExercise().id }}"
-    tumUiButton
+    tumAetUiButton
     severity="danger"
     size="small"
     jhiDeleteButton
@@ -66,8 +66,8 @@
     [renderButtonText]="false"
     [disabled]="isInVariantGroup()"
     [style.pointer-events]="isInVariantGroup() ? 'auto' : undefined"
-    [tumUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
-    tumUiTooltipPlacement="top"
+    [tumAetUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
+    tumAetUiTooltipPlacement="top"
     [actionType]="ActionType.EndNow"
     [entityTitle]="quizExercise().title || ''"
     deleteQuestion="artemisApp.quizExercise.endNow.question"
@@ -80,15 +80,15 @@
 </button>
 <button
     id="quiz-set-visible-{{ quizExercise().id }}"
-    tumUiButton
+    tumAetUiButton
     type="submit"
     severity="warn"
     size="small"
     (click)="showQuiz()"
     [disabled]="isInVariantGroup()"
     [style.pointer-events]="isInVariantGroup() ? 'auto' : undefined"
-    [tumUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
-    tumUiTooltipPlacement="top"
+    [tumAetUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
+    tumAetUiTooltipPlacement="top"
     [hidden]="!showSetVisibleButton()"
 >
     <fa-icon [icon]="faEye" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.showNow"></span>
