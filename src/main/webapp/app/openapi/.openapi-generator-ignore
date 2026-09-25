@@ -42,3 +42,10 @@ api/quiz-training-resources.ts
 api/tutorial-group-session-resources.ts
 api/tutorial-groups-configuration-resources.ts
 api/legacy-calendar-resources.ts
+api/admin-hyperion-generation-resources.ts
+api/admin-hyperion-generation-monitoring-resources.ts
+api/hyperion-exercise-generation-resources.ts
+api/admin-ai-worker-resources.ts
+api/hyperion-authoring-run-resources.ts
+api/hyperion-exercise-variant-resources.ts
+api/hyperion-programming-variant-resources.ts

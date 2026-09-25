@@ -21,6 +21,11 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerState;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerStatusDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.service.StudentExamPreparationService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -51,19 +56,19 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     private JsonMapper objectMapper;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exam.util.ExamUtilService examUtilService;
+    private ExamUtilService examUtilService;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository studentExamRepository;
+    private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exam.service.StudentExamPreparationService assignmentService;
+    private StudentExamPreparationService assignmentService;
 
     @Autowired
-    private de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi mutationApi;
+    private HyperionExerciseMutationApi mutationApi;
 
     private long exerciseId;
 

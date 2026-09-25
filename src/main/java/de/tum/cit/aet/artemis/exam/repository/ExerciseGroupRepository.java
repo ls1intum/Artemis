@@ -85,7 +85,7 @@ public interface ExerciseGroupRepository extends ArtemisJpaRepository<ExerciseGr
 
     /**
      * Moves an exam exercise into a different exercise group, but only while the exam has no student exam at all.
-     * The guard sits inside the statement so a concurrent generation cannot commit between check and write. Being a
+     * The caller holds the exam selection lock shared with assignment. This predicate also rejects committed student exams. Being a
      * bulk update, it bypasses the persistence context: a previously loaded {@code Exercise} keeps its old group.
      *
      * @param exerciseId      the id of the exercise to move

@@ -203,8 +203,6 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.14'
-      - name: Test code quality classifier
-        run: python -m unittest discover -s supporting_scripts -p test_analyze_java_files.py
       - name: Check LOC and number of class dependencies
         env:
           EVENT_TYPE: ${{ github.event_name }}

@@ -39,9 +39,9 @@ import { runOutcome } from '../model/hyperion-generation-stages';
     `,
 })
 export class HyperionRunLinkComponent {
-    readonly exercise = input.required<ProgrammingExercise>();
     private readonly service = inject(HyperionExerciseGenerationService);
     private readonly profile = inject(ProfileService);
+    readonly exercise = input.required<ProgrammingExercise>();
     private readonly exerciseId = computed(() => {
         const exercise = this.exercise();
         return exercise.isAtLeastEditor &&

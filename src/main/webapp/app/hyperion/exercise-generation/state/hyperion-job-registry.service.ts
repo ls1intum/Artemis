@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DestroyRef, Injectable, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
+import { DestroyRef, Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, Subscription, defer, from, interval } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, filter, finalize, map, mergeMap, switchMap, take, takeUntil, tap, timeout } from 'rxjs/operators';
@@ -76,7 +76,7 @@ export function isTerminalHyperionJobStatus(status: HyperionJobStatus): boolean 
  * Server-backed owner history and live progress. Only acknowledgement ids are stored in this browser;
  * exercise identities and outcomes are discovered anew after each login.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class HyperionJobRegistryService {
     private readonly accountService = inject(AccountService);
     private readonly generationService = inject(HyperionExerciseGenerationService);

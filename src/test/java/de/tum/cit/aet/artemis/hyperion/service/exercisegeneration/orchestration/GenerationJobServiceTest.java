@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
@@ -145,8 +146,7 @@ class GenerationJobServiceTest {
         var context = new GenerationVariantPreparation(7L, "source-reservation", null);
         var settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false, false);
 
-        var event = service.prepareVariantJob(owner, target, "Change the domain", "budget", settings,
-                new de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO("Change the domain", List.of(), 7L), context);
+        var event = service.prepareVariantJob(owner, target, "Change the domain", "budget", settings, new ExerciseGenerationInputDTO("Change the domain", List.of(), 7L), context);
 
         assertThat(dispatched).isEmpty();
         assertThat(service.isOwnedActiveJob(42L, event.jobId())).isTrue();
@@ -183,8 +183,7 @@ class GenerationJobServiceTest {
         var owner = user("owner");
         var target = exercise(42L);
         var settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false, false);
-        var event = service.prepareVariantJob(owner, target, "Change the domain", "budget", settings,
-                new de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO("Change the domain", List.of(), 7L),
+        var event = service.prepareVariantJob(owner, target, "Change the domain", "budget", settings, new ExerciseGenerationInputDTO("Change the domain", List.of(), 7L),
                 new GenerationVariantPreparation(7L, "source-reservation", null));
 
         assertThat(service.dispatchPreparedJob(event)).isFalse();

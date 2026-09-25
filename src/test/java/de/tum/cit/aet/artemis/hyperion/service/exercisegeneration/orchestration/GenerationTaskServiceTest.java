@@ -45,10 +45,13 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.hyperion.config.GenerationShutdownGuard;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
 import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
@@ -65,6 +68,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.Ge
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationReviewService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService.Seed;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -159,11 +163,10 @@ class GenerationTaskServiceTest {
                 .afterMutation(anyString(), any(), any(), any());
     }
 
-    private GenerationTaskService variantTask(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService variants) {
+    private GenerationTaskService variantTask(GenerationVariantService variants) {
         return new GenerationTaskService(buildConfigRepository, orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
                 auxiliaryRepositoryRepository, generationBudgetService, journal, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 250_000,
-                java.time.Duration.ofSeconds(15), new de.tum.cit.aet.artemis.hyperion.config.GenerationShutdownGuard(),
-                de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties.DEFAULT_CACHED_INPUT_TOKEN_WEIGHT, variants);
+                java.time.Duration.ofSeconds(15), new GenerationShutdownGuard(), HyperionAgentProperties.DEFAULT_CACHED_INPUT_TOKEN_WEIGHT, variants);
     }
 
     private GenerationStartedEvent variantEvent() {
@@ -173,7 +176,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void variantUsesTheSameWorkerAndPersistenceAndPlacesOnlyAfterVerification() {
-        var variants = mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService.class);
+        var variants = mock(GenerationVariantService.class);
         when(jobService.allowCancellationAfterPreparation(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
@@ -194,7 +197,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void variantPreparationFailureNeverStartsTheWorkerAndStillReleasesItsSource() {
-        var variants = mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService.class);
+        var variants = mock(GenerationVariantService.class);
         GenerationStartedEvent event = variantEvent();
         org.mockito.Mockito.doThrow(new IllegalStateException("copy failed")).when(variants).prepareInfrastructure(event);
 
@@ -208,7 +211,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void variantPlacementFailureReportsSavedPartialOutputRatherThanAnUnchangedExercise() {
-        var variants = mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant.GenerationVariantService.class);
+        var variants = mock(GenerationVariantService.class);
         when(jobService.allowCancellationAfterPreparation(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
@@ -1068,7 +1071,7 @@ class GenerationTaskServiceTest {
             ProviderUsageSink usageSink = invocation.getArgument(8);
             usageSink.accept(responseWithTokens(1000, 100, 800L));
             GenerationProgressSink progress = invocation.getArgument(6);
-            progress.activity("Thinking about the next step.", new de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity("artifacts", 1, 2, true, 1, 0, 0));
+            progress.activity("Thinking about the next step.", new GenerationActivity("artifacts", 1, 2, true, 1, 0, 0));
             return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
         });
 

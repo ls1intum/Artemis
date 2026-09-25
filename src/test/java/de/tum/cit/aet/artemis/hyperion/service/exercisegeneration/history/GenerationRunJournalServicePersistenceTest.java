@@ -21,7 +21,13 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmittedEvent;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationDispatchFailedEvent;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -65,7 +71,7 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
         var data = new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService();
         var rejectedJob = new java.util.concurrent.atomic.AtomicReference<String>();
         org.springframework.context.ApplicationEventPublisher publisher = event -> {
-            if (event instanceof de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmittedEvent admitted) {
+            if (event instanceof GenerationAdmittedEvent admitted) {
                 journal.admitted(admitted);
             }
             if (event instanceof GenerationStartedEvent started) {
@@ -75,17 +81,15 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
                 }
                 throw new IllegalStateException("Dispatch unavailable");
             }
-            if (event instanceof de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationDispatchFailedEvent failed) {
+            if (event instanceof GenerationDispatchFailedEvent failed) {
                 journal.dispatchFailed(failed);
             }
         };
-        var jobs = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService(data, publisher,
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.class), null,
-                java.time.Duration.ofMinutes(35), java.time.Duration.ofMinutes(30), Runnable::run);
+        var jobs = new GenerationJobService(data, publisher, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, java.time.Duration.ofMinutes(35),
+                java.time.Duration.ofMinutes(30), Runnable::run);
         jobs.init();
         if (prepared) {
-            var event = jobs.prepareVariantJob(user, exercise, "Variant", null, null, null,
-                    new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation(exercise.getId(), "source", null));
+            var event = jobs.prepareVariantJob(user, exercise, "Variant", null, null, null, new GenerationVariantPreparation(exercise.getId(), "source", null));
             assertThat(jobs.dispatchPreparedJob(event)).isFalse();
         }
         else {
@@ -97,8 +101,7 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
         assertThat(jobs.hasActiveJob(exercise.getId())).isFalse();
         var authorization = org.mockito.Mockito.mock(de.tum.cit.aet.artemis.core.service.AuthorizationCheckService.class);
         org.mockito.Mockito.when(authorization.isAtLeastEditorForExercise(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(user))).thenReturn(true);
-        var history = new GenerationHistoryService(runs, programmingExerciseRepository, authorization, jobs,
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService.class));
+        var history = new GenerationHistoryService(runs, programmingExerciseRepository, authorization, jobs, org.mockito.Mockito.mock(ExerciseGenerationRevertService.class));
         assertThat(history.history(user, null).runs()).filteredOn(run -> run.jobId().equals(rejectedJob.get())).singleElement().satisfies(run -> {
             assertThat(run.status()).isEqualTo(AuthoringRun.Status.ERROR);
             assertThat(run.finishedAt()).isNotNull();

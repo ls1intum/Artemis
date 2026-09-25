@@ -54,10 +54,11 @@ const MAX_CANCELLATION_REASON_LENGTH = 500;
 })
 export class HyperionGenerationsComponent implements OnInit {
     protected readonly generationEnabled = inject(ProfileService).isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
-    protected readonly workersFailed = signal(false);
     private readonly websocket = inject(WebsocketService);
     private readonly api = inject(AdminAiWorkerApi);
     private readonly generationApi = inject(AdminHyperionGenerationMonitoringApi);
+    private readonly destroyRef = inject(DestroyRef);
+    protected readonly workersFailed = signal(false);
     protected readonly generations = signal<ActiveGeneration[]>([]);
     protected readonly generationRows = computed(() =>
         this.generations().map((run) => {
@@ -85,7 +86,6 @@ export class HyperionGenerationsComponent implements OnInit {
             !this.cancelTarget()?.cancellationRequested,
     );
     protected readonly cancelFailed = signal(false);
-    private readonly destroyRef = inject(DestroyRef);
     protected readonly workers = signal<WorkerStatus[]>([]);
     protected readonly loading = signal(false);
     protected readonly failed = signal(false);

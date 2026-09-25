@@ -288,7 +288,6 @@ active runs and stop all writers before enabling or disabling it across the
 cluster, then restart with consistent values. Never disable it to bypass an
 interrupted save; reconcile that save first.
 
-
 Coordination follows the selected provider rather than assuming every store is a
 Hazelcast cluster:
 
@@ -412,7 +411,7 @@ See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
 
 | Environment | Worker placement                                           | Operational requirement                                                                                                                                                         |
 | ----------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Staging     | Dedicated generation VM or host                            | Use separate distributed-data, model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                             |
+| Staging     | Dedicated generation VM or host                            | Use separate distributed-data, model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                            |
 | Production  | Dedicated generation VM or host                            | Start with one slot, monitor actual resource use, and increase only within host and provider limits. Keep generation off exam-critical hosts.                                   |
 | Test server | Dedicated generation VM, which may share physical hardware | Use a separate Docker daemon inside the VM. Sharing the core or LocalCI Docker socket is not an isolation boundary. Leave generation disabled if no isolated host is available. |
 
@@ -540,13 +539,13 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Node and settings | What happens |
-| ----------------- | ------------ |
-| Core with both settings false | No Hyperion tools or generation. |
-| Core with only `artemis.hyperion.enabled=true` | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation or worker connection. |
-| Core with both settings true and profiles `core,localci,localvc` | All Hyperion tools plus programming exercise generation and AI Worker coordination. Worker and provider configuration is required. |
-| Writer with only `artemis.hyperion.exercise-generation.enabled=true` | Protects repository writes against generation. It does not load Hyperion tools or connect to AI Workers. |
-| Core with both settings true but a required profile missing | Generation stays off. The generation setting still protects writes if this node is a repository writer. |
+| Node and settings                                                    | What happens                                                                                                                       |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Core with both settings false                                        | No Hyperion tools or generation.                                                                                                   |
+| Core with only `artemis.hyperion.enabled=true`                       | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation or worker connection.         |
+| Core with both settings true and profiles `core,localci,localvc`     | All Hyperion tools plus programming exercise generation and AI Worker coordination. Worker and provider configuration is required. |
+| Writer with only `artemis.hyperion.exercise-generation.enabled=true` | Protects repository writes against generation. It does not load Hyperion tools or connect to AI Workers.                           |
+| Core with both settings true but a required profile missing          | Generation stays off. The generation setting still protects writes if this node is a repository writer.                            |
 
 The Administration > Features page shows AI authoring and programming exercise
 generation as separate module cards. Their status reports which features this
@@ -554,7 +553,6 @@ core offers; it does not report worker capacity. A missing ready worker or a
 full worker returns `503 generationCapacityUnavailable` without changing the
 status. On a writer-only node, the mutation guard can be active even though
 the generation card is inactive.
-
 
 The standalone worker is a separate process of the normal Artemis WAR, not an additional core
 profile. Its component scan contains only worker code, and it starts without an
@@ -573,11 +571,11 @@ not promise automatic continuation or resampling of interrupted runs.
 
 ### Build-agent and worker deployment boundaries
 
-| Process                               | Application contents     | Activation and exclusions                                                                                                                                                |
-| ------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Standalone LocalCI build agent        | Artemis server artifact  | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.  |
-| Combined core and LocalCI build agent | Artemis server artifact  | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                  |
-| Hyperion generation worker            | Separate worker artifact | No Artemis server modules, database, distributed-data provider, or incoming web server. Adding server profile names does not turn it into a core or LocalCI build agent. |
+| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                          |
+| ------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                            |
+| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                            |
+| Hyperion generation worker            | Normal Artemis WAR      | The `aiworker` profile loads worker services and the selected Hyperion workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
 
 The generation worker uses chat models only; its bundled configuration excludes
 OpenAI embedding, image, speech, transcription, and moderation auto-configuration.

@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.Phase;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 
 /**
@@ -45,7 +46,7 @@ class GenerationProgressEmitter implements GenerationProgressSink {
     }
 
     @Override
-    public void activity(String message, de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity activity) {
+    public void activity(String message, GenerationActivity activity) {
         emit(ExerciseGenerationEventDTO.activity(message, new ExerciseGenerationActivityDTO(activity.step(), activity.attempt(), activity.turn(), activity.waitingOnModel(),
                 activity.modelCalls(), activity.toolCalls(), activity.filesWritten())).withLiveUsage(liveUsage.get()));
     }

@@ -25,6 +25,7 @@ import com.github.dockerjava.api.DockerClient;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.aiworker.config.DockerConfiguration;
+import de.tum.cit.aet.artemis.aiworker.config.WorkerSandboxConfiguration;
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
@@ -58,7 +59,7 @@ class DockerGradleBuildTest {
         docker = new DockerConfiguration().dockerClient();
         var settings = new WorkerSettings("gradle-test-" + UUID.randomUUID(), System.getenv("HYPERION_GRADLE_TEST_IMAGE"), "runc", 2L * 1024 * 1024 * 1024, 200_000, 256,
                 Duration.ofSeconds(10), Duration.ofSeconds(45), Duration.ofMinutes(2), 1, "hyperion-generation", "java-gradle");
-        sandbox = new DockerSandboxService(docker, new de.tum.cit.aet.artemis.aiworker.config.WorkerSandboxConfiguration().sandboxPolicy(settings));
+        sandbox = new DockerSandboxService(docker, new WorkerSandboxConfiguration().sandboxPolicy(settings));
     }
 
     @AfterEach

@@ -99,12 +99,13 @@ public class StudentExamPreparationService {
      * @return persisted test run
      */
     public StudentExam assignTestRun(StudentExam testRun) {
-        return withReservations(testRun.getExercises(), () -> studentExamRepository.save(testRun));
+        return withReservations(testRun.getExercises(), () -> examRepository.withExerciseSelectionLock(testRun.getExam().getId(), exam -> studentExamRepository.save(testRun)));
     }
 
     private <T> T assign(long examId, Function<Exam, T> assignment) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        return withReservations(exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).toList(), () -> assignment.apply(exam));
+        return withReservations(exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).toList(),
+                () -> examRepository.withExerciseSelectionLock(examId, assignment));
     }
 
     private <T> T withReservations(Collection<Exercise> exercises, java.util.function.Supplier<T> assignment) {

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,6 +82,10 @@ class StudentExamPreparationServiceTest {
         group.setExercises(Set.of(second, quiz, first));
         exam.setExerciseGroups(List.of(group));
         when(exams.findWithExerciseGroupsAndExercisesByIdOrElseThrow(10L)).thenReturn(exam);
+        when(exams.withExerciseSelectionLock(anyLong(), any())).thenAnswer(invocation -> {
+            Function<Exam, ?> operation = invocation.getArgument(1);
+            return operation.apply(exam);
+        });
         when(studentExams.createRandomStudentExams(any(), any())).thenAnswer(ignored -> {
             calls.add("save");
             return List.of(new StudentExam());

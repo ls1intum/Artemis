@@ -9,7 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import jakarta.persistence.LockModeType;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
@@ -17,9 +20,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -42,6 +47,30 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
+
+    /**
+     * Locks one exam row before exercise selection or an exercise-group move.
+     *
+     * @param examId the exam to lock
+     * @return the locked exam, if it still exists
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT exam FROM Exam exam WHERE exam.id = :examId")
+    Optional<Exam> findForAssignmentWithLock(@Param("examId") long examId);
+
+    /**
+     * Keeps the lock until selection or movement commits.
+     *
+     * @param examId    the exam to lock
+     * @param operation selection or movement to run under the lock
+     * @return the operation result
+     * @param <T> the result type
+     */
+    @Transactional
+    default <T> T withExerciseSelectionLock(long examId, Function<Exam, T> operation) {
+        getValueElseThrow(findForAssignmentWithLock(examId), examId);
+        return operation.apply(findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId));
+    }
 
     /**
      * Reads only the dates that decide whether a submission is in time.

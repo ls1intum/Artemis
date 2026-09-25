@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionResponseDTO;
@@ -65,10 +66,12 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationToolchain;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseMetadataSuggestionService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionEffortProfileService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -217,7 +220,7 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
-        var selectedFeedback = List.of(new de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Fix the boundary.")));
+        var selectedFeedback = List.of(new ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Fix the boundary.")));
         when(reviewCommentContextRenderer.captureWholeExerciseSelectedFeedback(1L, List.of(5L, 9L)))
                 .thenReturn(new HyperionReviewCommentContextRendererService.SelectedFeedback("FEEDBACK_BLOCK", selectedFeedback));
         when(jobService.startJob(eq(testUser), eq(testExercise), argThat(prompt -> prompt.contains("RESOLVED") && prompt.contains("FEEDBACK_BLOCK")), eq(GenerationMode.ADAPT),
@@ -872,10 +875,9 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     private HyperionExerciseGenerationResource createResource(HyperionEffortProfileService profiles) {
-        var capabilities = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService(agentSystemPromptService,
-                auxiliaryRepositoryRepository, programmingExerciseRepository, jobService, sandboxClient);
-        var admission = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService(programmingExerciseRepository, capabilities,
-                jobService, agentSystemPromptService, reviewCommentContextRenderer, sandboxClient, generationBudgetService, generationCapacityHealthIndicator, profiles);
+        var capabilities = new GenerationCapabilityService(agentSystemPromptService, auxiliaryRepositoryRepository, programmingExerciseRepository, jobService, sandboxClient);
+        var admission = new GenerationAdmissionService(programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, reviewCommentContextRenderer,
+                sandboxClient, generationBudgetService, generationCapacityHealthIndicator, profiles);
         return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, admission,
                 generationRevertService, profiles, metadataSuggestionService);
     }

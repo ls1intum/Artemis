@@ -109,16 +109,20 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
     ],
 })
 export class HyperionRunPageComponent {
-    readonly inspectedExerciseId = input<number>();
-    readonly showStepCounter = input(true);
-    readonly inspectedRunId = input<string>();
-    protected readonly runId = computed(() => this.inspectedRunId() ?? this.routeParams()['runId'] ?? this.routeQuery()['run']);
-    protected readonly variant = computed(() => this.facade.run()?.kind === 'VARIANT');
     private readonly route = inject(ActivatedRoute);
     private readonly profileService = inject(ProfileService);
     private readonly translateService = inject(TranslateService);
     private readonly announcer = inject(HyperionRunAnnouncerService);
     private readonly facade = inject(HyperionGenerationActivityFacade);
+    private readonly registry = inject(HyperionJobRegistryService);
+    private readonly generationService = inject(HyperionExerciseGenerationService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly destroyRef = inject(DestroyRef);
+    readonly inspectedExerciseId = input<number>();
+    readonly showStepCounter = input(true);
+    readonly inspectedRunId = input<string>();
+    protected readonly runId = computed(() => this.inspectedRunId() ?? this.routeParams()['runId'] ?? this.routeQuery()['run']);
+    protected readonly variant = computed(() => this.facade.run()?.kind === 'VARIANT');
     protected readonly jobId = this.facade.jobId;
     protected readonly canRevert = this.facade.canRevert;
     protected readonly reverting = this.facade.reverting;
@@ -126,10 +130,6 @@ export class HyperionRunPageComponent {
     protected readonly confirmRevertVisible = this.facade.confirmRevertVisible;
     protected readonly revertPartialRepositories = this.facade.revertPartialRepositories;
     protected readonly undoKey = computed(() => (this.facade.effectiveRevertMode() === 'ADAPT' ? 'undoAdaptation' : 'undoGeneration'));
-    private readonly registry = inject(HyperionJobRegistryService);
-    private readonly generationService = inject(HyperionExerciseGenerationService);
-    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly destroyRef = inject(DestroyRef);
 
     private readonly routeQuery = toSignal(this.route.queryParams, { initialValue: this.route.snapshot.queryParams });
     private readonly routeParams = toSignal(this.route.params, { initialValue: this.route.snapshot.params });

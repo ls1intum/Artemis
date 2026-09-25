@@ -212,9 +212,8 @@ whether a retained result is usable and whether persistence requires operator re
 
 The `ls1intum.artemis.ai_worker` role deploys the supervisor. Select workload/profile
 explicitly and provision provider access through `ai_worker_provider` and its
-connection settings. Set `artemis_aiworker_ids` on eligible core nodes. Hyperion's
-two feature flags start coordination automatically; set `artemis_aiworker_enabled`
-only for other worker workloads.
+connection settings. Set `artemis_aiworker_ids` on eligible core nodes. Set `artemis_aiworker_enabled` on coordinating core nodes, including
+Hyperion generation nodes.
 The role validates inputs, protects rendered secrets, preloads the sandbox image and
 requires an explicit maintenance confirmation before replacing a running worker.
 It does not provision the provider, firewall or isolation boundary.

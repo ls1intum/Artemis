@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -216,9 +217,8 @@ class GenerationPersistenceServiceTest {
     void persistRejectsSupportedSecretFileBeforeAnyDurableWrite() throws Exception {
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("src/Fixture.java", GITHUB_SENTINEL), Map.of("Test.java", "x"), "safe statement");
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome))
-                .isInstanceOf(de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy.SecretMaterialException.class).hasMessageContaining("GITHUB_TOKEN")
-                .hasMessageNotContaining(GITHUB_SENTINEL);
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .hasMessageContaining("GITHUB_TOKEN").hasMessageNotContaining(GITHUB_SENTINEL);
         verify(repositoryService, never()).createFile(any(), any(), any());
         verify(repositoryService, never()).deleteFile(any(), any());
         verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(), any());
@@ -230,9 +230,8 @@ class GenerationPersistenceServiceTest {
     void persistRejectsSupportedSecretProblemStatementBeforeAnyDurableWrite() throws Exception {
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), GITHUB_SENTINEL);
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome))
-                .isInstanceOf(de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy.SecretMaterialException.class).hasMessageContaining("GITHUB_TOKEN")
-                .hasMessageNotContaining(GITHUB_SENTINEL);
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .hasMessageContaining("GITHUB_TOKEN").hasMessageNotContaining(GITHUB_SENTINEL);
         verify(repositoryService, never()).createFile(any(), any(), any());
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());

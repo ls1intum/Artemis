@@ -17,8 +17,8 @@ import tools.jackson.databind.json.JsonMapper;
 public class WorkerTelemetryConfiguration {
 
     @Bean
-    ChatModelContentObservationFilter chatModelContentObservationFilter(@Value("${artemis.telemetry.gen-ai.capture-content:false}") boolean captureContent,
+    ChatModelContentObservationFilter chatModelContentObservationFilter(JsonMapper jsonMapper, @Value("${artemis.telemetry.gen-ai.capture-content:false}") boolean captureContent,
             @Value("${artemis.telemetry.gen-ai.max-attribute-bytes:2000000}") int maxAttributeBytes) {
-        return new ChatModelContentObservationFilter(JsonMapper.builder().build(), captureContent, maxAttributeBytes);
+        return new ChatModelContentObservationFilter(jsonMapper, captureContent, maxAttributeBytes);
     }
 }

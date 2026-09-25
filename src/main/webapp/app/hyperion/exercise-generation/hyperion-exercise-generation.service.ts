@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { HyperionAuthoringRunApi } from 'app/openapi/api/hyperion-authoring-run-api';
@@ -16,7 +16,7 @@ import {
 import { ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 /** Client boundary for whole-exercise generation and adaptation. */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class HyperionExerciseGenerationService {
     private readonly api = inject(HyperionExerciseGenerationApi);
     private readonly history = inject(HyperionAuthoringRunApi);

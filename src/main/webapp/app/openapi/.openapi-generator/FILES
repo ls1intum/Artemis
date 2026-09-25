@@ -38,7 +38,6 @@ model/consistency-check-response.ts
 model/consistency-issue.ts
 model/conversation-user.ts
 model/costs.ts
-model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
 model/difficulty-assessment.ts
@@ -111,7 +110,6 @@ model/short-answer-submitted-answer-after-evaluation.ts
 model/short-answer-submitted-answer-from-live-client.ts
 model/short-answer-submitted-text-from-live-client.ts
 model/short-answer-submitted-text.ts
-model/step-output.ts
 model/student-export.ts
 model/student.ts
 model/submitted-answer-after-evaluation.ts
@@ -129,11 +127,6 @@ model/tutorial-group-schedule.ts
 model/tutorial-group-session.ts
 model/tutorial-group-student-import-data.ts
 model/tutorial-group-student.ts
-model/variant-generation-request.ts
-model/variant-job-detail.ts
-model/variant-job-start.ts
-model/variant-job.ts
-model/variant-placement.ts
 model/worker-execution.ts
 model/worker-status.ts
 model/workload-capability.ts

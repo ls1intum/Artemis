@@ -50,23 +50,23 @@ import { HyperionActivityRow, authoringActivity, variantActivity } from './hyper
     ],
 })
 export class HyperionActivityTrayComponent {
-    readonly authoringEnabled = input(false);
     private readonly injector = inject(Injector);
-    // A quiz-only deployment must not start programming-job polling against disabled endpoints.
-    private readonly registry = computed(() =>
-        this.authoringEnabled() && this.account.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR) ? this.injector.get(HyperionJobRegistryService) : undefined,
-    );
     private readonly variants = inject(ExerciseVariantGenerationService);
     private readonly generation = inject(HyperionExerciseGenerationService);
     private readonly account = inject(AccountService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly location = inject(Location);
-    private readonly routedJob = getSignalBasedOnRoute(this.router, (url) => this.router.parseUrl(url).queryParamMap.get('aiRun'));
     private readonly confirmations = inject(TumUiConfirmationService);
     private readonly translate = inject(TranslateService);
     private readonly alerts = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
+    readonly authoringEnabled = input(false);
+    // A quiz-only deployment must not start programming-job polling against disabled endpoints.
+    private readonly registry = computed(() =>
+        this.authoringEnabled() && this.account.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR) ? this.injector.get(HyperionJobRegistryService) : undefined,
+    );
+    private readonly routedJob = getSignalBasedOnRoute(this.router, (url) => this.router.parseUrl(url).queryParamMap.get('aiRun'));
     private readonly popover = viewChild(TumUiPopoverComponent);
     private readonly login = computed(() => this.account.userIdentity()?.login);
 

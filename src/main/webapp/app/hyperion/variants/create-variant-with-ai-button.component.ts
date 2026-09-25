@@ -40,9 +40,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     `,
 })
 export class CreateVariantWithAiButtonComponent {
-    readonly exercise = input.required<Exercise>();
-
     private readonly hyperionEnabled = inject(ProfileService).isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    readonly exercise = input.required<Exercise>();
 
     /** Spacing utilities from the surrounding button row. */
     readonly styleClass = input<string>('');

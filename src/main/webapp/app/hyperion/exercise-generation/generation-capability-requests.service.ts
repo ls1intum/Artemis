@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, inject } from '@angular/core';
+import { DestroyRef, Service, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, Subject, Subscriber, catchError, defer, finalize, mergeMap, takeUntil, tap, timeout } from 'rxjs';
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
@@ -11,7 +11,7 @@ interface CapabilityRequest {
 }
 
 /** Bounds list-page fan-out without caching mutable lifecycle permissions or sharing them between accounts. */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class GenerationCapabilityRequestsService {
     private readonly api = inject(HyperionExerciseGenerationApi);
     private readonly destroyRef = inject(DestroyRef);

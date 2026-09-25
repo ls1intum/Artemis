@@ -58,7 +58,9 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectMessage;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService.ControlAction;
+import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationBaseline;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
@@ -111,8 +113,7 @@ class DistributedDataSurfaceTest {
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, GenerationJobService.JobInfo.class,
             GenerationJobService.JobTranscript.class, GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class,
-            de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun.class, de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.Mutation.class,
-            de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.RunReference.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
+            AuthoringRun.class, GenerationRunStoreService.Mutation.class, GenerationRunStoreService.RunReference.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
             AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class,
             MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 
