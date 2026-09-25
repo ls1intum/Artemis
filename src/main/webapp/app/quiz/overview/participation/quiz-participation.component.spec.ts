@@ -1,5 +1,5 @@
 import { type MockInstance, beforeEach, describe, expect, it, vi, afterEach as vitestAfterEach } from 'vitest';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -201,7 +201,7 @@ describe('QuizParticipationComponent - live mode', () => {
         const participation: StudentParticipation = { exercise: { ...quizExercise } };
         participationSpy = vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(of(asGeneratedParticipation(participation)));
         quizExerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
+        vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ ...quizExercise }));
         httpMock = TestBed.inject(HttpTestingController);
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
@@ -367,15 +367,7 @@ describe('QuizParticipationComponent - live mode', () => {
         component.quizBatch.set({ started: false });
 
         const quizExerciseService = TestBed.inject(QuizExerciseService);
-        const findForStudentSpy = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(
-            of({
-                body: {
-                    ...quizExercise,
-                    quizStarted: true,
-                    quizEnded: true,
-                },
-            } as HttpResponse<QuizExercise>),
-        );
+        const findForStudentSpy = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ ...quizExercise, quizStarted: true, quizEnded: true }));
         const initQuizSpy = vi.spyOn(component, 'initQuiz');
         const initLiveModeSpy = vi.spyOn(component, 'initLiveMode').mockImplementation(() => {});
 
@@ -847,14 +839,14 @@ describe('QuizParticipationComponent - preview mode', () => {
     });
 
     it('should initialize', () => {
-        const serviceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        const serviceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
         fixture.detectChanges();
         expect(serviceStub).toHaveBeenCalledWith(quizExercise.id);
     });
 
     it('should initialize and start', () => {
         const quizService = TestBed.inject(ArtemisQuizService);
-        const serviceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        const serviceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
         const startSpy = vi.spyOn(component, 'startQuizPreviewOrPractice');
         const randomizeSpy = vi.spyOn(quizService, 'randomizeOrder');
         fixture.detectChanges();
@@ -865,7 +857,7 @@ describe('QuizParticipationComponent - preview mode', () => {
     });
 
     it('should submit quiz', () => {
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
         fixture.detectChanges();
 
         component.submitExercise();
@@ -938,7 +930,7 @@ describe('QuizParticipationComponent - practice mode', () => {
     });
 
     it('should initialize', () => {
-        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         fixture.detectChanges();
 
         expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
@@ -946,7 +938,7 @@ describe('QuizParticipationComponent - practice mode', () => {
 
     it('should initialize and start', () => {
         const quizService = TestBed.inject(ArtemisQuizService);
-        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         const startSpy = vi.spyOn(component, 'startQuizPreviewOrPractice');
         const randomizeSpy = vi.spyOn(quizService, 'randomizeOrder');
         fixture.detectChanges();
@@ -957,7 +949,7 @@ describe('QuizParticipationComponent - practice mode', () => {
     });
 
     it('should submit quiz', () => {
-        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         fixture.detectChanges();
 
         component.submitExercise();
@@ -991,7 +983,7 @@ describe('QuizParticipationComponent - practice mode', () => {
     });
 
     it('should let the student start another attempt when the automatic submission of an expired empty attempt fails', () => {
-        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         fixture.detectChanges();
 
         // The working time ran out without a single answer, so the component submits automatically.
@@ -1011,7 +1003,7 @@ describe('QuizParticipationComponent - practice mode', () => {
     it('should not submit again at the original deadline of a practice attempt that was already submitted', () => {
         vi.useFakeTimers();
         const practiceQuiz = { ...quizExerciseForPractice, duration: 120 } as QuizExercise;
-        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: practiceQuiz } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(practiceQuiz));
         fixture.detectChanges();
 
         component.submitExercise();
@@ -1031,7 +1023,7 @@ describe('QuizParticipationComponent - practice mode', () => {
     it('should not let a late existing-result response overwrite a practice attempt started while it was loading', () => {
         const existingResultResponse = new Subject<StudentQuizParticipation>();
         vi.spyOn(TestBed.inject(QuizParticipationApi), 'getParticipationResult').mockReturnValue(existingResultResponse);
-        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         const updateSpy = vi.spyOn(component, 'updateParticipationFromServer');
 
         // Open an existing practice result: the header already treats the attempt as finished and offers a restart.
@@ -1097,7 +1089,7 @@ describe('QuizParticipationComponent - solution mode', () => {
             .compileComponents();
 
         exerciseService = TestBed.inject(QuizExerciseService);
-        resultForSolutionServiceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        resultForSolutionServiceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExerciseForPractice));
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
         component = fixture.componentInstance;
@@ -1179,7 +1171,7 @@ describe('QuizParticipationComponent - relativeTimeText', () => {
             .compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
         component = fixture.componentInstance;
@@ -1264,7 +1256,7 @@ describe('QuizParticipationComponent - applySelection', () => {
             .compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
         component = fixture.componentInstance;
@@ -1354,7 +1346,7 @@ describe('QuizParticipationComponent - showResult', () => {
             .compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
         component = fixture.componentInstance;
@@ -1459,7 +1451,7 @@ describe('QuizParticipationComponent - onSaveError', () => {
             .compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
 
         alertService = TestBed.inject(AlertService);
 

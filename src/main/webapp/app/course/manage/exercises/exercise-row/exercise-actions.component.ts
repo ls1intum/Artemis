@@ -317,13 +317,10 @@ export class ExerciseActionsComponent {
             .find(exerciseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (response) => {
-                    const quiz = response.body;
-                    if (quiz) {
-                        quiz.status = this.quizExerciseService.getStatus(quiz);
-                        quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
-                        this.exerciseUpdated.emit(quiz);
-                    }
+                next: (quiz) => {
+                    quiz.status = this.quizExerciseService.getStatus(quiz);
+                    quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+                    this.exerciseUpdated.emit(quiz);
                 },
                 error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
             });

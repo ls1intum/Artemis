@@ -69,7 +69,7 @@ describe('Course Management Exercises Component', () => {
                     getGroupsForCourse: () => of([]),
                 }),
                 MockProvider(QuizExerciseService, {
-                    findForCourse: () => of(new HttpResponse({ body: [] })),
+                    findForCourse: () => of([]),
                 }),
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
@@ -619,7 +619,7 @@ describe('Course Management Exercises Component', () => {
             course.exercises = [quiz];
             const loadedQuiz = { id: 3, type: ExerciseType.QUIZ, quizBatches: [{ id: 1, started: true }], isEditable: false } as QuizExercise;
             const quizService = TestBed.inject(QuizExerciseService);
-            vi.spyOn(quizService, 'findForCourse').mockReturnValue(of(new HttpResponse({ body: [loadedQuiz] })));
+            vi.spyOn(quizService, 'findForCourse').mockReturnValue(of([loadedQuiz]));
             vi.spyOn(quizService, 'getStatus').mockReturnValue(QuizStatus.ACTIVE);
 
             comp.ngOnInit();
