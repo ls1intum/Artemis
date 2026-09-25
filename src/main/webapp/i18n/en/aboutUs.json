@@ -15,8 +15,7 @@
                 "contactAdministrator": "Contact the administrator"
             },
             "highlights": {
-                "title": "Highlights",
-                "description": "A few of the things you can do here."
+                "title": "Available features"
             },
             "modules": {
                 "title": "Enabled modules",
@@ -42,7 +41,7 @@
             "project": {
                 "title": "Powered by Artemis",
                 "description": "Artemis is an open-source learning platform, developed by the research group Applied Education Technologies at the Technical University of Munich, and used by universities and schools in several countries.",
-                "operatedBy": "This site is run by {{ operator }}, not by the Artemis team.",
+                "operatedBy": "Artemis is run by {{ operator }}.",
                 "links": {
                     "documentation": "Documentation",
                     "sourceCode": "Source code",
