@@ -68,9 +68,12 @@ host directive's input from the host, so when the component must supply or resha
 extends the aria class instead and overrides that input. The menu trigger extends the aria trigger
 because the menu it opens only exists once its template has been rendered, and because a disabled
 menu button stays natively disabled. The tab extends the aria tab because aria keys tabs by string
-while `tum-ui-tab` accepts numbers as well. Such an override works only because aria reads its
-inputs lazily through `this`; each subclass states in a comment what it relies on, so a test that
-fails after an aria update points at the cause.
+while `tum-ui-tab` accepts numbers as well. An override keeps the type of the aria member, because
+the external consumer test compiles the published declarations without skipping library checks;
+`tum-ui-tab` therefore moves aria's `value` input to an internal name and binds its own `value`
+under the public one. Such an override works only because aria reads its inputs lazily through
+`this`; each subclass states in a comment what it relies on, so a test that fails after an aria
+update points at the cause.
 
 Aria's other inputs keep their defaults unless an application binds them, and two of those
 defaults shape the behavior. A disabled menu item or tab stays focusable: the arrow keys reach it,

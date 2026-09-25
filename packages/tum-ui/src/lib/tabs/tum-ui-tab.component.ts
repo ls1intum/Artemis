@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, input, model, untracked } from '@angular/core';
 import { Tab } from '@angular/aria/tabs';
 import { TumUiTabsService, tabKey } from './tum-ui-tabs.service';
 
@@ -23,20 +23,31 @@ export class TumUiTabComponent extends Tab implements OnInit, OnDestroy {
     private readonly tabsService = inject(TumUiTabsService);
     private removeFromTabs?: () => void;
 
+    /** Value that associates this tab with a tab panel. */
+    // eslint-disable-next-line @angular-eslint/no-input-rename -- the public name must stay `value`; see `value` below.
+    readonly tabValue = input.required<number | string>({ alias: 'value' });
+
     /**
-     * Value that associates this tab with a tab panel.
+     * The key aria identifies this tab by: `tabValue` passed through {@link tabKey}, so `1` and `'1'` stay two tabs.
      *
-     * Aria identifies a tab by a string. This input also accepts a number and hands aria the typed key from
-     * {@link tabKey}, so `1` and `'1'` stay two tabs. TypeScript rejects the wider input type of the override, although
-     * Angular's template type checker and runtime both use it; every aria read of `value` goes through the key.
+     * Aria keys a tab by the string in its `value` input, while this tab accepts numbers as well. Overriding `value` with
+     * a wider input type would break the type of the aria class for every consumer that checks library types, so this
+     * override keeps aria's type and moves the input to an internal name that nobody binds; the tab sets it itself.
      *
-     * The override relies on how aria reads the input. Aria builds its tab pattern in a field initializer from a copy
-     * of `this`, which still holds aria's own, never bound `value` input, and reads `value` only lazily through
+     * The override relies on how aria reads the input. Aria builds its tab pattern in a field initializer from a copy of
+     * `this`, which still holds aria's own, never bound `value` input, and reads `value` only lazily through
      * `this.value()`, in the tab and panel maps and when looking up the selected tab. If an aria update starts reading
      * `value` from that copy, the tabs lose their panels and selection.
      */
-    // @ts-expect-error -- the override accepts numbers too and narrows them to aria's string key, see above.
-    override readonly value = input.required<string, number | string>({ transform: tabKey });
+    override readonly value = model('', { alias: 'tumUiTabKey' });
+
+    constructor() {
+        super();
+        effect(() => {
+            const key = tabKey(this.tabValue());
+            untracked(() => this.value.set(key));
+        });
+    }
 
     protected readonly hostClasses = computed(() => {
         const state = this.selected() ? 'tum:text-accent' : 'tum:text-muted tum:hover:text-text';
@@ -45,6 +56,8 @@ export class TumUiTabComponent extends Tab implements OnInit, OnDestroy {
     });
 
     override ngOnInit(): void {
+        // Bindings are applied by now, so aria sees the key from its first read on; the effect follows later changes.
+        this.value.set(tabKey(this.tabValue()));
         super.ngOnInit();
         this.removeFromTabs = this.tabsService.addTab({ key: this.value, element: this.element, disabled: this.disabled, selected: this.selected });
     }
