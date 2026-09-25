@@ -72,7 +72,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((res) => {
-                this.loadQuizSuccess(res.body!);
+                this.loadQuizSuccess(res);
             });
     }
 
