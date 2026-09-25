@@ -1,88 +1,90 @@
-import { FocusKeyManager } from '@angular/cdk/a11y';
-import { Directionality } from '@angular/cdk/bidi';
-import { ChangeDetectionStrategy, Component, ElementRef, Injector, OnDestroy, afterRenderEffect, computed, contentChildren, effect, inject, signal } from '@angular/core';
-import { TumUiTabsService } from './tum-ui-tabs.service';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, afterRenderEffect, computed, contentChildren, effect, inject, signal, untracked } from '@angular/core';
+import { TabList } from '@angular/aria/tabs';
 import { TumUiTabComponent } from './tum-ui-tab.component';
+import { TumUiTabsService, tabKey, tabValue } from './tum-ui-tabs.service';
 
-/** Scrollable tab-list container with keyboard navigation and an animated selection indicator. */
+/**
+ * Scrollable tab list with an animated selection indicator.
+ *
+ * An Angular Aria tab list: it owns the `tablist` role and the keyboard model. The arrow keys move between tabs, following
+ * the text direction and wrapping at either end, Home and End jump to the first and last tab, and focusing a tab selects
+ * it. The list keeps the selection on an enabled tab: when the bound value matches no tab, or its tab is disabled or
+ * removed, it selects the first enabled tab instead.
+ */
 @Component({
     selector: 'tum-ui-tab-list',
     templateUrl: './tum-ui-tab-list.component.html',
     styleUrl: './tum-ui-tab-list.component.scss',
+    hostDirectives: [TabList],
     host: {
-        role: 'tablist',
         class: 'tum-ui-tab-list tum:relative tum:flex tum:w-full tum:min-w-0 tum:max-w-full tum:overflow-x-auto tum:border-b tum:border-border',
-        '(keydown)': 'onKeydown($event)',
+        '(focusin)': 'revealFocusedTab($event)',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTabListComponent implements OnDestroy {
     private readonly tabsService = inject(TumUiTabsService);
-    private readonly directionality = inject(Directionality);
-    private readonly injector = inject(Injector);
+    private readonly tabList = inject(TabList);
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
-    private readonly tabs = contentChildren(TumUiTabComponent, { descendants: true });
-    private readonly keyManager = new FocusKeyManager(this.tabs, this.injector).withWrap().withHomeAndEnd().setFocusOrigin('keyboard');
+    /**
+     * The rendered tabs, in the order they are shown, for placing the indicator. Only their element and selection are
+     * read: the query reports a tab declared inside `@if` or `@for` before its `value` binding has been applied.
+     */
+    private readonly renderedTabs = contentChildren(TumUiTabComponent, { descendants: true });
     private resizeObserver?: ResizeObserver;
     protected readonly indicatorPosition = signal({ offset: 0, width: 0, animate: false });
     protected readonly indicatorTransform = computed(() => `translateX(${this.indicatorPosition().offset}px)`);
     private indicatorReady = false;
 
     constructor() {
-        this.keyManager.change.subscribe((index) => {
-            const tab = this.tabs()[index];
-            if (tab) {
-                this.tabsService.select(this.tabsService.valueFor(tab));
-            }
-        });
+        // The bound value drives aria's selection.
         effect(() => {
-            const tabs = this.tabs();
-            if (!this.allValuesPublished(tabs)) {
-                return;
-            }
-            const activeValue = this.tabsService.active();
-            const activeIndex = tabs.findIndex((tab) => this.tabsService.valueFor(tab) === activeValue && !tab.disabled);
-            if (activeIndex >= 0) {
-                this.keyManager.updateActiveItem(activeIndex);
-                return;
-            }
-            const firstEnabledIndex = tabs.findIndex((tab) => !tab.disabled);
-            if (firstEnabledIndex >= 0) {
-                this.keyManager.updateActiveItem(firstEnabledIndex);
-                this.tabsService.select(this.tabsService.valueFor(tabs[firstEnabledIndex]));
+            const active = this.tabsService.active();
+            const key = active === undefined ? undefined : tabKey(active);
+            untracked(() => {
+                if (this.tabList.selectedTab() !== key) {
+                    this.tabList.selectedTab.set(key);
+                }
+            });
+        });
+        // Aria's selection, changed by a click or the keyboard, flows back into the bound value, and a selection that
+        // lands on no enabled tab falls back to the first enabled one.
+        effect(() => {
+            const tabs = this.tabsService.orderedTabs();
+            const selected = tabs.find((tab) => tab.selected() && !tab.disabled()) ?? tabs.find((tab) => !tab.disabled());
+            if (selected) {
+                const value = tabValue(selected.key());
+                untracked(() => {
+                    if (this.tabsService.active() !== value) {
+                        this.tabsService.select(value);
+                    }
+                });
             }
         });
         afterRenderEffect(() => {
-            const tabs = this.tabs();
-            const active = tabs.find((tab) => this.tabsService.valueFor(tab) === this.tabsService.active());
-            this.updateIndicator(active);
+            const tabs = this.renderedTabs();
+            this.updateIndicator(tabs.find((tab) => tab.selected()));
             this.observeLayout(tabs);
         });
     }
 
-    protected onKeydown(event: KeyboardEvent): void {
-        if (event.target instanceof HTMLElement) {
-            const eventIndex = this.tabs().findIndex((tab) => tab.elementRef.nativeElement === event.target);
-            if (eventIndex >= 0) {
-                this.keyManager.updateActiveItem(eventIndex);
-            }
-        }
-        this.keyManager.withHorizontalOrientation(this.directionality.value).onKeydown(event);
-    }
-
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
-        this.keyManager.destroy();
     }
 
-    private allValuesPublished(tabs: readonly TumUiTabComponent[]): boolean {
-        return tabs.every((tab) => this.tabsService.valueFor(tab) !== undefined);
+    /**
+     * Scrolls a focused tab fully into the list. Aria moves focus with `focus()`, which leaves a tab that is already
+     * partly visible where it is, so in a narrow, scrolling list the tab the keyboard reached could stay cut off.
+     */
+    protected revealFocusedTab(event: FocusEvent): void {
+        const tab = this.renderedTabs().find((candidate) => candidate.element === event.target);
+        tab?.element.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     }
 
     private updateIndicator(active: TumUiTabComponent | undefined): void {
-        const width = active?.elementRef.nativeElement.offsetWidth ?? 0;
+        const width = active?.element.offsetWidth ?? 0;
         this.indicatorPosition.set({
-            offset: active?.elementRef.nativeElement.offsetLeft ?? 0,
+            offset: active?.element.offsetLeft ?? 0,
             width,
             animate: this.indicatorReady,
         });
@@ -94,11 +96,8 @@ export class TumUiTabListComponent implements OnDestroy {
             return;
         }
         this.resizeObserver?.disconnect();
-        this.resizeObserver = new ResizeObserver(() => {
-            const active = this.tabs().find((tab) => this.tabsService.valueFor(tab) === this.tabsService.active());
-            this.updateIndicator(active);
-        });
+        this.resizeObserver = new ResizeObserver(() => this.updateIndicator(this.renderedTabs().find((tab) => tab.selected())));
         this.resizeObserver.observe(this.elementRef.nativeElement);
-        tabs.forEach((tab) => this.resizeObserver!.observe(tab.elementRef.nativeElement));
+        tabs.forEach((tab) => this.resizeObserver!.observe(tab.element));
     }
 }
