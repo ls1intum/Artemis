@@ -17,6 +17,8 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MockComponent } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseNotificationPopupOverlayComponent', () => {
     let component: CourseNotificationPopupOverlayComponent;
@@ -103,6 +105,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CommonModule, FaIconComponent, CourseNotificationPopupOverlayComponent],
             providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },
                 { provide: CourseNotificationService, useValue: courseNotificationService },
                 { provide: ActivatedRoute, useValue: mockRoute },
