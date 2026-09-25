@@ -461,7 +461,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.activeCodeGenerationRepository = repositoryType;
         this.updateCodeGenerationStatus(repositoryType, (status) => cloneWith(status, { state: 'running', attempts: undefined, message: undefined }));
 
-        const request = this.createCodeGenerationRequest(repositoryType, false, this.currentCodeGenerationUsesInitialIterationLimit);
+        const request = this.createCodeGenerationRequest(repositoryType, this.currentCodeGenerationUsesInitialIterationLimit);
         const exerciseId = this.exercise.id;
         this.hyperionCodeGenerationApi.generateCode(exerciseId, request).subscribe({
             next: (res) => {
@@ -558,10 +558,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.clearCodeGenerationStatusSubscription();
-        const request = this.createCheckOnlyCodeGenerationRequest();
         const requestId = this.restoreRequestId;
         const persistedState = this.loadPersistedCodeGenerationState();
-        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, request).subscribe({
+        this.statusSubscription = this.hyperionCodeGenerationApi.getActiveCodeGenerationJob(this.exercise.id).subscribe({
             next: (res) => {
                 if (requestId !== this.restoreRequestId) {
                     return;
@@ -617,36 +616,26 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Creates the request payload used to start code generation or perform a slot/check-only probe.
+     * Creates the request payload used to start code generation.
      * @param repositoryType repository to generate
-     * @param checkOnly whether the request should only query the current generation status
+     * @param initialAutoGeneration whether this is the first automatically triggered end-to-end generation
      * @returns a request object matching the server's runtime contract
      */
-    private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false, initialAutoGeneration = false): CodeGenerationRequest {
+    private createCodeGenerationRequest(repositoryType: RepositoryType, initialAutoGeneration = false): CodeGenerationRequest {
         // Built with the client RepositoryType enum so the whole construction is type-checked; see CodeGenerationRequestPayload.
-        const request: CodeGenerationRequestPayload = { repositoryType, checkOnly };
+        const request: CodeGenerationRequestPayload = { repositoryType };
         if (initialAutoGeneration) {
             request.initialAutoGeneration = true;
         }
-        if (!checkOnly) {
-            const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
-                repositoryType,
-                repositoryType === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
-            );
-            if (selectedFeedbackThreadIds.length > 0) {
-                request.selectedFeedbackThreadIds = selectedFeedbackThreadIds;
-            }
+        const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
+            repositoryType,
+            repositoryType === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
+        );
+        if (selectedFeedbackThreadIds.length > 0) {
+            request.selectedFeedbackThreadIds = selectedFeedbackThreadIds;
         }
         // Single boundary assertion to the generated OpenAPI type: only repositoryType differs (enum names vs repository names).
         return request as CodeGenerationRequest;
-    }
-
-    /**
-     * Creates a request that checks whether a generation job is active without starting a new one.
-     * @returns check-only request payload for the Hyperion endpoint
-     */
-    private createCheckOnlyCodeGenerationRequest(): CodeGenerationRequest {
-        return { checkOnly: true };
     }
 
     /**
@@ -1406,7 +1395,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         this.clearCodeGenerationStatusSubscription();
-        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, this.createCheckOnlyCodeGenerationRequest()).subscribe({
+        this.statusSubscription = this.hyperionCodeGenerationApi.getActiveCodeGenerationJob(this.exercise.id).subscribe({
             next: (res) => {
                 if (!res?.jobId) {
                     this.clearCodeGenerationStatusSubscription();

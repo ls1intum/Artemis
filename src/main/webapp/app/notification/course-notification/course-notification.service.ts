@@ -216,6 +216,18 @@ export class CourseNotificationService implements OnDestroy {
     }
 
     /**
+     * Marks notifications as seen on the server because the overview displayed them, not because the user acted on them.
+     * Kept apart from {@link setNotificationStatus} so that the server's feature usage report can count the user's own
+     * actions on notifications separately from this automatic update.
+     *
+     * @param courseId - The ID of the course
+     * @param notificationIds - The IDs of the displayed notifications
+     */
+    public markDisplayedNotificationsAsSeen(courseId: number, notificationIds: number[]): void {
+        this.http.put(this.apiEndpoint + courseId + '/seen', { notificationIds }).subscribe();
+    }
+
+    /**
      * Archives all notifications for a course on the server.
      *
      * @param courseId - The ID of the course
