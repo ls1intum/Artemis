@@ -95,8 +95,9 @@ Artemis can drive TUM UI menus and tabs with `MenuHarness` from `@angular/aria/m
 `triggerText` filter only work once the menu is open: click the trigger first, then load the
 harness. Prefer the harness over hand-written DOM queries when it covers the interaction.
 
-`@angular/aria` requires exactly the `@angular/cdk` version it was released with. The workspace
-catalog pins both, and they move together.
+`@angular/aria` requires exactly the `@angular/cdk` version it was released with. The package
+declares both as peers with the same minimum, so an application installs one copy of each; keep
+them on the same version when upgrading. The workspace catalog pins both, and they move together.
 
 ### Stories
 
