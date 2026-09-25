@@ -26,6 +26,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 const setExerciseInput = (fixture: ComponentFixture<ExamExerciseRowButtonsComponent>, exercise: Exercise) => {
     fixture.componentRef.setInput('exercise', exercise);
@@ -93,7 +94,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
         deleteTextExerciseStub = vi.spyOn(textExerciseService, 'delete');
         deleteModelingExerciseStub = vi.spyOn(modelingExerciseService, 'delete');
-        deleteQuizExerciseStub = vi.spyOn(quizExerciseService, 'delete');
+        deleteQuizExerciseStub = vi.spyOn(TestBed.inject(QuizExerciseDeletionApi), 'deleteQuizExercise');
         deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete');
         deleteProgrammingExerciseStub = vi.spyOn(programmingExerciseService, 'delete');
         quizExerciseServiceFindStub = vi.spyOn(quizExerciseService, 'find');

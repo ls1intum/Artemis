@@ -28,6 +28,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -358,7 +359,7 @@ describe('Course Management Exercises Component', () => {
         });
 
         it('deletes quiz, modeling and file-upload exercises via their services', () => {
-            const quizDelete = vi.spyOn(TestBed.inject(QuizExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const quizDelete = vi.spyOn(TestBed.inject(QuizExerciseDeletionApi), 'deleteQuizExercise').mockReturnValue(of(undefined));
             const modelingDelete = vi.spyOn(TestBed.inject(ModelingExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
             const fileUploadDelete = vi.spyOn(TestBed.inject(FileUploadExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
             comp.exercises.set([
