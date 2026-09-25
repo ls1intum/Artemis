@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -39,7 +40,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("grading/participant-scores")
+@FeatureUsage(UserFeature.COURSE_SCORES)
 @RestController
 @RequestMapping("api/assessment/")
 public class ParticipantScoreResource {
@@ -108,6 +109,7 @@ public class ParticipantScoreResource {
      * @param examId the id of the exam for which to calculate the exam scores
      * @return list of scores for every registered user in the exam or 404 not found if scores are empty
      */
+    @FeatureUsage(UserFeature.EXAM_SCORES)
     @GetMapping("exams/{examId}/exam-scores")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {

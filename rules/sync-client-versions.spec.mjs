@@ -67,6 +67,17 @@ describe('client dependency version synchronization', () => {
         expect(JSON.parse(readFileSync(paths.playwrightPackage, 'utf8')).devDependencies['@playwright/test']).toBe('1.61.1');
     });
 
+    it('leaves the packages of the Angular components release, which aria pins to its cdk, to their own version', () => {
+        const paths = fixture({
+            env: { ANGULAR_VERSION: '22.0.8' },
+            rootPackage: { dependencies: { '@angular/aria': 'catalog:', '@angular/cdk': 'catalog:', '@angular/core': 'catalog:' } },
+            workspace: "catalog:\n  '@angular/aria': 22.0.7\n  '@angular/cdk': 22.0.7\n  '@angular/core': 22.0.7\n",
+        });
+
+        expect(syncForward(parseEnv(paths.envFile), false, paths)).toBe(0);
+        expect(parse(readFileSync(paths.workspace, 'utf8')).catalog).toEqual({ '@angular/aria': '22.0.7', '@angular/cdk': '22.0.7', '@angular/core': '22.0.8' });
+    });
+
     it('reverse-syncs named catalogs and normalizes the Playwright Docker tag', () => {
         const paths = fixture({
             env: { ANGULAR_VERSION: '22.0.7', PLAYWRIGHT_VERSION: 'v1.60.0' },

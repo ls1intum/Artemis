@@ -1,14 +1,14 @@
 <div>
     <h5 *adminTitleBarTitle id="system-notification-management-page-heading" class="mb-0" jhiTranslate="artemisApp.systemNotification.systemNotifications"></h5>
     <div *adminTitleBarActions class="flex items-center gap-2">
-        <a tumUiButton size="small" [routerLink]="['./new']" data-testid="create-notification-button">
+        <a tumAetUiButton size="small" [routerLink]="['./new']" data-testid="create-notification-button">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.systemNotification.createLabel"></span>
         </a>
     </div>
     @if (notifications(); as notificationList) {
         <table
-            tumUiTable
+            tumAetUiTable
             [sortField]="predicate()"
             [sortOrder]="reverse() ? 1 : -1"
             (sortChange)="onTableSort($event)"
@@ -19,23 +19,23 @@
         >
             <thead>
                 <tr>
-                    <th scope="col" [tumUiSortableColumn]="'id'">
+                    <th scope="col" [tumAetUiSortableColumn]="'id'">
                         <span jhiTranslate="global.field.id"></span>
                     </th>
-                    <th scope="col" [tumUiSortableColumn]="'title'">
+                    <th scope="col" [tumAetUiSortableColumn]="'title'">
                         <span jhiTranslate="artemisApp.systemNotification.title"></span>
                     </th>
-                    <th scope="col" [tumUiSortableColumn]="'text'">
+                    <th scope="col" [tumAetUiSortableColumn]="'text'">
                         <span jhiTranslate="artemisApp.systemNotification.text"></span>
                     </th>
-                    <th scope="col" [tumUiSortableColumn]="'type'">
+                    <th scope="col" [tumAetUiSortableColumn]="'type'">
                         <span jhiTranslate="artemisApp.systemNotification.type"></span>
                     </th>
                     <th scope="col"></th>
-                    <th scope="col" [tumUiSortableColumn]="'notificationDate'">
+                    <th scope="col" [tumAetUiSortableColumn]="'notificationDate'">
                         <span jhiTranslate="artemisApp.systemNotification.notificationDate"></span>
                     </th>
-                    <th scope="col" [tumUiSortableColumn]="'expireDate'">
+                    <th scope="col" [tumAetUiSortableColumn]="'expireDate'">
                         <span jhiTranslate="artemisApp.systemNotification.expireDate"></span>
                     </th>
                     <th scope="col"></th>
@@ -51,30 +51,31 @@
                         <td>
                             @switch (getNotificationState(notification)) {
                                 @case (ACTIVE) {
-                                    <tum-ui-tag severity="success" [value]="'artemisApp.systemNotification.active' | artemisTranslate" />
+                                    <tumaet-ui-tag severity="success" [value]="'artemisApp.systemNotification.active' | artemisTranslate" />
                                 }
                                 @case (EXPIRED) {
-                                    <tum-ui-tag severity="danger" [value]="'artemisApp.systemNotification.expired' | artemisTranslate" />
+                                    <tumaet-ui-tag severity="danger" [value]="'artemisApp.systemNotification.expired' | artemisTranslate" />
                                 }
                                 @case (SCHEDULED) {
-                                    <tum-ui-tag severity="info" [value]="'artemisApp.systemNotification.scheduled' | artemisTranslate" />
+                                    <tumaet-ui-tag severity="info" [value]="'artemisApp.systemNotification.scheduled' | artemisTranslate" />
                                 }
+                                @default {}
                             }
                         </td>
                         <td>{{ notification.notificationDate | artemisDate }}</td>
                         <td>{{ notification.expireDate | artemisDate }}</td>
                         <td class="text-end">
                             <div class="flex items-center justify-end gap-2">
-                                <a id="viewButton" [routerLink]="['./', notification.id]" tumUiButton size="small" severity="info">
+                                <a id="viewButton" [routerLink]="['./', notification.id]" tumAetUiButton size="small" severity="info">
                                     <fa-icon [icon]="faEye" />
                                     <span class="hidden md:inline" jhiTranslate="entity.action.view"></span>
                                 </a>
-                                <a id="editButton" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" tumUiButton size="small" severity="warn">
+                                <a id="editButton" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" tumAetUiButton size="small" severity="warn">
                                     <fa-icon [icon]="faPencil" />
                                     <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                                 </a>
                                 <button
-                                    tumUiButton
+                                    tumAetUiButton
                                     severity="danger"
                                     size="small"
                                     [renderButtonStyle]="false"
@@ -97,7 +98,7 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="flex justify-center">
-                <tum-ui-paginator
+                <tumaet-ui-paginator
                     id="pagination"
                     [page]="page() - 1"
                     [pageSize]="itemsPerPage"

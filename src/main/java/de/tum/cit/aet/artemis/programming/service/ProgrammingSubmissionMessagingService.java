@@ -1,9 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.EXERCISE_SUBMISSIONS;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.NEW_SUBMISSIONS;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -45,13 +44,12 @@ public class ProgrammingSubmissionMessagingService {
                 // eager load the team with students so their information can be used for the messages below
                 studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
             }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submissionDTO));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSIONS.at(), submissionDTO));
         }
 
         // send an update to tutors, editors and instructors about submissions for template and solution participations
         if (!(submission.getParticipation() instanceof StudentParticipation)) {
-            var topicDestination = getExerciseTopicForTAAndAbove(exerciseId);
-            websocketMessagingService.sendMessage(topicDestination, submissionDTO);
+            websocketMessagingService.sendMessage(EXERCISE_SUBMISSIONS.at(exerciseId), submissionDTO);
         }
     }
 
@@ -67,16 +65,12 @@ public class ProgrammingSubmissionMessagingService {
                 // eager load the team with students so their information can be used for the messages below
                 studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
             }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSIONS.at(), error));
         }
 
         if (participation != null && participation.getExercise() != null) {
-            websocketMessagingService.sendMessage(getExerciseTopicForTAAndAbove(participation.getExercise().getId()), error);
+            websocketMessagingService.sendMessage(EXERCISE_SUBMISSIONS.at(participation.getExercise().getId()), error);
         }
-    }
-
-    private static String getExerciseTopicForTAAndAbove(long exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
     }
 
     public void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {

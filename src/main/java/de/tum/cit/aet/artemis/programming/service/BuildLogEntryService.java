@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -10,8 +11,8 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -20,9 +21,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
@@ -54,42 +57,74 @@ public class BuildLogEntryService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final FailedBuildLogService failedBuildLogService;
+
+    /** How many expired rows are deleted in one statement, and how many such statements one nightly run issues. Mirrors the audit log cleanup. */
+    private static final int DELETE_BATCH_SIZE = 5_000;
+
+    private static final int MAX_DELETE_BATCHES_PER_RUN = 200;
+
     @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
     private int expiryDays;
+
+    @Value("${artemis.continuous-integration.build-log.failed-build-retention-days:365}")
+    private int failedBuildRetentionDays;
 
     @Value("${artemis.build-logs-path:./build-logs}")
     private Path buildLogsPath;
 
     public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository, ProfileService profileService,
-            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, FailedBuildLogService failedBuildLogService) {
         this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.profileService = profileService;
         this.buildJobRepository = buildJobRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.failedBuildLogService = failedBuildLogService;
     }
 
     /**
-     * Saves the build log entries in the database. The association to the programming submission is first removed and
-     * after the saving restored as the relation submission->result uses an order column.
+     * Stores the build logs of a failed result. Other failed results of the same submission remain available.
+     * <p>
+     * The entries go to {@link FailedBuildLogService}, not to the database. A multi-line entry is written as several entries sharing its timestamp, which is why the returned
+     * list can be longer than the one that was passed in.
      *
      * @param buildLogs             build logs to save
      * @param programmingSubmission submission of the build logs
-     * @return the saved build logs
+     * @param result                persisted result of the failed build
+     * @return the entries as they were stored, which is what a subsequent read returns
      */
-    public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission) {
-        // Replaces the logs of a previous build of the same submission. This used to happen implicitly: the entries were
-        // saved without their submission, and saving the submission afterwards both attached them and removed the old
-        // ones through the collection's orphan removal. That save is what made every result fetch the whole submission
-        // together with its participation, exercise and course, so both steps are done directly here instead.
+    public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, Result result) {
+        List<BuildLogEntry> stored;
+        try {
+            ZonedDateTime retentionTime = result.getCompletionDate() != null ? result.getCompletionDate() : programmingSubmission.getSubmissionDate();
+            stored = failedBuildLogService.saveBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId(), retentionTime, buildLogs);
+        }
+        catch (UncheckedIOException e) {
+            // A build result must not fail because its logs could not be written, and the rows below are deliberately left alone: a submission that still has them keeps
+            // showing the logs of its previous build, which is more use than the nothing it would otherwise be left with.
+            log.error("Could not store the build logs of submission {}; any rows it still has are kept", programmingSubmission.getId(), e);
+            return List.of();
+        }
+
+        // Only now that the result file exists. Rows of a build that predates the file store are removed rather than left behind, so that a submission is never represented in
+        // both stores and the read below never has to decide which of the two is newer. Once the table has drained this is a delete that matches nothing.
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
-        return buildLogs.stream().map(buildLogEntry -> {
-            // Truncate the log so that it fits into the database
-            buildLogEntry.truncateLogToMaxLength();
-            // The entry owns the foreign key, so setting the submission before saving writes it with the insert.
-            buildLogEntry.setProgrammingSubmission(programmingSubmission);
-            return buildLogEntryRepository.save(buildLogEntry);
-        }).collect(Collectors.toCollection(ArrayList::new));
+        return stored;
+    }
+
+    /**
+     * Discards the stored logs of a result whose build did not fail.
+     * <p>
+     * A result that is updated in place rather than replaced keeps its id, so a build that succeeds after an earlier one failed writes nothing and would leave the earlier
+     * failure's file behind under the very id that now stands for a successful build. Only this result's file is removed; other failed results of the same submission keep
+     * theirs.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param result                result whose build did not fail
+     */
+    public void deleteBuildLogsOfSucceededResult(ProgrammingSubmission programmingSubmission, Result result) {
+        failedBuildLogService.deleteBuildLogs(exerciseIdOf(programmingSubmission), programmingSubmission.getId(), result.getId());
     }
 
     /**
@@ -99,8 +134,79 @@ public class BuildLogEntryService {
      * @return the build log entries
      */
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
+        // Builds that failed before this release still have their logs in build_log_entry and nothing moves them, so a submission without a file falls back to the table for
+        // as long as its rows survive the retention period. Both branches are removed once the table has drained.
+        long exerciseId = exerciseIdOf(programmingSubmission);
+        return failedBuildLogService.getLatestBuildLogs(exerciseId, programmingSubmission.getId()).orElseGet(() -> programmingSubmissionRepository
+                .findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf).orElseGet(List::of));
+    }
+
+    /**
+     * Retrieves the failed build logs of one result.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param resultId              result whose logs to retrieve
+     * @return the build log entries
+     */
+    public List<BuildLogEntry> getBuildLogs(ProgrammingSubmission programmingSubmission, long resultId) {
+        long exerciseId = exerciseIdOf(programmingSubmission);
+        Optional<List<BuildLogEntry>> storedForResult = failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), resultId);
+        if (storedForResult.isPresent()) {
+            return storedForResult.get();
+        }
+
+        // The rows that predate the file store are not attributed to a result, so they may only answer for the one build they can have come from: the submission's newest, and
+        // only while it is still the failed one. Without that gate a submission that failed before this release and has since been rebuilt successfully would answer a request
+        // for the successful result with the earlier failure's logs. Removed together with the table once it has drained.
+        if (!legacyRowsBelongToResult(programmingSubmission, resultId)) {
+            return List.of();
+        }
         return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf)
                 .orElseGet(List::of);
+    }
+
+    /**
+     * Decides whether the legacy rows of a submission can be the logs of the requested result. They carry no result of their own, so they are only attributable while the
+     * submission's newest result is the requested one and that build is still failed.
+     *
+     * @param programmingSubmission submission the result belongs to
+     * @param resultId              result whose logs were requested
+     * @return true if the rows can only have come from the requested result
+     */
+    private boolean legacyRowsBelongToResult(ProgrammingSubmission programmingSubmission, long resultId) {
+        if (!programmingSubmission.isBuildFailed()) {
+            return false;
+        }
+        return programmingSubmissionRepository.findLatestResultIdBySubmissionId(programmingSubmission.getId()).filter(latestResultId -> latestResultId == resultId).isPresent();
+    }
+
+    /**
+     * Drains what is left of build_log_entry.
+     * <p>
+     * Nothing writes to the table any more, so it only shrinks: rows expire on the same retention period as the files that replaced them, and once the last one is gone the
+     * entity, this job and the fallback in {@link #getLatestBuildLogs} can all be deleted together with the table. The work is batched because the backlog is large - on a
+     * long-lived instance most of the table is already past a one-year cutoff on the day this ships - and a single delete of that size is not something to hand a live database.
+     */
+    @Scheduled(cron = "${artemis.continuous-integration.build-log.failed-build-cleanup-schedule:0 30 3 * * ?}")
+    public void deleteExpiredBuildLogEntryRows() {
+        if (!profileService.isSchedulingActive()) {
+            return;
+        }
+
+        ZonedDateTime cutoff = ZonedDateTime.now().minusDays(failedBuildRetentionDays);
+        int deleted = 0;
+        for (int batch = 0; batch < MAX_DELETE_BATCHES_PER_RUN; batch++) {
+            List<Long> expiredIds = buildLogEntryRepository.findExpiredIds(cutoff, PageRequest.of(0, DELETE_BATCH_SIZE));
+            if (expiredIds.isEmpty()) {
+                if (deleted > 0) {
+                    log.info("Deleted {} build log entry rows older than {} days", deleted, failedBuildRetentionDays);
+                }
+                return;
+            }
+            buildLogEntryRepository.deleteAllByIdIn(expiredIds);
+            deleted += expiredIds.size();
+        }
+        log.info("Deleted {} build log entry rows older than {} days and reached the per-run limit; the remainder follows on the next run", deleted, failedBuildRetentionDays);
     }
 
     private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",
@@ -291,9 +397,24 @@ public class BuildLogEntryService {
      * @param programmingSubmission the programming submission for which the build logs should be deleted
      */
     public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
+        long exerciseId = programmingSubmission.getParticipation().getExercise().getId();
+        failedBuildLogService.deleteBuildLogs(exerciseId, programmingSubmission.getId());
         programmingSubmission.setBuildLogEntries(Set.of());
         programmingSubmissionRepository.save(programmingSubmission);
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+    }
+
+    private long exerciseIdOf(ProgrammingSubmission programmingSubmission) {
+        var persistedExerciseId = programmingSubmissionRepository.findExerciseIdBySubmissionId(programmingSubmission.getId());
+        if (persistedExerciseId.isPresent()) {
+            return persistedExerciseId.get();
+        }
+
+        Result latestResult = programmingSubmission.getLatestResult();
+        if (latestResult != null) {
+            return latestResult.getExerciseId();
+        }
+        throw new IllegalArgumentException("No programming submission found with id " + programmingSubmission.getId());
     }
 
     /**

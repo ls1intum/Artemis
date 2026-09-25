@@ -1,0 +1,66 @@
+<div #container [class]="containerClasses()" (click)="focusInput()">
+    @if (multiple()) {
+        @for (value of selectedValues(); track $index; let i = $index) {
+            <tumaet-ui-chip
+                size="small"
+                [label]="valueLabel(value)"
+                [removable]="!isDisabled()"
+                [removeAriaLabel]="removeAriaLabel() ?? ('tumAetUi.autocomplete.remove' | tumAetUiTranslate)"
+                (removed)="removeAt(i, $event)"
+            />
+        }
+    }
+    <input
+        #textInput
+        type="text"
+        role="combobox"
+        [id]="inputId()"
+        [attr.name]="name()"
+        class="tumaet-ui-autocomplete-input tumaet:min-w-16 tumaet:flex-1 tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-base tumaet:text-inherit tumaet:outline-none tumaet:placeholder:text-muted"
+        [value]="inputText()"
+        [attr.placeholder]="inputPlaceholder()"
+        [disabled]="isDisabled()"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="panelVisible() ? 'true' : 'false'"
+        [attr.aria-controls]="panelVisible() ? listboxId : null"
+        [attr.aria-activedescendant]="activeOptionId()"
+        [attr.aria-label]="ariaLabel()"
+        (input)="onInput($event)"
+        (focus)="onFocus($event)"
+        (blur)="onBlur()"
+        (keydown)="onInputKeydown($event)"
+    />
+</div>
+
+<ng-template #panel>
+    <div
+        class="tumaet-ui-autocomplete-panel tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:text-text tumaet:shadow-md"
+    >
+        <ul
+            [id]="listboxId"
+            role="listbox"
+            [attr.aria-label]="ariaLabel()"
+            [attr.aria-multiselectable]="multiple() ? 'true' : null"
+            class="tumaet:m-0 tumaet:flex tumaet:max-h-60 tumaet:list-none tumaet:flex-col tumaet:gap-0.5 tumaet:overflow-y-auto tumaet:p-1"
+        >
+            @for (option of suggestions(); track $index; let i = $index) {
+                <li
+                    [id]="optionId(i)"
+                    role="option"
+                    [attr.aria-selected]="isAlreadySelected(option) ? 'true' : 'false'"
+                    [class]="optionClasses(option, i)"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="selectOption(option, $event)"
+                    (mouseenter)="setActive(i)"
+                >
+                    <span class="tumaet:flex-1 tumaet:truncate">{{ valueLabel(option) }}</span>
+                </li>
+            } @empty {
+                <li role="option" aria-selected="false" aria-disabled="true" class="tumaet:px-3 tumaet:py-2 tumaet:text-muted">
+                    {{ emptyMessage() ?? ('tumAetUi.autocomplete.empty' | tumAetUiTranslate) }}
+                </li>
+            }
+        </ul>
+    </div>
+</ng-template>

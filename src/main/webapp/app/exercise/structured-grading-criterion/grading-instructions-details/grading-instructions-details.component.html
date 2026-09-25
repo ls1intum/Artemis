@@ -1,6 +1,6 @@
 @let currentExercise = exercise();
 @let generationUnavailableReason = generationDisabledReason();
-<tum-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
+<tumaet-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
 <!--- Template If Grading Instructions are not used in Assessment --->
 @if (!currentExercise.gradingInstructionFeedbackUsed) {
     <div class="edit-sqi">
@@ -31,9 +31,9 @@
                         <span
                             class="assessment-criteria-generation__tooltip-trigger"
                             [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                            [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
+                            [tumAetUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
                         >
-                            <tum-ui-button
+                            <tumaet-ui-button
                                 type="button"
                                 severity="secondary"
                                 data-testid="generate-assessment-criteria"
@@ -48,7 +48,7 @@
                                 } @else {
                                     <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
                                 }
-                            </tum-ui-button>
+                            </tumaet-ui-button>
                         </span>
                     </div>
                 </div>
@@ -183,7 +183,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <tum-ui-button
+                            <tumaet-ui-button
                                 type="button"
                                 class="mb-3"
                                 id="add-instruction-button"
@@ -194,7 +194,7 @@
                                 [icon]="faPlus"
                                 [disabled]="!editable()"
                                 [ariaLabel]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                [tumUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
                                 (clicked)="addNewInstruction(criterion)"
                             />
                         </div>
@@ -241,9 +241,9 @@
                 <span
                     class="assessment-criteria-generation__tooltip-trigger"
                     [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                    [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
+                    [tumAetUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
                 >
-                    <tum-ui-button
+                    <tumaet-ui-button
                         type="button"
                         severity="secondary"
                         data-testid="generate-assessment-criteria"
@@ -258,7 +258,7 @@
                         } @else {
                             <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
                         }
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 </span>
             </div>
         }
@@ -340,7 +340,7 @@
                                                 <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
                                                     <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}" />
                                                 </span>
-                                                <tum-ui-button
+                                                <tumaet-ui-button
                                                     type="button"
                                                     id="add-button"
                                                     severity="secondary"
@@ -350,7 +350,7 @@
                                                     [icon]="faPlus"
                                                     [disabled]="!editable()"
                                                     [ariaLabel]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
-                                                    [tumUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
+                                                    [tumAetUiTooltip]="'artemisApp.exercise.addAssessmentInstruction' | artemisTranslate"
                                                     (clicked)="addInstruction(criteria)"
                                                 />
                                             </div>

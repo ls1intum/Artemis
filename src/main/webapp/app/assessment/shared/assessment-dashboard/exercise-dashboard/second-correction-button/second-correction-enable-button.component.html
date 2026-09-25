@@ -2,7 +2,7 @@
     {{ 'artemisApp.exerciseAssessmentDashboard.secondCorrection' | artemisTranslate }}:
     {{ (secondCorrectionEnabled() ? 'artemisApp.exerciseAssessmentDashboard.enabled' : 'artemisApp.exerciseAssessmentDashboard.disabled') | artemisTranslate }}
 </span>
-<tum-ui-toggle-switch
+<tumaet-ui-toggle-switch
     [ngModel]="secondCorrectionEnabled()"
     [disabled]="togglingSecondCorrectionButton()"
     (changed)="triggerSecondCorrectionButton()"

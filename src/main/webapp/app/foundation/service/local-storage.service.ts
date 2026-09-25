@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { parseJson } from 'app/foundation/util/json.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LocalStorageService {
     /**
      * Stores a value in the local storage under the specified key.

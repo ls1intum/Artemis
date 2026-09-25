@@ -159,6 +159,7 @@ Desktop.ini
 repos/
 repos-download/
 local-vcs-repos
+failed-build-logs/
 /templates/
 .bash_history
 .v8flags.*.json
@@ -254,9 +255,13 @@ deferredEagerBeanInstantiationViolations.dot
 /.e2e-local-multinode/
 
 ######################
-# Claude Code
+# Local agent installations and working notes
 ######################
 .claude
+/.agents/skills/
+/.ai/
+/.context/
+/skills-lock.json
 
 
 ######################

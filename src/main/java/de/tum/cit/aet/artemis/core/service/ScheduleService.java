@@ -363,7 +363,8 @@ public class ScheduleService {
         var taskNames = scheduledExerciseTasks.get(task);
         if (taskNames != null) {
             log.debug("Cancelling scheduled task {} for Exercise (#{}).", lifecycle, exerciseId);
-            taskNames.forEach(taskName -> taskName.future().cancel(true));
+            // A running task is not interrupted: the interrupt would close the socket of a JDBC connection the task is using.
+            taskNames.forEach(taskName -> taskName.future().cancel(false));
             removeScheduledExerciseTask(exerciseId, lifecycle);
         }
 
@@ -385,7 +386,8 @@ public class ScheduleService {
         var taskNames = scheduledSlideTasks.get(task);
         if (taskNames != null) {
             log.debug("Cancelling scheduled task {} for Slide (#{}).", lifecycle, slideId);
-            taskNames.forEach(taskName -> taskName.future().cancel(true));
+            // A running task is not interrupted: the interrupt would close the socket of a JDBC connection the task is using.
+            taskNames.forEach(taskName -> taskName.future().cancel(false));
             removeScheduledSlideTask(slideId, lifecycle);
         }
     }
@@ -402,7 +404,8 @@ public class ScheduleService {
         Set<ScheduledTaskName> taskNames = scheduledParticipationTasks.get(task);
         if (taskNames != null) {
             log.debug("Cancelling scheduled task {} for Participation (#{}).", lifecycle, participationId);
-            taskNames.forEach(taskName -> taskName.future().cancel(true));
+            // A running task is not interrupted: the interrupt would close the socket of a JDBC connection the task is using.
+            taskNames.forEach(taskName -> taskName.future().cancel(false));
             removeScheduledParticipationTask(exerciseId, participationId, lifecycle);
         }
     }

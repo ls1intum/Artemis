@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import {
     CompetencyGraphDTO,
     LearningObjectType,
@@ -16,9 +16,7 @@ import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service
 import { LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LearningPathApiService extends BaseApiHttpService {
     async getLearningPathForCurrentUser(courseId: number): Promise<LearningPathDTO> {
         return await this.get<LearningPathDTO>(`atlas/courses/${courseId}/learning-path/me`);

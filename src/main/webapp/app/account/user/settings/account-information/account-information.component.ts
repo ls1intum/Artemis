@@ -14,7 +14,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { RouterLink } from '@angular/router';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiDialogComponent, TumUiListComponent, TumUiListItemDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -27,25 +27,25 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         FaIconComponent,
         ArtemisDatePipe,
         RouterLink,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiDialogComponent,
         ImageCropperModalComponent,
         ArtemisTranslatePipe,
     ],
 })
 export class AccountInformationComponent {
-    protected readonly faPen = faPencil;
-    protected readonly faTrash = faTrash;
-    protected readonly faPlus = faPlus;
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
-
     private readonly accountService = inject(AccountService);
     private readonly userSettingsService = inject(UserSettingsService);
     private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
+
+    protected readonly faPen = faPencil;
+    protected readonly faTrash = faTrash;
+    protected readonly faPlus = faPlus;
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
     readonly imageLoadFailed = signal(false);
