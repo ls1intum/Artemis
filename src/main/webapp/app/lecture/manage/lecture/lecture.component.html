@@ -173,13 +173,13 @@
         >
             <ng-container tumAetUiEmptyStateActions>
                 @if (lectures().length === 0) {
-                    <button type="button" class="btn btn-primary btn-sm" (click)="navigateToLectureCreationPage()">
-                        <fa-icon [icon]="faPlus" />
-                        <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
-                    </button>
                     <button type="button" class="btn btn-primary btn-sm" (click)="openImportModal()">
                         <fa-icon [icon]="faFileImport" />
                         <span jhiTranslate="artemisApp.lecture.import.label"></span>
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" (click)="navigateToLectureCreationPage()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
                     </button>
                 }
             </ng-container>
