@@ -112,7 +112,7 @@ describe('CourseRequestsComponent', () => {
         component = fixture.componentInstance;
     });
 
-    describe('pagination (tum-ui paginator)', () => {
+    describe('pagination (tumaet-ui paginator)', () => {
         it('converts the 0-indexed paginator page to the 1-indexed decided page and reloads with the 0-indexed offset', () => {
             mockCourseRequestService.findAdminOverview.mockClear();
             mockCourseRequestService.findAdminOverview.mockReturnValue(of({ pendingRequests: [], decidedRequests: [], totalDecidedCount: 0 } as CourseRequestsAdminOverview));

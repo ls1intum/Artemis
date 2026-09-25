@@ -20,10 +20,10 @@
             </div>
             <!-- links to the different settings -->
             <h2 id="navigation-bar-heading" class="mt-2 text-base font-semibold" jhiTranslate="artemisApp.userSettings.userSettings"></h2>
-            <tum-ui-list id="navigation-bar" class="mt-1 block" ariaLabelledBy="navigation-bar-heading">
-                <li tumUiListItem>
+            <tumaet-ui-list id="navigation-bar" class="mt-1 block" ariaLabelledBy="navigation-bar-heading">
+                <li tumAetUiListItem>
                     <a
-                        tumUiListItemAction
+                        tumAetUiListItemAction
                         routerLink="account"
                         routerLinkActive
                         #accountLink="routerLinkActive"
@@ -32,9 +32,9 @@
                     ></a>
                 </li>
                 @if (isAiEnabled()) {
-                    <li tumUiListItem>
+                    <li tumAetUiListItem>
                         <a
-                            tumUiListItemAction
+                            tumAetUiListItemAction
                             routerLink="ai-experience"
                             routerLinkActive
                             #aiLink="routerLinkActive"
@@ -44,9 +44,9 @@
                     </li>
                 }
                 @if (isLearnerProfileEnabled()) {
-                    <li tumUiListItem>
+                    <li tumAetUiListItem>
                         <a
-                            tumUiListItemAction
+                            tumAetUiListItemAction
                             routerLink="profile"
                             routerLinkActive
                             #profileLink="routerLinkActive"
@@ -56,9 +56,9 @@
                     </li>
                 }
                 @if (isAtlasEnabled()) {
-                    <li tumUiListItem>
+                    <li tumAetUiListItem>
                         <a
-                            tumUiListItemAction
+                            tumAetUiListItemAction
                             routerLink="science"
                             routerLinkActive
                             #scienceLink="routerLinkActive"
@@ -67,9 +67,9 @@
                         ></a>
                     </li>
                 }
-                <li tumUiListItem>
+                <li tumAetUiListItem>
                     <a
-                        tumUiListItemAction
+                        tumAetUiListItemAction
                         routerLink="ssh"
                         routerLinkActive
                         #sshLink="routerLinkActive"
@@ -77,9 +77,9 @@
                         jhiTranslate="artemisApp.userSettings.sshSettings"
                     ></a>
                 </li>
-                <li tumUiListItem>
+                <li tumAetUiListItem>
                     <a
-                        tumUiListItemAction
+                        tumAetUiListItemAction
                         routerLink="credentials"
                         routerLinkActive
                         #credentialsLink="routerLinkActive"
@@ -88,9 +88,9 @@
                     ></a>
                 </li>
                 @if (isAtLeastTutor()) {
-                    <li tumUiListItem>
+                    <li tumAetUiListItem>
                         <a
-                            tumUiListItemAction
+                            tumAetUiListItemAction
                             routerLink="vcs-token"
                             routerLinkActive
                             #vcsTokenLink="routerLinkActive"
@@ -99,9 +99,9 @@
                         ></a>
                     </li>
                 }
-                <li tumUiListItem>
+                <li tumAetUiListItem>
                     <a
-                        tumUiListItemAction
+                        tumAetUiListItemAction
                         routerLink="access-tokens"
                         routerLinkActive
                         #accessTokensLink="routerLinkActive"
@@ -110,9 +110,9 @@
                     ></a>
                 </li>
                 @if (isPasskeyEnabled()) {
-                    <li tumUiListItem>
+                    <li tumAetUiListItem>
                         <a
-                            tumUiListItemAction
+                            tumAetUiListItemAction
                             routerLink="passkeys"
                             routerLinkActive
                             #passkeysLink="routerLinkActive"
@@ -121,9 +121,9 @@
                         ></a>
                     </li>
                 }
-                <li tumUiListItem>
+                <li tumAetUiListItem>
                     <a
-                        tumUiListItemAction
+                        tumAetUiListItemAction
                         routerLink="ide-preferences"
                         routerLinkActive
                         #idePreferencesLink="routerLinkActive"
@@ -131,9 +131,9 @@
                         jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"
                     ></a>
                 </li>
-                <li tumUiListItem>
+                <li tumAetUiListItem>
                     <a
-                        tumUiListItemAction
+                        tumAetUiListItemAction
                         routerLink="notifications"
                         routerLinkActive
                         #notificationsLink="routerLinkActive"
@@ -141,9 +141,9 @@
                         jhiTranslate="artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS"
                     ></a>
                 </li>
-                <li tumUiListItem>
+                <li tumAetUiListItem>
                     <a
-                        tumUiListItemAction
+                        tumAetUiListItemAction
                         routerLink="quiz-training"
                         routerLinkActive
                         #quizTrainingLink="routerLinkActive"
@@ -151,7 +151,7 @@
                         jhiTranslate="artemisApp.userSettings.quizTrainingSettings.quizTraining"
                     ></a>
                 </li>
-            </tum-ui-list>
+            </tumaet-ui-list>
         </div>
         <!-- the currently opened settings -->
         <div class="mt-4 md:mt-0 md:min-w-0 md:flex-1">

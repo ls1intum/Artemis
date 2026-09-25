@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkConfigDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -35,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkServ
  */
 @Profile(PROFILE_SECURITY_FRAMEWORK)
 @Lazy
-@FeatureUsage("configuration/security-framework")
+@FeatureUsage(UserFeature.PROGRAMMING_SECURITY_FRAMEWORK)
 @RestController
 @RequestMapping("api/programming/")
 public class SecurityFrameworkResource {

@@ -47,7 +47,7 @@
             }
 
             @if (displayTimeInMilliseconds() !== undefined) {
-                <div [ngStyle]="{ 'animation-duration': displayTimeInMilliseconds() + 'ms' }" class="course-notification-loading-indicator"></div>
+                <div [style.animation-duration]="displayTimeInMilliseconds() + 'ms'" class="course-notification-loading-indicator"></div>
             }
         </div>
     </div>

@@ -4,9 +4,11 @@ title: Feature Usage Catalogue
 sidebar_label: Feature Usage Catalogue
 ---
 
-The features whose usage Artemis tracks, as declared by `@FeatureUsage` on each REST controller.
+The features whose usage Artemis tracks, as users know them, and the modules and REST resources that implement
+each one. The catalogue is the `UserFeature` enum; `@FeatureUsage` on each controller or handler method assigns
+an endpoint to one of its entries.
 
-**This file is generated.** Do not edit it by hand. It is checked in so that the taxonomy as a whole can be
+**This file is generated.** Do not edit it by hand. It is checked in so that the catalogue as a whole can be
 reviewed in one place and so that a change to it shows up in a pull request diff.
 `FeatureUsageAnnotationTest` fails when it drifts from the annotations; regenerate it with:
 
@@ -14,514 +16,1482 @@ reviewed in one place and so that a change to it shows up in a pull request diff
 ./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
 ```
 
-A feature is usually one controller. Where several controllers are one thing to a user they share a label,
-which is why the controllers are listed. See
+For every resource, the columns count its endpoints by how their calls are reported: **Actions** and **Views**
+are use of the feature, **Automatic** calls are made by the client on its own and **System** calls by another
+system, and neither of the last two counts as use. The interaction follows from the HTTP verb unless
+`@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 28 modules, 88 areas and 185 features.
+Currently 20 product areas, 146 features, 1038 REST endpoints in 28 modules, and 62 interaction overrides.
 
-## account
+## Courses
 
-### account
+### My courses
 
-* **access-tokens** (`TokenResource`)
-* **passkeys** (`PasskeyResource`)
-* **self-service** (`AccountResource`)
+`COURSE_DASHBOARD`: The course cards on the start page and the archive of past courses.
 
-### organizations
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `FileResource` | 0 | 0 | 1 | 0 |
+| course | `CourseArchiveResource` | 0 | 1 | 0 | 0 |
+| course | `CourseOverviewResource` | 0 | 1 | 0 | 0 |
 
-* **organizations** (`OrganizationResource`)
+### Course page
 
-### users
+`COURSE_OVERVIEW`: The student view of a course with its sidebar and exercise list.
 
-* **user-administration** (`AdminUserResource`)
-* **user-directory** (`UserResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| course | `CourseOverviewResource` | 0 | 5 | 1 | 0 |
 
-## admin
+### Enrollment
 
-### build-system
+`COURSE_ENROLLMENT`: Self-enrollment into open courses and leaving a course.
 
-* **build-queue-administration** (`AdminBuildJobQueueResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| course | `CourseAccessResource` | 2 | 3 | 0 | 0 |
 
-### configuration
+### My statistics and grading key
 
-* **feature-toggles** (`AdminFeatureToggleResource`)
+`STUDENT_COURSE_STATISTICS`: A student's own scores per exercise type and the course grading key.
 
-### courses
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `GradeStepResource` | 0 | 2 | 0 | 0 |
+| exercise | `ExerciseScoresChartResource` | 0 | 1 | 0 | 0 |
 
-* **course-administration** (`AdminCourseResource`)
-* **course-requests** (`AdminCourseRequestResource`)
+### Course calendar
 
-### data-privacy
+`CALENDAR`: Month, week and day views of course events, and the calendar subscription.
 
-* **data-cleanup** (`AdminCleanupResource`)
-* **data-exports** (`AdminDataExportResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| calendar | `CalendarResource` | 0 | 3 | 0 | 0 |
 
-### dependencies
+### Global search
 
-* **software-bill-of-materials** (`AdminSbomResource`)
+`GLOBAL_SEARCH`: The search dialog for courses, exercises, lectures and lecture content.
 
-### legal
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| globalsearch | `GlobalSearchResource` | 0 | 1 | 0 | 0 |
+| iris | `IrisGlobalSearchResource` | 0 | 1 | 0 | 0 |
 
-* **imprint** (`AdminImprintResource`)
-* **privacy-statement** (`AdminPrivacyStatementResource`)
+## Course management
 
-### monitoring
+### Course creation and requests
 
-* **audit-log** (`AdminAuditResource`)
-* **feature-usage** (`AdminFeatureUsageResource`)
-* **metrics** (`AdminMetricsResource`)
-* **scheduled-jobs** (`AdminScheduleResource`)
-* **server-logs** (`AdminLogResource`)
-* **usage-statistics** (`AdminStatisticsResource`)
-* **websocket-broker** (`AdminWebsocketResource`)
+`COURSE_CREATION`: Creating courses and requesting a new course from the administrators.
 
-### organizations
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminCourseRequestResource` | 3 | 1 | 0 | 0 |
+| admin | `AdminCourseResource` | 1 | 0 | 0 | 0 |
+| course | `CourseRequestResource` | 1 | 0 | 0 | 0 |
 
-* **organization-administration** (`AdminOrganizationResource`)
+### Course management overview
 
-## assessment
+`COURSE_MANAGEMENT_OVERVIEW`: The list of managed courses and the course detail page for staff.
 
-### complaints
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| course | `CourseManagementResource` | 0 | 9 | 0 | 0 |
+| course | `CourseStatsResource` | 0 | 1 | 0 | 0 |
 
-* **complaint-responses** (`ComplaintResponseResource`)
-* **complaints** (`ComplaintResource`)
+### Course settings
 
-### feedback
+`COURSE_SETTINGS`: Course configuration, onboarding and the switches for optional features.
 
-* **student-ratings** (`RatingResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `ConversationResource` | 1 | 0 | 0 | 0 |
+| course | `CourseAthenaConfigResource` | 1 | 1 | 0 | 0 |
+| course | `CourseUpdateResource` | 1 | 0 | 0 | 0 |
 
-### grading
+### Course members
 
-* **bonus** (`BonusResource`)
-* **grading-scale** (`GradeStepResource`, `GradingScaleResource`)
-* **long-feedback** (`LongFeedbackTextResource`)
-* **participant-scores** (`ParticipantScoreResource`)
-* **results** (`ResultResource`)
+`COURSE_MEMBERS`: Managing students, tutors, editors and instructors of a course.
 
-### tutor-training
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `UserResource` | 0 | 1 | 0 | 0 |
+| course | `CourseAccessResource` | 9 | 7 | 0 | 0 |
 
-* **example-submissions** (`ExampleSubmissionResource`)
-* **tutor-effort** (`TutorEffortResource`)
-* **tutor-participation** (`TutorParticipationResource`)
+### Import from another course
 
-## athena
+`COURSE_MATERIAL_IMPORT`: Importing exercises, lectures, exams and more from an earlier course.
 
-### feedback-suggestions
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| course | `CourseManagementResource` | 0 | 1 | 0 | 0 |
+| course | `CourseMaterialImportResource` | 1 | 1 | 0 | 0 |
 
-* **feedback-suggestions** (`AthenaResource`)
-* **internal-callbacks** (`AthenaInternalResource`)
+### Course statistics
 
-## atlas
+`COURSE_STATISTICS`: Activity and performance charts of a course.
 
-### ai
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `StatisticsResource` | 0 | 2 | 0 | 0 |
+| course | `CourseStatsResource` | 0 | 2 | 0 | 0 |
 
-* **atlas-agent** (`AtlasAgentResource`)
-* **competency-orchestration** (`CompetencyOrchestrationResource`)
+### Course scores
 
-### competencies
+`COURSE_SCORES`: The table of every student's points across all exercises.
 
-* **competencies** (`CompetencyResource`, `CourseCompetencyResource`)
-* **prerequisites** (`PrerequisiteResource`)
-* **standardized-competencies** (`AdminStandardizedCompetencyResource`, `StandardizedCompetencyResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `ParticipantScoreResource` | 0 | 2 | 0 | 0 |
+| plagiarism | `PlagiarismCaseResource` | 0 | 1 | 0 | 0 |
 
-### learner-profile
+### Course archive and cleanup
 
-* **learner-profile** (`CourseLearnerProfileResource`, `LearnerProfileResource`)
+`COURSE_ARCHIVE`: Archiving a finished course and cleaning up its data.
 
-### learning-paths
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| course | `CourseArchiveResource` | 2 | 1 | 0 | 0 |
 
-* **learning-paths** (`LearningPathResource`)
+### Course reset and deletion
 
-### research
+`COURSE_RESET_DELETE`: Resetting or deleting a course, including the progress display.
 
-* **science-events** (`ScienceResource`)
-* **science-settings** (`ScienceSettingsResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminCourseResource` | 2 | 2 | 0 | 0 |
 
-## calendar
+### Images in Markdown
 
-### calendar
+`MARKDOWN_UPLOADS`: Uploading and showing images and files embedded in Markdown texts.
 
-* **calendar-events** (`CalendarResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `FileResource` | 1 | 0 | 1 | 0 |
 
-## communication
+## Exercises
 
-### content
+### Exercise details page
 
-* **faq** (`FaqResource`)
-* **link-previews** (`LinkPreviewResource`)
+`EXERCISE_DETAILS`: The page students open for an exercise, with its problem statement.
 
-### conversations
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `ExerciseResource` | 0 | 4 | 1 | 0 |
+| exercise | `ProblemStatementRenderingResource` | 0 | 1 | 0 | 0 |
+| programming | `PlantUmlResource` | 0 | 0 | 2 | 0 |
 
-* **channels** (`ChannelResource`)
-* **conversations** (`ConversationResource`)
-* **group-chats** (`GroupChatResource`)
-* **one-to-one-chats** (`OneToOneChatResource`)
+### Start and practice
 
-### mobile-apps
+`EXERCISE_PARTICIPATION`: Starting, resuming and practicing an exercise.
 
-* **app-site-association** (`AndroidAppSiteAssociationResource`, `AppleAppSiteAssociationResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `ParticipationResource` | 3 | 0 | 0 | 0 |
+| exercise | `ParticipationRetrievalResource` | 0 | 2 | 0 | 0 |
 
-### posts
+### Results and feedback
 
-* **answers** (`AnswerMessageResource`)
-* **forwarding** (`ForwardedMessageResource`)
-* **messages** (`ConversationMessageResource`)
-* **reactions** (`ReactionResource`)
-* **saved-posts** (`SavedPostResource`)
+`EXERCISE_FEEDBACK`: The result and feedback students see for a submission.
 
-## core
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `LongFeedbackTextResource` | 0 | 1 | 0 | 0 |
+| assessment | `ResultResource` | 0 | 1 | 0 | 0 |
+| fileupload | `FileUploadAssessmentResource` | 0 | 1 | 0 | 0 |
+| modeling | `ModelingAssessmentResource` | 0 | 1 | 0 | 0 |
 
-### authentication
+### Team exercises
 
-* **jwt-tokens** (`PublicUserJwtResource`)
+`TEAM_EXERCISES`: Creating and importing teams and working on an exercise as a team.
 
-### data-privacy
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `TeamResource` | 5 | 5 | 0 | 0 |
 
-* **data-exports** (`DataExportResource`)
+### Exercise variant groups
 
-### files
+`EXERCISE_VARIANT_GROUPS`: Interchangeable exercise variants that share a timeline and score.
 
-* **file-access** (`FileResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `ExerciseVariantGroupResource` | 4 | 2 | 0 | 0 |
 
-### public
+### Exercise management
 
-* **account** (`PublicAccountResource`)
-* **imprint** (`PublicImprintResource`)
-* **privacy-statement** (`PublicPrivacyStatementResource`)
+`EXERCISE_MANAGEMENT`: The staff list of a course's exercises and the common exercise actions.
 
-### sharing
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `ExerciseResource` | 1 | 2 | 0 | 0 |
 
-* **sharing-platform** (`SharingSupportResource`)
+### Version history
 
-### statistics
+`EXERCISE_VERSION_HISTORY`: Browsing earlier versions of an exercise.
 
-* **statistics** (`StatisticsResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `ExerciseVersionResource` | 0 | 2 | 0 | 0 |
 
-## course
+### Review comments
 
-### analytics
+`EXERCISE_REVIEW`: Review threads on exercise content and resolving them.
 
-* **course-statistics** (`CourseStatsResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `ExerciseReviewResource` | 9 | 1 | 0 | 0 |
 
-### management
+### Participations
 
-* **archive** (`CourseArchiveResource`)
-* **course-management** (`CourseAthenaConfigResource`, `CourseManagementResource`, `CourseUpdateResource`)
-* **course-requests** (`CourseRequestResource`)
-* **material-import** (`CourseMaterialImportResource`)
+`EXERCISE_PARTICIPATIONS_STAFF`: The staff view of participations, individual due dates and submissions.
 
-### student-view
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `ParticipationDeletionResource` | 2 | 0 | 0 | 0 |
+| exercise | `ParticipationRetrievalResource` | 0 | 4 | 0 | 0 |
+| exercise | `ParticipationUpdateResource` | 2 | 0 | 0 | 0 |
+| exercise | `SubmissionResource` | 1 | 1 | 0 | 0 |
 
-* **course-overview** (`CourseOverviewResource`)
-* **enrollment** (`CourseAccessResource`)
+### Exercise scores and statistics
 
-## deimos
+`EXERCISE_SCORES`: Results per student, external results and exercise statistics.
 
-### malicious-code-analysis
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `ResultResource` | 1 | 1 | 0 | 0 |
+| core | `StatisticsResource` | 0 | 1 | 0 | 0 |
 
-* **batch-runs** (`DeimosResource`)
+## Programming exercises
 
-## exam
+### Online code editor
 
-### authoring
+`PROGRAMMING_ONLINE_EDITOR`: Editing, committing and submitting code in the browser.
 
-* **exam-management** (`AdminExamResource`, `ExamResource`)
-* **exercise-groups** (`ExerciseGroupResource`)
-* **registration** (`ExamUserResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `ProgrammingExerciseParticipationResource` | 1 | 0 | 0 | 0 |
+| programming | `RepositoryProgrammingExerciseParticipationResource` | 8 | 4 | 0 | 0 |
 
-### conduction
+### Local IDE and Git
 
-* **student-exam** (`StudentExamResource`)
+`PROGRAMMING_LOCAL_IDE`: Cloning and pushing repositories to work in a local IDE.
 
-### rooms
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `IdeSettingsResource` | 2 | 2 | 0 | 0 |
 
-* **room-management** (`AdminExamRoomManagementResource`, `ExamRoomManagementResource`)
-* **seat-distribution** (`ExamRoomDistributionResource`)
+Also recorded outside REST by `LocalVCUsageTrackingService`.
 
-## exercise
+### Online IDE
 
-### analytics
+`PROGRAMMING_ONLINE_IDE`: Working on a programming exercise in the cloud IDE.
 
-* **score-charts** (`ExerciseScoresChartResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `ProgrammingExerciseRetrievalResource` | 0 | 1 | 0 | 0 |
+| programming | `TheiaConfigurationResource` | 0 | 1 | 0 | 0 |
 
-### management
+### Repository and commit history
 
-* **consistency-check** (`ConsistencyCheckResource`)
-* **exercise-management** (`AdminExerciseResource`, `ExerciseResource`)
-* **problem-statement** (`ProblemStatementRenderingResource`)
-* **review** (`ExerciseReviewResource`)
-* **variant-groups** (`ExerciseVariantGroupResource`)
-* **versions** (`ExerciseVersionResource`)
+`PROGRAMMING_REPOSITORY_HISTORY`: Viewing a repository, its commits and its access log.
 
-### participation
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `ProgrammingExerciseParticipationResource` | 0 | 8 | 0 | 0 |
+| programming | `RepositoryProgrammingExerciseParticipationResource` | 0 | 1 | 0 | 0 |
 
-* **participations** (`ParticipationDeletionResource`, `ParticipationResource`, `ParticipationRetrievalResource`, `ParticipationUpdateResource`)
-* **teams** (`TeamResource`)
+### Build results and logs
 
-### submission
+`PROGRAMMING_RESULTS`: Automatic test results, build status and build logs.
 
-* **submissions** (`SubmissionResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `ResultResource` | 0 | 1 | 0 | 0 |
+| localci | `BuildJobQueueResource` | 0 | 0 | 1 | 0 |
+| programming | `ProgrammingExerciseParticipationResource` | 0 | 4 | 2 | 0 |
+| programming | `ProgrammingSubmissionResource` | 2 | 0 | 0 | 0 |
+| programming | `PublicProgrammingExerciseResultResource` | 0 | 0 | 0 | 1 |
+| programming | `RepositoryProgrammingExerciseParticipationResource` | 0 | 1 | 0 | 0 |
 
-## fileupload
+Also recorded outside REST by `LocalVCUsageTrackingService`.
 
-### assessment
+### Create and edit programming exercises
 
-* **manual-assessment** (`FileUploadAssessmentResource`)
+`PROGRAMMING_AUTHORING`: Setting up, updating and deleting programming exercises.
 
-### authoring
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `FileResource` | 0 | 1 | 0 | 0 |
+| localci | `AutomaticAfterDueDateResource` | 0 | 1 | 0 | 0 |
+| localci | `BuildPhasesTemplateResource` | 0 | 1 | 0 | 0 |
+| programming | `ProgrammingExerciseCreationResource` | 2 | 0 | 0 | 0 |
+| programming | `ProgrammingExerciseDeletionResource` | 3 | 0 | 0 | 0 |
+| programming | `ProgrammingExercisePartialUpdateResource` | 2 | 0 | 0 | 0 |
+| programming | `ProgrammingExerciseRetrievalResource` | 0 | 12 | 0 | 0 |
+| programming | `ProgrammingExerciseTaskResource` | 0 | 2 | 0 | 0 |
+| programming | `ProgrammingExerciseUpdateResource` | 1 | 0 | 0 | 0 |
 
-* **exercise-management** (`FileUploadExerciseResource`)
+### Edit exercise repositories
 
-### participation
+`PROGRAMMING_REPOSITORY_EDITING`: Editing the test and auxiliary repositories in the editor, and the template, solution and test repositories over Git.
 
-* **submissions** (`FileUploadSubmissionResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `AuxiliaryRepositoryResource` | 8 | 3 | 0 | 0 |
+| programming | `TestRepositoryResource` | 8 | 3 | 0 | 0 |
 
-## globalsearch
+Also recorded outside REST by `LocalVCUsageTrackingService`.
 
-### search
+### Build plan and configuration
 
-* **global-search** (`GlobalSearchResource`)
+`PROGRAMMING_BUILD_CONFIGURATION`: Editing the build plan and build settings of an exercise.
 
-## hyperion
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| localci | `BuildPlanResource` | 1 | 1 | 0 | 0 |
+| localci | `PublicBuildPlanResource` | 0 | 0 | 0 | 1 |
+| programming | `ProgrammingExerciseBuildConfigResource` | 1 | 0 | 0 | 0 |
 
-### authoring-assistance
+### Test weights and static code analysis
 
-* **assessment-criteria-generation** (`HyperionAssessmentCriteriaGenerationResource`)
-* **code-generation** (`HyperionCodeGenerationResource`)
-* **faq-rewrite** (`HyperionFaqResource`)
-* **problem-statement** (`HyperionProblemStatementResource`)
-* **quiz-generation** (`HyperionQuizQuestionGenerationResource`)
-* **variant-generation** (`HyperionExerciseVariantResource`)
+`PROGRAMMING_GRADING_CONFIGURATION`: Configuring test case weights, bonus points and code analysis categories.
 
-## iris
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `ProgrammingExerciseGradingResource` | 0 | 1 | 0 | 0 |
+| programming | `ProgrammingExerciseTestCaseResource` | 2 | 1 | 0 | 0 |
+| programming | `StaticCodeAnalysisResource` | 3 | 1 | 0 | 0 |
 
-### chat
+### Re-evaluate and trigger builds
 
-* **availability** (`IrisResource`)
-* **chat-sessions** (`IrisChatSessionResource`)
-* **messages** (`IrisMessageResource`)
-* **struggle-intervention** (`IrisStruggleInterventionResource`)
-* **tutor-suggestions** (`IrisTutorSuggestionSessionResource`)
+`PROGRAMMING_REEVALUATION`: Re-evaluating results and triggering the builds of all participants.
 
-### configuration
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `ProgrammingExerciseGradingResource` | 1 | 0 | 0 | 0 |
+| programming | `ProgrammingExerciseUpdateResource` | 1 | 0 | 0 | 0 |
+| programming | `ProgrammingSubmissionResource` | 2 | 0 | 0 | 0 |
 
-* **settings** (`IrisSettingsResource`)
+### Submission policies
 
-### internal
+`PROGRAMMING_SUBMISSION_POLICY`: Limits and penalties for the number of submissions.
 
-* **pyris-status-updates** (`PyrisInternalStatusUpdateResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `SubmissionPolicyResource` | 4 | 2 | 0 | 0 |
 
-### memory
+### Structural consistency check
 
-* **memory** (`IrisMemoryResource`)
+`PROGRAMMING_CONSISTENCY_CHECK`: Checking the repositories and build plans of an exercise for errors.
 
-### monitoring
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exercise | `ConsistencyCheckResource` | 1 | 0 | 0 | 0 |
 
-* **dashboard** (`IrisAdminDashboardResource`)
+### Import and export programming exercises
 
-### search
+`PROGRAMMING_IMPORT_EXPORT`: Importing exercises, exporting them and downloading repositories.
 
-* **lecture-search** (`IrisGlobalSearchResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `ProgrammingExerciseExportImportResource` | 4 | 1 | 0 | 0 |
+| programming | `ProgrammingExerciseRepositoryExportResource` | 0 | 4 | 0 | 0 |
 
-## lecture
+## Quizzes
 
-### ai
+### Live quiz
 
-* **transcription** (`LectureTranscriptionResource`)
+`QUIZ_LIVE`: Taking part in a synchronized, batched or individual quiz.
 
-### authoring
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `FileResource` | 0 | 0 | 2 | 0 |
+| quiz | `QuizExerciseBatchResource` | 1 | 0 | 0 | 0 |
+| quiz | `QuizExerciseRetrievalResource` | 0 | 1 | 0 | 0 |
+| quiz | `QuizParticipationResource` | 1 | 1 | 0 | 0 |
+| quiz | `QuizSubmissionResource` | 1 | 0 | 0 | 0 |
 
-* **lectures** (`LectureResource`)
+### Quiz practice
 
-### units
+`QUIZ_PRACTICE`: Retaking a quiz after it has ended.
 
-* **attachment-video-units** (`AttachmentVideoUnitResource`)
-* **exercise-units** (`ExerciseUnitResource`)
-* **online-units** (`OnlineUnitResource`)
-* **text-units** (`TextUnitResource`)
-* **unit-management** (`LectureUnitResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| quiz | `QuizSubmissionResource` | 1 | 0 | 0 | 0 |
 
-## localci
+### Quiz training
 
-### build-system
+`QUIZ_TRAINING`: Training with the course's question pool and the leaderboard.
 
-* **after-due-date-builds** (`AutomaticAfterDueDateResource`)
-* **build-logs** (`BuildLogResource`)
-* **build-phase-templates** (`BuildPhasesTemplateResource`)
-* **build-plans** (`BuildPlanResource`, `PublicBuildPlanResource`)
-* **build-queue** (`BuildJobQueueResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| quiz | `QuizTrainingResource` | 3 | 3 | 0 | 0 |
 
-## localvc
+### Quiz editor
 
-### access
+`QUIZ_AUTHORING`: Creating quiz questions, including drag and drop from UML diagrams.
 
-* **build-agent-address** (`PublicBuildAgentAddressResource`)
-* **ssh-fingerprints** (`SshFingerprintsProviderResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| modeling | `ApollonDiagramResource` | 3 | 2 | 1 | 0 |
+| quiz | `QuizExerciseCreationUpdateResource` | 3 | 0 | 0 | 0 |
+| quiz | `QuizExerciseDeletionResource` | 1 | 0 | 0 | 0 |
+| quiz | `QuizExerciseRetrievalResource` | 0 | 4 | 0 | 0 |
+| quiz | `QuizSubmissionResource` | 0 | 1 | 0 | 0 |
 
-## lti
+### Quiz start and batches
 
-### lti
+`QUIZ_LIFECYCLE`: Starting and ending a quiz and managing its batches.
 
-* **launch** (`LtiResource`, `PublicLtiResource`)
-* **oauth2-keys** (`PublicOAuth2JWKSResource`)
-* **platform-configuration** (`AdminLtiConfigurationResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| quiz | `QuizExerciseBatchResource` | 2 | 0 | 0 | 0 |
+| quiz | `QuizExerciseResource` | 1 | 0 | 0 | 0 |
 
-## modeling
+### Quiz statistics and re-evaluation
 
-### assessment
+`QUIZ_EVALUATION`: Question statistics and correcting and re-scoring a quiz.
 
-* **manual-assessment** (`ModelingAssessmentResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| quiz | `QuizExerciseEvaluationResource` | 2 | 0 | 0 | 0 |
+| quiz | `QuizStatisticsResource` | 0 | 3 | 0 | 0 |
 
-### authoring
+## Text, modeling and file upload exercises
 
-* **exercise-management** (`ModelingExerciseResource`)
+### Text exercises
 
-### diagrams
+`TEXT_EXERCISES`: Writing and submitting a text answer.
 
-* **apollon-conversion** (`ApollonConversionResource`)
-* **apollon-diagrams** (`ApollonDiagramResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| text | `TextExerciseResource` | 0 | 1 | 0 | 0 |
+| text | `TextSubmissionResource` | 2 | 1 | 0 | 0 |
 
-### participation
+### Create text exercises
 
-* **submissions** (`ModelingSubmissionResource`)
+`TEXT_AUTHORING`: Creating, importing and exporting text exercises.
 
-## notification
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| text | `TextExerciseCreationUpdateResource` | 3 | 0 | 0 | 0 |
+| text | `TextExerciseExportImportResource` | 2 | 0 | 0 | 0 |
+| text | `TextExerciseResource` | 1 | 3 | 0 | 0 |
 
-### course-notifications
+### Modeling exercises
 
-* **notifications** (`CourseNotificationResource`)
-* **read-status** (`UserCourseNotificationStatusResource`)
+`MODELING_EXERCISES`: Drawing and submitting a UML diagram.
 
-### delivery
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| modeling | `ApollonConversionResource` | 0 | 1 | 0 | 0 |
+| modeling | `ModelingSubmissionResource` | 2 | 2 | 0 | 0 |
 
-* **push-devices** (`PushNotificationResource`)
+### Create modeling exercises
 
-### settings
+`MODELING_AUTHORING`: Creating, importing and exporting modeling exercises.
 
-* **course-settings** (`UserCourseNotificationSettingResource`)
-* **global-settings** (`GlobalNotificationSettingResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| modeling | `ModelingExerciseResource` | 6 | 3 | 0 | 0 |
 
-### system-notifications
+### File upload exercises
 
-* **administration** (`AdminSystemNotificationResource`)
-* **system-notifications** (`PublicSystemNotificationResource`, `SystemNotificationResource`)
+`FILE_UPLOAD_EXERCISES`: Uploading files as the answer to an exercise.
 
-## plagiarism
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `FileResource` | 0 | 1 | 0 | 0 |
+| fileupload | `FileUploadSubmissionResource` | 1 | 1 | 0 | 0 |
 
-### cases
+### Create file upload exercises
 
-* **answer-posts** (`PlagiarismAnswerPostResource`)
-* **plagiarism-cases** (`PlagiarismCaseResource`)
-* **posts** (`PlagiarismPostResource`)
+`FILE_UPLOAD_AUTHORING`: Creating, importing and exporting file upload exercises.
 
-### detection
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| fileupload | `FileUploadExerciseResource` | 6 | 3 | 0 | 0 |
 
-* **plagiarism-checks** (`PlagiarismResource`)
+## Assessment and grading
 
-## programming
+### Assessment dashboard
 
-### access
+`ASSESSMENT_DASHBOARD`: The tutor dashboards of courses, exams and exercises, and assessment locks.
 
-* **ssh-keys** (`SshPublicKeysResource`)
-* **vcs-access-tokens** (`RepositoryVcsAccessTokenResource`, `VcsAccessTokenOverviewResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| course | `CourseManagementResource` | 0 | 2 | 0 | 0 |
+| course | `CourseStatsResource` | 0 | 1 | 0 | 0 |
+| exam | `ExamResource` | 0 | 4 | 0 | 0 |
+| exercise | `ExerciseResource` | 1 | 2 | 0 | 0 |
+| exercise | `SubmissionResource` | 0 | 3 | 0 | 0 |
 
-### assessment
+### Manual assessment
 
-* **manual-assessment** (`ProgrammingAssessmentResource`)
+`MANUAL_ASSESSMENT`: Assessing text, modeling, file upload and programming submissions.
 
-### authoring
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| fileupload | `FileUploadAssessmentResource` | 4 | 0 | 0 | 0 |
+| fileupload | `FileUploadSubmissionResource` | 0 | 3 | 0 | 0 |
+| modeling | `ModelingAssessmentResource` | 4 | 0 | 0 | 0 |
+| modeling | `ModelingSubmissionResource` | 0 | 3 | 0 | 0 |
+| programming | `ProgrammingAssessmentResource` | 4 | 0 | 0 | 0 |
+| programming | `ProgrammingSubmissionResource` | 0 | 3 | 0 | 0 |
+| programming | `RepositoryProgrammingExerciseParticipationResource` | 0 | 1 | 0 | 0 |
+| text | `TextAssessmentResource` | 5 | 1 | 0 | 0 |
+| text | `TextSubmissionResource` | 0 | 2 | 0 | 0 |
 
-* **exercise-management** (`ProgrammingExerciseCreationResource`, `ProgrammingExerciseDeletionResource`, `ProgrammingExercisePartialUpdateResource`, `ProgrammingExerciseRetrievalResource`, `ProgrammingExerciseUpdateResource`)
-* **import-export** (`ProgrammingExerciseExportImportResource`)
-* **sharing** (`ExerciseSharingResource`)
-* **tasks** (`ProgrammingExerciseTaskResource`)
-* **uml-rendering** (`PlantUmlResource`)
+### Complaints and feedback requests
 
-### configuration
+`COMPLAINTS`: Students complaining about an assessment and tutors responding.
 
-* **auxiliary-repositories** (`AuxiliaryRepositoryResource`)
-* **build-plan** (`ProgrammingExerciseBuildConfigResource`)
-* **grading** (`ProgrammingExerciseGradingResource`)
-* **re-evaluate-results** (`ProgrammingExerciseGradingResource`)
-* **security-framework** (`SecurityFrameworkResource`)
-* **static-code-analysis** (`StaticCodeAnalysisResource`)
-* **submission-policy** (`SubmissionPolicyResource`)
-* **test-cases** (`ProgrammingExerciseTestCaseResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `ComplaintResource` | 1 | 5 | 0 | 0 |
+| assessment | `ComplaintResponseResource` | 3 | 0 | 0 | 0 |
+| course | `CourseOverviewResource` | 0 | 1 | 0 | 0 |
 
-### integrity
+### Feedback ratings
 
-* **plagiarism** (`ProgrammingExercisePlagiarismResource`)
+`FEEDBACK_RATINGS`: Students rating the feedback they received.
 
-### participation
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `RatingResource` | 2 | 2 | 0 | 0 |
 
-* **ide-settings** (`IdeSettingsResource`)
-* **online-editor** (`RepositoryProgrammingExerciseParticipationResource`)
-* **online-ide** (`TheiaConfigurationResource`)
-* **participations** (`ProgrammingExerciseParticipationResource`)
+### Tutor training
 
-### repositories
+`TUTOR_TRAINING`: Example submissions with example assessments for training tutors.
 
-* **export** (`ProgrammingExerciseRepositoryExportResource`)
-* **test-repository** (`TestRepositoryResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `ExampleSubmissionResource` | 5 | 1 | 0 | 0 |
+| assessment | `TutorParticipationResource` | 2 | 0 | 0 | 0 |
+| exercise | `SubmissionResource` | 0 | 1 | 0 | 0 |
+| modeling | `ModelingAssessmentResource` | 1 | 1 | 0 | 0 |
+| text | `TextAssessmentResource` | 2 | 1 | 0 | 0 |
 
-### submission
+### Tutor effort
 
-* **build-results** (`PublicProgrammingExerciseResultResource`)
-* **submissions** (`ProgrammingSubmissionResource`)
+`TUTOR_EFFORT`: Statistics on the time tutors spend assessing.
 
-## quiz
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `TutorEffortResource` | 0 | 1 | 0 | 0 |
+| text | `AdminTextAssessmentEventResource` | 0 | 1 | 0 | 0 |
+| text | `TextAssessmentEventResource` | 1 | 1 | 0 | 0 |
 
-### authoring
+### Grading keys
 
-* **exercise-management** (`QuizExerciseCreationUpdateResource`, `QuizExerciseDeletionResource`, `QuizExerciseResource`, `QuizExerciseRetrievalResource`)
+`GRADING_KEYS`: Grade steps of courses and exams.
 
-### conduction
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `GradeStepResource` | 0 | 2 | 0 | 0 |
+| assessment | `GradingScaleResource` | 6 | 3 | 0 | 0 |
 
-* **batches** (`QuizExerciseBatchResource`)
-* **participation** (`QuizParticipationResource`)
-* **submissions** (`QuizSubmissionResource`)
+### Bonus
 
-### evaluation
+`BONUS`: Bonus points from another course or exam.
 
-* **evaluation** (`QuizExerciseEvaluationResource`, `QuizStatisticsResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `BonusResource` | 3 | 2 | 0 | 0 |
 
-### practice
+### Results and feedback analysis
 
-* **training** (`QuizTrainingResource`)
+`RESULTS_AND_FEEDBACK_ANALYSIS`: Aggregated feedback across all submissions of an exercise.
 
-## text
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `ResultResource` | 0 | 3 | 0 | 0 |
+| communication | `ChannelResource` | 1 | 0 | 0 | 0 |
 
-### assessment
+## Exams
 
-* **assessment-analytics** (`AdminTextAssessmentEventResource`, `TextAssessmentEventResource`)
-* **manual-assessment** (`TextAssessmentResource`)
+### Take an exam
 
-### authoring
+`EXAM_TAKE`: Starting an exam, working on it and handing it in.
 
-* **exercise-management** (`TextExerciseCreationUpdateResource`, `TextExerciseResource`)
-* **import-export** (`TextExerciseExportImportResource`)
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `ExamResource` | 0 | 3 | 0 | 0 |
+| exam | `ExamUserResource` | 0 | 1 | 0 | 0 |
+| exam | `StudentExamResource` | 2 | 1 | 0 | 0 |
+| quiz | `QuizSubmissionResource` | 1 | 0 | 0 | 0 |
 
-### integrity
+### Test exams
 
-* **plagiarism** (`TextExercisePlagiarismResource`)
+`EXAM_TEST_EXAMS`: Practice exams with several attempts.
 
-### participation
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `StudentExamResource` | 0 | 1 | 0 | 0 |
 
-* **submissions** (`TextSubmissionResource`)
+### Exam results and review
 
-## tutorialgroup
+`EXAM_RESULTS`: The exam summary, the grade and the review period.
 
-### management
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `GradeStepResource` | 0 | 2 | 0 | 0 |
+| exam | `StudentExamResource` | 0 | 2 | 0 | 0 |
 
-* **configuration** (`TutorialGroupsConfigurationResource`)
-* **free-periods** (`TutorialGroupFreePeriodResource`)
-* **sessions** (`TutorialGroupSessionResource`)
-* **tutorial-groups** (`TutorialGroupResource`)
+### Create and configure exams
 
-## videosource
+`EXAM_AUTHORING`: Creating, importing and configuring exams and exercise groups.
 
-### video
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `ExamResource` | 4 | 6 | 1 | 0 |
+| exam | `ExerciseGroupResource` | 5 | 2 | 0 | 0 |
 
-* **tum-live** (`TumLiveResource`)
+### Exam registration
 
+`EXAM_REGISTRATION`: Registering students for an exam.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `ExamResource` | 4 | 0 | 0 | 0 |
+| exam | `ExamUserResource` | 1 | 3 | 0 | 0 |
+
+### Rooms and seats
+
+`EXAM_ROOMS`: Exam rooms and distributing students to seats.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `AdminExamRoomManagementResource` | 1 | 0 | 0 | 0 |
+| exam | `ExamRoomDistributionResource` | 2 | 4 | 0 | 0 |
+| exam | `ExamRoomManagementResource` | 1 | 1 | 0 | 0 |
+
+### Attendance check
+
+`EXAM_ATTENDANCE`: Checking identities and signatures during the exam.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `FileResource` | 0 | 2 | 0 | 0 |
+| exam | `ExamRoomDistributionResource` | 0 | 1 | 0 | 0 |
+| exam | `ExamUserResource` | 1 | 1 | 0 | 0 |
+| exam | `StudentExamResource` | 1 | 0 | 0 | 0 |
+
+### Exam conduction
+
+`EXAM_CONDUCTION_MANAGEMENT`: Generating student exams, test runs, working time and announcements.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `ExamResource` | 5 | 1 | 0 | 0 |
+| exam | `StudentExamResource` | 8 | 5 | 0 | 0 |
+
+### Suspicious behavior
+
+`EXAM_SUSPICIOUS_BEHAVIOR`: Suspicious exam sessions and potential plagiarism in an exam.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `ExamResource` | 0 | 2 | 0 | 0 |
+
+### Exam scores and statistics
+
+`EXAM_SCORES`: The scores and statistics of an exam.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| assessment | `ParticipantScoreResource` | 0 | 1 | 0 | 0 |
+| exam | `ExamResource` | 0 | 2 | 0 | 0 |
+
+### Exam archive, reset and deletion
+
+`EXAM_ARCHIVE`: Archiving, resetting, cleaning up and deleting an exam.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `ExamResource` | 4 | 2 | 0 | 0 |
+
+## Lectures
+
+### Lecture pages
+
+`LECTURE_PAGES`: The list of lectures and the lecture detail page.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| lecture | `LectureResource` | 0 | 4 | 1 | 0 |
+
+### Lecture units and slides
+
+`LECTURE_UNITS`: Viewing attachments and slides and completing lecture units.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `FileResource` | 0 | 6 | 0 | 0 |
+| lecture | `LectureUnitResource` | 1 | 1 | 0 | 0 |
+
+### Lecture videos and transcripts
+
+`LECTURE_VIDEO`: Watching lecture videos and reading their transcripts.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| lecture | `LectureTranscriptionResource` | 0 | 1 | 0 | 0 |
+| videosource | `TumLiveResource` | 0 | 1 | 0 | 0 |
+
+### Create and manage lectures
+
+`LECTURE_AUTHORING`: Creating lectures and their units and importing lectures.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `FileResource` | 0 | 1 | 0 | 0 |
+| lecture | `AttachmentVideoUnitResource` | 2 | 1 | 0 | 0 |
+| lecture | `ExerciseUnitResource` | 1 | 1 | 0 | 0 |
+| lecture | `LectureResource` | 5 | 2 | 0 | 0 |
+| lecture | `LectureUnitResource` | 2 | 0 | 0 | 0 |
+| lecture | `OnlineUnitResource` | 2 | 2 | 0 | 0 |
+| lecture | `TextUnitResource` | 2 | 1 | 0 | 0 |
+
+### Slide splitting and hidden pages
+
+`LECTURE_SLIDE_PROCESSING`: Splitting a slide deck into units and hiding pages for students.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| lecture | `AttachmentVideoUnitResource` | 3 | 2 | 0 | 0 |
+
+### Automatic content processing
+
+`LECTURE_CONTENT_PROCESSING`: Transcription and processing of lecture content.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
+| lecture | `LectureTranscriptionResource` | 0 | 1 | 0 | 0 |
+| lecture | `LectureUnitResource` | 1 | 1 | 0 | 0 |
+
+## Communication
+
+### Messages and threads
+
+`MESSAGING`: Writing, reading and answering messages in any conversation.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `AnswerMessageResource` | 4 | 1 | 0 | 0 |
+| communication | `ConversationMessageResource` | 4 | 2 | 0 | 0 |
+| core | `FileResource` | 1 | 0 | 1 | 0 |
+| course | `CourseAccessResource` | 0 | 1 | 0 | 0 |
+
+### Channels
+
+`CHANNELS`: Browsing, creating and moderating channels.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `ChannelResource` | 10 | 4 | 0 | 0 |
+
+### Direct messages and group chats
+
+`DIRECT_MESSAGES`: Starting one-to-one and group conversations.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `GroupChatResource` | 4 | 0 | 0 | 0 |
+| communication | `OneToOneChatResource` | 1 | 0 | 0 | 0 |
+| course | `CourseAccessResource` | 0 | 2 | 0 | 0 |
+
+### Conversation list
+
+`CONVERSATION_ORGANIZATION`: Favorites, muting, unread messages and the code of conduct.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `ChannelResource` | 1 | 0 | 0 | 0 |
+| communication | `ConversationResource` | 5 | 4 | 2 | 0 |
+| core | `FileResource` | 0 | 1 | 0 | 0 |
+
+### Reactions, saved and forwarded messages
+
+`MESSAGE_INTERACTIONS`: Reacting to, saving and forwarding messages.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `ForwardedMessageResource` | 1 | 1 | 0 | 0 |
+| communication | `ReactionResource` | 2 | 0 | 0 | 0 |
+| communication | `SavedPostResource` | 3 | 1 | 0 | 0 |
+
+### Link previews
+
+`LINK_PREVIEWS`: Previews of links in messages.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `LinkPreviewResource` | 0 | 1 | 0 | 0 |
+
+### FAQs
+
+`FAQ`: Reading, proposing and managing the frequently asked questions of a course.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `FaqResource` | 3 | 5 | 0 | 0 |
+
+## Notifications
+
+### In-app notifications
+
+`COURSE_NOTIFICATIONS`: The notification bell with the notifications of each course.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| course | `CourseOverviewResource` | 0 | 0 | 1 | 0 |
+| notification | `CourseNotificationResource` | 0 | 1 | 1 | 0 |
+| notification | `UserCourseNotificationStatusResource` | 2 | 0 | 1 | 0 |
+
+### Notification delivery
+
+`NOTIFICATION_DELIVERY`: Delivering notifications in the app, by email and by push.
+
+Also recorded outside REST by `CourseNotificationService`.
+
+### Notification settings
+
+`NOTIFICATION_SETTINGS`: Choosing which notifications to receive.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| notification | `GlobalNotificationSettingResource` | 1 | 1 | 0 | 0 |
+| notification | `UserCourseNotificationSettingResource` | 2 | 1 | 0 | 0 |
+
+### System notifications
+
+`SYSTEM_NOTIFICATIONS`: Maintenance and information banners for all users.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| notification | `AdminSystemNotificationResource` | 3 | 1 | 0 | 0 |
+| notification | `PublicSystemNotificationResource` | 0 | 0 | 1 | 0 |
+| notification | `SystemNotificationResource` | 0 | 2 | 0 | 0 |
+
+## Tutorial groups
+
+### My tutorial groups
+
+`TUTORIAL_GROUPS`: The tutorial groups of a course with their schedule and sessions.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| lecture | `LectureResource` | 0 | 1 | 0 | 0 |
+| tutorialgroup | `TutorialGroupResource` | 0 | 2 | 1 | 0 |
+| tutorialgroup | `TutorialGroupsConfigurationResource` | 0 | 1 | 0 | 0 |
+
+### Tutorial group management
+
+`TUTORIAL_GROUP_MANAGEMENT`: Creating groups, registering students and configuring free days.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| tutorialgroup | `TutorialGroupFreePeriodResource` | 3 | 4 | 0 | 0 |
+| tutorialgroup | `TutorialGroupResource` | 7 | 6 | 0 | 0 |
+| tutorialgroup | `TutorialGroupsConfigurationResource` | 2 | 0 | 0 | 0 |
+
+### Tutorial group sessions
+
+`TUTORIAL_GROUP_SESSIONS`: Creating, cancelling and activating sessions.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| tutorialgroup | `TutorialGroupSessionResource` | 5 | 0 | 0 | 0 |
+
+## Competencies and learning paths
+
+### Competency progress
+
+`COMPETENCY_PROGRESS`: Students' progress and mastery per competency.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `CompetencyResource` | 0 | 2 | 0 | 0 |
+| atlas | `CourseCompetencyResource` | 0 | 5 | 1 | 0 |
+| atlas | `PrerequisiteResource` | 0 | 2 | 0 | 0 |
+
+### Competency management
+
+`COMPETENCY_MANAGEMENT`: Creating, linking and importing competencies and prerequisites.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `CompetencyResource` | 7 | 0 | 0 | 0 |
+| atlas | `CourseCompetencyResource` | 4 | 5 | 0 | 0 |
+| atlas | `PrerequisiteResource` | 7 | 0 | 0 | 0 |
+
+### Standardized competency catalog
+
+`STANDARDIZED_COMPETENCIES`: The shared catalog of standardized competencies.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `AdminStandardizedCompetencyResource` | 7 | 1 | 0 | 0 |
+| atlas | `CompetencyResource` | 1 | 0 | 0 | 0 |
+| atlas | `PrerequisiteResource` | 1 | 0 | 0 | 0 |
+| atlas | `StandardizedCompetencyResource` | 0 | 3 | 0 | 0 |
+
+### Learning paths
+
+`LEARNING_PATHS`: A student's personalized sequence of learning objects.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `LearningPathResource` | 2 | 9 | 0 | 0 |
+| lecture | `LectureUnitResource` | 0 | 1 | 0 | 0 |
+
+### Learning path management
+
+`LEARNING_PATH_MANAGEMENT`: Enabling learning paths and monitoring their health.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `LearningPathResource` | 2 | 4 | 0 | 0 |
+
+### Learner profile
+
+`LEARNER_PROFILE`: A student's learning preferences.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `CourseLearnerProfileResource` | 1 | 1 | 0 | 0 |
+| atlas | `LearnerProfileResource` | 1 | 1 | 0 | 0 |
+
+### Research data collection
+
+`SCIENCE`: Collecting learning events for research, with an opt-out.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `ScienceResource` | 1 | 0 | 0 | 0 |
+| atlas | `ScienceSettingsResource` | 1 | 0 | 1 | 0 |
+
+## AI for learners
+
+### Iris chat
+
+`IRIS_CHAT`: Chatting with Iris about a course, an exercise or a lecture.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| iris | `IrisChatSessionResource` | 3 | 2 | 2 | 0 |
+| iris | `IrisMessageResource` | 5 | 1 | 0 | 0 |
+| iris | `IrisResource` | 0 | 0 | 1 | 0 |
+| iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 2 |
+
+### Iris memories
+
+`IRIS_MEMORY`: What Iris remembers about a student, and deleting it.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `AccountResource` | 1 | 0 | 0 | 0 |
+| iris | `IrisMemoryResource` | 2 | 2 | 0 | 0 |
+
+### Iris struggle intervention
+
+`IRIS_STRUGGLE_INTERVENTION`: Iris offering help when a student is stuck.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| iris | `IrisStruggleInterventionResource` | 5 | 0 | 0 | 0 |
+| iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
+
+### Iris answers in search
+
+`IRIS_SEARCH_ANSWER`: An AI answer shown in the global search.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| iris | `IrisGlobalSearchResource` | 1 | 0 | 0 | 0 |
+| iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
+
+### Iris course settings
+
+`IRIS_SETTINGS`: Configuring Iris for a course.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| iris | `IrisSettingsResource` | 1 | 0 | 1 | 0 |
+
+### Iris content ingestion
+
+`IRIS_CONTENT_INGESTION`: Sending FAQs to Iris so that it can answer with them.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `FaqResource` | 1 | 0 | 0 | 0 |
+| iris | `IrisResource` | 0 | 1 | 0 | 0 |
+| iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
+
+### AI feedback on request
+
+`AI_FEEDBACK_REQUEST`: Students requesting formative AI feedback on their work.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `StudentExamResource` | 1 | 1 | 0 | 0 |
+| exercise | `ParticipationResource` | 1 | 0 | 0 | 0 |
+
+Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
+
+## AI for instructors and tutors
+
+### AI problem statement generation
+
+`HYPERION_PROBLEM_STATEMENT`: Generating, refining and rewriting a problem statement.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionProblemStatementResource` | 4 | 0 | 0 | 0 |
+
+### AI instructor checklist
+
+`HYPERION_CHECKLIST`: Analyzing a problem statement against a quality checklist.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionProblemStatementResource` | 3 | 0 | 0 | 0 |
+
+### AI consistency check
+
+`HYPERION_CONSISTENCY_CHECK`: Checking the problem statement against the code of an exercise.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionProblemStatementResource` | 1 | 0 | 0 | 0 |
+
+### AI code generation
+
+`HYPERION_CODE_GENERATION`: Generating the solution, template or test code of an exercise.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionCodeGenerationResource` | 1 | 0 | 1 | 0 |
+
+### AI exercise variants
+
+`HYPERION_VARIANT_GENERATION`: Generating variants of an existing exercise.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionExerciseVariantResource` | 2 | 0 | 2 | 0 |
+
+### AI quiz questions
+
+`HYPERION_QUIZ_GENERATION`: Generating and refining quiz questions.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionQuizQuestionGenerationResource` | 3 | 0 | 0 | 0 |
+
+### AI grading criteria
+
+`HYPERION_ASSESSMENT_CRITERIA`: Generating structured grading criteria.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionAssessmentCriteriaGenerationResource` | 1 | 0 | 0 | 0 |
+
+### AI FAQ rewrite
+
+`HYPERION_FAQ_REWRITE`: Rewriting the text of an FAQ.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionFaqResource` | 1 | 0 | 0 | 0 |
+
+### AI feedback suggestions
+
+`ATHENA_FEEDBACK_SUGGESTIONS`: Suggested feedback for tutors while they assess.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| athena | `AthenaInternalResource` | 0 | 0 | 0 | 4 |
+| athena | `AthenaResource` | 0 | 3 | 0 | 0 |
+
+Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
+
+### AI answer suggestions for tutors
+
+`IRIS_TUTOR_SUGGESTIONS`: Suggested answers when tutors reply to a question.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| iris | `IrisMessageResource` | 1 | 0 | 0 | 0 |
+| iris | `IrisTutorSuggestionSessionResource` | 1 | 0 | 1 | 0 |
+| iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 2 |
+
+### Atlas agent
+
+`ATLAS_AGENT`: A chat assistant for managing competencies.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `AtlasAgentResource` | 1 | 1 | 0 | 0 |
+
+### Automatic competency linking
+
+`COMPETENCY_ORCHESTRATION`: Linking exercises to competencies automatically.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `CompetencyOrchestrationResource` | 1 | 1 | 0 | 0 |
+
+### AI competency generation
+
+`AI_COMPETENCY_GENERATION`: Generating competencies and suggesting their relations.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| atlas | `CompetencyResource` | 2 | 0 | 0 | 0 |
+| atlas | `CourseCompetencyResource` | 1 | 0 | 0 | 0 |
+| iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
+
+## Academic integrity
+
+### Plagiarism checks
+
+`PLAGIARISM_CHECKS`: Running plagiarism checks and inspecting the matches.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| plagiarism | `PlagiarismResource` | 2 | 2 | 0 | 0 |
+| programming | `ProgrammingExercisePlagiarismResource` | 2 | 1 | 0 | 0 |
+| programming | `RepositoryProgrammingExerciseParticipationResource` | 0 | 2 | 0 | 0 |
+| text | `TextExercisePlagiarismResource` | 1 | 1 | 0 | 0 |
+
+### Continuous plagiarism control
+
+`CONTINUOUS_PLAGIARISM_CONTROL`: Plagiarism checks that run automatically.
+
+Also recorded outside REST by `ContinuousPlagiarismControlService`.
+
+### Plagiarism cases
+
+`PLAGIARISM_CASES`: Verdicts on plagiarism cases and the discussion with students.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| plagiarism | `PlagiarismAnswerPostResource` | 3 | 0 | 0 | 0 |
+| plagiarism | `PlagiarismCaseResource` | 1 | 7 | 0 | 0 |
+| plagiarism | `PlagiarismPostResource` | 3 | 1 | 0 | 0 |
+
+### Malicious participation analysis
+
+`DEIMOS`: Analyzing programming participations for malicious code.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| deimos | `DeimosResource` | 2 | 0 | 0 | 0 |
+
+## Account and security
+
+### Sign-in
+
+`SIGN_IN`: Signing in and out, including single sign-on.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `PublicAccountResource` | 0 | 2 | 0 | 0 |
+| core | `PublicUserJwtResource` | 4 | 0 | 0 | 0 |
+
+### Registration and password
+
+`REGISTRATION_PASSWORD`: Registering an account and changing or resetting the password.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `AccountResource` | 1 | 0 | 0 | 0 |
+| core | `PublicAccountResource` | 3 | 1 | 0 | 0 |
+
+### Account settings
+
+`ACCOUNT_SETTINGS`: Profile, language, profile picture and AI preferences.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `AccountResource` | 4 | 0 | 0 | 0 |
+| account | `UserResource` | 2 | 0 | 0 | 0 |
+| core | `FileResource` | 0 | 0 | 1 | 0 |
+| core | `PublicAccountResource` | 1 | 0 | 1 | 0 |
+
+### Passkeys
+
+`PASSKEYS`: Registering and managing passkeys.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `PasskeyResource` | 3 | 2 | 0 | 0 |
+
+### SSH keys and access tokens
+
+`GIT_CREDENTIALS`: SSH keys and personal access tokens for Git.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `AccountResource` | 3 | 1 | 0 | 0 |
+| localvc | `SshFingerprintsProviderResource` | 0 | 1 | 0 | 0 |
+| programming | `RepositoryVcsAccessTokenResource` | 1 | 1 | 0 | 0 |
+| programming | `SshPublicKeysResource` | 2 | 2 | 0 | 0 |
+| programming | `VcsAccessTokenOverviewResource` | 1 | 1 | 0 | 0 |
+
+### Personal data export
+
+`PERSONAL_DATA_EXPORT`: Exporting one's own data.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `DataExportResource` | 1 | 4 | 0 | 0 |
+
+## Integrations
+
+### LTI
+
+`LTI`: Opening Artemis content from a learning management system.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| lti | `AdminLtiConfigurationResource` | 4 | 1 | 0 | 0 |
+| lti | `LtiResource` | 2 | 2 | 0 | 0 |
+| lti | `PublicLtiResource` | 1 | 0 | 0 | 0 |
+| lti | `PublicOAuth2JWKSResource` | 0 | 0 | 0 | 1 |
+
+### Sharing platform
+
+`SHARING_PLATFORM`: Exchanging programming exercises with the sharing platform.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| core | `SharingSupportResource` | 0 | 0 | 0 | 2 |
+| programming | `ExerciseSharingResource` | 2 | 2 | 0 | 1 |
+
+### Mobile apps
+
+`MOBILE_APPS`: Deep links and push notifications of the iOS and Android apps.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| communication | `AndroidAppSiteAssociationResource` | 0 | 0 | 0 | 1 |
+| communication | `AppleAppSiteAssociationResource` | 0 | 0 | 0 | 1 |
+| notification | `PushNotificationResource` | 2 | 0 | 0 | 0 |
+
+### VS Code extension
+
+`VS_CODE_EXTENSION`: Signing in to Artemis from the VS Code extension.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `TokenResource` | 1 | 0 | 0 | 0 |
+
+## Build system
+
+### Build overview
+
+`BUILD_OVERVIEW`: The build jobs of a course with their logs.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| localci | `BuildJobQueueResource` | 3 | 5 | 0 | 0 |
+| localci | `BuildLogResource` | 0 | 1 | 0 | 0 |
+
+### Build agents
+
+`BUILD_AGENTS`: All build jobs and the build agents of the server.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminBuildJobQueueResource` | 9 | 9 | 0 | 0 |
+| localvc | `PublicBuildAgentAddressResource` | 0 | 0 | 0 | 1 |
+
+## Administration and operations
+
+### User management
+
+`USER_MANAGEMENT`: Creating, importing, editing and deleting users.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `AdminUserResource` | 8 | 6 | 0 | 0 |
+
+### Organizations
+
+`ORGANIZATIONS`: Organizations that group users and courses.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `OrganizationResource` | 0 | 1 | 0 | 0 |
+| admin | `AdminOrganizationResource` | 8 | 6 | 1 | 0 |
+
+### Feature toggles
+
+`FEATURE_TOGGLES`: Switching features on and off at runtime.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminFeatureToggleResource` | 1 | 0 | 0 | 0 |
+
+### Monitoring
+
+`MONITORING`: Metrics, logs, audits, websocket and scheduled jobs.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminAuditResource` | 0 | 3 | 0 | 0 |
+| admin | `AdminLogResource` | 1 | 1 | 0 | 0 |
+| admin | `AdminMetricsResource` | 0 | 1 | 0 | 0 |
+| admin | `AdminScheduleResource` | 0 | 2 | 0 | 0 |
+| admin | `AdminWebsocketResource` | 1 | 0 | 1 | 0 |
+
+### Usage statistics
+
+`USAGE_STATISTICS`: Platform usage over time.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminStatisticsResource` | 0 | 1 | 0 | 0 |
+
+### Feature usage
+
+`FEATURE_USAGE`: This page.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminFeatureUsageResource` | 1 | 3 | 0 | 0 |
+
+### Cleanup service
+
+`DATA_CLEANUP`: Deleting orphaned and outdated data.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminCleanupResource` | 12 | 14 | 0 | 0 |
+
+### Data exports
+
+`ADMIN_DATA_EXPORTS`: Creating data exports for users.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminDataExportResource` | 2 | 2 | 0 | 0 |
+
+### Imprint and privacy statement
+
+`LEGAL_PAGES`: Viewing and editing the imprint and the privacy statement.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminImprintResource` | 1 | 1 | 0 | 0 |
+| admin | `AdminPrivacyStatementResource` | 1 | 1 | 0 | 0 |
+| core | `PublicImprintResource` | 0 | 1 | 0 | 0 |
+| core | `PublicPrivacyStatementResource` | 0 | 1 | 0 | 0 |
+
+### Dependencies and vulnerabilities
+
+`DEPENDENCIES`: The software bill of materials and known vulnerabilities.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| admin | `AdminSbomResource` | 2 | 5 | 0 | 0 |
+
+### Iris dashboard
+
+`IRIS_ADMIN_DASHBOARD`: Usage, cost and alerts of Iris.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| iris | `IrisAdminDashboardResource` | 0 | 4 | 0 | 0 |
+
+### Upcoming exams and exercises
+
+`UPCOMING_EXAMS_AND_EXERCISES`: An overview of what is coming up across all courses.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| exam | `AdminExamResource` | 0 | 1 | 0 | 0 |
+| exercise | `AdminExerciseResource` | 0 | 1 | 0 | 0 |
+
+## Interaction overrides
+
+The endpoints whose calls do not count the way their HTTP verb suggests, grouped by how they count instead.
+
+### Counted as actions
+
+* `GET api/admin/sbom/vulnerabilities/refresh` (`DEPENDENCIES`)
+* `GET api/atlas/courses/{courseId}/competencies/relations/suggest` (`AI_COMPETENCY_GENERATION`)
+* `GET api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction` (`EXAM_TAKE`)
+* `GET api/exam/courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction` (`EXAM_CONDUCTION_MANAGEMENT`)
+* `GET api/exercise/programming-exercises/{programmingExerciseId}/consistency-check` (`PROGRAMMING_CONSISTENCY_CHECK`)
+* `GET api/programming/programming-exercises/{exerciseId}/check-plagiarism` (`PLAGIARISM_CHECKS`)
+* `GET api/programming/programming-exercises/{exerciseId}/check-plagiarism-jplag-report` (`PLAGIARISM_CHECKS`)
+* `GET api/text/text-exercises/{exerciseId}/check-plagiarism` (`PLAGIARISM_CHECKS`)
+
+### Counted as views
+
+* `POST api/account/admin/users/deletion-impact` (`USER_MANAGEMENT`)
+* `POST api/exercise/problem-statement/render` (`EXERCISE_DETAILS`)
+* `POST api/iris/lecture-search` (`GLOBAL_SEARCH`)
+* `POST api/localci/programming-exercises/timeline/automatic-after-due-date-preview` (`PROGRAMMING_AUTHORING`)
+* `POST api/modeling/apollon/convert-to-pdf` (`MODELING_EXERCISES`)
+* `POST api/programming/programming-exercises/{exerciseId}/files-content-commit-details/selected` (`PROGRAMMING_REPOSITORY_HISTORY`)
+* `POST api/programming/sharing/import/basket/exercise-details` (`SHARING_PLATFORM`)
+* `POST api/quiz/courses/{courseId}/training-questions` (`QUIZ_TRAINING`)
+* `POST api/quiz/exercises/{exerciseId}/submissions/preview` (`QUIZ_AUTHORING`)
+
+### Counted as automatic calls
+
+* `GET api/admin/organizations/{organizationId}/title` (`ORGANIZATIONS`)
+* `GET api/admin/websocket/nodes` (`MONITORING`)
+* `GET api/atlas/course-competencies/{competencyId}/title` (`COMPETENCY_PROGRESS`)
+* `GET api/atlas/science-settings` (`SCIENCE`)
+* `GET api/communication/courses/{courseId}/unread-messages` (`CONVERSATION_ORGANIZATION`)
+* `GET api/core/files/courses/{courseId}/conversations/{conversationId}/{filename}` (`MESSAGING`)
+* `GET api/core/files/courses/{courseId}/icons/*` (`COURSE_DASHBOARD`)
+* `GET api/core/files/drag-and-drop/questions/{questionId}/backgrounds/*` (`QUIZ_LIVE`)
+* `GET api/core/files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/*` (`QUIZ_LIVE`)
+* `GET api/core/files/markdown/{filename}` (`MARKDOWN_UPLOADS`)
+* `GET api/core/files/users/{userId}/profile-pictures/*` (`ACCOUNT_SETTINGS`)
+* `GET api/core/public/account` (`ACCOUNT_SETTINGS`)
+* `GET api/course/courses/for-notifications` (`COURSE_NOTIFICATIONS`)
+* `GET api/course/courses/{courseId}/title` (`COURSE_OVERVIEW`)
+* `GET api/exam/exams/{examId}/title` (`EXAM_AUTHORING`)
+* `GET api/exercise/exercises/{exerciseId}/title` (`EXERCISE_DETAILS`)
+* `GET api/hyperion/programming-exercises/{exerciseId}/code-generation/active-job` (`HYPERION_CODE_GENERATION`)
+* `GET api/hyperion/variant-jobs` (`HYPERION_VARIANT_GENERATION`)
+* `GET api/hyperion/variant-jobs/{jobId}` (`HYPERION_VARIANT_GENERATION`)
+* `GET api/iris/chat/courses/{courseId}/sessions/overview` (`IRIS_CHAT`)
+* `GET api/iris/courses/{courseId}/iris-settings` (`IRIS_SETTINGS`)
+* `GET api/iris/courses/{courseId}/status` (`IRIS_CHAT`)
+* `GET api/lecture/lectures/{lectureId}/title` (`LECTURE_PAGES`)
+* `GET api/localci/queued-jobs/queue-duration-estimation` (`PROGRAMMING_RESULTS`)
+* `GET api/modeling/apollon-diagrams/{diagramId}/title` (`QUIZ_AUTHORING`)
+* `GET api/notification/courses/info` (`COURSE_NOTIFICATIONS`)
+* `GET api/notification/public/system-notifications/active` (`SYSTEM_NOTIFICATIONS`)
+* `GET api/programming/plantuml/png` (`EXERCISE_DETAILS`)
+* `GET api/programming/plantuml/svg` (`EXERCISE_DETAILS`)
+* `GET api/programming/programming-exercise-participations/{participationId}/latest-pending-submission` (`PROGRAMMING_RESULTS`)
+* `GET api/programming/programming-exercises/{exerciseId}/latest-pending-submissions` (`PROGRAMMING_RESULTS`)
+* `GET api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title` (`TUTORIAL_GROUPS`)
+* `PATCH api/communication/courses/{courseId}/conversations/{conversationId}/mark-as-read` (`CONVERSATION_ORGANIZATION`)
+* `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)
+* `POST api/iris/tutor-suggestion/posts/{postId}/sessions/current` (`IRIS_TUTOR_SUGGESTIONS`)
+* `PUT api/notification/courses/{courseId}/seen` (`COURSE_NOTIFICATIONS`)
+
+### Counted as system calls
+
+* `GET .well-known/apple-app-site-association` (`MOBILE_APPS`)
+* `GET .well-known/assetlinks.json` (`MOBILE_APPS`)
+* `GET .well-known/jwks.json` (`LTI`)
+* `GET api/core/sharing/config` (`SHARING_PLATFORM`)
+* `GET api/core/sharing/config/is-enabled` (`SHARING_PLATFORM`)
+* `GET api/localci/public/programming-exercises/{exerciseId}/build-plan` (`PROGRAMMING_BUILD_CONFIGURATION`)
+* `GET api/localvc/public/observed-client-address` (`BUILD_AGENTS`)
+* `GET api/programming/sharing/export/{token}` (`SHARING_PLATFORM`)
+* `POST api/programming/public/programming-exercises/new-result` (`PROGRAMMING_RESULTS`)

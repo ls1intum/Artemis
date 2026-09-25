@@ -21,6 +21,7 @@
                                 @case ('solution') {
                                     <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
                                 }
+                                @default {}
                             }
                             <ng-template #modeBadge let-modeTranslation>
                                 <span class="small">
@@ -133,6 +134,7 @@
                                             }"
                                         />
                                     }
+                                    @default {}
                                 }
                                 <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
                                 <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>

@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Service, computed, signal } from '@angular/core';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
 
 /**
@@ -13,7 +13,7 @@ import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/sh
  * - `_page` reflects the current route (lecture/exercise/course/tutor-suggestion) and is
  *   the source-of-truth when (re)creating a session.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisChatContextService {
     private readonly _committed = signal<SessionContext | undefined>(undefined);
     private readonly _pending = signal<SessionContext | undefined>(undefined);
