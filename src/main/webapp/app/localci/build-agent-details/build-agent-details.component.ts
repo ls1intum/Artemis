@@ -7,7 +7,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonComponent, TumUiInputDirective, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -45,10 +45,10 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [
         FontAwesomeModule,
         RouterModule,
-        TumUiButtonComponent,
-        TumUiTagComponent,
-        TumUiMessageComponent,
-        TumUiInputDirective,
+        TumAetUiButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiInputDirective,
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,

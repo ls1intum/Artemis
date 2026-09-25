@@ -1,0 +1,25 @@
+<fa-icon [icon]="faMagnifyingGlass" class="tumaet-ui-search-field-icon tumaet:text-muted" aria-hidden="true" />
+
+<input
+    #searchInput
+    tumAetUiInput
+    type="search"
+    [tumAetUiInputSize]="size()"
+    [value]="value()"
+    [disabled]="disabled()"
+    [placeholder]="placeholder() | tumAetUiTranslate"
+    [attr.aria-label]="accessibleNameKey() | tumAetUiTranslate"
+    (input)="onInput(searchInput.value)"
+/>
+
+@if (value()) {
+    <button
+        type="button"
+        class="tumaet-ui-search-field-clear tumaet:cursor-pointer tumaet:appearance-none tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted tumaet:hover:text-text"
+        [disabled]="disabled()"
+        [attr.aria-label]="'tumAetUi.searchField.clear' | tumAetUiTranslate"
+        (click)="clear()"
+    >
+        <fa-icon [icon]="faXmark" />
+    </button>
+}

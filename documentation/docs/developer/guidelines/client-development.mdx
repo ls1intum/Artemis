@@ -102,29 +102,29 @@ Key principles:
 ### UI components
 
 <Callout variant={CalloutVariant.danger}>
-    **TUM UI is the target Artemis component system; Bootstrap, ng-bootstrap, and PrimeNG are deprecated migration dependencies.** Prefer a component from
-    [`@tumaet/ui-angular`](/developer/tum-ui-reference) whenever one exists. The long-term direction is to migrate the client entirely to the [TUM UI component
-    kit](/developer/guidelines/tum-ui-kit), built on Angular Aria, Angular CDK, and Tailwind tokens. Use PrimeNG only for capabilities TUM UI does not yet provide, and do not
-    introduce Bootstrap or ng-bootstrap in new work.
+    **TUM AET UI is the target Artemis component system; Bootstrap, ng-bootstrap, and PrimeNG are deprecated migration dependencies.** Prefer a component from
+    [`@tumaet/ui-angular`](/developer/tum-aet-ui-reference) whenever one exists. The long-term direction is to migrate the client entirely to the [TUM AET UI component
+    kit](/developer/guidelines/tum-aet-ui-kit), built on Angular Aria, Angular CDK, and Tailwind tokens. Use PrimeNG only for capabilities TUM AET UI does not yet provide, and do
+    not introduce Bootstrap or ng-bootstrap in new work.
 </Callout>
 
 Choose the smallest stable abstraction that meets the requirement:
 
 1. Use semantic native HTML when the platform already supplies the required behavior.
-2. Use an existing TUM UI component for a reusable control or visual pattern.
-3. If a reusable pattern is missing, add or evolve a TUM UI component around native HTML, Angular
+2. Use an existing TUM AET UI component for a reusable control or visual pattern.
+3. If a reusable pattern is missing, add or evolve a TUM AET UI component around native HTML, Angular
    Aria, and stable Angular CDK primitives. The pull request must include a concrete Artemis
    consumer; a second application is not required.
 4. Keep domain-specific composition, routing, requests, and application translations in Artemis.
-   Compose those features from TUM UI primitives instead of exporting application policy as a
+   Compose those features from TUM AET UI primitives instead of exporting application policy as a
    package API.
-5. Use PrimeNG only when the TUM UI gap cannot reasonably be closed in the same change. State the
+5. Use PrimeNG only when the TUM AET UI gap cannot reasonably be closed in the same change. State the
    missing capability and migration path in the pull request, and isolate the fallback so it can be
    replaced.
 
 Do not reimplement keyboard navigation, focus management, overlays, selection, or virtual scrolling
 when native HTML, Angular Aria, or Angular CDK already provides the behavior. Follow the
-[TUM UI package guide](/developer/guidelines/tum-ui-kit) for ownership, public API, stories, and
+[TUM AET UI package guide](/developer/guidelines/tum-aet-ui-kit) for ownership, public API, stories, and
 validation.
 
 <Callout variant={CalloutVariant.danger}>
@@ -308,7 +308,7 @@ export class ExampleComponent {
 }
 ```
 
-An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **errors** on `ngOnChanges` across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs. The checked paths are free of the hook, and error severity prevents an accidental reintroduction from passing CI.
+An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **errors** on `ngOnChanges` across `src/main/webapp/app`, `packages/tum-aet-ui/src/lib`, and `src/test/javascript`, including specs. The checked paths are free of the hook, and error severity prevents an accidental reintroduction from passing CI.
 
 The rule deliberately does **not** require an `@Component` / `@Directive` decorator. Angular invokes `ngOnChanges` on the component _instance_, so a hook inherited from an undecorated base class runs exactly like one declared on the component — requiring the decorator would leave that route open. Type-only declarations (`interface X { ngOnChanges(...) }`), object-literal properties, and `static ngOnChanges` helpers are not flagged, because Angular never calls those.
 
@@ -765,7 +765,7 @@ that selector.
 
 ### Styling
 
-Use Tailwind for application layout and TUM UI for reusable component styling. Add component SCSS
+Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
 only when semantic utilities and component contracts cannot express a genuinely component-specific
 rule. Keep global styles in `src/main/webapp/content/scss` limited to application-wide foundations
 and legacy integration.
@@ -784,19 +784,19 @@ When an application component needs owned class selectors, use [BEM](https://get
 }
 ```
 
-**Bootstrap → TUM UI/Tailwind quick reference** (apply when migrating a module):
+**Bootstrap → TUM AET UI/Tailwind quick reference** (apply when migrating a module):
 
 | Bootstrap                                                       | Target                                                                                                                                     |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `tum-ui-button` or `[tumUiButton]` with `severity`, `size`, and `variant`; `tum-ui-button-group`                                           |
-| `badge` / `bg-success` badge                                    | `tum-ui-tag` with a semantic `severity`                                                                                                    |
-| `alert alert-*`                                                 | `tum-ui-message` with a semantic `severity`                                                                                                |
-| `card` / collapsible panel                                      | `tum-ui-card` / `tum-ui-panel`; a semantic element with Tailwind utilities for a presentation-only box                                     |
-| `table table-striped table-responsive`                          | `tum-ui-table`, native `<table tumUiTable>`, or `tum-ui-table-virtual-scroll` when virtualization is justified                             |
-| `form-control` / `form-group` / `form-check`                    | `[tumUiInput]`, `tum-ui-select`, `tum-ui-checkbox`, or `tum-ui-radio-button`, composed with Tailwind layout                                |
-| a filter or search input                                        | `tum-ui-search-field`, which brings its own magnifier and clear control; `jhi-search-filter` wraps it for Artemis                          |
-| tabs / pagination / progress / tooltip / date picker            | `tum-ui-tabs`, `tum-ui-paginator`, TUM UI progress components, `[tumUiTooltip]`, or `tum-ui-date-picker`                                   |
-| modal                                                           | `tum-ui-dialog`; keep feature state and result handling in the Artemis host                                                                |
+| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `tumaet-ui-button` or `[tumAetUiButton]` with `severity`, `size`, and `variant`; `tumaet-ui-button-group`                                  |
+| `badge` / `bg-success` badge                                    | `tumaet-ui-tag` with a semantic `severity`                                                                                                 |
+| `alert alert-*`                                                 | `tumaet-ui-message` with a semantic `severity`                                                                                             |
+| `card` / collapsible panel                                      | `tumaet-ui-card` / `tumaet-ui-panel`; a semantic element with Tailwind utilities for a presentation-only box                               |
+| `table table-striped table-responsive`                          | `tumaet-ui-table`, native `<table tumAetUiTable>`, or `tumaet-ui-table-virtual-scroll` when virtualization is justified                    |
+| `form-control` / `form-group` / `form-check`                    | `[tumAetUiInput]`, `tumaet-ui-select`, `tumaet-ui-checkbox`, or `tumaet-ui-radio-button`, composed with Tailwind layout                    |
+| a filter or search input                                        | `tumaet-ui-search-field`, which brings its own magnifier and clear control; `jhi-search-filter` wraps it for Artemis                       |
+| tabs / pagination / progress / tooltip / date picker            | `tumaet-ui-tabs`, `tumaet-ui-paginator`, TUM AET UI progress components, `[tumAetUiTooltip]`, or `tumaet-ui-date-picker`                   |
+| modal                                                           | `tumaet-ui-dialog`; keep feature state and result handling in the Artemis host                                                             |
 | `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*`, or flexbox                                                                           |
 | `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                          |
 | `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                             |
@@ -810,21 +810,21 @@ When an application component needs owned class selectors, use [BEM](https://get
 | Need                                    | Use                                                                                                           | Never                                                                             |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | brand / neutral / surface               | an Artemis semantic property, or an app-owned semantic utility when one is defined                            | `text-blue-500`, `bg-surface-200`, `bg-[#…]`, or a framework-owned primitive      |
-| state on a **TUM UI component**         | the component's semantic `severity`, such as `tum-ui-message`, `tum-ui-tag`, or `tum-ui-button`               | a color class that overrides the component                                        |
+| state on a **TUM AET UI component**     | the component's semantic `severity`, such as `tumaet-ui-message`, `tumaet-ui-tag`, or `tumaet-ui-button`      | a color class that overrides the component                                        |
 | state on **plain markup** (static)      | `text-state-danger`, `bg-state-success`, `border-state-warning`, or `text-state-info`                         | `text-danger` (Bootstrap), `text-(--danger)`, or `text-(--p-red-500)`             |
 | state that is **dynamic / conditional** | a semantic component input, or `[style.color]="cond ? 'var(--danger)' : undefined"` for irreducible inline UI | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"`, or a raw color value |
 
 The Artemis state tokens are `--danger`, `--success`, `--warning`, and `--info`. They are generated
-for light and dark mode and feed the TUM UI host-token adapter. Legacy PrimeNG also receives these
-roles during migration, but it does not own them. Semantic markup and TUM UI therefore share one
+for light and dark mode and feed the TUM AET UI host-token adapter. Legacy PrimeNG also receives these
+roles during migration, but it does not own them. Semantic markup and TUM AET UI therefore share one
 source of truth without component-level `dark:` color branches.
 
 The `state-*` names are Artemis's semantic namespace and avoid collisions with Bootstrap's
 unlayered color utilities during migration. `@theme inline` maps them directly to Artemis theme
 properties in `src/main/webapp/tailwind.css`.
 
-**Pick the tool by meaning, not by syntax.** Render a labelled status with `tum-ui-tag` or
-`tum-ui-message` and its semantic `severity`; the component owns the theme-aware visual treatment.
+**Pick the tool by meaning, not by syntax.** Render a labelled status with `tumaet-ui-tag` or
+`tumaet-ui-message` and its semantic `severity`; the component owns the theme-aware visual treatment.
 Use `text-state-*` only for irreducible inline color with no suitable component host, such as a
 translated validation hint or a state-colored status glyph. Do not add a component wrapper solely
 to avoid an otherwise appropriate semantic utility.
@@ -841,7 +841,7 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 ```html
 <div class="flex items-center justify-between gap-2">
     <h5 class="mb-0" jhiTranslate="..."></h5>
-    <tum-ui-button size="small" (clicked)="save()"> {{ 'entity.action.save' | artemisTranslate }} </tum-ui-button>
+    <tumaet-ui-button size="small" (clicked)="save()"> {{ 'entity.action.save' | artemisTranslate }} </tumaet-ui-button>
 </div>
 ```
 
@@ -851,15 +851,15 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 
 1. **Closure first, not directory.** Map what actually _renders_: the section's component tree **plus** the global shell (footer, navbar, alert overlay) and any runtime dialogs (`jhiDeleteButton → delete-dialog → confirm-entity-name`). For each shared/leaf component in that closure — if already locked, reuse it; if small and section-local, migrate it first as its own locked unit; if app-wide and not yet migrated, **leave it Bootstrap and do not put a Tailwind utility on its host** (a half-migrated shared component loses the cascade everywhere it renders).
 2. **Enumerate + triage.** Grep the closure's `.html` for Bootstrap classes and its `.scss`/`.ts` for hex / `var(--bs-*)` / class-strings. Discount false positives (shared spacing `mb-*`/`me-*`/`gap-*` are allowed; many `row`/`table` hits are `p-table` `styleClass` or custom classes).
-3. **Convert templates fully** (never half). Use the TUM UI and Tailwind quick-reference table above,
+3. **Convert templates fully** (never half). Use the TUM AET UI and Tailwind quick-reference table above,
    and convert spacing by target size rather than copying the class index. Import package symbols
    from `@tumaet/ui-angular`, never through a deep path.
-4. **Replace legacy behavior with the target primitive.** Use `tum-ui-dialog` for modal presentation,
-   `[tumUiTooltip]` for tooltips, and the corresponding TUM UI control where it exists. Keep
-   application state and results in the Artemis component. If TUM UI lacks a capability, either add
+4. **Replace legacy behavior with the target primitive.** Use `tumaet-ui-dialog` for modal presentation,
+   `[tumAetUiTooltip]` for tooltips, and the corresponding TUM AET UI control where it exists. Keep
+   application state and results in the Artemis component. If TUM AET UI lacks a capability, either add
    the reusable contract or document a contained PrimeNG fallback.
 5. **Convert colors in `.html`, `.scss`, and `.ts`.** Template lint cannot see every color in
-   TypeScript class maps or SCSS. Replace Bootstrap classes and raw values with TUM UI inputs,
+   TypeScript class maps or SCSS. Replace Bootstrap classes and raw values with TUM AET UI inputs,
    Tailwind semantic utilities, or Artemis semantic properties.
 6. **Strip dead SCSS** — prefer deleting component SCSS in favour of utilities; remove `::ng-deep` bandaids.
 7. **Drive Bootstrap hits to zero** across the closure — a module must be 100% converted before it renders correctly. Run `pnpm migrate:check <path>` to list what Bootstrap remains in a path and whether it is ready to lock; `pnpm migrate:status` shows the remaining-Bootstrap burndown by section to pick the next one.
@@ -869,28 +869,28 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 9. **Prove it** — `pnpm run test:rules && pnpm run lint && pnpm run stylelint && pnpm run prettier:check`.
 10. **Restart the dev server + verify light AND dark.** `@source` changes need a fresh Tailwind scan (`ng serve` does not reliably HMR `tailwind.css`); also check a _not-yet-migrated_ page that shares the same closure components, for spillover.
 
-| Symptom                                          | Cause                                                      | Fix                                         |
-| ------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------- |
-| Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                             |
-| Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                                      |
-| A legacy control renders grey or unstyled        | a `p-*` root class hand-painted on a bare element          | use TUM UI or the actual fallback component |
-| A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1)          |
+| Symptom                                          | Cause                                                      | Fix                                             |
+| ------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------- |
+| Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                                 |
+| Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                                          |
+| A legacy control renders grey or unstyled        | a `p-*` root class hand-painted on a bare element          | use TUM AET UI or the actual fallback component |
+| A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1)              |
 
 **Exit criteria.** Bootstrap can be removed after every rendering closure is migrated and locked.
 That removal enables Tailwind Preflight, removes the source allowlist and Bootstrap dependency, and
 drops Bootstrap-specific token aliases. PrimeNG can be removed after its remaining capability gaps
-have TUM UI replacements and all imports, theme setup, and PrimeUI-specific utilities are gone. The
-TUM UI host adapter keeps these migrations behind one boundary, so package component APIs and
+have TUM AET UI replacements and all imports, theme setup, and PrimeUI-specific utilities are gone. The
+TUM AET UI host adapter keeps these migrations behind one boundary, so package component APIs and
 semantic tokens do not need to change as either legacy framework leaves.
 
 ### Chart Instantiation
 
-Charts come from the TUM UI kit: `tum-ui-bar-chart`, `tum-ui-line-chart` and `tum-ui-doughnut-chart` in
+Charts come from the TUM AET UI kit: `tumaet-ui-bar-chart`, `tumaet-ui-line-chart` and `tumaet-ui-doughnut-chart` in
 `@tumaet/ui-angular`. They render inline SVG, so every axis tick, category label and data label is a real
 `<text>` node that can be selected, copied and searched, and each chart renders a visually hidden data table
 beside it for assistive technology.
 
-Do not build the SVG yourself. `app/shared-ui/chart/tum-ui-chart-adapters.ts` maps Artemis' series models onto
+Do not build the SVG yourself. `app/shared-ui/chart/tum-aet-ui-chart-adapters.ts` maps Artemis' series models onto
 the shape the components consume, so a chart stays a matter of data plus a small config object:
 
 | Helper                                         | Purpose                                                                              |
@@ -906,7 +906,7 @@ chart's container:
 ```html
 <h4 id="score-distribution-heading" jhiTranslate="statistics.score_distribution"></h4>
 <div style="height: 250px">
-    <tum-ui-bar-chart
+    <tumaet-ui-bar-chart
         [labels]="chartData().labels"
         [series]="chartData().series"
         [config]="chartConfig()"
@@ -919,7 +919,7 @@ chart's container:
 
 ```ts
 readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.DARK_BLUE]));
-readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
     percentScale: true,
     xAxis: { label: this.xAxisLabel() },
     yAxis: { max: this.yScaleMax() },
@@ -945,13 +945,13 @@ Here are the rules to follow when adding a chart:
 
     ```html
     <!-- Preferred: reuse the translation key of the chart's own visible heading -->
-    <tum-ui-line-chart [labels]="…" [series]="…" [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate" />
+    <tumaet-ui-line-chart [labels]="…" [series]="…" [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate" />
 
     <!-- Or name it from the visible heading, when that heading has a stable unique id -->
-    <tum-ui-bar-chart [labels]="…" [series]="…" [ariaLabelledBy]="'active-students-heading'" />
+    <tumaet-ui-bar-chart [labels]="…" [series]="…" [ariaLabelledBy]="'active-students-heading'" />
 
     <!-- Or, ONLY if the chart is decorative because every figure it shows is also rendered as text next to it -->
-    <tum-ui-doughnut-chart [labels]="…" [series]="…" aria-hidden="true" />
+    <tumaet-ui-doughnut-chart [labels]="…" [series]="…" aria-hidden="true" />
     ```
 
     The `localRules/require-chart-accessible-name` ESLint rule enforces this for external templates and inline
@@ -1176,6 +1176,6 @@ Use `placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}
 
 **Use ArtemisTimeAgoPipe instead of TimeAgoPipe**
 
-Do not use `<span [tumUiTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>`
+Do not use `<span [tumAetUiTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>`
 
-Use `<span [tumUiTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>`
+Use `<span [tumAetUiTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>`

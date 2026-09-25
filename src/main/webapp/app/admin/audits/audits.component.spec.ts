@@ -243,7 +243,7 @@ describe('AuditsComponent', () => {
         });
     });
 
-    describe('pagination (tum-ui paginator)', () => {
+    describe('pagination (tumaet-ui paginator)', () => {
         it('converts the 0-indexed paginator event to the 1-indexed page and navigates', () => {
             comp.ngOnInit(); // sets the default date range
             const router = TestBed.inject(Router);

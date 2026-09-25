@@ -5,7 +5,7 @@ import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { ChartExerciseTypeFilter } from 'app/exercise/chart/chart-exercise-type-filter';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -15,7 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 
 interface ExerciseStatisticsEntry extends ChartSeriesEntry {
     exerciseType: ExerciseType;
@@ -32,7 +32,7 @@ export enum PerformanceInterval {
     selector: 'jhi-statistics-average-score-graph',
     templateUrl: './statistics-average-score-graph.component.html',
     styleUrls: ['./statistics-average-score-graph.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, TumUiBarChartComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, TumAetUiBarChartComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -61,7 +61,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     private readonly resolvedColors = computed(() => this.barColors());
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.resolvedColors()));
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         yAxis: { max: 100, tickFormatter: (value) => axisTickFormattingWithPercentageSign(String(value)) },
         tooltip: {
             label: (item) => {
@@ -143,7 +143,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * Handles the click event on one of the bars and navigates to the corresponding exercise statistics page
      * @param event the event identifying the clicked bar
      */
-    onSelect(event: TumUiChartSelectEvent): void {
+    onSelect(event: TumAetUiChartSelectEvent): void {
         const dataEntry = event.meta as ExerciseStatisticsEntry | undefined;
 
         if (dataEntry) {

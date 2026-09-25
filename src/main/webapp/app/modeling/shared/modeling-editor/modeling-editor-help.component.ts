@@ -1,6 +1,13 @@
 import { Component, computed, inject, model } from '@angular/core';
 import { APOLLON_SHORTCUTS, type ApollonShortcutCombo, type ApollonShortcutId, shortcutKeyName } from '@tumaet/apollon';
-import { TumUiDialogComponent, TumUiTabComponent, TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabsComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiDialogComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { OsDetectorService } from 'app/core/navbar/global-search/services/os-detector.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -49,12 +56,12 @@ const WALKTHROUGHS: readonly HelpWalkthrough[] = [
     templateUrl: './modeling-editor-help.component.html',
     styleUrls: ['./modeling-editor-help.component.scss'],
     imports: [
-        TumUiDialogComponent,
-        TumUiTabsComponent,
-        TumUiTabListComponent,
-        TumUiTabComponent,
-        TumUiTabPanelsComponent,
-        TumUiTabPanelComponent,
+        TumAetUiDialogComponent,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],

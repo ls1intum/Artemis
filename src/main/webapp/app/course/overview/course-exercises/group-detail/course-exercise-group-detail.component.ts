@@ -21,7 +21,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-course-exercise-group-detail',
@@ -36,7 +36,7 @@ import { TumUiTooltipDirective } from '@tumaet/ui-angular';
         TranslateDirective,
         ExerciseHeadersInformationComponent,
         InformationBoxComponent,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         CourseSidebarToggleButtonComponent,
     ],
     /* preserveWhitespaces: false is required here because the global tsconfig sets preserveWhitespaces: true,

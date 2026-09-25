@@ -4,13 +4,13 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import {
-    TumUiButtonDirective,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiInputGroupAddonComponent,
-    TumUiInputGroupComponent,
-    TumUiInputNumberComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiInputNumberComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
@@ -30,16 +30,16 @@ export interface UpdateTutorialGroupSessionData {
     selector: 'jhi-tutorial-session-create-or-edit-modal',
     imports: [
         FormsModule,
-        // Contained PrimeNG fallback: the date and the two time inputs have no TUM UI equivalent yet.
+        // Contained PrimeNG fallback: the date and the two time inputs have no TUM AET UI equivalent yet.
         DatePickerModule,
         FaIconComponent,
-        TumUiButtonDirective,
-        TumUiDialogComponent,
-        TumUiInputDirective,
-        TumUiInputGroupAddonComponent,
-        TumUiInputGroupComponent,
-        TumUiInputNumberComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiInputNumberComponent,
+        TumAetUiTooltipDirective,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
