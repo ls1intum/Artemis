@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXERCISE_START_STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -30,7 +31,7 @@ class ExamExercisePreparationStatusServiceTest {
 
         var expected = new ExamExerciseStartPreparationStatus(5, 2, 10, 15, started);
         assertThat(service.get(1L)).contains(expected);
-        verify(websocket, org.mockito.Mockito.times(2)).sendMessage("/topic/exams/1/exercise-start-status", expected);
+        verify(websocket, org.mockito.Mockito.times(2)).sendMessage(EXERCISE_START_STATUS.at(1), expected);
         assertThat(lock.isLocked()).isFalse();
     }
 
@@ -50,7 +51,7 @@ class ExamExercisePreparationStatusServiceTest {
     void failedPublicationStillRetainsProgressAndReleasesTheBatchLock() {
         ZonedDateTime started = ZonedDateTime.now();
         var expected = new ExamExerciseStartPreparationStatus(1, 0, 1, 1, started);
-        doThrow(new IllegalStateException("disconnected")).when(websocket).sendMessage(eq("/topic/exams/1/exercise-start-status"), eq(expected));
+        doThrow(new IllegalStateException("disconnected")).when(websocket).sendMessage(eq(EXERCISE_START_STATUS.at(1)), eq(expected));
         ReentrantLock lock = new ReentrantLock();
 
         service.update(1L, 1, 0, 1, 1, started, lock);
