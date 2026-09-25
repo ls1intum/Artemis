@@ -55,7 +55,7 @@ export class TumUiTableComponent<T> {
     readonly loading = input(false, { transform: booleanAttribute });
     /** Optional action template receiving the row as its implicit value. */
     readonly rowActions = input<TemplateRef<{ $implicit: T }> | undefined>(undefined);
-    /** Marks the rows that f.e. concern the current reader */
+    /** Predicate identifying rows to highlight. */
     readonly rowHighlighted = input<((row: T) => boolean) | undefined>(undefined);
 
     /** Identity function forwarded to the CDK table. */
