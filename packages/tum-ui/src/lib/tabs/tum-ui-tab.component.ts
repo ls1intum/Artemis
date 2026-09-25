@@ -34,9 +34,6 @@ export class TumUiTabComponent {
     }
 
     constructor() {
-        // Publish the value from the tab's own change detection, where the required input is always available. The tab
-        // list cannot read the input directly: its content query reports a tab declared inside @if or @for before
-        // Angular has applied the binding, and reading it then throws NG0950.
         effect(() => this.tabsService.publish(this, this.value()));
         inject(DestroyRef).onDestroy(() => this.tabsService.unpublish(this));
     }

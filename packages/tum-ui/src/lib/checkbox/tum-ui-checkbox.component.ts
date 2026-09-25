@@ -39,8 +39,6 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
     protected readonly faCheck = faCheck;
     protected readonly faMinus = faMinus;
 
-    // Indeterminate takes visual precedence over checked, as a native `<input indeterminate>` does: the dash
-    // shows whenever indeterminate is set, the tick only when checked and NOT indeterminate.
     protected readonly showDash = computed(() => this.indeterminate());
     protected readonly showTick = computed(() => this.checked() && !this.indeterminate());
 
@@ -51,7 +49,6 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
         if (this.isDisabled()) {
             return 'tum:bg-disabled-background tum:border-control-border';
         }
-        // Both the checked tick and the indeterminate dash sit on a brand-filled box.
         if (this.checked() || this.indeterminate()) {
             return 'tum:bg-primary tum:border-primary';
         }
