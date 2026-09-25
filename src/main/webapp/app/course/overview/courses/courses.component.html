@@ -2,7 +2,15 @@
     <div>
         <h3 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.examTitle" [translateValues]="{ course: nextRelevantCourseForExam()?.title }"></h3>
         <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center exam-container px-3" (click)="openExam()">
+            <div
+                class="d-flex justify-content-between align-items-center exam-container px-3"
+                (click)="openExam()"
+                #keyboardAction5
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction5.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction5.click()"
+            >
                 <div class="mb-4 mt-4 d-flex" style="width: unset">
                     <fa-icon [icon]="faPenAlt" size="2x" />
                     <h4 class="ms-2 fw-medium">{{ nextRelevantExam()?.title }}</h4>

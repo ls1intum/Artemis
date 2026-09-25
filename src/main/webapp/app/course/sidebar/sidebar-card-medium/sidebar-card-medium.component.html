@@ -4,6 +4,11 @@
         class="pointer item-border rounded-3 col-12 px-1 pt-2 pb-1 border-5 highlight-card bg-module hover-effect"
         [ngClass]="{ 'bg-selected border-selected': itemSelected() }"
         (click)="onExamCardClicked()"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
     >
         <jhi-sidebar-card-item [groupKey]="groupKey()" [sidebarType]="sidebarType()" [sidebarItem]="sidebarItem()" />
     </div>
@@ -23,6 +28,11 @@
             [routerLink]="sidebarItem()?.targetComponentSubRoute ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id] : ['./', sidebarItem().id]"
             (click)="onNonExamCardClicked()"
             [routerLinkActive]="'bg-selected border-selected'"
+            #keyboardAction12
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction12.click()"
+            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction12.click()"
         >
             <jhi-sidebar-card-item
                 [unreadCount]="this.sidebarItem().conversation?.unreadMessagesCount ?? 0"

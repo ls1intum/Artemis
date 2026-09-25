@@ -5,6 +5,11 @@
                 [id]="'test-accordion-item-header-' + groupKey"
                 class="control-label d-flex align-items-center justify-content-between bg-module px-1"
                 (click)="toggleGroupCategoryCollapse(groupKey)"
+                #keyboardAction4
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction4.click()"
             >
                 <div class="my-2">
                     @if (showLeadingIcon()) {

@@ -1,7 +1,7 @@
 <div class="flex flex-col h-full">
     <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
     <div *adminTitleBarActions>
-        <button tumUiButton size="small" [routerLink]="['./new']" data-testid="add-organization-btn">
+        <button type="button" tumUiButton size="small" [routerLink]="['./new']" data-testid="add-organization-btn">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
@@ -45,6 +45,7 @@
             <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>
         </button>
         <button
+            type="button"
             tumUiButton
             severity="danger"
             size="small"

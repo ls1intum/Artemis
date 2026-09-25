@@ -27,7 +27,16 @@
                     </div>
                 }
                 @if (!croppedImage()) {
-                    <div id="no-image-placeholder" class="no-image clickable me-2 lh-sm" (click)="triggerFileInput()">
+                    <div
+                        id="no-image-placeholder"
+                        class="no-image clickable me-2 lh-sm"
+                        (click)="triggerFileInput()"
+                        #keyboardAction30
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction30.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction30.click()"
+                    >
                         <div class="h3 my-0 font-weight-bold">+</div>
                         <div class="small" jhiTranslate="artemisApp.course.imageCropper.uploadTitle"></div>
                     </div>
@@ -71,6 +80,12 @@
                                 [attr.aria-label]="'artemisApp.course.color' | artemisTranslate"
                                 [style.background-color]="courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR"
                                 (click)="openColorSelector($event)"
+                                #keyboardAction68
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction68.click()"
+                                (keydown.space)="
+                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction68.click()
+                                "
                             ></div>
                             <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
                         </div>

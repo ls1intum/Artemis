@@ -13,7 +13,19 @@
             @if (isChannel(activeConversation()!) && conversationMember()?.isChannelModerator) {
                 <fa-icon [icon]="faUserGear" [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate" />
             }
-            <a (click)="userNameClicked()" class="bs-body-color" [ngClass]="{ disabled: isCurrentUser() }"> {{ userLabel() }} </a>
+            <a
+                (click)="userNameClicked()"
+                class="bs-body-color"
+                [ngClass]="{ disabled: isCurrentUser() }"
+                [attr.aria-disabled]="isCurrentUser()"
+                #keyboardAction16
+                role="button"
+                [attr.tabindex]="isCurrentUser() ? -1 : 0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction16.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction16.click()"
+            >
+                {{ userLabel() }}
+            </a>
             @if (!conversationMember()?.isStudent) {
                 <fa-icon class="ms-1 text-secondary" [icon]="userIcon()" [ngbTooltip]="userTooltip()" />
             }
@@ -27,6 +39,7 @@
             <div ngbDropdownMenu>
                 @if (canBeRemovedFromConversation()) {
                     <button
+                        type="button"
                         ngbDropdownItem
                         class="text-danger remove-member"
                         (click)="openRemoveFromConversationDialog($event)"
@@ -35,6 +48,7 @@
                 }
                 @if (canBeGrantedChannelModeratorRole()) {
                     <button
+                        type="button"
                         ngbDropdownItem
                         class="text-danger grant-moderator"
                         (click)="openGrantChannelModeratorRoleDialog($event)"
@@ -43,6 +57,7 @@
                 }
                 @if (canBeRevokedChannelModeratorRole()) {
                     <button
+                        type="button"
                         ngbDropdownItem
                         class="text-danger revoke-moderator"
                         (click)="openRevokeChannelModeratorRoleDialog($event)"

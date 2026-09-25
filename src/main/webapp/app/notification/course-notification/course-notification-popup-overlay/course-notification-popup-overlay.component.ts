@@ -12,6 +12,7 @@ import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { ButtonModule } from 'primeng/button';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component that displays real-time notification popups.
@@ -20,7 +21,7 @@ import { ButtonModule } from 'primeng/button';
  */
 @Component({
     selector: 'jhi-course-notification-popup-overlay',
-    imports: [CourseNotificationComponent, CommonModule, FaIconComponent, ButtonModule],
+    imports: [CourseNotificationComponent, CommonModule, FaIconComponent, ButtonModule, ArtemisTranslatePipe],
     templateUrl: './course-notification-popup-overlay.component.html',
     styleUrls: ['./course-notification-popup-overlay.component.scss'],
 })

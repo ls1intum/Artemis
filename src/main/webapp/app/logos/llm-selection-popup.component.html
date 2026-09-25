@@ -4,7 +4,9 @@
         data-testid="llm-selection-modal"
         [class.dark-theme]="themeService.currentTheme() === Theme.DARK"
         (click)="onBackdropClick($event)"
+        (keydown.escape)="close()"
         role="dialog"
+        tabindex="-1"
         aria-modal="true"
         aria-labelledby="ai-modal-title"
     >
@@ -304,7 +306,16 @@
 
             <div class="footer-note">
                 <p jhiTranslate="artemisApp.llmSelectionPopup.disclaimer"></p>
-                <a class="learn-more-link" (click)="onLearnMoreClick($event)" jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"></a>
+                <a
+                    class="learn-more-link"
+                    (click)="onLearnMoreClick($event)"
+                    jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"
+                    #keyboardAction307
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction307.click()"
+                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction307.click()"
+                ></a>
             </div>
         </div>
     </div>

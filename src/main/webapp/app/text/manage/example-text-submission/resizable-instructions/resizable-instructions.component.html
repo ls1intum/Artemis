@@ -1,7 +1,15 @@
 <div>
     <!-- Inject resizing bar -->
     <ng-content select="[resizingbar]" />
-    <div class="card-header text-white bg-primary" (click)="toggleCollapse()($event, toggleCollapseId())">
+    <div
+        class="card-header text-white bg-primary"
+        (click)="toggleCollapse()($event, toggleCollapseId())"
+        #keyboardAction4
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction4.click()"
+    >
         <span class="float-end"><fa-icon [icon]="faChevronRight" /></span>
         <h3 class="card-title">
             <fa-icon [icon]="farListAlt" />

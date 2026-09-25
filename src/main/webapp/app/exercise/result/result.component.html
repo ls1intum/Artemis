@@ -73,7 +73,18 @@
                 @if (showIcon()) {
                     <fa-icon class="result-score-icon" [class]="textColorClass()" [icon]="resultIconClass()" size="lg" />
                 }
-                <span [class]="textColorClass()" class="result leading-tight" [class.clickable-result]="canShowDetails()" id="result-score" (click)="showDetails(currentResult)">
+                <span
+                    [class]="textColorClass()"
+                    class="result leading-tight"
+                    [class.clickable-result]="canShowDetails()"
+                    id="result-score"
+                    (click)="showDetails(currentResult)"
+                    #keyboardAction76
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction76.click()"
+                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction76.click()"
+                >
                     <span [pTooltip]="resultTooltip() | artemisTranslate">{{ resultString() }}</span>
                     @if (short() && currentResult.codeIssueCount) {
                         <span [pTooltip]="'artemisApp.result.codeIssuesTooltip' | artemisTranslate">
@@ -139,6 +150,11 @@
                             class="result"
                             (click)="showDetails(missingResult)"
                             jhiTranslate="artemisApp.result.missing.viewPrevious"
+                            #keyboardAction137
+                            role="button"
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction137.click()"
+                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction137.click()"
                         ></span>
                     }
                 }

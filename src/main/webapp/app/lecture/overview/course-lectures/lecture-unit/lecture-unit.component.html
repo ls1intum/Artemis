@@ -1,5 +1,14 @@
 <div class="lecture-unit-card col clickable">
-    <div class="lecture-unit-header row px-4 m-0" id="lecture-unit-toggle-button" (click)="toggleCollapse()">
+    <div
+        class="lecture-unit-header row px-4 m-0"
+        id="lecture-unit-toggle-button"
+        (click)="toggleCollapse()"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
+    >
         <div class="d-flex p-0 justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 <fa-icon class="me-3" size="lg" [icon]="icon()" />
@@ -14,19 +23,20 @@
             </div>
             <div class="d-flex align-items-center gap-2">
                 @if (showOriginalVersionButton() && !isStudentPath()) {
-                    <button id="view-original-version-button" class="btn btn-sm btn-primary" (click)="handleOriginalVersionView($event)">
+                    <button type="button" id="view-original-version-button" class="btn btn-sm btn-primary" (click)="handleOriginalVersionView($event)">
                         <fa-icon [icon]="faDownload" />
                         <span class="d-none d-md-inline" [jhiTranslate]="'artemisApp.textUnit.originalVersion'"></span>
                     </button>
                 }
                 @if (showViewIsolatedButton()) {
-                    <button id="view-isolated-button" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
+                    <button type="button" id="view-isolated-button" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
                         <fa-icon [icon]="viewIsolatedButtonIcon()" />
                         <span class="d-none d-md-inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
                     </button>
                 }
                 @if (showFullscreenButton()) {
                     <button
+                        type="button"
                         id="fullscreen-button"
                         class="btn btn-sm btn-primary"
                         [attr.aria-label]="'artemisApp.lectureUnit.openFullscreen' | artemisTranslate"

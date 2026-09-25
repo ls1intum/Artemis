@@ -9,7 +9,17 @@
 >
     <ng-template let-node pTemplate="knowledgeArea">
         <div class="flex items-center" data-testid="knowledge-area-node">
-            <h5 class="mb-0 me-2 clickable" (click)="toggle(node.data)">{{ node.data.title }}</h5>
+            <h5
+                class="mb-0 me-2 clickable"
+                (click)="toggle(node.data)"
+                #keyboardAction12
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction12.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction12.click()"
+            >
+                {{ node.data.title }}
+            </h5>
             <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate() ?? null" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
         </div>
     </ng-template>

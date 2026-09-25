@@ -108,7 +108,16 @@
                 <h5 class="d-flex align-items-center gap-2">
                     <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
                     <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
-                    <a class="iris-learn-more" (click)="openAboutIrisModal()" jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"></a>
+                    <a
+                        class="iris-learn-more"
+                        (click)="openAboutIrisModal()"
+                        jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"
+                        #keyboardAction111
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction111.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction111.click()"
+                    ></a>
                 </h5>
                 @if (isIrisEnabled()) {
                     <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisEnabledHint"></p>

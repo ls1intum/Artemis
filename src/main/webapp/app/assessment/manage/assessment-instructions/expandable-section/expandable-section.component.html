@@ -1,12 +1,28 @@
 @if (headerKey() !== null) {
     <div class="expandable-header-row">
         @if (isSubHeader()) {
-            <h6 class="expandable-header" (click)="toggleCollapsed()">
+            <h6
+                class="expandable-header"
+                (click)="toggleCollapsed()"
+                #keyboardAction4
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction4.click()"
+            >
                 {{ hasTranslation() ? (headerKey() | artemisTranslate) : headerKey() }}
                 <fa-icon [icon]="isCollapsed() ? faAngleRight : faAngleDown" />
             </h6>
         } @else {
-            <h5 class="expandable-header" (click)="toggleCollapsed()">
+            <h5
+                class="expandable-header"
+                (click)="toggleCollapsed()"
+                #keyboardAction9
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction9.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction9.click()"
+            >
                 {{ hasTranslation() ? (headerKey() | artemisTranslate) : headerKey() }}
                 <fa-icon [icon]="isCollapsed() ? faAngleRight : faAngleDown" />
             </h5>

@@ -1,6 +1,7 @@
 <div data-testid="exam-mode-picker" class="d-flex align-items-start">
     <div class="btn-group" [ngClass]="{ disabled: disableInput() }">
-        <div
+        <button
+            type="button"
             id="standard-mode"
             class="btn"
             [class.btn-success]="!exam().testExam"
@@ -8,8 +9,10 @@
             [class.disabled]="disableInput()"
             (click)="setExamMode(false)"
             jhiTranslate="artemisApp.examManagement.testExam.realExam"
-        ></div>
-        <div
+            [disabled]="disableInput()"
+        ></button>
+        <button
+            type="button"
             data-testid="test-mode"
             class="btn btn-default"
             [class.btn-primary]="exam().testExam"
@@ -17,6 +20,7 @@
             [class.disabled]="disableInput()"
             (click)="setExamMode(true)"
             jhiTranslate="artemisApp.examManagement.testExam.testExam"
-        ></div>
+            [disabled]="disableInput()"
+        ></button>
     </div>
 </div>

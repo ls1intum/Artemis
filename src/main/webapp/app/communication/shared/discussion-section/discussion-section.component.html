@@ -13,7 +13,17 @@
                 </div>
                 <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden' : 'card'">
                     <!-- header -->
-                    <div class="card-header" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed.set(true)" [hidden]="embedded()">
+                    <div
+                        class="card-header"
+                        [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate"
+                        (click)="collapsed.set(true)"
+                        [hidden]="embedded()"
+                        #keyboardAction16
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction16.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction16.click()"
+                    >
                         <div class="row flex-grow-1">
                             <div class="col">
                                 <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.communication.label"></h5>
@@ -95,7 +105,19 @@
                                                     <span jhiTranslate="artemisApp.metis.discussionSection.sortByDate"></span>
                                                 </div>
                                                 @if (!currentSortDirection()) {
-                                                    <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
+                                                    <div
+                                                        class="col-auto p-0 clickable"
+                                                        (click)="onChangeSortDir()"
+                                                        #keyboardAction98
+                                                        role="button"
+                                                        tabindex="0"
+                                                        [attr.aria-label]="'artemisApp.metis.discussionSection.defaultSortCriterion' | artemisTranslate"
+                                                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction98.click()"
+                                                        (keydown.space)="
+                                                            $event.target === $event.currentTarget && $event.preventDefault();
+                                                            $event.target === $event.currentTarget && keyboardAction98.click()
+                                                        "
+                                                    >
                                                         <fa-icon
                                                             [icon]="faLongArrowRight"
                                                             [ngbTooltip]="'artemisApp.metis.discussionSection.defaultSortCriterion' | artemisTranslate"
@@ -103,7 +125,24 @@
                                                     </div>
                                                 }
                                                 @if (currentSortDirection()) {
-                                                    <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
+                                                    <div
+                                                        class="col-auto p-0 clickable"
+                                                        (click)="onChangeSortDir()"
+                                                        #keyboardAction106
+                                                        role="button"
+                                                        tabindex="0"
+                                                        [attr.aria-label]="
+                                                            (currentSortDirection() === SortDirection.ASCENDING
+                                                                ? 'artemisApp.metis.overview.sortAscending'
+                                                                : 'artemisApp.metis.overview.sortDescending'
+                                                            ) | artemisTranslate
+                                                        "
+                                                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction106.click()"
+                                                        (keydown.space)="
+                                                            $event.target === $event.currentTarget && $event.preventDefault();
+                                                            $event.target === $event.currentTarget && keyboardAction106.click()
+                                                        "
+                                                    >
                                                         <fa-icon
                                                             [icon]="currentSortDirection() === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
                                                             [ngbTooltip]="
@@ -155,7 +194,7 @@
                             @if (createdPost() && !isLoading() && !channel()?.isArchived) {
                                 <div class="row mt-2">
                                     <div class="col-12">
-                                        <button id="new-post" class="btn btn-sm btn-primary" (click)="toggleSendMessage()">
+                                        <button type="button" id="new-post" class="btn btn-sm btn-primary" (click)="toggleSendMessage()">
                                             @if (!shouldSendMessage()) {
                                                 <fa-icon [icon]="faPlus" />
                                             }
@@ -180,7 +219,16 @@
                 </div>
             </div>
         } @else {
-            <div class="postings-container collapsed-discussion" (click)="collapsed.set(false)" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
+            <div
+                class="postings-container collapsed-discussion"
+                (click)="collapsed.set(false)"
+                [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate"
+                #keyboardAction183
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction183.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction183.click()"
+            >
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
                 <span class="h5" jhiTranslate="artemisApp.metis.communication.label"></span>
                 <div class="spacer"></div>

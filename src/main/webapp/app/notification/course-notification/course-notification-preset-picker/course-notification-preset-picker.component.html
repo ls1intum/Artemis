@@ -13,6 +13,11 @@
                 [class.is-selected]="selectedCourseSettingPreset()?.identifier === preset.identifier"
                 ngbDropdownItem
                 (click)="presetSelected(preset.typeId)"
+                #keyboardAction11
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction11.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction11.click()"
             >
                 <div class="course-notification-preset-picker-item-title">
                     <fa-icon [icon]="getPresetIcon(preset.identifier)" class="course-notification-preset-picker-item-icon" />
@@ -31,7 +36,17 @@
             </div>
         }
 
-        <div class="course-notification-preset-picker-item" [class.is-selected]="selectedCourseSettingPreset() === undefined" ngbDropdownItem (click)="presetSelected(0)">
+        <div
+            class="course-notification-preset-picker-item"
+            [class.is-selected]="selectedCourseSettingPreset() === undefined"
+            ngbDropdownItem
+            (click)="presetSelected(0)"
+            #keyboardAction34
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction34.click()"
+            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction34.click()"
+        >
             <div class="course-notification-preset-picker-item-title">
                 <fa-icon [icon]="getPresetIcon('customUserCourseNotificationSettingPreset')" class="course-notification-preset-picker-item-icon" />
                 @if (selectedCourseSettingPreset() === undefined) {

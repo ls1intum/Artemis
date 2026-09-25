@@ -1,7 +1,16 @@
 @if (showColorSelector()) {
     <div class="color-selector" [style.top.px]="colorSelectorPosition().top" [style.left.px]="colorSelectorPosition().left" [style.height.px]="height()">
         @for (tagColor of tagColors(); track tagColor) {
-            <div class="tag-color-selector" (click)="selectColorForTag(tagColor)">
+            <div
+                class="tag-color-selector"
+                (click)="selectColorForTag(tagColor)"
+                #keyboardAction4
+                role="button"
+                tabindex="0"
+                [attr.aria-label]="tagColor"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction4.click()"
+            >
                 <div class="color-element" [style.background-color]="tagColor"></div>
             </div>
         }

@@ -3,7 +3,15 @@
         <div class="week-row">
             @for (day of week.days; track day.id) {
                 @if (day.isInDisplayedMonth) {
-                    <div class="day" (click)="onDateSelected.emit(day.date)">
+                    <div
+                        class="day"
+                        (click)="onDateSelected.emit(day.date)"
+                        #keyboardAction6
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction6.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction6.click()"
+                    >
                         <jhi-calendar-day-badge [date]="day.date" />
                         <div class="event-stack">
                             @if (day.eventsAndMetadata.length > 3) {

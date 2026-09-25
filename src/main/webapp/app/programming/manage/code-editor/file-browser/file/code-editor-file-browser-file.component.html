@@ -1,6 +1,13 @@
 <!--File-->
 <li
     (click)="onNodeSelect.emit(item())"
+    #keyboardAction2
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="item().text"
+    [attr.aria-pressed]="item().checked"
+    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
+    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
     class="list-group-item file-item"
     [class.node-selected]="item().checked"
     [class.text-danger]="!item().checked && hasError()"
@@ -34,10 +41,10 @@
     <!-- File level actions -->
     @if (!disableActions()) {
         <span class="file-icons" [ngClass]="item().checked ? 'text-white' : 'primary'">
-            <button (click)="setRenamingNode($event)" class="btn btn-small">
+            <button type="button" (click)="setRenamingNode($event)" class="btn btn-small">
                 <fa-icon id="file-browser-file-edit" [icon]="faEdit" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate }}" />
             </button>
-            <button (click)="deleteNode($event)" class="btn btn-small">
+            <button type="button" (click)="deleteNode($event)" class="btn btn-small">
                 <fa-icon data-testid="file-browser-file-delete" [icon]="faTrash" title="{{ 'artemisApp.editor.fileBrowser.deleteFile' | artemisTranslate }}" />
             </button>
         </span>

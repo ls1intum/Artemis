@@ -1,5 +1,6 @@
 <div class="btn-group">
-    <div
+    <button
+        type="button"
         data-testid="picker-option"
         class="btn"
         [ngClass]="{
@@ -8,8 +9,9 @@
         }"
         (click)="change(IncludedInOverallScore.INCLUDED_COMPLETELY)"
         jhiTranslate="artemisApp.exercise.yes"
-    ></div>
-    <div
+    ></button>
+    <button
+        type="button"
         data-testid="picker-option"
         class="btn btn-default"
         [ngClass]="{
@@ -18,9 +20,10 @@
         }"
         (click)="change(IncludedInOverallScore.INCLUDED_AS_BONUS)"
         jhiTranslate="artemisApp.exercise.bonus"
-    ></div>
+    ></button>
     @if (allowNotIncluded()) {
-        <div
+        <button
+            type="button"
             data-testid="picker-option"
             class="btn btn-default"
             [ngClass]="{
@@ -29,6 +32,6 @@
             }"
             (click)="change(IncludedInOverallScore.NOT_INCLUDED)"
             jhiTranslate="artemisApp.exercise.no"
-        ></div>
+        ></button>
     }
 </div>

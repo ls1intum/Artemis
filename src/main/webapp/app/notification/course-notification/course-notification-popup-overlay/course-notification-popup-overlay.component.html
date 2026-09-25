@@ -3,6 +3,12 @@
     [style.height]="isExpanded() ? 5 + notifications().length * 7 + 'rem' : null"
     class="course-notification-popup-overlay"
     (click)="overlayClicked()"
+    #keyboardAction1
+    [attr.role]="!isExpanded() && notifications().length > 1 ? 'button' : null"
+    [attr.tabindex]="!isExpanded() && notifications().length > 1 ? 0 : -1"
+    [attr.aria-label]="'artemisApp.notification.expandPopup' | artemisTranslate"
+    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction1.click()"
+    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction1.click()"
 >
     @for (notification of notifications(); track notification.notificationId) {
         <div
@@ -25,11 +31,11 @@
     }
 
     <div class="course-notification-popup-overlay-collapse">
-        <button pButton [outlined]="true" size="small" [rounded]="true" class="me-2" (click)="collapseOverlayClicked()">
+        <button type="button" pButton [outlined]="true" size="small" [rounded]="true" class="me-2" (click)="collapseOverlayClicked()">
             <fa-icon [icon]="faTimes" />
         </button>
 
-        <button pButton [outlined]="true" size="small" [rounded]="true" (click)="clearAllNotifications()">
+        <button type="button" pButton [outlined]="true" size="small" [rounded]="true" (click)="clearAllNotifications()">
             <fa-icon [icon]="faTrash" />
         </button>
     </div>

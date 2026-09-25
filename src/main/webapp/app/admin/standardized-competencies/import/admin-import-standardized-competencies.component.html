@@ -1,7 +1,16 @@
 <div class="container">
     <h5 *adminTitleBarTitle id="import-standardized-competencies-heading" class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.import.title"></h5>
     <div class="mt-3 rounded-lg border">
-        <div class="clickable flex max-w-full items-center p-3" (click)="toggleCollapse()" data-testid="format-toggle">
+        <div
+            class="clickable flex max-w-full items-center p-3"
+            (click)="toggleCollapse()"
+            data-testid="format-toggle"
+            #keyboardAction1
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction1.click()"
+            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction1.click()"
+        >
             <div class="me-2">
                 <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
             </div>
@@ -28,7 +37,15 @@
             <div class="flex">
                 <jhi-knowledge-area-tree class="flex h-full w-1/2 grow" [dataSource]="dataSource()">
                     <ng-template let-competency="competency" let-knowledgeArea="knowledgeArea" #competencyTemplate>
-                        <div class="clickable flex items-center" (click)="openCompetencyDetails(competency, knowledgeArea.title)">
+                        <div
+                            class="clickable flex items-center"
+                            (click)="openCompetencyDetails(competency, knowledgeArea.title)"
+                            #keyboardAction31
+                            role="button"
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction31.click()"
+                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction31.click()"
+                        >
                             <fa-icon
                                 class="me-2"
                                 [icon]="getIcon(competency.taxonomy)"

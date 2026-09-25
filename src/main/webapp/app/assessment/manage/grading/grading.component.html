@@ -58,6 +58,7 @@
     </button>
     @if (existingGradingScale()) {
         <button
+            type="button"
             [title]="'entity.action.delete' | artemisTranslate"
             jhiDeleteButton
             tumUiButton
@@ -136,12 +137,22 @@
                 [class.active]="viewMode() === GradingViewMode.INTERVAL"
                 (click)="setViewMode(GradingViewMode.INTERVAL)"
                 jhiTranslate="artemisApp.gradingSystem.intervalTab.title"
+                #keyboardAction134
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction134.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction134.click()"
             ></div>
             <div
                 class="tab-item detailed"
                 [class.active]="viewMode() === GradingViewMode.DETAILED"
                 (click)="setViewMode(GradingViewMode.DETAILED)"
                 jhiTranslate="artemisApp.gradingSystem.detailedTab.title"
+                #keyboardAction140
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction140.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction140.click()"
             ></div>
         </div>
     </div>

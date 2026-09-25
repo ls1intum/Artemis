@@ -1,4 +1,12 @@
-<div class="posting-summary rounded p-2" (click)="onTriggerNavigateToPost()">
+<div
+    class="posting-summary rounded p-2"
+    (click)="onTriggerNavigateToPost()"
+    #keyboardAction1
+    role="button"
+    tabindex="0"
+    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction1.click()"
+    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction1.click()"
+>
     @if (post() !== undefined) {
         @if (isShowSummary()) {
             <div class="posting-summary-conversation fs-x-small text-secondary d-flex align-items-center mb-1">

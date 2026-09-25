@@ -3,6 +3,7 @@
 <div *adminTitleBarActions class="flex gap-2">
     @if (vulnerabilities()) {
         <button
+            type="button"
             tumUiButton
             severity="secondary"
             size="small"
@@ -15,6 +16,7 @@
             <span jhiTranslate="artemisApp.dependencies.refreshVulnerabilities"></span>
         </button>
         <button
+            type="button"
             tumUiButton
             severity="secondary"
             size="small"
@@ -28,13 +30,13 @@
         </button>
     }
     @if (combinedSbom()?.server) {
-        <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="downloadSbom('server')" data-testid="download-server-sbom-button">
+        <button type="button" tumUiButton severity="secondary" size="small" variant="outlined" (click)="downloadSbom('server')" data-testid="download-server-sbom-button">
             <fa-icon [icon]="faDownload" />
             <span jhiTranslate="artemisApp.dependencies.downloadServer"></span>
         </button>
     }
     @if (combinedSbom()?.client) {
-        <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="downloadSbom('client')" data-testid="download-client-sbom-button">
+        <button type="button" tumUiButton severity="secondary" size="small" variant="outlined" (click)="downloadSbom('client')" data-testid="download-client-sbom-button">
             <fa-icon [icon]="faDownload" />
             <span jhiTranslate="artemisApp.dependencies.downloadClient"></span>
         </button>

@@ -1,5 +1,6 @@
 <ng-container>
     <button
+        type="button"
         jhi-exercise-action-button
         [buttonIcon]="faCode"
         class="code-button"
@@ -42,6 +43,13 @@
                                 (click)="useHttpsPassword()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password ? 'active' : '' }}"
                                 id="useHTTPSButton"
+                                #keyboardAction41
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction41.click()"
+                                (keydown.space)="
+                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction41.click()
+                                "
                                 >HTTPS</a
                             >
                         }
@@ -50,6 +58,13 @@
                                 (click)="useHttpsToken()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token ? 'active' : '' }}"
                                 id="useHTTPSWithTokenButton"
+                                #keyboardAction49
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction49.click()"
+                                (keydown.space)="
+                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction49.click()
+                                "
                                 >Token</a
                             >
                         }
@@ -58,6 +73,13 @@
                                 (click)="useSshUrl()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH ? 'active' : '' }}"
                                 id="useSSHButton"
+                                #keyboardAction57
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction57.click()"
+                                (keydown.space)="
+                                    $event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction57.click()
+                                "
                                 >SSH</a
                             >
                         }
@@ -93,7 +115,18 @@
             jhiTranslate="{{ wasCopied() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
         ></button>
         @if (theiaEnabled()) {
-            <a class="btn btn-primary btn-sm me-2" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer" data-testid="openOnlineIDEButton">
+            <a
+                class="btn btn-primary btn-sm me-2"
+                (click)="startOnlineIDE()"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="openOnlineIDEButton"
+                #keyboardAction96
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction96.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction96.click()"
+            >
                 <fa-icon [icon]="faLaptopCode" />
                 <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
             </a>

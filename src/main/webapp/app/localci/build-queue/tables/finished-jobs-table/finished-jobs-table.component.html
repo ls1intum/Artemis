@@ -63,9 +63,7 @@
                     </td>
                     <td class="finish-jobs-column-status">
                         @if (finishedBuildJob.status === 'SUCCESSFUL') {
-                            <span (click)="$event.stopPropagation()">
-                                <jhi-result [result]="finishedBuildJob.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
-                            </span>
+                            <jhi-result [result]="finishedBuildJob.submissionResult" [showUngradedResults]="true" [showBadge]="true" (click)="$event.stopPropagation()" />
                         } @else {
                             <tum-ui-tag
                                 [severity]="finishedBuildJob.status === 'CANCELLED' ? 'warn' : 'danger'"

@@ -30,6 +30,15 @@
 @if (binaryFile() && !cannotLoadFiles()) {
     <div class="binaryFileDialogue">
         <span class="me-1" jhiTranslate="artemisApp.plagiarism.binaryFileNotRendered"></span>
-        <a class="text-primary" (click)="downloadCurrentFile()" jhiTranslate="entity.action.download"></a>
+        <a
+            class="text-primary"
+            (click)="downloadCurrentFile()"
+            jhiTranslate="entity.action.download"
+            #keyboardAction33
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction33.click()"
+            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction33.click()"
+        ></a>
     </div>
 }

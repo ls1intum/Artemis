@@ -70,6 +70,7 @@
                                 @defer (on idle) {
                                     @if (detail.data.isApollonEnabled) {
                                         <button
+                                            type="button"
                                             (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
                                             class="btn btn-primary m-2"
                                             jhiTranslate="entity.action.export"

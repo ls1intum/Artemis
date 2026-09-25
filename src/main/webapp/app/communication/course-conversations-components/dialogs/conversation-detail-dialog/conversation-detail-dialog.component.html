@@ -44,6 +44,10 @@
                         role="button"
                         (click)="selectedTab = Tabs.INFO"
                         jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.info"
+                        #keyboardAction41
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction41.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction41.click()"
                     ></a>
                 </li>
                 @if (!isOneToOneChat()) {
@@ -54,6 +58,10 @@
                             role="button"
                             (click)="selectedTab = Tabs.MEMBERS"
                             jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.members"
+                            #keyboardAction51
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction51.click()"
+                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction51.click()"
                         ></a>
                     </li>
                     <li class="nav-item settings-tab">
@@ -64,6 +72,10 @@
                             role="button"
                             (click)="selectedTab = Tabs.SETTINGS"
                             jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.settings"
+                            #keyboardAction60
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget && keyboardAction60.click()"
+                            (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction60.click()"
                         ></a>
                     </li>
                 }

@@ -1,16 +1,19 @@
 <tum-ui-dialog [header]="'artemisApp.exerciseManagement.addModal.header' | artemisTranslate" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" size="medium">
     <div class="tab-bar mb-3">
         <button
+            type="button"
             class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}"
             (click)="setActiveTab('create')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.create"
         ></button>
         <button
+            type="button"
             class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}"
             (click)="setActiveTab('import')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.import"
         ></button>
         <button
+            type="button"
             class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}"
             (click)="requestExport()"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.export"

@@ -8,6 +8,11 @@
                     'selected-learning-object': currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type,
                     clickable: !learningObject.unreleased,
                 }"
+                #keyboardAction4
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction4.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction4.click()"
             >
                 @if (learningObject.unreleased) {
                     <span class="col-md-auto p-0 text-muted" jhiTranslate="artemisApp.learningPath.navigation.overview.unreleasedLearningObjectLabel"></span>

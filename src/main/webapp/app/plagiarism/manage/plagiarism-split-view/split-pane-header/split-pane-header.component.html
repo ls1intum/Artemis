@@ -1,5 +1,15 @@
 <div class="split-pane-header" ngbDropdown>
-    <div class="split-pane-header-top" data-toggle="dropdown" [ngClass]="{ active: showFiles(), clickable: hasFiles() }" (click)="toggleShowFiles(true)">
+    <div
+        class="split-pane-header-top"
+        data-toggle="dropdown"
+        [ngClass]="{ active: showFiles(), clickable: hasFiles() }"
+        (click)="toggleShowFiles(true)"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction2.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction2.click()"
+    >
         @if (hasActiveFile()) {
             <div class="split-pane-header-file-name">
                 <fa-icon class="file-arrow-down" [icon]="faChevronDown" />
@@ -17,6 +27,11 @@
                     (mouseenter)="triggerMouseEnter(file, idx)"
                     (click)="handleFileSelect(file, idx, true)"
                     [ngClass]="{ hover: idx === hoveredFileIndex() }"
+                    #keyboardAction14
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget && keyboardAction14.click()"
+                    (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction14.click()"
                 >
                     <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
                 </li>

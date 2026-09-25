@@ -3,13 +3,14 @@
         <div class="w100 row justify-content-center card-header">
             <div class="btn-group">
                 @for (state of State | keyvalue; track state; let i = $index) {
-                    <div
+                    <button
+                        type="button"
                         class="btn"
                         [ngClass]="{ 'btn-primary': currentState() === state.value, 'btn-default': currentState() !== state.value }"
                         (click)="setCurrentState(state.value)"
                     >
                         <span [jhiTranslate]="stateTexts[i]"></span>
-                    </div>
+                    </button>
                 }
             </div>
         </div>
@@ -42,7 +43,13 @@
                     </div>
                     <div class="input-group flex-grow-1 col">
                         <input id="importFileInput" type="file" accept=".json,.zip" class="form-control" (change)="setImportFile($event)" placeholder="Upload file..." />
-                        <button class="btn btn-outline-primary" (click)="importQuiz()" jhiTranslate="entity.action.import" [ngClass]="{ disabled: !importFile() }"></button>
+                        <button
+                            type="button"
+                            class="btn btn-outline-primary"
+                            (click)="importQuiz()"
+                            jhiTranslate="entity.action.import"
+                            [ngClass]="{ disabled: !importFile() }"
+                        ></button>
                     </div>
                 </div>
             }
@@ -64,7 +71,7 @@
                                 <label class="form-check-label" for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"></label>
                             </div>
                         </div>
-                        <button class="btn btn-outline-secondary" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
+                        <button type="button" class="btn btn-outline-secondary" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
                     </div>
                 }
                 @if (allExistingQuestions().length === 0 && selectedCourseId !== undefined) {
@@ -136,7 +143,7 @@
                     <div jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound" class="ms-3"></div>
                 }
                 @if (existingQuestions().length !== 0) {
-                    <button class="btn btn-outline-primary" (click)="addExistingQuestions()" jhiTranslate="artemisApp.quizExercise.addSelectedQuestions"></button>
+                    <button type="button" class="btn btn-outline-primary" (click)="addExistingQuestions()" jhiTranslate="artemisApp.quizExercise.addSelectedQuestions"></button>
                 }
             }
         </div>

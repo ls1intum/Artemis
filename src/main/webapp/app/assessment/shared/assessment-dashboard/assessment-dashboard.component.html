@@ -63,6 +63,7 @@
 
                     @if (deimosModuleEnabled()) {
                         <button
+                            type="button"
                             [jhiFeatureToggleHide]="FeatureToggle.Deimos"
                             [attr.aria-label]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"
                             [tumUiTooltip]="'artemisApp.deimos.button.courseTrigger' | artemisTranslate"

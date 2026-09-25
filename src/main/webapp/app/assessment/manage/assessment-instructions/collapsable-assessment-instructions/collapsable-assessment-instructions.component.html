@@ -13,7 +13,15 @@
             <fa-icon [icon]="faGripLinesVertical" aria-hidden="true" />
         </div>
         <div class="card">
-            <div class="card-header text-white bg-primary" (click)="collapsed.set(!collapsed())">
+            <div
+                class="card-header text-white bg-primary"
+                (click)="collapsed.set(!collapsed())"
+                #keyboardAction16
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction16.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction16.click()"
+            >
                 <h3 class="card-title">
                     <fa-icon [icon]="farListAlt" />&nbsp;
                     <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
@@ -32,7 +40,15 @@
         </div>
     </div>
 } @else {
-    <div class="collapsed-instructions instructions-container text-white bg-primary" (click)="collapsed.set(!collapsed())">
+    <div
+        class="collapsed-instructions instructions-container text-white bg-primary"
+        (click)="collapsed.set(!collapsed())"
+        #keyboardAction35
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction35.click()"
+        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction35.click()"
+    >
         <fa-icon [icon]="faChevronLeft" />
         <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
         <fa-icon [icon]="faChevronLeft" />

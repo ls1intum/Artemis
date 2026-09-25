@@ -1,8 +1,8 @@
 <div class="flex flex-wrap gap-2 mb-2">
-    <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="expandAll()" data-testid="expand-all">
+    <button type="button" tumUiButton severity="secondary" size="small" variant="outlined" (click)="expandAll()" data-testid="expand-all">
         <span jhiTranslate="artemisApp.featureUsage.expandAll"></span>
     </button>
-    <button tumUiButton severity="secondary" size="small" variant="outlined" (click)="collapseAll()" data-testid="collapse-all">
+    <button type="button" tumUiButton severity="secondary" size="small" variant="outlined" (click)="collapseAll()" data-testid="collapse-all">
         <span jhiTranslate="artemisApp.featureUsage.collapseAll"></span>
     </button>
 </div>
@@ -36,6 +36,7 @@
                         <span class="inline-flex items-center gap-2" [style.padding-left.rem]="row.level * 1.25">
                             @if (row.hasChildren) {
                                 <button
+                                    type="button"
                                     tumUiButton
                                     severity="secondary"
                                     size="small"
@@ -135,6 +136,7 @@
                     <td>
                         @if ((row.kind === 'feature' || row.kind === 'endpoint') && hasCalls(row)) {
                             <button
+                                type="button"
                                 tumUiButton
                                 severity="secondary"
                                 size="small"

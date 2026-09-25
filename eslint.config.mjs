@@ -624,8 +624,9 @@ export default tseslint.config(
         },
         rules: {
             'prettier/prettier': ['error', { parser: 'angular' }],
-            '@angular-eslint/template/click-events-have-key-events': 'off',
-            '@angular-eslint/template/interactive-supports-focus': 'off',
+            '@angular-eslint/template/click-events-have-key-events': 'error',
+            '@angular-eslint/template/interactive-supports-focus': 'error',
+            '@angular-eslint/template/button-has-type': 'error',
             '@angular-eslint/template/label-has-associated-control': 'off',
             '@angular-eslint/template/alt-text': 'off',
             '@angular-eslint/template/elements-content': 'off',

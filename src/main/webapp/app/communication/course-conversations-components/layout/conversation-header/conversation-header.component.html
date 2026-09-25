@@ -3,10 +3,19 @@
         <div>
             <div class="d-flex justify-content-between flex-wrap">
                 <div class="d-flex align-items-center px-3">
-                    <button class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
                         <fa-icon [icon]="faChevronLeft" />
                     </button>
-                    <h4 class="pointer d-inline-block rounded py-2 info mb-0" data-testid="conversation-name" (click)="openConversationDetailDialog($event, INFO)">
+                    <h4
+                        class="pointer d-inline-block rounded py-2 info mb-0"
+                        data-testid="conversation-name"
+                        (click)="openConversationDetailDialog($event, INFO)"
+                        #keyboardAction9
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget && keyboardAction9.click()"
+                        (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction9.click()"
+                    >
                         @if (activeConversationAsChannel(); as activeConversationAsChannel) {
                             <jhi-channel-icon [isPublic]="activeConversationAsChannel.isPublic!" [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!" />
                         }

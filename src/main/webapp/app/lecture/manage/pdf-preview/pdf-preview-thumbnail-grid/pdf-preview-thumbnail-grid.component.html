@@ -17,6 +17,11 @@
                 cdkDrag
                 [cdkDragData]="page"
                 (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
+                #keyboardAction12
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction12.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction12.click()"
             >
                 <div class="drag-handle">
                     <fa-icon [icon]="faGripLines" />
@@ -38,6 +43,7 @@
                     <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
                 }
                 <button
+                    type="button"
                     [id]="'hide-show-button-' + page.slideId"
                     [style.opacity]="activeButtonPage() && activeButtonPage()?.slideId === page.slideId ? '1' : '0'"
                     [class]="'hide-show-btn btn ' + (hiddenPages()[page.slideId] ? 'btn-success' : 'btn-secondary')"
@@ -90,10 +96,10 @@
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
                             </p>
                             <div class="submit-container mt-3 d-flex justify-content-between">
-                                <button class="btn btn-secondary" (click)="activeButtonPage.set(undefined); popover.close()">
+                                <button type="button" class="btn btn-secondary" (click)="activeButtonPage.set(undefined); popover.close()">
                                     <span jhiTranslate="entity.action.cancel"></span>
                                 </button>
-                                <button class="btn btn-primary" (click)="showPage(activeButtonPage()?.slideId!); popover.close()">
+                                <button type="button" class="btn btn-primary" (click)="showPage(activeButtonPage()?.slideId!); popover.close()">
                                     <span jhiTranslate="entity.action.show"></span>
                                 </button>
                             </div>
@@ -105,7 +111,16 @@
     } @else {
         <!-- Without drag and drop for regular attachments -->
         @for (page of orderedPages(); track page.slideId) {
-            <div [id]="'pdf-page-' + page.slideId" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()">
+            <div
+                [id]="'pdf-page-' + page.slideId"
+                class="pdf-canvas-container"
+                (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
+                #keyboardAction108
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget && keyboardAction108.click()"
+                (keydown.space)="$event.target === $event.currentTarget && $event.preventDefault(); $event.target === $event.currentTarget && keyboardAction108.click()"
+            >
                 @if (hiddenPages()[page.slideId]) {
                     <ng-container>
                         <div class="hidden-overlay pdf-overlay" style="opacity: 1">
