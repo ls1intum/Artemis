@@ -21,6 +21,11 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbPopover, TranslateDirective, DragDropModule],
 })
 export class PdfPreviewThumbnailGridComponent {
+    // Injected services
+    private readonly alertService = inject(AlertService);
+    private readonly renderer = inject(Renderer2);
+    private readonly pdfEngineService = inject(PdfEngineService);
+
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     FOREVER = dayjs('9999-12-31');
@@ -50,11 +55,6 @@ export class PdfPreviewThumbnailGridComponent {
     selectedPagesOutput = output<Set<OrderedPage>>();
     hiddenPagesOutput = output<HiddenPageMap>();
     pageOrderOutput = output<OrderedPage[]>();
-
-    // Injected services
-    private readonly alertService = inject(AlertService);
-    private readonly renderer = inject(Renderer2);
-    private readonly pdfEngineService = inject(PdfEngineService);
 
     protected readonly faEye = faEye;
     protected readonly faEyeSlash = faEyeSlash;

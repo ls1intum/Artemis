@@ -33,6 +33,8 @@ export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
     pure: false,
 })
 // needed to be injectable in services and components that format dates outside of a template, e.g. for alert messages
+// @Service() cannot share a class with @Pipe (the compiler reports a decorator collision), so this stays @Injectable.
+// eslint-disable-next-line @angular-eslint/prefer-service-decorator
 @Injectable({ providedIn: 'root' })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private readonly translateService = inject(TranslateService);

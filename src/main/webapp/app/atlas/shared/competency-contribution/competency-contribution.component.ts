@@ -17,13 +17,13 @@ import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
     templateUrl: './competency-contribution.component.html',
 })
 export class CompetencyContributionComponent {
-    courseId = input.required<number>();
-    learningObjectId = input.required<number>();
-    isExercise = input.required<boolean>();
-
     private readonly courseCompetencyService = inject(CourseCompetencyService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
+
+    courseId = input.required<number>();
+    learningObjectId = input.required<number>();
+    isExercise = input.required<boolean>();
 
     // `competencies` is assigned inside an async HTTP subscribe; both fields are read in the template,
     // so they must be signals to render under zoneless change detection.

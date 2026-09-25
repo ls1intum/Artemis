@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { DialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/dialog-stub.component';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ValidationStatus } from 'app/foundation/util/validation';
@@ -33,7 +33,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(TutorialSessionCreateOrEditModalComponent, {
-                remove: { imports: [TumUiDialogComponent] },
+                remove: { imports: [TumAetUiDialogComponent] },
                 add: { imports: [DialogStubComponent] },
             })
             .compileComponents();

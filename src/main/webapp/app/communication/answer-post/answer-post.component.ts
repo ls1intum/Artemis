@@ -20,7 +20,7 @@ import { PostingDirective } from 'app/communication/directive/posting.directive'
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -59,7 +59,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         PostingContentComponent,
         PostingReactionsBarComponent,
         AnswerPostCreateEditModalComponent,
-        NgStyle,
         CdkOverlayOrigin,
         CdkConnectedOverlay,
         EmojiPickerComponent,

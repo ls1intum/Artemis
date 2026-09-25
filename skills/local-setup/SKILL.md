@@ -1,6 +1,6 @@
 ---
 name: local-setup
-description: Get a local Artemis development environment running from a fresh clone, or fix one that has stopped working. Use when setting up the project for the first time, when the server or client will not start, when Gradle or pnpm complain about versions, or when unsure which command to run for server-only versus full-stack development. Covers prerequisites, the two run modes, test users, and mail capture.
+description: Set up or troubleshoot a local Artemis server and client development environment.
 ---
 
 # Get Artemis running locally

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.feature;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.web.CoreWebsocketTopics.FEATURE_TOGGLES;
 
 import java.util.List;
 import java.util.Map;
@@ -25,8 +26,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 public class FeatureToggleService {
 
     private static final Logger log = LoggerFactory.getLogger(FeatureToggleService.class);
-
-    private static final String TOPIC_FEATURE_TOGGLES = "/topic/management/feature-toggles";
 
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
@@ -208,7 +207,7 @@ public class FeatureToggleService {
     private void sendUpdate() {
         try {
             if (isDistributedDataAvailable()) {
-                websocketMessagingService.sendMessage(TOPIC_FEATURE_TOGGLES, enabledFeatures());
+                websocketMessagingService.sendMessage(FEATURE_TOGGLES.at(), enabledFeatures());
             }
         }
         catch (RuntimeException e) {

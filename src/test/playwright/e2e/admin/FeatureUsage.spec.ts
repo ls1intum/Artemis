@@ -23,6 +23,9 @@ import { dismissPasskeyReminderIfPresent } from '../../support/dismissPasskeyRem
  * stack. Everything else runs with the shipped defaults.
  */
 test.describe('Feature usage analysis', { tag: '@fast' }, () => {
+    /** The report itself: every read of it is a call this suite makes, so it is the one endpoint whose count it controls. */
+    const OWN_ENDPOINT = 'GET api/admin/feature-usage';
+
     let page: Page;
 
     test.beforeAll('Login as admin', async ({ browser }) => {
@@ -40,69 +43,103 @@ test.describe('Feature usage analysis', { tag: '@fast' }, () => {
      * That is what lets the page answer "what can we delete" rather than only "what is popular", so an empty inventory
      * makes the whole feature useless while looking perfectly healthy.
      */
-    test('Registers the endpoint inventory at startup', async () => {
-        await expect(page.locator('[data-testid="kpi-tracked-features"]')).toBeVisible();
+    test('Registers the endpoint inventory at startup and reports every catalogue feature', async () => {
+        await expect(page.locator('[data-testid="kpi-used-features"]')).toBeVisible();
 
+        const report = await overviewFromApi();
         // A real deployment has hundreds of endpoints; any small number here means the scan matched the wrong mapping.
-        const endpoints = await endpointCountOf('kpi-tracked-features');
-        expect(endpoints).toBeGreaterThan(100);
+        expect(report.endpoints.length).toBeGreaterThan(100);
+        // Every catalogue feature is reported, including the ones this deployment does not offer
+        expect(report.features.length).toBeGreaterThan(100);
+        // Every endpoint is classified, and almost all of them belong to a feature of the catalogue
+        const catalogue = new Set(report.features.map((feature: any) => feature.feature));
+        const interactions = new Set(['ACTION', 'VIEW', 'AUTOMATIC', 'SYSTEM']);
+        expect(report.endpoints.every((endpoint: any) => interactions.has(endpoint.interaction))).toBeTruthy();
+        expect(report.endpoints.filter((endpoint: any) => !endpoint.retired && !catalogue.has(endpoint.featureLabel))).toHaveLength(0);
 
-        // Features, not endpoints, is what the headline leads with and what the tables below it list.
-        const features = await headlineNumberOf('kpi-tracked-features');
-        expect(features).toBeGreaterThan(0);
-        expect(features).toBeLessThanOrEqual(endpoints);
+        // The headline counts features, and what is offered here has to add up
+        const offered = await detailNumberOf('kpi-used-features');
+        expect(offered).toBe(report.availableFeatures);
+        expect(report.usedFeatures + report.onlyAutomatic + report.unusedFeatures).toBe(report.availableFeatures);
     });
 
-    test('Lists unused features and counts them in features rather than endpoints', async () => {
+    /**
+     * The status probes a page sends on its own must not count as use. The account lookup runs on every page load, so it
+     * is the one automatic endpoint this test can rely on having been called.
+     */
+    test('Classifies automatic calls separately from use', async () => {
+        const report = await overviewFromApi();
+        const account = report.endpoints.find((endpoint: any) => endpoint.identifier === 'GET api/core/public/account');
+
+        expect(account?.interaction).toBe('AUTOMATIC');
+        expect(report.endpoints.find((endpoint: any) => endpoint.identifier === OWN_ENDPOINT)?.interaction).toBe('VIEW');
+    });
+
+    test('Lists the features that need attention and counts them like the headline', async () => {
         await expect(page.locator('[data-testid="kpi-unused-features"]')).toBeVisible();
 
-        await page.locator('[data-testid="tab-unused"]').click();
-        const rows = page.locator('table tbody tr');
-        await expect.poll(() => rows.count(), { timeout: 10000 }).toBeGreaterThan(0);
+        await page.locator('[data-testid="tab-attention"]').click();
+        await expect(page.locator('[data-testid="attention-unused"]')).toBeVisible();
 
-        // The headline and the table have to agree: they used to count different things, so the page read
+        // The headline and the list have to agree: they used to count different things, so the page read
         // "895 unused" above a list of 131 rows.
-        expect(await rows.count()).toBe(await headlineNumberOf('kpi-unused-features'));
+        expect(await countOf('attention-unused')).toBe(await headlineNumberOf('kpi-unused-features'));
+        expect(await countOf('attention-onlyAutomatic')).toBe(await headlineNumberOf('kpi-only-automatic'));
     });
 
     /**
      * The whole write path in one assertion: this browser's own API traffic has to appear in the database and come back
-     * through the read API. Polling with reloads rather than a fixed wait, because the flush is scheduled and the test
-     * must not depend on landing between two ticks.
+     * through the read API. Polling rather than a fixed wait, because the flush is scheduled and the test must not depend
+     * on landing between two ticks.
      */
     test('Records the calls of a request that just happened', async () => {
-        // Asserted as an increase over what is already stored, not as "more than zero". A stack that has served other
-        // tests first already has counts, and against those a zero-based assertion passes instantly without the flush
-        // ever having run - proving nothing while looking like coverage.
-        const before = await headlineNumberOf('kpi-total-calls');
+        // Asserted on this endpoint's own count, and as an increase over what is already stored. A headline total is not
+        // enough: tests running in parallel raise it too, so it can grow while the calls made here are still in memory.
+        // And a stack that has served other tests first already has counts, against which "more than zero" passes
+        // without the flush ever having run. Every poll reads the report, so each one is itself a call to this endpoint.
+        const before = await callsOfEndpoint(OWN_ENDPOINT);
 
-        await expect
-            .poll(
-                async () => {
-                    await page.reload();
-                    await page.waitForLoadState('domcontentloaded');
-                    await dismissPasskeyReminderIfPresent(page);
-                    return headlineNumberOf('kpi-total-calls');
-                },
-                { timeout: 90000, intervals: [5000] },
-            )
-            .toBeGreaterThan(before);
+        await expect.poll(() => callsOfEndpoint(OWN_ENDPOINT), { timeout: 90000, intervals: [5000] }).toBeGreaterThan(before);
 
         // The caller's role bucket is the only thing recorded about who called, so it has to be resolved and stored.
+        await reloadPage();
         await expect(page.locator('[data-testid="role-distribution"]')).toContainText('ADMIN');
     });
 
     /**
      * Requesting the admin API is itself a tracked feature, so its own row is the one call this test can attribute
-     * exactly. It also proves the label taxonomy survives the round trip rather than the row appearing by raw path.
+     * exactly. It also proves the catalogue survives the round trip: the call arrives under the feature, in its product
+     * area, served by the controller that handles it.
      */
-    test('Attributes the calls to the labelled feature that served them', async () => {
-        await page.locator('[data-testid="tab-all-features"]').click();
-        const ownRow = page.locator('table tbody tr', { hasText: 'monitoring/feature-usage' });
+    test('Attributes the calls to the feature and the resource that served them', async () => {
+        // Waits for this feature itself rather than relying on the previous test: that one proves a flush for one endpoint,
+        // and this one must hold when it runs alone as well.
+        await expect
+            .poll(async () => (await overviewFromApi()).features.find((feature: any) => feature.feature === 'FEATURE_USAGE')?.status, { timeout: 90000, intervals: [5000] })
+            .toBe('USED');
+        await reloadPage();
 
-        await expect.poll(() => ownRow.count(), { timeout: 10000 }).toBeGreaterThan(0);
-        await expect(ownRow.first()).toContainText('admin');
+        await page.locator('[data-testid="tab-features"]').click();
+        await page.locator('[data-testid="search-input"]').fill(OWN_ENDPOINT.slice(OWN_ENDPOINT.indexOf(' ') + 1));
+
+        await page.locator('[data-testid="toggle-ADMINISTRATION"]').click();
+        const ownFeature = page.locator('[data-testid="tree-row-ADMINISTRATION/FEATURE_USAGE"]');
+        await expect(ownFeature).toHaveAttribute('data-status', 'USED');
+
+        await page.locator('[data-testid="toggle-ADMINISTRATION/FEATURE_USAGE"]').click();
+        await expect(page.locator('[data-kind="resource"]', { hasText: 'AdminFeatureUsageResource' })).toBeVisible();
     });
+
+    async function reloadPage(): Promise<void> {
+        await page.reload();
+        await page.waitForLoadState('domcontentloaded');
+        await dismissPasskeyReminderIfPresent(page);
+    }
+
+    async function callsOfEndpoint(identifier: string): Promise<number> {
+        const report = await overviewFromApi();
+        return report.endpoints.find((endpoint: any) => endpoint.identifier === identifier)?.callCount ?? 0;
+    }
 
     /**
      * Addressed by test id rather than by position or by label text: the card component owns wrapper elements the test
@@ -113,7 +150,18 @@ test.describe('Feature usage analysis', { tag: '@fast' }, () => {
         return Number((await page.locator(`[data-testid="${testId}"] [data-testid="kpi-value"]`).innerText()).replace(/[^0-9]/g, ''));
     }
 
-    async function endpointCountOf(testId: string): Promise<number> {
-        return Number((await page.locator(`[data-testid="${testId}"] [data-testid="kpi-endpoints"]`).innerText()).replace(/[^0-9]/g, ''));
+    async function detailNumberOf(testId: string): Promise<number> {
+        return Number((await page.locator(`[data-testid="${testId}"] [data-testid="kpi-detail"]`).innerText()).replace(/[^0-9]/g, ''));
+    }
+
+    async function countOf(sectionTestId: string): Promise<number> {
+        return Number((await page.locator(`[data-testid="${sectionTestId}"] [data-testid="attention-count"]`).innerText()).replace(/[^0-9]/g, ''));
+    }
+
+    async function overviewFromApi(): Promise<any> {
+        const response = await page.request.get('/api/admin/feature-usage?days=30');
+        expect(response.ok()).toBeTruthy();
+        const report = await response.json();
+        return { ...report, features: report.features ?? [], endpoints: report.endpoints ?? [] };
     }
 });

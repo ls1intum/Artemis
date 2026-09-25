@@ -142,4 +142,21 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
         // Verify student version regeneration was attempted
         verify(attachmentService).regenerateStudentVersion(testAttachment);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void testUnhideSlide_whenHiddenDateWasMovedToTheFuture() {
+        // The hidden date was moved to a later point after the unhide task started
+        ZonedDateTime newHiddenDate = ZonedDateTime.now().plusDays(1);
+        testSlide.setHidden(newHiddenDate);
+        slideTestRepository.save(testSlide);
+
+        slideUnhideExecutionService.unhideSlide(testSlide.getId());
+
+        Optional<Slide> slide = slideTestRepository.findById(testSlide.getId());
+        assertThat(slide).isPresent();
+        assertThat(slide.get().getHidden()).isNotNull();
+        assertThat(slide.get().getHidden().toInstant()).isAfter(ZonedDateTime.now().toInstant());
+        verify(attachmentService, never()).regenerateStudentVersion(any());
+    }
 }

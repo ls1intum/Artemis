@@ -31,6 +31,10 @@ public class ExamRepositoryApi extends AbstractExamApi {
         this.examRepository = examRepository;
     }
 
+    public Optional<Long> findCourseIdById(long examId) {
+        return examRepository.findCourseIdById(examId);
+    }
+
     public Exam findByIdElseThrow(long id) {
         return examRepository.findByIdElseThrow(id);
     }

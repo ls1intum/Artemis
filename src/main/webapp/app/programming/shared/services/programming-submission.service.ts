@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
@@ -73,7 +73,7 @@ export interface IProgrammingSubmissionService {
     unsubscribeForLatestSubmissionOfParticipation: (participationId: number) => void;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingSubmissionService implements IProgrammingSubmissionService, OnDestroy {
     private websocketService = inject(WebsocketService);
     private http = inject(HttpClient);

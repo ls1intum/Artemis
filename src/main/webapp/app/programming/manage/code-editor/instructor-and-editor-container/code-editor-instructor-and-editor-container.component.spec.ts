@@ -175,7 +175,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: Location, useValue: { replaceState: vi.fn() } },
         { provide: ParticipationService, useClass: MockParticipationService },
         { provide: ActivatedRoute, useValue: { params: of({}) } },
-        { provide: HyperionCodeGenerationApi, useValue: { generateCode: vi.fn() } },
+        { provide: HyperionCodeGenerationApi, useValue: { generateCode: vi.fn(), getActiveCodeGenerationJob: vi.fn() } },
         { provide: NgbModal, useValue: { open: vi.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
         { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of({ confirmed: true }) })) } },
         { provide: HyperionWebsocketService, useValue: { subscribeToJob: vi.fn(), unsubscribeFromJob: vi.fn() } },
@@ -213,7 +213,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
-    let codeGenerationApi: { generateCode: ReturnType<typeof vi.fn> };
+    let codeGenerationApi: { generateCode: ReturnType<typeof vi.fn>; getActiveCodeGenerationJob: ReturnType<typeof vi.fn> };
     let ws: { subscribeToJob: ReturnType<typeof vi.fn>; unsubscribeFromJob: ReturnType<typeof vi.fn> };
     let alertService: AlertService;
     let repoService: CodeEditorRepositoryService;
@@ -376,7 +376,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         await configureTestBed([{ provide: ExerciseReviewCommentService, useValue: reviewCommentService }]);
 
         alertService = TestBed.inject(AlertService);
-        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApi) as unknown as { generateCode: ReturnType<typeof vi.fn> };
+        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApi) as unknown as {
+            generateCode: ReturnType<typeof vi.fn>;
+            getActiveCodeGenerationJob: ReturnType<typeof vi.fn>;
+        };
+        // no generation is running unless a test says otherwise
+        codeGenerationApi.getActiveCodeGenerationJob.mockReturnValue(of({}));
         ws = TestBed.inject(HyperionWebsocketService) as unknown as { subscribeToJob: ReturnType<typeof vi.fn>; unsubscribeFromJob: ReturnType<typeof vi.fn> };
         profileService = TestBed.inject(ProfileService);
         repoService = TestBed.inject(CodeEditorRepositoryService);
@@ -478,7 +483,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve(); // resolve modal
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
 
             // Emit DONE success event
             job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS' });
@@ -505,7 +510,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION });
 
             job$.next({ type: 'DONE', success: false, completionStatus: 'PARTIAL', message: 'Generation completed, but the build failed' });
 
@@ -565,7 +570,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS });
             expect(comp.isGeneratingCode()).toBe(false);
             expect(addAlertSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -779,7 +784,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             await Promise.resolve();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
             expect(comp.isGeneratingCode()).toBe(false);
             expect(openSpy).toHaveBeenCalledOnce();
             expect(addAlertSpy).not.toHaveBeenCalledWith(
@@ -973,26 +978,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const testsJob$ = new Subject<any>();
             codeGenerationApi.generateCode
                 .mockReturnValueOnce(of({ jobId: 'job-solution' }))
-                .mockReturnValueOnce(of({}))
                 .mockReturnValueOnce(of({ jobId: 'job-template' }))
-                .mockReturnValueOnce(of({}))
                 .mockReturnValueOnce(of({ jobId: 'job-tests' }));
             ws.subscribeToJob.mockReturnValueOnce(solutionJob$.asObservable()).mockReturnValueOnce(templateJob$.asObservable()).mockReturnValueOnce(testsJob$.asObservable());
 
             comp.generateCode();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { repositoryType: RepositoryType.SOLUTION });
 
             solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+            expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenNthCalledWith(1, 42);
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { repositoryType: RepositoryType.TEMPLATE });
 
             templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(5, 42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
+            expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenNthCalledWith(2, 42);
+            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { repositoryType: RepositoryType.TESTS });
 
             testsJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
@@ -1075,7 +1078,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, {
                 repositoryType: RepositoryType.SOLUTION,
-                checkOnly: false,
                 initialAutoGeneration: true,
             });
         });
@@ -1087,11 +1089,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
                 const solutionJob$ = new Subject<any>();
                 const templateJob$ = new Subject<any>();
-                codeGenerationApi.generateCode
-                    .mockReturnValueOnce(of({ jobId: 'job-solution' }))
-                    .mockReturnValueOnce(of({ jobId: 'job-solution-still-active' }))
-                    .mockReturnValueOnce(of({}))
-                    .mockReturnValueOnce(of({ jobId: 'job-template' }));
+                codeGenerationApi.generateCode.mockReturnValueOnce(of({ jobId: 'job-solution' })).mockReturnValueOnce(of({ jobId: 'job-template' }));
+                codeGenerationApi.getActiveCodeGenerationJob.mockReturnValueOnce(of({ jobId: 'job-solution-still-active' })).mockReturnValueOnce(of({}));
                 ws.subscribeToJob.mockReturnValueOnce(solutionJob$.asObservable()).mockReturnValueOnce(templateJob$.asObservable());
 
                 comp.generateCode();
@@ -1100,13 +1099,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
                 await vi.advanceTimersByTimeAsync(0);
 
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
-                expect(codeGenerationApi.generateCode).toHaveBeenCalledTimes(2);
+                expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenNthCalledWith(1, 42);
+                expect(codeGenerationApi.generateCode).toHaveBeenCalledOnce();
 
                 await vi.advanceTimersByTimeAsync(1000);
 
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { checkOnly: true });
-                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
+                expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenNthCalledWith(2, 42);
+                expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { repositoryType: RepositoryType.TEMPLATE });
 
                 templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
                 await vi.advanceTimersByTimeAsync(0);
@@ -1160,11 +1159,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should clear subscription when restore check-only has no active job', () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             const clearSpy = vi.spyOn(internals(comp), 'clearJobSubscription');
-            codeGenerationApi.generateCode.mockReturnValue(of({}));
+            codeGenerationApi.getActiveCodeGenerationJob.mockReturnValue(of({}));
 
             internals(comp).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
+            expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenCalledWith(42);
             expect(clearSpy).toHaveBeenCalledWith(true);
         });
 
@@ -1176,17 +1175,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             internals(comp).restoreCodeGenerationState();
 
             expect(unsubscribe).not.toHaveBeenCalled();
-            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
+            expect(codeGenerationApi.getActiveCodeGenerationJob).not.toHaveBeenCalled();
         });
 
         it('should restore the running repository from the check-only response instead of the selected tab', () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             const subscribeSpy = vi.spyOn(internals(comp), 'subscribeToJob').mockImplementation(() => {});
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.TEMPLATE }));
+            codeGenerationApi.getActiveCodeGenerationJob.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.TEMPLATE }));
 
             internals(comp).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
+            expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenCalledWith(42);
             expect(internals(comp).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
             expect(subscribeSpy).toHaveBeenCalledWith('job-1', RepositoryType.TEMPLATE);
             expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)?.state).toBe('running');
@@ -1268,7 +1267,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                     },
                 ],
             });
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.TEMPLATE }));
+            codeGenerationApi.getActiveCodeGenerationJob.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.TEMPLATE }));
 
             internals(comp).restoreCodeGenerationState();
 
@@ -1314,20 +1313,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             const solutionJob$ = new Subject<any>();
             const templateJob$ = new Subject<any>();
-            codeGenerationApi.generateCode
-                .mockReturnValueOnce(of({ jobId: 'job-solution', repositoryType: RepositoryType.SOLUTION }))
-                .mockReturnValueOnce(of({}))
-                .mockReturnValueOnce(of({ jobId: 'job-template' }));
+            codeGenerationApi.getActiveCodeGenerationJob.mockReturnValueOnce(of({ jobId: 'job-solution', repositoryType: RepositoryType.SOLUTION })).mockReturnValueOnce(of({}));
+            codeGenerationApi.generateCode.mockReturnValueOnce(of({ jobId: 'job-template' }));
             ws.subscribeToJob.mockReturnValueOnce(solutionJob$.asObservable()).mockReturnValueOnce(templateJob$.asObservable());
 
             internals(comp).restoreCodeGenerationState();
             solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, {
+            expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenNthCalledWith(2, 42);
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledExactlyOnceWith(42, {
                 repositoryType: RepositoryType.TEMPLATE,
-                checkOnly: false,
                 initialAutoGeneration: true,
             });
             expect(internals(comp).activeCodeGenerationRepository).toBe(RepositoryType.TEMPLATE);
@@ -1362,14 +1358,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                     },
                 ],
             });
-            codeGenerationApi.generateCode.mockReturnValueOnce(of({})).mockReturnValueOnce(of({ jobId: 'job-template' }));
+            codeGenerationApi.generateCode.mockReturnValueOnce(of({ jobId: 'job-template' }));
 
             internals(comp).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { checkOnly: true });
-            expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, {
+            expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenCalledExactlyOnceWith(42);
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledExactlyOnceWith(42, {
                 repositoryType: RepositoryType.TEMPLATE,
-                checkOnly: false,
                 initialAutoGeneration: true,
             });
             expect(subscribeSpy).toHaveBeenCalledWith('job-template', RepositoryType.TEMPLATE);
@@ -1380,11 +1375,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should clear the restore subscription when the check-only response contains an unsupported repository type', () => {
             const clearSpy = vi.spyOn(internals(comp), 'clearJobSubscription');
             const subscribeSpy = vi.spyOn(internals(comp), 'subscribeToJob').mockImplementation(() => {});
-            codeGenerationApi.generateCode.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.ASSIGNMENT }));
+            codeGenerationApi.getActiveCodeGenerationJob.mockReturnValue(of({ jobId: 'job-1', repositoryType: RepositoryType.ASSIGNMENT }));
 
             internals(comp).restoreCodeGenerationState();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { checkOnly: true });
+            expect(codeGenerationApi.getActiveCodeGenerationJob).toHaveBeenCalledWith(42);
             expect(clearSpy).toHaveBeenCalledWith(true);
             expect(subscribeSpy).not.toHaveBeenCalled();
         });
@@ -1401,7 +1396,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                     },
                 ],
             });
-            codeGenerationApi.generateCode.mockReturnValue(of({}));
+            codeGenerationApi.getActiveCodeGenerationJob.mockReturnValue(of({}));
 
             internals(comp).restoreCodeGenerationState();
 
@@ -1449,7 +1444,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                     },
                 ],
             });
-            codeGenerationApi.generateCode.mockReturnValue(throwError(() => new Error('restore failed')));
+            codeGenerationApi.getActiveCodeGenerationJob.mockReturnValue(throwError(() => new Error('restore failed')));
 
             internals(comp).restoreCodeGenerationState();
 

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
@@ -37,7 +38,7 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("system-notifications/administration")
+@FeatureUsage(UserFeature.SYSTEM_NOTIFICATIONS)
 @RestController
 @RequestMapping("api/notification/admin/")
 public class AdminSystemNotificationResource {

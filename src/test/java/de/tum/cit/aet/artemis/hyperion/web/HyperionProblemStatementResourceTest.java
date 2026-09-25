@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -200,7 +200,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         });
 
         var captor = ArgumentCaptor.forClass(ExerciseReviewThreadUpdateDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exerciseId + "/synchronization"), captor.capture());
+        verify(websocketMessagingService, times(1)).sendMessage(topic("/topic/exercises/" + exerciseId + "/synchronization"), captor.capture());
 
         ExerciseReviewThreadUpdateDTO syncPayload = captor.getValue();
         assertThat(syncPayload.eventType()).isEqualTo(ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE);

@@ -146,13 +146,13 @@
             </table>
         </div>
     } @else if (loaded()) {
-        <tum-ui-empty-state
+        <tumaet-ui-empty-state
             class="mt-5"
             [icon]="faQuestion"
             [title]="(hasFaqs() ? 'artemisApp.faq.home.empty.noMatchingTitle' : 'artemisApp.faq.home.empty.title') | artemisTranslate"
             [description]="(hasFaqs() ? 'artemisApp.faq.noMatching' : 'artemisApp.faq.noExisting') | artemisTranslate"
         >
-            <ng-container tumUiEmptyStateActions>
+            <ng-container tumAetUiEmptyStateActions>
                 @if (!hasFaqs()) {
                     <a class="btn btn-sm btn-primary" [routerLink]="['new']">
                         <fa-icon [icon]="faPlus" />
@@ -160,13 +160,13 @@
                     </a>
                 }
             </ng-container>
-            <ng-container tumUiEmptyStateDocumentation>
+            <ng-container tumAetUiEmptyStateDocumentation>
                 @if (!hasFaqs()) {
                     <a href="https://docs.artemis.tum.de/instructor/communication-support/faq" target="_blank" rel="noopener noreferrer">
                         <span jhiTranslate="artemisApp.faq.home.empty.documentation"></span>
                     </a>
                 }
             </ng-container>
-        </tum-ui-empty-state>
+        </tumaet-ui-empty-state>
     }
 </div>
