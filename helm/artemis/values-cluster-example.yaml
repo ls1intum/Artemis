@@ -31,6 +31,11 @@ artemis:
     # CHANGE ME. Must be reachable by browsers AND resolvable from build-agent pods, because agents clone
     # LocalVC repositories through it.
     serverUrl: https://artemis.example.org
+    # CHANGE ME. Required installation metadata, shared by core and build-agent nodes.
+    operator:
+      name: "Example University IT Services"
+      adminName: "Max Mustermann"
+      universityName: "Example University"
     admin:
       username: artemis_admin
       # CHANGE ME. Must not be a password Artemis publishes as an example (artemis_admin, artemis-admin,

@@ -51,6 +51,11 @@ Required secret values are:
 - `registry.password`
 - `broker.auth.password`
 
+Set `artemis.config.operator.name`, `artemis.config.operator.adminName`, and `artemis.config.operator.universityName`
+to the installation's operator, administrator, and university or institution. The shared ConfigMap supplies these
+required values to every core and build-agent node, independently of whether telemetry is enabled. They are displayed
+on the About page.
+
 Every node here runs under the `prod` profile, which refuses to start on a credential that Artemis publishes as an
 example. `artemis.config.admin.password` must therefore not be `artemis_admin`.
 

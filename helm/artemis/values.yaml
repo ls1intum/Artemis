@@ -123,9 +123,11 @@ artemis:
     serverUrl: ""
 
     operator:
-      # Shown on the "About Us"/imprint pages.
+      # Required on core and build-agent nodes and shown on the "About Us" page.
+      # Replace these examples with the installation's operator, administrator and institution.
       name: "Example University"
       adminName: "Max Mustermann"
+      universityName: "Example University"
 
     # Initial internal admin account (created on first startup). REQUIRED.
     admin:

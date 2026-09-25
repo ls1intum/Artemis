@@ -13,6 +13,7 @@ data:
 
   INFO_OPERATORNAME: {{ .Values.artemis.config.operator.name | quote }}
   INFO_OPERATORADMINNAME: {{ .Values.artemis.config.operator.adminName | quote }}
+  INFO_UNIVERSITYNAME: {{ .Values.artemis.config.operator.universityName | quote }}
 
   # ---- Datasource (PostgreSQL) ----
   SPRING_DATASOURCE_URL: {{ include "artemis.jdbcUrl" . | quote }}
