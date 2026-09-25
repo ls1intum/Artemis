@@ -18,6 +18,7 @@ import { TumUiTabsService, tabKey, tabValue } from './tum-ui-tabs.service';
     hostDirectives: [TabList],
     host: {
         class: 'tum-ui-tab-list tum:relative tum:flex tum:w-full tum:min-w-0 tum:max-w-full tum:overflow-x-auto tum:border-b tum:border-border',
+        '(focusin)': 'revealFocusedTab($event)',
     },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -69,6 +70,15 @@ export class TumUiTabListComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+    }
+
+    /**
+     * Scrolls a focused tab fully into the list. Aria moves focus with `focus()`, which leaves a tab that is already
+     * partly visible where it is, so in a narrow, scrolling list the tab the keyboard reached could stay cut off.
+     */
+    protected revealFocusedTab(event: FocusEvent): void {
+        const tab = this.renderedTabs().find((candidate) => candidate.element === event.target);
+        tab?.element.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     }
 
     private updateIndicator(active: TumUiTabComponent | undefined): void {

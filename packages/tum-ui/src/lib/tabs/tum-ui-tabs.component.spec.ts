@@ -171,6 +171,16 @@ describe('TumUiTabs family', () => {
         expect(host.value()).toBe(1);
     });
 
+    it('scrolls the tab the keyboard reaches fully into a narrow list', async () => {
+        const scrollIntoView = vi.fn();
+        tabs()[1].scrollIntoView = scrollIntoView;
+
+        await press(tabs()[0], 'ArrowRight');
+
+        expect(document.activeElement).toBe(tabs()[1]);
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+    });
+
     it('reverses horizontal arrow navigation in right-to-left layouts', async () => {
         TestBed.inject(Directionality).valueSignal.set('rtl');
 
