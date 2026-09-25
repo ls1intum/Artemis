@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.course.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import jakarta.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -67,7 +65,7 @@ public class CourseAthenaConfigResource {
      */
     @PatchMapping("courses/{courseId}/athena-configuration")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<CourseAthenaConfigDTO> updateAthenaConfig(@PathVariable long courseId, @Valid @RequestBody CourseAthenaConfigUpdateDTO update) {
+    public ResponseEntity<CourseAthenaConfigDTO> updateAthenaConfig(@PathVariable long courseId, @RequestBody CourseAthenaConfigUpdateDTO update) {
         log.debug("REST request to change the Athena configuration of course {} to {}", courseId, update);
         return ResponseEntity.ok(courseAthenaConfigService.updateConfig(courseId, update));
     }

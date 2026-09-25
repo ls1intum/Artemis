@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
-import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -72,8 +71,7 @@ class AthenaFeedbackSuggestionsUsageTest {
         when(athenaModuleService.getAthenaModuleUrl(any())).thenReturn("http://athena.example.com/modules/text");
 
         service = new AthenaFeedbackSuggestionsService(restTemplate, athenaModuleService, dtoConverterService, mock(LLMTokenUsageService.class), resultRepository,
-                Optional.<LearnerProfileApi>empty(), Optional.<CourseCompetencyApi>empty(), mock(UserAiPreferenceService.class), mock(CourseAthenaConfigRepository.class),
-                Optional.of(featureUsageCollector));
+                Optional.<LearnerProfileApi>empty(), Optional.<CourseCompetencyApi>empty(), mock(UserAiPreferenceService.class), Optional.of(featureUsageCollector));
 
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setGradingFeedbackEnabled(true);

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { Subject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -134,18 +134,6 @@ describe('AthenaEnabledComponent', () => {
         const element = fixture.nativeElement;
         expect(element.querySelector('[data-testid="athena-enabled-enable"]')).toBeTruthy();
         expect(element.querySelector('[data-testid="athena-enabled-disable"]')).toBeTruthy();
-        expect(element.querySelector('.athena-configure-link')).toBeTruthy();
-    });
-
-    it('should render a loading placeholder instead of the toggle before the configuration answers', () => {
-        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(new Subject<AthenaCourseConfigDTO>().asObservable());
-        componentRef.setInput('course', course);
-        fixture.detectChanges();
-
-        const element = fixture.nativeElement;
-        expect(element.querySelector('[data-testid="athena-enabled-loading"]')).toBeTruthy();
-        expect(element.querySelector('[data-testid="athena-enabled-enable"]')).toBeFalsy();
-        // The configure link is not gated on the load: it only navigates, so there is nothing there to get wrong.
         expect(element.querySelector('.athena-configure-link')).toBeTruthy();
     });
 

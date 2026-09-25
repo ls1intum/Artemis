@@ -7,7 +7,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { SkeletonModule } from 'primeng/skeleton';
 
 /**
  * The single course-level Athena toggle shown on the course overview, next to the Iris toggle. Each change is saved
@@ -16,7 +15,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 @Component({
     selector: 'jhi-athena-enabled',
     templateUrl: './athena-enabled.component.html',
-    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent, SkeletonModule],
+    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `
@@ -68,9 +67,6 @@ export class AthenaEnabledComponent {
     private readonly state = createAthenaCourseConfigState(computed(() => this.course()?.id));
 
     readonly masterEnabled = computed(() => this.state()?.masterEnabled() ?? false);
-
-    /** False while the first load for this course is still on its way; see {@link AthenaCourseConfigState#isLoaded}. */
-    readonly isLoaded = computed(() => this.state()?.isLoaded() ?? false);
 
     /**
      * Route to the settings page. Computed rather than a method, because `[routerLink]="settingsRoute()"` is evaluated

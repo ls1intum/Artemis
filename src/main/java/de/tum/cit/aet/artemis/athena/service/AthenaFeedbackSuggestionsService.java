@@ -47,8 +47,6 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
-import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -92,8 +90,6 @@ public class AthenaFeedbackSuggestionsService {
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
-    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
-
     private final Optional<FeatureUsageCollector> featureUsageCollector;
 
     @Value("${artemis.athena.allowed-feedback-requests:10}")
@@ -102,20 +98,18 @@ public class AthenaFeedbackSuggestionsService {
     /**
      * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      *
-     * @param athenaRestTemplate           REST template used for the communication with Athena
-     * @param athenaModuleService          Athena module serviced used to determine the urls for different modules
-     * @param athenaDTOConverterService    Service to convert exercises and submissions to DTOs
-     * @param llmTokenUsageService         Service to store the usage of LLM tokens
-     * @param learnerProfileApi            API for learner profile operations
-     * @param courseCompetencyApi          API for course competency operations
-     * @param courseAthenaConfigRepository repository for the course-level Athena configuration, read to resolve a
-     *                                         course's feedback style defaults
-     * @param featureUsageCollector        counts feedback suggestion requests for the feature usage analysis
+     * @param athenaRestTemplate        REST template used for the communication with Athena
+     * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
+     * @param athenaDTOConverterService Service to convert exercises and submissions to DTOs
+     * @param llmTokenUsageService      Service to store the usage of LLM tokens
+     * @param learnerProfileApi         API for learner profile operations
+     * @param courseCompetencyApi       API for course competency operations
+     * @param featureUsageCollector     counts feedback suggestion requests for the feature usage analysis
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi, UserAiPreferenceService userAiPreferenceService,
-            CourseAthenaConfigRepository courseAthenaConfigRepository, Optional<FeatureUsageCollector> featureUsageCollector) {
+            Optional<FeatureUsageCollector> featureUsageCollector) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         this.userAiPreferenceService = userAiPreferenceService;
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
@@ -126,7 +120,6 @@ public class AthenaFeedbackSuggestionsService {
         this.learnerProfileApi = learnerProfileApi;
         this.resultRepository = resultRepository;
         this.courseCompetencyApi = courseCompetencyApi;
-        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.featureUsageCollector = featureUsageCollector;
     }
 
@@ -194,32 +187,6 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Builds the learner profile DTO sent to Athena for a submission, applying the course's feedback style defaults
-     * where the student has not set a preference of their own (see {@link LearnerProfileDTO#withCourseDefaults}).
-     *
-     * @param submission the submission to extract the profile from
-     * @param exercise   the exercise the submission belongs to, used to look up the course's Athena configuration
-     * @return the resulting DTO, or null if no learner profile is available for the submission
-     */
-    private LearnerProfileDTO buildLearnerProfileDTO(Submission submission, Exercise exercise) {
-        LearnerProfile learnerProfile = extractLearnerProfile(submission);
-        if (learnerProfile == null) {
-            return null;
-        }
-        if (learnerProfile.hasSetupFeedbackPreferences()) {
-            return LearnerProfileDTO.of(learnerProfile);
-        }
-
-        // The course id can be null for a transient exercise/course pair built in a test rather than persisted; that
-        // reads the same as a course with no Athena configuration, i.e. no course default.
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        CourseAthenaConfigDTO courseConfig = courseId != null ? courseAthenaConfigRepository.findConfigByCourseId(courseId).orElse(null) : null;
-        int defaultFeedbackDetail = courseConfig != null ? courseConfig.defaultFeedbackDetail() : 0;
-        int defaultFeedbackFormality = courseConfig != null ? courseConfig.defaultFeedbackFormality() : 0;
-        return LearnerProfileDTO.withCourseDefaults(learnerProfile, defaultFeedbackDetail, defaultFeedbackFormality);
-    }
-
-    /**
      * Extract the student's LLM selection for preliminary Athena feedback requests.
      *
      * @param user     the user who triggered the feedback generation
@@ -273,7 +240,7 @@ public class AthenaFeedbackSuggestionsService {
         List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
                 .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                buildLearnerProfileDTO(submission, exercise), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
         final long startNanos = System.nanoTime();
         // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
         boolean failed = true;
@@ -317,8 +284,8 @@ public class AthenaFeedbackSuggestionsService {
             return List.of();
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                buildLearnerProfileDTO(submission, exercise), isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
+                isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         final long startNanos = System.nanoTime();
         // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
         boolean failed = true;
@@ -361,8 +328,8 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                buildLearnerProfileDTO(submission, exercise), isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
+                isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         final long startNanos = System.nanoTime();
         // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
         boolean failed = true;

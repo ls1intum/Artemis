@@ -7,19 +7,9 @@
     // so the two AI-feedback settings pages share the same content width.
     max-width: 800px;
     margin: 0 auto;
-}
-
-.athena-general-panel {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    padding-top: 1rem;
-}
-
-.athena-admin-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
     padding-top: 1rem;
 }
 
@@ -40,133 +30,6 @@
     }
 }
 
-// ── Feedback style cards ──
-// Styled after Iris's "Level of Instructional Support" slider on the Iris settings page
-// (see iris-settings-update.component.scss), so the two AI-feedback settings pages read as one
-// family. Unlike that slider, 0 (no tick active) is a valid state here - "no course default" - so
-// this is a plain custom track with button ticks rather than a PrimeNG `p-slider`, which always
-// renders its handle at some position and has no "unset" state to show.
-
-.athena-card {
-    background: var(--iris-secondary-background);
-    border: 1px solid var(--iris-accent-background);
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-}
-
-.athena-card-title {
-    font-size: 1rem;
-    margin: 0;
-}
-
-// On a <small> this also overrides the element's default 0.875em shrink
-.athena-card-subtitle {
-    display: block;
-    color: var(--iris-label-color) !important;
+.athena-toggle-hint {
     font-size: 0.875rem;
-}
-
-.athena-slider-wrapper {
-    position: relative;
-    max-width: 80%;
-    margin-inline: auto;
-
-    // Vertical room so the enlarged tick hit-area is not clipped
-    padding: 0.5rem 0;
-}
-
-.athena-slider-track {
-    height: 6px;
-    border-radius: 999px;
-    background: var(--iris-accent-background);
-}
-
-.athena-slider-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--primary);
-}
-
-// The "big tick": a larger dot marking the currently selected value, drawn the same way as a small
-// tick (white fill, primary-coloured ring) but scaled up - the custom-track equivalent of PrimeNG's
-// slider handle.
-.athena-slider-handle {
-    position: absolute;
-    top: 50%;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--white);
-    border: 2px solid var(--primary);
-    transform: translate(-50%, -50%);
-    z-index: 3;
-    pointer-events: none;
-}
-
-// Clickable tick: a 20px-square button (generous hit area) with a visible 10px dot centred inside
-// it. Clicking it sets the course default to that tick's value, or clears it if already active.
-.athena-slider-tick {
-    position: absolute;
-    top: 50%;
-    left: 0; // overridden inline per tick
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-    z-index: 2; // sit above the track + fill
-    appearance: none;
-
-    // The visible dot: white fill with a border-coloured ring
-    &::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--white);
-        border: 2px solid var(--iris-accent-border-color);
-        transform: translate(-50%, -50%);
-        transition: border-color 0.15s ease;
-    }
-
-    // A "covered" tick sits behind the handle (a higher value is selected) - promote its ring to
-    // the primary colour. A plain (uncovered, unselected) tick keeps the grey ring.
-    &.covered::before {
-        border-color: var(--primary);
-    }
-
-    // The handle sits over this tick - hide the small dot so the handle is the only marker here.
-    &.active::before {
-        opacity: 0;
-    }
-}
-
-// Positioned at the same percentages as the ticks (see .athena-slider-tick) so the two always stay
-// aligned. The container only needs to provide the positioning context and reserve vertical space.
-.athena-slider-labels {
-    position: relative;
-    max-width: 80%;
-    margin-inline: auto;
-    margin-top: 0.25rem;
-    height: 1.5em;
-    color: var(--body-color);
-    font-size: 0.75rem;
-}
-
-.athena-slider-label {
-    position: absolute;
-    top: 0;
-    left: 0; // overridden inline per label
-    transform: translateX(-50%);
-    white-space: nowrap;
-}
-
-// Wraps the "Example feedback" label and the jhi-unified-feedback example preview below each slider.
-.athena-example-feedback {
-    margin-top: 1.25rem;
 }
