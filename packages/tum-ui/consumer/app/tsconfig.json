@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "ES2024",
+        "module": "preserve",
+        "moduleResolution": "bundler",
+        "experimentalDecorators": true,
+        "strict": true,
+        "skipLibCheck": false,
+        "types": []
+    },
+    "angularCompilerOptions": { "strictTemplates": true, "strictInjectionParameters": true },
+    "files": ["main.ts"]
+}

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
@@ -43,7 +43,7 @@ export interface GradeStepDTO {
     isPassingGrade: boolean;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class GradingService {
     private http = inject(HttpClient);
 

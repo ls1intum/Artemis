@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExerciseDto, fromFileUploadExerciseDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
@@ -12,7 +12,7 @@ interface FileUploadExerciseSearchResultDto {
     numberOfPages: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FileUploadExercisePagingService extends ExercisePagingService<FileUploadExercise> {
     private static readonly RESOURCE_URL = 'api/fileupload/file-upload-exercises';
 

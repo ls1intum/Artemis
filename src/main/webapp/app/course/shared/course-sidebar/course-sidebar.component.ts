@@ -66,6 +66,10 @@ export interface SidebarItem {
     ],
 })
 export class CourseSidebarComponent {
+    layoutService = inject(LayoutService);
+    private readonly scienceService = inject(ScienceService);
+    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
+
     protected readonly faChevronRight = faChevronRight;
     protected readonly faEllipsis = faEllipsis;
     protected readonly faCog = faCog;
@@ -81,9 +85,6 @@ export class CourseSidebarComponent {
     isTestServer = input<boolean>(false);
     hasUnreadMessages = input<boolean>(false);
     communicationRouteLoaded = input<boolean>(false);
-    layoutService = inject(LayoutService);
-    private readonly scienceService = inject(ScienceService);
-    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
 
     hiddenItems = signal<SidebarItem[]>([]);
     anyItemHidden = signal<boolean>(false);

@@ -16,8 +16,9 @@ import { TumUiConfirmationService } from './tum-ui-confirmation.service';
     `,
 })
 class ConfirmDialogStoryComponent {
-    readonly key = input<string>();
     private readonly confirmations = inject(TumUiConfirmationService);
+
+    readonly key = input<string>();
 
     protected open(): void {
         this.confirmations.confirm({

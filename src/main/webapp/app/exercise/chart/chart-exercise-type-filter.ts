@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ChartFilter } from 'app/exercise/chart/chart-filter';
 import { ExerciseScoresDTO } from 'app/course/overview/visualizations/exercise-scores-chart.service';
@@ -6,7 +6,7 @@ import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course
 
 type TypeFilterOperatingType = ExerciseScoresDTO | CourseManagementStatisticsModel;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ChartExerciseTypeFilter extends ChartFilter {
     typeSet: Set<ExerciseType> = new Set();
 

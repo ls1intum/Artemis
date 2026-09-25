@@ -75,7 +75,7 @@
                                 </button>
                                 <p-popover #colorPopover [dismissable]="true" styleClass="md-action-popover">
                                     <div class="flex flex-wrap gap-1 w-[13.75rem]">
-                                        @for (tagColor of colorSignal(); track tagColor) {
+                                        @for (tagColor of colors; track tagColor) {
                                             <button
                                                 type="button"
                                                 class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"

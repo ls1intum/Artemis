@@ -19,12 +19,12 @@ import { NgClass } from '@angular/common';
     styleUrl: './learning-path-nav-overview-learning-objects.component.scss',
 })
 export class LearningPathNavOverviewLearningObjectsComponent {
-    protected readonly faCheckCircle = faCheckCircle;
-    protected readonly faLock = faLock;
-
     private readonly alertService = inject(AlertService);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
+
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faLock = faLock;
 
     readonly learningPathId = input.required<number>();
     readonly competencyId = input.required<number>();

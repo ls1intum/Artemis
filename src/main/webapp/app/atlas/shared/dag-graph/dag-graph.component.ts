@@ -49,6 +49,7 @@ export class DagGraphComponent implements OnDestroy {
     private static readonly MAX_ZOOM = 4;
     private static readonly ZOOM_WHEEL_SENSITIVITY = 1.01;
     private static readonly MINIMAP_MARGIN = 10;
+    private readonly element = inject(ElementRef);
 
     /** Graph nodes. A node becomes part of the layout once its `dimension` is set (see class docs). */
     readonly nodes = input.required<DagGraphNode[]>();
@@ -117,7 +118,6 @@ export class DagGraphComponent implements OnDestroy {
         };
     });
 
-    private readonly element = inject(ElementRef);
     private resizeObserver?: ResizeObserver;
 
     constructor() {

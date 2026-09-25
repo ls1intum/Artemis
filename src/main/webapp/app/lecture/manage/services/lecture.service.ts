@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LectureService {
     protected http = inject(HttpClient);
     private accountService = inject(AccountService);

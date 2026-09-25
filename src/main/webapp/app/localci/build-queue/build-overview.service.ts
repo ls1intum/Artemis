@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -9,7 +9,7 @@ import { HttpResponse } from '@angular/common/http';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BuildOverviewService {
     private http = inject(HttpClient);
 

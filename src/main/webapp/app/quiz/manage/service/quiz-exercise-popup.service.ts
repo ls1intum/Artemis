@@ -1,9 +1,9 @@
-import { Injectable, Type, inject } from '@angular/core';
+import { Service, Type, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class QuizExercisePopupService {
     private dialogService = inject(DialogService);
     private router = inject(Router);

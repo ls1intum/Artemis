@@ -68,6 +68,7 @@
                                     @case ('SELF_PAUSED') {
                                         <tum-ui-tag severity="warn" [value]="'artemisApp.buildAgents.selfPaused' | artemisTranslate" />
                                     }
+                                    @default {}
                                 }
                             </td>
                             <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>

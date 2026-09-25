@@ -45,7 +45,6 @@ const TYPEAHEAD_DEBOUNCE_MS = 500;
     styleUrl: './tum-ui-select.component.scss',
     imports: [FaIconComponent, TumUiTranslatePipe],
     host: {
-        // The application stylesheet excludes TUM UI controls from the JHipster validity accent by this class.
         class: 'tum-ui-select',
     },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiSelectComponent), multi: true }],
@@ -132,14 +131,9 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         return this.options().find((option) => this.valuesMatch(this.resolveValue(option), current));
     });
 
-    /**
-     * The options the panel shows. Everything index-based - the key manager, `aria-activedescendant`, the
-     * option ids and every keyboard action - runs over this list rather than `options()`, so an index can
-     * never point at an option the user cannot see.
-     */
-    /** Whether a query is currently narrowing the list, rather than merely present. */
     protected readonly isFiltering = computed(() => this.filter() && this.filterText().trim().length > 0);
 
+    /** Keyboard navigation, option IDs and aria-activedescendant share this filtered order. */
     protected readonly visibleOptions = computed(() => {
         if (!this.isFiltering()) {
             return this.options();
@@ -184,8 +178,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
                 this.close();
             }
         });
-        // Focus lands on the search field when one is shown, so typing filters the list rather than running
-        // the trigger's typeahead.
         afterRenderEffect(() => {
             const field = this.filterInput()?.nativeElement;
             if (this.pendingFilterFocus && field) {
@@ -409,10 +401,6 @@ export class TumUiSelectComponent implements ControlValueAccessor {
         this.keyManager.setActiveItem(this.visibleOptions().length > 0 ? 0 : -1);
     }
 
-    /**
-     * Keys typed in the search field. Everything that moves or commits the selection is forwarded to the
-     * same handling the trigger uses; the rest is left to the input.
-     */
     protected onFilterKeydown(event: KeyboardEvent): void {
         const navigationKeys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter', 'Escape', 'Tab'];
         if (!navigationKeys.includes(event.key)) {

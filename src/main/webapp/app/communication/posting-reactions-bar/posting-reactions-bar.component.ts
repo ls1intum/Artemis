@@ -93,6 +93,13 @@ interface ReactionMetaDataMap {
     ],
 })
 export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
+    private metisService = inject(MetisService);
+    private accountService = inject(AccountService);
+    private conversationService = inject(ConversationService);
+    private dialogService = inject(DialogService);
+    private metisConversationService = inject(MetisConversationService);
+    private courseSidebarService = inject(CourseSidebarService);
+
     constructor() {
         effect(() => {
             // Track signal inputs that were monitored in ngOnChanges
@@ -172,13 +179,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     course = input<Course>();
     isDeleteEvent = output<boolean>();
     createEditModal = viewChild.required<PostCreateEditModalComponent>('createEditModal');
-
-    private metisService = inject(MetisService);
-    private accountService = inject(AccountService);
-    private conversationService = inject(ConversationService);
-    private dialogService = inject(DialogService);
-    private metisConversationService = inject(MetisConversationService);
-    private courseSidebarService = inject(CourseSidebarService);
 
     /**
      * on initialization: updates the current posting and its reactions,

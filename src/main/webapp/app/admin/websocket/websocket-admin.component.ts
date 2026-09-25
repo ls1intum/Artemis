@@ -37,6 +37,9 @@ import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiMessageComponent,
     ],
 })
 export class WebsocketAdminComponent implements OnInit, OnDestroy {
+    private websocketAdminService = inject(WebsocketAdminService);
+    private alertService = inject(AlertService);
+
     protected readonly faPlug = faPlug;
     protected readonly faSync = faSync;
     protected readonly faPowerOff = faPowerOff;
@@ -56,8 +59,6 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
     lastUpdated = signal<Date | undefined>(undefined);
     lastUpdateFailed = signal(false);
 
-    private websocketAdminService = inject(WebsocketAdminService);
-    private alertService = inject(AlertService);
     private refreshSubscription?: Subscription;
 
     ngOnInit(): void {

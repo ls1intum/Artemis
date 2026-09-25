@@ -40,9 +40,10 @@ function isVariantGroupCard(item: SidebarCardElement): boolean {
     imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {
-    protected readonly Object = Object;
     private metisConversationService = inject(MetisConversationService);
     private localStorageService = inject(LocalStorageService);
+
+    protected readonly Object = Object;
     private ngUnsubscribe = new Subject<void>();
 
     readonly onUpdateSidebar = output<void>();

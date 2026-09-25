@@ -25,13 +25,12 @@ import { ButtonModule } from 'primeng/button';
     styleUrls: ['./course-notification-popup-overlay.component.scss'],
 })
 export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestroy {
-    protected readonly popupTimeInMilliseconds = 40000;
-
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);
     private readonly courseNotificationService = inject(CourseNotificationService);
-
     private readonly route = inject(ActivatedRoute);
     private readonly communicationState = inject(ConversationSelectionState);
+
+    protected readonly popupTimeInMilliseconds = 40000;
 
     protected readonly notifications = signal<CourseNotification[]>([]);
     protected readonly isExpanded = signal(false);
