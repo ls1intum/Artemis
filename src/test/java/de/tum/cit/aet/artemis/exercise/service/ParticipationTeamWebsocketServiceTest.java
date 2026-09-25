@@ -8,6 +8,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,8 +23,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -131,6 +135,22 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         verify(websocketMessagingService).sendMessage(topic(websocketTopic(participation)), eq(List.of()));
         assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was added to destination tracker.").hasSize(1);
         assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testIgnoresSubscriptionEventsThatWereNotAuthorized() {
+        var headers = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
+        headers.setSessionId("rejected-session");
+        headers.setSubscriptionId("rejected-subscription");
+        headers.setDestination(websocketTopic(teamTextParticipation));
+        headers.setUser(getPrincipalMock("student2"));
+        var event = new SessionSubscribeEvent(this, MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders()), headers.getUser());
+
+        participationTeamWebsocketService.handleSubscribe(event);
+
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).isEmpty();
+        verify(websocketMessagingService, never()).sendMessage(topic(websocketTopic(teamTextParticipation)), any(Object.class));
     }
 
     @Test

@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -28,12 +29,18 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompReactorNettyCodec;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
+import org.springframework.messaging.simp.user.UserDestinationMessageHandler;
+import org.springframework.messaging.simp.user.UserDestinationResolver;
+import org.springframework.messaging.support.AbstractSubscribableChannel;
+import org.springframework.messaging.support.ExecutorSubscribableChannel;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
@@ -41,10 +48,14 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
+import org.springframework.web.socket.messaging.DefaultSimpUserRegistry;
+import org.springframework.web.socket.messaging.SessionSubscribeEvent;
+import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 import org.springframework.web.socket.messaging.StompSubProtocolErrorHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
@@ -156,6 +167,78 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         GzipMessageConverter gzipMessageConverter = new GzipMessageConverter(jsonMapper);
         messageConverters.add(gzipMessageConverter);
         return false;
+    }
+
+    /**
+     * Registers only authorized subscriptions. With receive ordering enabled, Spring publishes a subscribe event after enqueueing the frame, even if an inbound
+     * interceptor rejects it or has not checked it yet. Recheck the declared topic here so consumers can safely use registry membership for authorization and presence.
+     * This check runs per subscription, never per editor keystroke.
+     *
+     * @param order the listener order, before consumers of subscription events
+     * @return the local registry, which Spring also uses in its multi-server registry
+     */
+    @Override
+    protected SimpUserRegistry createLocalUserRegistry(@Nullable Integer order) {
+        var registry = new DefaultSimpUserRegistry() {
+
+            @Override
+            public void onApplicationEvent(ApplicationEvent event) {
+                if (event instanceof SessionSubscribeEvent subscription) {
+                    var headers = StompHeaderAccessor.wrap(subscription.getMessage());
+                    if (headers.getSessionId() == null || headers.getSubscriptionId() == null) {
+                        return;
+                    }
+                    // A rejected reuse of an id must not retain the authorization of an earlier subscription.
+                    super.onApplicationEvent(new SessionUnsubscribeEvent(this, subscription.getMessage(), subscription.getUser()));
+                    try {
+                        if (websocketTopicRegistry.getObject().authorizeSubscription(subscription.getUser(), headers.getDestination()) != WebsocketTopicRegistry.Decision.ALLOWED) {
+                            return;
+                        }
+                    }
+                    catch (RuntimeException e) {
+                        log.error("Could not authorize the subscription event for {}, rejecting it", headers.getDestination(), e);
+                        return;
+                    }
+                }
+                super.onApplicationEvent(event);
+            }
+        };
+        if (order != null) {
+            registry.setOrder(order);
+        }
+        return registry;
+    }
+
+    /**
+     * Keeps user-destination forwarding synchronous with the inbound handler. Spring 7.0.9 otherwise adds another ordered queue when receive ordering is enabled,
+     * reuses a message across user sessions, and drops all but the first delivery once its headers become immutable. The broker channel has no executor, so the
+     * inbound ordering already covers forwarding subscriptions to the broker; another queue is unnecessary. The delegating channel only prevents that second queue
+     * from being selected and keeps subscriptions on the original, ordered inbound channel.
+     */
+    @Override
+    @Bean
+    public UserDestinationMessageHandler userDestinationMessageHandler(AbstractSubscribableChannel clientInboundChannel, AbstractSubscribableChannel clientOutboundChannel,
+            AbstractSubscribableChannel brokerChannel, UserDestinationResolver userDestinationResolver) {
+        Assert.state(brokerChannel instanceof ExecutorSubscribableChannel channel && channel.getExecutor() == null,
+                "User-destination forwarding requires a synchronous broker channel");
+        var inboundDelegate = new AbstractSubscribableChannel() {
+
+            @Override
+            public boolean subscribe(MessageHandler handler) {
+                return clientInboundChannel.subscribe(handler);
+            }
+
+            @Override
+            public boolean unsubscribe(MessageHandler handler) {
+                return clientInboundChannel.unsubscribe(handler);
+            }
+
+            @Override
+            protected boolean sendInternal(Message<?> message, long timeout) {
+                return clientInboundChannel.send(message, timeout);
+            }
+        };
+        return super.userDestinationMessageHandler(inboundDelegate, clientOutboundChannel, brokerChannel, userDestinationResolver);
     }
 
     /**

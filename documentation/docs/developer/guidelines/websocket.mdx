@@ -4,8 +4,8 @@ title: WebSocket Topics
 sidebar_label: WebSocket Topics
 ---
 
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 Artemis pushes live updates to the client over a STOMP websocket: new results, posts, exam announcements, build queue
 changes, Iris answers and many more. The server publishes a message to a **destination**, and every client that holds
@@ -15,20 +15,22 @@ endpoint or the topic.
 
 <Callout variant={CalloutVariant.danger}>
 
-  <strong>Every destination the server sends to is a declared topic, and every topic declares who may subscribe.</strong>
-  A topic is a <code>WebsocketTopic</code> or <code>WebsocketUserTopic</code> constant in the <code>*WebsocketTopics</code>
-  class of the module that owns it. <code>WebsocketMessagingService</code> only accepts destinations of such constants,
-  and a subscription to a destination that no topic declares is rejected. Architecture tests
-  (<code>WebsocketTopicArchitectureTest</code>) fail the build if a topic is declared anywhere else.
+<strong>Every destination the server sends to is a declared topic, and every topic declares who may subscribe.</strong>
+
+A topic is a <code>WebsocketTopic</code> or
+
+<code>WebsocketUserTopic</code> constant in the <code>*WebsocketTopics</code>
+class of the module that owns it. <code>WebsocketMessagingService</code> only accepts destinations of such constants, and a subscription to a destination that no topic declares is
+rejected. Architecture tests (<code>WebsocketTopicArchitectureTest</code>) fail the build if a topic is declared anywhere else.
 
 </Callout>
 
 ## The two kinds of topics
 
-| Kind               | Declared as          | Sent with                                                   | Client subscribes to     | Who receives a message                                         |
-|--------------------|----------------------|-------------------------------------------------------------|--------------------------|----------------------------------------------------------------|
-| Broadcast topic    | `WebsocketTopic`     | `websocketMessagingService.sendMessage(TOPIC.at(id), dto)`  | `/topic/...`             | every client subscribed to the destination                     |
-| Per-user topic     | `WebsocketUserTopic` | `sendMessageToUser(login, TOPIC.at(id), dto)`               | `/user/topic/...`        | only the sessions of the user the server addresses             |
+| Kind            | Declared as          | Sent with                                                  | Client subscribes to | Who receives a message                             |
+| --------------- | -------------------- | ---------------------------------------------------------- | -------------------- | -------------------------------------------------- |
+| Broadcast topic | `WebsocketTopic`     | `websocketMessagingService.sendMessage(TOPIC.at(id), dto)` | `/topic/...`         | every client subscribed to the destination         |
+| Per-user topic  | `WebsocketUserTopic` | `sendMessageToUser(login, TOPIC.at(id), dto)`              | `/user/topic/...`    | only the sessions of the user the server addresses |
 
 Use a **per-user topic** whenever a message belongs to one person: their results, their Iris chat, their
 notifications, the progress of a job they started. Delivery is decided by the server for each message, so a per-user
@@ -83,17 +85,17 @@ whether the access rule fits the payload.
 `WebsocketTopicAccess` offers the same vocabulary as the REST authorization annotations. The course, exercise and
 lecture rules read the id from a template variable and also admit an administrator with active elevation.
 
-| Rule                                                           | Admits                                                                                   |
-|----------------------------------------------------------------|------------------------------------------------------------------------------------------|
-| `anyAuthenticatedUser()`                                       | every logged-in user; only for data everyone may see, such as system notifications       |
-| `administrator()`                                              | administrators with active elevation                                                     |
-| `ownUser("userId")`                                            | only the user whose id is in the destination; no administrator override                  |
-| `atLeastStudentInCourse("courseId")`, `...Tutor...`, `...Editor...`, `...Instructor...` | the role in the course                                                                    |
-| `atLeastTutorInExercise("exerciseId")`, `...Editor...`, `...Instructor...`             | the role in the course of the exercise                                                    |
-| `atLeastTutorInExerciseAndInstructorInExamExercise("exerciseId")` | tutors for course exercises, instructors for exam exercises                            |
-| `atLeastTutorInExerciseAndEditorInExamExercise("exerciseId")`  | tutors for course exercises, editors for exam exercises                                  |
-| `atLeastEditorInLecture("lectureId")`                          | editors and instructors of the course of the lecture                                     |
-| `custom(Provider.class, Provider::check)`                      | whatever the check method of the provider decides                                        |
+| Rule                                                                                    | Admits                                                                             |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `anyAuthenticatedUser()`                                                                | every logged-in user; only for data everyone may see, such as system notifications |
+| `administrator()`                                                                       | administrators with active elevation                                               |
+| `ownUser("userId")`                                                                     | only the user whose id is in the destination; no administrator override            |
+| `atLeastStudentInCourse("courseId")`, `...Tutor...`, `...Editor...`, `...Instructor...` | the role in the course                                                             |
+| `atLeastTutorInExercise("exerciseId")`, `...Editor...`, `...Instructor...`              | the role in the course of the exercise                                             |
+| `atLeastTutorInExerciseAndInstructorInExamExercise("exerciseId")`                       | tutors for course exercises, instructors for exam exercises                        |
+| `atLeastTutorInExerciseAndEditorInExamExercise("exerciseId")`                           | tutors for course exercises, editors for exam exercises                            |
+| `atLeastEditorInLecture("lectureId")`                                                   | editors and instructors of the course of the lecture                               |
+| `custom(Provider.class, Provider::check)`                                               | whatever the check method of the provider decides                                  |
 
 Pick the narrowest rule that fits the payload, and compare it with the REST endpoint that returns the same data: a
 topic must never reveal more than that endpoint. Rules that need data of the module, such as the owner of a student
@@ -108,7 +110,9 @@ private boolean isOwnerOfStudentExam(WebsocketSubscription subscription) {
 }
 ```
 
-A subscription is checked once, when the client subscribes. Keep the checks to one or two indexed queries.
+Subscriptions are checked by the inbound interceptor and independently by the user registry when the client subscribes.
+Spring can publish a subscription event before its ordered inbound queue checks the frame, so the registry must also
+apply the topic rule. Checks never run per editor keystroke. Keep each check to one or two indexed queries.
 
 ## Messages from the client
 
@@ -155,11 +159,11 @@ means that a client subscribes to a topic that nobody declares.
 
 ## Testing
 
-* `WebsocketTopicAuthorizationTest` checks the access rules through `WebsocketTopicRegistry.authorizeSubscription`. Add
+- `WebsocketTopicAuthorizationTest` checks the access rules through `WebsocketTopicRegistry.authorizeSubscription`. Add
   cases for a new rule, in particular a user who must be rejected.
-* Verify sent messages with `WebsocketDestinationMatchers`, which compare the destination as it goes over the wire:
+- Verify sent messages with `WebsocketDestinationMatchers`, which compare the destination as it goes over the wire:
   `verify(websocketMessagingService).sendMessage(topic("/topic/exercise/" + exerciseId + "/newResults"), any())`.
-* `WebsocketTopicArchitectureTest` and `WebsocketSecurityConfigurationTest` guard the model itself. The architecture test
+- `WebsocketTopicArchitectureTest` and `WebsocketSecurityConfigurationTest` guard the model itself. The architecture test
   also builds the registry from the topics of all modules, so two templates that match the same destination equally well,
   such as `/topic/things/{courseId}/details` and `/topic/things/items/{exerciseId}`, fail the build.
 

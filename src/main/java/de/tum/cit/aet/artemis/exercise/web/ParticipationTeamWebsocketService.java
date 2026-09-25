@@ -153,7 +153,7 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Called for every subscription the subscription check accepted. A subscription to the team topic of a participation
+     * Called for subscription events, including frames Spring enqueued but later rejected. Only an authorized subscription to the team topic of a participation
      * ({@link ExerciseWebsocketTopics#TEAM_ONLINE_STUDENTS}) announces the subscriber to the rest of the team.
      *
      * @param event session subscribe event
@@ -162,7 +162,14 @@ public class ParticipationTeamWebsocketService {
     public void handleSubscribe(SessionSubscribeEvent event) {
         StompHeaderAccessor stompHeaderAccessor = StompHeaderAccessor.wrap(event.getMessage());
         String destination = stompHeaderAccessor.getDestination();
-        if (destination != null) {
+        Principal principal = event.getUser();
+        SimpUser user = principal != null ? simpUserRegistry.getUser(principal.getName()) : null;
+        String sessionId = stompHeaderAccessor.getSessionId();
+        SimpSession session = user != null && sessionId != null ? user.getSession(sessionId) : null;
+        // The local registry runs first and independently checks the topic's access rule.
+        boolean authorized = session != null && session.getSubscriptions().stream()
+                .anyMatch(subscription -> subscription.getId().equals(stompHeaderAccessor.getSubscriptionId()) && subscription.getDestination().equals(destination));
+        if (authorized && destination != null) {
             TEAM_ONLINE_STUDENTS.match(destination).ifPresent(variables -> subscribe(Long.parseLong(variables.get("participationId")), stompHeaderAccessor));
         }
     }
