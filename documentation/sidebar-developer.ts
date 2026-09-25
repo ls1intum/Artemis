@@ -36,6 +36,7 @@ const sidebars: SidebarsConfig = {
                     items: [
                         'guidelines/server-development',
                         'guidelines/rest-api',
+                        'guidelines/websocket',
                         'guidelines/server-tests',
                         'guidelines/database',
                         'guidelines/entity-ownership',

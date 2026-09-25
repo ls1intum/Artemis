@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.cit.aet.artemis.exam.service.ExamSubmissionService.isContentEqualTo;
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXERCISE_START_STATUS;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -89,8 +90,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Lazy
 @Service
 public class StudentExamService {
-
-    private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
     private static final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
@@ -831,7 +830,7 @@ public class StudentExamService {
             else {
                 log.warn("Unable to add exam exercise start status to distributed cache because it is null");
             }
-            websocketMessagingService.sendMessage(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status);
+            websocketMessagingService.sendMessage(EXERCISE_START_STATUS.at(examId), status);
         }
         catch (Exception e) {
             log.warn("Failed to send exercise preparation status", e);
