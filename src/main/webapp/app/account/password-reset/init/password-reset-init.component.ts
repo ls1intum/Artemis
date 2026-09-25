@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Component for initiating the password reset process.
@@ -25,10 +25,10 @@ import { TumUiButtonComponent, TumUiFormFieldComponent, TumUiInputDirective, Tum
         FormsModule,
         ArtemisTranslatePipe,
         ExternalUserPasswordResetModalComponent,
-        TumUiButtonComponent,
-        TumUiFormFieldComponent,
-        TumUiInputDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

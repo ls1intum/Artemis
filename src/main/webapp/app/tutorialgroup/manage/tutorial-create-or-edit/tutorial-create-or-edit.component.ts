@@ -9,16 +9,16 @@ import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/s
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
 import {
-    TumUiButtonDirective,
-    TumUiConfirmDialogComponent,
-    TumUiConfirmationService,
-    TumUiInputDirective,
-    TumUiInputGroupAddonComponent,
-    TumUiInputGroupComponent,
-    TumUiInputNumberComponent,
-    TumUiSelectComponent,
-    TumUiToggleSwitchComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiInputNumberComponent,
+    TumAetUiSelectComponent,
+    TumAetUiToggleSwitchComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -54,26 +54,26 @@ export interface UpdateTutorialGroupEvent {
         SelectModule,
         DatePickerModule,
         RouterLink,
-        TumUiButtonDirective,
-        TumUiInputDirective,
-        TumUiSelectComponent,
-        TumUiToggleSwitchComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiTooltipDirective,
         FaIconComponent,
         TutorialEditLanguagesInputComponent,
-        TumUiInputNumberComponent,
-        TumUiInputGroupComponent,
-        TumUiInputGroupAddonComponent,
-        TumUiConfirmDialogComponent,
+        TumAetUiInputNumberComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiConfirmDialogComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-create-or-edit.component.html',
     styleUrl: './tutorial-create-or-edit.component.scss',
 })
 export class TutorialCreateOrEditComponent {
-    private confirmationService = inject(TumUiConfirmationService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);

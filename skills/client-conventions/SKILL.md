@@ -1,6 +1,6 @@
 ---
 name: client-conventions
-description: Apply Artemis conventions when changing Angular application or TUM UI code, migrating components, or fixing client lint violations.
+description: Apply Artemis conventions when changing Angular application or TUM AET UI code, migrating components, or fixing client lint violations.
 ---
 
 # Artemis client conventions
@@ -40,7 +40,7 @@ disable and do not autofix it. Other provider metadata also keeps `@Injectable`.
 
 Use `computed()` or `effect()`. Enforced at error level by
 `localRules/prefer-signal-reactivity-over-ngonchanges` (`rules/prefer-signal-reactivity-over-ngonchanges.mjs`)
-across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs
+across `src/main/webapp/app`, `packages/tum-aet-ui/src/lib`, and `src/test/javascript`, including specs
 and undecorated base classes.
 
 This is a consistency ban, not a correctness fix. Angular does call inherited `ngOnChanges` hooks
@@ -124,21 +124,21 @@ Shallow copies share nested state; `structuredClone` loses custom prototypes suc
 Do not clone merely to notify a signal if nested identity must survive. For that case and the
 child-input identity boundary, read the cloning section of `reference/migration-recipes.md`.
 
-`packages/tum-ui` is outside these application rules and must not import `app/` utilities.
+`packages/tum-aet-ui` is outside these application rules and must not import `app/` utilities.
 Choose copying behavior appropriate to the package's data and identity requirements.
 
 ## Styling
 
-Use TUM UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Do not add Bootstrap or
+Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Do not add Bootstrap or
 ng-bootstrap in new work.
 
-Colours use semantic tokens. Use TUM UI component variants, or `text-state-danger`,
+Colours use semantic tokens. Use TUM AET UI component variants, or `text-state-danger`,
 `text-state-success`, `text-state-warning`, `text-state-info` for plain markup. Never `--p-<color>-N`
 primitives, never `text-red-500`, never `text-danger`, never the superseded arbitrary
 `text-(--danger)` form.
 
 `localRules/no-raw-tailwind-color-palette` enforces the palette part across
-`src/main/webapp/app/**/*.html` and `packages/tum-ui/src/lib/**/*.html`. **The Bootstrap ban is
+`src/main/webapp/app/**/*.html` and `packages/tum-aet-ui/src/lib/**/*.html`. **The Bootstrap ban is
 only partly enforced**: `localRules/no-bootstrap-classes` covers the migrated directories listed
 in `eslint.config.mjs`.
 The convention applies throughout the client even where lint does not enforce it. Add newly
@@ -148,13 +148,13 @@ Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-in
 the real PrimeNG component so its styles load deterministically. Enforced by
 `localRules/no-primeng-component-classes`.
 
-PrimeNG itself is a transitional fallback, used only when a TUM UI gap cannot reasonably be closed
+PrimeNG itself is a transitional fallback, used only when a TUM AET UI gap cannot reasonably be closed
 in the same change. Explain the contained fallback in the pull request.
 
-If TUM UI lacks a reusable capability, add or evolve a package component around native HTML,
+If TUM AET UI lacks a reusable capability, add or evolve a package component around native HTML,
 Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
 primitives, and keep Artemis-specific composition in the application. See
-`documentation/docs/developer/guidelines/tum-ui-kit.mdx`.
+`documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
 
 ## Other rules worth knowing
 

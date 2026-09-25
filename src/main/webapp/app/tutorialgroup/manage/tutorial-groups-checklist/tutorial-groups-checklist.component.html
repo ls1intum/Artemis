@@ -8,7 +8,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <jhi-checklist-check id="timeZone" [checkAttribute]="isTimeZoneConfigured()" />
                     <label class="pe-4" for="timeZone" jhiTranslate="artemisApp.pages.checklist.timeZone"></label>
-                    <a [routerLink]="['/course-management', course().id!, 'settings']" tumUiButton severity="warn" class="my-2">
+                    <a [routerLink]="['/course-management', course().id!, 'settings']" tumAetUiButton severity="warn" class="my-2">
                         <fa-icon [icon]="faCog" />
                         <span jhiTranslate="artemisApp.courseOverview.menu.settings"></span>
                     </a>
@@ -26,7 +26,7 @@
                             type="button"
                             data-testid="configuration-action"
                             [routerLink]="['/course-management', course().id!, 'tutorial-groups', 'configuration', course().tutorialGroupsConfiguration!.id!, 'edit']"
-                            tumUiButton
+                            tumAetUiButton
                             class="my-2"
                             [disabled]="!isTimeZoneConfigured()"
                         >
@@ -39,7 +39,7 @@
                             type="button"
                             data-testid="configuration-action"
                             [routerLink]="['/course-management', course().id!, 'create-tutorial-groups-configuration']"
-                            tumUiButton
+                            tumAetUiButton
                             class="my-2"
                             [disabled]="!isTimeZoneConfigured()"
                         >
@@ -51,7 +51,7 @@
             </div>
             <hr />
             <div>
-                <button type="button" [routerLink]="['/course-management', course().id!, 'tutorial-groups']" tumUiButton class="my-2" [disabled]="!isFullyConfigured">
+                <button type="button" [routerLink]="['/course-management', course().id!, 'tutorial-groups']" tumAetUiButton class="my-2" [disabled]="!isFullyConfigured">
                     <span jhiTranslate="artemisApp.pages.checklist.continueToManagement"></span>
                 </button>
             </div>
