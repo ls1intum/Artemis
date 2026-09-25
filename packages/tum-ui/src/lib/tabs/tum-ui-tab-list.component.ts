@@ -1,7 +1,6 @@
 import { FocusKeyManager } from '@angular/cdk/a11y';
 import { Directionality } from '@angular/cdk/bidi';
 import { ChangeDetectionStrategy, Component, ElementRef, Injector, OnDestroy, afterRenderEffect, computed, contentChildren, effect, inject, signal } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { TumUiTabsService } from './tum-ui-tabs.service';
 import { TumUiTabComponent } from './tum-ui-tab.component';
 
@@ -24,14 +23,13 @@ export class TumUiTabListComponent implements OnDestroy {
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly tabs = contentChildren(TumUiTabComponent, { descendants: true });
     private readonly keyManager = new FocusKeyManager(this.tabs, this.injector).withWrap().withHomeAndEnd().setFocusOrigin('keyboard');
-    private readonly keyManagerChange: Subscription;
     private resizeObserver?: ResizeObserver;
     protected readonly indicatorPosition = signal({ offset: 0, width: 0, animate: false });
     protected readonly indicatorTransform = computed(() => `translateX(${this.indicatorPosition().offset}px)`);
     private indicatorReady = false;
 
     constructor() {
-        this.keyManagerChange = this.keyManager.change.subscribe((index) => {
+        this.keyManager.change.subscribe((index) => {
             const tab = this.tabs()[index];
             if (tab) {
                 this.tabsService.select(this.tabsService.valueFor(tab));
@@ -40,9 +38,6 @@ export class TumUiTabListComponent implements OnDestroy {
         effect(() => {
             const tabs = this.tabs();
             if (!this.allValuesPublished(tabs)) {
-                // A tab created by @if or @for is reported by the content query before its `value` binding has been
-                // applied. Acting now would select the wrong tab, or overwrite the value the host bound with undefined;
-                // this effect re-runs as soon as the missing tab publishes its value.
                 return;
             }
             const activeValue = this.tabsService.active();
@@ -77,14 +72,9 @@ export class TumUiTabListComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
-        this.keyManagerChange.unsubscribe();
         this.keyManager.destroy();
     }
 
-    /**
-     * Whether every tab currently in the query has published its value, i.e. whether Angular has applied the `value`
-     * binding of each of them. Only then does the list know which tab is which.
-     */
     private allValuesPublished(tabs: readonly TumUiTabComponent[]): boolean {
         return tabs.every((tab) => this.tabsService.valueFor(tab) !== undefined);
     }

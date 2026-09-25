@@ -14,10 +14,10 @@ let nextConfirmDialogId = 0;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiConfirmDialogComponent {
+    private readonly confirmationService = inject(TumUiConfirmationService);
+
     /** Static key used to select this dialog's confirmation requests. */
     readonly key = input<string>();
-
-    private readonly confirmationService = inject(TumUiConfirmationService);
 
     protected readonly messageId = `tum-ui-confirm-dialog-message-${nextConfirmDialogId++}`;
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -16,7 +16,7 @@ export interface AssessmentScore {
     total: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StructuredGradingCriterionService {
     /**
      * Connects the structured grading instructions with the feedback of a submission element

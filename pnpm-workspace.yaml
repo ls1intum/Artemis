@@ -7,21 +7,21 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.7.2
-  '@analogjs/vitest-angular': 2.7.2
+  '@analogjs/vite-plugin-angular': 2.7.5
+  '@analogjs/vitest-angular': 2.7.5
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2201.8
-  '@angular-devkit/core': 22.1.8
-  '@angular/build': 22.1.8
-  '@angular/cdk': 22.1.7
-  '@angular/cli': 22.1.8
-  '@angular/common': 22.1.7
-  '@angular/compiler': 22.1.7
-  '@angular/compiler-cli': 22.1.7
-  '@angular/core': 22.1.7
-  '@angular/forms': 22.1.7
-  '@angular/localize': 22.1.7
-  '@angular/platform-browser': 22.1.7
+  '@angular-devkit/architect': 0.2202.0
+  '@angular-devkit/core': 22.2.0
+  '@angular/build': 22.2.0
+  '@angular/cdk': 22.2.0
+  '@angular/cli': 22.2.0
+  '@angular/common': 22.2.0
+  '@angular/compiler': 22.2.0
+  '@angular/compiler-cli': 22.2.0
+  '@angular/core': 22.2.0
+  '@angular/forms': 22.2.0
+  '@angular/localize': 22.2.0
+  '@angular/platform-browser': 22.2.0
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -33,7 +33,7 @@ catalog:
   '@storybook/addon-vitest': 10.6.0
   '@storybook/angular-vite': 10.6.0
   '@tailwindcss/postcss': 4.3.3
-  '@types/node': 24.13.4
+  '@types/node': 24.13.6
   '@types/react': 19.2.18
   '@vitest/browser': 4.1.11
   '@vitest/browser-playwright': 4.1.11
@@ -43,11 +43,11 @@ catalog:
   concurrently: 10.0.5
   cross-env: 10.1.0
   dayjs: 1.11.23
-  eslint: 10.10.0
+  eslint: 10.11.0
   eslint-plugin-storybook: 10.6.0
   jsdom: 30.0.1
   lodash-es: 4.18.1
-  ng-packagr: 22.1.1
+  ng-packagr: 22.2.1
   postcss: 8.5.28
   publint: 0.3.24
   playwright: 1.63.0
@@ -55,14 +55,14 @@ catalog:
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.104.1
+  sass: 1.105.0
   semver: 7.8.5
   storybook: 10.6.0
   stylelint: 17.15.0
   tailwindcss: 4.3.3
   tslib: 2.8.1
   typescript: 6.0.3
-  vite: 8.1.5
+  vite: 8.3.0
   vitest: 4.1.11
   yaml: 2.9.1
   zone.js: 0.16.3
@@ -82,6 +82,18 @@ preferFrozenLockfile: true
 
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
+
+# Temporary exceptions to pnpm's default 24h minimumReleaseAge. Every entry names an exact version, and
+# is deleted once that version is older than a day; `pnpm install --frozen-lockfile` names any entry
+# that is still needed.
+# - @analogjs 2.7.5 (published 2026-09-25): Angular 22.2 builds its JavaScript transformer around a
+#   content hash that must be initialized first, and every analog release before 2.7.3 fails every spec
+#   file with "Hash utility must be initialized by awaiting `initializeHash()`" (analogjs/analog#2576).
+#   2.7.5 additionally stops 22.2's pre-warmed transformer worker pools from idling in the Vitest
+#   process (analogjs/analog#2581). Remove on or after 2026-09-26.
+minimumReleaseAgeExclude:
+  - '@analogjs/vite-plugin-angular@2.7.5'
+  - '@analogjs/vitest-angular@2.7.5'
 
 # Tell pnpm that the Angular major this project is on is an acceptable peer for
 # packages whose published peerDependencies range still lists only older majors.
@@ -119,9 +131,6 @@ peerDependencyRules:
 # because it never uses Vite. Without an override, @angular/build's own exact pin governs
 # and the mismatch cannot happen. `pnpm run check:vite-override` fails the build if it does.
 overrides:
-  # Rolldown 1.2.0 corrupts KaTeX surrogate escapes during chunk optimization (oxc-project/oxc#25084).
-  # Remove when @angular/build pins a fixed Rolldown version; keep chunk optimization enabled.
-  '@angular/build>rolldown': '1.2.9'
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
   'ng-mocks>@angular/forms': '^22.0.0'
@@ -132,12 +141,13 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': '22.1.7'
+  '@angular/localize': '22.2.0'
   # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
-  # animations 22.1.7 and animations asks for core 22.1.7 - so without this pin an Angular patch bump
-  # leaves animations behind on the old patch against the new core. Keep it equal to @angular/core.
-  '@angular/animations': '22.1.7'
+  # animations of its own version and animations asks for core of its own version - so without this pin
+  # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
+  # to @angular/core.
+  '@angular/animations': '22.2.0'
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
@@ -148,20 +158,17 @@ overrides:
   ajv: '8.20.0'
   brace-expansion: '5.0.12'
   braces: '3.0.3'
-  cookie: '1.1.1'
   debug: '4.4.3'
   diff: '9.0.0'
-  dompurify: '3.4.15'
+  dompurify: '3.4.16'
   esbuild: '0.28.2'
-  express: '5.2.1'
   # Kept on the 3.x line (ajv/fast-json-stringify require ^3); 4.x is an API break.
   # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
-  fast-uri: '3.1.7'
+  fast-uri: '3.1.8'
   globals: '17.12.0'
   http-proxy-middleware: '3.0.7'
   immutable: '5.1.9'
-  ip-address: '10.7.2'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
   js-yaml: '4.3.2'
   # Held at 30.0.1: in 30.1.0 a detached element's style object no longer passes jsdom's own
@@ -170,7 +177,7 @@ overrides:
   # down, which failed 65 tests across two specs on teardown alone. Revisit once PrimeNG or
   # jsdom fixes it; keep this equal to the catalog entry.
   jsdom: '30.0.1'
-  katex: '0.18.7'
+  katex: '0.18.9'
   # less dropped the optional `image-size` dependency in 4.9.0. Every image-size release published so
   # far carries unfixed infinite-loop DoS advisories (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so
   # there is no version to upgrade to.
@@ -198,8 +205,8 @@ overrides:
   # a single red AutoDocs run as a verdict on a react bump; re-run it several times first.
   react: '19.2.8'
   react-dom: '19.2.8'
-  # Reached through express / body-parser, which both already sit on their newest release and
-  # still resolve qs to 6.15.x. 6.16.0 fixed GHSA-4mjr-xmp4-gh2g (uncaught TypeError when a
+  # Reached through body-parser (via @compodoc/compodoc), which already sits on its newest release and
+  # still resolves qs to 6.15.x. 6.16.0 fixed GHSA-4mjr-xmp4-gh2g (uncaught TypeError when a
   # parsed object with a non-callable constructor.isBuffer is stringified again) and
   # GHSA-x5fp-wj9c-mxmx (bracket keys bypassing arrayLimit when comma parsing is on).
   qs: '6.16.0'
@@ -223,7 +230,12 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-  'eslint@10.10.0': 'patches/eslint+10.10.0.patch'
+  # Backport of angular-eslint/angular-eslint#3201: reactive-context-must-read-signal looks up its settings by the
+  # called function's name in a plain object, so a bare call such as toString(x) or a destructured valueOf(...)
+  # resolves to an Object.prototype member and aborts the whole lint run. Remove this entry once angular-eslint
+  # releases the fix (any version after 22.5.0).
+  '@angular-eslint/eslint-plugin@22.5.0': 'patches/@angular-eslint__eslint-plugin@22.5.0.patch'
+  'eslint@10.11.0': 'patches/eslint+10.11.0.patch'
   y-monaco@0.1.6: patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.

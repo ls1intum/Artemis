@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -47,7 +48,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
  * See {@link PyrisJobService#getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest, Class)} for more information.
  */
 @Lazy
-@FeatureUsage("internal/pyris-status-updates")
+@FeatureUsage(UserFeature.IRIS_CHAT)
 @RestController
 @Conditional(IrisEnabled.class)
 @RequestMapping("api/iris/internal/")
@@ -127,6 +128,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
+    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
     @PostMapping("pipelines/competency-extraction/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setCompetencyExtractionJobStatus(@PathVariable String runId, @RequestBody PyrisCompetencyStatusUpdateDTO statusUpdateDTO,
@@ -153,6 +155,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
      * @throws AccessForbiddenException if the token is invalid
      */
+    @FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
     @PostMapping("pipelines/tutor-suggestion/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setTutorSuggestionJobStatus(@PathVariable String runId, @RequestBody TutorSuggestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
@@ -178,6 +181,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
+    @FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
     @PostMapping("pipelines/autonomous-tutor/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setAutonomousTutorJobStatus(@PathVariable String runId, @RequestBody PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdateDTO,
@@ -204,6 +208,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
      * @throws AccessForbiddenException if the token is invalid
      */
+    @FeatureUsage(UserFeature.IRIS_STRUGGLE_INTERVENTION)
     @PostMapping("pipelines/struggle-intervention/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setStruggleInterventionJobStatus(@PathVariable String runId, @RequestBody PyrisStruggleInterventionStatusUpdateDTO statusUpdateDTO,
@@ -233,6 +238,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws ConflictException        if the run ID in the URL does not match the token in the request header
      * @throws AccessForbiddenException if the token is invalid
      */
+    @FeatureUsage(UserFeature.IRIS_SEARCH_ANSWER)
     @PostMapping("pipelines/global-search/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setStatusOfGlobalSearchAnswerJob(@PathVariable String runId, @RequestBody PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdateDTO,
@@ -257,6 +263,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
      * @throws AccessForbiddenException if the token is invalid
      */
+    @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
     @PostMapping("webhooks/ingestion/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisLectureIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
@@ -282,6 +289,7 @@ public class PyrisInternalStatusUpdateResource {
      * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
      * @throws AccessForbiddenException if the token is invalid
      */
+    @FeatureUsage(UserFeature.IRIS_CONTENT_INGESTION)
     @PostMapping("webhooks/ingestion/faqs/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setStatusOfFaqIngestionJob(@PathVariable String runId, @RequestBody PyrisFaqIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {

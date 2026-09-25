@@ -41,9 +41,9 @@ export class StatisticsGraphComponent {
     tooltipTranslation = '';
     readonly yScaleMax = signal<number | undefined>(undefined);
 
-    private readonly chartColors = computed(() => [GraphColors.DARK_BLUE]);
+    private readonly chartColors = [GraphColors.DARK_BLUE];
 
-    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.chartColors()));
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.chartColors));
     readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
         yAxis: { max: this.yScaleMax(), tickFormatter: (value) => yAxisTickFormatting(String(value)) },
         tooltip: {

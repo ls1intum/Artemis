@@ -34,7 +34,7 @@
             <div
                 [class]="{ 'content-sidebar-width': !isCollapsed() }"
                 class="content-width scrollable-content no-header-bar-height"
-                [ngStyle]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
+                [style]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
             >
                 <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>

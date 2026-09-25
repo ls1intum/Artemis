@@ -47,6 +47,8 @@ interface HolidayListEntry {
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective, TumUiTagComponent, TumUiTooltipDirective],
 })
 export class HolidayListComponent {
+    private readonly translateService = inject(TranslateService);
+
     readonly holidays = input.required<readonly Holiday[]>();
     /** Sessions each holiday covers, keyed by free period id and counted by overlap rather than by whole days. */
     readonly sessionCountsByHoliday = input.required<Map<number, number>>();
@@ -64,7 +66,6 @@ export class HolidayListComponent {
     }
     readonly deleteRequested = output<Holiday>();
 
-    private readonly translateService = inject(TranslateService);
     private readonly locale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly faWrench = faWrench;

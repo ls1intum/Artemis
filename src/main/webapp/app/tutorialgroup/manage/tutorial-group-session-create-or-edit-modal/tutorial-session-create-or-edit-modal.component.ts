@@ -47,10 +47,11 @@ export interface UpdateTutorialGroupSessionData {
     styleUrl: './tutorial-session-create-or-edit-modal.component.scss',
 })
 export class TutorialSessionCreateOrEditModalComponent {
+    private translateService = inject(TranslateService);
+
     protected readonly ValidationStatus = ValidationStatus;
     protected readonly faCircleInfo = faCircleInfo;
 
-    private translateService = inject(TranslateService);
     private session = signal<TutorialGroupSession | undefined>(undefined);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());

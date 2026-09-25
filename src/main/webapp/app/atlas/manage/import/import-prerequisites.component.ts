@@ -16,10 +16,10 @@ import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-se
     imports: [ButtonComponent, TranslateDirective, FormsModule, ImportCompetenciesTableComponent, CompetencySearchComponent],
 })
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
+    private readonly prerequisiteService = inject(PrerequisiteService);
+
     entityType = CourseCompetencyType.PREREQUISITE;
     override allowRelationImport = false;
-
-    private readonly prerequisiteService = inject(PrerequisiteService);
 
     onSubmit() {
         this.prerequisiteService.importBulk(this.selectedCourseCompetencies.resultsOnPage, this.courseId, false).subscribe({

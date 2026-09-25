@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
@@ -47,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("configuration/static-code-analysis")
+@FeatureUsage(UserFeature.PROGRAMMING_GRADING_CONFIGURATION)
 @RestController
 @RequestMapping("api/programming/")
 public class StaticCodeAnalysisResource {

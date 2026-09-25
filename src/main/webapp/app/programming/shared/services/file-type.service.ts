@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 
 const CHAR_CODE_TAB = 9;
 const CHAR_CODE_LINE_FEED = 10;
@@ -17,9 +17,7 @@ const IMAGE_EXTENSIONS_TO_MIME_TYPE: Readonly<Record<string, string>> = {
     ico: 'image/x-icon',
 };
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class FileTypeService {
     /**
      * Determines for a string whether it represents the content of a binary file.

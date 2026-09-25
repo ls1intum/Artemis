@@ -56,6 +56,7 @@
     tum-ui-tooltip-content,
     .tum-ui-btn,
     .tum-ui-input,
+    .tum-ui-overlay,
     .tum-ui-popover-panel,
     .tum-ui-table
 ) {
@@ -73,6 +74,7 @@
         tum-ui-date-picker,
         tum-ui-dialog,
         tum-ui-input-number,
+        tum-ui-menu,
         tum-ui-paginator,
         tum-ui-panel,
         tum-ui-radio-button,
@@ -80,7 +82,8 @@
         tum-ui-select,
         tum-ui-select-button,
         tum-ui-table,
-        tum-ui-toggle-switch
+        tum-ui-toggle-switch,
+        .tum-ui-overlay
     )
     :where(button, input, select, textarea) {
     font: inherit;

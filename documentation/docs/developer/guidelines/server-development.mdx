@@ -258,37 +258,58 @@ Key points:
 * Use appropriate authorization annotations (`@EnforceAtLeastInstructor`, `@EnforceRoleInResource`, etc.)
 * Follow route naming conventions (kebab-case, proper structure)
 
-### Labelling a feature for the usage analysis
+### Assigning endpoints to a feature for the usage analysis
 
 Every endpoint is already counted by the built-in [feature usage analysis](/admin/feature-usage) without anyone doing
-anything: the inventory is built at startup from Spring's own mapping table, so coverage never drifts. What is missing by
-default is meaning, because an endpoint is listed by its HTTP verb and path.
+anything: the inventory is built at startup from Spring's own mapping table, so coverage never drifts. What an endpoint
+needs from you is meaning: which feature, as users know it, it serves, and whether its calls say that someone used that
+feature.
 
-Add `@FeatureUsage` where the path does not say what is being used, in particular for a sub feature of a larger area:
+**Which feature.** Every controller carries `@FeatureUsage` with an entry of the `UserFeature` catalogue:
 
 ```java
-@FeatureUsage("configuration/static-code-analysis")
+@FeatureUsage(UserFeature.PROGRAMMING_GRADING_CONFIGURATION)
 @RestController
 @RequestMapping("api/programming/")
 public class StaticCodeAnalysisResource {
 ```
 
-* **Required on every controller**, enforced by `FeatureUsageAnnotationTest`. On a controller it labels every endpoint in
-  it; on a method it labels that endpoint and wins over the class.
-* The value is `area/feature`, which is what gives the admin page its tree. The whole taxonomy is rendered into
-  [Feature Usage Catalogue](/developer/feature-usage-catalogue); regenerate it with
-  `./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true` after changing a label.
-* The label is kebab-case and only has to be unique within the module. The module itself is never part of the
-  annotation: it is derived from the controller's package, so there is nothing that can drift out of sync.
-* Endpoints sharing a label are reported as one row, which is the point. The stored data stays per endpoint, so adding,
-  renaming or removing a label is safe at any time and historic counts regroup immediately.
+* **Required on every controller**, enforced by `FeatureUsageAnnotationTest`. On a controller it assigns every endpoint
+  in it; on a method it assigns that endpoint and wins over the class. Split a controller per method as soon as it serves
+  more than one thing a user would name, such as the student view and the instructor view of the same data.
+* Pick the feature a user would recognise, not the one that matches the code. Endpoints of several modules can serve the
+  same feature, and the page shows the modules one level below it.
+* A feature that does not exist yet goes into `UserFeature`, under its `ProductArea`, with a name and a one-line
+  description in `src/main/webapp/i18n/{en,de}/featureUsage.json`. The test fails for a constant without translations
+  and for one that nothing records.
+* The whole mapping is rendered into [Feature Usage Catalogue](/developer/feature-usage-catalogue); regenerate it with
+  `./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true` and read the diff.
 
-Do not confuse it with `@FeatureToggle`, which decides whether an endpoint may be called at all. `@FeatureUsage` never
-affects behaviour.
+**How its calls count.** A `GET` or `HEAD` is a view and everything else an action, unless the endpoint is `@Internal`,
+which makes it a system call. Add `@UsageInteraction` where that is wrong:
+
+```java
+@UsageInteraction(FeatureInteraction.AUTOMATIC)
+@GetMapping("variant-jobs")
+public ResponseEntity<List<VariantJobDTO>> getJobsOfCurrentUser() {
+```
+
+* `AUTOMATIC` for an endpoint the client calls on its own: a status probe, a poll, a badge, a title lookup. This is the
+  one to think about for every new `GET` that a page calls when it loads. Without it, a feature nobody uses looks busy.
+* `VIEW` for a `POST` that only reads, such as a search or a preview.
+* `ACTION` for a `GET` whose purpose is a side effect, such as starting an exam or locking a submission.
+* `SYSTEM` for an endpoint another system calls, such as a build agent or an AI service reporting back.
+
+The interaction belongs to the endpoint, not to a call. An endpoint that both acts and reports status, for example
+through a `checkOnly` flag, cannot be counted correctly; give the status its own endpoint.
+
+Do not confuse either annotation with `@FeatureToggle`, which decides whether an endpoint may be called at all.
+`@FeatureUsage` and `@UsageInteraction` never affect behaviour, and changing them is safe at any time: the stored data
+stays per endpoint, and historic counts regroup at the next startup.
 
 Server-initiated work has no endpoint to annotate. Count it by calling `FeatureUsageCollector.recordUsage` with
-`FeatureKind.BACKGROUND`, and keep the identifier bounded: a value derived from a user name or an entity id would turn
-every user into its own feature.
+`FeatureKind.BACKGROUND`, the feature and the interaction, and keep the identifier bounded: a value derived from a user
+name or an entity id would turn every user into its own entry.
 
 See [Feature Usage Analysis](/developer/feature-usage) for how the tracking works and which invariants must hold when
 changing it.

@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationCapacityHealthIndicator;
@@ -70,7 +71,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Conditional(HyperionExerciseGenerationEnabled.class)
 @Lazy
 @RestController
-@FeatureUsage("authoring-assistance/exercise-generation")
+@FeatureUsage(UserFeature.HYPERION_EXERCISE_GENERATION)
 @RequestMapping("api/hyperion/")
 public class HyperionExerciseGenerationResource {
 

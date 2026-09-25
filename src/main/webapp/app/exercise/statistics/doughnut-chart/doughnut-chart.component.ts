@@ -22,9 +22,9 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     imports: [RouterLink, NgClass, FaIconComponent, TumUiDoughnutChartComponent, ArtemisTranslatePipe],
 })
 export class DoughnutChartComponent implements OnInit {
-    protected readonly faSpinner = faSpinner;
-
     private readonly router = inject(Router);
+
+    protected readonly faSpinner = faSpinner;
 
     readonly course = input<Course>(undefined!);
     readonly contentType = input<DoughnutChartType>(undefined!);

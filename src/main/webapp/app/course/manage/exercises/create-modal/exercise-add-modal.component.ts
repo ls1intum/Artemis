@@ -72,6 +72,11 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
+    private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly router = inject(Router);
+    private readonly dialogService = inject(DialogService);
+
     readonly visible = input<boolean>(false);
     readonly mode = input<AddModalMode>('create');
     readonly courseId = input<number | undefined>(undefined);
@@ -79,9 +84,6 @@ export class ExerciseAddModalComponent {
     readonly visibleChange = output<boolean>();
     readonly groupCreate = output<void>();
     readonly exportRequested = output<void>();
-
-    private readonly profileService = inject(ProfileService);
-    private readonly featureToggleService = inject(FeatureToggleService);
 
     /** Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. */
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
@@ -112,9 +114,6 @@ export class ExerciseAddModalComponent {
     protected readonly faArrowRight = faArrowRight;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faLayerGroup = faLayerGroup;
-
-    private readonly router = inject(Router);
-    private readonly dialogService = inject(DialogService);
 
     constructor() {
         effect(() => {

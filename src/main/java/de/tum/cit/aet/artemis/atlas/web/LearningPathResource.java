@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
@@ -63,7 +64,7 @@ import de.tum.cit.aet.artemis.course.service.CourseService;
 @Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.LearningPaths)
 @Lazy
-@FeatureUsage("learning-paths/learning-paths")
+@FeatureUsage(UserFeature.LEARNING_PATHS)
 @RestController
 @RequestMapping("api/atlas/")
 public class LearningPathResource {
@@ -115,6 +116,7 @@ public class LearningPathResource {
      * @param courseId the id of the course for which the learning paths should be enabled
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @PutMapping("courses/{courseId}/learning-paths/enable")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
@@ -135,6 +137,7 @@ public class LearningPathResource {
      * @param courseId the id of the course for which the learning paths should be created
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @PutMapping("courses/{courseId}/learning-paths/generate-missing")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable long courseId) {
@@ -152,6 +155,7 @@ public class LearningPathResource {
      * @param search   the pageable search containing the page size, page number and query string
      * @return the ResponseEntity with status 200 (OK) and with body the desired page, sorted and matching the given query
      */
+    @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @GetMapping("courses/{courseId}/learning-paths")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, SearchTermPageableSearchDTO<String> search) {
@@ -166,6 +170,7 @@ public class LearningPathResource {
      * @param courseId the id of the course for which the average progress should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the average progress information
      */
+    @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @GetMapping("courses/{courseId}/learning-path/average-progress")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<LearningPathAverageProgressDTO> getAverageProgressForCourse(@PathVariable long courseId) {
@@ -181,6 +186,7 @@ public class LearningPathResource {
      * @param courseId the id of the course for which the health status should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the health status
      */
+    @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @GetMapping("courses/{courseId}/learning-path-health")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<LearningPathHealthDTO> getHealthStatusForCourse(@PathVariable long courseId) {
@@ -231,6 +237,7 @@ public class LearningPathResource {
      * @param courseId the id of the course for which the graph should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the graph
      */
+    @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @GetMapping("courses/{courseId}/learning-path/competency-instructor-graph")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse

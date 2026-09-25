@@ -1082,6 +1082,30 @@ public class LocalVCServletService {
      * @return a {@link UsernameAndPassword} object with the extracted username and password
      * @throws LocalVCAuthException if the header is missing, invalid, or improperly formatted
      */
+    /**
+     * Whether a git request over HTTPS was made by a build agent or a CI system cloning for a build, rather than by a person.
+     * <p>
+     * Local CI agents are recognised by the attribute their authorization sets. A CI system using the shared build
+     * credential, which returns from the authorization before that attribute is set, is recognised by the credential's
+     * username instead; by the time a completed request is inspected, authentication has already succeeded, so the
+     * username cannot be claimed without the password.
+     *
+     * @param request a git request that has been served
+     * @return true if the request was a clone for a build
+     */
+    public boolean isBuildAgentClone(HttpServletRequest request) {
+        if (request.getAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE) != null) {
+            return true;
+        }
+        try {
+            String username = extractUsernameAndPassword(request.getHeader(HttpHeaders.AUTHORIZATION)).username();
+            return BUILD_USER_NAME.equals(username) || (StringUtils.hasText(buildAgentGitUsername) && buildAgentGitUsername.equals(username));
+        }
+        catch (LocalVCAuthException e) {
+            return false;
+        }
+    }
+
     private UsernameAndPassword extractUsernameAndPassword(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
             throw new LocalVCAuthException("No authorization header provided", true);

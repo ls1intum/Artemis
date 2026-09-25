@@ -42,18 +42,18 @@ import { TumUiButtonDirective } from '@tumaet/ui-angular';
     ],
 })
 export class CoursesComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+    private teamService = inject(TeamService);
+    private router = inject(Router);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+    private accountService = inject(AccountService);
+
     protected readonly faPenAlt = faPenAlt;
     protected readonly faArrowDownAZ = faArrowDownAZ;
     protected readonly faArrowUpAZ = faArrowUpAZ;
     protected readonly faDoorOpen = faDoorOpen;
     protected readonly faBook = faBook;
     protected readonly faPlus = faPlus;
-
-    private courseService = inject(CourseManagementService);
-    private teamService = inject(TeamService);
-    private router = inject(Router);
-    private courseAccessStorageService = inject(CourseAccessStorageService);
-    private accountService = inject(AccountService);
 
     // All written inside the dashboard HTTP subscribe — must be signals under zoneless,
     // otherwise the course list silently never renders after the response arrives.
