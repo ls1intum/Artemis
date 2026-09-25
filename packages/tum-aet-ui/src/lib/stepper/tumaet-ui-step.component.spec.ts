@@ -123,7 +123,7 @@ describe('TumAetUiStepComponent', () => {
 
     it('keeps the state word out of the visible line', () => {
         const label = fixture.debugElement.query(By.css('.tumaet-ui-step-label')).nativeElement as HTMLElement;
-        const hidden = label.querySelector('.tum\\:sr-only') as HTMLElement;
+        const hidden = label.querySelector('.tumaet\\:sr-only') as HTMLElement;
         expect(hidden.textContent?.trim()).toBe('Not started');
         expect(label.getAttribute('aria-hidden')).toBeNull();
     });
