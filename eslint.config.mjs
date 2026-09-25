@@ -600,6 +600,12 @@ export default tseslint.config(
             '@angular-eslint/template/elements-content': 'off',
             '@angular-eslint/template/prefer-control-flow': 'error',
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
+            // A @switch without @default silently renders nothing for an unmatched value. Write `@default never;`
+            // when the cases cover the whole union or enum (the template type check then fails when a member is
+            // added), otherwise `@default {}` to state that nothing is rendered on purpose.
+            '@angular-eslint/template/require-switch-default': 'error',
+            // Setting outerHTML replaces the node Angular is bound to, so the next update fails. Use [innerHTML].
+            '@angular-eslint/template/no-outerhtml': 'error',
         },
     },
     {
