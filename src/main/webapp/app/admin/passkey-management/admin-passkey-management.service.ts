@@ -1,9 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { PasskeyDTO } from 'app/account/user/settings/passkey-settings/dto/passkey.dto';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AdminPasskeyManagementService extends BaseApiHttpService {
     private resourceUrl = 'account/passkeys';
 

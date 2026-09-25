@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,11 +10,11 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 type EntityResponseType = HttpResponse<Faq>;
 type EntityArrayResponseType = HttpResponse<Faq[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FaqService {
-    public resourceUrl = 'api/communication/courses';
-
     private http = inject(HttpClient);
+
+    public resourceUrl = 'api/communication/courses';
 
     create(courseId: number, createFaqDTO: CreateFaqDTO): Observable<EntityResponseType> {
         const copy = FaqService.convertCreateFaqFromClient(createFaqDTO);

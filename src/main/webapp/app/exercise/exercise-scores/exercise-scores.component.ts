@@ -100,17 +100,6 @@ export enum FilterProp {
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
-    protected readonly faDownload = faDownload;
-    protected readonly faSync = faSync;
-    protected readonly faFolderOpen = faFolderOpen;
-    protected readonly faListAlt = faListAlt;
-    protected readonly farFileCode = faFileCode;
-    protected readonly RepositoryType = RepositoryType;
-    protected readonly ExerciseType = ExerciseType;
-    protected readonly FeatureToggle = FeatureToggle;
-    protected readonly AssessmentType = AssessmentType;
-    readonly FilterProp = FilterProp;
-
     private readonly route = inject(ActivatedRoute);
     private readonly accountService = inject(AccountService);
     private readonly courseService = inject(CourseManagementService);
@@ -121,6 +110,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly alertService = inject(AlertService);
     private readonly breakpointObserver = inject(BreakpointObserver);
+
+    protected readonly faDownload = faDownload;
+    protected readonly faSync = faSync;
+    protected readonly faFolderOpen = faFolderOpen;
+    protected readonly faListAlt = faListAlt;
+    protected readonly farFileCode = faFileCode;
+    protected readonly RepositoryType = RepositoryType;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly AssessmentType = AssessmentType;
+    readonly FilterProp = FilterProp;
 
     // Laptop and smaller: covers screens up to 1400px
     private static readonly LAPTOP_BREAKPOINT = '(max-width: 1400px)';

@@ -17,8 +17,9 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
-    readonly exercise = model.required<Exercise>();
     readonly fb = inject(FormBuilder);
+
+    readonly exercise = model.required<Exercise>();
 
     form: FormGroup;
 

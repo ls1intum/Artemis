@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -18,7 +18,7 @@ export type Response<T> = Observable<HttpResponse<T>>;
 /**
  * Provides a set of methods to perform CRUD operations on messages
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisChatHttpService {
     protected httpClient = inject(HttpClient);
 

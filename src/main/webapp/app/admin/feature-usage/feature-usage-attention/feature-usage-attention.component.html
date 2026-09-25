@@ -1,0 +1,66 @@
+@for (section of sections(); track section.key) {
+    <section class="mb-5" [attr.data-testid]="'attention-' + section.key">
+        <h6 class="mb-1 font-semibold">
+            <span [jhiTranslate]="'artemisApp.featureUsage.attention.' + section.key + '.title'"></span>
+            <span class="text-muted-color ms-1" data-testid="attention-count">({{ section.features.length }})</span>
+        </h6>
+        <p class="text-muted-color text-sm mb-2" [jhiTranslate]="'artemisApp.featureUsage.attention.' + section.key + '.hint'"></p>
+        @if (section.features.length) {
+            <div class="overflow-x-auto">
+                <table tumUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading">
+                    <thead>
+                        <tr>
+                            <th scope="col" jhiTranslate="artemisApp.featureUsage.column.area"></th>
+                            <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
+                            <th scope="col" jhiTranslate="artemisApp.featureUsage.column.modules"></th>
+                            @if (section.key === 'onlyAutomatic') {
+                                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.automatic"></th>
+                                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.system"></th>
+                            } @else if (section.key === 'noActions') {
+                                <th scope="col" class="text-end" jhiTranslate="artemisApp.featureUsage.column.views"></th>
+                            }
+                            @if (section.key !== 'unused') {
+                                <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (feature of section.features; track feature.feature) {
+                            <tr [attr.data-testid]="'attention-row-' + feature.feature">
+                                <td class="text-muted-color">{{ areaTranslationKey(feature.area) | artemisTranslate }}</td>
+                                <td>
+                                    <span [tumUiTooltip]="featureTranslationKey(feature.feature, 'description') | artemisTranslate">{{
+                                        featureTranslationKey(feature.feature, 'name') | artemisTranslate
+                                    }}</span>
+                                </td>
+                                <td class="text-muted-color text-sm">{{ (feature.modules ?? []).join(', ') }}</td>
+                                @if (section.key === 'onlyAutomatic') {
+                                    <td class="text-end" data-testid="attention-automatic">{{ feature.automaticCount }}</td>
+                                    <td class="text-end" data-testid="attention-system">{{ feature.systemCount }}</td>
+                                } @else if (section.key === 'noActions') {
+                                    <td class="text-end" data-testid="attention-views">{{ feature.viewCount }}</td>
+                                }
+                                @if (section.key !== 'unused') {
+                                    <td>
+                                        <button
+                                            tumUiButton
+                                            severity="secondary"
+                                            size="small"
+                                            variant="outlined"
+                                            (click)="trendRequested.emit(feature)"
+                                            [attr.aria-label]="'artemisApp.featureUsage.column.trend' | artemisTranslate"
+                                        >
+                                            <fa-icon [icon]="faChartLine" />
+                                        </button>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        } @else {
+            <p class="text-sm" jhiTranslate="artemisApp.featureUsage.attention.none"></p>
+        }
+    </section>
+}

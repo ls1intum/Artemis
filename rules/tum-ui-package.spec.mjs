@@ -360,7 +360,10 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(angularWorkspace.projects.artemis.architect.serve.options.buildTarget).toBe('artemis:build:development,tum-ui-source');
         expect(angularWorkspace.projects.artemis.architect.serve.options.prebundle).toEqual({ exclude: ['@tumaet/ui-angular'] });
         expect(rootPackageJson.scripts.start).toContain('build:styles -- --development --watch');
-        expect(rootPackageJson.scripts.start).toContain('ng serve --hmr --poll 1000');
+        // No --poll: it polls the whole workspace root, including runtime data such as local/, and holds the first build
+        // back until that scan finishes. The native watcher already sees styles.css being replaced.
+        expect(rootPackageJson.scripts.start).toMatch(/ng serve --hmr\b/);
+        expect(rootPackageJson.scripts.start).not.toContain('--poll');
         expect(publicApi).not.toMatch(/export\s+\*\s+from/);
         expect(developmentGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
         expect(productionGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');

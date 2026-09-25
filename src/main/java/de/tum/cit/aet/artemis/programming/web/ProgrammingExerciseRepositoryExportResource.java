@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
@@ -54,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @Lazy
-@FeatureUsage("repositories/export")
+@FeatureUsage(UserFeature.PROGRAMMING_IMPORT_EXPORT)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseRepositoryExportResource {
