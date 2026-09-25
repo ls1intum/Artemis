@@ -4,6 +4,7 @@
             <div
                 class="d-flex align-items-center mw-100 clickable"
                 (click)="toggle()"
+                [attr.aria-expanded]="!isCollapsed()"
                 #keyboardAction4
                 role="button"
                 tabindex="0"

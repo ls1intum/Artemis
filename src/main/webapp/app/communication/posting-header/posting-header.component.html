@@ -21,11 +21,11 @@
                             [ngClass]="{ clickable: !isAuthorOfPosting() && posting()?.authorRole }"
                             (click)="userNameClicked()"
                             #keyboardAction19
-                            role="button"
-                            tabindex="0"
-                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
-                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                            [attr.role]="!isAuthorOfPosting() && posting()?.authorRole ? 'button' : null"
+                            [attr.tabindex]="!isAuthorOfPosting() && posting()?.authorRole ? 0 : null"
+                            (keydown.enter)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                            (keydown.space)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
                             >{{ authorOfPosting.name }}</span
                         >
                         @if (isUnverifiedIris()) {

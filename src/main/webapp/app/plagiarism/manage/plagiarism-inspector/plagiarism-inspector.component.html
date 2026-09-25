@@ -6,6 +6,7 @@
                     class="plagiarism-page-title fw-medium"
                     (click)="showOptions = !showOptions"
                     [class.active]="showOptions"
+                    [attr.aria-expanded]="showOptions"
                     #keyboardAction5
                     role="button"
                     tabindex="0"

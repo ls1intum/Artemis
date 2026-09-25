@@ -12,11 +12,11 @@
         [ngClass]="titleLink() ? 'clickable' : ''"
         (click)="openCorrespondingPage()"
         #keyboardAction10
-        role="button"
-        tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
-        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+        [attr.role]="titleLink() ? 'button' : null"
+        [attr.tabindex]="titleLink() ? 0 : null"
+        (keydown.enter)="titleLink() && $event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+        (keydown.space)="titleLink() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="titleLink() && $event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
     >
         <div class="doughnut-chart-text" data-testid="course-chart-values">
             @if (receivedStats()) {

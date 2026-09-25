@@ -2,13 +2,14 @@
     <div
         class="card-header code-editor-panel-header d-flex justify-content-left"
         (click)="!disableCollapse() && toggleEditorCollapse($event)"
+        [attr.aria-expanded]="!collapsed()"
         #keyboardAction2
         role="button"
         [attr.aria-disabled]="disableCollapse()"
         [attr.tabindex]="disableCollapse() ? -1 : 0"
-        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
-        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.enter)="!disableCollapse() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="!disableCollapse() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="!disableCollapse() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
     >
         <h3 class="card-title">
             @if (!collapsed()) {

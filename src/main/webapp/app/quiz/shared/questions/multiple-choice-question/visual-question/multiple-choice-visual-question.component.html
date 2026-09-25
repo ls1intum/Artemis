@@ -39,13 +39,13 @@
                     [ngClass]="answerOption.isCorrect ? 'visual-answer-correct-container' : 'visual-answer-wrong-container'"
                     (click)="toggleIsCorrect(answerOption)"
                     #keyboardAction37
-                    role="button"
-                    tabindex="0"
+                    [attr.role]="!(correctToggleDisabled() && !answerOption.isCorrect) ? 'button' : null"
+                    [attr.tabindex]="!(correctToggleDisabled() && !answerOption.isCorrect) ? 0 : null"
                     [attr.aria-label]="'artemisApp.multipleChoiceQuestion.visualEditor.correctnessOfAnswer' | artemisTranslate: { number: i + 1 }"
-                    [attr.aria-pressed]="answerOption.isCorrect"
-                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction37.click() : undefined"
-                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction37.click() : undefined"
+                    [attr.aria-pressed]="!(correctToggleDisabled() && !answerOption.isCorrect) ? answerOption.isCorrect : null"
+                    (keydown.enter)="!(correctToggleDisabled() && !answerOption.isCorrect) && $event.target === $event.currentTarget ? keyboardAction37.click() : undefined"
+                    (keydown.space)="!(correctToggleDisabled() && !answerOption.isCorrect) && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="!(correctToggleDisabled() && !answerOption.isCorrect) && $event.target === $event.currentTarget ? keyboardAction37.click() : undefined"
                 >
                     <fa-icon [icon]="answerOption.isCorrect ? faCheck : faXmark" />
                 </div>

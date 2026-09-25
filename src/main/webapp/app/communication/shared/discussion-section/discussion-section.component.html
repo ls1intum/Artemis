@@ -18,6 +18,7 @@
                         [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate"
                         (click)="collapsed.set(true)"
                         [hidden]="embedded()"
+                        [attr.aria-expanded]="!collapsed()"
                         #keyboardAction16
                         role="button"
                         tabindex="0"
@@ -220,6 +221,7 @@
                 class="postings-container collapsed-discussion"
                 (click)="collapsed.set(false)"
                 [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate"
+                [attr.aria-expanded]="!collapsed()"
                 #keyboardAction183
                 role="button"
                 tabindex="0"

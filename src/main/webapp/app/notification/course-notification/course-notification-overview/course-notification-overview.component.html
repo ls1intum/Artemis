@@ -42,6 +42,7 @@
                         (click)="selectCategory(category)"
                         [ngClass]="isCategorySelected(category) ? 'is-selected' : ''"
                         class="course-notification-overview-category"
+                        [attr.aria-pressed]="isCategorySelected(category)"
                         #keyboardAction40
                         role="button"
                         tabindex="0"

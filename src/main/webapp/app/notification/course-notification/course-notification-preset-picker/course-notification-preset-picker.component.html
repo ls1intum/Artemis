@@ -13,6 +13,7 @@
                 [class.is-selected]="selectedCourseSettingPreset()?.identifier === preset.identifier"
                 ngbDropdownItem
                 (click)="presetSelected(preset.typeId)"
+                [attr.aria-pressed]="selectedCourseSettingPreset()?.identifier === preset.identifier"
                 #keyboardAction11
                 role="button"
                 tabindex="0"
@@ -42,6 +43,7 @@
             [class.is-selected]="selectedCourseSettingPreset() === undefined"
             ngbDropdownItem
             (click)="presetSelected(0)"
+            [attr.aria-pressed]="selectedCourseSettingPreset() === undefined"
             #keyboardAction34
             role="button"
             tabindex="0"

@@ -43,6 +43,7 @@
                                 (click)="useHttpsPassword()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password ? 'active' : '' }}"
                                 id="useHTTPSButton"
+                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password"
                                 #keyboardAction41
                                 role="button"
                                 tabindex="0"
@@ -57,6 +58,7 @@
                                 (click)="useHttpsToken()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token ? 'active' : '' }}"
                                 id="useHTTPSWithTokenButton"
+                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token"
                                 #keyboardAction49
                                 role="button"
                                 tabindex="0"
@@ -71,6 +73,7 @@
                                 (click)="useSshUrl()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH ? 'active' : '' }}"
                                 id="useSSHButton"
+                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH"
                                 #keyboardAction57
                                 role="button"
                                 tabindex="0"

@@ -5,6 +5,7 @@
             class="clickable flex max-w-full items-center p-3"
             (click)="toggleCollapse()"
             data-testid="format-toggle"
+            [attr.aria-expanded]="!isCollapsed()"
             #keyboardAction1
             role="button"
             tabindex="0"

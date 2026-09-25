@@ -60,6 +60,7 @@
                 [class.active]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime"
                 [class.search-result]="isCurrentSearchResult(segment)"
                 [innerHTML]="highlightText(segment.text)"
+                [attr.aria-current]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime ? true : null"
                 #keyboardAction54
                 role="button"
                 tabindex="0"

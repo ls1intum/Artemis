@@ -21,11 +21,17 @@
         class="reference"
         (click)="onClickUserReference(postingContentPart()?.queryParams?.referenceUserLogin)"
         #keyboardAction20
-        role="button"
-        tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction20.click() : undefined"
-        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction20.click() : undefined"
+        [attr.role]="canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) ? 'button' : null"
+        [attr.tabindex]="canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) ? 0 : -1"
+        (keydown.enter)="
+            canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) && $event.target === $event.currentTarget ? keyboardAction20.click() : undefined
+        "
+        (keydown.space)="
+            canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) && $event.target === $event.currentTarget ? $event.preventDefault() : undefined
+        "
+        (keyup.space)="
+            canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) && $event.target === $event.currentTarget ? keyboardAction20.click() : undefined
+        "
     >
         <fa-icon class="px-1" [icon]="faAt" />{{ postingContentPart()?.referenceStr }}
     </a>
@@ -60,17 +66,17 @@
 }
 @if (postingContentPart()?.slideToReference) {
     <div style="max-width: 400px">
-        <a
-            class="reference"
-            (click)="enlargeImage(postingContentPart()?.slideToReference || '', postingContentPart()?.referenceStr)"
-            #keyboardAction36
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
-            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
-        >
-            @if (postingContentPart()?.slideToReference && !imageNotFound()) {
+        @if (!imageNotFound()) {
+            <a
+                class="reference"
+                (click)="enlargeImage(postingContentPart()?.slideToReference || '', postingContentPart()?.referenceStr)"
+                #keyboardAction36
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+            >
                 <img
                     class="img-fluid rounded-sm border mt-1 mb-1"
                     [src]="postingContentPart()?.slideToReference"
@@ -80,8 +86,8 @@
                     height="auto"
                     width="100%"
                 />
-            }
-        </a>
+            </a>
+        }
         @if (imageNotFound()) {
             <div class="card">
                 <h5 class="card-body"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"></span></h5>

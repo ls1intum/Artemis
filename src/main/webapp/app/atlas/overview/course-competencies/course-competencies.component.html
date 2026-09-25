@@ -15,6 +15,7 @@
                     <div
                         class="control-label"
                         (click)="isCollapsed = !isCollapsed"
+                        [attr.aria-expanded]="!isCollapsed"
                         #keyboardAction15
                         role="button"
                         tabindex="0"

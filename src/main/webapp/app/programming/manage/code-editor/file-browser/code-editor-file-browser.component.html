@@ -3,6 +3,7 @@
         class="card-header code-editor-panel-header d-flex justify-content-center"
         [class.d-none]="!showHeader()"
         (click)="toggleEditorCollapse($event)"
+        [attr.aria-expanded]="!collapsed()"
         #keyboardAction2
         role="button"
         tabindex="0"

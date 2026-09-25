@@ -5,6 +5,7 @@
                 [id]="'test-accordion-item-header-' + groupKey"
                 class="control-label d-flex align-items-center justify-content-between bg-module px-1"
                 (click)="toggleGroupCategoryCollapse(groupKey)"
+                [attr.aria-expanded]="!collapseStateInternal()[groupKey]"
                 #keyboardAction4
                 role="button"
                 tabindex="0"

@@ -19,6 +19,7 @@
             <div
                 class="collapsed right text-white bg-primary"
                 (click)="collapsed.set(!collapsed())"
+                [attr.aria-expanded]="!collapsed()"
                 #keyboardAction19
                 role="button"
                 tabindex="0"
@@ -47,6 +48,7 @@
                     <div
                         class="card-header text-white bg-primary"
                         (click)="collapsed.set(!collapsed())"
+                        [attr.aria-expanded]="!collapsed()"
                         #keyboardAction38
                         role="button"
                         tabindex="0"

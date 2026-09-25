@@ -61,6 +61,7 @@
                 id="toggleAdvancedSearch"
                 class="clickable"
                 (click)="toggleAdvancedSearch()"
+                [attr.aria-expanded]="advancedSearchEnabled()"
                 #keyboardAction60
                 role="button"
                 tabindex="0"

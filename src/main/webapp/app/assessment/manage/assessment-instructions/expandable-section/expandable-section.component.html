@@ -4,6 +4,7 @@
             <h6
                 class="expandable-header"
                 (click)="toggleCollapsed()"
+                [attr.aria-expanded]="!isCollapsed()"
                 #keyboardAction4
                 role="button"
                 tabindex="0"
@@ -18,6 +19,7 @@
             <h5
                 class="expandable-header"
                 (click)="toggleCollapsed()"
+                [attr.aria-expanded]="!isCollapsed()"
                 #keyboardAction9
                 role="button"
                 tabindex="0"

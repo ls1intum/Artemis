@@ -113,6 +113,7 @@
                         <div
                             class="legend-entry"
                             (click)="togglePerformanceInterval(interval)"
+                            [attr.aria-pressed]="displayColorMap.get(interval) !== ''"
                             #keyboardAction112
                             role="button"
                             tabindex="0"

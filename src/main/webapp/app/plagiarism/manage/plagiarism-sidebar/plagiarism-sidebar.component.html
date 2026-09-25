@@ -3,6 +3,7 @@
         class="plagiarism-info-tab"
         [class.selected]="showRunDetails()"
         (click)="displayRunDetails()"
+        [attr.aria-pressed]="showRunDetails()"
         #keyboardAction2
         role="button"
         tabindex="0"
@@ -33,6 +34,7 @@
                     class="plagiarism-list-item"
                     [class.selected]="!showRunDetails() && comparison.id === activeID()"
                     (click)="selectIndex.emit(comparison.id)"
+                    [attr.aria-pressed]="!showRunDetails() && comparison.id === activeID()"
                     #keyboardAction22
                     role="button"
                     tabindex="0"

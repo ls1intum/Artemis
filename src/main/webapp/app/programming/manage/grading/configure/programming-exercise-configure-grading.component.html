@@ -3,6 +3,7 @@
         class="tab-item"
         (click)="selectTab(type)"
         [ngClass]="activeTab() === type ? 'active' : ''"
+        [attr.aria-pressed]="activeTab() === type"
         #keyboardAction2
         role="button"
         tabindex="0"

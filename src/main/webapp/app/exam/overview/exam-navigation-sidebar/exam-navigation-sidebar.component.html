@@ -11,6 +11,7 @@
                         class="pointer rounded-3 col-12 px-2 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"
                         [ngClass]="{ 'bg-selected border-selected': exerciseIndex() === -1 }"
                         (click)="changePage(true, -1)"
+                        [attr.aria-current]="exerciseIndex() === -1 ? true : null"
                         #keyboardAction10
                         role="button"
                         tabindex="0"
@@ -36,6 +37,7 @@
                                 class="pointer rounded-3 col-12 px-2 pt-2 pb-1 border-5 highlight-card bg-module"
                                 [ngClass]="{ 'bg-selected border-selected': i === exerciseIndex() }"
                                 (click)="changePage(false, i, false)"
+                                [attr.aria-current]="i === exerciseIndex() ? true : null"
                                 #keyboardAction29
                                 role="button"
                                 tabindex="0"

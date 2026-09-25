@@ -13,12 +13,14 @@
                 [class.active]="activeStep() === i"
                 [class.completed]="activeStep() > i"
                 (click)="goToStep(i)"
+                [attr.aria-current]="activeStep() === i ? 'step' : null"
                 #keyboardAction9
                 role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
+                [attr.aria-disabled]="isSaving()"
+                [attr.tabindex]="!isSaving() ? 0 : -1"
+                (keydown.enter)="!isSaving() && $event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
+                (keydown.space)="!isSaving() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="!isSaving() && $event.target === $event.currentTarget ? keyboardAction9.click() : undefined"
             >
                 <div class="step-circle">
                     @if (activeStep() > i) {

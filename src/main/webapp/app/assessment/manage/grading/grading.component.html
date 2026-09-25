@@ -135,6 +135,7 @@
             <div
                 class="tab-item interval"
                 [class.active]="viewMode() === GradingViewMode.INTERVAL"
+                [attr.aria-pressed]="viewMode() === GradingViewMode.INTERVAL"
                 (click)="setViewMode(GradingViewMode.INTERVAL)"
                 jhiTranslate="artemisApp.gradingSystem.intervalTab.title"
                 #keyboardAction134
@@ -147,6 +148,7 @@
             <div
                 class="tab-item detailed"
                 [class.active]="viewMode() === GradingViewMode.DETAILED"
+                [attr.aria-pressed]="viewMode() === GradingViewMode.DETAILED"
                 (click)="setViewMode(GradingViewMode.DETAILED)"
                 jhiTranslate="artemisApp.gradingSystem.detailedTab.title"
                 #keyboardAction140

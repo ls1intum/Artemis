@@ -42,6 +42,7 @@
         <div
             class="feedback-group feedback-group--{{ feedbackItemGroup()!.color }} mb-4 flex cursor-pointer items-center justify-between rounded-[0.15rem] p-4"
             (click)="toggleFeedbackItemGroupOpen()"
+            [attr.aria-expanded]="isGroupExpanded()"
             #keyboardAction42
             role="button"
             tabindex="0"
