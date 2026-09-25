@@ -19,6 +19,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/create-variant-modal/create-variant-with-ai-button.component';
+import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
@@ -27,6 +28,7 @@ import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
+    private quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
     private exerciseService = inject(ExerciseService);
@@ -94,7 +96,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * Deletes quiz exercise
      */
     deleteQuizExercise() {
-        this.quizExerciseService.delete(this.quizExercise().id!).subscribe({
+        this.quizExerciseDeletionApi.deleteQuizExercise(this.quizExercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
