@@ -1,80 +1,70 @@
 {
     "artemisApp": {
         "aboutUsOverview": {
-            "title": "Artemis: Interactive Learning with Individual Feedback",
-            "feature": "Main Features",
-            "exercises": {
-                "programming": {
-                    "text": "<a href='{{ programmingUrl }}'>Programming exercises</a> with version control, automatic individual feedback based on test cases and static code analysis."
-                },
-                "quiz": {
-                    "text": "<a href={{ quizUrl }}>Quiz exercises</a> with multiple choice, drag and drop, and short answer questions in individual, synchronized or batched mode with a practice mode."
-                },
-                "modeling": {
-                    "text": "<a href={{ modelingUrl }}>Modeling exercises</a> with an easy-to-use online modeling editor <a href={{ apollonUrl }}>Apollon</a> with semi-automatic assessment."
-                },
-                "text": {
-                    "text": "<a href={{ textUrl }}>Text exercises</a> with semi-automatic assessment using <a href={{ athenaUrl }}>Athena</a>."
-                },
-                "fileUpload": {
-                    "text": "<a href={{ fileUploadUrl }}>File upload exercises</a> with manual assessment."
+            "title": "About Artemis",
+            "subtitle": "Interactive learning with individual feedback",
+            "courseRequests": "Request a new course",
+            "installation": {
+                "title": "This installation",
+                "operator": "Operated by",
+                "testServer": "Test server"
+            },
+            "help": {
+                "title": "Get in touch",
+                "courseQuestions": "Questions about a course, an exercise or a grade? Ask the instructors of that course. For access or account problems, contact the administrator of this installation.",
+                "contactAdministrator": "Contact the administrator"
+            },
+            "highlights": {
+                "title": "Highlights",
+                "description": "A few of the things you can do on this installation."
+            },
+            "modules": {
+                "title": "Enabled modules",
+                "description": "Optional parts of Artemis that the operator has turned on here.",
+                "exam": "Exam mode",
+                "text": "Text exercises",
+                "modeling": "Modeling exercises",
+                "fileUpload": "File upload exercises",
+                "lecture": "Lectures",
+                "tutorialGroup": "Tutorial groups",
+                "atlas": "Competencies and learning paths",
+                "iris": "Iris AI tutor",
+                "athena": "AI-assisted assessment",
+                "hyperion": "AI-assisted exercise creation",
+                "plagiarism": "Plagiarism checks",
+                "deimos": "Suspicious participation analysis",
+                "theia": "Online IDE",
+                "sharing": "Exercise sharing platform",
+                "lti": "Learning management system integration (LTI)",
+                "saml2": "Single sign-on (SAML)",
+                "passkey": "Passkey sign-in"
+            },
+            "project": {
+                "title": "Powered by Artemis",
+                "description": "Artemis is an open-source learning platform, developed by the research group Applied Education Technologies at the Technical University of Munich, and used by universities and schools in several countries.",
+                "operatedBy": "This installation is operated by {{ operator }}, not by the Artemis team.",
+                "links": {
+                    "documentation": "Documentation",
+                    "sourceCode": "Source code",
+                    "securityPolicy": "Security policy",
+                    "publications": "Publications"
                 }
             },
-            "exam": {
-                "text": "<a href={{ examModeUrl }}>Exam mode:</a> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
+            "maintainers": {
+                "title": "Maintainers",
+                "contributors": "Built with hundreds of contributors"
             },
-            "grading": {
-                "text": "<a href={{ gradingUrl }}>Grading:</a> Calculate and display grades using configurable grade keys for courses and exams. Export as CSV files to university systems (e.g. CAMPUSonline)."
+            "citation": {
+                "title": "Cite Artemis",
+                "description": "If you use Artemis in your research, please cite:",
+                "copy": "Copy",
+                "copied": "Copied"
             },
-            "assessment": {
-                "text": "<a href={{ assessmentUrl }}>Assessment:</a> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
+            "release": {
+                "title": "Release",
+                "version": "Version",
+                "license": "License"
             },
-            "communication": {
-                "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions. Message course participants in private."
-            },
-            "notifications": {
-                "text": "<a href = {{ notificationsURL }}>Notifications:</a> Customizable for web and email. Users can enable and disable different notification types."
-            },
-            "teamExercises": {
-                "text": "<a href={{ teamExercisesUrl }}>Team exercises</a> with real-time collaboration and dedicated tutors per team."
-            },
-            "lectures": {
-                "text": "<a href={{ lecturesUrl }}>Lectures:</a> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define competencies."
-            },
-            "integratedMarkdownEditor": {
-                "text": "<a href={{ markdownEditorUrl }}>Integrated Markdown Editor:</a> Markdown is used to format text content across the platform using an integrated markdown editor."
-            },
-            "plagiarismChecks": {
-                "text": "<a href={{ plagiarismChecksUrl }}>Plagiarism checks</a> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
-            },
-            "learningAnalytics": {
-                "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and competencies."
-            },
-            "adaptiveLearning": {
-                "text": "<a href={{ adaptiveLearningUrl }}>Adaptive learning:</a> Define competencies and learning goals. Track the progress of students and provide individual feedback."
-            },
-            "tutorialGroups": {
-                "text": "<a href={{ tutorialGroupsUrl }}>Tutorial Groups:</a> Manage the tutorial groups of a course. Plan the sessions, assign responsible tutors, register students and track the attendance."
-            },
-            "iris": {
-                "text": "<a href={{ irisUrl }}>Iris:</a> Artemis integrates Iris, an AI tutor that provides context-aware support for programming exercises and lecture content."
-            },
-            "scalable": {
-                "text": "<a href={{ scalingUrl }}>Scalable</a> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
-            },
-            "highUserSatisfaction": {
-                "text": "<a href={{ userExperienceUrl }}>High user satisfaction:</a> Artemis is easy to use. Developers focus on usability, user experience, and performance."
-            },
-            "customizable": {
-                "text": "<a href={{ customizableUrl }}>Customizable:</a> It supports multiple Instructors, Editors, and Tutors per course and allows Instructors to customize many course settings."
-            },
-            "openSource": {
-                "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."
-            },
-            "getInTouch": "Get in touch",
-            "courseRequests": "Request a new course",
-            "contributors": "Individual contributors",
-            "website": "Website",
             "roles": {
                 "projectManager": "Project Manager",
                 "administrator": "System Administrator",

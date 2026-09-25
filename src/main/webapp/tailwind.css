@@ -76,6 +76,7 @@
 @source './app/shared-ui/confirm-entity-name';
 @source './app/shared-ui/delete-dialog';
 @source './app/core/alert';
+@source './app/core/about-us';
 @source './app/core/layouts/footer';
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
 @source './app/course/overview/setup-passkey-modal';
