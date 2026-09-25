@@ -25,20 +25,20 @@ Hyperion uses the `AiWorkerApi` facade to claim work and receive results.
 
 ## One artifact, two process roles
 
-The normal Artemis entry point starts core services. With the `aiworker` profile it
-can also start a worker on the same node. Do not give a core process the host Docker
-socket in production. The separate `AiWorkerApplication` entry point runs the same
-WAR in an isolated worker VM. It adds `aiworker` and `aiworker-standalone`, rejects
-core/LocalCI/LocalVC/Build Agent profiles, starts no HTTP server, and scans only AI
-Worker plus a selected workload. The standalone profile disables database and
-Redis auto-configuration. The VM network policy must also block those services.
+The normal `ArtemisApp` entry point starts either process role. With only
+`prod,aiworker`, it scans AI Worker services and the selected workload, starts no
+HTTP server, and excludes database auto-configuration. It rejects a combined
+core/LocalCI/LocalVC/Build Agent profile and HTTP override. The worker VM must
+also block access to core database and repository services. The selected Hazelcast
+or Redis client still starts through the shared distributed-data provider.
 
 The worker runs a workload only when `artemis.aiworker.workload` selects it. Hyperion
 selects `hyperion-generation`; other values do not activate its authoring services.
 Each worker identity advertises one versioned workload capability and one qualified
-sandbox image. The broker and core use separate credentials. A heartbeat reaches the
-shared `DistributedDataProvider` through a core listener, so any core node can see
+sandbox image. The worker and core use separate provider credentials. A heartbeat reaches the
+shared `DistributedDataProvider`, so any core node can see
 capacity. A job stays fenced to its claimed worker incarnation and execution UUID.
+The worker calls the configured LLM provider directly; core does not proxy those calls.
 
 ## Add a workload
 

@@ -17,10 +17,10 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListR
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentity;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
 
-/** Loads only the shared distributed-data client and its required support on a standalone worker. */
+/** Loads only the shared distributed-data client and its required support on a worker-only node. */
 @Configuration(proxyBeanMethods = false)
 @Lazy
-@Profile("aiworker-standalone")
+@Profile("aiworker & !core")
 @EnableConfigurationProperties({ ArtemisProperties.class, ServerProperties.class })
 @Import({ EurekaClientConfiguration.class, EurekaInstanceHelper.class, HazelcastConfiguration.class, HazelcastDistributedDataProviderService.class,
         RedissonCodecConfiguration.class, RedisNodeIdentity.class, RedisClientListResolver.class, RedissonDistributedDataProviderService.class })
