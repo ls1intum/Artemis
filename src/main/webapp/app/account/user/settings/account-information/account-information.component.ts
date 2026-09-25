@@ -14,7 +14,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { RouterLink } from '@angular/router';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiDialogComponent, TumUiListComponent, TumUiListItemDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -27,11 +27,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         FaIconComponent,
         ArtemisDatePipe,
         RouterLink,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiDialogComponent,
         ImageCropperModalComponent,
         ArtemisTranslatePipe,
     ],

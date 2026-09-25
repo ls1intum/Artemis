@@ -1,0 +1,316 @@
+---
+id: tum-aet-ui-kit
+title: TUM AET UI package
+sidebar_label: TUM AET UI package
+slug: /guidelines/tum-aet-ui-kit
+description: Architecture, integration, contribution, testing, and publishing for the TUM AET UI component library.
+---
+
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+
+TUM AET UI is the Angular component library from the [Applied Education Technologies (AET)
+research group at the Technical University of Munich](https://aet.cit.tum.de/). It is published
+as `@tumaet/ui-angular`. Artemis production builds consume its compiled public entry point and stylesheet.
+
+<Callout variant={CalloutVariant.info}>
+    TUM AET UI is the target component system for Artemis. Bootstrap, ng-bootstrap, and PrimeNG are migration-only dependencies. Use an existing TUM AET UI component whenever it
+    covers the requirement.
+</Callout>
+
+Use the [TUM AET UI component reference](/developer/tum-aet-ui-reference) to inspect
+supported states, controls, accessibility results, and APIs. This guide covers package architecture
+and contribution rules.
+
+## Ownership boundary
+
+Package code:
+
+- imports only its declared dependencies;
+- exposes supported contracts through `src/public-api.ts`;
+- uses package-owned translation keys and `--tumaet-ui-*` theme properties;
+- contains no Artemis routes, services, Artemis-owned theme properties or translation keys, or
+  request models.
+
+Artemis-specific adapters live in `src/main/webapp/app/shared-ui/tum-aet-ui-integration`. Artemis
+imports package symbols from `@tumaet/ui-angular`; ESLint rejects deep imports.
+
+The package has its own version and GitHub release notes. Repository code owners review its public contract;
+npm organization maintainers approve releases.
+
+## Adding or changing a component
+
+Follow the [component decision order](/developer/guidelines/client-development#ui-components). A
+new package API needs a reusable design-system responsibility and a concrete Artemis consumer;
+keep application policy in Artemis. Build reusable behavior on native HTML, Angular Aria, or stable
+Angular CDK primitives. Document unsupported public behavior beside the API declaration.
+
+Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`,
+native input coercion, and semantic Tailwind utilities. Prefer stable native controls, Angular Aria,
+and CDK behavior over custom keyboard, focus, overlay, or selection machinery.
+
+Tests should assert public behavior: accessible role and name, keyboard interaction, focus changes,
+disabled behavior, emitted values, and forms integration. Avoid tests that restate implementation
+details or static class maps.
+
+### Accessibility foundation
+
+Composite widgets build on [Angular Aria](https://angular.dev/guide/aria/overview) (`@angular/aria`),
+Angular's headless accessibility directives. Aria owns the roles, the ARIA state, roving focus,
+keyboard navigation, and typeahead; the package adds the styling and the TUM AET UI API on top. The
+menu and the tabs are built this way. Aria ships the same widgets for accordions, comboboxes, grids,
+listboxes, toolbars, and trees, so reach for it before writing keyboard handling for one of those.
+The CDK still provides what aria leaves to the host, such as the overlay that positions an open
+menu.
+
+A package component composes an aria directive in one of two ways. It applies the directive as a
+host directive when the component never has to set one of the directive's inputs itself: the tab
+list, the tabs container, the menu surface, and the menu item work this way. Angular cannot bind a
+host directive's input from the host, so when the component must supply or reshape an input, it
+extends the aria class instead and overrides that input. The menu trigger extends the aria trigger
+because the menu it opens only exists once its template has been rendered, and because a disabled
+menu button stays natively disabled. The tab extends the aria tab because aria keys tabs by string
+while `tumaet-ui-tab` accepts numbers as well. An override keeps the type of the aria member, because
+the external consumer test compiles the published declarations without skipping library checks;
+`tumaet-ui-tab` therefore moves aria's `value` input to an internal name and binds its own `value`
+under the public one. Such an override works only because aria reads its inputs lazily through
+`this`; each subclass states in a comment what it relies on, so a test that fails after an aria
+update points at the cause.
+
+Aria's other inputs keep their defaults unless an application binds them, and two of those
+defaults shape the behavior. A disabled menu item or tab stays focusable: the arrow keys reach it,
+assistive technology announces it as unavailable, and it cannot be chosen, as the
+[WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/#kbd_disabled_controls)
+recommend. A tab is selected as soon as it receives focus. A tab list without panels remains
+supported for switching a view the application renders itself; `tumaet-ui-tabs` then gives each tab an
+empty, hidden placeholder panel, which only keeps aria from reporting a missing panel in
+development mode.
+
+Aria opens a menu from Enter and Space on keydown and cancels the key, so a keyboard user produces
+no `click` on the trigger. React to a menu with the trigger's `menuOpened` output and to a chosen
+entry with its `triggered` output, never with a `(click)` handler on the trigger.
+
+Each host carries the attribute aria's test harnesses look for, so tests in the package and in
+Artemis can drive TUM AET UI menus and tabs with `MenuHarness` from `@angular/aria/menu/testing` and
+`TabsHarness` from `@angular/aria/tabs/testing`. A closed TUM AET UI menu is not in the document, and
+`MenuHarness` finds a trigger through the rendered menu, so `MenuHarness.open()` and the
+`triggerText` filter only work once the menu is open: click the trigger first, then load the
+harness. Prefer the harness over hand-written DOM queries when it covers the interaction.
+
+`@angular/aria` requires exactly the `@angular/cdk` version it was released with. The package
+declares both as peers with the same minimum, so an application installs one copy of each; keep
+them on the same version when upgrading. The workspace catalog pins both, and they move together.
+
+### Stories
+
+Colocate each top-level consumer story with its component or directive. Document supporting pieces
+of a composite API, such as tab panels or sortable columns, as subcomponents of that story. Use the
+package's [CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
+TypeScript's `satisfies` operator. Type component stories with the component or explicit story args.
+Keep configuration in `packages/tum-aet-ui/.storybook`; do not add root Storybook configuration or
+import Artemis into a story.
+
+Prefer an args-driven default story and only the additional states that expose a meaningful visual
+or behavioral contract. Let Storybook render the component directly when inputs and outputs are
+enough. Use an Angular template only when the public contract requires projection, a directive host,
+forms, a `TemplateRef`, or compound components. Use args for initial state and Controls. Keep
+interaction state in Angular bindings when a transition depends on preserving the rendered element;
+updating Storybook args rerenders an inline AutoDocs story.
+
+Stories should provide the minimum realistic context needed to understand the contract. A
+presentation wrapper may arrange an example but must not repair or restyle the component. Expose
+meaningful serializable controls; keep callbacks, templates, and framework objects read-only.
+Source JSDoc is the canonical description for non-obvious inputs and outputs. Test compact, narrow,
+dark, reduced-motion, or right-to-left conditions only when they affect the contract.
+
+Add a `play` function for browser-only behavior such as focus, keyboard navigation, overlays, or
+dismissal. Hide a tested story from the sidebar and AutoDocs only when the interaction is valuable
+but its final state is not a useful reference; do not create hidden duplicates of unit tests. Query
+by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
+or disable accessibility rules to make a story pass.
+
+## Consuming the package
+
+Import only from the package root:
+
+```ts
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+```
+
+Storybook AutoDocs derives the component API from those declarations and their source JSDoc.
+Document non-obvious public behavior beside the declaration; do not maintain separate input and
+output tables.
+
+Artemis declares the package through pnpm's `workspace:*` protocol. Application builds and Artemis
+tests consume `packages/tum-aet-ui/dist`; their root commands build the package first. Development serve
+mode maps the package entry point to its source so changes participate in Angular's normal watch and
+reload cycle.
+
+### Theme contract
+
+The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-aet-ui/README.md)
+documents stylesheet loading, token semantics, dark mode, and host styling.
+
+Artemis loads `@tumaet/ui-angular/styles.css` after application styles. Its unlayered stylesheet
+overrides the package's font family, brand, application surfaces, and status roles. Its Tailwind
+configuration owns application utilities. Set `data-theme="dark"` on the document element for dark
+mode; the package theme also sets the matching CSS `color-scheme` for browser controls.
+
+Treat package token names and responsive thresholds as public styling contracts. Add a token only when a host needs a supported customization
+axis; do not expose Tailwind's full primitive theme.
+
+Apply application layout classes directly to the component host with the native `class` attribute.
+Do not add `styleClass`-style compatibility inputs or expose internal element classes. Add a
+semantic input or theme token only when the customization is a supported component contract.
+
+### Translation contract
+
+Package-owned text uses `tumAetUi.*` keys and has English defaults. A host can implement
+`TumAetUiTranslator` and register it once:
+
+```ts
+providers: [provideTumAetUiTranslator(ApplicationTranslator)];
+```
+
+The adapter's `translationChanges` signal invalidates translated views, and its `locale` signal
+controls locale-sensitive formatting. Artemis registers `provideArtemisTumAetUiTranslator()` in
+`app.config.ts`; its key mapping belongs in `app/shared-ui/tum-aet-ui-integration`, not in the package.
+
+## Local workflow
+
+After installing workspace dependencies, install Chromium for browser tests. Repeat this after
+upgrading Playwright:
+
+```bash
+pnpm --dir packages/tum-aet-ui exec playwright install --with-deps --only-shell chromium
+```
+
+Run focused commands while developing:
+
+| Command                                             | Purpose                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------- |
+| `pnpm run tum-aet-ui:test`                          | Run package unit tests with Angular's Vitest runner                       |
+| `pnpm run tum-aet-ui:test:coverage`                 | Run package specs with the CI coverage thresholds                         |
+| `pnpm run tum-aet-ui:pack:check`                    | Build and validate an isolated artifact with publint and AreTheTypesWrong |
+| `pnpm run tum-aet-ui:source:check`                  | Build Artemis against the package source entry point                      |
+| `pnpm --dir packages/tum-aet-ui run storybook`      | Build package styles and start its isolated Storybook                     |
+| `pnpm --dir packages/tum-aet-ui run storybook:test` | Run stories and accessibility checks in Chromium                          |
+| `pnpm run docs:test`                                | Build the combined documentation and test its navigation and themes       |
+
+Before submitting a package change, run the complete validation from the repository root:
+
+```bash
+pnpm run tum-aet-ui:validate
+```
+
+`pnpm start` and the shared IntelliJ client configuration first build `packages/tum-aet-ui/dist` for
+editor resolution, then serve package sources. Restart the client after changing the package
+manifest or build configuration. Production builds consume `packages/tum-aet-ui/dist`; package
+validation writes to `packages/tum-aet-ui/dist-pack`.
+
+Angular peer ranges start at the workspace catalog versions used to build the library. Other peer
+ranges must include their catalog versions; development upgrades do not require raising their
+consumer minimums. `pnpm run test:rules` checks these constraints. External consumer tests install
+the tarball outside the workspace with strict peer resolution, build an Angular production
+application, and exercise forms, icons, dialog focus, and theme overrides in Chromium. CI tests minimum and latest compatible peers. Server-side rendering
+is not supported.
+
+```bash
+pnpm run tum-aet-ui:pack:check
+pnpm run tum-aet-ui:test:consumer minimum
+pnpm run tum-aet-ui:test:consumer latest
+```
+
+`pack:check` writes the validated tarball and its integrity metadata to `build/tum-aet-ui-package`.
+Consumer failures retain the npm manifest, resolved lockfile, and browser diagnostics under
+`build/test-results/tum-aet-ui-consumer`; CI uploads these as artifacts.
+
+## Publishing to npm
+
+TUM AET UI versions independently from Artemis. Tags use the npm package identity:
+`@tumaet/ui-angular@<version>`. This follows the
+[package-name@version convention](https://github.com/changesets/changesets/blob/main/docs/command-line-options.md)
+and keeps package releases separate from Artemis's numeric application tags.
+
+Run **Release TUM AET UI** (`release-tum-aet-ui.yml`) explicitly:
+
+- On a branch, it validates without publishing.
+- On a package tag, it validates the tag against `package.json` and requires its commit to be
+  reachable from `develop`, then stages the tested tarball for npm approval.
+
+Creating a tag or GitHub release does not start this workflow. It builds once, tests the tarball
+with both external consumer configurations, then passes it to a separate OIDC staging job.
+Public npm availability requires a maintainer's 2FA approval.
+
+### Release setup
+
+The package must exist on npm before staged publishing can be enabled. GitHub enables manual
+dispatch after the workflow exists on the default branch.
+
+1. Give the people who will approve the staged package access to `@tumaet/ui-angular` on npm and
+   require 2FA. GitHub environment reviewers need access to the Artemis repository but do not
+   need npm access unless they will also approve the staged package.
+2. Protect `develop` with required CI and code-owner review. Protect
+   `@tumaet/ui-angular@*` tags from updates and deletion. Limit tag creation to release
+   maintainers if the repository's release policy requires it.
+3. Create the GitHub environment **npm-tum-aet-ui** with required reviewers and a **tag**
+   deployment rule matching `@tumaet/ui-angular@*`. The slash is literal; environment wildcards
+   do not match slashes. Create the environment before dispatching a release, since GitHub can
+   create a referenced environment without protection rules.
+4. In npm's package settings, configure a GitHub trusted publisher for organization **ls1intum**,
+   repository **Artemis**, workflow **release-tum-aet-ui.yml**, and environment
+   **npm-tum-aet-ui**. Allow **stage publish** only. Select **Require two-factor authentication
+   and disallow tokens** under publishing access. Do not add an npm publishing token to GitHub
+   secrets. npm's workflow and environment fields must exactly match GitHub's names. Remove any
+   older trusted-publisher connection for this package that points to another workflow or
+   environment. npm does not let those identity fields be changed in place.
+
+[Trusted publishing](https://docs.npmjs.com/trusted-publishers/) generates provenance for the
+public package and repository. [Staged publishing](https://docs.npmjs.com/staged-publishing/)
+requires npm 11.15 or newer. Trusted-publisher fields are case-sensitive.
+
+After a new or renamed workflow is merged into `develop`, dispatch it there once and verify the
+build and consumer checks pass while the staging job is skipped:
+
+```bash
+gh workflow run release-tum-aet-ui.yml --ref develop
+```
+
+GitHub requires a manually dispatched workflow to exist on the default branch before it can be
+dispatched for a tag.
+
+### Publishing a version
+
+Update the version from `packages/tum-aet-ui` with `npm version <version> --no-git-tag-version --ignore-scripts`.
+Before 1.0, incompatible API, token, or peer-minimum changes increment the minor; compatible fixes
+and additions increment the patch. After 1.0, breaking changes increment the major.
+Document migrations instead of adding compatibility aliases.
+
+Merge the validated change into `develop`, then create an annotated tag at that reviewed commit
+and dispatch the workflow on it. Replace `<version>` and `<reviewed-commit>` in these commands:
+
+```bash
+git tag -a '@tumaet/ui-angular@<version>' '<reviewed-commit>' -m '@tumaet/ui-angular@<version>'
+git push origin 'refs/tags/@tumaet/ui-angular@<version>'
+gh workflow run release-tum-aet-ui.yml --ref '@tumaet/ui-angular@<version>'
+```
+
+All releases target `latest`. Omit an explicit `--tag` so npm retains its built-in
+[protection against staging older versions](https://docs.npmjs.com/cli/v11/commands/npm-stage/#tag-behavior).
+
+After the workflow succeeds, inspect the staged package's version, content, and provenance commit
+on npm, then approve with 2FA using the website or `npm stage approve <stage-id>`.
+
+### GitHub release notes and recovery
+
+After confirming the version is public on npm, create a GitHub release for its existing tag.
+Write TUM AET UI-specific notes covering consumer-visible changes and migrations; repository-wide
+generated notes also include unrelated Artemis changes. Use
+[`gh release create '@tumaet/ui-angular@<version>' --verify-tag --latest=false`](https://cli.github.com/manual/gh_release_create)
+to require the existing tag and preserve the latest Artemis release. The Artemis application
+release and Android test workflows exclude `@tumaet/` package releases.
+
+Staging success does not mean the package is public. Before retrying an interrupted run, inspect
+`npm stage list @tumaet/ui-angular`; the upload may already have succeeded. Published versions are
+immutable. Fix a bad release with a new version, deprecate the affected version, and restore the
+previous dist-tag if necessary. Do not move release tags or overwrite versions.
