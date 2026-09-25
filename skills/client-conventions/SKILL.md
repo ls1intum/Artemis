@@ -19,6 +19,22 @@ helpers. `localRules/enforce-signal-apis` (`rules/enforce-signal-apis.mjs`) enfo
 `src/main/webapp/app/` and `src/test/javascript/`. Use signal APIs when changing an existing
 component; there is no unmigrated-module exception.
 
+A `computed()`, `linkedSignal()`, `effect()` or `afterRenderEffect()` must read a signal, or it
+never re-runs; a value that reads none is a constant and belongs in a plain `readonly` field
+(`@angular-eslint/reactive-context-must-read-signal`).
+
+## Injection and services
+
+Declare every `inject()` field before any other class member (`@angular-eslint/inject-at-top`).
+Fields initialize in declaration order, so a getter called from an earlier initializer would read
+`undefined` from a service declared further down.
+
+Declare an application-wide service with `@Service()`, not `@Injectable({ providedIn: 'root' })`
+(`@angular-eslint/prefer-service-decorator`, autofixable). `@Service()` rejects constructor
+injection and cannot share a class with another Angular decorator, so an injectable `@Pipe` keeps
+`@Injectable` with a justified line-level disable. Other provider metadata also keeps
+`@Injectable`.
+
 ## `ngOnChanges` is banned
 
 Use `computed()` or `effect()`. Enforced at error level by
@@ -36,6 +52,15 @@ or ordering before child initialisation, needs a detailed comment and a justifie
 ## Template control flow
 
 Use `@if`, `@for`, `@switch`. Never `*ngIf`, `*ngFor`, `*ngSwitch`.
+
+Every `@switch` has a `@default` (`@angular-eslint/template/require-switch-default`). Use
+`@default never;` when the cases cover the whole union or enum, so the strict template check
+reports a missing case, and an empty `@default {}` otherwise. Both render nothing for an unmatched
+value.
+
+Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, never `[ngStyle]`
+(`@angular-eslint/template/prefer-style-binding`); a constant is a static `style` attribute. Never
+bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
 
 ## Copying objects
 

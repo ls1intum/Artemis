@@ -202,6 +202,8 @@ export default tseslint.config(
             '@angular-eslint/prefer-service-decorator': 'error',
             // A computed(), linkedSignal(), effect() or afterRenderEffect() that reads no signal never re-runs: either a
             // signal read is missing (`count` instead of `count()`), or the value is a constant and should be a field.
+            // Version 22.5.0 crashes ("config.args is not iterable") on a call to a bare function named like an
+            // Object.prototype member, such as a destructured Signal Forms `valueOf`; call it as `context.valueOf(...)`.
             '@angular-eslint/reactive-context-must-read-signal': 'error',
             // A computed() whose function returns nothing is always undefined.
             '@angular-eslint/computed-must-return': 'error',
