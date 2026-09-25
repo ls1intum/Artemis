@@ -26,6 +26,10 @@ const FOREVER = dayjs('9999-12-31');
     imports: [FontAwesomeModule, NgbTooltipModule, RouterModule, TranslateDirective, CommonModule, FormsModule],
 })
 export class PdfPreviewDateBoxComponent implements OnInit {
+    // Injected services
+    private readonly alertService = inject(AlertService);
+    private readonly courseExerciseService = inject(CourseExerciseService);
+
     // Inputs
     courseId = input<number>();
     selectedPages = input<OrderedPage[]>([]);
@@ -64,10 +68,6 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     isSubmitDisabled = computed(() => {
         return !this.hideForever() && !this.calendarSelected() && !this.selectedExercise();
     });
-
-    // Injected services
-    private readonly alertService = inject(AlertService);
-    private readonly courseExerciseService = inject(CourseExerciseService);
 
     ngOnInit(): void {
         this.loadExercises();

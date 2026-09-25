@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -38,7 +39,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  * Handles administrative actions for LTI platforms, including configuration, deletion, and dynamic registration.
  */
 @Lazy
-@FeatureUsage("lti/platform-configuration")
+@FeatureUsage(UserFeature.LTI)
 @RestController
 @EnforceAdmin
 @RequestMapping("api/lti/admin/")

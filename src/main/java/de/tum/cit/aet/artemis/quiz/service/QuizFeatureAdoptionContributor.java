@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureAdoptionContributor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureAdoptionEntry;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseAdoptionRepository;
 
@@ -35,8 +36,7 @@ public class QuizFeatureAdoptionContributor implements FeatureAdoptionContributo
     public List<FeatureAdoptionEntry> collectAdoption() {
         long total = adoptionRepository.count();
         // Iterating the enum rather than listing the modes means a new mode is reported without touching this class.
-        return Arrays.stream(QuizMode.values())
-                .map(quizMode -> new FeatureAdoptionEntry(MODULE, "mode/" + quizMode.name().toLowerCase(Locale.ROOT), adoptionRepository.countByQuizMode(quizMode), total))
-                .toList();
+        return Arrays.stream(QuizMode.values()).map(quizMode -> new FeatureAdoptionEntry(MODULE, "mode/" + quizMode.name().toLowerCase(Locale.ROOT), UserFeature.QUIZ_LIVE,
+                adoptionRepository.countByQuizMode(quizMode), total)).toList();
     }
 }

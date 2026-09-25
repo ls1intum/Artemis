@@ -1,7 +1,6 @@
 import { Component, input, output, signal } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -9,7 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-code-editor-instructions',
     styleUrls: ['./code-editor-instructions.scss'],
     templateUrl: './code-editor-instructions.component.html',
-    imports: [NgStyle, FaIconComponent, TranslateDirective],
+    imports: [FaIconComponent, TranslateDirective],
 })
 export class CodeEditorInstructionsComponent {
     readonly onToggleCollapse = output<{

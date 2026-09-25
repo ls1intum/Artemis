@@ -32,17 +32,17 @@ import { HttpErrorResponse } from '@angular/common/http';
     imports: [FormsModule, TranslateDirective, ConfirmEntityNameComponent, FaIconComponent, ArtemisTranslatePipe, TableModule, ButtonModule, CheckboxModule, ProgressSpinnerModule],
 })
 export class DeleteDialogComponent implements OnInit {
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
+    private alertService = inject(AlertService);
+    private destroyRef = inject(DestroyRef);
+
     protected readonly faBan = faBan;
     protected readonly faSpinner = faSpinner;
     protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
     protected readonly faCheck = faCheck;
     protected readonly faUndo = faUndo;
-
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
-    private alertService = inject(AlertService);
-    private destroyRef = inject(DestroyRef);
 
     readonly actionTypes = ActionType;
     private delete!: DeleteDialogDeleteHandler; // set in ngOnInit() from dialog config data

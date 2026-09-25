@@ -92,6 +92,14 @@ const INITIAL_EAGER_PAGES = 3;
 })
 export class PdfViewerComponent {
     private static instanceCounter = 0;
+    private readonly themeService = inject(ThemeService);
+    private readonly http = inject(HttpClient);
+    private readonly pdfEngineService = inject(PdfEngineService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly injector = inject(Injector);
+    private readonly hostElementRef = inject(ElementRef<HTMLElement>);
+    private readonly translateService = inject(TranslateService);
+
     private readonly docId = `pdf-viewer-${++PdfViewerComponent.instanceCounter}`;
 
     // Inputs
@@ -141,14 +149,6 @@ export class PdfViewerComponent {
     protected readonly faDownload = faDownload;
     protected readonly faExpand = faExpand;
     protected readonly faXmark = faXmark;
-
-    private readonly themeService = inject(ThemeService);
-    private readonly http = inject(HttpClient);
-    private readonly pdfEngineService = inject(PdfEngineService);
-    private readonly destroyRef = inject(DestroyRef);
-    private readonly injector = inject(Injector);
-    private readonly hostElementRef = inject(ElementRef<HTMLElement>);
-    private readonly translateService = inject(TranslateService);
 
     protected readonly isDarkMode = computed(() => this.themeService.currentTheme() === Theme.DARK);
     protected readonly scaleValue = this.scale.asReadonly();

@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
@@ -54,7 +55,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.QUIZ_LIFECYCLE)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseResource {

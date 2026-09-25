@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -57,6 +58,8 @@ import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
@@ -66,7 +69,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("public/account")
+@FeatureUsage(UserFeature.SIGN_IN)
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicAccountResource {
@@ -136,6 +139,7 @@ public class PublicAccountResource {
      * @throws EmailAlreadyUsedException             {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException             {@code 400 (Bad Request)} if the login is already used.
      */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
     @PostMapping("register")
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
@@ -176,6 +180,7 @@ public class PublicAccountResource {
      * @return ResponseEntity with status 200 (OK)
      * @throws BadRequestAlertException {@code 400 (Bad Request)} if the activation key is invalid or expired.
      */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
     @GetMapping("activate")
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
@@ -210,6 +215,8 @@ public class PublicAccountResource {
      * @return the ResponseEntity with status 200 (OK) and with body the current user, empty if not logged in.
      * @throws EntityNotFoundException {@code 404 (User not found)} if the user couldn't be returned.
      */
+    @FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("account")
     @EnforceNothing
     public ResponseEntity<UserDTO> getAccount(HttpServletRequest request) {
@@ -297,6 +304,7 @@ public class PublicAccountResource {
      * @return ResponseEntity with status 200 (OK)
      * @throws BadRequestAlertException {@code 400 (Bad Request)} if the language key is not 'en' or 'de'.
      */
+    @FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
     @PostMapping("account/change-language")
     @EnforceNothing
     public ResponseEntity<Void> changeLanguageKey(@RequestBody String languageKey) {
@@ -315,6 +323,7 @@ public class PublicAccountResource {
      * @param mailUsername string containing either mail or username of the user.
      * @return ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
     @PostMapping("account/reset-password/init")
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
@@ -347,7 +356,7 @@ public class PublicAccountResource {
             }
         }
         else {
-            log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
+            log.warn("Password reset requested for a non-existing account");
             accountSecurityEventService.recordPasswordResetRequestRejected("unknown-identifier");
         }
         return ResponseEntity.ok().build();
@@ -361,6 +370,7 @@ public class PublicAccountResource {
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
      * @throws RuntimeException                      {@code 500 (Internal Server Error)} if the password could not be reset.
      */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
     @PostMapping("account/reset-password/finish")
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)

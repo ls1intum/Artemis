@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { VcsAccessTokenOverview, VcsAccessTokenType } from 'app/account/user/settings/vcs-access-token-overview/vcs-access-token-overview.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class VcsAccessTokenOverviewService {
     private readonly http = inject(HttpClient);
     private readonly resourceUrl = 'api/programming/vcs-access-tokens';

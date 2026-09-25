@@ -15,7 +15,7 @@
     </thead>
     <tbody>
         <!-- Exercise Group as rows -->
-        @for (exerciseGroup of exam().exerciseGroups; track exerciseGroup.id) {
+        @for (exerciseGroup of exam().exerciseGroups; track exerciseGroup.id ?? exerciseGroup; let groupIndex = $index) {
             <tr [class.exerciseGroupNotSelected]="!exerciseGroupContainsExercises(exerciseGroup)">
                 <td>
                     <!-- Display general exercise group settings (name, mandatory) to the left -->
@@ -23,10 +23,7 @@
                         <tbody>
                             <tr class="w-25">
                                 <td class="justify-content-center">
-                                    <label
-                                        class="form-check-label"
-                                        for="'exerciseGroup-' + exerciseGroup.id + '-title'"
-                                        jhiTranslate="artemisApp.examManagement.exerciseGroup.title"
+                                    <label class="form-check-label" [for]="'exerciseGroup-' + groupIndex + '-title'" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"
                                         >Title</label
                                     >
                                 </td>
@@ -34,8 +31,8 @@
                                     <input
                                         [ngClass]="{ 'form-control': true, 'is-invalid': !!getExerciseGroupTitleError(exerciseGroup) }"
                                         type="text"
-                                        id="exerciseGroup-{{ exerciseGroup.id }}-title"
-                                        name="exerciseGroup-{{ exerciseGroup.id }}-title"
+                                        id="exerciseGroup-{{ groupIndex }}-title"
+                                        name="exerciseGroup-{{ groupIndex }}-title"
                                         [(ngModel)]="exerciseGroup.title"
                                     />
                                     @if (getExerciseGroupTitleError(exerciseGroup); as groupTitleError) {
@@ -47,7 +44,7 @@
                                 <td class="justify-content-center">
                                     <label
                                         class="form-check-label"
-                                        for="exerciseGroup-{{ exerciseGroup.id }}-mandatory'"
+                                        [for]="'exerciseGroup-' + groupIndex + '-mandatory'"
                                         jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"
                                     ></label>
                                 </td>
@@ -55,8 +52,8 @@
                                     <input
                                         class="form-check-input"
                                         type="checkbox"
-                                        [id]="'exerciseGroup-' + exerciseGroup.id + '-mandatory'"
-                                        [name]="'exerciseGroup-' + exerciseGroup.id + '-mandatory'"
+                                        [id]="'exerciseGroup-' + groupIndex + '-mandatory'"
+                                        [name]="'exerciseGroup-' + groupIndex + '-mandatory'"
                                         [(ngModel)]="exerciseGroup.isMandatory"
                                     />
                                 </td>

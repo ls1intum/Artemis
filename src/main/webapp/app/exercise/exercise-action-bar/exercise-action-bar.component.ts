@@ -21,7 +21,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonDirective, TumUiPopoverComponent, TumUiPopoverTriggerDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -64,10 +64,10 @@ function widthOf(element: HTMLElement): number {
         RouterLink,
         NgTemplateOutlet,
         FaIconComponent,
-        TumUiButtonDirective,
-        TumUiPopoverComponent,
-        TumUiPopoverTriggerDirective,
-        TumUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
         DeleteButtonDirective,
@@ -75,6 +75,10 @@ function widthOf(element: HTMLElement): number {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseActionBarComponent {
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly translateService = inject(TranslateService);
+
     readonly items = input.required<ActionItem[]>();
     /** Whether the `[actionBarReserved]`-projected prefix renders anything, so the separator next to it only shows when needed. */
     readonly hasReservedContent = input<boolean>(false);
@@ -93,11 +97,7 @@ export class ExerciseActionBarComponent {
 
     protected readonly faEllipsis = faEllipsis;
 
-    private readonly destroyRef = inject(DestroyRef);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
-    private readonly translateService = inject(TranslateService);
-
-    private readonly menu = viewChild<TumUiPopoverComponent>('menu');
+    private readonly menu = viewChild<TumAetUiPopoverComponent>('menu');
     /** The full-width action row; its width minus the reserved content is the budget for the collapsible main buttons. */
     private readonly actionsRow = viewChild<ElementRef<HTMLElement>>('actionsRow');
     /** The always-visible projected prefix; its width is reserved up front. */

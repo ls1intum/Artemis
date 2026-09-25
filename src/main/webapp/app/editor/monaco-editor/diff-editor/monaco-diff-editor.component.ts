@@ -12,6 +12,13 @@ import * as monaco from 'monaco-editor';
     encapsulation: ViewEncapsulation.None,
 })
 export class MonacoDiffEditorComponent implements OnDestroy {
+    /*
+     * Injected services and elements.
+     */
+    private readonly elementRef = inject(ElementRef);
+    private readonly renderer = inject(Renderer2);
+    private readonly monacoEditorService = inject(MonacoEditorService);
+
     private _editor: monaco.editor.IStandaloneDiffEditor;
     monacoDiffEditorContainerElement: HTMLElement;
 
@@ -24,13 +31,6 @@ export class MonacoDiffEditorComponent implements OnDestroy {
      * Subscriptions and listeners that need to be disposed of when this component is destroyed.
      */
     listeners: Disposable[] = [];
-
-    /*
-     * Injected services and elements.
-     */
-    private readonly elementRef = inject(ElementRef);
-    private readonly renderer = inject(Renderer2);
-    private readonly monacoEditorService = inject(MonacoEditorService);
 
     constructor() {
         /*

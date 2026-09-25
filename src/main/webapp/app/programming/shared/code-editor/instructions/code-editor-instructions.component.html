@@ -1,8 +1,4 @@
-<div
-    id="cardInstructions"
-    class="instructions-wrapper card collapsable-card"
-    [ngStyle]="collapsed() ? (isAssessmentMode() ? { height: '200px' } : { height: '250px' }) : { height: '100%' }"
->
+<div id="cardInstructions" class="instructions-wrapper card collapsable-card" [style.height]="collapsed() ? (isAssessmentMode() ? '200px' : '250px') : '100%'">
     <div class="card-header code-editor-panel-header d-flex justify-content-left" (click)="!disableCollapse() && toggleEditorCollapse($event)">
         <h3 class="card-title">
             @if (!collapsed()) {

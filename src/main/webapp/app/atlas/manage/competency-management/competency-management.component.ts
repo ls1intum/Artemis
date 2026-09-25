@@ -9,7 +9,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
@@ -47,6 +47,17 @@ import { getErrorMessage } from 'app/foundation/util/global.utils';
     ],
 })
 export class CompetencyManagementComponent implements OnInit, OnDestroy {
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly dialogService = inject(DialogService);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly accountService = inject(AccountService);
+    private readonly pendingTasks = inject(PendingTasks);
+
     protected readonly faEdit = faEdit;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -58,17 +69,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'Competencies';
     readonly CourseCompetencyType = CourseCompetencyType;
-
-    private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
-    private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly profileService = inject(ProfileService);
-    private readonly irisSettingsService = inject(IrisSettingsService);
-    private readonly featureToggleService = inject(FeatureToggleService);
-    private readonly localStorageService = inject(LocalStorageService);
-    private readonly accountService = inject(AccountService);
-    private readonly pendingTasks = inject(PendingTasks);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
@@ -105,9 +105,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         }
         this.localStorageService.store('alreadyVisitedCompetencyManagement', true);
 
+        // The agent itself only exists when AtlasLLM is configured; the runtime toggle is a finer gate on top of it.
+        // Without the module check, an instance that enables the toggle without a chat model would offer a chat whose
+        // endpoint is not registered at all.
+        const atlasLLMActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
         this.agentChatSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent).subscribe((isFeatureEnabled) => {
             const hasAuthority = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR);
-            this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
+            this.agentChatEnabled.set(atlasLLMActive && hasAuthority && isFeatureEnabled);
         });
     }
 

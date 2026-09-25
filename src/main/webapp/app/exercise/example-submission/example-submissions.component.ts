@@ -15,12 +15,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, NgbTooltip, ResultComponent, ArtemisTranslatePipe, TumUiButtonDirective, DeleteButtonDirective],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, NgbTooltip, ResultComponent, ArtemisTranslatePipe, TumAetUiButtonDirective, DeleteButtonDirective],
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);

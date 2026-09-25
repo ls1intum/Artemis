@@ -21,12 +21,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
@@ -35,7 +38,7 @@ import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/problem-statement")
+@FeatureUsage(UserFeature.EXERCISE_DETAILS)
 @RestController
 @RequestMapping("api/exercise/")
 public class ProblemStatementRenderingResource {
@@ -59,6 +62,7 @@ public class ProblemStatementRenderingResource {
      * @param renderRequest the render request containing markdown, test results, and configuration
      * @return the rendered problem statement DTO
      */
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping(value = "problem-statement/render", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)

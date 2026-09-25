@@ -1,0 +1,206 @@
+@import './themes.css' layer(tumaet-ui-theme);
+@import 'tailwindcss/theme.css' prefix(tumaet);
+@import 'tailwindcss/utilities.css' prefix(tumaet) source(none);
+@import '@angular/cdk/overlay-prebuilt.css' layer(tumaet-ui-cdk);
+@import './tailwind-theme.css';
+
+@source './src';
+@source not './src/**/*.mdx';
+@source not './src/**/*.spec.ts';
+@source not './src/**/*.stories.ts';
+
+:where(
+    tumaet-ui-autocomplete,
+    tumaet-ui-bar-chart,
+    tumaet-ui-button,
+    tumaet-ui-button-group,
+    tumaet-ui-calendar,
+    tumaet-ui-card,
+    tumaet-ui-chart-data-table,
+    tumaet-ui-chart-legend,
+    tumaet-ui-chart-tooltip,
+    tumaet-ui-checkbox,
+    tumaet-ui-chip,
+    tumaet-ui-confirm-dialog,
+    tumaet-ui-date-picker,
+    tumaet-ui-dialog,
+    tumaet-ui-doughnut-chart,
+    tumaet-ui-empty-state,
+    tumaet-ui-form-field,
+    tumaet-ui-icon-field,
+    tumaet-ui-input-group,
+    tumaet-ui-input-group-addon,
+    tumaet-ui-input-number,
+    tumaet-ui-line-chart,
+    tumaet-ui-list,
+    tumaet-ui-menu,
+    tumaet-ui-message,
+    tumaet-ui-paginator,
+    tumaet-ui-panel,
+    tumaet-ui-popover,
+    tumaet-ui-progress-bar,
+    tumaet-ui-progress-spinner,
+    tumaet-ui-radio-button,
+    tumaet-ui-search-field,
+    tumaet-ui-select,
+    tumaet-ui-select-button,
+    tumaet-ui-tab,
+    tumaet-ui-tab-list,
+    tumaet-ui-tab-panel,
+    tumaet-ui-tab-panels,
+    tumaet-ui-table,
+    tumaet-ui-table-virtual-scroll,
+    tumaet-ui-tabs,
+    tumaet-ui-tag,
+    tumaet-ui-toggle-switch,
+    tumaet-ui-tooltip-content,
+    .tumaet-ui-btn,
+    .tumaet-ui-input,
+    .tumaet-ui-overlay,
+    .tumaet-ui-popover-panel,
+    .tumaet-ui-table
+) {
+    font-family: var(--tumaet-ui-font-family);
+    font-size: var(--tumaet-ui-font-size-base);
+    line-height: var(--tumaet-ui-line-height-base);
+}
+
+:where(
+        tumaet-ui-autocomplete,
+        tumaet-ui-button,
+        tumaet-ui-calendar,
+        tumaet-ui-checkbox,
+        tumaet-ui-chip,
+        tumaet-ui-date-picker,
+        tumaet-ui-dialog,
+        tumaet-ui-input-number,
+        tumaet-ui-menu,
+        tumaet-ui-paginator,
+        tumaet-ui-panel,
+        tumaet-ui-radio-button,
+        tumaet-ui-search-field,
+        tumaet-ui-select,
+        tumaet-ui-select-button,
+        tumaet-ui-table,
+        tumaet-ui-toggle-switch,
+        .tumaet-ui-overlay
+    )
+    :where(button, input, select, textarea) {
+    font: inherit;
+}
+
+.tumaet-ui-button-group {
+    display: inline-flex;
+}
+
+.tumaet-ui-button-group > tumaet-ui-button,
+.tumaet-ui-button-group > button:not(.tumaet-ui-btn) {
+    margin: 0;
+}
+
+.tumaet-ui-button-group > tumaet-ui-button:not(:first-of-type, :last-of-type) .tumaet-ui-btn,
+.tumaet-ui-button-group > button:not(.tumaet-ui-btn, :first-of-type, :last-of-type) {
+    border-radius: 0;
+}
+
+.tumaet-ui-button-group > tumaet-ui-button:first-of-type:not(:only-of-type) .tumaet-ui-btn,
+.tumaet-ui-button-group > button:not(.tumaet-ui-btn):first-of-type:not(:only-of-type) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tumaet-ui-button-group > tumaet-ui-button:last-of-type:not(:only-of-type) .tumaet-ui-btn,
+.tumaet-ui-button-group > button:not(.tumaet-ui-btn):last-of-type:not(:only-of-type) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tumaet-ui-button-group > tumaet-ui-button:not(:last-of-type) .tumaet-ui-btn,
+.tumaet-ui-button-group > button:not(.tumaet-ui-btn):not(:last-of-type) {
+    border-inline-end: 0 none;
+}
+
+.tumaet-ui-button-group .tumaet-ui-btn:focus-visible,
+.tumaet-ui-button-group > button:not(.tumaet-ui-btn):focus-visible {
+    position: relative;
+    z-index: 1;
+}
+
+.tumaet-ui-input-group > .tumaet-ui-input:not(:first-child) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tumaet-ui-input-group > :not(:first-child) {
+    --_tumaet-ui-input-group-start-radius: 0;
+}
+
+.tumaet-ui-input-group > :not(:last-child) {
+    --_tumaet-ui-input-group-end-radius: 0;
+}
+
+.tumaet-ui-input-group > :is(.tumaet-ui-input, tumaet-ui-input-number) {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.tumaet-ui-input-group > .tumaet-ui-input:not(:last-child) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tumaet-ui-input-group > tumaet-ui-input-number:not(:first-child) > .tumaet-ui-input-number-input {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tumaet-ui-input-group > tumaet-ui-input-number:not(:last-child) > .tumaet-ui-input-number-input {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tumaet-ui-input-group > tumaet-ui-input-number:not(:last-child) > .tumaet-ui-input-number-button-group > .tumaet-ui-input-number-increment {
+    border-start-end-radius: 0;
+}
+
+.tumaet-ui-input-group > tumaet-ui-input-number:not(:last-child) > .tumaet-ui-input-number-button-group > .tumaet-ui-input-number-decrement {
+    border-end-end-radius: 0;
+}
+
+.tumaet-ui-icon-field > .tumaet-ui-input {
+    width: 100%;
+}
+
+.tumaet-ui-icon-field[data-has-icon][data-position='left'] > .tumaet-ui-input {
+    padding-inline-start: calc(var(--tumaet-ui-spacing) * 10);
+}
+
+.tumaet-ui-icon-field[data-has-icon][data-position='right'] > .tumaet-ui-input {
+    padding-inline-end: calc(var(--tumaet-ui-spacing) * 10);
+}
+
+/* Projected documentation links keep the component's link treatment across Angular view boundaries. */
+.tumaet-ui-empty-state-documentation a {
+    color: var(--tumaet-ui-accent-color);
+    text-decoration: underline;
+    transition: color 0.15s ease;
+}
+
+.tumaet-ui-empty-state-documentation a:focus-visible {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+}
+
+.tumaet-ui-empty-state-documentation a:hover {
+    color: var(--tumaet-ui-text-hover-color);
+}
+
+.tumaet-ui-empty-state-documentation a::after {
+    content: ' ↗';
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tumaet-ui-empty-state-documentation a {
+        transition: none;
+    }
+}

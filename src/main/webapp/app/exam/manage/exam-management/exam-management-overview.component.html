@@ -7,11 +7,11 @@
 
 <ng-template titleBarActions>
     @if (course()?.isAtLeastInstructor) {
-        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()" [title]="'artemisApp.examManagement.importExam' | artemisTranslate">
+        <tumaet-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()" [title]="'artemisApp.examManagement.importExam' | artemisTranslate">
             <fa-icon [icon]="faFileImport" />
             <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
-        </tum-ui-button>
-        <a tumUiButton size="small" data-testid="create-exam" [routerLink]="['new']" [title]="'artemisApp.examManagement.createExam' | artemisTranslate">
+        </tumaet-ui-button>
+        <a tumAetUiButton size="small" data-testid="create-exam" [routerLink]="['new']" [title]="'artemisApp.examManagement.createExam' | artemisTranslate">
             <fa-icon [icon]="faPlus" />
             <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.createExam"></span>
         </a>
@@ -70,26 +70,26 @@
         </table>
     </div>
 } @else if (exams()) {
-    <tum-ui-empty-state
+    <tumaet-ui-empty-state
         class="mt-5"
         [icon]="faFileAlt"
         [title]="'artemisApp.examManagement.empty.title' | artemisTranslate"
         [description]="'artemisApp.examManagement.empty.description' | artemisTranslate"
     >
-        <ng-container tumUiEmptyStateActions>
+        <ng-container tumAetUiEmptyStateActions>
             @if (course()?.isAtLeastInstructor) {
-                <tum-ui-button size="small" (clicked)="openImportModal()">
+                <tumaet-ui-button size="small" (clicked)="openImportModal()">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.examManagement.importExam"></span>
-                </tum-ui-button>
-                <a tumUiButton size="small" [routerLink]="['new']">
+                </tumaet-ui-button>
+                <a tumAetUiButton size="small" [routerLink]="['new']">
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.examManagement.createExam"></span>
                 </a>
             }
         </ng-container>
-        <a tumUiEmptyStateDocumentation href="https://docs.artemis.tum.de/instructor/exams/intro" target="_blank" rel="noopener noreferrer">
+        <a tumAetUiEmptyStateDocumentation href="https://docs.artemis.tum.de/instructor/exams/intro" target="_blank" rel="noopener noreferrer">
             <span jhiTranslate="artemisApp.examManagement.empty.documentation"></span>
         </a>
-    </tum-ui-empty-state>
+    </tumaet-ui-empty-state>
 }

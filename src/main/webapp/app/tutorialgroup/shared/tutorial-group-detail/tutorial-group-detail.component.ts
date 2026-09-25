@@ -28,8 +28,8 @@ import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
@@ -112,7 +112,7 @@ export enum TutorialGroupDetailAccessLevel {
         TranslateDirective,
         SelectButton,
         FormsModule,
-        TumUiDoughnutChartComponent,
+        TumAetUiDoughnutChartComponent,
         SelectModule,
         TutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,
@@ -128,6 +128,14 @@ export enum TutorialGroupDetailAccessLevel {
     styleUrl: './tutorial-group-detail.component.scss',
 })
 export class TutorialGroupDetailComponent {
+    protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
+    private translateService = inject(TranslateService);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private alertService = inject(AlertService);
+    private confirmationService = inject(ConfirmationService);
+    private router = inject(Router);
+    activatedRoute = inject(ActivatedRoute);
+
     protected readonly faFlag = faFlag;
     protected readonly faUsers = faUsers;
     protected readonly faTag = faTag;
@@ -142,19 +150,12 @@ export class TutorialGroupDetailComponent {
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
     protected readonly faCirclePlay = faCirclePlay;
-    protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
     protected readonly TutorialGroupDetailManagementAccessLevel = TutorialGroupDetailAccessLevel;
 
-    private translateService = inject(TranslateService);
-    private oneToOneChatService = inject(OneToOneChatService);
-    private alertService = inject(AlertService);
-    private confirmationService = inject(ConfirmationService);
-    private router = inject(Router);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRatio(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
     private sessionModal = viewChild.required<TutorialSessionCreateOrEditModalComponent>('sessionModal');
 
-    activatedRoute = inject(ActivatedRoute);
     tutorialGroup = input.required<TutorialGroupDetailData>();
     courseId = input.required<number>();
     isMessagingEnabled = input.required<boolean>();
@@ -177,7 +178,7 @@ export class TutorialGroupDetailComponent {
     pieChartColors = computed<string[]>(() => this.computePieChartColors());
     readonly chartData = computed(() => singleSeriesChart(this.pieChartData(), this.pieChartColors()));
     // the chart is rendered edge-to-edge inside its fixed-size container, hence no padding
-    readonly chartConfig: TumUiDoughnutChartConfig = { arcWidth: 0.3, legend: false, padding: 0 };
+    readonly chartConfig: TumAetUiDoughnutChartConfig = { arcWidth: 0.3, legend: false, padding: 0 };
     sessionListOptions = computed(() => this.computeSessionListOptions());
     selectedSessionListOption = signal<ListOption>('all-sessions');
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());

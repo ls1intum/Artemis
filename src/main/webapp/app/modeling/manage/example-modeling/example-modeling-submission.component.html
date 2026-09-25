@@ -16,7 +16,7 @@
                             class="example-submission-header__control-label"
                             jhiTranslate="artemisApp.exampleSubmission.assessmentTraining"
                         ></span>
-                        <tum-ui-select-button
+                        <tumaet-ui-select-button
                             [options]="trainingModeOptions()"
                             [ngModel]="selectedMode()"
                             (ngModelChange)="selectedMode.set($event)"
@@ -40,12 +40,12 @@
                 }
                 @if (currentExercise.isAtLeastEditor && !readOnly() && !toComplete()) {
                     @if (assessmentMode()) {
-                        <button type="button" tumUiButton size="small" (click)="saveExampleAssessment()">
+                        <button type="button" tumAetUiButton size="small" (click)="saveExampleAssessment()">
                             <fa-icon [icon]="faSave" />
                             <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment"></span>
                         </button>
                     } @else {
-                        <button type="button" tumUiButton size="small" (click)="upsertExampleModelingSubmission()">
+                        <button type="button" tumAetUiButton size="small" (click)="upsertExampleModelingSubmission()">
                             <fa-icon [icon]="faSave" />
                             @if (isNewSubmission()) {
                                 <span jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" data-testid="new-modeling-example-submission"></span>
@@ -56,13 +56,13 @@
                     }
                 }
                 @if (readOnly()) {
-                    <button type="button" tumUiButton size="small" severity="success" (click)="readAndUnderstood()">
+                    <button type="button" tumAetUiButton size="small" severity="success" (click)="readAndUnderstood()">
                         <fa-icon [icon]="faCheck" />
                         <span jhiTranslate="artemisApp.exampleSubmission.readAndUnderstood"></span>
                     </button>
                 }
                 @if (toComplete()) {
-                    <button type="button" tumUiButton size="small" (click)="checkAssessment()" [disabled]="!assessmentsAreValid()" id="submit-example-assessment">
+                    <button type="button" tumAetUiButton size="small" (click)="checkAssessment()" [disabled]="!assessmentsAreValid()" id="submit-example-assessment">
                         <span jhiTranslate="artemisApp.exampleSubmission.submitAssessment"></span>
                     </button>
                 }
@@ -137,7 +137,7 @@
                     <div assessmentWorkspaceCanvas class="example-submission-assessment-canvas">
                         <jhi-modeling-assessment
                             [umlModel]="umlModel()"
-                            [resultFeedbacks]="result()?.feedbacks || []"
+                            [resultFeedbacks]="referencedFeedback()"
                             [diagramType]="currentExercise.diagramType"
                             [readOnly]="readOnly()"
                             [explanation]="explanationText()"
@@ -206,7 +206,7 @@
                                     <p jhiTranslate="artemisApp.exampleSubmission.assessmentExplanationInfo"></p>
                                 </header>
                                 <textarea
-                                    tumUiTextarea
+                                    tumAetUiTextarea
                                     cdkTextareaAutosize
                                     [cdkAutosizeMinRows]="3"
                                     [cdkAutosizeMaxRows]="8"

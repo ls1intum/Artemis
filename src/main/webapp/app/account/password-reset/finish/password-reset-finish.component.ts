@@ -1,3 +1,4 @@
+import { passwordMaxBytesValidator } from 'app/account/shared/password-max-bytes.validator';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -6,10 +7,10 @@ import { PasswordStrengthBarComponent } from 'app/account/password/password-stre
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { PasswordResetFinishService } from './password-reset-finish.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_BYTES, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiFormFieldComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 /**
  * Type definition for the password reset completion form controls.
@@ -34,11 +35,11 @@ interface PasswordResetForm {
         ReactiveFormsModule,
         PasswordStrengthBarComponent,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiCheckboxComponent,
-        TumUiFormFieldComponent,
-        TumUiInputDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -55,6 +56,8 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     /** Maximum allowed password length exposed for template validation messages */
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+    /** BCrypt limits passwords by their UTF-8 byte length, not their character count. */
+    readonly PASSWORD_MAX_BYTES = PASSWORD_MAX_BYTES;
 
     /** Indicates the component has finished extracting the reset key from URL */
     readonly initialized = signal(false);
@@ -83,7 +86,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     readonly passwordForm = new FormGroup<PasswordResetForm>({
         newPassword: new FormControl('', {
             nonNullable: true,
-            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)],
+            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator],
         }),
         confirmPassword: new FormControl('', {
             nonNullable: true,
@@ -124,6 +127,11 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
 
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
+            return;
+        }
+
+        if (this.passwordForm.invalid) {
+            this.passwordForm.markAllAsTouched();
             return;
         }
 

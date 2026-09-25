@@ -485,7 +485,7 @@ if [ "$SKIP_SERVER" = false ]; then
 else
     echo ""
     echo -e "${YELLOW}Step 2a: Skipping server (--skip-server)${NC}"
-    if ! curl -sf http://localhost:8080/management/health >/dev/null 2>&1; then
+    if ! curl -sf http://localhost:8080/management/health/readiness >/dev/null 2>&1; then
         echo -e "${RED}WARNING: Server does not appear to be running at http://localhost:8080${NC}"
     fi
 fi
@@ -531,7 +531,10 @@ if [ "$NEED_WAIT_SERVER" = true ]; then
     echo "Waiting for server to be ready (this may take a few minutes on first run)..."
     TIMEOUT=300
     ELAPSED=0
-    until curl -sf http://localhost:8080/management/health >/dev/null 2>&1; do
+    # Gate on the readiness probe, not the aggregate /management/health: the aggregate also
+    # includes external connectors (e.g. the Hermes push relay), so an outage there would keep
+    # a fully started server "not ready" and fail the run before a single test executes.
+    until curl -sf http://localhost:8080/management/health/readiness >/dev/null 2>&1; do
         if ! kill -0 "$SERVER_PID" 2>/dev/null; then
             echo -e "${RED}ERROR: Server process died. Check $LOCAL_DIR/server.log${NC}"
             tail -20 "$LOCAL_DIR/server.log"

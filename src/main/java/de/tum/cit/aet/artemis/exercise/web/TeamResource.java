@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -75,7 +76,7 @@ import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/teams")
+@FeatureUsage(UserFeature.TEAM_EXERCISES)
 @RestController
 @RequestMapping("api/exercise/")
 public class TeamResource {
@@ -272,8 +273,8 @@ public class TeamResource {
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
-        var participationsOfSavedTeam = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(),
-                savedTeam.getId());
+        var participationsOfSavedTeam = studentParticipationRepository.findWithTeamStudentsAndSubmissionsAndResultsByExerciseIdAndTeamId(exercise.getId(), savedTeam.getId());
+        participationsOfSavedTeam.forEach(exercise::filterResultsForStudents);
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeamCopy, savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, dto.id().toString())).body(TeamResponseDTO.of(savedTeam));
     }

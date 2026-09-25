@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -56,7 +57,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.QUIZ_AUTHORING)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseRetrievalResource {
@@ -204,6 +205,7 @@ public class QuizExerciseRetrievalResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.QUIZ_LIVE)
     @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizExerciseForStudentResponseDTO> getQuizExerciseForStudent(@PathVariable long quizExerciseId) {

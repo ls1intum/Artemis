@@ -50,7 +50,7 @@
                 @if (numberOfSubmissions().total > 0) {
                     <div class="col-12 col-md-5 col-xl-4 d-flex justify-content-center justify-content-lg-end chart-col">
                         <div class="chart overflow-hidden">
-                            <tum-ui-doughnut-chart
+                            <tumaet-ui-doughnut-chart
                                 class="h-[150px] w-[330px]"
                                 [labels]="chartData().labels"
                                 [series]="chartData().series"
@@ -144,13 +144,13 @@
                             <div class="col-5">{{ ratingsDashboardInfo().total }} | {{ ratingsDashboardInfo().tutor }}</div>
                         </div>
                         <div class="mt-1 grid gap-2" [class.grid-cols-2]="complaintsEnabled()">
-                            <a tumUiButton severity="secondary" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
+                            <a tumAetUiButton severity="secondary" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
                                 <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
                             </a>
                             @if (complaintsEnabled()) {
                                 <a
-                                    tumUiButton
+                                    tumAetUiButton
                                     severity="secondary"
                                     size="small"
                                     [routerLink]="complaintsLink()"
@@ -437,7 +437,6 @@
                                                                         [class.disabled]="openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()"
                                                                         [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
                                                                         [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
-                                                                        [ngStyle]="{}"
                                                                     >
                                                                         @if (openingAssessmentEditorForNewSubmission()) {
                                                                             <fa-icon [icon]="faSpinner" animation="spin" />
@@ -458,6 +457,7 @@
                                                                     [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
                                                                     [participation]="submission.participation!"
                                                                     [exercise]="exercise()"
+                                                                    [isOwnParticipation]="false"
                                                                 />
                                                             </td>
                                                             @if (exercise().type === ExerciseType.TEXT) {
@@ -582,6 +582,7 @@
                                                         [result]="submissionWithComplaint.submission.latestResult"
                                                         [participation]="submissionWithComplaint.complaint.result!.submission!.participation!"
                                                         [exercise]="exercise()"
+                                                        [isOwnParticipation]="false"
                                                     />
                                                 </td>
                                                 <td>
@@ -686,7 +687,7 @@
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                                 <td>
-                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" />
+                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" [isOwnParticipation]="false" />
                                                 </td>
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {

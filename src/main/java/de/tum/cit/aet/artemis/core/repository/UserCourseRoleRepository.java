@@ -50,8 +50,7 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
 
     /**
      * Batch variant of {@link #existsByUser_IdAndCourse_IdAndRole}: returns which of the given users already hold the
-     * role in the course in a single query, so bulk enrollment can skip the already-enrolled subset without one
-     * existence check per user.
+     * role in the course in a single query, without one existence check per user.
      *
      * @param courseId the id of the course
      * @param role     the role to check for

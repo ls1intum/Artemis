@@ -1,4 +1,4 @@
-<tum-ui-dialog [header]="header()" size="large" [(visible)]="isOpen">
+<tumaet-ui-dialog [header]="header()" size="large" [(visible)]="isOpen">
     @let step = flowStep();
     <div class="frame">
         @if (step === ImportFlowStep.RESULTS && allStudentsExist()) {
@@ -32,6 +32,7 @@
                         ></span>
                     }
                 }
+                @default never;
             }
             <div class="table-container-scroll-container">
                 <div class="table-container">
@@ -46,7 +47,7 @@
                     <input type="file" class="file-upload-input" accept=".csv" (change)="parseStudents($event)" #fileUploadInput />
                     <button
                         type="button"
-                        tumUiButton
+                        tumAetUiButton
                         size="small"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.chooseFileButtonLabel"
                         data-testid="choose-file-button"
@@ -56,7 +57,7 @@
                 @case (ImportFlowStep.CONFIRMATION) {
                     <button
                         type="button"
-                        tumUiButton
+                        tumAetUiButton
                         severity="secondary"
                         size="small"
                         data-testid="back-to-explanation-button"
@@ -66,7 +67,7 @@
                     <div class="spacer"></div>
                     <button
                         type="button"
-                        tumUiButton
+                        tumAetUiButton
                         size="small"
                         data-testid="import-button"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.importButtonLabel"
@@ -77,7 +78,7 @@
                     @if (!allStudentsExist()) {
                         <button
                             type="button"
-                            tumUiButton
+                            tumAetUiButton
                             severity="secondary"
                             size="small"
                             data-testid="restart-button"
@@ -88,17 +89,18 @@
                     <div class="spacer"></div>
                     <button
                         type="button"
-                        tumUiButton
+                        tumAetUiButton
                         size="small"
                         data-testid="finish-button"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.finishButtonLabel"
                         (click)="close()"
                     ></button>
                 }
+                @default never;
             }
         </div>
         @if (isLoading()) {
             <jhi-loading-indicator-overlay />
         }
     </div>
-</tum-ui-dialog>
+</tumaet-ui-dialog>
