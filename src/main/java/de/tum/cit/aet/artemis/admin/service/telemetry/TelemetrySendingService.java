@@ -22,10 +22,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
-
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
@@ -50,18 +46,15 @@ public class TelemetrySendingService {
 
     private final ProfileService profileService;
 
-    private final JsonMapper objectMapper;
-
     private final NodeRegistryService nodeRegistryService;
 
     private final Optional<LocalCITelemetryApi> localCITelemetryApi;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, JsonMapper objectMapper, NodeRegistryService nodeRegistryService,
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, NodeRegistryService nodeRegistryService,
             Optional<LocalCITelemetryApi> localCITelemetryApi) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
-        this.objectMapper = objectMapper;
         this.nodeRegistryService = nodeRegistryService;
         this.localCITelemetryApi = localCITelemetryApi;
     }
@@ -102,8 +95,8 @@ public class TelemetrySendingService {
      * enabled module features, connected nodes and build agents, and optionally administrator details.
      *
      * <p>
-     * The method constructs the telemetry data object, converts it to JSON, and sends it to a
-     * telemetry collection server. The request is sent asynchronously due to the {@code @Async} annotation.
+     * The method constructs the telemetry data object and posts it to a telemetry collection server, which receives it as JSON.
+     * The request is sent asynchronously due to the {@code @Async} annotation.
      *
      * @param sendAdminDetails a flag indicating whether to include administrator details in the
      *                             telemetry data (such as contact information and admin name).
@@ -114,22 +107,15 @@ public class TelemetrySendingService {
     public void sendTelemetryByPostRequest(boolean sendAdminDetails, String startupId, Instant startedAt) {
 
         try {
-            var telemetryData = buildTelemetryData(sendAdminDetails, startupId, startedAt);
-            ObjectNode payload = objectMapper.valueToTree(telemetryData);
-            // NON_EMPTY is the DTO convention, but [] must distinguish no enabled features from an older sender.
-            payload.set("moduleFeatures", objectMapper.valueToTree(telemetryData.moduleFeatures()));
-            String telemetryJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(payload);
             HttpHeaders headers = new HttpHeaders();
+            // Declared explicitly: the default message converters include XML, which could otherwise be chosen for the record.
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
+            var requestEntity = new HttpEntity<>(buildTelemetryData(sendAdminDetails, startupId, startedAt), headers);
 
             log.info("Sending startup telemetry to {}", destination);
             // NOTE: there should be no module in the following URL
             var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
             log.info("Successfully sent telemetry data: {}", response.getStatusCode());
-        }
-        catch (JacksonException e) {
-            log.warn("JacksonException in sendTelemetry.", e);
         }
         catch (Exception e) {
             log.warn("Exception in sendTelemetry, with dst URI: {}", destination, e);
