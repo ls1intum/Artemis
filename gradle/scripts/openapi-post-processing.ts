@@ -87,11 +87,15 @@ interface OpenApiSchema {
 }
 
 interface OpenApiOperation {
+    operationId?: string;
     requestBody?: {
         content?: Record<string, {
             schema?: OpenApiSchema;
         }>;
     };
+    responses?: Record<string, {
+        headers?: Record<string, unknown>;
+    }>;
 }
 
 interface OpenApiSpecification {
@@ -141,6 +145,54 @@ const getMultipartBinaryPartNames = (openApiSpecification: OpenApiSpecification)
                 .map(([partName]) => partName);
         }),
     );
+};
+
+const getOperationIdsWithResponseHeaders = (openApiSpecification: OpenApiSpecification): string[] => {
+    return Object.values(openApiSpecification.paths ?? {}).flatMap(path =>
+        Object.values(path)
+            .filter(operation => Object.values(operation.responses ?? {}).some(response => response.headers))
+            .flatMap(operation => (operation.operationId ? [operation.operationId] : [])),
+    );
+};
+
+// An operation that declares a response header is useless as a bare Observable<T>: HttpClient only exposes headers
+// when asked to observe the whole response. Opt exactly those operations into observe: 'response' and widen their
+// return type, so a caller can read the header the contract promises.
+const observeFullResponseForHeaderOperations = (sourceFile: SourceFile, observedOperationsInFile: number, operationIdsWithResponseHeaders: Set<string>) => {
+    for (const method of sourceFile.getClasses().flatMap(classDeclaration => classDeclaration.getMethods())) {
+        if (!operationIdsWithResponseHeaders.has(method.getName())) {
+            continue;
+        }
+
+        const returnTypeNode = method.getReturnTypeNode();
+        const returnType = returnTypeNode?.getText();
+        if (!returnType?.startsWith("Observable<")) {
+            throw new Error(`Cannot observe the full response of ${method.getName()} in ${sourceFile.getBaseName()}: ${returnType}`);
+        }
+        if (returnType.startsWith("Observable<HttpResponse<")) {
+            observedOperationsInFile++;
+            continue;
+        }
+
+        const httpCall = method
+            .getDescendantsOfKind(SyntaxKind.CallExpression)
+            .find(callExpression => callExpression.getExpression().getText().startsWith("this.http."));
+        if (!httpCall) {
+            throw new Error(`No HttpClient call to observe in ${method.getName()} in ${sourceFile.getBaseName()}`);
+        }
+
+        returnTypeNode.replaceWithText(`Observable<HttpResponse<${returnType.slice("Observable<".length, -1)}>>`);
+        httpCall.addArgument("{ observe: 'response' }");
+
+        const httpImport = sourceFile.getImportDeclaration(declaration => declaration.getModuleSpecifierValue() === "@angular/common/http");
+        if (httpImport && !httpImport.getNamedImports().some(namedImport => namedImport.getName() === "HttpResponse")) {
+            httpImport.addNamedImport("HttpResponse");
+        }
+
+        observedOperationsInFile++;
+    }
+
+    return observedOperationsInFile;
 };
 
 // The generator types a binary part as Blob. FormData.append then labels it "blob", because only a File carries a
@@ -292,6 +344,8 @@ const main = async () => {
     const multipartObjectPartNameSet = new Set(multipartObjectPartNames);
     const multipartBinaryPartNames = getMultipartBinaryPartNames(openApiSpecification);
     const multipartBinaryPartNameSet = new Set(multipartBinaryPartNames);
+    const operationIdsWithResponseHeaders = getOperationIdsWithResponseHeaders(openApiSpecification);
+    const operationIdsWithResponseHeaderSet = new Set(operationIdsWithResponseHeaders);
     const totalReplacedUnionModels = replaceOneOfModelsWithUnionTypes(project, openApiSpecification);
 
     const typeChecker = project.getTypeChecker();
@@ -299,12 +353,14 @@ const main = async () => {
     let totalRenamedMethods = 0;
     let totalSerializedFormDataParts = 0;
     let totalNamedBinaryParts = 0;
+    let totalObservedOperations = 0;
 
     for (const sourceFile of project.getSourceFiles()) {
         let removedImportsInFile = 0;
         let renamedMethodsInFile = 0;
         let serializedFormDataPartsInFile = 0;
         let namedBinaryPartsInFile = 0;
+        let observedOperationsInFile = 0;
 
         for (const importDeclaration of sourceFile.getImportDeclarations()) {
             for (const namedImport of importDeclaration.getNamedImports()) {
@@ -338,6 +394,7 @@ const main = async () => {
         renamedMethodsInFile = stripLeadingUnderscoresAndTrailingDigitsFromAllMethods(sourceFile, renamedMethodsInFile);
         serializedFormDataPartsInFile = serializeGeneratedModelFormDataParts(sourceFile, serializedFormDataPartsInFile, multipartObjectPartNameSet);
         namedBinaryPartsInFile = nameGeneratedBinaryFormDataParts(sourceFile, namedBinaryPartsInFile, multipartBinaryPartNameSet);
+        observedOperationsInFile = observeFullResponseForHeaderOperations(sourceFile, observedOperationsInFile, operationIdsWithResponseHeaderSet);
         const path = sourceFile.getFilePath();
         const leadingBanner = leadingBanners.get(sourceFile);
         const text = sourceFile.getFullText();
@@ -347,16 +404,18 @@ const main = async () => {
         const fixedContent = isWindows ? normalizeLineEndings(content, "CRLF") : content;
 
         writeFileSync(path, fixedContent, "utf8");
-        if (removedImportsInFile + renamedMethodsInFile + serializedFormDataPartsInFile + namedBinaryPartsInFile > 0) {
+        if (removedImportsInFile + renamedMethodsInFile + serializedFormDataPartsInFile + namedBinaryPartsInFile + observedOperationsInFile > 0) {
             totalRemovedImports += removedImportsInFile;
             totalRenamedMethods += renamedMethodsInFile;
             totalSerializedFormDataParts += serializedFormDataPartsInFile;
             totalNamedBinaryParts += namedBinaryPartsInFile;
+            totalObservedOperations += observedOperationsInFile;
             console.log(
                 `🧹 Removed ${removedImportsInFile} imports, ` +
                 `renamed ${renamedMethodsInFile} methods, ` +
                 `serialized ${serializedFormDataPartsInFile} multipart model parts, ` +
-                `named ${namedBinaryPartsInFile} multipart binary parts in ${sourceFile.getBaseName()}`
+                `named ${namedBinaryPartsInFile} multipart binary parts, ` +
+                `observed ${observedOperationsInFile} full responses in ${sourceFile.getBaseName()}`
             );
         }
     }
@@ -369,11 +428,16 @@ const main = async () => {
         throw new Error(`Expected ${multipartBinaryPartNames.length} multipart binary parts to be named, but named ${totalNamedBinaryParts}`);
     }
 
+    if (totalObservedOperations !== operationIdsWithResponseHeaders.length) {
+        throw new Error(`Expected ${operationIdsWithResponseHeaders.length} operations to observe the full response, but observed ${totalObservedOperations}`);
+    }
+
     console.log(
         `✅ Done. Total imports removed: ${totalRemovedImports}, ` +
         `methods renamed: ${totalRenamedMethods}, ` +
         `multipart model parts serialized: ${totalSerializedFormDataParts}, ` +
         `multipart binary parts named: ${totalNamedBinaryParts}, ` +
+        `full responses observed: ${totalObservedOperations}, ` +
         `oneOf models converted to union types: ${totalReplacedUnionModels}`
     );
 };

@@ -12,7 +12,7 @@
  * QuizTrainingApi - API service
  * @generated from OpenAPI specification
  */
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { LeaderboardSetting } from '../model/leaderboard-setting';
@@ -45,7 +45,7 @@ export class QuizTrainingApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      */
-    getQuizQuestionsForPractice(courseId: number, isNewSession: boolean, requestBody: Array<number>, page?: number, size?: number, sort?: Array<string>): Observable<Array<QuizQuestionTraining>> {
+    getQuizQuestionsForPractice(courseId: number, isNewSession: boolean, requestBody: Array<number>, page?: number, size?: number, sort?: Array<string>): Observable<HttpResponse<Array<QuizQuestionTraining>>> {
         const queryParams = new URLSearchParams();
         if (page !== undefined && page !== null) {
             queryParams.set('page', String(page));
@@ -61,7 +61,7 @@ export class QuizTrainingApi {
         }
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/quiz/courses/${courseId}/training-questions${queryString ? `?${queryString}` : ''}`;
-        return this.http.post<Array<QuizQuestionTraining>>(url, requestBody);
+        return this.http.post<Array<QuizQuestionTraining>>(url, requestBody, { observe: 'response' });
     }
 
     /**
