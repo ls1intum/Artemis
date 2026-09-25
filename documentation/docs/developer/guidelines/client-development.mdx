@@ -104,17 +104,17 @@ Key principles:
 <Callout variant={CalloutVariant.danger}>
     **TUM UI is the target Artemis component system; Bootstrap, ng-bootstrap, and PrimeNG are deprecated migration dependencies.** Prefer a component from
     [`@tumaet/ui-angular`](/developer/tum-ui-reference) whenever one exists. The long-term direction is to migrate the client entirely to the [TUM UI component
-    kit](/developer/guidelines/tum-ui-kit), built on Angular CDK and Tailwind tokens. Use PrimeNG only for capabilities TUM UI does not yet provide, and do not introduce Bootstrap
-    or ng-bootstrap in new work.
+    kit](/developer/guidelines/tum-ui-kit), built on Angular Aria, Angular CDK, and Tailwind tokens. Use PrimeNG only for capabilities TUM UI does not yet provide, and do not
+    introduce Bootstrap or ng-bootstrap in new work.
 </Callout>
 
 Choose the smallest stable abstraction that meets the requirement:
 
 1. Use semantic native HTML when the platform already supplies the required behavior.
 2. Use an existing TUM UI component for a reusable control or visual pattern.
-3. If a reusable pattern is missing, add or evolve a TUM UI component around native HTML and stable
-   Angular CDK primitives. The pull request must include a concrete Artemis consumer; a second
-   application is not required.
+3. If a reusable pattern is missing, add or evolve a TUM UI component around native HTML, Angular
+   Aria, and stable Angular CDK primitives. The pull request must include a concrete Artemis
+   consumer; a second application is not required.
 4. Keep domain-specific composition, routing, requests, and application translations in Artemis.
    Compose those features from TUM UI primitives instead of exporting application policy as a
    package API.
@@ -123,7 +123,7 @@ Choose the smallest stable abstraction that meets the requirement:
    replaced.
 
 Do not reimplement keyboard navigation, focus management, overlays, selection, or virtual scrolling
-when native HTML or Angular CDK already provides the behavior. Follow the
+when native HTML, Angular Aria, or Angular CDK already provides the behavior. Follow the
 [TUM UI package guide](/developer/guidelines/tum-ui-kit) for ownership, public API, stories, and
 validation.
 

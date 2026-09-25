@@ -107,8 +107,9 @@ the real PrimeNG component so its styles load deterministically. Enforced by
 PrimeNG itself is a transitional fallback, used only when a TUM UI gap cannot reasonably be closed
 in the same change. Explain the contained fallback in the pull request.
 
-If TUM UI lacks a reusable capability, add or evolve a package component around native HTML or
-stable Angular CDK primitives, and keep Artemis-specific composition in the application. See
+If TUM UI lacks a reusable capability, add or evolve a package component around native HTML,
+Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
+primitives, and keep Artemis-specific composition in the application. See
 `documentation/docs/developer/guidelines/tum-ui-kit.mdx`.
 
 ## Other rules worth knowing
