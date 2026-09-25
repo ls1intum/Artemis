@@ -12,9 +12,9 @@ data:
   ARTEMIS_VERSIONCONTROL_SSHHOSTKEYPATH: "/opt/artemis/config/ssh-hostkey"
 
   # ---- Installation metadata, validated on every core and build-agent startup ----
-  INFO_OPERATORNAME: {{ required "artemis.config.operator.name is required" .Values.artemis.config.operator.name | quote }}
-  INFO_OPERATORADMINNAME: {{ required "artemis.config.operator.adminName is required" .Values.artemis.config.operator.adminName | quote }}
-  INFO_UNIVERSITYNAME: {{ required "artemis.config.operator.universityName is required" .Values.artemis.config.operator.universityName | quote }}
+  INFO_OPERATORNAME: {{ required "artemis.config.operator.name is required" (.Values.artemis.config.operator.name | trim) | quote }}
+  INFO_OPERATORADMINNAME: {{ required "artemis.config.operator.adminName is required" (.Values.artemis.config.operator.adminName | trim) | quote }}
+  INFO_UNIVERSITYNAME: {{ required "artemis.config.operator.universityName is required" (.Values.artemis.config.operator.universityName | trim) | quote }}
 
   # ---- Datasource (PostgreSQL) ----
   SPRING_DATASOURCE_URL: {{ include "artemis.jdbcUrl" . | quote }}

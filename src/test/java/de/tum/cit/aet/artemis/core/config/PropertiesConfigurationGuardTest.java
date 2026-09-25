@@ -5,14 +5,20 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class PropertiesConfigurationGuardTest {
@@ -28,7 +34,7 @@ class PropertiesConfigurationGuardTest {
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = { "  ", "Admin", "Some Artemis Operator", "Your University", "<university>", "TODO", "Example University", "Max Mustermann", "Anonymous University",
-            "anonymous university admin" })
+            "anonymous university admin", "Example University IT Services" })
     void rejectsMissingAndPlaceholderMetadata(String invalid) {
         assertThatIllegalArgumentException().isThrownBy(guard(invalid, "Erika Muster", "Technical University of Munich")::afterPropertiesSet)
                 .withMessageContaining("info.operatorName (INFO_OPERATORNAME)");
@@ -41,6 +47,39 @@ class PropertiesConfigurationGuardTest {
     @Test
     void allowsValidMetadata() {
         assertThatNoException().isThrownBy(guard("AET", "Erika Muster", "Technical University of Munich")::afterPropertiesSet);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "dev.env", "dev-local-vc-local-ci.env", "prod-multinode.env", "migration-check.env", "playwright.env", "prod-multinode-fast.env" })
+    void allowsShippedLocalDeploymentMetadata(String file) throws IOException {
+        var properties = new Properties();
+        try (var reader = Files.newBufferedReader(Path.of("docker/artemis/config", file))) {
+            properties.load(reader);
+        }
+        assertThatNoException().isThrownBy(
+                guard(envValue(properties, "INFO_OPERATORNAME"), envValue(properties, "INFO_OPERATORADMINNAME"), envValue(properties, "INFO_UNIVERSITYNAME"))::afterPropertiesSet);
+    }
+
+    private String envValue(Properties properties, String name) {
+        String value = properties.getProperty(name);
+        return value == null ? null : value.replace("\"", "");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "values.yaml", "values-cluster-example.yaml" })
+    void rejectsUnconfiguredProductionChartMetadata(String file) throws IOException {
+        var values = new YamlPropertySourceLoader().load("chart", new FileSystemResource("helm/artemis/" + file)).getFirst();
+        assertThatIllegalArgumentException()
+                .isThrownBy(guard((String) values.getProperty("artemis.config.operator.name"), (String) values.getProperty("artemis.config.operator.adminName"),
+                        (String) values.getProperty("artemis.config.operator.universityName"))::afterPropertiesSet)
+                .withMessageContaining("info.operatorName").withMessageContaining("info.operatorAdminName").withMessageContaining("info.universityName");
+    }
+
+    @Test
+    void allowsDockerDesktopChartMetadata() throws IOException {
+        var values = new YamlPropertySourceLoader().load("chart", new FileSystemResource("helm/artemis/values-docker-desktop.yaml")).getFirst();
+        assertThatNoException().isThrownBy(guard((String) values.getProperty("artemis.config.operator.name"), (String) values.getProperty("artemis.config.operator.adminName"),
+                (String) values.getProperty("artemis.config.operator.universityName"))::afterPropertiesSet);
     }
 
     @ParameterizedTest

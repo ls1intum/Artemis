@@ -26,7 +26,7 @@ public class PropertiesConfigurationGuard implements InitializingBean {
      */
     private static final Set<String> PLACEHOLDERS = Set.of("admin", "some artemis operator", "some universities admin", "your university", "your name", "your operator",
             "university name", "operator name", "admin name", "todo", "tbd", "changeme", "example university", "max mustermann", "anonymous university",
-            "anonymous university admin");
+            "anonymous university admin", "example university it services");
 
     @Value("${info.operatorAdminName:#{null}}")
     private String operatorAdminName;

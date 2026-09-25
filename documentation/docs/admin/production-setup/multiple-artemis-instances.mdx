@@ -770,6 +770,13 @@ export ARTEMIS_E2E_JWT_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
 
 The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do this for you.
 
+The shipped `prod-multinode.env` describes a local test installation and sets `INFO_TESTSERVER=true`.
+All three nodes, including standalone build agents, read the operator, administrator, and institution from this shared
+file. For a real deployment, set `ARTEMIS_ENV_FILE` to an external replacement containing the installation's actual
+`INFO_OPERATORNAME`, `INFO_OPERATORADMINNAME`, and `INFO_UNIVERSITYNAME`, along with its credentials.
+Set `INFO_TESTSERVER=false` for a production installation. Keep these shared values in that file rather than in
+`node1.env`, so member cores and build agents receive the same required identity.
+
 <Callout variant={CalloutVariant.info}>
     You may run into the following error when starting the containers
     `No member group is available to assign partition ownership...`. This issue should resolve itself after a few
