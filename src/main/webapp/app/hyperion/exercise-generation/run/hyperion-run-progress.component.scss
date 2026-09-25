@@ -1,7 +1,7 @@
 /*
  * The rule that separates a stage's live detail from the substep ladder printed above it.
  *
- * Drawn from the TUM UI border token rather than from a bare Tailwind `border-t`. Tailwind preflight is not loaded in
+ * Drawn from the TUM AET UI border token rather than from a bare Tailwind `border-t`. Tailwind preflight is not loaded in
  * this application, and the `@layer base` rule that would otherwise supply a border colour is overridden by a
  * dependency that points `border-color` at an undefined custom property — so a bare border utility falls back to
  * `currentColor` and draws the hairline in the *text* colour. Measured in dark: 17.63:1 where 1.24:1 was intended.

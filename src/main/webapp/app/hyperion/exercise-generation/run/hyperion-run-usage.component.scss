@@ -33,7 +33,7 @@
  * settling as a provisional total becomes a sealed one — a state change (NN/g's second job for motion), carried by
  * colour only, on an element the reader is not in the middle of reading.
  *
- * Durations and easings come from the TUM UI motion tokens. The literal fallbacks are deliberate: the tokens ship in
+ * Durations and easings come from the TUM AET UI motion tokens. The literal fallbacks are deliberate: the tokens ship in
  * the package's built `styles.css`, and a `var()` with no fallback would silently disable the transition in any build
  * where that artefact is a step behind.
  */
