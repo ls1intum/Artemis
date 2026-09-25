@@ -63,6 +63,26 @@ Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, never `[ngSty
 (`@angular-eslint/template/prefer-style-binding`); a constant is a static `style` attribute. Never
 bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
 
+## Redirecting from guards and resolvers
+
+A guard returns `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)` when it
+needs `replaceUrl`, `skipLocationChange` or `state`. A resolver returns or emits a
+`RedirectCommand`; a `UrlTree` returned from a resolver becomes route data and does not redirect.
+Inside an RxJS operator or a promise callback, throw the `RedirectCommand` instead. The router
+cancels the running navigation with a redirect, and alerts shown before the throw still appear.
+
+Never call `router.navigate()` or `navigateByUrl()` in a guard or resolver: it starts a second
+navigation while the first is running, and forces `return false` or `return EMPTY` workarounds.
+`localRules/no-navigation-in-guard-or-resolver` (`rules/no-navigation-in-guard-or-resolver.mjs`)
+enforces this at error level under `src/main/webapp`. It also follows the guard into the helper
+methods it reaches through `this` and into functions of the same file, so moving the call into a
+helper does not silence it. A `catchError` after a thrown redirect must rethrow what it does not
+handle.
+
+In specs, use the real router (`TestBed.inject(Router)`, no `MockRouter`) and assert the result:
+`router.serializeUrl(result as UrlTree)` for a returned redirect, or an `error` callback that
+receives a `RedirectCommand` for a thrown one. Do not assert a `navigate` spy.
+
 ## Copying objects
 
 In production `src/main/webapp/app/**/*.ts`, use the wrappers in
