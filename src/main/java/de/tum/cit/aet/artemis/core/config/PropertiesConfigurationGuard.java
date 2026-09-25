@@ -19,8 +19,14 @@ import org.springframework.stereotype.Component;
 @Profile(PROFILE_CORE + " | " + PROFILE_BUILDAGENT)
 public class PropertiesConfigurationGuard implements InitializingBean {
 
+    /**
+     * Template values, compared case-insensitively. Besides generic placeholders, this lists the defaults that Artemis configuration files, the Helm chart
+     * ({@code Example University}, {@code Max Mustermann}) and the Ansible collection ({@code Anonymous University}, {@code Anonymous University Admin}) have
+     * shipped, so an installation that kept one of them is asked for its own value.
+     */
     private static final Set<String> PLACEHOLDERS = Set.of("admin", "some artemis operator", "some universities admin", "your university", "your name", "your operator",
-            "university name", "operator name", "admin name", "todo", "tbd", "changeme");
+            "university name", "operator name", "admin name", "todo", "tbd", "changeme", "example university", "max mustermann", "anonymous university",
+            "anonymous university admin");
 
     @Value("${info.operatorAdminName:#{null}}")
     private String operatorAdminName;
@@ -36,13 +42,13 @@ public class PropertiesConfigurationGuard implements InitializingBean {
     public void afterPropertiesSet() {
         List<String> invalid = new ArrayList<>();
         if (isInvalid(operatorName)) {
-            invalid.add("info.operatorName");
+            invalid.add("info.operatorName (INFO_OPERATORNAME)");
         }
         if (isInvalid(operatorAdminName)) {
-            invalid.add("info.operatorAdminName");
+            invalid.add("info.operatorAdminName (INFO_OPERATORADMINNAME)");
         }
         if (isInvalid(universityName)) {
-            invalid.add("info.universityName");
+            invalid.add("info.universityName (INFO_UNIVERSITYNAME)");
         }
         if (!invalid.isEmpty()) {
             throw new IllegalArgumentException("Configure meaningful values for " + String.join(", ", invalid)
@@ -55,6 +61,6 @@ public class PropertiesConfigurationGuard implements InitializingBean {
             return true;
         }
         String normalized = value.strip().toLowerCase(Locale.ROOT);
-        return PLACEHOLDERS.contains(normalized) || normalized.startsWith("<") && normalized.endsWith(">");
+        return PLACEHOLDERS.contains(normalized) || (normalized.startsWith("<") && normalized.endsWith(">"));
     }
 }

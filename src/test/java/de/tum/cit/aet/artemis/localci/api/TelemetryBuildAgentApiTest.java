@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.ClusterMembership;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -25,8 +27,7 @@ class TelemetryBuildAgentApiTest {
     private final LocalCITelemetryApi api = new LocalCITelemetryApi(data, provider);
 
     private BuildAgentInformation agent(String name, String address) {
-        return new BuildAgentInformation(new BuildAgentDTO(name, address, name), 1, 0, java.util.List.of(), de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus.PAUSED, null,
-                null, 0);
+        return new BuildAgentInformation(new BuildAgentDTO(name, address, name), 1, 0, List.of(), BuildAgentStatus.PAUSED, null, null, 0);
     }
 
     @Test

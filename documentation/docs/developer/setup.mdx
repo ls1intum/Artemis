@@ -210,7 +210,19 @@ Instead, follow these best practices:
     - If you want to change application properties, you should do that in `application-local.yml`.
     - If needed, you can modify values such as database credentials, authentication and application settings.
 
-3. **Activate the correct profile**
+3. **Set the installation metadata**
+    - The server refuses to start until it knows who operates the installation. Add these three values to `application-local.yml`, replacing the examples with your own; they appear on the About page:
+
+    ```yaml
+    info:
+        operatorName: Research group of Applied Education Technologies
+        operatorAdminName: Jane Doe
+        universityName: Technical University of Munich
+    ```
+
+    - Empty values and template values such as `Admin`, `Your University` or `<name>` are rejected, and the error names the properties to fix. See [Telemetry](/admin/telemetry#required-configuration) for details.
+
+4. **Activate the correct profile**
     - When running Artemis, ensure the `local` profile is selected in the run configurations.
     - For additional custom configurations, create `application-<name>.yml` and activate the `<name>` profile.
 

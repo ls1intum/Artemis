@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.admin.service.telemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,13 +38,13 @@ class TelemetryServiceTest {
     void collectsOnceTenMinutesAfterReadiness() {
         when(applicationContext.getBean(TelemetrySendingService.class)).thenReturn(sender);
         var future = mock(ScheduledFuture.class);
-        org.mockito.Mockito.doReturn(future).when(scheduler).schedule(any(Runnable.class), any(Instant.class));
+        doReturn(future).when(scheduler).schedule(any(Runnable.class), any(Instant.class));
         var service = new TelemetryService(profiles, applicationContext, scheduler, true, false, false);
         service.scheduleTelemetry(startedAt, readyAt);
         service.scheduleTelemetry(startedAt, readyAt);
         var task = ArgumentCaptor.forClass(Runnable.class);
         verify(scheduler).schedule(task.capture(), eq(readyAt.plusSeconds(600)));
-        verify(sender, never()).sendTelemetryByPostRequest(org.mockito.ArgumentMatchers.anyBoolean(), any(), any());
+        verify(sender, never()).sendTelemetryByPostRequest(anyBoolean(), any(), any());
         verify(applicationContext, never()).getBean(TelemetrySendingService.class);
         task.getValue().run();
         var startupId = ArgumentCaptor.forClass(String.class);

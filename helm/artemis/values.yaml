@@ -122,12 +122,15 @@ artemis:
     # LocalVC repository URLs are based on this value.
     serverUrl: ""
 
+    # Installation metadata. REQUIRED: every core and build-agent pod refuses to start without meaningful values,
+    # independently of telemetry. All three are shown on the About page.
     operator:
-      # Required on core and build-agent nodes and shown on the "About Us" page.
-      # Replace these examples with the installation's operator, administrator and institution.
-      name: "Example University"
-      adminName: "Max Mustermann"
-      universityName: "Example University"
+      # The organization operating Artemis, e.g. "Research group of Applied Education Technologies".
+      name: ""
+      # The administrator's name.
+      adminName: ""
+      # The university, school or institution using Artemis, e.g. "Technical University of Munich".
+      universityName: ""
 
     # Initial internal admin account (created on first startup). REQUIRED.
     admin:

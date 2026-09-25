@@ -9,6 +9,9 @@ import java.util.concurrent.ScheduledFuture;
 
 import jakarta.annotation.PreDestroy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
@@ -22,6 +25,8 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class TelemetryService {
+
+    private static final Logger log = LoggerFactory.getLogger(TelemetryService.class);
 
     private static final Duration STARTUP_DELAY = Duration.ofMinutes(10);
 
@@ -38,11 +43,12 @@ public class TelemetryService {
 
     private final boolean testServer;
 
-    private boolean scheduledOrStopped;
+    // Set once the single report is scheduled or the service shuts down; either way no further report may be scheduled.
+    private boolean closedForScheduling;
 
     private ScheduledFuture<?> pendingReport;
 
-    public TelemetryService(ProfileService profileService, ApplicationContext applicationContext, TaskScheduler taskScheduler,
+    public TelemetryService(ProfileService profileService, ApplicationContext applicationContext, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
             @Value("${artemis.telemetry.enabled:false}") boolean useTelemetry, @Value("${artemis.telemetry.sendAdminDetails:false}") boolean sendAdminDetails,
             @Value("${info.testServer:false}") boolean testServer) {
         this.profileService = profileService;
@@ -60,18 +66,20 @@ public class TelemetryService {
      * @param readyAt   the time the application became ready
      */
     public synchronized void scheduleTelemetry(Instant startedAt, Instant readyAt) {
-        if (scheduledOrStopped || !useTelemetry || profileService.isDevActive() || testServer) {
+        if (closedForScheduling || !useTelemetry || profileService.isDevActive() || testServer) {
             return;
         }
-        scheduledOrStopped = true;
+        closedForScheduling = true;
         String startupId = UUID.randomUUID().toString();
+        Instant sendAt = readyAt.plus(STARTUP_DELAY);
         pendingReport = taskScheduler.schedule(() -> applicationContext.getBean(TelemetrySendingService.class).sendTelemetryByPostRequest(sendAdminDetails, startupId, startedAt),
-                readyAt.plus(STARTUP_DELAY));
+                sendAt);
+        log.info("Scheduled startup telemetry for {}", sendAt);
     }
 
     @PreDestroy
     public synchronized void cancelTelemetry() {
-        scheduledOrStopped = true;
+        closedForScheduling = true;
         if (pendingReport != null) {
             pendingReport.cancel(false);
         }

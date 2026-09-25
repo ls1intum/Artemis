@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,13 +27,15 @@ class PropertiesConfigurationGuardTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = { "  ", "Admin", "Some Artemis Operator", "Your University", "<university>", "TODO" })
+    @ValueSource(strings = { "  ", "Admin", "Some Artemis Operator", "Your University", "<university>", "TODO", "Example University", "Max Mustermann", "Anonymous University",
+            "anonymous university admin" })
     void rejectsMissingAndPlaceholderMetadata(String invalid) {
         assertThatIllegalArgumentException().isThrownBy(guard(invalid, "Erika Muster", "Technical University of Munich")::afterPropertiesSet)
-                .withMessageContaining("info.operatorName");
+                .withMessageContaining("info.operatorName (INFO_OPERATORNAME)");
         assertThatIllegalArgumentException().isThrownBy(guard("AET", invalid, "Technical University of Munich")::afterPropertiesSet)
-                .withMessageContaining("info.operatorAdminName");
-        assertThatIllegalArgumentException().isThrownBy(guard("AET", "Erika Muster", invalid)::afterPropertiesSet).withMessageContaining("info.universityName");
+                .withMessageContaining("info.operatorAdminName (INFO_OPERATORADMINNAME)");
+        assertThatIllegalArgumentException().isThrownBy(guard("AET", "Erika Muster", invalid)::afterPropertiesSet)
+                .withMessageContaining("info.universityName (INFO_UNIVERSITYNAME)");
     }
 
     @Test
@@ -39,16 +45,26 @@ class PropertiesConfigurationGuardTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "core,scheduling", "core", "buildagent", "dev,core", "prod,core,buildagent" })
-    void rejectsInvalidMetadataOnEveryNodeRegardlessOfTelemetry(String profiles) {
-        for (boolean enabled : new boolean[] { true, false }) {
-            try (var context = new AnnotationConfigApplicationContext()) {
-                context.getEnvironment().setActiveProfiles(profiles.split(","));
-                context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("test",
-                        java.util.Map.of("artemis.telemetry.enabled", enabled, "artemis.telemetry.sendAdminDetails", false, "info.operatorName", "AET")));
-                context.register(PropertiesConfigurationGuard.class);
-                org.assertj.core.api.Assertions.assertThatThrownBy(context::refresh).hasRootCauseInstanceOf(IllegalArgumentException.class)
-                        .hasStackTraceContaining("info.operatorAdminName").hasStackTraceContaining("info.universityName");
-            }
+    void rejectsInvalidMetadataOnEveryCoreNodeAndBuildAgent(String profiles) {
+        try (var context = contextWithOperatorNameOnly(profiles)) {
+            assertThatThrownBy(context::refresh).hasRootCauseInstanceOf(IllegalArgumentException.class).hasStackTraceContaining("info.operatorAdminName")
+                    .hasStackTraceContaining("info.universityName");
         }
+    }
+
+    @Test
+    void isNotRegisteredOnNodesThatAreNeitherCoreNorBuildAgent() {
+        try (var context = contextWithOperatorNameOnly("prod,scheduling")) {
+            context.refresh();
+            assertThat(context.getBeansOfType(PropertiesConfigurationGuard.class)).isEmpty();
+        }
+    }
+
+    private static AnnotationConfigApplicationContext contextWithOperatorNameOnly(String profiles) {
+        var context = new AnnotationConfigApplicationContext();
+        context.getEnvironment().setActiveProfiles(profiles.split(","));
+        context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("test", Map.of("info.operatorName", "AET")));
+        context.register(PropertiesConfigurationGuard.class);
+        return context;
     }
 }

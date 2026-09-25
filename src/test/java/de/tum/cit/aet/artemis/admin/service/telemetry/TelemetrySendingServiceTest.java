@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.admin.service.telemetry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
@@ -26,18 +27,6 @@ import de.tum.cit.aet.artemis.localci.api.LocalCITelemetryApi;
 
 class TelemetrySendingServiceTest {
 
-    private static final java.util.List<String> MODULE_PROPERTIES = java.util.List.of(de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.ATLASML_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.ATLASLLM_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.DEIMOS_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.TEXT_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.MODELING_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.LECTURE_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.THEIA_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME,
-            de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME, de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME);
-
     private final ProfileService profiles = mock(ProfileService.class);
 
     private final NodeRegistryService nodes = mock(NodeRegistryService.class);
@@ -48,16 +37,21 @@ class TelemetrySendingServiceTest {
 
     private final MockRestServiceServer server = MockRestServiceServer.bindTo(rest).build();
 
-    private final MockEnvironment env = new MockEnvironment();
+    // Module flags that are not set read as disabled, so a newly added module does not need to be listed here.
+    private final MockEnvironment env = new MockEnvironment() {
+
+        @Override
+        public <T> T getProperty(String key, Class<T> targetType) {
+            T value = super.getProperty(key, targetType);
+            return value == null && targetType == Boolean.class ? targetType.cast(Boolean.FALSE) : value;
+        }
+    };
 
     private TelemetrySendingService service;
 
     @BeforeEach
     void setUp() {
         env.setActiveProfiles("prod", "core", "scheduling");
-        for (String key : MODULE_PROPERTIES) {
-            env.setProperty(key, "false");
-        }
         env.setProperty("artemis.iris.enabled", "true");
         service = sender(Optional.of(agents));
     }
@@ -139,7 +133,7 @@ class TelemetrySendingServiceTest {
         server.verify();
         server.reset();
         server.expect(requestTo("https://telemetry.example/api/telemetry")).andRespond(withServerError());
-        org.assertj.core.api.Assertions.assertThatNoException().isThrownBy(() -> service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH));
+        assertThatNoException().isThrownBy(() -> service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH));
         server.verify();
     }
 }

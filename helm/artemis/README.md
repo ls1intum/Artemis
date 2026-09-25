@@ -51,13 +51,16 @@ Required secret values are:
 - `registry.password`
 - `broker.auth.password`
 
-Set `artemis.config.operator.name`, `artemis.config.operator.adminName`, and `artemis.config.operator.universityName`
-to the installation's operator, administrator, and university or institution. The shared ConfigMap supplies these
-required values to every core and build-agent node, independently of whether telemetry is enabled. They are displayed
-on the About page.
-
 Every node here runs under the `prod` profile, which refuses to start on a credential that Artemis publishes as an
 example. `artemis.config.admin.password` must therefore not be `artemis_admin`.
+
+The installation metadata is required as well. The shared ConfigMap supplies it to every core and build-agent pod,
+which refuse to start without meaningful values even when telemetry is disabled, and all three are shown on the About
+page. The chart refuses to render while one is empty:
+
+- `artemis.config.operator.name`: the organization operating Artemis
+- `artemis.config.operator.adminName`: the administrator's name
+- `artemis.config.operator.universityName`: the university, school or institution using Artemis
 
 Set `gateway.enabled=false` when using only `kubectl port-forward`. For a plain-HTTP local port-forward, also set `artemis.config.secureCookies=false`; the Docker Desktop values file already does this. Otherwise install the Gateway API CRDs/controller and configure the gateway values.
 

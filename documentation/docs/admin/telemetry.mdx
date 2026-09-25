@@ -17,8 +17,7 @@ the report is sent. A worker-only restart does not produce a report, and shuttin
 scheduling node before the delay expires cancels its pending report.
 
 Development servers and servers configured with `info.testServer: true` do not send telemetry.
-The collector also ignores reports explicitly marked as test reports from older senders.
-There is no hostname-based test-server detection: configure the flag explicitly.
+Artemis does not detect test servers on its own, so set the flag explicitly on every test installation.
 
 The collector identifies each installation by its URL and keeps a separate startup history.
 Repeated delivery of the same startup identifier does not add duplicate entries. The latest
@@ -69,7 +68,7 @@ info:
 | `buildAgentCount` | Connected build agents, including paused agents and core nodes that also build |
 | `isMultiNode` | Whether more than one core node is connected |
 | `isProductionInstance`, `isTestServer`, `dataSource`, `isLocalLLMDeploymentEnabled` | Deployment configuration |
-| `startupId`, `startedAt` | Identifier and start time of the scheduling-node process |
+| `startupId`, `startedAt` | Identifier and start time of this startup of the scheduling node's application |
 | `adminName`, `contact` | Administrator details, only when `sendAdminDetails` is enabled |
 
 Dedicated build agents are counted separately from core nodes. A node with both roles contributes
