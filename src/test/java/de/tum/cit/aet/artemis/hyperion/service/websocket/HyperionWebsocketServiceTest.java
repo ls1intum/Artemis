@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.websocket;
 
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.EXERCISE_GENERATION_STATE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -28,6 +29,6 @@ class HyperionWebsocketServiceTest {
             context.publishEvent(new ExerciseGenerationStateChangedEvent(state));
         }
 
-        verify(messaging).sendMessage("/topic/hyperion/exercise-generation/exercises/42/state", state);
+        verify(messaging).sendMessage(EXERCISE_GENERATION_STATE.at(42), state);
     }
 }

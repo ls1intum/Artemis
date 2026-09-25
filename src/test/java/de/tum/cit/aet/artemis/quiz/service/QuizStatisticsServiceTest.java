@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -59,7 +61,7 @@ class QuizStatisticsServiceTest {
 
         notification.getValue().run();
 
-        verify(websocketMessagingService).sendMessage("/topic/statistic/42", 42L);
+        verify(websocketMessagingService).sendMessage(topic("/topic/statistic/42"), eq(42L));
 
         quizStatisticsService.notifyStatisticsChanged(42L);
         verify(taskScheduler, times(2)).schedule(any(Runnable.class), any(Instant.class));

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.websocket;
 
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.EXERCISE_GENERATION_STATE;
+
 import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
@@ -10,6 +12,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationStateChangedEvent;
 
@@ -19,8 +22,6 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 public class HyperionWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionWebsocketService.class);
-
-    private static final String TOPIC_PREFIX = "/topic/hyperion/";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -36,21 +37,20 @@ public class HyperionWebsocketService {
     @EventListener
     public void sendExerciseState(ExerciseGenerationStateChangedEvent event) {
         var state = event.state();
-        websocketMessagingService.sendMessage(TOPIC_PREFIX + "exercise-generation/exercises/" + state.exerciseId() + "/state", state);
+        websocketMessagingService.sendMessage(EXERCISE_GENERATION_STATE.at(state.exerciseId()), state);
     }
 
     /**
      * Sends a websocket message to a specific user under the Hyperion namespace.
      *
      * @param userLogin   the receiver's login
-     * @param topicSuffix suffix appended to "/topic/hyperion/"
+     * @param destination a destination of one of the {@link de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics}
      * @param payload     the payload to send
      */
-    public void send(String userLogin, String topicSuffix, Object payload) {
-        String topic = TOPIC_PREFIX + topicSuffix;
+    public void send(String userLogin, WebsocketUserDestination destination, Object payload) {
         try {
-            websocketMessagingService.sendMessageToUser(userLogin, topic, payload).get();
-            log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
+            websocketMessagingService.sendMessageToUser(userLogin, destination, payload).get();
+            log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, destination, payload);
         }
         catch (InterruptedException | ExecutionException e) {
             // The interrupt status is deliberately not restored, which is what java:S2142 would ask for. A code
@@ -58,7 +58,7 @@ public class HyperionWebsocketService {
             // or error event. CompletableFuture.get() throws as soon as the flag is set, so restoring it would fail
             // every later send of that job, including the terminal one, and the client's job view would stay "in
             // progress" until the page is reloaded.
-            log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
+            log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, destination, payload, e);
         }
     }
 }

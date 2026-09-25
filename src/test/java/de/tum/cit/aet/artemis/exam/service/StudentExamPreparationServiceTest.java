@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXERCISE_START_STATUS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,7 +64,7 @@ class StudentExamPreparationServiceTest {
         preparation.sendAndCacheExercisePreparationStatus(42L, 3, 1, 8, 12, start, lock);
         var expected = new ExamExerciseStartPreparationStatus(5, 2, 10, 20, start);
         assertThat(preparation.getExerciseStartStatusOfExam(42L)).contains(expected);
-        verify(messages, org.mockito.Mockito.times(2)).sendMessage("/topic/exams/42/exercise-start-status", expected);
+        verify(messages, org.mockito.Mockito.times(2)).sendMessage(EXERCISE_START_STATUS.at(42), expected);
         assertThat(lock.isLocked()).isFalse();
         preparation.invalidateExerciseStartStatus(42L);
         assertThat(preparation.getExerciseStartStatusOfExam(42L)).isEmpty();

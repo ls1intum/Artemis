@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.aiworker.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.AI_WORKER_MONITORING_TOPIC;
+import static de.tum.cit.aet.artemis.aiworker.web.AiWorkerWebsocketTopics.WORKERS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import org.springframework.context.annotation.Conditional;
@@ -35,8 +35,8 @@ public class WorkerMonitoringService {
     /** Refreshes watched snapshots, including expired worker presence and completed runs. */
     @Scheduled(fixedDelay = 5000)
     public void publish() {
-        if (!subscribers.findSubscriptions(subscription -> AI_WORKER_MONITORING_TOPIC.equals(subscription.getDestination())).isEmpty()) {
-            messaging.sendMessage(AI_WORKER_MONITORING_TOPIC, source.workerStatuses());
+        if (!subscribers.findSubscriptions(subscription -> WORKERS.template().equals(subscription.getDestination())).isEmpty()) {
+            messaging.sendMessage(WORKERS.at(), source.workerStatuses());
         }
     }
 }

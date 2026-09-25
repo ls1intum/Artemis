@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.EXERCISE_GENERATION_JOB;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -327,7 +328,7 @@ class GenerationTaskServiceTest {
     /** The events pushed to the live client, in order. */
     private List<ExerciseGenerationEventDTO> sentEvents() {
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
-        verify(websocket, org.mockito.Mockito.atLeastOnce()).send(eq("instructor1"), anyString(), captor.capture());
+        verify(websocket, org.mockito.Mockito.atLeastOnce()).send(eq("instructor1"), eq(EXERCISE_GENERATION_JOB.at(JOB_ID)), captor.capture());
         return captor.getAllValues().stream().filter(ExerciseGenerationEventDTO.class::isInstance).map(ExerciseGenerationEventDTO.class::cast).toList();
     }
 
@@ -349,7 +350,7 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
-        verify(websocket, Mockito.atLeastOnce()).send(eq("instructor1"), anyString(), captor.capture());
+        verify(websocket, Mockito.atLeastOnce()).send(eq("instructor1"), eq(EXERCISE_GENERATION_JOB.at(JOB_ID)), captor.capture());
         assertThat(captor.getAllValues()).extracting(message -> {
             if (message instanceof ExerciseGenerationEventDTO event) {
                 return event.type().name();
@@ -375,7 +376,7 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
-        verify(websocket, Mockito.atLeastOnce()).send(eq("instructor1"), anyString(), captor.capture());
+        verify(websocket, Mockito.atLeastOnce()).send(eq("instructor1"), eq(EXERCISE_GENERATION_JOB.at(JOB_ID)), captor.capture());
         assertThat(captor.getAllValues()).doesNotContain(fileChange);
         verify(jobService).recordFileUpdate(eq(EXERCISE_ID), eq(JOB_ID), any());
     }

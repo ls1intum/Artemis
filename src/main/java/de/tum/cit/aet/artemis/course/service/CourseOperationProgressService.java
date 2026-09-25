@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_OPERATION_PROGRESS_STATUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.course.web.CourseWebsocketTopics.COURSE_OPERATION_PROGRESS;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -44,8 +45,6 @@ import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
 public class CourseOperationProgressService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseOperationProgressService.class);
-
-    private static final String COURSE_OPERATION_PROGRESS_TOPIC = "/topic/courses/%d/operation-progress";
 
     private static final String COURSE_OPERATION_CLAIMS = "course-operation-claims";
 
@@ -343,7 +342,7 @@ public class CourseOperationProgressService {
             else {
                 log.warn("Unable to cache course operation progress because cache is null");
             }
-            websocketMessagingService.sendMessage(COURSE_OPERATION_PROGRESS_TOPIC.formatted(courseId), status);
+            websocketMessagingService.sendMessage(COURSE_OPERATION_PROGRESS.at(courseId), status);
         }
         catch (Exception e) {
             log.warn("Failed to send course operation progress", e);

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_GENERATION_MONITORING_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.ACTIVE_GENERATIONS;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -35,8 +35,8 @@ public class GenerationMonitoringWebsocketService {
     /** Refreshes watched snapshots, including expired worker presence and completed runs. */
     @Scheduled(fixedDelay = 5000)
     public void publish() {
-        if (!subscribers.findSubscriptions(subscription -> HYPERION_GENERATION_MONITORING_TOPIC.equals(subscription.getDestination())).isEmpty()) {
-            messaging.sendMessage(HYPERION_GENERATION_MONITORING_TOPIC, source.activeGenerations());
+        if (!subscribers.findSubscriptions(subscription -> ACTIVE_GENERATIONS.template().equals(subscription.getDestination())).isEmpty()) {
+            messaging.sendMessage(ACTIVE_GENERATIONS.at(), source.activeGenerations());
         }
     }
 }

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.EXERCISE_GENERATION_JOB;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumMap;
@@ -77,8 +79,6 @@ public class GenerationTaskService {
     private final ProgrammingExerciseBuildConfigRepository buildConfigRepository;
 
     private static final Logger log = LoggerFactory.getLogger(GenerationTaskService.class);
-
-    private static final String TOPIC_PREFIX = "exercise-generation/jobs/";
 
     private final GenerationOrchestrationService orchestrator;
 
@@ -218,7 +218,7 @@ public class GenerationTaskService {
         String userPrompt = event.userPrompt();
         long exerciseId = event.exercise().getId();
         String login = user.getLogin();
-        String topic = TOPIC_PREFIX + jobId;
+        var topic = EXERCISE_GENERATION_JOB.at(jobId);
         // Use the budget reserved for this request, which may be lower than the deployment default.
         long runTokenBudget = event.settings() == null ? maxTokensPerJob : event.settings().maxTokensPerJob();
         GenerationLiveUsage liveUsage = new GenerationLiveUsage(runTokenBudget, cachedInputTokenWeight);

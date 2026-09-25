@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -34,6 +35,7 @@ import tools.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -169,7 +171,7 @@ class IrisCommandServiceTest {
         var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
 
         assertThat(result.applied()).isTrue();
-        verify(irisWebsocketService).send(eq("student1"), anyString(), any());
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), any());
         verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND));
         verify(markerWriteLock).lock();
         verify(markerWriteLock).unlock();
@@ -223,7 +225,7 @@ class IrisCommandServiceTest {
         commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), CLIENT_ID);
         commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
 
-        verify(irisWebsocketService, times(2)).send(eq("student1"), eq(SESSION_ID + "/commands"), payload.capture());
+        verify(irisWebsocketService, times(2)).send(eq("student1"), userTopic("/topic/iris/" + SESSION_ID + "/commands"), payload.capture());
         assertThat(((IrisCommandRequestWebsocketDTO) payload.getAllValues().getFirst()).targetClientId()).isEqualTo(CLIENT_ID);
         assertThat(((IrisCommandRequestWebsocketDTO) payload.getAllValues().getLast()).targetClientId()).isNull();
         assertThat(((IrisCommandRequestWebsocketDTO) payload.getAllValues().getFirst()).expiresAt()).isGreaterThan(System.currentTimeMillis());
@@ -260,7 +262,7 @@ class IrisCommandServiceTest {
         var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), CLIENT_ID);
 
         assertThat(result.applied()).isFalse();
-        verify(irisWebsocketService).send(eq("student1"), anyString(), any());
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), any());
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
     }
