@@ -25,6 +25,10 @@ import { QuizExerciseForCourse } from 'app/openapi/model/quiz-exercise-for-cours
 import { QuizExerciseForStudentResponse } from 'app/openapi/model/quiz-exercise-for-student-response';
 import type { ExerciseVariantGroupReference as GeneratedExerciseVariantGroupReference } from 'app/openapi/model/exercise-variant-group-reference';
 import { ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizStatisticsOverview } from 'app/openapi/model/quiz-statistics-overview';
+import { QuizPointStatistics } from 'app/openapi/model/quiz-point-statistics';
+import type { QuizQuestionStatisticResponse as GeneratedQuizQuestionStatisticResponse } from 'app/openapi/model/quiz-question-statistic-response';
+import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 /**
  * Bridges the generated models of the quiz retrieval and participation endpoints and the quiz class graph.
@@ -113,6 +117,48 @@ export function toQuizExerciseFromListRow(exercise: QuizExerciseForCourse): Quiz
     quizExercise.dueDate = convertDateStringFromServer(exercise.dueDate);
     quizExercise.quizBatches = exercise.quizBatches?.map(toQuizBatch);
     return quizExercise;
+}
+
+/**
+ * Converts the overview statistics of a quiz exercise into the model the statistics view works on.
+ *
+ * @param overview the generated overview, whose questions are per-question summaries
+ * @returns the converted exercise carrying the overview statistics
+ */
+export function toQuizStatisticsOverview(overview: QuizStatisticsOverview): QuizStatisticsOverviewResponse {
+    const { quizQuestions, participantsRated, participantsUnrated, ...exercise } = overview;
+    const quizStatisticsOverview: QuizStatisticsOverviewResponse = toQuizExercise(exercise);
+    quizStatisticsOverview.quizQuestions = quizQuestions;
+    quizStatisticsOverview.participantsRated = participantsRated;
+    quizStatisticsOverview.participantsUnrated = participantsUnrated;
+    return quizStatisticsOverview;
+}
+
+/**
+ * Converts the point distribution of a quiz exercise into the model the statistics view works on.
+ *
+ * @param pointStatistics the generated exercise with its point distribution
+ * @returns the converted exercise carrying the point distribution
+ */
+export function toQuizPointStatistics(pointStatistics: QuizPointStatistics): QuizPointStatisticsResponse {
+    const { quizPointStatistic, ...exercise } = pointStatistics;
+    const quizPointStatistics: QuizPointStatisticsResponse = toQuizExercise(exercise);
+    quizPointStatistics.quizPointStatistic = quizPointStatistic;
+    return quizPointStatistics;
+}
+
+/**
+ * Converts the statistic of one quiz question into the model the statistics view works on.
+ *
+ * @param questionStatistic the generated exercise with one question and its statistic
+ * @returns the converted exercise carrying the converted question and its statistic
+ */
+export function toQuizQuestionStatistic(questionStatistic: GeneratedQuizQuestionStatisticResponse): QuizQuestionStatisticResponse {
+    const { quizQuestion, quizQuestionStatistic, ...exercise } = questionStatistic;
+    const quizQuestionStatisticResponse: QuizQuestionStatisticResponse = toQuizExercise(exercise);
+    quizQuestionStatisticResponse.quizQuestion = quizQuestion ? toQuizQuestion(quizQuestion) : undefined;
+    quizQuestionStatisticResponse.quizQuestionStatistic = quizQuestionStatistic;
+    return quizQuestionStatisticResponse;
 }
 
 /**
