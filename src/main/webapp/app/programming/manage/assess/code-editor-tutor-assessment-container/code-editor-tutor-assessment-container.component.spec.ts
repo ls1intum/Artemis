@@ -937,6 +937,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(suggestionsSpy).not.toHaveBeenCalled();
         });
 
+        it('should not fetch suggestions for a later submission loaded into the reused component while the AI Experience refresh is pending', async () => {
+            // Regression test: "Assess next" reuses this component. The pending refresh continuation of the first
+            // submission must not fetch on behalf of the second, which ran (and here failed) its own eligibility check.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const pendingRefresh = new Subject<LLMSelectionDecision | undefined>();
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(pendingRefresh.asObservable());
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
+
+            const firstLoad = internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+            await Promise.resolve();
+
+            const nextSubmission = buildNewAssessmentSubmission();
+            nextSubmission.id = 558;
+            (nextSubmission.participation!.exercise as ProgrammingExercise).course = { athenaGradingFeedbackEnabled: false } as Course;
+            await internals(comp).onSubmissionReceived('558', nextSubmission);
+
+            pendingRefresh.next(LLMSelectionDecision.CLOUD_AI);
+            pendingRefresh.complete();
+            await firstLoad;
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        });
+
         it('should refresh the AI Experience choice and skip the generic alert when the server rejects a stale-accepted suggestion request', async () => {
             // Regression test: the server rejects the request with errorKey "llmSelectionRequired" when the assessor's
             // AI Experience turns out (on the server, freshly) to be No AI, even though this tab thought it was enabled.

@@ -318,8 +318,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (!this.isFeedbackSuggestionsEnabled()) {
             return;
         }
+        // The router can reuse this component for another submission while the refresh is pending; that
+        // submission starts its own fetch, so this continuation must not start a duplicate one for it.
+        const submissionAtStart = this.submission;
+        const resultAtStart = this.result();
         await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
-        if (this.requiresAiExperienceOptIn()) {
+        if (this.submission !== submissionAtStart || this.result() !== resultAtStart || this.requiresAiExperienceOptIn()) {
             return;
         }
         this.loadFeedbackSuggestions();

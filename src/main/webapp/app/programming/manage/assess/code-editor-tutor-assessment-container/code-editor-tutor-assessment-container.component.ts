@@ -401,8 +401,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (this.isFeedbackSuggestionsEnabled() && (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
             // Another tab may have changed the AI Experience choice since this tab cached it; re-check right before
             // deciding whether to auto-fetch, so a stale "accepted" cache doesn't fire a request the server will reject.
+            // The router can reuse this component for another submission while the refresh is pending; that
+            // submission runs its own eligibility check, so this continuation must not fetch on its behalf.
+            const manualResultAtStart = this.manualResult();
             await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
-            if (!this.requiresAiExperienceOptIn()) {
+            if (this.submission() === submission && this.manualResult() === manualResultAtStart && !this.requiresAiExperienceOptIn()) {
                 await this.loadFeedbackSuggestions();
             }
         }

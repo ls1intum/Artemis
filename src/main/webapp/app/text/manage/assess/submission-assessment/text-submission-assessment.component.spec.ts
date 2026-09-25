@@ -14,7 +14,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
-import { ReplaySubject, of, throwError } from 'rxjs';
+import { ReplaySubject, Subject, of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -296,6 +296,28 @@ describe('TextSubmissionAssessmentComponent', () => {
 
             expect(refreshSpy).toHaveBeenCalled();
             expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not start a duplicate fetch for a later submission loaded into the reused component while the AI Experience refresh is pending', async () => {
+            // Regression test: "Assess next" reuses this component. The pending refresh continuation of the first
+            // submission must not fetch again for the second, which starts its own fetch after its own refresh.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const firstRefresh = new Subject<LLMSelectionDecision | undefined>();
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience')
+                .mockReturnValueOnce(firstRefresh.asObservable())
+                .mockReturnValue(of(LLMSelectionDecision.CLOUD_AI));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([]));
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
+
+            firstRefresh.next(LLMSelectionDecision.CLOUD_AI);
+            firstRefresh.complete();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
         });
 
         it('should refresh the AI Experience choice and skip loading when the server rejects a stale-accepted suggestion request', async () => {

@@ -24,7 +24,7 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -558,6 +558,45 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             expect(refreshSpy).toHaveBeenCalled();
             expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch suggestions for a later submission loaded into the reused component while the AI Experience refresh is pending', async () => {
+            // Regression test: "Assess next" reuses this component. The pending refresh continuation of the first
+            // submission must not fetch on behalf of the second, which ran (and here failed) its own eligibility check.
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const pendingRefresh = new Subject<LLMSelectionDecision | undefined>();
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(pendingRefresh.asObservable());
+            paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
+
+            const firstSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: { id: 1, type: 'modeling', feedbackSuggestionModule: 'modeling', course: { athenaGradingFeedbackEnabled: true } } as unknown as Exercise,
+                },
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(firstSubmission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            const secondSubmission: ModelingSubmission = {
+                id: 124,
+                submitted: true,
+                participation: {
+                    exercise: { id: 1, type: 'modeling', feedbackSuggestionModule: 'modeling', course: { athenaGradingFeedbackEnabled: false } } as unknown as Exercise,
+                },
+            } as ModelingSubmission;
+            component['handleReceivedSubmission'](secondSubmission);
+
+            pendingRefresh.next(LLMSelectionDecision.CLOUD_AI);
+            pendingRefresh.complete();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+            expect(component.submission()).toBe(secondSubmission);
         });
 
         it('should show the AI Experience opt-in hint instead of a generic error when the server rejects a stale-accepted suggestion request', async () => {

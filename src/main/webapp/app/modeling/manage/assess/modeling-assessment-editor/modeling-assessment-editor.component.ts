@@ -358,8 +358,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (!this.isFeedbackSuggestionsEnabled() || hasPersistedSuggestions || feedbacks.length !== automaticFeedbackCount) {
             return;
         }
+        // The router can reuse this component for another submission while the refresh is pending; that
+        // submission runs its own eligibility check, so this continuation must not fetch on its behalf.
+        const submissionAtStart = this.submission();
+        const resultAtStart = this.result();
         await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
-        if (this.requiresAiExperienceOptIn()) {
+        if (this.submission() !== submissionAtStart || this.result() !== resultAtStart || this.requiresAiExperienceOptIn()) {
             return;
         }
         void this.fetchAndApplyFeedbackSuggestions();
