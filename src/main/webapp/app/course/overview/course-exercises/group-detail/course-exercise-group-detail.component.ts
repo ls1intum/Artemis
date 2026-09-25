@@ -118,11 +118,11 @@ export class CourseExerciseGroupDetailComponent {
         return this.scoresStorageService.getStoredAchievedGroupPoints(this.courseId, group.id) ?? 0;
     });
 
-    protected readonly pointsInfoBoxData = computed<InformationBox>(() => ({
+    protected readonly pointsInfoBoxData: InformationBox = {
         title: 'artemisApp.courseOverview.exerciseDetails.points',
         content: { type: 'string', value: '' },
         isContentComponent: true,
-    }));
+    };
 
     protected readonly variantsInfoBoxData = computed<InformationBox>(() => ({
         title: 'artemisApp.exerciseVariantGroup.detail.variants',

@@ -140,7 +140,8 @@ export class GradingComponent implements OnInit {
             required(step.gradeName, { message: this.translateService.instant('artemisApp.gradingSystem.error.emptyFields') });
             validate(step, ({ value }) => this.gradeStepFieldErrors(value()));
         });
-        validateTree(path.gradeSteps, ({ value, valueOf }) => this.gradeStepStructureErrors(value(), valueOf(path.gradeType)));
+        // Not destructured: angular-eslint 22.5.0's reactive-context-must-read-signal crashes on a bare valueOf() call.
+        validateTree(path.gradeSteps, (context) => this.gradeStepStructureErrors(context.value(), context.valueOf(path.gradeType)));
     });
 
     /**

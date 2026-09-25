@@ -200,6 +200,13 @@ export default tseslint.config(
             // Services with any other provider metadata keep @Injectable, and so does a @Pipe that is also injected
             // as a service, because @Service() cannot share a class with another Angular decorator. Autofixable.
             '@angular-eslint/prefer-service-decorator': 'error',
+            // A computed(), linkedSignal(), effect() or afterRenderEffect() that reads no signal never re-runs: either a
+            // signal read is missing (`count` instead of `count()`), or the value is a constant and should be a field.
+            '@angular-eslint/reactive-context-must-read-signal': 'error',
+            // A computed() whose function returns nothing is always undefined.
+            '@angular-eslint/computed-must-return': 'error',
+            // takeUntilDestroyed() without a DestroyRef throws NG0203 outside an injection context (ngOnInit, methods).
+            '@angular-eslint/no-implicit-take-until-destroyed': 'error',
             // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
             // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
             // is allowed only with a description. Specs relax this to 'off' in the test-file block below.

@@ -6,10 +6,8 @@ import {
     ElementRef,
     Injector,
     OnDestroy,
-    Signal,
     ViewContainerRef,
     afterNextRender,
-    computed,
     effect,
     inject,
     input,
@@ -355,7 +353,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         ['#d86b1f', 'orange'],
     ]);
 
-    colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
+    readonly colors: string[] = [...this.colorToClassMap.keys()];
     allowedFileExtensions = signal<string>(UPLOAD_MARKDOWN_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(', ')).asReadonly();
 
     static readonly TAB_EDIT = TAB_EDIT_ID;
