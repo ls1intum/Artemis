@@ -66,7 +66,8 @@ export class CourseService {}
 
 `@angular-eslint/prefer-service-decorator` fixes this with `pnpm run lint:fix`. `@Service()`
 rejects constructor injection, and it cannot share a class with `@Pipe` or another Angular
-decorator; keep `@Injectable` there with a justified line-level disable.
+decorator. The rule still reports such a pipe and the autofix breaks `ng build` with NG1006, so
+keep `@Injectable` there with a justified line-level disable and check with `ng build`.
 
 ## A `computed()` that reads no signal
 

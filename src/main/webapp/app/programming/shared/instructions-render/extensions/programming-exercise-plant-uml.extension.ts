@@ -16,7 +16,7 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
  * Singleton service that handles rendering of PlantUML diagrams embedded in programming exercise problem statements.
  *
  * IMPORTANT - SINGLETON HAZARD IN EXAM MODE:
- * This service is providedIn: 'root', meaning there is ONE shared instance across the entire application.
+ * This service is a root @Service(), meaning there is ONE shared instance across the entire application.
  * In exam mode, multiple ProgrammingExerciseInstructionComponent instances coexist simultaneously
  * in the DOM (hidden via [hidden], NOT destroyed). They ALL share this SAME singleton.
  *

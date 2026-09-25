@@ -75,9 +75,10 @@ Key principles:
 - Declare every `inject()` field before any other class member. Fields initialize in the order they are declared, so a getter or method that an earlier field initializer
   calls would read `undefined` from a service declared further down, and TypeScript does not catch that indirection. The `@angular-eslint/inject-at-top` rule enforces this.
 - Declare an application-wide service with `@Service()` instead of `@Injectable({ providedIn: 'root' })`. It is the same provider, it is what `ng generate service` emits,
-  and it rejects constructor injection at compile time. Keep `@Injectable` for a service with other provider metadata, and for a class that carries another Angular
-  decorator, such as a pipe that is also injected as a service: `@Service()` cannot share a class with `@Pipe`. The autofixable `@angular-eslint/prefer-service-decorator`
-  rule enforces this.
+  and it rejects constructor injection at compile time. The autofixable `@angular-eslint/prefer-service-decorator` rule enforces this, and `@Injectable` stays only
+  for a service with other provider metadata. A pipe that is also injected as a service is the exception the rule does not know about: it still reports the pipe, but
+  `@Service()` cannot share a class with `@Pipe`, so its autofix breaks the build with NG1006. Only the AOT compiler (`ng build`) catches that, not Vitest. Keep
+  `@Injectable` on such a pipe with a justified line-level disable, and do not run the autofix on it.
 
     ```ts
     // Don't - @Injectable for a root service, and the injected field after another member
@@ -442,13 +443,23 @@ Every `@switch` has a `@default`, which the `@angular-eslint/template/require-sw
 `@default never;`. It renders nothing, and the strict template check fails as soon as a member is added without a matching case. Otherwise, for example when the value can
 also be `undefined`, write an empty `@default {}` to show that rendering nothing is intended.
 
-```angular-html
-@switch (selectedTab) {
-    @case (Tabs.MEMBERS) {
-        <jhi-conversation-members />
+```ts
+type ImportStep = 'upload' | 'review' | 'done';
+
+readonly step = signal<ImportStep>('upload');
+```
+
+{/* prettier-ignore */}
+```html
+@switch (step()) {
+    @case ('upload') {
+        <p>Choose a file</p>
     }
-    @case (Tabs.INFO) {
-        <jhi-conversation-info />
+    @case ('review') {
+        <p>Check the rows</p>
+    }
+    @case ('done') {
+        <p>Import finished</p>
     }
     @default never;
 }

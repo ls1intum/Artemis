@@ -163,7 +163,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
  * Synchronizes exercise metadata changes from other editors into the current
  * exercise editor session.
  *
- * This service is intentionally `providedIn: 'root'` (singleton) because it
+ * This service is intentionally a root `@Service()` (singleton) because it
  * shares the WebSocket subscription managed by {@link ExerciseEditorSyncService},
  * which is also root-scoped. Only one exercise can be edited at a time, so the
  * singleton holds mutable state for the active exercise. Calling {@link initialize}

@@ -31,9 +31,10 @@ Fields initialize in declaration order, so a getter called from an earlier initi
 
 Declare an application-wide service with `@Service()`, not `@Injectable({ providedIn: 'root' })`
 (`@angular-eslint/prefer-service-decorator`, autofixable). `@Service()` rejects constructor
-injection and cannot share a class with another Angular decorator, so an injectable `@Pipe` keeps
-`@Injectable` with a justified line-level disable. Other provider metadata also keeps
-`@Injectable`.
+injection and cannot share a class with another Angular decorator. The rule still reports a `@Pipe`
+that is also injected as a service, and its autofix then breaks `ng build` with NG1006 (Vitest
+compiles JIT and does not notice), so keep `@Injectable` on such a pipe with a justified line-level
+disable and do not autofix it. Other provider metadata also keeps `@Injectable`.
 
 ## `ngOnChanges` is banned
 
