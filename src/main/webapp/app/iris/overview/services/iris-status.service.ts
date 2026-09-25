@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, firstValueFrom } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -14,7 +14,7 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
  * The availability status is distributed to other services.
  * It also manages the current rate limits, which are course-specific.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisStatusService implements OnDestroy {
     private websocketService = inject(WebsocketService);
     private httpClient = inject(HttpClient);

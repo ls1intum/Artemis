@@ -1,9 +1,7 @@
-import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { PLATFORM_ID, Service, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class OsDetectorService {
     private platformId = inject(PLATFORM_ID);
 

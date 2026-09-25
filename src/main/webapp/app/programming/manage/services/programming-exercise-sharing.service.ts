@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { MODULE_FEATURE_SHARING } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -26,7 +26,7 @@ interface ParticipationWithCircularReferences {
 }
 
 /** the programming exercise sharing service */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseSharingService {
     private readonly http = inject(HttpClient);
     private readonly profileService = inject(ProfileService);

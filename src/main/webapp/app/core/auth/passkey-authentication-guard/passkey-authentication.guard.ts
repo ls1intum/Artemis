@@ -1,12 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class PasskeyAuthenticationGuard implements CanActivate {
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { OnDestroy, Service, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
@@ -20,7 +20,7 @@ type CommentThreadResponseType = HttpResponse<CommentThread>;
 type CommentResponseType = HttpResponse<Comment>;
 type ReviewCommentSuccessCallback = () => void;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseReviewCommentService implements OnDestroy {
     private http = inject(HttpClient);
     private alertService = inject(AlertService);

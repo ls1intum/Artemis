@@ -1,10 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, retry } from 'rxjs/operators';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExercisePlantUmlService {
     private readonly themeService = inject(ThemeService);
     private readonly http = inject(HttpClient);

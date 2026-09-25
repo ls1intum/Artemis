@@ -1,4 +1,4 @@
-import { ErrorHandler, Injectable, inject } from '@angular/core';
+import { ErrorHandler, Service, inject } from '@angular/core';
 import { Event as SentryEvent, browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -10,7 +10,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 // (e.g. "Dedupe") back to `string` so a mixed integration array stays assignable.
 type Integration = Omit<ReturnType<typeof dedupeIntegration>, 'name'> & { name: string };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SentryErrorHandler extends ErrorHandler {
     private localStorageService = inject(LocalStorageService);
 

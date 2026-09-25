@@ -1,9 +1,9 @@
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { GlobalNotificationType } from 'app/account/user/settings/global-notifications-settings/global-notifications-settings.component';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class GlobalNotificationSettingsService {
     private httpClient = inject(HttpClient);
 

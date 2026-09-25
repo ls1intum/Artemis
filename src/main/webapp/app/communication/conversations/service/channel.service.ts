@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChannelDTO, ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ChannelService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);

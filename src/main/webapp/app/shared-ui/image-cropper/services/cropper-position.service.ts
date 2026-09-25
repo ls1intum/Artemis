@@ -1,10 +1,10 @@
-import { ElementRef, Injectable } from '@angular/core';
+import { ElementRef, Service } from '@angular/core';
 import { CropperSettings } from '../interfaces/cropper.settings';
 import { CropperPosition } from 'app/shared-ui/image-cropper/interfaces/cropper-position.interface';
 import { MoveStart } from 'app/shared-ui/image-cropper/interfaces/move-start.interface';
 import { Dimensions } from 'app/shared-ui/image-cropper/interfaces/dimensions.interface';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CropperPositionService {
     resetCropperPosition(sourceImage: ElementRef, cropperPosition: CropperPosition, settings: CropperSettings): void {
         if (!sourceImage?.nativeElement) {

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -172,7 +172,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
  * Consumers MUST call {@link destroy} in their `ngOnDestroy` to clean up
  * the WebSocket subscription and reset internal state before navigating away.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseMetadataSyncService {
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly http = inject(HttpClient);

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ArtemisTextReplacementPlugin } from 'app/foundation/util/ArtemisTextReplacementPlugin';
 import { escapeStringForUseInRegex } from 'app/foundation/util/string-pure.utils';
@@ -43,7 +43,7 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
  * The fix removed the mutable counter entirely and uses the array index instead.
  * See programming-exercise-plant-uml.extension.spec.ts for regression tests.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextReplacementPlugin {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
     private plantUmlService = inject(ProgrammingExercisePlantUmlService);

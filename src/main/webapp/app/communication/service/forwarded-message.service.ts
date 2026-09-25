@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { ForwardedMessage, ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
@@ -6,7 +6,7 @@ import { PostingType } from 'app/communication/shared/entities/posting.model';
 
 type EntityResponseType = HttpResponse<ForwardedMessageDTO>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ForwardedMessageService {
     private http = inject(HttpClient);
 

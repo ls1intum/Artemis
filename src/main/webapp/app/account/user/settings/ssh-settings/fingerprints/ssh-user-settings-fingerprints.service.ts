@@ -1,8 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SshUserSettingsFingerprintsService {
     private http = inject(HttpClient);
 

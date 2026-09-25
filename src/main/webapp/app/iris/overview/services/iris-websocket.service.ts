@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { IrisChatWebsocketDTO } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisCommand, IrisCommandAckDTO } from 'app/iris/shared/entities/iris-command.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -16,7 +16,7 @@ const COMMAND_TOPIC_SUFFIX = '/commands';
 /**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisWebsocketService implements OnDestroy {
     protected websocketService = inject(WebsocketService);
 

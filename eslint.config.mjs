@@ -195,6 +195,11 @@ export default tseslint.config(
             // an earlier field initializer sees `undefined` if the inject() field comes later. TypeScript only catches
             // the direct reference, not the one behind a getter or method, so keep every inject() field first.
             '@angular-eslint/inject-at-top': 'error',
+            // Angular 22's @Service() is the shorthand for @Injectable({ providedIn: 'root' }) and what `ng generate
+            // service` emits. It also rejects constructor injection at compile time, which matches prefer-inject.
+            // Services with any other provider metadata keep @Injectable, and so does a @Pipe that is also injected
+            // as a service, because @Service() cannot share a class with another Angular decorator. Autofixable.
+            '@angular-eslint/prefer-service-decorator': 'error',
             // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
             // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
             // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
