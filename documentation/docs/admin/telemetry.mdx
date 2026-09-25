@@ -4,22 +4,45 @@ title: Telemetry
 sidebar_label: Telemetry
 ---
 
-To help to improve Artemis, we collect some data when the application starts.
-This feature can be disabled by setting `telemetry.enabled` in the `application-prod.yml` to `false`.
-When this is set to false, no data is sent to the Artemis maintainer team.
-By setting `telemetry.sendAdminDetails` to false, personal information of the instance's admin (i.e. contact email and name) is excluded from the telemetry data.
-This includes the contact email and the administrator's name.
+Artemis reports installation configuration to help the maintainer team understand deployments,
+support their configurations, and plan improvements. Set `artemis.telemetry.enabled: false`
+to disable reporting.
 
-Artemis collects the following data at the startup of an instance:
+## Startup reporting
 
-* The used Artemis version
-* The contact email address of the admin, which is set in `info.contact`
-* The name of the admin, set in `info.operatorAdminName` (optional)
-* The server's URL
-* The operator's name
-* The used profiles (e.g. Jenkins, LocalVC, LocalCI, ...)
+Only the node with both `core` and `scheduling` profiles reports telemetry. Configure exactly
+one scheduling node per installation. It sends one report **ten minutes after the application
+becomes ready**, allowing other nodes and build agents to connect. Counts are collected when
+the report is sent. A worker-only restart does not produce a report, and shutting down the
+scheduling node before the delay expires cancels its pending report.
 
-Example configuration in `application-prod.yml`:
+Development servers and servers configured with `info.testServer: true` do not send telemetry.
+The collector also ignores reports explicitly marked as test reports from older senders.
+There is no hostname-based test-server detection: configure the flag explicitly.
+
+The collector identifies each installation by its URL and keeps a separate startup history.
+Repeated delivery of the same startup identifier does not add duplicate entries. The latest
+startup supplies the current installation snapshot, even if an older report arrives later.
+
+## Required configuration
+
+When `artemis.telemetry.enabled: true`, the scheduling node refuses to start unless these
+properties contain meaningful values:
+
+- `info.operatorName`: the organization operating Artemis.
+- `info.operatorAdminName`: the administrator's name.
+- `info.universityName`: the university, school, or institution using Artemis.
+
+Empty, whitespace-only, and known template values such as `Admin`, `Some Artemis Operator`,
+`Your University`, and angle-bracket placeholders are rejected. The error lists the settings
+to correct. Configure all three values before starting an installation with telemetry enabled.
+The university and operator are independent; neither is inferred from the other.
+
+`artemis.telemetry.sendAdminDetails: false` omits the administrator's name and contact email
+from transmission. It does not bypass local configuration validation. When telemetry is
+disabled, the existing operator-name requirement for the about page still applies; administrator
+and university names are not required by the telemetry check.
+
 ```yaml
 artemis:
     telemetry:
@@ -28,10 +51,29 @@ artemis:
         destination: https://telemetry.artemis.cit.tum.de
 
 info:
-    contact: contactMailAddress@cit.tum.de
-    operatorName: Technical University of Munich
+    testServer: false
+    operatorName: Chair of Applied Software Engineering
+    universityName: Technical University of Munich
     operatorAdminName: Stephan Krusche
+    contact: contactMailAddress@cit.tum.de
 ```
 
-We collect this data to enhance Artemis by understanding how it is used, ensuring compatibility with different configurations, and providing better support to our users.
-Collecting admin contact information allows us to communicate important updates or address critical issues directly.
+## Reported information
+
+| Field | Meaning |
+| --- | --- |
+| `version`, `serverUrl`, `operator`, `universityName` | Installation version, URL, operator and institution |
+| `profiles` | Active profiles on the scheduling node |
+| `moduleFeatures` | Enabled module features resolved from Artemis configuration; these are not measurements of user activity |
+| `numberOfNodes` | Core Artemis nodes with recent registry heartbeats |
+| `buildAgentCount` | Connected build agents, including paused agents and core nodes that also build |
+| `isMultiNode` | Whether more than one core node is connected |
+| `isProductionInstance`, `isTestServer`, `dataSource`, `isLocalLLMDeploymentEnabled` | Deployment configuration |
+| `startupId`, `startedAt` | Identifier and start time of the scheduling-node process |
+| `adminName`, `contact` | Administrator details, only when `sendAdminDetails` is enabled |
+
+Dedicated build agents are counted separately from core nodes. A node with both roles contributes
+to both counts. Missing connectivity information is omitted rather than reported as zero;
+without LocalCI, the build-agent count is zero. Ten minutes allows discovery to settle, but the
+report describes the observed topology at that time, not a guarantee that all configured nodes
+are healthy. The collector records its own receipt time separately from `startedAt`.

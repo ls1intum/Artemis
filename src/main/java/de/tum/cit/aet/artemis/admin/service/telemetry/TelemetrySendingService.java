@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.admin.service.telemetry;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +24,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
+import de.tum.cit.aet.artemis.localci.api.LocalCITelemetryApi;
 
 @Lazy
 @Service
@@ -34,7 +40,8 @@ public class TelemetrySendingService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TelemetryData(String version, String serverUrl, String operator, List<String> profiles, boolean isProductionInstance, boolean isTestServer, String dataSource,
-            String contact, String adminName, boolean isLocalLLMDeploymentEnabled) {
+            String contact, String adminName, boolean isLocalLLMDeploymentEnabled, String universityName, List<String> moduleFeatures, Integer numberOfNodes,
+            Integer buildAgentCount, Boolean isMultiNode, String startupId, Instant startedAt) {
     }
 
     private final Environment env;
@@ -45,11 +52,18 @@ public class TelemetrySendingService {
 
     private final JsonMapper objectMapper;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, JsonMapper objectMapper) {
+    private final NodeRegistryService nodeRegistryService;
+
+    private final Optional<LocalCITelemetryApi> localCITelemetryApi;
+
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, JsonMapper objectMapper, NodeRegistryService nodeRegistryService,
+            Optional<LocalCITelemetryApi> localCITelemetryApi) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
         this.objectMapper = objectMapper;
+        this.nodeRegistryService = nodeRegistryService;
+        this.localCITelemetryApi = localCITelemetryApi;
     }
 
     @Value("${artemis.version}")
@@ -61,7 +75,10 @@ public class TelemetrySendingService {
     @Value("${info.operatorName}")
     private String operator;
 
-    @Value("${info.operatorAdminName}")
+    @Value("${info.universityName:}")
+    private String universityName;
+
+    @Value("${info.operatorAdminName:}")
     private String operatorAdminName;
 
     @Value("${info.contact}")
@@ -82,8 +99,7 @@ public class TelemetrySendingService {
     /**
      * Sends telemetry data to a specified destination via an HTTP POST request asynchronously.
      * The telemetry includes information about the application version, environment, data source,
-     * and optionally, administrator details. If Eureka is enabled, the number of registered
-     * instances is also included.
+     * enabled module features, connected nodes and build agents, and optionally administrator details.
      *
      * <p>
      * The method constructs the telemetry data object, converts it to JSON, and sends it to a
@@ -91,21 +107,26 @@ public class TelemetrySendingService {
      *
      * @param sendAdminDetails a flag indicating whether to include administrator details in the
      *                             telemetry data (such as contact information and admin name).
+     * @param startupId        stable identifier of this scheduling-node startup
+     * @param startedAt        time the scheduling application started
      */
     @Async
-    public void sendTelemetryByPostRequest(boolean sendAdminDetails) {
+    public void sendTelemetryByPostRequest(boolean sendAdminDetails, String startupId, Instant startedAt) {
 
         try {
-            var telemetryData = buildTelemetryData(sendAdminDetails);
-            String telemetryJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(telemetryData);
+            var telemetryData = buildTelemetryData(sendAdminDetails, startupId, startedAt);
+            ObjectNode payload = objectMapper.valueToTree(telemetryData);
+            // NON_EMPTY is the DTO convention, but [] must distinguish no enabled features from an older sender.
+            payload.set("moduleFeatures", objectMapper.valueToTree(telemetryData.moduleFeatures()));
+            String telemetryJson = objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(payload);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
 
-            log.info("Sending telemetry {} to {}", telemetryJson, destination);
+            log.info("Sending startup telemetry to {}", destination);
             // NOTE: there should be no module in the following URL
             var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
-            log.info("Successfully sent telemetry data. {}", response.getBody());
+            log.info("Successfully sent telemetry data: {}", response.getStatusCode());
         }
         catch (JacksonException e) {
             log.warn("JacksonException in sendTelemetry.", e);
@@ -120,10 +141,11 @@ public class TelemetrySendingService {
      * about the active profiles, data source type, and optionally admin contact details.
      *
      * @param sendAdminDetails whether to include admin contact information in the telemetry data
+     * @param startupId        stable startup identifier
+     * @param startedAt        scheduling application start time
      * @return an instance of {@link TelemetryData} containing the gathered telemetry information
      */
-    private TelemetryData buildTelemetryData(boolean sendAdminDetails) {
-        TelemetryData telemetryData;
+    TelemetryData buildTelemetryData(boolean sendAdminDetails, String startupId, Instant startedAt) {
         var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
@@ -133,8 +155,27 @@ public class TelemetrySendingService {
             contact = operatorContact;
             adminName = operatorAdminName;
         }
-        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, contact, adminName,
-                isLocalLLMDeploymentEnabled);
-        return telemetryData;
+        Integer nodeCount = null;
+        Integer buildAgentCount = localCITelemetryApi.isEmpty() ? 0 : null;
+        try {
+            var liveNodes = nodeRegistryService.getLiveNodeIds();
+            if (!liveNodes.isEmpty()) {
+                nodeCount = liveNodes.size();
+            }
+        }
+        catch (Exception ex) {
+            log.warn("Could not determine the live core-node count for telemetry", ex);
+        }
+        try {
+            if (localCITelemetryApi.isPresent()) {
+                buildAgentCount = localCITelemetryApi.get().getConnectedBuildAgentCount();
+            }
+        }
+        catch (Exception ex) {
+            log.warn("Could not determine the connected build-agent count for telemetry", ex);
+        }
+        List<String> moduleFeatures = new ArtemisConfigHelper().getEnabledFeatures(env).stream().sorted().toList();
+        return new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, contact, adminName,
+                isLocalLLMDeploymentEnabled, universityName, moduleFeatures, nodeCount, buildAgentCount, nodeCount == null ? null : nodeCount > 1, startupId, startedAt);
     }
 }
