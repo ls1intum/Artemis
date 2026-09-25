@@ -33,7 +33,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/account/user/user.model';
 
@@ -288,8 +288,8 @@ describe('CoursesComponent', () => {
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 
-        const requestCourseButton = fixture.debugElement.query(By.css('#request-course')).injector.get(TumUiButtonDirective);
-        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        const requestCourseButton = fixture.debugElement.query(By.css('#request-course')).injector.get(TumAetUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
         expect(requestCourseButton.severity()).toBe('primary');
         expect(enrollmentButton.severity()).toBe('secondary');
         expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
@@ -300,8 +300,8 @@ describe('CoursesComponent', () => {
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 
-        const createCourseButton = fixture.debugElement.query(By.css('#create-course')).injector.get(TumUiButtonDirective);
-        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        const createCourseButton = fixture.debugElement.query(By.css('#create-course')).injector.get(TumAetUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
         expect(createCourseButton.severity()).toBe('primary');
         expect(enrollmentButton.severity()).toBe('secondary');
         expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
@@ -312,7 +312,7 @@ describe('CoursesComponent', () => {
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 
-        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
         expect(enrollmentButton.severity()).toBe('primary');
         expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
         expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
@@ -329,7 +329,7 @@ describe('CoursesComponent', () => {
 
         const onSortSpy = vi.spyOn(component, 'onSort');
         const button = fixture.debugElement.nativeElement.querySelector('#test-sort');
-        const sortButton = fixture.debugElement.query(By.css('#test-sort')).injector.get(TumUiButtonDirective);
+        const sortButton = fixture.debugElement.query(By.css('#test-sort')).injector.get(TumAetUiButtonDirective);
         button.click();
         expect(onSortSpy).toHaveBeenCalledOnce();
         expect(component.isSortAscending()).toBe(false);

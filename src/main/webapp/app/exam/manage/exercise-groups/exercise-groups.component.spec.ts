@@ -1,4 +1,4 @@
-import { TumUiButtonComponent, TumUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -68,8 +68,8 @@ describe('Exercise Groups Component', () => {
                 MockComponent(ExamExerciseTableComponent),
                 MockComponent(ExamExerciseGroupEditModalComponent),
                 MockComponent(ExamExerciseTypePickerComponent),
-                MockComponent(TumUiPanelComponent),
-                MockComponent(TumUiButtonComponent),
+                MockComponent(TumAetUiPanelComponent),
+                MockComponent(TumAetUiButtonComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
@@ -468,7 +468,7 @@ describe('Exercise Groups Component', () => {
         comp.exerciseGroups.set([]);
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelectorAll('tum-ui-panel')).toHaveLength(0);
+        expect(fixture.nativeElement.querySelectorAll('tumaet-ui-panel')).toHaveLength(0);
         expect(fixture.nativeElement.querySelector('#create-first-group')).not.toBeNull();
     });
 

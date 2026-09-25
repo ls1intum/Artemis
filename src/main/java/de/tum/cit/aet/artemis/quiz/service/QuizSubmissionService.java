@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.QUIZ_PARTICIPATION;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -253,7 +254,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
         var user = participation.getParticipantIdentifier();
         StudentQuizParticipationWithSolutionsDTO participationDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
-        websocketMessagingService.sendMessageToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participationDTO);
+        websocketMessagingService.sendMessageToUser(user, QUIZ_PARTICIPATION.at(quizExerciseId), participationDTO);
     }
 
     /**

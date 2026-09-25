@@ -98,10 +98,10 @@
                 <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
             } @else if (!loadingInitialSubmission()) {
                 <div class="modeling-assessment-not-found mt-4">
-                    <tum-ui-message severity="warn">
+                    <tumaet-ui-message severity="warn">
                         <span jhiTranslate="artemisApp.modelingAssessment.notFound"></span>
-                    </tum-ui-message>
-                    <a [routerLink]="exerciseDashboardLink()" tumUiButton severity="info" size="small" class="assessment-dashboard">
+                    </tumaet-ui-message>
+                    <a [routerLink]="exerciseDashboardLink()" tumAetUiButton severity="info" size="small" class="assessment-dashboard">
                         <span jhiTranslate="entity.action.exerciseDashboard"></span>
                     </a>
                 </div>

@@ -3,30 +3,30 @@
 </div>
 
 <div class="athena-settings-content">
-    <tum-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)">
-        <tum-ui-tab-list>
-            <tum-ui-tab value="general">
+    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)">
+        <tumaet-ui-tab-list>
+            <tumaet-ui-tab value="general">
                 <fa-icon [icon]="faCog" class="me-2" />
                 <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.generalTab"></span>
-            </tum-ui-tab>
+            </tumaet-ui-tab>
             @if (isAdmin()) {
-                <tum-ui-tab value="admin">
+                <tumaet-ui-tab value="admin">
                     <fa-icon [icon]="faShieldHalved" class="me-2" />
                     <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.adminTab"></span>
-                </tum-ui-tab>
+                </tumaet-ui-tab>
             }
-        </tum-ui-tab-list>
+        </tumaet-ui-tab-list>
 
-        <tum-ui-tab-panels>
+        <tumaet-ui-tab-panels>
             <!-- ── GENERAL TAB ── -->
-            <tum-ui-tab-panel value="general">
+            <tumaet-ui-tab-panel value="general">
                 <div class="athena-general-panel">
                     @for (feature of features; track feature.key) {
                         @let stateLabelKey = 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledLabel' : '.disabledLabel');
                         @let stateHintKey = 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledHint' : '.disabledHint');
                         <div class="athena-toggle-row">
                             @if (isLoaded()) {
-                                <tum-ui-toggle-switch
+                                <tumaet-ui-toggle-switch
                                     [inputId]="feature.testId + '-toggle'"
                                     [ngModel]="feature.enabled()"
                                     [ngModelOptions]="{ standalone: true }"
@@ -144,19 +144,19 @@
                         </div>
                     }
                 </div>
-            </tum-ui-tab-panel>
+            </tumaet-ui-tab-panel>
 
             <!-- ── ADMIN TAB ── -->
             @if (isAdmin()) {
-                <tum-ui-tab-panel value="admin">
+                <tumaet-ui-tab-panel value="admin">
                     <div class="athena-admin-panel">
                         <p class="text-muted-color" jhiTranslate="artemisApp.course.athenaConfig.settingsPage.adminOnly"></p>
-                        <tum-ui-message severity="info" class="w-full">
+                        <tumaet-ui-message severity="info" class="w-full">
                             <span jhiTranslate="artemisApp.course.athenaConfig.settingsPage.rateLimit.description" [translateValues]="{ limit: allowedFeedbackRequests() }"></span>
-                        </tum-ui-message>
+                        </tumaet-ui-message>
                     </div>
-                </tum-ui-tab-panel>
+                </tumaet-ui-tab-panel>
             }
-        </tum-ui-tab-panels>
-    </tum-ui-tabs>
+        </tumaet-ui-tab-panels>
+    </tumaet-ui-tabs>
 </div>

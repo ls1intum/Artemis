@@ -23,7 +23,7 @@ export default defineConfig({
             src: path.resolve(__dirname, 'src'),
             // Mirrors the tsconfig `paths` entry: the package's own `exports` map only exposes
             // `./styles.css`, so the bare specifier resolves through the built library instead.
-            '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-ui/dist'),
+            '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-aet-ui/dist'),
         },
     },
     css: {

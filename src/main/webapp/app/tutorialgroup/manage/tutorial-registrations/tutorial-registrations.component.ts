@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiIconFieldComponent, TumUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiIconFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -19,22 +19,22 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 @Component({
     selector: 'jhi-tutorial-registrations',
     imports: [
-        TumUiButtonDirective,
-        TumUiConfirmDialogComponent,
-        TumUiIconFieldComponent,
-        TumUiInputDirective,
+        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiIconFieldComponent,
+        TumAetUiInputDirective,
         TranslateDirective,
         FormsModule,
         TutorialRegistrationsImportModalComponent,
         TutorialRegistrationsRegisterModalComponent,
         TutorialRegistrationsStudentsTableComponent,
     ],
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-registrations.component.html',
     styleUrl: './tutorial-registrations.component.scss',
 })
 export class TutorialRegistrationsComponent {
-    private confirmationService = inject(TumUiConfirmationService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private translateService = inject(TranslateService);
     private tutorialGroupRegisteredStudentService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);

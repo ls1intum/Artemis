@@ -12,6 +12,9 @@ catalog:
   '@arethetypeswrong/cli': 0.18.5
   '@angular-devkit/architect': 0.2202.0
   '@angular-devkit/core': 22.2.0
+  # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
+  # move both together.
+  '@angular/aria': 22.2.0
   '@angular/build': 22.2.0
   '@angular/cdk': 22.2.0
   '@angular/cli': 22.2.0
@@ -25,7 +28,6 @@ catalog:
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
-  '@compodoc/compodoc': 2.0.0
   '@playwright/test': 1.63.0
   '@storybook/addon-a11y': 10.6.0
   '@storybook/addon-docs': 10.6.0
@@ -51,7 +53,7 @@ catalog:
   postcss: 8.5.28
   publint: 0.3.24
   playwright: 1.63.0
-  # Only here to satisfy Storybook's peer requirement (packages/tum-ui declares it); Artemis itself is Angular.
+  # Only here to satisfy Storybook's peer requirement (packages/tum-aet-ui declares it); Artemis itself is Angular.
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
   rxjs: 7.8.2
@@ -193,7 +195,7 @@ overrides:
   punycode: '2.3.1'
   # React and react-dom must resolve to one version each, and to the same one: react-dom asserts this at import time
   # and throws "Incompatible React versions" otherwise. Only Storybook renders React here, but that is enough - the
-  # mismatch takes down all 76 tum-ui story tests and the documentation Playwright suite with them.
+  # mismatch takes down all 76 tumaet-ui story tests and the documentation Playwright suite with them.
   # This is easy to split by accident, because react is a catalog entry while react-dom is never declared at all:
   # it arrives as an auto-installed peer, and packages asking for `^19` will happily pull a newer react than the
   # catalog pins. Pinning both here makes the pairing enforced rather than a coincidence of resolution order.
@@ -205,11 +207,6 @@ overrides:
   # a single red AutoDocs run as a verdict on a react bump; re-run it several times first.
   react: '19.2.8'
   react-dom: '19.2.8'
-  # Reached through body-parser (via @compodoc/compodoc), which already sits on its newest release and
-  # still resolves qs to 6.15.x. 6.16.0 fixed GHSA-4mjr-xmp4-gh2g (uncaught TypeError when a
-  # parsed object with a non-callable constructor.isBuffer is stringified again) and
-  # GHSA-x5fp-wj9c-mxmx (bracket keys bypassing arrayLimit when comma parsing is on).
-  qs: '6.16.0'
   semver: '7.8.5'
   serialize-javascript: '7.1.1'
   shell-quote: '1.10.0'

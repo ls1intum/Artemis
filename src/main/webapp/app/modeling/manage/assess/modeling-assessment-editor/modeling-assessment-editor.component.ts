@@ -51,7 +51,7 @@ import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-w
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
-import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -72,8 +72,8 @@ import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular'
         ModelingAssessmentTopRightDirective,
         ModelingAssessmentLegendComponent,
         AssessmentNotPossibleYetComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {

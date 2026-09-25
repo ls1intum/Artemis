@@ -13,13 +13,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCog, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
-    TumUiMessageComponent,
-    TumUiTabComponent,
-    TumUiTabListComponent,
-    TumUiTabPanelComponent,
-    TumUiTabPanelsComponent,
-    TumUiTabsComponent,
-    TumUiToggleSwitchComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTabsComponent,
+    TumAetUiToggleSwitchComponent,
 } from '@tumaet/ui-angular';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
@@ -50,28 +50,28 @@ interface FeedbackStyleTick {
     imports: [
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
-        TumUiTabsComponent,
-        TumUiTabListComponent,
-        TumUiTabComponent,
-        TumUiTabPanelsComponent,
-        TumUiTabPanelComponent,
-        TumUiMessageComponent,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiMessageComponent,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
         FaIconComponent,
         SkeletonModule,
-        TumUiToggleSwitchComponent,
+        TumAetUiToggleSwitchComponent,
         UnifiedFeedbackComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AthenaSettingsUpdateComponent {
-    protected readonly faCog = faCog;
-    protected readonly faShieldHalved = faShieldHalved;
-
     private readonly accountService = inject(AccountService);
     private readonly route = inject(ActivatedRoute);
+
+    protected readonly faCog = faCog;
+    protected readonly faShieldHalved = faShieldHalved;
 
     readonly isAdmin = signal(this.accountService.isAdmin());
     readonly activeTab = signal('general');
