@@ -1,18 +1,17 @@
 ---
 name: e2e-pr-check
-description: Run the Artemis Playwright E2E tests that this branch's changes actually affect, and interpret the result correctly. Use when asked to E2E test a branch or pull request, to check a change end to end before pushing, or to investigate a failing Playwright spec. Covers selecting the affected specs, choosing between the single-node and multi-node runner, and the failure modes that look like real bugs but are not.
+description: Select, run, or debug Artemis Playwright tests for a branch or pull request.
 ---
 
 # Run the E2E tests this change affects
 
-The full Playwright suite is over 400 tests across roughly 90 spec files, and takes tens of
-minutes. Almost no change needs all of them. This skill selects the specs the change actually affects, runs them, and then reads
-the result with the failure patterns of this suite in mind.
+Select affected specs before running Playwright. Use the result and the runner's topology to
+classify failures.
 
 ## Step 1: work out which specs are affected
 
-Do not guess and do not hand-read `.ci/E2E-tests/e2e-test-mapping.json`. Run the same resolver CI
-uses, so local selection and CI selection can never disagree:
+Use the CI resolver instead of selecting specs by inspection. Its output depends on the base
+revision and committed diff:
 
 ```bash
 ./.ci/E2E-tests/determine-relevant-tests.sh origin/develop
@@ -32,14 +31,11 @@ It prints five `OUTPUT:` lines. The ones that matter:
 
 Two things about the input:
 
-- **It diffs commits, not the working tree.** The script runs `git diff --name-only <base>...HEAD`,
-  so uncommitted changes are invisible to it. **Commit before resolving.** With nothing committed at
-  all it says "No changed files detected. Running all tests.", which is loud and harmless. The
-  dangerous case is quieter: committed work plus uncommitted edits touching a further module gives
-  a selection based only on the committed files, so the specs covering your newest edits are the
-  ones left out.
-- **Pass a different base for a stacked branch.** The base is the first argument. A stacked pull
-  request is not cut from develop, so diffing against develop selects its parent's changes too.
+- **It diffs commits, not the working tree.** The script runs `git diff --name-only <base>...HEAD`.
+  Uncommitted changes are invisible; identify their affected specs separately. Do not commit only
+  to make the selector work. If there are no committed changes, the resolver selects all tests.
+- **Use the pull request's actual base.** The base is the first argument. `origin/develop` is only
+  correct for a pull request that targets `develop`.
 
 ## Step 2: choose the runner
 
@@ -82,8 +78,8 @@ The runners keep services alive between runs. After the first run, reuse them:
 
 For the multi-node runner the equivalent is `--skip-build --skip-up`.
 
-Tear down with `--stop` when finished. Leaving services running is fine and normal during
-iteration, but see the wrong-client trap below.
+The runners can stop services they did not start. Use `--stop` only after you have identified
+the services and confirmed that the runner owns them. It also tears down its database.
 
 ## Step 4: interpret the result
 

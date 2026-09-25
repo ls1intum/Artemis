@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -47,7 +47,7 @@ export interface ParticipationDeleteOptions {
     deleteRepository?: boolean;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ParticipationService {
     private http = inject(HttpClient);
     private submissionService = inject(SubmissionService);

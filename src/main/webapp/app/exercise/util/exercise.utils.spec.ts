@@ -129,6 +129,24 @@ describe('ExerciseUtils', () => {
             expect(isStartPracticeAvailable(exercise, participation)).toBe(startPracticeAvailable);
         });
 
+        it.each([
+            { type: ExerciseType.TEXT, teamMode: false, startPracticeAvailable: true },
+            { type: ExerciseType.TEXT, teamMode: true, startPracticeAvailable: false },
+            { type: ExerciseType.MODELING, teamMode: false, startPracticeAvailable: true },
+            { type: ExerciseType.MODELING, teamMode: true, startPracticeAvailable: false },
+        ])('should only allow practicing a $type exercise after the due date if it is not a team exercise (teamMode: $teamMode)', ({ type, teamMode, startPracticeAvailable }) => {
+            const exercise: Exercise = {
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+                type,
+                teamMode,
+                dueDate: dayjs().subtract(1, 'day'),
+            };
+
+            expect(isStartPracticeAvailable(exercise)).toBe(startPracticeAvailable);
+        });
+
         it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, undefined])('should not allow practicing for other exercises', (type) => {
             const exercise: Exercise = {
                 numberOfAssessmentsOfCorrectionRounds: [],

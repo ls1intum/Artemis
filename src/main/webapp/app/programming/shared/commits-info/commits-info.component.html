@@ -29,7 +29,7 @@
         <tbody>
             @for (commitGroup of groupedCommits(); track commitGroup; let i = $index) {
                 <jhi-commits-info-group
-                    [ngStyle]="{ display: 'contents' }"
+                    style="display: contents"
                     [commits]="commitGroup.commits"
                     [currentSubmissionHash]="currentSubmissionHash()"
                     [previousSubmissionHash]="previousSubmissionHash()"

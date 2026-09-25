@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.deimos.api.DeimosBatchApi;
 import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.deimos.service.DeimosBatchService;
 
 @Conditional(DeimosEnabled.class)
 @Lazy
-@FeatureUsage("malicious-code-analysis/batch-runs")
+@FeatureUsage(UserFeature.DEIMOS)
 @RestController
 @RequestMapping("api/deimos/")
 @FeatureToggle(Feature.Deimos)

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -36,7 +36,7 @@ export interface IComplaintService {
     findAllWithoutStudentInformationForExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ComplaintService implements IComplaintService {
     private http = inject(HttpClient);
     private complaintResponseService = inject(ComplaintResponseService);

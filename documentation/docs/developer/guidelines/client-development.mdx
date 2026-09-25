@@ -21,9 +21,9 @@ Key principles:
 **Angular best practices**
 
 <Callout variant={CalloutVariant.danger}>
-    **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code.** Use Angular's signal-based
-    APIs instead. An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules and will fail the build if legacy decorators are reintroduced.
-    In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components.
+    **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in client code.** Use Angular's
+    signal-based APIs instead. The `localRules/enforce-signal-apis` ESLint rule rejects these decorators throughout `src/main/webapp/app/` and `src/test/javascript/`, including
+    tests. Use signal APIs when changing an existing component; there is no unmigrated-module exception.
 </Callout>
 
 - Use **standalone components** instead of Angular modules: https://angular.dev/reference/migrations/standalone
@@ -68,7 +68,34 @@ Key principles:
     doubled = computed(() => this.count() * 2);
     ```
 
+- A `computed()`, `linkedSignal()`, `effect()` or `afterRenderEffect()` must read at least one signal, otherwise it runs once and never again. Either a signal read is
+  missing (`count` instead of `count()`), or the value is a constant and belongs in a plain `readonly` field. The `@angular-eslint/reactive-context-must-read-signal` rule
+  reports this, and `@angular-eslint/computed-must-return` reports a `computed()` that returns nothing.
 - Use the `inject()` function for dependency injection instead of constructor injection: https://angular.dev/reference/migrations/inject-function
+- Declare every `inject()` field before any other class member. Fields initialize in the order they are declared, so a getter or method that an earlier field initializer
+  calls would read `undefined` from a service declared further down, and TypeScript does not catch that indirection. The `@angular-eslint/inject-at-top` rule enforces this.
+- Declare an application-wide service with `@Service()` instead of `@Injectable({ providedIn: 'root' })`. It is the same provider, it is what `ng generate service` emits,
+  and it rejects constructor injection at compile time. The autofixable `@angular-eslint/prefer-service-decorator` rule enforces this, and `@Injectable` stays only
+  for a service with other provider metadata. A pipe that is also injected as a service is the exception the rule does not know about: it still reports the pipe, but
+  `@Service()` cannot share a class with `@Pipe`, so its autofix breaks the build with NG1006. Only the AOT compiler (`ng build`) catches that, not Vitest. Keep
+  `@Injectable` on such a pipe with a justified line-level disable, and do not run the autofix on it.
+
+    ```ts
+    // Don't - @Injectable for a root service, and the injected field after another member
+    @Injectable({ providedIn: 'root' })
+    export class CourseService {
+        private readonly resourceUrl = 'api/core/courses';
+        private readonly http = inject(HttpClient);
+    }
+
+    // Do
+    @Service()
+    export class CourseService {
+        private readonly http = inject(HttpClient);
+        private readonly resourceUrl = 'api/core/courses';
+    }
+    ```
+
 - Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
 - See the migration example: https://github.com/ls1intum/Artemis/pull/9299
 
@@ -407,6 +434,51 @@ It's recommended to thoroughly test the component after each change to ensure it
 Standalone components can be generated with the Angular CLI using `ng g c <component-name> --standalone`.
 
 More info about standalone components: https://angular.dev/guide/components/importing#standalone-components
+
+### Templates
+
+Use the built-in control flow blocks `@if`, `@for` and `@switch`, not the structural directives `*ngIf`, `*ngFor` and `*ngSwitch`.
+
+Every `@switch` has a `@default`, which the `@angular-eslint/template/require-switch-default` rule enforces. When the cases cover every member of a union or an enum, write
+`@default never;`. It renders nothing, and the strict template check fails as soon as a member is added without a matching case. Otherwise, for example when the value can
+also be `undefined`, write an empty `@default {}` to show that rendering nothing is intended.
+
+```ts
+type ImportStep = 'upload' | 'review' | 'done';
+
+readonly step = signal<ImportStep>('upload');
+```
+
+{/* prettier-ignore */}
+```html
+@switch (step()) {
+    @case ('upload') {
+        <p>Choose a file</p>
+    }
+    @case ('review') {
+        <p>Check the rows</p>
+    }
+    @case ('done') {
+        <p>Import finished</p>
+    }
+    @default never;
+}
+```
+
+Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, not with `NgStyle`, and write a constant style as a static `style` attribute. The
+`@angular-eslint/template/prefer-style-binding` rule enforces this. A `[style]` object is compared by reference, so replace the object instead of mutating it. It also does
+not accept the unit suffixes `NgStyle` understands: write `{ 'top.px': y }` as `[style.top.px]="y"`.
+
+```html
+<!-- Don't -->
+<div [ngStyle]="{ position: 'fixed', 'top.px': position.y, color: disabled ? 'grey' : undefined }"></div>
+
+<!-- Do -->
+<div style="position: fixed" [style.top.px]="position.y" [style.color]="disabled ? 'grey' : undefined"></div>
+```
+
+Never bind `outerHTML`: replacing the element Angular is bound to breaks the next update. Use `[innerHTML]` to render markup inside an element. The
+`@angular-eslint/template/no-outerhtml` rule enforces this.
 
 ### Comments & Documentation
 

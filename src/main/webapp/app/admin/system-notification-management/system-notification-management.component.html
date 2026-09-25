@@ -59,6 +59,7 @@
                                 @case (SCHEDULED) {
                                     <tum-ui-tag severity="info" [value]="'artemisApp.systemNotification.scheduled' | artemisTranslate" />
                                 }
+                                @default {}
                             }
                         </td>
                         <td>{{ notification.notificationDate | artemisDate }}</td>

@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -131,7 +131,7 @@ export interface ITeamService {
     exportTeams(teams: Team[]): void;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TeamService implements ITeamService, OnDestroy {
     private http = inject(HttpClient);
     private websocketService = inject(WebsocketService);

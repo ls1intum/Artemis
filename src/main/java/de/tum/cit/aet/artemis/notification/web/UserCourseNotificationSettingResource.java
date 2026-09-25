@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingSpecificationRequestDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService;
@@ -26,7 +27,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingServ
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("settings/course-settings")
+@FeatureUsage(UserFeature.NOTIFICATION_SETTINGS)
 @RestController
 @RequestMapping("api/notification/courses/")
 public class UserCourseNotificationSettingResource {

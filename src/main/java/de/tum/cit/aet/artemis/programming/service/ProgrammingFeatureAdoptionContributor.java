@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureAdoptionContributor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureAdoptionEntry;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseAdoptionRepository;
 
 /**
@@ -34,12 +35,13 @@ public class ProgrammingFeatureAdoptionContributor implements FeatureAdoptionCon
     @Override
     public List<FeatureAdoptionEntry> collectAdoption() {
         long total = adoptionRepository.count();
-        return List.of(new FeatureAdoptionEntry(MODULE, "static-code-analysis", adoptionRepository.countWithStaticCodeAnalysis(), total),
-                new FeatureAdoptionEntry(MODULE, "online-editor", adoptionRepository.countWithOnlineEditor(), total),
-                new FeatureAdoptionEntry(MODULE, "offline-ide", adoptionRepository.countWithOfflineIde(), total),
-                new FeatureAdoptionEntry(MODULE, "online-ide", adoptionRepository.countWithOnlineIde(), total),
-                new FeatureAdoptionEntry(MODULE, "released-tests", adoptionRepository.countWithReleasedTests(), total),
-                new FeatureAdoptionEntry(MODULE, "submission-policy", adoptionRepository.countWithSubmissionPolicy(), total),
-                new FeatureAdoptionEntry(MODULE, "auxiliary-repositories", adoptionRepository.countWithAuxiliaryRepositories(), total));
+        return List.of(
+                new FeatureAdoptionEntry(MODULE, "static-code-analysis", UserFeature.PROGRAMMING_GRADING_CONFIGURATION, adoptionRepository.countWithStaticCodeAnalysis(), total),
+                new FeatureAdoptionEntry(MODULE, "online-editor", UserFeature.PROGRAMMING_ONLINE_EDITOR, adoptionRepository.countWithOnlineEditor(), total),
+                new FeatureAdoptionEntry(MODULE, "offline-ide", UserFeature.PROGRAMMING_LOCAL_IDE, adoptionRepository.countWithOfflineIde(), total),
+                new FeatureAdoptionEntry(MODULE, "online-ide", UserFeature.PROGRAMMING_ONLINE_IDE, adoptionRepository.countWithOnlineIde(), total),
+                new FeatureAdoptionEntry(MODULE, "released-tests", UserFeature.EXERCISE_DETAILS, adoptionRepository.countWithReleasedTests(), total),
+                new FeatureAdoptionEntry(MODULE, "submission-policy", UserFeature.PROGRAMMING_SUBMISSION_POLICY, adoptionRepository.countWithSubmissionPolicy(), total),
+                new FeatureAdoptionEntry(MODULE, "auxiliary-repositories", UserFeature.PROGRAMMING_REPOSITORY_EDITING, adoptionRepository.countWithAuxiliaryRepositories(), total));
     }
 }

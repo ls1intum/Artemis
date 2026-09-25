@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -22,7 +22,7 @@ export interface AutoOrchestrationSummary {
  * subscription is short-lived: callers (the course dashboard component) call `subscribeToCourse`
  * on init and `unsubscribeFromCourse` on destroy so we never accumulate orphan subscriptions.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AutoOrchestrationNotificationService implements OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly alertService = inject(AlertService);
