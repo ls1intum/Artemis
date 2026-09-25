@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.WorkerCommand;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkerEvent;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
@@ -164,11 +165,11 @@ class GenerationOrchestrationServiceTest {
     @Test
     void budgetStopPreservesCheckpointButInstructorCancellationPreventsSave() {
         deliveries.add(event(1, WorkerEvent.Type.FINISHED, output(true, "draft")));
-        assertThat(run(() -> true).loopResult().status()).isEqualTo(de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult.Status.COMPLETED);
+        assertThat(run(() -> true).loopResult().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(client).send(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.STOP_AUTHORING, claim.identity(), null));
         when(jobs.isCancelled("job")).thenReturn(true);
         deliveries.add(event(2, WorkerEvent.Type.CANCELLED, output(true, "draft")));
-        assertThat(run(() -> true).loopResult().status()).isEqualTo(de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult.Status.CANCELLED);
+        assertThat(run(() -> true).loopResult().status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
     }
 
     @Test

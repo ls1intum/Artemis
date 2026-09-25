@@ -32,12 +32,6 @@
                 "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.openapi",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.hyperion.exercise-generation.enabled=true",
-                // Controller introspection only; no generation job is admitted by this documentation process.
-                "-Dartemis.aiworker.enabled=true",
-                "-Dartemis.aiworker.broker-url=tcp://localhost:61617?sslEnabled=true&verifyHost=true",
-                "-Dartemis.aiworker.user=openapi-docs",
-                "-Dartemis.aiworker.password=unused",
-                "-Dartemis.aiworker.ids=openapi-docs",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
                 "-Dartemis.iris.enabled=true",
@@ -65,12 +59,6 @@
                 "--artemis.version-control.local-vcs-repo-path=${localVcsPath}"
             ])
         }
-    }
-
-    // The fork plugin snapshots the launch classpath, losing its project-artifact task dependencies.
-    // Build those artifacts before launching, not later while the documentation JVM is reading an old JAR.
-    tasks.named('forkedSpringBootRun') {
-        dependsOn configurations.runtimeClasspath
     }
 
     // 1. TODO Detect if any resources have changed
@@ -327,13 +315,8 @@
     tasks.named('openApiGenerate') {
         finalizedBy 'postProcessTsFiles'
     }
-    // The client can use the committed spec alone, but combined generation must consume the freshly produced spec.
-    tasks.named('pruneOpenApiSpec') {
-        mustRunAfter 'generateOpenApiDocs'
-    }
     tasks.named('openApiGenerate') {
         dependsOn 'pruneOpenApiSpec'
-        mustRunAfter 'generateOpenApiDocs'
     }
     tasks.named("openApiGenerate") {
         doFirst {
