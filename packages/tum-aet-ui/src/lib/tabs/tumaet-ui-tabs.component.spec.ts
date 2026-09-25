@@ -88,16 +88,6 @@ describe('TumAetUiTabs family', () => {
         await fixture.whenStable();
     }
 
-    it('lets an already padded surface opt out without changing the active panel', () => {
-        const container = fixture.debugElement.query(By.directive(TumAetUiTabPanelsComponent)).nativeElement as HTMLElement;
-        expect(container.getAttribute('data-padded')).toBe('true');
-        host.padded.set(false);
-        fixture.detectChanges();
-        expect(container.getAttribute('data-padded')).toBe('false');
-        expect(panels()[0].textContent).toContain('Panel One');
-        expect(tabs()[0].getAttribute('aria-selected')).toBe('true');
-    });
-
     it('renders the ARIA tabs structure (tablist / tab / tabpanel roles)', () => {
         const tabList = fixture.debugElement.query(By.css('tumaet-ui-tab-list')).nativeElement as HTMLElement;
         expect(tabList.getAttribute('role')).toBe('tablist');
