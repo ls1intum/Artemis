@@ -267,9 +267,6 @@ repositories {
 }
 
 configurations.configureEach {
-    // The OpenAI SDK brings the pre-Jakarta Swagger annotations with the same class names as springdoc's
-    // newer Jakarta artifact. Keep only the latter so schema generation cannot load an incompatible Schema.
-    exclude group: "io.swagger.core.v3", module: "swagger-annotations"
     exclude group: "org.dom4j", module: "dom4j"
     exclude group: "org.xmlpull", module: "pull-parser"
     exclude group: "jaxen", module: "jaxen"
@@ -382,7 +379,12 @@ dependencies {
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
     // the former spring-ai-starter-model-azure-openai module was removed upstream.
-    implementation "org.springframework.ai:spring-ai-starter-model-openai"
+    implementation("org.springframework.ai:spring-ai-starter-model-openai") {
+        // OpenAI's Java SDK pulls in legacy annotations that duplicate springdoc's Jakarta Schema class.
+        exclude group: "io.swagger.core.v3", module: "swagger-annotations"
+    }
+    // Spring Boot 4's OTLP tracing auto-configuration is not supplied by the exporter alone.
+    // The starter also supplies the tracing bridge, so do not declare that bridge again below.
     implementation "org.springframework.boot:spring-boot-starter-opentelemetry"
     // Jackson 3 core modules — versions supplied by the tools.jackson jackson-bom import above. Declared
     // explicitly because webauthn4j / spring-ai only request them transitively, at an older patch.
@@ -479,9 +481,7 @@ dependencies {
     implementation "io.micrometer:micrometer-commons"
     implementation "io.micrometer:micrometer-observation"
 
-    // required for exposing LLM traces to Langfuse (version managed by Spring Boot BOM)
-    implementation "io.micrometer:micrometer-tracing-bridge-otel"
-    // OpenTelemetry version managed by the micrometer-tracing BOM
+    // LlmOnlyExporterConfig imports the exporter API at compile time; the starter supplies its runtime wiring.
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus needs protobuf-java transitively; declare it directly to force the latest version (avoids CVEs).

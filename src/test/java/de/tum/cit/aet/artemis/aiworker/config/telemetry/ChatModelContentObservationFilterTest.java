@@ -34,7 +34,7 @@ class ChatModelContentObservationFilterTest {
             ChatModelContentObservationFilter.DEFAULT_MAX_ATTRIBUTE_BYTES);
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles("aiworker"))
-            .withUserConfiguration(WorkerTelemetryConfiguration.class);
+            .withUserConfiguration(WorkerTelemetryConfiguration.class).withBean(JsonMapper.class, () -> objectMapper);
 
     @Test
     void theConfiguredCaptureFlagAndBoundReachTheSpringBuiltBean() {

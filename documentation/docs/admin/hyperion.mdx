@@ -379,7 +379,7 @@ See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
 
 | Environment | Worker placement                                           | Operational requirement                                                                                                                                                         |
 | ----------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Staging     | Dedicated generation VM or host                            | Use separate distributed-data, model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                             |
+| Staging     | Dedicated generation VM or host                            | Use separate distributed-data, model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                            |
 | Production  | Dedicated generation VM or host                            | Start with one slot, monitor actual resource use, and increase only within host and provider limits. Keep generation off exam-critical hosts.                                   |
 | Test server | Dedicated generation VM, which may share physical hardware | Use a separate Docker daemon inside the VM. Sharing the core or LocalCI Docker socket is not an isolation boundary. Leave generation disabled if no isolated host is available. |
 
@@ -505,13 +505,13 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Control                                                                          | Effect                                                                                                            |
-| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `artemis.hyperion.enabled=false`                                                 | Disables Hyperion, including generation.                                                                          |
-| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent | Other Hyperion tools remain available; no generation transport beans or worker configuration are required.          |
-| Both properties true and profiles `core,localci,localvc`                         | Enables generation coordination and advertises its module feature. Valid worker and provider configuration is required. |
-| Missing any required profile                                                     | Generation remains disabled even when both properties are true.                                                   |
-| No ready worker or no free slot                                                  | Enabled but unavailable; capacity errors do not turn off the module flag.                                         |
+| Control                                                                                             | Effect                                                                                                                          |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `artemis.hyperion.enabled=false`                                                                    | Disables Hyperion, including generation.                                                                                        |
+| Hyperion enabled; `artemis.hyperion.exercise-generation.enabled` false or absent                    | Other Hyperion tools remain available; no generation transport beans or worker configuration are required.                      |
+| Both Hyperion properties true, `artemis.aiworker.enabled=true`, and profiles `core,localci,localvc` | Enables generation coordination and advertises its module feature. A compatible worker and provider configuration are required. |
+| Missing a required profile or AI Worker coordination flag                                           | Generation remains unavailable even when both Hyperion properties are true.                                                     |
+| No ready worker or no free slot                                                                     | Enabled but unavailable; capacity errors do not turn off the module flag.                                                       |
 
 The standalone worker is a separate process of the normal Artemis WAR, not an additional core
 profile. Its component scan contains only worker code, and it starts without an
@@ -530,11 +530,11 @@ not promise automatic continuation or resampling of interrupted runs.
 
 ### Build-agent and worker deployment boundaries
 
-| Process                               | Application contents     | Activation and exclusions                                                                                                                                                |
-| ------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Standalone LocalCI build agent        | Artemis server artifact  | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.  |
-| Combined core and LocalCI build agent | Artemis server artifact  | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                  |
-| Hyperion generation worker            | Separate worker artifact | No Artemis server modules, database, distributed-data provider, or incoming web server. Adding server profile names does not turn it into a core or LocalCI build agent. |
+| Process                               | Application contents    | Activation and exclusions                                                                                                                                                                 |
+| ------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                   |
+| Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                   |
+| Hyperion generation worker            | Normal Artemis WAR      | The `aiworker` profile loads worker services and the selected workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
 
 The generation worker uses chat models only; its bundled configuration excludes
 OpenAI embedding, image, speech, transcription, and moderation auto-configuration.
