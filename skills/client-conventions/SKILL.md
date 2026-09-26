@@ -23,6 +23,12 @@ A `computed()`, `linkedSignal()`, `effect()` or `afterRenderEffect()` must read 
 never re-runs; a value that reads none is a constant and belongs in a plain `readonly` field
 (`@angular-eslint/reactive-context-must-read-signal`).
 
+Read a signal with `()` when checking its value; `@angular-eslint/no-uncalled-signals` catches
+accidental checks of the signal function. Keep Angular lifecycle hooks synchronous. Delegate
+work that awaits to a separate async method (`@angular-eslint/no-async-lifecycle-method`).
+Do not repeat a declaration in a component's metadata arrays
+(`@angular-eslint/no-duplicates-in-metadata-arrays`).
+
 ## Injection and services
 
 Declare every `inject()` field before any other class member (`@angular-eslint/inject-at-top`).
@@ -63,7 +69,15 @@ Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, never `[ngSty
 (`@angular-eslint/template/prefer-style-binding`); a constant is a static `style` attribute. Never
 bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
 
+Do not use `$any()` in templates (`@angular-eslint/template/no-any`). Prefer a typed template
+reference for DOM input values and a typed component method for library event payloads.
+
 ## Images and keyboard order
+
+Use `NgOptimizedImage` with `ngSrc` for images with known intrinsic dimensions or a positioned,
+sized container for `fill`. Mark an image `priority` only when it is expected to be the largest
+visible image on initial load. For arbitrary user images that must retain their intrinsic layout,
+keep native `src` and use appropriate loading and decoding hints.
 
 Give every `<img>` a useful, localized text alternative, or `alt=""` when the image is decorative
 or already described next to it (`@angular-eslint/template/alt-text`). Keep keyboard focus in DOM

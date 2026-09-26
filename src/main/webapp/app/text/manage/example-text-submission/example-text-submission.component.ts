@@ -123,8 +123,12 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     /**
      * Reads route params and loads the example submission on initialWithContext.
      */
-    override async ngOnInit(): Promise<void> {
-        await super.ngOnInit();
+    override ngOnInit(): void {
+        void this.initializeExampleTextSubmissionComponent();
+    }
+
+    private async initializeExampleTextSubmissionComponent(): Promise<void> {
+        await super.initializeTextAssessmentBaseComponent();
         // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');

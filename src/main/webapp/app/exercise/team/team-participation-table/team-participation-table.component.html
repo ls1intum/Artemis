@@ -64,12 +64,12 @@
                     : undefined
             "
             tooltipPosition="left"
-            (click)="openAssessmentEditor(cell.data, $any(cell.data.participation), cell.data.submission ?? 'new')"
+            (click)="openAssessmentEditor(cell.data, cell.data.participation!, cell.data.submission ?? 'new')"
         >
             <i class="pi pi-folder-open me-1"></i>
             {{ 'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(cell.data.submission) + 'Assessment' | artemisTranslate }}
         </button>
-        @if ($any(cell.data.submission)?.result?.hasComplaint) {
+        @if (cell.data.submission?.result?.hasComplaint) {
             <i class="pi pi-flag" [pTooltip]="'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | artemisTranslate"></i>
         }
     </div>

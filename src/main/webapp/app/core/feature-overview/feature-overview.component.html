@@ -25,20 +25,44 @@
                     @if (feature.descriptionTextTwo) {
                         @if (!feature.firstImageLeft) {
                             @if (feature.imageOne) {
-                                <img class="text-wrap-right" src="{{ feature.imageOne }}" alt="feature-image-one" />
+                                <img
+                                    class="text-wrap-right"
+                                    [ngSrc]="feature.imageOne"
+                                    [width]="imageDimensions[feature.imageOne].width"
+                                    [height]="imageDimensions[feature.imageOne].height"
+                                    [alt]="feature.title | artemisTranslate"
+                                />
                             }
                             <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                             @if (feature.imageTwo) {
-                                <img class="text-wrap-left" src="{{ feature.imageTwo }}" alt="feature-image-two" />
+                                <img
+                                    class="text-wrap-left"
+                                    [ngSrc]="feature.imageTwo"
+                                    [width]="imageDimensions[feature.imageTwo].width"
+                                    [height]="imageDimensions[feature.imageTwo].height"
+                                    [alt]="feature.title | artemisTranslate"
+                                />
                             }
                             <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
                         } @else {
                             @if (feature.imageOne) {
-                                <img class="text-wrap-left" src="{{ feature.imageOne }}" alt="feature-image-one" />
+                                <img
+                                    class="text-wrap-left"
+                                    [ngSrc]="feature.imageOne"
+                                    [width]="imageDimensions[feature.imageOne].width"
+                                    [height]="imageDimensions[feature.imageOne].height"
+                                    [alt]="feature.title | artemisTranslate"
+                                />
                             }
                             <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                             @if (feature.imageTwo) {
-                                <img class="text-wrap-right" src="{{ feature.imageTwo }}" alt="feature-image-two" />
+                                <img
+                                    class="text-wrap-right"
+                                    [ngSrc]="feature.imageTwo"
+                                    [width]="imageDimensions[feature.imageTwo].width"
+                                    [height]="imageDimensions[feature.imageTwo].height"
+                                    [alt]="feature.title | artemisTranslate"
+                                />
                             }
                             <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
                         }
@@ -46,34 +70,82 @@
                         @if (!feature.centered) {
                             @if (!feature.firstImageLeft) {
                                 @if (feature.imageOne) {
-                                    <img class="text-wrap-right" src="{{ feature.imageOne }}" alt="feature-image-one" />
+                                    <img
+                                        class="text-wrap-right"
+                                        [ngSrc]="feature.imageOne"
+                                        [width]="imageDimensions[feature.imageOne].width"
+                                        [height]="imageDimensions[feature.imageOne].height"
+                                        [alt]="feature.title | artemisTranslate"
+                                    />
                                 }
                                 <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                                 @if (feature.imageTwo) {
-                                    <img class="center" src="{{ feature.imageTwo }}" alt="feature-image-two" />
+                                    <img
+                                        class="center"
+                                        [ngSrc]="feature.imageTwo"
+                                        [width]="imageDimensions[feature.imageTwo].width"
+                                        [height]="imageDimensions[feature.imageTwo].height"
+                                        [alt]="feature.title | artemisTranslate"
+                                    />
                                 }
                             } @else {
                                 @if (feature.imageOne) {
-                                    <img class="text-wrap-left" src="{{ feature.imageOne }}" alt="feature-image-one" />
+                                    <img
+                                        class="text-wrap-left"
+                                        [ngSrc]="feature.imageOne"
+                                        [width]="imageDimensions[feature.imageOne].width"
+                                        [height]="imageDimensions[feature.imageOne].height"
+                                        [alt]="feature.title | artemisTranslate"
+                                    />
                                 }
                                 <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                                 @if (feature.imageTwo) {
-                                    <img class="center" src="{{ feature.imageTwo }}" alt="feature-image-two" />
+                                    <img
+                                        class="center"
+                                        [ngSrc]="feature.imageTwo"
+                                        [width]="imageDimensions[feature.imageTwo].width"
+                                        [height]="imageDimensions[feature.imageTwo].height"
+                                        [alt]="feature.title | artemisTranslate"
+                                    />
                                 }
                             }
                         } @else {
                             <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
                             @if (feature.imageOne && !feature.expandedImage && !feature.shrunkImage) {
-                                <img src="{{ feature.imageOne }}" class="center" alt="feature-image-one" />
+                                <img
+                                    class="center"
+                                    [ngSrc]="feature.imageOne"
+                                    [width]="imageDimensions[feature.imageOne].width"
+                                    [height]="imageDimensions[feature.imageOne].height"
+                                    [alt]="feature.title | artemisTranslate"
+                                />
                             }
                             @if (feature.imageOne && feature.expandedImage) {
-                                <img src="{{ feature.imageOne }}" class="center" alt="feature-image-one" />
+                                <img
+                                    class="center"
+                                    [ngSrc]="feature.imageOne"
+                                    [width]="imageDimensions[feature.imageOne].width"
+                                    [height]="imageDimensions[feature.imageOne].height"
+                                    [alt]="feature.title | artemisTranslate"
+                                />
                             }
                             @if (feature.imageOne && feature.shrunkImage) {
-                                <img src="{{ feature.imageOne }}" class="center" alt="feature-image-one" />
+                                <img
+                                    class="center"
+                                    [ngSrc]="feature.imageOne"
+                                    [width]="imageDimensions[feature.imageOne].width"
+                                    [height]="imageDimensions[feature.imageOne].height"
+                                    [alt]="feature.title | artemisTranslate"
+                                />
                             }
                             @if (feature.imageTwo) {
-                                <img src="{{ feature.imageTwo }}" class="center" alt="feature-image-one" />
+                                <img
+                                    class="center"
+                                    [ngSrc]="feature.imageTwo"
+                                    [width]="imageDimensions[feature.imageTwo].width"
+                                    [height]="imageDimensions[feature.imageTwo].height"
+                                    [alt]="feature.title | artemisTranslate"
+                                />
                             }
                         }
                     }

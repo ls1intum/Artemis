@@ -42,6 +42,8 @@
                                 <div class="col-md-4">
                                     <img
                                         class="img-fluid w-100 rounded"
+                                        loading="lazy"
+                                        decoding="async"
                                         [src]="pm.photoDirectory"
                                         [alt]="'artemisApp.aboutUsOverview.portraitAlt' | artemisTranslate: { name: pm.fullName }"
                                     />
@@ -68,6 +70,8 @@
                         <div class="contributor text-center">
                             <img
                                 class="img-fluid"
+                                loading="lazy"
+                                decoding="async"
                                 [src]="contributor.photoDirectory"
                                 [alt]="'artemisApp.aboutUsOverview.portraitAlt' | artemisTranslate: { name: contributor.fullName }"
                             />
