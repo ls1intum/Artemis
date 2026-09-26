@@ -25,8 +25,9 @@ startup supplies the current installation snapshot, even if an older report arri
 
 ## Required configuration
 
-Every core node refuses to start unless these properties contain meaningful values,
-independently of telemetry settings. Dedicated build agents do not need them:
+Every production core node refuses to start unless these properties contain meaningful values,
+independently of telemetry settings. Development servers, test servers (`info.testServer: true`), and
+dedicated build agents start without them:
 
 - `info.operatorName`: the organization operating Artemis.
 - `info.operatorAdminName`: the administrator's name.
@@ -34,9 +35,8 @@ independently of telemetry settings. Dedicated build agents do not need them:
 
 Empty, whitespace-only, and known template values such as `Admin`, `Some Artemis Operator`,
 `Your University`, and angle-bracket placeholders are rejected. The error lists the settings
-to correct. Configure all three values on every core node, including development
-and test installations. Disabling telemetry does not bypass this startup check.
-All three values are displayed on the About page.
+to correct. Disabling telemetry does not bypass this startup check.
+The About page displays the values that are set.
 The university and operator are independent; neither is inferred from the other.
 
 `artemis.telemetry.sendAdminDetails: false` omits the administrator's name and contact email

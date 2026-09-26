@@ -8,14 +8,15 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 /**
- * Refuses to start a core node without meaningful installation metadata, which the About page shows and the scheduling node reports as telemetry. Build agents
- * neither show nor report it, so they are not checked.
+ * Refuses to start a production core node without meaningful installation metadata, which the About page shows and the scheduling node reports as telemetry.
+ * Development servers and test servers ({@code info.testServer: true}) send no telemetry and may leave it out, and build agents neither show nor report it, so
+ * none of them is checked.
  */
 @Component
 @Lazy(false)
@@ -31,31 +32,32 @@ public class PropertiesConfigurationGuard implements InitializingBean {
             "university name", "operator name", "admin name", "todo", "tbd", "changeme", "example university", "max mustermann", "anonymous university",
             "anonymous university admin", "example university it services", "some artemis dev", "n/a", "none", "unknown");
 
-    @Value("${info.operatorAdminName:#{null}}")
-    private String operatorAdminName;
+    private final Environment environment;
 
-    @Value("${info.universityName:#{null}}")
-    private String universityName;
+    public PropertiesConfigurationGuard(Environment environment) {
+        this.environment = environment;
+    }
 
-    @Value("${info.operatorName:#{null}}")
-    private String operatorName;
-
-    /** Rejects incomplete installation metadata on every core node before readiness. */
+    /** Rejects incomplete installation metadata on a production core node before readiness. */
     @Override
     public void afterPropertiesSet() {
+        if (!environment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION) || environment.getProperty("info.testServer", Boolean.class, false)) {
+            return;
+        }
         List<String> invalid = new ArrayList<>();
-        if (isInvalid(operatorName)) {
+        if (isInvalid(environment.getProperty("info.operatorName"))) {
             invalid.add("info.operatorName (INFO_OPERATORNAME)");
         }
-        if (isInvalid(operatorAdminName)) {
+        if (isInvalid(environment.getProperty("info.operatorAdminName"))) {
             invalid.add("info.operatorAdminName (INFO_OPERATORADMINNAME)");
         }
-        if (isInvalid(universityName)) {
+        if (isInvalid(environment.getProperty("info.universityName"))) {
             invalid.add("info.universityName (INFO_UNIVERSITYNAME)");
         }
         if (!invalid.isEmpty()) {
             throw new IllegalArgumentException("Configure meaningful values for " + String.join(", ", invalid)
-                    + "; these installation properties are required on every core node, independently of telemetry settings, and displayed on the About page.");
+                    + "; these installation properties are required on every production core node, independently of telemetry settings, and displayed on the About page."
+                    + " Test servers (info.testServer: true) and development servers do not need them.");
         }
     }
 
