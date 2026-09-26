@@ -771,10 +771,12 @@ export ARTEMIS_E2E_JWT_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
 The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do this for you.
 
 The shipped `prod-multinode.env` describes a local test installation and sets `INFO_TESTSERVER=true`, so its core
-nodes would start without installation metadata; the operator, administrator, and institution it sets only fill the
-About page. Standalone build agents ignore them. For a real deployment, set `ARTEMIS_ENV_FILE` to an external replacement containing the installation's actual
+nodes would start without installation metadata. The operator, administrator, and institution it sets appear on the
+About page; as a test server, the stack sends no telemetry. Standalone build agents ignore them. For a real deployment, set `ARTEMIS_ENV_FILE` to an external replacement containing the installation's actual
 `INFO_OPERATORNAME`, `INFO_OPERATORADMINNAME`, and `INFO_UNIVERSITYNAME`, along with its credentials.
-Set `INFO_TESTSERVER=false` for a production installation, whose core nodes refuse to start without the three values.
+Set `INFO_TESTSERVER=false` for a production installation: its core nodes refuse to start without the three values, and
+its scheduling node includes them in the [telemetry](/admin/telemetry) report, the administrator's name only when
+`artemis.telemetry.sendAdminDetails` is enabled.
 Keep these shared values in that file rather than in `node1.env`, so every core node receives the same identity.
 
 <Callout variant={CalloutVariant.info}>
