@@ -1,3 +1,4 @@
+import { NgOptimizedImage } from '@angular/common';
 import { Component, computed, inject, model } from '@angular/core';
 import { APOLLON_SHORTCUTS, type ApollonShortcutCombo, type ApollonShortcutId, shortcutKeyName } from '@tumaet/apollon';
 import {
@@ -56,6 +57,7 @@ const WALKTHROUGHS: readonly HelpWalkthrough[] = [
     templateUrl: './modeling-editor-help.component.html',
     styleUrls: ['./modeling-editor-help.component.scss'],
     imports: [
+        NgOptimizedImage,
         TumAetUiDialogComponent,
         TumAetUiTabsComponent,
         TumAetUiTabListComponent,

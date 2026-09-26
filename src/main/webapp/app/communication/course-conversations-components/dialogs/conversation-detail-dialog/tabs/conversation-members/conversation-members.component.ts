@@ -220,7 +220,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     private onSuccess(members: ConversationUserDTO[] | null, headers: HttpHeaders): void {
         this.totalItems.set(Number(headers.get('X-Total-Count')));
-        if (this.activeConversation) {
+        if (this.activeConversation()) {
             // might have changed because of user deletion or addition
             this.activeConversation.update((current) => {
                 if (current) {
