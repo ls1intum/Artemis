@@ -83,10 +83,25 @@ export class CompetencyService extends CourseCompetencyService {
             .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
     }
 
+    /** Creates a competency through the server-owned Hyperion checklist provenance route. */
+    createFromHyperionChecklist(competency: Competency, courseId: number): Observable<EntityResponseType> {
+        const request: CourseCompetencyRequestDTO = toCourseCompetencyRequestDTO(competency);
+        return this.httpClient
+            .post<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/generated-from-hyperion-checklist`, request, { observe: 'response' })
+            .pipe(map((res: EntityResponseDTOType) => this.mapCompetencyResponse(res)));
+    }
+
     createBulk(competencies: Competency[], courseId: number) {
         const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
         return this.httpClient
             .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk`, request, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
+    }
+
+    createBulkFromCourseDescription(competencies: Competency[], courseId: number) {
+        const request = competencies.map((competency) => toCourseCompetencyRequestDTO(competency));
+        return this.httpClient
+            .post<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies/bulk/generated-from-description`, request, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)));
     }
 

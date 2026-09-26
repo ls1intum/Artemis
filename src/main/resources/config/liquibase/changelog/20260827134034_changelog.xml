@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260827134034-1-add-ai-provenance" author="lanfermann">
+        <addColumn tableName="competency">
+            <column name="generated_by_ai" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="competency_exercise">
+            <column name="generated_by_ai" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="competency_lecture_unit">
+            <column name="generated_by_ai" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="competency_lecture_unit" columnName="generated_by_ai"/>
+            <dropColumn tableName="competency_exercise" columnName="generated_by_ai"/>
+            <dropColumn tableName="competency" columnName="generated_by_ai"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -238,7 +238,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      */
     save() {
         const competenciesToSave = this.competencies.getRawValue().map((c) => hydrate(new Competency(), c.competency));
-        this.competencyService.createBulk(competenciesToSave, this.courseId).subscribe({
+        this.competencyService.createBulkFromCourseDescription(competenciesToSave, this.courseId).subscribe({
             next: () => {
                 this.submitted = true;
                 void this.router.navigate(['../'], { relativeTo: this.activatedRoute });

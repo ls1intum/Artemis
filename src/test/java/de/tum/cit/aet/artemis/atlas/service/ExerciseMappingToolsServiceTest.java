@@ -16,6 +16,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -270,7 +271,10 @@ class ExerciseMappingToolsServiceTest {
         JsonNode json = objectMapper.readTree(service.saveExerciseCompetencyMappings(10L, 42L, mappings));
 
         assertThat(json.get("success").asBoolean()).isTrue();
-        verify(competencyExerciseLinkRepository).saveAll(any());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<CompetencyExerciseLink>> linkCaptor = ArgumentCaptor.forClass(List.class);
+        verify(competencyExerciseLinkRepository).saveAll(linkCaptor.capture());
+        assertThat(linkCaptor.getValue()).singleElement().satisfies(link -> assertThat(link.isGeneratedByAi()).isTrue());
         verify(atlasMLApi).mapCompetencyToExercise(42L, 1L);
     }
 
@@ -299,6 +303,7 @@ class ExerciseMappingToolsServiceTest {
         existingLink.setCompetency(competency1);
         existingLink.setExercise(exercise);
         existingLink.setWeight(0.5);
+        existingLink.setGeneratedByAi(true);
 
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
@@ -309,6 +314,7 @@ class ExerciseMappingToolsServiceTest {
         service.saveExerciseCompetencyMappings(10L, 42L, mappings);
 
         assertThat(existingLink.getWeight()).isEqualTo(1.0);
+        assertThat(existingLink.isGeneratedByAi()).isTrue();
         verify(atlasMLApi, never()).mapCompetencyToExercise(any(), any());
     }
 
