@@ -35,6 +35,16 @@ public class FeatureToggleService {
 
     private final boolean globalSearchEnabledOnStart;
 
+    // The reconcile passes have their own static config (artemis.weaviate.reconcile.*) precisely because their
+    // numeric tuning (batch sizes, the outbox depth limit) still needs a deliberate, restart-time decision — see
+    // WeaviateReconcileProperties. These two booleans exist only to seed the runtime toggle's very first value, the
+    // same role globalSearchEnabledOnStart plays for Feature.GlobalSearch; from then on the toggle is the live,
+    // restart-free switch. missing and drift share one toggle because neither deletes; orphan stays separate
+    // because it does.
+    private final boolean globalSearchReconcileEnabledOnStart;
+
+    private final boolean globalSearchReconcileOrphanEnabledOnStart;
+
     private final RateLimitConfigurationService rateLimitConfigurationService;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -46,12 +56,21 @@ public class FeatureToggleService {
     private DistributedMap<Feature, Boolean> features;
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, DistributedDataProvider distributedDataProvider, ProfileService profileService,
-            RateLimitConfigurationService rateLimitConfigurationService, @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart) {
+            RateLimitConfigurationService rateLimitConfigurationService, @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.missing-sweep-enabled:false}") boolean missingSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.drift-sweep-enabled:false}") boolean driftSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.orphan-sweep-enabled:false}") boolean orphanSweepEnabledOnStart) {
         this.websocketMessagingService = websocketMessagingService;
         this.distributedDataProvider = distributedDataProvider;
         this.profileService = profileService;
         this.rateLimitConfigurationService = rateLimitConfigurationService;
         this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
+        // A single combined toggle can't honor two conflicting YAML values, so an asymmetric seed (one true, one
+        // false) resolves to off rather than guessing which pass the operator actually meant to enable; that
+        // matches WeaviateReconcileProperties' own stance that enabling a pass is an operational decision, not
+        // something a deployment should do on its behalf.
+        this.globalSearchReconcileEnabledOnStart = missingSweepEnabledOnStart && driftSweepEnabledOnStart;
+        this.globalSearchReconcileOrphanEnabledOnStart = orphanSweepEnabledOnStart;
     }
 
     private Optional<DistributedMap<Feature, Boolean>> getFeatures() {
@@ -93,7 +112,7 @@ public class FeatureToggleService {
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
                     && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
-                    && feature != Feature.Deimos) {
+                    && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile && feature != Feature.GlobalSearchReconcileOrphan) {
                 features.put(feature, true);
             }
         }
@@ -120,6 +139,14 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.GlobalSearch)) {
             features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.GlobalSearchReconcile)) {
+            features.put(Feature.GlobalSearchReconcile, globalSearchReconcileEnabledOnStart);
+        }
+
+        if (!features.containsKey(Feature.GlobalSearchReconcileOrphan)) {
+            features.put(Feature.GlobalSearchReconcileOrphan, globalSearchReconcileOrphanEnabledOnStart);
         }
 
         if (!features.containsKey(Feature.AutonomousTutor)) {
