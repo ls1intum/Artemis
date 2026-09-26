@@ -35,6 +35,7 @@
             </p-floatlabel>
             @if (initialLectures().length !== 1) {
                 <button
+                    type="button"
                     pButton
                     outlined
                     severity="secondary"
@@ -54,6 +55,7 @@
                 </div>
                 <div>
                     <button
+                        type="button"
                         pButton
                         outlined
                         severity="secondary"
@@ -105,8 +107,8 @@
         </div>
     }
     <div class="save-and-cancel-section">
-        <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-        <button pButton size="small" [disabled]="noDraftsGenerated()" (click)="save()" jhiTranslate="entity.action.save"></button>
+        <button type="button" pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" pButton size="small" [disabled]="noDraftsGenerated()" (click)="save()" jhiTranslate="entity.action.save"></button>
     </div>
     @if (isLoading()) {
         <div class="loading-overlay">

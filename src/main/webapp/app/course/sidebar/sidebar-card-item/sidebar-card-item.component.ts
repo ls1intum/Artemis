@@ -30,6 +30,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
 })
 export class SidebarCardItemComponent {
     readonly sidebarItem = input.required<SidebarCardElement>();
+    readonly showTriggerBuildButton = input(true);
     readonly sidebarType = input<SidebarTypes>();
     readonly groupKey = input<string>();
     readonly unreadCount = input<number>(0);

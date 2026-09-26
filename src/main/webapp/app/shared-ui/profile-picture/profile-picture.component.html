@@ -13,7 +13,8 @@
             [id]="imageId()"
             [alt]="authorName()"
             class="profile-picture rounded-lg"
-            [src]="imageUrl()"
+            [ngSrc]="imageUrl()!"
+            fill
             [style.background-color]="imageBackgroundColor() ?? profilePictureBackgroundColor()"
             [ngClass]="imageClass() + (isGray() ? ' is-grayscale' : '')"
         />

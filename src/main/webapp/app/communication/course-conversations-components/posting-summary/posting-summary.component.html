@@ -1,7 +1,16 @@
+<!-- Pointer clicks on the preview open the post; the native header/author button provides keyboard access.
+     The container stays non-interactive so rich-content links and saved-post buttons retain their own semantics. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
 <div class="posting-summary rounded p-2" (click)="onTriggerNavigateToPost()">
     @if (post() !== undefined) {
         @if (isShowSummary()) {
-            <div class="posting-summary-conversation fs-x-small text-secondary d-flex align-items-center mb-1">
+            <button
+                type="button"
+                data-testid="posting-summary-open"
+                (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
+                [attr.aria-label]="'artemisApp.metis.post.openPost' | artemisTranslate: { title: post()!.conversation!.title! }"
+                class="posting-summary-conversation fs-x-small text-secondary flex items-center mb-1 border-0 bg-transparent p-0 text-start focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
                 <span class="d-inline-block">
                     <fa-icon [icon]="post()!.conversation!.type! === ConversationType.CHANNEL ? faHashtag : faLock" />
                 </span>
@@ -11,7 +20,7 @@
                         > <span jhiTranslate="artemisApp.metis.post.thread"></span>
                     }
                 </span>
-            </div>
+            </button>
         }
         @if (isShowContent()) {
             <div class="posting-summary-wrap">
@@ -32,7 +41,19 @@
                     />
                     <div class="posting-summary-author-content fs-small flex-column align-items-start">
                         <div>
-                            <span class="fw-semibold d-inline-block me-1">{{ post()!.author!.name! }}</span>
+                            @if (isShowSummary()) {
+                                <span class="fw-semibold d-inline-block me-1">{{ post()!.author!.name! }}</span>
+                            } @else {
+                                <button
+                                    type="button"
+                                    data-testid="posting-summary-open"
+                                    (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
+                                    [attr.aria-label]="'artemisApp.metis.post.openPost' | artemisTranslate: { title: post()!.author!.name! }"
+                                    class="font-semibold inline-block me-1 border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                                >
+                                    {{ post()!.author!.name! }}
+                                </button>
+                            }
                             @if (post()!.creationDate !== undefined) {
                                 <span class="fs-small text-secondary" [disableTooltip]="postingIsOfToday()" ngbTooltip="{{ post()!.creationDate! | artemisDate: 'time' }}">
                                     {{ postingIsOfToday() ? (post()!.creationDate! | artemisDate: 'time') : (post()!.creationDate! | artemisDate: 'short-date') }}
