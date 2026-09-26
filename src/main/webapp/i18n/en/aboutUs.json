@@ -3,6 +3,7 @@
         "aboutUsOverview": {
             "title": "About Artemis",
             "subtitle": "Interactive learning with individual feedback",
+            "portraitAlt": "Portrait of {{ name }}",
             "courseRequests": "Request a new course",
             "installation": {
                 "title": "Who runs Artemis here",

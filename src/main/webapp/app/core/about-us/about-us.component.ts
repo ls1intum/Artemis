@@ -65,6 +65,12 @@ export class AboutUsComponent implements OnInit {
         return contact ? `mailto:${contact}?body=${encodeURIComponent(CONTACT_MAIL_BODY)}` : undefined;
     });
 
+    /** Only production servers must name their operator; development and test servers may leave any of these out, and the page omits what is missing. */
+    protected readonly hasInstallationDetails = computed(() => {
+        const info = this.profileInfo();
+        return !!(info?.universityName || info?.operatorName || info?.operatorAdminName || this.contactMailto());
+    });
+
     protected readonly gitCommit = computed(() => this.profileInfo()?.git?.commit?.id?.abbrev);
 
     /** Only a test server can run an arbitrary branch; a production installation runs a release, which the version already names. */

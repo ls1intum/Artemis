@@ -72,10 +72,17 @@ bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
 Do not use `$any()` in templates (`@angular-eslint/template/no-any`). Prefer a typed template
 reference for DOM input values and a typed component method for library event payloads.
 
+## Images and keyboard order
+
 Use `NgOptimizedImage` with `ngSrc` for images with known intrinsic dimensions or a positioned,
 sized container for `fill`. Mark an image `priority` only when it is expected to be the largest
 visible image on initial load. For arbitrary user images that must retain their intrinsic layout,
 keep native `src` and use appropriate loading and decoding hints.
+
+Give every `<img>` a useful, localized text alternative, or `alt=""` when the image is decorative
+or already described next to it (`@angular-eslint/template/alt-text`). Keep keyboard focus in DOM
+order; do not use a positive `tabindex` to reorder controls
+(`@angular-eslint/template/no-positive-tabindex`). Move markup when the DOM order is wrong.
 
 ## Redirecting from guards and resolvers
 

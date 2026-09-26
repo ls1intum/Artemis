@@ -116,6 +116,35 @@ describe('AboutUsComponent', () => {
         expect(byTestId('about-contact-tile')).toBeNull();
     });
 
+    it('names the operator in the project section', () => {
+        render(profile());
+
+        expect(byTestId('about-operated-by')).not.toBeNull();
+    });
+
+    it('omits installation metadata that a development server leaves out', () => {
+        render(profile({ universityName: undefined, operatorName: '', operatorAdminName: undefined, contact: undefined }));
+
+        expect(byTestId('about-installation')).toBeNull();
+        expect(byTestId('about-operated-by')).toBeNull();
+    });
+
+    it('shows only the installation metadata that is set', () => {
+        render(profile({ universityName: undefined, operatorAdminName: undefined, contact: undefined }));
+
+        expect(byTestId('about-installation')).not.toBeNull();
+        expect(byTestId('about-university')).toBeNull();
+        expect(byTestId('about-operator')?.textContent).toContain('Research group of Applied Education Technologies');
+        expect(byTestId('about-admin')).toBeNull();
+    });
+
+    it('keeps the test server tag without installation metadata', () => {
+        render(profile({ universityName: undefined, operatorName: undefined, operatorAdminName: undefined, contact: undefined, testServer: true }));
+
+        expect(byTestId('about-test-server')).not.toBeNull();
+        expect(byTestId('about-university')).toBeNull();
+    });
+
     it('lists enabled user-facing modules in display order and ignores infrastructure flags', () => {
         render(profile({ activeModuleFeatures: [MODULE_FEATURE_IRIS, MODULE_FEATURE_LDAP, MODULE_FEATURE_EXAM, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, MODULE_FEATURE_TEXT] }));
 

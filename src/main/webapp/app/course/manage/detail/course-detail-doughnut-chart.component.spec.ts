@@ -54,6 +54,29 @@ describe('CourseDetailDoughnutChartComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it.each([DoughnutChartType.CURRENT_LLM_COST, DoughnutChartType.AVERAGE_EXERCISE_SCORE, DoughnutChartType.ASSESSMENT])(
+        'only enables chart navigation when a destination exists (%s)',
+        (contentType) => {
+            componentRef.setInput('contentType', contentType);
+            fixture.detectChanges();
+            const active = !!component.titleLink();
+            const chart = fixture.nativeElement.querySelector('.doughnut-chart-container') as HTMLElement;
+            const navigate = vi.spyOn(component, 'openCorrespondingPage').mockImplementation(() => {});
+            expect(chart.getAttribute('role')).toBe(active ? 'button' : null);
+            expect(chart.tabIndex).toBe(active ? 0 : -1);
+            for (const repeat of [false, true]) {
+                const event = new KeyboardEvent('keydown', { key: ' ', repeat, bubbles: true, cancelable: true });
+                chart.dispatchEvent(event);
+                expect(event.defaultPrevented).toBe(active);
+            }
+            expect(navigate).not.toHaveBeenCalled();
+            chart.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            expect(navigate).toHaveBeenCalledTimes(active ? 1 : 0);
+            chart.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(navigate).toHaveBeenCalledTimes(active ? 2 : 0);
+        },
+    );
+
     it('should initialize', () => {
         fixture.detectChanges();
 

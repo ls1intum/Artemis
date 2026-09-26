@@ -10,8 +10,15 @@
     [class.positive-feedback]="textBlockRef().feedback?.credits! > 0"
     [class.negative-feedback]="textBlockRef().feedback?.credits! < 0"
     [class.neutral-feedback]="textBlockRef().feedback?.credits === 0"
-    [class.clickable]="textBlockRef().selectable"
+    [class.clickable]="!readOnly() && textBlockRef().selectable"
     [class.highlighted]="textBlockRef().highlighted"
+    #keyboardAction2
+    [attr.role]="!readOnly() && textBlockRef().selectable ? 'button' : undefined"
+    [attr.tabindex]="!readOnly() && textBlockRef().selectable ? 0 : undefined"
+    [attr.aria-pressed]="!readOnly() && textBlockRef().selectable ? selected() : null"
+    (keydown.enter)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    (keydown.space)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+    (keyup.space)="!readOnly() && textBlockRef().selectable && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
 ></span>
 <!-- Display Feedback Editor -->
 @if (textBlockRef().feedback || selected()) {
