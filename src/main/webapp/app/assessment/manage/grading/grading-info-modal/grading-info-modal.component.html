@@ -43,7 +43,7 @@
         </tr>
     </table>
     <ng-template #footer>
-        <button pButton severity="secondary" (click)="close()">{{ 'entity.action.close' | artemisTranslate }}</button>
+        <button type="button" pButton severity="secondary" (click)="close()">{{ 'entity.action.close' | artemisTranslate }}</button>
     </ng-template>
 </p-dialog>
 <button tumAetUiButton variant="outlined" size="small" (click)="open()" type="button" [attr.aria-label]="'artemisApp.gradingSystem.info.title' | artemisTranslate">

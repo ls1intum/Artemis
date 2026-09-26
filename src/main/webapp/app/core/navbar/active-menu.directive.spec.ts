@@ -43,6 +43,7 @@ describe('ActiveMenuDirective', () => {
 
         const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(true);
+        expect(divElement.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('should not add active class when menu language does not match current language', () => {
@@ -51,6 +52,7 @@ describe('ActiveMenuDirective', () => {
 
         const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(false);
+        expect(divElement.getAttribute('aria-pressed')).toBe('false');
     });
 
     it('should update active class when language changes to match menu language', async () => {
@@ -59,6 +61,7 @@ describe('ActiveMenuDirective', () => {
 
         const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(false);
+        expect(divElement.getAttribute('aria-pressed')).toBe('false');
 
         // Simulate language change to German
         langChangeSubject.next({ lang: 'de', translations: {} });
@@ -66,6 +69,7 @@ describe('ActiveMenuDirective', () => {
         fixture.detectChanges();
 
         expect(divElement.classList.contains('active')).toBe(true);
+        expect(divElement.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('should remove active class when language changes to not match menu language', async () => {
@@ -74,6 +78,7 @@ describe('ActiveMenuDirective', () => {
 
         const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(true);
+        expect(divElement.getAttribute('aria-pressed')).toBe('true');
 
         // Simulate language change to German
         langChangeSubject.next({ lang: 'de', translations: {} });
@@ -81,6 +86,7 @@ describe('ActiveMenuDirective', () => {
         fixture.detectChanges();
 
         expect(divElement.classList.contains('active')).toBe(false);
+        expect(divElement.getAttribute('aria-pressed')).toBe('false');
     });
 
     it('should handle multiple language changes correctly', async () => {
@@ -89,24 +95,28 @@ describe('ActiveMenuDirective', () => {
 
         const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(true);
+        expect(divElement.getAttribute('aria-pressed')).toBe('true');
 
         // Change to German
         langChangeSubject.next({ lang: 'de', translations: {} });
         await fixture.whenStable();
         fixture.detectChanges();
         expect(divElement.classList.contains('active')).toBe(false);
+        expect(divElement.getAttribute('aria-pressed')).toBe('false');
 
         // Change back to English
         langChangeSubject.next({ lang: 'en', translations: {} });
         await fixture.whenStable();
         fixture.detectChanges();
         expect(divElement.classList.contains('active')).toBe(true);
+        expect(divElement.getAttribute('aria-pressed')).toBe('true');
 
         // Change to French
         langChangeSubject.next({ lang: 'fr', translations: {} });
         await fixture.whenStable();
         fixture.detectChanges();
         expect(divElement.classList.contains('active')).toBe(false);
+        expect(divElement.getAttribute('aria-pressed')).toBe('false');
     });
 
     it('should call getCurrentLang on initialization', () => {
@@ -121,6 +131,7 @@ describe('ActiveMenuDirective', () => {
         const divElement = fixture.nativeElement;
         // undefined !== 'en', so should not have active class
         expect(divElement.classList.contains('active')).toBe(false);
+        expect(divElement.getAttribute('aria-pressed')).toBe('false');
     });
 
     it('should handle empty string menu language', async () => {
@@ -129,11 +140,13 @@ describe('ActiveMenuDirective', () => {
 
         const divElement = fixture.nativeElement;
         expect(divElement.classList.contains('active')).toBe(false);
+        expect(divElement.getAttribute('aria-pressed')).toBe('false');
 
         // Even if language changes to empty string, should match
         langChangeSubject.next({ lang: '', translations: {} });
         await fixture.whenStable();
         fixture.detectChanges();
         expect(divElement.classList.contains('active')).toBe(true);
+        expect(divElement.getAttribute('aria-pressed')).toBe('true');
     });
 });

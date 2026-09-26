@@ -304,4 +304,33 @@ describe('CourseWideSearchComponent', () => {
         selectedDirectionOption.dispatchEvent(new Event('click'));
         expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.DESCENDING);
     });
+
+    it('should change sorting direction once when a held Space key is released', () => {
+        const sortControl = fixture.nativeElement.querySelector('[role="button"]') as HTMLElement;
+        const initialDirection = component.sortingOrder();
+        const changeDirection = vi.spyOn(component, 'onChangeSortDir');
+
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            sortControl.querySelector('fa-icon')!.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(changeDirection).not.toHaveBeenCalled();
+
+        for (const repeat of [false, true, true]) {
+            const event = new KeyboardEvent('keydown', { key: ' ', repeat, bubbles: true, cancelable: true });
+            sortControl.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(true);
+        }
+        expect(changeDirection).not.toHaveBeenCalled();
+        expect(component.sortingOrder()).toBe(initialDirection);
+
+        sortControl.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(changeDirection).toHaveBeenCalledOnce();
+        expect(component.sortingOrder()).not.toBe(initialDirection);
+    });
 });

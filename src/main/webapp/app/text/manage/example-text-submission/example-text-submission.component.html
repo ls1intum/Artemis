@@ -52,13 +52,13 @@
                 </div>
                 @switch (state.submissionEditButton) {
                     @case (SubmissionButtonStates.NEW) {
-                        <button id="create-example-submission" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
+                        <button type="button" id="create-example-submission" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
                         </button>
                     }
                     @case (SubmissionButtonStates.UPDATE) {
-                        <button (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto" [disabled]="!unsavedSubmissionChanges()">
+                        <button type="button" (click)="updateExampleTextSubmission()" class="btn btn-primary col-auto" [disabled]="!unsavedSubmissionChanges()">
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                         </button>
@@ -80,19 +80,25 @@
                 @switch (state.assessButton) {
                     <!--TODO: Disable Button if unsaved changes in submission -->
                     @case (AssessButtonStates.ASSESS) {
-                        <button (click)="startAssessment()" class="btn btn-primary col-auto ms-auto me-3" id="createNewAssessment" [disabled]="unsavedSubmissionChanges()">
+                        <button
+                            type="button"
+                            (click)="startAssessment()"
+                            class="btn btn-primary col-auto ms-auto me-3"
+                            id="createNewAssessment"
+                            [disabled]="unsavedSubmissionChanges()"
+                        >
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
                         </button>
                     }
                     @case (AssessButtonStates.CREATE) {
-                        <button (click)="saveAssessments()" [disabled]="!assessmentsAreValid()" class="btn btn-primary col-auto ms-auto me-3" id="saveNewAssessment">
+                        <button type="button" (click)="saveAssessments()" [disabled]="!assessmentsAreValid()" class="btn btn-primary col-auto ms-auto me-3" id="saveNewAssessment">
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
                         </button>
                     }
                     @case (AssessButtonStates.UPDATE) {
-                        <button (click)="saveAssessments()" [disabled]="!assessmentsAreValid()" class="btn btn-primary col-auto ms-auto me-3">
+                        <button type="button" (click)="saveAssessments()" [disabled]="!assessmentsAreValid()" class="btn btn-primary col-auto ms-auto me-3">
                             <fa-icon [icon]="faSave" />
                             {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
                         </button>
@@ -176,6 +182,7 @@
 @if (toComplete()) {
     <div class="col-12 text-end pt-2">
         <button
+            type="button"
             class="btn btn-primary col-3"
             (click)="checkAssessment()"
             [disabled]="!assessmentsAreValid()"
@@ -186,7 +193,7 @@
 }
 @if (readOnly()) {
     <div class="col-12 text-end pt-2">
-        <button (click)="readAndUnderstood()" class="btn btn-success col-3">
+        <button type="button" (click)="readAndUnderstood()" class="btn btn-success col-3">
             <fa-icon [icon]="faSave" />
             {{ 'artemisApp.exampleSubmission.readAndUnderstood' | artemisTranslate }}
         </button>
