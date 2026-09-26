@@ -120,8 +120,9 @@ Associate each visible form label with its native input using a matching `for` a
 the input in the label. For a custom control, connect the label to the input inside the component,
 not its host element. Use a heading or `span` for informational text that does not label a control;
 give groups of controls an accessible group name. The
-`@angular-eslint/template/label-has-associated-control` rule enforces this in TUM AET UI and the
-client template areas listed in `eslint.config.mjs`.
+`@angular-eslint/template/label-has-associated-control` rule checks the label association, not
+the element choice or group names, in TUM AET UI and the client template areas listed in
+`eslint.config.mjs`.
 
 ## Copying objects
 

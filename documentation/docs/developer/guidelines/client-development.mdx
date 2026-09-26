@@ -490,7 +490,8 @@ intrinsic layout, use native `src` with appropriate `loading` and `decoding` att
 Associate a form label with its native control: match the label's `for` to the input's `id`, or place the input inside the label. When a custom component renders the
 input, connect the label to that inner input rather than to the component host. Use a heading or `span` for text that only names a section or explains a legend. Name a
 group of related controls with a `fieldset` and `legend` or with `aria-labelledby` on a group. The
-`@angular-eslint/template/label-has-associated-control` rule enforces this in TUM AET UI and selected client template areas as they are migrated.
+`@angular-eslint/template/label-has-associated-control` rule checks the label association, not the element choice or group names, in TUM AET UI and selected client
+template areas as they are migrated.
 
 ### Comments & Documentation
 
