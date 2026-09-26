@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.hyperion.web;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -16,6 +18,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.domain.WorkerState;
+import de.tum.cit.aet.artemis.aiworker.dto.WorkerStatusDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAssignmentService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -152,6 +156,28 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         exercise.setExerciseGroup(exam.getExerciseGroups().getFirst());
         programmingExerciseRepository.saveAndFlush(exercise);
         return exam;
+    }
+
+    @Test
+    @WithAnonymousUser
+    void generationWorkers_anonymous_isUnauthorized() throws Exception {
+        request.performMvcRequest(get("/api/aiworker/admin/workers")).andExpect(status().isUnauthorized());
+        Mockito.verify(aiWorkers, Mockito.never()).workerStatuses();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void generationWorkers_instructor_isForbidden() throws Exception {
+        request.performMvcRequest(get("/api/aiworker/admin/workers")).andExpect(status().isForbidden());
+        Mockito.verify(aiWorkers, Mockito.never()).workerStatuses();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void generationWorkers_admin_returnsDiagnosticSnapshot() throws Exception {
+        Mockito.when(aiWorkers.workerStatuses()).thenReturn(List.of(new WorkerStatusDTO("worker-1", WorkerState.OFFLINE, null, null, null, null, false)));
+        request.performMvcRequest(get("/api/aiworker/admin/workers")).andExpect(status().isOk()).andExpect(jsonPath("$[0].workerId").value("worker-1"))
+                .andExpect(jsonPath("$[0].state").value("OFFLINE")).andExpect(jsonPath("$[0].lastHeartbeat").doesNotExist());
     }
 
     @Test

@@ -20,6 +20,7 @@
 // Needed for the in-house GitHub-style markdown alerts and markdown callouts
 @import 'src/main/webapp/content/scss/github-alerts';
 @import 'primeicons/primeicons.css';
+@import '@angular/cdk/a11y-prebuilt.css';
 
 // Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
 // so the transition can never be seen there, yet it still marks every node of an SVG subtree as

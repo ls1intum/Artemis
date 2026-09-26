@@ -172,7 +172,6 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.componentRef.setInput('isDisabled', false);
         fixture.componentRef.setInput('isSaving', false);
-        fixture.componentRef.setInput('isGeneratingWithAi', false);
         fixture.detectChanges();
         const saveSpy = vi.fn();
         fixture.componentInstance.save.subscribe(saveSpy);
@@ -186,7 +185,6 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.componentRef.setInput('isDisabled', false);
         fixture.componentRef.setInput('isSaving', false);
-        fixture.componentRef.setInput('isGeneratingWithAi', false);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
         expect(saveButton.getAttribute('aria-disabled')).toBe('false');
@@ -202,12 +200,11 @@ describe('FormFooterComponent', () => {
         expect(saveButton.getAttribute('aria-disabled')).toBe('true');
     });
 
-    it('should disable save button while generating with AI', () => {
-        fixture.componentRef.setInput('invalidReasons', []);
-        fixture.componentRef.setInput('isDisabled', false);
-        fixture.componentRef.setInput('isGeneratingWithAi', true);
+    it('offers normal save and cancel without an AI-generation entry point', () => {
+        fixture.componentRef.setInput('isCreation', true);
         fixture.detectChanges();
-        const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+        expect(fixture.nativeElement.querySelector('#save-entity')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#cancel-save')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#generate-with-ai')).toBeNull();
     });
 });

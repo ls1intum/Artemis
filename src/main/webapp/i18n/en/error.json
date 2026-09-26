@@ -330,6 +330,9 @@
         "duplicateBuildPhaseNames": "Build phase names must be unique.",
         "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
         "sharingInfoMissing": "The sharing platform information is missing.",
-        "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
+        "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
+        "generationBriefRequired": "Enter a brief before generating an exercise without a problem statement.",
+        "generationCapacityUnavailable": "Artemis has no free capacity for AI generation right now. Nothing has been generated — try again in a few minutes.",
+        "exerciseGenerationRunning": "An AI run is currently changing this exercise. Wait for it to finish, then try again."
     }
 }
