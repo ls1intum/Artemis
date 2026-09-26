@@ -618,9 +618,21 @@ public class SearchableEntityWeaviateService {
         }
     }
 
+    /**
+     * Deletes the single row of one entity by the same deterministic UUID {@link #upsertRow} writes it under. A
+     * {@code type} filter cannot be used here: the property is word-tokenized, so {@code type Equal "lecture"} also
+     * matches {@code lecture_unit} rows (tokens {@code ["lecture", "unit"]}) and {@code type Equal "post"} also matches
+     * {@code answer_post} rows, which would delete an unrelated entity that happens to share the numeric id.
+     */
     private void deleteEntityInternal(String type, long entityId) {
-        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)),
-                type + " " + entityId);
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            boolean deleted = collection.data.deleteById(WeaviateUuidUtil.deterministicUuid(type, entityId));
+            log.debug("Deleted {} {} (row present: {})", type, entityId, deleted);
+        }
+        catch (IOException e) {
+            throw new WeaviateException("Failed to delete " + type + " " + entityId + " in Weaviate: " + e.getMessage(), e);
+        }
     }
 
     private void doDeleteLectureUnitsForLecture(long lectureId, long deleteOutboxId) {

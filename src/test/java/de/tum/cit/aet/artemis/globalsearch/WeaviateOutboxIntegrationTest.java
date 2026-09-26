@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAn
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAnswerPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
@@ -288,6 +290,60 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         assertPostNotInWeaviate(weaviateService, stalePostId);
         // The newer row was written after the delete was enqueued, so the fence must have left it untouched.
         assertPostExistsInWeaviate(weaviateService, newerPostId);
+    }
+
+    // `type` is word-tokenized, so "lecture_unit" carries the token "lecture" and "answer_post" the token "post". Lecture and
+    // lecture unit ids (like post and answer post ids) come from separate sequences and routinely coincide, so deleting one
+    // entity must never reach the other type's row that happens to share its numeric id.
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteEntity_lectureLeavesLectureUnitWithSameIdIntact() throws Exception {
+        long courseId = 990700, sharedId = 990701;
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE, sharedId,
+                new LectureSearchableEntityDTO(sharedId, courseId, "lecture", "desc", null, null).toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, sharedId,
+                new LectureUnitSearchableEntityDTO(sharedId, courseId, 990702L, "unit", "desc", "text", null).toPropertyMap());
+        assertLectureUnitExistsInWeaviate(weaviateService, sharedId);
+
+        searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, sharedId);
+
+        // Asserting the lecture is gone first guarantees the delete has run before checking what it spared.
+        assertLectureNotInWeaviate(weaviateService, sharedId);
+        assertLectureUnitExistsInWeaviate(weaviateService, sharedId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteEntity_postLeavesAnswerPostWithSameIdIntact() throws Exception {
+        long courseId = 990800, channelId = 990801, sharedId = 990802;
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, sharedId, new PostSearchableEntityDTO(sharedId, courseId, channelId, "title", "content").toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.ANSWER_POST, sharedId,
+                new AnswerPostSearchableEntityDTO(sharedId, 990803L, courseId, channelId, "answer").toPropertyMap());
+        assertAnswerPostExistsInWeaviate(weaviateService, sharedId);
+
+        searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, sharedId);
+
+        assertPostNotInWeaviate(weaviateService, sharedId);
+        assertAnswerPostExistsInWeaviate(weaviateService, sharedId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpsertOfRemovedEntity_convergesToDeleteThatLeavesLectureUnitWithSameIdIntact() throws Exception {
+        // No lecture with this id exists in the database, so the dispatcher re-derives the upsert into a delete of the
+        // lecture row. That delete must not take the lecture unit sharing the id with it.
+        long courseId = 990900, sharedId = 990901;
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE, sharedId,
+                new LectureSearchableEntityDTO(sharedId, courseId, "lecture", "desc", null, null).toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, sharedId,
+                new LectureUnitSearchableEntityDTO(sharedId, courseId, 990902L, "unit", "desc", "text", null).toPropertyMap());
+        assertLectureUnitExistsInWeaviate(weaviateService, sharedId);
+
+        searchableEntityWeaviateService.upsertLectureAsync(new LectureSearchableEntityDTO(sharedId, courseId, "lecture", "desc", null, null));
+
+        assertLectureNotInWeaviate(weaviateService, sharedId);
+        assertLectureUnitExistsInWeaviate(weaviateService, sharedId);
     }
 
     private boolean hasOutboxRowFor(String type, long entityId) {

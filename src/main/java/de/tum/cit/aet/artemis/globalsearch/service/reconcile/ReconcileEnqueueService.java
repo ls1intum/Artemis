@@ -50,8 +50,9 @@ public class ReconcileEnqueueService {
     }
 
     /**
-     * Returns whether there is room to queue more repairs. Call this before each batch rather than once per tick,
-     * so a long tick cannot push the queue far past the limit.
+     * Returns whether there is room to queue more repairs. Each pass calls this once per tick, before it examines any
+     * rows; it is a circuit breaker between ticks, not a hard cap within one. That is safe because every per-tick batch
+     * in {@link WeaviateReconcileProperties} is sized to stay under the limit even when every examined row needs a write.
      * <p>
      * The count is cheap precisely because this limit keeps the table small: rows are deleted once their write is
      * confirmed, so the outbox holds only what is still pending.
