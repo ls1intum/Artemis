@@ -11,8 +11,10 @@ data:
   ARTEMIS_VERSIONCONTROL_SSHTEMPLATECLONEURL: "ssh://git@{{ .Values.gateway.hostname | default (include "artemis.httpName" .) }}:{{ .Values.gateway.ssh.port }}/"
   ARTEMIS_VERSIONCONTROL_SSHHOSTKEYPATH: "/opt/artemis/config/ssh-hostkey"
 
-  INFO_OPERATORNAME: {{ .Values.artemis.config.operator.name | quote }}
-  INFO_OPERATORADMINNAME: {{ .Values.artemis.config.operator.adminName | quote }}
+  # ---- Installation metadata, validated on every core startup; build agents ignore it ----
+  INFO_OPERATORNAME: {{ required "artemis.config.operator.name is required" (.Values.artemis.config.operator.name | trim) | quote }}
+  INFO_OPERATORADMINNAME: {{ required "artemis.config.operator.adminName is required" (.Values.artemis.config.operator.adminName | trim) | quote }}
+  INFO_UNIVERSITYNAME: {{ required "artemis.config.operator.universityName is required" (.Values.artemis.config.operator.universityName | trim) | quote }}
 
   # ---- Datasource (PostgreSQL) ----
   SPRING_DATASOURCE_URL: {{ include "artemis.jdbcUrl" . | quote }}

@@ -10,6 +10,7 @@
             <jhi-course-exam-archive-button class="flex flex-wrap items-center gap-2" [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
         }
         <button
+            type="button"
             [title]="'entity.action.reset' | artemisTranslate"
             tumAetUiButton
             severity="danger"
@@ -28,6 +29,7 @@
             <span class="title-bar-collapsible-label" jhiTranslate="entity.action.reset"></span>
         </button>
         <button
+            type="button"
             [title]="'entity.action.delete' | artemisTranslate"
             data-testid="exam-delete"
             tumAetUiButton

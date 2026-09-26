@@ -1,7 +1,7 @@
 @if (isDeleted()) {
     <span class="posting-content-undo-delete d-inline-flex align-items-center">
         <span class="text-secondary" jhiTranslate="artemisApp.metis.post.deletedContent" [translateValues]="{ progress: deleteTimerInSeconds() }"></span>
-        <button class="btn btn-outline-primary btn-sm ms-2 position-relative" (click)="onUndoDeleteEvent.emit()">
+        <button type="button" class="btn btn-outline-primary btn-sm ms-2 position-relative" (click)="onUndoDeleteEvent.emit()">
             <span class="post-delete-button-label" jhiTranslate="artemisApp.metis.post.undoDelete"></span>
             <span class="post-delete-button-background"></span>
         </button>

@@ -770,6 +770,13 @@ export ARTEMIS_E2E_JWT_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
 
 The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do this for you.
 
+The shipped `prod-multinode.env` describes a local test installation and sets `INFO_TESTSERVER=true`.
+The core nodes read the operator, administrator, and institution from this shared file; standalone build agents
+ignore them. For a real deployment, set `ARTEMIS_ENV_FILE` to an external replacement containing the installation's actual
+`INFO_OPERATORNAME`, `INFO_OPERATORADMINNAME`, and `INFO_UNIVERSITYNAME`, along with its credentials.
+Set `INFO_TESTSERVER=false` for a production installation. Keep these shared values in that file rather than in
+`node1.env`, so every core node receives the same required identity.
+
 <Callout variant={CalloutVariant.info}>
     You may run into the following error when starting the containers
     `No member group is available to assign partition ownership...`. This issue should resolve itself after a few
@@ -842,12 +849,10 @@ The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do 
 1. Make sure to enable "Allow the default Docker socket to be used (requires password)" in the Docker Desktop settings.
     This can be found under Settings > Advanced in Docker Desktop.
 
-2. Define the operator name `INFO_OPERATORNAME='Some Artemis Dev'` in the file `docker/artemis/config/node1.env`.
-
-3. Start the docker containers by running
+2. Start the docker containers by running
 
     ```bash
     docker compose --env-file .env -f docker/test-server-multi-node-mysql-localci.yml up
     ```
 
-4. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
+3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.

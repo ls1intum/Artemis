@@ -46,7 +46,7 @@
             <p id="no-file-selected" class="text-center lead text-body-secondary pt-5" jhiTranslate="artemisApp.editor.selectFile"></p>
         } @else if (imagePreviewUrl(); as url) {
             <div id="image-file-preview" class="image-file-preview">
-                <img [src]="url" [alt]="selectedFile()!" />
+                <img [src]="url" [alt]="selectedFile()!" decoding="async" />
             </div>
         } @else if (imagePreviewError()) {
             <p id="image-file-preview-error" class="text-center lead pt-5" jhiTranslate="artemisApp.editor.imageFileLoadingFailed"></p>

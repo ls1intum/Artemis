@@ -31,7 +31,7 @@
                         </div>
                         @if (lp.image && !multiple()) {
                             <div class="preview-image">
-                                <img [src]="lp.image" alt="Preview Image" />
+                                <img [src]="lp.image" alt="Preview Image" loading="lazy" decoding="async" />
                             </div>
                         }
                     </div>

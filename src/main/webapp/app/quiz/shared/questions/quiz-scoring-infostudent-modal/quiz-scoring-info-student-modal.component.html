@@ -562,7 +562,7 @@
     </ng-template>
 </p-dialog>
 <div>
-    <button class="btn" (click)="open()">
+    <button type="button" class="btn" (click)="open()">
         <fa-icon [ngClass]="{ questionCorrect: this.score() === this.question().points, questionWrong: this.score() !== this.question().points }" [icon]="farQuestionCircle" />
     </button>
 </div>

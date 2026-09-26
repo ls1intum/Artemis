@@ -284,9 +284,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
 
     focusInput(): void {
         setTimeout(() => {
-            if (this.searchElement) {
-                this.searchElement()!.nativeElement.focus();
-            }
+            this.searchElement()?.nativeElement.focus();
         }, 0);
     }
 
@@ -372,7 +370,8 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
         // Close dropdown when clicking outside
-        if (this.searchElement && !this.searchElement()!.nativeElement.contains(event.target)) {
+        const searchElement = this.searchElement();
+        if (searchElement && !searchElement.nativeElement.contains(event.target)) {
             this.closeDropdown();
             this.isSearchActive.set(false);
         }
