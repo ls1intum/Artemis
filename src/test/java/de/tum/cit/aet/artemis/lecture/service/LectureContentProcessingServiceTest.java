@@ -1475,7 +1475,7 @@ class LectureContentProcessingServiceTest {
             callbackService.handleProcessingFailureIfStillLive(testState, "YOUTUBE_PRIVATE", null, null);
 
             ArgumentCaptor<LectureUnitCombinedStatusDTO> dtoCaptor = ArgumentCaptor.forClass(LectureUnitCombinedStatusDTO.class);
-            verify(websocketMessagingService).sendMessage(anyString(), dtoCaptor.capture());
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), dtoCaptor.capture());
             LectureUnitCombinedStatusDTO sentDto = dtoCaptor.getValue();
 
             assertThat(sentDto.processingPhase()).as("clients must not be left seeing an active run").isEqualTo(ProcessingPhase.FAILED);
@@ -1645,7 +1645,7 @@ class LectureContentProcessingServiceTest {
             // The stage progress is persisted AND pushed to the client so the badge can render "Indexing 5/64".
             assertThat(testState.getStageProgress()).isEqualTo(5);
             assertThat(testState.getStageTotal()).isEqualTo(64);
-            verify(websocketMessagingService).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
+            verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
 
         @Test
@@ -1663,7 +1663,7 @@ class LectureContentProcessingServiceTest {
             // but must not spam the WebSocket.
             callbackService.handleHeartbeat(testUnit.getId(), TEST_JOB_TOKEN, "chunking", 5, 64);
 
-            verify(websocketMessagingService, times(1)).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
+            verify(websocketMessagingService, times(1)).sendMessage(any(WebsocketDestination.class), any(LectureUnitCombinedStatusDTO.class));
         }
     }
 }
