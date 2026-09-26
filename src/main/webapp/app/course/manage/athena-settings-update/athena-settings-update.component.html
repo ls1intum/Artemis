@@ -24,4 +24,110 @@
             </div>
         </tumaet-ui-card>
     }
+    <!-- Feedback style defaults, laid out after Iris's "Level of Instructional Support" slider. A value of 0 (no
+         tick active) means "no course default", which a slider handle cannot show, so the ticks are buttons. -->
+    <tumaet-ui-card>
+        <h6 class="m-0 text-base" jhiTranslate="artemisApp.course.athenaConfig.defaultFeedbackDetail.label"></h6>
+        <small class="block text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.defaultFeedbackDetail.tooltip"></small>
+
+        <!-- Vertical padding so the enlarged tick hit areas are not clipped. -->
+        <div class="relative mx-auto mt-3 max-w-[80%] py-2">
+            <div class="h-1.5 rounded-full bg-(--border-color)">
+                <div class="h-full rounded-full bg-(--primary)" [style.width.%]="tickPercent(defaultFeedbackDetail())"></div>
+            </div>
+            @if (defaultFeedbackDetail() > 0) {
+                <div
+                    class="pointer-events-none absolute top-1/2 z-3 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-(--primary) bg-(--module-bg)"
+                    [style.left.%]="tickPercent(defaultFeedbackDetail())"
+                ></div>
+            }
+            @for (tick of feedbackDetailTicks; track tick.value) {
+                <button
+                    type="button"
+                    class="absolute top-1/2 z-2 size-5 -translate-x-1/2 -translate-y-1/2 cursor-pointer appearance-none border-0 bg-transparent p-0"
+                    [style.left.%]="tickPercent(tick.value)"
+                    [attr.aria-pressed]="defaultFeedbackDetail() === tick.value"
+                    [attr.aria-label]="tick.labelKey | artemisTranslate"
+                    [attr.data-testid]="'athena-settings-default-feedback-detail-' + tick.value"
+                    (click)="onFeedbackStyleTickClick('defaultFeedbackDetail', tick.value)"
+                >
+                    <!-- A tick behind the handle takes the primary colour; the one under it is hidden by the handle. -->
+                    <span
+                        class="absolute top-1/2 left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-(--module-bg) transition-colors"
+                        [class.opacity-0]="defaultFeedbackDetail() === tick.value"
+                        [style.border-color]="tick.value < defaultFeedbackDetail() ? 'var(--primary)' : 'var(--border-color)'"
+                    ></span>
+                </button>
+            }
+        </div>
+        <div class="relative mx-auto mt-1 h-[1.5em] max-w-[80%] text-xs text-(--body-color)">
+            @for (tick of feedbackDetailTicks; track tick.value) {
+                <span class="absolute top-0 -translate-x-1/2 whitespace-nowrap" [style.left.%]="tickPercent(tick.value)" [jhiTranslate]="tick.labelKey"></span>
+            }
+        </div>
+
+        <!-- Example feedback, rendered with the same component a student sees feedback in, so the selected level's
+             effect is concrete rather than described in prose. -->
+        <div class="mt-5">
+            <small class="mb-2 block" jhiTranslate="artemisApp.course.athenaConfig.exampleFeedbackLabel"></small>
+            <jhi-unified-feedback
+                data-testid="athena-settings-default-feedback-detail-example"
+                [points]="2"
+                [showReference]="false"
+                [feedbackContent]="feedbackDetailExampleKey() | artemisTranslate"
+            />
+        </div>
+    </tumaet-ui-card>
+    <tumaet-ui-card>
+        <h6 class="m-0 text-base" jhiTranslate="artemisApp.course.athenaConfig.defaultFeedbackFormality.label"></h6>
+        <small class="block text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.defaultFeedbackFormality.tooltip"></small>
+
+        <!-- Vertical padding so the enlarged tick hit areas are not clipped. -->
+        <div class="relative mx-auto mt-3 max-w-[80%] py-2">
+            <div class="h-1.5 rounded-full bg-(--border-color)">
+                <div class="h-full rounded-full bg-(--primary)" [style.width.%]="tickPercent(defaultFeedbackFormality())"></div>
+            </div>
+            @if (defaultFeedbackFormality() > 0) {
+                <div
+                    class="pointer-events-none absolute top-1/2 z-3 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-(--primary) bg-(--module-bg)"
+                    [style.left.%]="tickPercent(defaultFeedbackFormality())"
+                ></div>
+            }
+            @for (tick of feedbackFormalityTicks; track tick.value) {
+                <button
+                    type="button"
+                    class="absolute top-1/2 z-2 size-5 -translate-x-1/2 -translate-y-1/2 cursor-pointer appearance-none border-0 bg-transparent p-0"
+                    [style.left.%]="tickPercent(tick.value)"
+                    [attr.aria-pressed]="defaultFeedbackFormality() === tick.value"
+                    [attr.aria-label]="tick.labelKey | artemisTranslate"
+                    [attr.data-testid]="'athena-settings-default-feedback-formality-' + tick.value"
+                    (click)="onFeedbackStyleTickClick('defaultFeedbackFormality', tick.value)"
+                >
+                    <!-- A tick behind the handle takes the primary colour; the one under it is hidden by the handle. -->
+                    <span
+                        class="absolute top-1/2 left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-(--module-bg) transition-colors"
+                        [class.opacity-0]="defaultFeedbackFormality() === tick.value"
+                        [style.border-color]="tick.value < defaultFeedbackFormality() ? 'var(--primary)' : 'var(--border-color)'"
+                    ></span>
+                </button>
+            }
+        </div>
+        <div class="relative mx-auto mt-1 h-[1.5em] max-w-[80%] text-xs text-(--body-color)">
+            @for (tick of feedbackFormalityTicks; track tick.value) {
+                <span class="absolute top-0 -translate-x-1/2 whitespace-nowrap" [style.left.%]="tickPercent(tick.value)" [jhiTranslate]="tick.labelKey"></span>
+            }
+        </div>
+
+        <!-- Example feedback, rendered with the same component a student sees feedback in, so the selected level's
+             effect is concrete rather than described in prose. -->
+        <div class="mt-5">
+            <small class="mb-2 block" jhiTranslate="artemisApp.course.athenaConfig.exampleFeedbackLabel"></small>
+            <jhi-unified-feedback
+                data-testid="athena-settings-default-feedback-formality-example"
+                [points]="2"
+                [showReference]="false"
+                [feedbackContent]="feedbackFormalityExampleKey() | artemisTranslate"
+            />
+        </div>
+    </tumaet-ui-card>
 </div>

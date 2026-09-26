@@ -256,6 +256,31 @@
                     "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",
                     "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge von Athena."
                 },
+                "exampleFeedbackLabel": "Beispiel-Feedback",
+                "defaultFeedbackDetail": {
+                    "label": "Feedback-Detailgrad",
+                    "tooltip": "Legt fest, wie detailliert KI-Feedback in diesem Kurs standardmäßig ausfällt. Gilt nur für Studierende, die keine eigene Feedback-Präferenz festgelegt haben.",
+                    "brief": "Kurz",
+                    "neutral": "Neutral",
+                    "detailed": "Ausführlich",
+                    "example": {
+                        "brief": "Prüfung auf leere Eingabe fehlt.",
+                        "neutral": "Deine Lösung behandelt eine leere Eingabe nicht - füge vor der Verarbeitung der Liste eine Prüfung hinzu.",
+                        "detailed": "Deine Implementierung wirft einen Fehler, wenn die Eingabeliste leer ist, da Zeile 4 auf das erste Element zugreift, ohne vorher dessen Länge zu prüfen. Füge eine Schutzbedingung wie <code>if not items: return None</code> hinzu und ergänze einen Testfall für den Fall einer leeren Liste."
+                    }
+                },
+                "defaultFeedbackFormality": {
+                    "label": "Feedback-Förmlichkeit",
+                    "tooltip": "Legt fest, wie förmlich KI-Feedback in diesem Kurs standardmäßig ausfällt. Gilt nur für Studierende, die keine eigene Feedback-Präferenz festgelegt haben.",
+                    "formal": "Förmlich",
+                    "neutral": "Neutral",
+                    "friendly": "Freundlich",
+                    "example": {
+                        "formal": "Die Abgabe validiert negative Eingabewerte nicht. Bitte überarbeiten Sie die Eingabebehandlung entsprechend.",
+                        "neutral": "Dein Code prüft negative Eingabewerte noch nicht. Erwäge, einen Validierungsschritt hinzuzufügen.",
+                        "friendly": "Bisher gute Arbeit! Ein Punkt zum Nachbessern: Negative Eingaben werden noch nicht geprüft - das lohnt sich noch schnell zu ergänzen."
+                    }
+                },
                 "settingsPage": {
                     "title": "Athena-Einstellungen",
                     "sidebarTitle": "Athena"

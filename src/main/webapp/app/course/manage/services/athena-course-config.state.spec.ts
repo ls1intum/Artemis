@@ -87,7 +87,7 @@ describe('AthenaCourseConfigState', () => {
             // Only the switched feature is sent: restating the other one would write back the value this client last
             // read, undoing a change made elsewhere in the meantime.
             expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
-            expect(state.config()).toEqual(expected);
+            expect(state.config()).toMatchObject(expected);
         });
 
         it('should still save a switched feature when no configuration was loaded', () => {
@@ -133,7 +133,7 @@ describe('AthenaCourseConfigState', () => {
             formative.error(failure());
 
             // Restoring the whole snapshot this switch was made on would also drop the grading switch made after it.
-            expect(state.config()).toEqual({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+            expect(state.config()).toMatchObject({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
         });
 
         it('should keep showing the stored state when a feature is switched twice and both saves fail', () => {
@@ -264,7 +264,7 @@ describe('AthenaCourseConfigState', () => {
 
             state.setMasterEnabled(true);
 
-            expect(state.config()).toEqual({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+            expect(state.config()).toMatchObject({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
             expect(state.masterEnabled()).toBe(true);
         });
     });
@@ -359,7 +359,7 @@ describe('createAthenaCourseConfigState', () => {
             load.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
             save.next(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } }));
 
-            expect(state()?.config()).toEqual(bothDisabled);
+            expect(state()?.config()).toMatchObject(bothDisabled);
         });
     });
 });

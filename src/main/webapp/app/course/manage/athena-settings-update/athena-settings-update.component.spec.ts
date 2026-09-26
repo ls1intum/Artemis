@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AthenaSettingsUpdateComponent } from 'app/course/manage/athena-settings-update/athena-settings-update.component';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -103,5 +103,55 @@ describe('AthenaSettingsUpdateComponent', () => {
             'artemisApp.course.athenaConfig.formativeFeedbackEnabled.label',
             'artemisApp.course.athenaConfig.gradingFeedbackEnabled.label',
         ]);
+    });
+
+    it('should save a clicked feedback style tick', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+        const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, defaultFeedbackDetail: 3 } })));
+        createComponent();
+        fixture.detectChanges();
+
+        comp.onFeedbackStyleTickClick('defaultFeedbackDetail', 3);
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { defaultFeedbackDetail: 3 });
+        expect(comp.defaultFeedbackDetail()).toBe(3);
+    });
+
+    it('should clear a feedback style default when its already-active tick is clicked again', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ ...bothDisabled, defaultFeedbackFormality: 1 }));
+        const updateSpy = vi
+            .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+            .mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, defaultFeedbackFormality: 0 } })));
+        createComponent();
+        fixture.detectChanges();
+
+        comp.onFeedbackStyleTickClick('defaultFeedbackFormality', 1);
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { defaultFeedbackFormality: 0 });
+        expect(comp.defaultFeedbackFormality()).toBe(0);
+    });
+
+    it('should roll a feedback style default back to the stored value when saving it fails', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ ...bothDisabled, defaultFeedbackDetail: 2 }));
+        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        createComponent();
+        fixture.detectChanges();
+
+        comp.onFeedbackStyleTickClick('defaultFeedbackDetail', 3);
+
+        expect(comp.defaultFeedbackDetail()).toBe(2);
+    });
+
+    it('should render a clickable tick per level for both feedback style defaults', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+        createComponent();
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement;
+        for (const field of ['default-feedback-detail', 'default-feedback-formality']) {
+            for (const level of [1, 2, 3]) {
+                expect(element.querySelector(`[data-testid="athena-settings-${field}-${level}"]`)).toBeTruthy();
+            }
+        }
     });
 });
