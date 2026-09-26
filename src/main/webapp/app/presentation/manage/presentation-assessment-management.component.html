@@ -27,7 +27,7 @@
                                 <strong class="presentation-detail-title">{{ presentationAssessment.title }}</strong>
                                 <div class="flex flex-wrap items-center gap-2">
                                     @if (selectedPresentationExerciseRoute(); as exerciseRoute) {
-                                        <a tumUiButton size="small" severity="secondary" variant="outlined" [routerLink]="exerciseRoute">
+                                        <a tumAetUiButton size="small" severity="secondary" variant="outlined" [routerLink]="exerciseRoute">
                                             <fa-icon [icon]="faArrowUpRightFromSquare" />
                                             <span>{{ presentationAssessment.exerciseTitle }}</span>
                                         </a>
@@ -43,8 +43,8 @@
                             <div class="presentation-grading-toolbar">
                                 <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                     <input
-                                        tumUiInput
-                                        tumUiInputSize="small"
+                                        tumAetUiInput
+                                        tumAetUiInputSize="small"
                                         type="search"
                                         class="student-search-input w-full"
                                         [ngModel]="studentSearchTerm()"
@@ -61,7 +61,7 @@
                             </div>
 
                             <div class="presentation-table-scroll">
-                                <table tumUiTable data-testid="presentation-instances-table">
+                                <table tumAetUiTable data-testid="presentation-instances-table">
                                     <thead>
                                         <tr>
                                             <th><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
@@ -214,8 +214,8 @@
                         <div class="presentation-overall-toolbar">
                             <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                 <input
-                                    tumUiInput
-                                    tumUiInputSize="small"
+                                    tumAetUiInput
+                                    tumAetUiInputSize="small"
                                     type="search"
                                     class="student-search-input w-full"
                                     [ngModel]="studentSearchTerm()"
@@ -280,7 +280,7 @@
                         </div>
                         <div class="presentation-table-scroll">
                             <table
-                                tumUiTable
+                                tumAetUiTable
                                 size="small"
                                 [sortField]="studentSortField()"
                                 [sortOrder]="studentSortOrder()"
@@ -289,12 +289,12 @@
                             >
                                 <thead>
                                     <tr>
-                                        <th tumUiSortableColumn="studentLogin"><span jhiTranslate="artemisApp.presentationAssessment.presenter"></span></th>
-                                        <th tumUiSortableColumn="presentationTitle"><span jhiTranslate="artemisApp.presentationAssessment.presentation"></span></th>
+                                        <th tumAetUiSortableColumn="studentLogin"><span jhiTranslate="artemisApp.presentationAssessment.presenter"></span></th>
+                                        <th tumAetUiSortableColumn="presentationTitle"><span jhiTranslate="artemisApp.presentationAssessment.presentation"></span></th>
                                         <th><span jhiTranslate="artemisApp.presentationAssessment.type"></span></th>
-                                        <th tumUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.date"></span></th>
+                                        <th tumAetUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.date"></span></th>
                                         <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
-                                        <th tumUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+                                        <th tumAetUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
                                         <th></th>
                                     </tr>
                                 </thead>

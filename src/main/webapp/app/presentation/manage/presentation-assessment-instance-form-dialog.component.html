@@ -74,7 +74,7 @@
                 <label for="presentation-instance-location" jhiTranslate="artemisApp.presentationAssessment.location"></label>
                 <input
                     id="presentation-instance-location"
-                    tumUiInput
+                    tumAetUiInput
                     class="w-full"
                     formControlName="location"
                     [attr.aria-invalid]="editForm.controls.location.hasError('maxlength')"
@@ -94,7 +94,7 @@
                 <label for="presentation-instance-link" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></label>
                 <input
                     id="presentation-instance-link"
-                    tumUiInput
+                    tumAetUiInput
                     class="w-full"
                     type="url"
                     formControlName="meetingLink"
@@ -117,7 +117,7 @@
         <label for="presentation-instance-remark" jhiTranslate="artemisApp.presentationAssessment.remark"></label>
         <textarea
             id="presentation-instance-remark"
-            tumUiTextarea
+            tumAetUiTextarea
             class="w-full"
             rows="3"
             formControlName="remark"
@@ -137,7 +137,6 @@
     <jhi-course-group
         [(allGroupUsers)]="assignedStudents"
         [courseRoleSlug]="studentsCourseGroup"
-        [isLoadingAllGroupUsers]="false"
         [isAdmin]="false"
         [course]="presentationStudentCourse()"
         [addUserToGroup]="addStudent"

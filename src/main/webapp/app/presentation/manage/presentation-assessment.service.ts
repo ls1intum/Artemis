@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { User } from 'app/account/user/user.model';
@@ -11,7 +11,7 @@ type EntityResponseType = HttpResponse<PresentationAssessment>;
 type EntityArrayResponseType = HttpResponse<PresentationAssessment[]>;
 type PresentationAssessmentInstanceRest = Omit<PresentationAssessmentInstance, 'presentationDate'> & { presentationDate?: string };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PresentationAssessmentService {
     private readonly http = inject(HttpClient);
 
