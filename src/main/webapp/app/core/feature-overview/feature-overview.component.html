@@ -8,7 +8,17 @@
         </div>
         <div class="custom-container">
             @for (feature of features(); track feature) {
-                <div id="featureOverview{{ feature.id }}" class="box" (click)="navigateToFeature(feature.id)">
+                <div
+                    id="featureOverview{{ feature.id }}"
+                    class="box"
+                    (click)="navigateToFeature(feature.id)"
+                    #keyboardAction11
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
+                >
                     <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true" />
                     <h3 class="title">{{ feature.title | artemisTranslate }}</h3>
                     <div class="feature-short-description">

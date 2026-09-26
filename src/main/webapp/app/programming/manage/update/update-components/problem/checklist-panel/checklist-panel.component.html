@@ -2,6 +2,7 @@
     <div class="checklist-panel-header">
         <h5 jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
         <button
+            type="button"
             pButton
             severity="primary"
             size="small"
@@ -40,6 +41,7 @@
                     </span>
                 }
                 <button
+                    type="button"
                     pButton
                     severity="warn"
                     [text]="true"
@@ -142,6 +144,7 @@
                     <div class="issue-toolbar-end">
                         @if (selectedIssueIndices().size > 0) {
                             <button
+                                type="button"
                                 pButton
                                 severity="warn"
                                 size="small"
@@ -159,6 +162,7 @@
                                 <span>({{ selectedIssueIndices().size }})</span>
                             </button>
                             <button
+                                type="button"
                                 pButton
                                 severity="danger"
                                 size="small"
@@ -173,6 +177,7 @@
                             </button>
                         }
                         <button
+                            type="button"
                             pButton
                             severity="primary"
                             size="small"
@@ -206,6 +211,7 @@
                                         <small class="issue-line-ref">Line {{ issue.location?.startLine }}</small>
                                     }
                                     <button
+                                        type="button"
                                         pButton
                                         severity="warn"
                                         size="small"
@@ -222,6 +228,7 @@
                                         <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix</span>
                                     </button>
                                     <button
+                                        type="button"
                                         pButton
                                         severity="danger"
                                         size="small"
@@ -278,6 +285,7 @@
                     </span>
                 }
                 <button
+                    type="button"
                     pButton
                     severity="warn"
                     [text]="true"
@@ -315,6 +323,7 @@
                     <div class="competency-toolbar-end">
                         @if (selectedCompetencyIndices().size > 0) {
                             <button
+                                type="button"
                                 pButton
                                 severity="primary"
                                 size="small"
@@ -328,6 +337,7 @@
                                 <span>({{ selectedCompetencyIndices().size }})</span>
                             </button>
                             <button
+                                type="button"
                                 pButton
                                 severity="danger"
                                 size="small"
@@ -342,6 +352,7 @@
                             </button>
                         }
                         <button
+                            type="button"
                             pButton
                             severity="primary"
                             size="small"
@@ -393,6 +404,7 @@
                                 </div>
                                 <div class="competency-actions">
                                     <button
+                                        type="button"
                                         pButton
                                         [text]="true"
                                         severity="secondary"
@@ -408,6 +420,7 @@
                                         }}</span>
                                     </button>
                                     <button
+                                        type="button"
                                         pButton
                                         severity="danger"
                                         size="small"
@@ -467,6 +480,7 @@
                     </span>
                 }
                 <button
+                    type="button"
                     pButton
                     severity="warn"
                     [text]="true"
@@ -509,6 +523,7 @@
                     <small class="difficulty-adapt-label" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.adaptTo">Adapt to:</small>
                     @for (level of difficultyLevels; track level) {
                         <button
+                            type="button"
                             pButton
                             [severity]="getDifficultySeverity(level)"
                             size="small"

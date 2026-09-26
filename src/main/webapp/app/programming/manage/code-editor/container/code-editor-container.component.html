@@ -104,6 +104,7 @@
             <jhi-code-editor-build-output
                 [participation]="participation()"
                 [secondaryHeader]="!showNavbar()"
+                [collapsed]="grid.buildOutputIsCollapsed()"
                 (onAnnotations)="onAnnotations($event)"
                 (onError)="onError($event)"
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"

@@ -78,7 +78,7 @@
                         <div class="px-3">
                             @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                                 <div class="pt-2">
-                                    <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
+                                    <button type="button" class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
                                     <jhi-post-create-edit-modal #createEditModal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                                 </div>
                             } @else {
@@ -99,7 +99,7 @@
                     <div class="d-none d-sm-block px-3">
                         @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
-                                <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
+                                <button type="button" class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
                                 <jhi-post-create-edit-modal #createEditModal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                             </div>
                         } @else {
