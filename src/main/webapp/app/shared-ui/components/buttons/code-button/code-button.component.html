@@ -1,5 +1,6 @@
 <ng-container>
     <button
+        type="button"
         jhi-exercise-action-button
         [buttonIcon]="faCode"
         class="code-button"
@@ -22,6 +23,20 @@
         @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired()) {
             <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip()"></div>
         }
+        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password && authenticationMechanisms().includes(RepositoryAuthenticationMethod.Token)) {
+            <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2" data-testid="password-warning-nudge">
+                <div class="d-flex align-items-center">
+                    <span>
+                        {{ 'artemisApp.exerciseActions.passwordWarningText' | artemisTranslate }}
+                        <span class="fw-bold">Token</span>.
+                    </span>
+                    <jhi-help-icon class="ms-1" placement="right auto" text="artemisApp.exerciseActions.passwordWarningHelp" />
+                </div>
+                <button type="button" class="btn btn-sm btn-primary text-nowrap" (click)="useHttpsToken()" data-testid="switch-to-token-button">
+                    {{ 'artemisApp.exerciseActions.switchToToken' | artemisTranslate }}
+                </button>
+            </div>
+        }
         <h5 [jhiTranslate]="clonedHeadline()"></h5>
 
         <div class="d-flex" style="margin: 0; max-width: 100%">
@@ -42,6 +57,13 @@
                                 (click)="useHttpsPassword()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password ? 'active' : '' }}"
                                 id="useHTTPSButton"
+                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password"
+                                #keyboardAction41
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
                                 >HTTPS</a
                             >
                         }
@@ -50,6 +72,13 @@
                                 (click)="useHttpsToken()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token ? 'active' : '' }}"
                                 id="useHTTPSWithTokenButton"
+                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token"
+                                #keyboardAction49
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction49.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction49.click() : undefined"
                                 >Token</a
                             >
                         }
@@ -58,6 +87,13 @@
                                 (click)="useSshUrl()"
                                 class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH ? 'active' : '' }}"
                                 id="useSSHButton"
+                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH"
+                                #keyboardAction57
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction57.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction57.click() : undefined"
                                 >SSH</a
                             >
                         }
@@ -93,7 +129,19 @@
             jhiTranslate="{{ wasCopied() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
         ></button>
         @if (theiaEnabled()) {
-            <a class="btn btn-primary btn-sm me-2" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer" data-testid="openOnlineIDEButton">
+            <a
+                class="btn btn-primary btn-sm me-2"
+                (click)="startOnlineIDE()"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="openOnlineIDEButton"
+                #keyboardAction96
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction96.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction96.click() : undefined"
+            >
                 <fa-icon [icon]="faLaptopCode" />
                 <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
             </a>

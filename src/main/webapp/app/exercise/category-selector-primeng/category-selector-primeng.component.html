@@ -15,7 +15,16 @@
     <!-- Colored chip token for each selected category: label + remove icon share one colored pill -->
     <ng-template #selecteditem let-label>
         <div class="custom-tag" [style.backgroundColor]="colorFor(label)">
-            <span class="category-name" (click)="openColorSelectorForLabel($event, label)">
+            <span
+                class="category-name"
+                (click)="openColorSelectorForLabel($event, label)"
+                #keyboardAction18
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction18.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction18.click() : undefined"
+            >
                 {{ label }}
             </span>
             <button

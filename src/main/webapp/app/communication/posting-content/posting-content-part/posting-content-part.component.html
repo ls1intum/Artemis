@@ -17,35 +17,77 @@
     <a class="reference"> <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart()?.referenceType!)" />{{ postingContentPart()?.referenceStr }} </a>
 }
 @if (postingContentPart()?.referenceType === ReferenceType.USER) {
-    <a class="reference" (click)="onClickUserReference(postingContentPart()?.queryParams?.referenceUserLogin)">
+    <a
+        class="reference"
+        (click)="onClickUserReference(postingContentPart()?.queryParams?.referenceUserLogin)"
+        #keyboardAction20
+        [attr.role]="canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) ? 'button' : null"
+        [attr.tabindex]="canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) ? 0 : -1"
+        (keydown.enter)="
+            canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) && $event.target === $event.currentTarget ? keyboardAction20.click() : undefined
+        "
+        (keydown.space)="
+            canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) && $event.target === $event.currentTarget ? $event.preventDefault() : undefined
+        "
+        (keyup.space)="
+            canActivateUserReference(postingContentPart()?.queryParams?.referenceUserLogin) && $event.target === $event.currentTarget ? keyboardAction20.click() : undefined
+        "
+    >
         <fa-icon class="px-1" [icon]="faAt" />{{ postingContentPart()?.referenceStr }}
     </a>
 }
 @if (postingContentPart()?.referenceType === ReferenceType.CHANNEL) {
-    <a class="reference" (click)="onClickChannelReference(postingContentPart()?.queryParams?.channelId)">
+    <a
+        class="reference"
+        (click)="onClickChannelReference(postingContentPart()?.queryParams?.channelId)"
+        #keyboardAction25
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction25.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction25.click() : undefined"
+    >
         <fa-icon class="px-1" [icon]="faHashtag" />{{ postingContentPart()?.referenceStr }}
     </a>
 }
 @if (postingContentPart()?.attachmentToReference) {
-    <a class="reference" (click)="openAttachment(postingContentPart()?.attachmentToReference || '')">
+    <a
+        class="reference"
+        (click)="openAttachment(postingContentPart()?.attachmentToReference || '')"
+        #keyboardAction30
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+    >
         <fa-icon class="px-1" [icon]="faFile" />{{ postingContentPart()?.referenceStr }}
     </a>
 }
 @if (postingContentPart()?.slideToReference) {
     <div style="max-width: 400px">
-        <a class="reference" (click)="enlargeImage(postingContentPart()?.slideToReference || '', postingContentPart()?.referenceStr)">
-            @if (postingContentPart()?.slideToReference && !imageNotFound()) {
+        @if (!imageNotFound()) {
+            <a
+                class="reference"
+                (click)="enlargeImage(postingContentPart()?.slideToReference || '', postingContentPart()?.referenceStr)"
+                #keyboardAction36
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction36.click() : undefined"
+            >
                 <img
                     class="img-fluid rounded-sm border mt-1 mb-1"
                     [src]="postingContentPart()?.slideToReference"
                     [alt]="postingContentPart()?.referenceStr"
                     [title]="postingContentPart()?.referenceStr"
                     (error)="toggleImageNotFound()"
-                    height="auto"
-                    width="100%"
+                    loading="lazy"
+                    decoding="async"
                 />
-            }
-        </a>
+            </a>
+        }
         @if (imageNotFound()) {
             <div class="card">
                 <h5 class="card-body"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.slideNotFound"></span></h5>
@@ -57,15 +99,24 @@
 @if (postingContentPart()?.imageToReference) {
     <div [style.user-select]="'none'" [style.max-width.px]="400">
         @if (postingContentPart()?.imageToReference && !imageNotFound()) {
-            <a class="reference" (click)="enlargeImage(postingContentPart()?.imageToReference || '', postingContentPart()?.referenceStr)">
+            <a
+                class="reference"
+                (click)="enlargeImage(postingContentPart()?.imageToReference || '', postingContentPart()?.referenceStr)"
+                #keyboardAction60
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction60.click() : undefined"
+            >
                 <img
                     class="img-fluid rounded-sm border mt-1 mb-1"
                     [src]="postingContentPart()?.imageToReference"
                     [alt]="postingContentPart()?.referenceStr"
                     [title]="postingContentPart()?.referenceStr"
                     (error)="toggleImageNotFound()"
-                    height="auto"
-                    width="100%"
+                    loading="lazy"
+                    decoding="async"
                 />
             </a>
         } @else if (imageNotFound()) {

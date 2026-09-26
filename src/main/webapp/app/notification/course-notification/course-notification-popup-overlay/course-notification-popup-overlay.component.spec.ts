@@ -17,6 +17,8 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MockComponent } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseNotificationPopupOverlayComponent', () => {
     let component: CourseNotificationPopupOverlayComponent;
@@ -103,6 +105,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CommonModule, FaIconComponent, CourseNotificationPopupOverlayComponent],
             providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },
                 { provide: CourseNotificationService, useValue: courseNotificationService },
                 { provide: ActivatedRoute, useValue: mockRoute },
@@ -121,6 +124,66 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should expose a separate expand/collapse button outside notification controls', () => {
+        component['notifications'].set([createMockNotification(1, 101, 0), createMockNotification(2, 102, 0)]);
+        fixture.detectChanges();
+        const overlay = fixture.nativeElement.firstElementChild as HTMLElement;
+        const toggle = overlay.querySelector('[data-testid="notification-popup-toggle"]') as HTMLButtonElement;
+        const notification = overlay.querySelector('jhi-course-notification') as HTMLElement;
+        const clear = overlay.querySelector('.notification-popup-clear') as HTMLButtonElement;
+        expect(overlay.hasAttribute('role')).toBe(false);
+        expect(overlay.tabIndex).toBe(-1);
+        expect(notification.closest('button, [role="button"]')).toBeNull();
+        expect(toggle).not.toBeNull();
+        expect(toggle.type).toBe('button');
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect(toggle.tabIndex).toBe(0);
+        expect(clear.tabIndex).toBe(-1);
+        toggle.focus();
+        expect(document.activeElement).toBe(toggle);
+
+        const childEvent = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+        notification.dispatchEvent(childEvent);
+        expect(childEvent.defaultPrevented).toBe(false);
+        expect(component['isExpanded']()).toBe(false);
+
+        toggle.click();
+        fixture.detectChanges();
+        expect(component['isExpanded']()).toBe(true);
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(clear.tabIndex).toBe(0);
+        expect(overlay.querySelector('[data-testid="notification-popup-toggle"]')).toBe(toggle);
+        expect(document.activeElement).toBe(toggle);
+        toggle.click();
+        vi.advanceTimersByTime(0);
+        fixture.detectChanges();
+        expect(component['isExpanded']()).toBe(false);
+        expect(overlay.querySelector('[data-testid="notification-popup-toggle"]')).toBe(toggle);
+        expect(document.activeElement).toBe(toggle);
+        expect(clear.tabIndex).toBe(-1);
+
+        component['notifications'].set([createMockNotification(1, 101, 0)]);
+        fixture.detectChanges();
+        expect(toggle.tabIndex).toBe(-1);
+        expect(clear.tabIndex).toBe(-1);
+    });
+
+    it.each(['button', 'a', 'div'])('should not expand when a descendant %s closes a notification', (tagName) => {
+        const closingNotification = createMockNotification(1, 101, 0);
+        component['notifications'].set([closingNotification, createMockNotification(2, 101, 0), createMockNotification(3, 101, 0)]);
+        fixture.detectChanges();
+        const notification = fixture.nativeElement.querySelector('jhi-course-notification') as HTMLElement;
+        const close = document.createElement(tagName);
+        if (tagName === 'div') {
+            close.setAttribute('role', 'button');
+        }
+        close.addEventListener('click', () => component.closeClicked(closingNotification));
+        notification.appendChild(close);
+        close.click();
+        expect(component['notifications']()).toHaveLength(2);
+        expect(component['isExpanded']()).toBe(false);
     });
 
     it('should add notification when websocket emits one', () => {
@@ -297,6 +360,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     it('should trigger collapseOverlayClicked when clicking the collapse button', () => {
         const mockNotification = createMockNotification(1, 101, 0);
         componentAsAny.notifications.set([mockNotification]);
+        componentAsAny.isExpanded.set(true);
         fixture.changeDetectorRef.detectChanges();
         const collapseOverlayClickedSpy = vi.spyOn(component, 'collapseOverlayClicked');
         const collapseButton = fixture.debugElement.query(By.css('button[pButton]'));

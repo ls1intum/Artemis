@@ -64,10 +64,14 @@ describe('Mode Picker Component', () => {
     it('should not set mode when disabled', () => {
         fixture.componentRef.setInput('disabled', true);
         fixture.componentRef.setInput('value', 'old mode');
+        fixture.componentRef.setInput('options', modePickerOptions);
         let valueChangeCalledWith: string | undefined;
         comp.valueChange.subscribe((value) => (valueChangeCalledWith = value));
 
-        comp.setMode('new mode');
+        fixture.detectChanges();
+        const option = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        expect(option.disabled).toBe(true);
+        option.click();
 
         expect(valueChangeCalledWith).toBeUndefined();
     });
