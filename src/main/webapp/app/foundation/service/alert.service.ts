@@ -1,4 +1,4 @@
-import { Injectable, SecurityContext, inject, signal } from '@angular/core';
+import { SecurityContext, Service, inject, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -57,9 +57,7 @@ export type Alert = Readonly<AlertInternal>;
 const DEFAULT_TIMEOUT = 15000;
 const DEFAULT_DISMISSIBLE = true;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class AlertService {
     private sanitizer = inject(DomSanitizer);
     private translateService = inject(TranslateService);

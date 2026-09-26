@@ -1,0 +1,13 @@
+diff --git a/dist/rules/reactive-context-must-read-signal.js b/dist/rules/reactive-context-must-read-signal.js
+index e7a9eb0..ac2cd32 100644
+--- a/dist/rules/reactive-context-must-read-signal.js
++++ b/dist/rules/reactive-context-must-read-signal.js
+@@ -316,7 +316,7 @@ exports.default = (0, create_eslint_rule_1.createESLintRule)({
+                 if (node.callee.type !== utils_1.AST_NODE_TYPES.Identifier) {
+                     return;
+                 }
+-                const config = primitives[node.callee.name];
++                const config = Object.hasOwn(primitives, node.callee.name) ? primitives[node.callee.name] : undefined;
+                 if (!config) {
+                     return;
+                 }

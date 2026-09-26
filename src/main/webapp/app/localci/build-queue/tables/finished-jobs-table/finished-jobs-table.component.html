@@ -1,28 +1,36 @@
 @if (buildJobs()?.length) {
-    <table tumUiTable [size]="'small'" [striped]="true" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onTableSort($event)" style="width: max-content">
+    <table
+        tumAetUiTable
+        [size]="'small'"
+        [striped]="true"
+        [sortField]="predicate()"
+        [sortOrder]="ascending() ? 1 : -1"
+        (sortChange)="onTableSort($event)"
+        style="width: max-content"
+    >
         <thead>
             <tr>
                 <th class="finish-jobs-column-tiny">
                     <span></span>
                 </th>
-                <th [tumUiSortableColumn]="'name'" class="finish-jobs-column-strings">
+                <th [tumAetUiSortableColumn]="'name'" class="finish-jobs-column-strings">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.name"></span>
                 </th>
-                <th [tumUiSortableColumn]="'buildStatus'" class="finish-jobs-column-status">
+                <th [tumAetUiSortableColumn]="'buildStatus'" class="finish-jobs-column-status">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.status"></span>
                 </th>
-                <th [tumUiSortableColumn]="'buildAgentAddress'" class="finish-jobs-column-strings">
+                <th [tumAetUiSortableColumn]="'buildAgentAddress'" class="finish-jobs-column-strings">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
                 </th>
                 @if (showCourseId()) {
-                    <th [tumUiSortableColumn]="'courseId'" class="finish-jobs-column">
+                    <th [tumAetUiSortableColumn]="'courseId'" class="finish-jobs-column">
                         <span jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
                     </th>
                 }
                 <th class="finish-jobs-column">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.duration"></span>
                 </th>
-                <th [tumUiSortableColumn]="'buildCompletionDate'" class="finish-jobs-column">
+                <th [tumAetUiSortableColumn]="'buildCompletionDate'" class="finish-jobs-column">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.completion"></span>
                 </th>
                 <th class="finish-jobs-column">
@@ -57,7 +65,7 @@
                         </span>
                     </td>
                     <td class="finish-jobs-column-strings">
-                        <span [tumUiTooltip]="finishedBuildJob.name ?? ''"
+                        <span [tumAetUiTooltip]="finishedBuildJob.name ?? ''"
                             >{{ finishedBuildJob.name ?? '' | slice: 0 : 25 }}{{ (finishedBuildJob.name ?? '').length > 25 ? '...' : '' }}</span
                         >
                     </td>
@@ -67,7 +75,7 @@
                                 <jhi-result [result]="finishedBuildJob.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
                             </span>
                         } @else {
-                            <tum-ui-tag
+                            <tumaet-ui-tag
                                 [severity]="finishedBuildJob.status === 'CANCELLED' ? 'warn' : 'danger'"
                                 [value]="finishedBuildJob.status"
                                 [rounded]="true"
@@ -100,9 +108,9 @@
                         <span class="text-muted-color">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short' : true }}</span>
                     </td>
                     <td class="finish-jobs-column-strings">
-                        <tum-ui-button variant="text" size="small" class="detail-link" (clicked)="onViewLogs($event, finishedBuildJob.id)">
+                        <tumaet-ui-button variant="text" size="small" class="detail-link" (clicked)="onViewLogs($event, finishedBuildJob.id)">
                             <span jhiTranslate="artemisApp.result.buildLogs.viewLogs"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     </td>
                 </tr>
             }

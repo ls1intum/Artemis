@@ -29,11 +29,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -56,7 +59,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("practice/training")
+@FeatureUsage(UserFeature.QUIZ_TRAINING)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizTrainingResource {
@@ -102,6 +105,7 @@ public class QuizTrainingResource {
      * @return a list of quiz questions for the training session depending on the pagination information
      */
     @ApiResponse(responseCode = "200", headers = { @Header(name = "X-Has-Next", schema = @Schema(type = "boolean")) })
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, @ParameterObject Pageable pageable,

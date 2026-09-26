@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { finalize, map, shareReplay, tap } from 'rxjs/operators';
@@ -8,7 +8,7 @@ import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/i
  * Service for managing Iris course-level settings.
  * Replaces the legacy three-tier (Global → Course → Exercise) settings system.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisSettingsService {
     private http = inject(HttpClient);
 

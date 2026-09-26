@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static de.tum.cit.aet.artemis.lecture.web.LectureWebsocketTopics.UNIT_PROCESSING_STATE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -28,8 +30,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 public class ProcessingStateNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProcessingStateNotificationService.class);
-
-    private static final String PROCESSING_STATE_TOPIC = "/topic/lectures/%d/unit-processing-state";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -64,7 +64,7 @@ public class ProcessingStateNotificationService {
         }
         long lectureId = unit.getLecture().getId();
         var dto = LectureUnitCombinedStatusDTO.of(unit.getId(), state, transcriptionStatus);
-        String topic = PROCESSING_STATE_TOPIC.formatted(lectureId);
+        var topic = UNIT_PROCESSING_STATE.at(lectureId);
         websocketMessagingService.sendMessage(topic, dto);
         log.debug("Sent processing state WebSocket update for unit {} on topic {}", unit.getId(), topic);
     }

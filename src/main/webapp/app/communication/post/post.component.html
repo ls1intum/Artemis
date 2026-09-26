@@ -183,7 +183,7 @@
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown()) {
-    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition().y, 'left.px': dropdownPosition().x }" class="dropdown-menu show" data-testid="posting-context-menu">
+    <div style="position: fixed" [style.top.px]="dropdownPosition().y" [style.left.px]="dropdownPosition().x" class="dropdown-menu show" data-testid="posting-context-menu">
         <button class="dropdown-item d-flex" (click)="addReaction($event)" data-testid="posting-menu-react">
             <fa-icon [icon]="faSmile" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
@@ -227,7 +227,7 @@
     </div>
 }
 
-<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin [ngStyle]="{ position: 'fixed', 'top.px': clickPosition.y, 'left.px': clickPosition.x }"></div>
+<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin style="position: fixed" [style.top.px]="clickPosition.y" [style.left.px]="clickPosition.x"></div>
 
 <ng-template
     cdkConnectedOverlay

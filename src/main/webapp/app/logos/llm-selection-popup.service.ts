@@ -1,10 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Observable, Subject, firstValueFrom } from 'rxjs';
 import { LLMModalResult, LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LLMSelectionModalService {
     private openModalSubject = new Subject<LLMSelectionDecision | undefined>();
     private choiceSubject = new Subject<LLMModalResult>();

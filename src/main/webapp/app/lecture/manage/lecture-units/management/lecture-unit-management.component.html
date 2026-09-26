@@ -37,30 +37,30 @@
                              Every marker is the same small tag, so the row reads as one band of metadata rather than
                              as competing badges. -->
                         <div class="unit-badges">
-                            <tum-ui-tag rounded size="sm" severity="secondary">
+                            <tumaet-ui-tag rounded size="sm" severity="secondary">
                                 {{
                                     getLectureUnitReleaseDate(lectureUnit)
                                         ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
                                         : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
                                 }}
-                            </tum-ui-tag>
+                            </tumaet-ui-tag>
 
                             @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
                                 <!-- Transcription Status Badge (hidden when transcribing to avoid redundancy) -->
                                 @if (!isProcessingTranscribing(lectureUnit)) {
                                     @if (isTranscriptionPending(lectureUnit)) {
-                                        <tum-ui-tag rounded size="sm" severity="info">
+                                        <tumaet-ui-tag rounded size="sm" severity="info">
                                             <fa-icon [icon]="faSpinner" animation="spin" />
                                             <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
-                                        </tum-ui-tag>
+                                        </tumaet-ui-tag>
                                     } @else if (isTranscriptionFailed(lectureUnit)) {
-                                        <tum-ui-tag rounded size="sm" severity="danger">
+                                        <tumaet-ui-tag rounded size="sm" severity="danger">
                                             <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
-                                        </tum-ui-tag>
+                                        </tumaet-ui-tag>
                                     } @else if (hasTranscription(lectureUnit)) {
-                                        <tum-ui-tag rounded size="sm" severity="success">
+                                        <tumaet-ui-tag rounded size="sm" severity="success">
                                             <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
-                                        </tum-ui-tag>
+                                        </tumaet-ui-tag>
                                     }
                                 }
 
@@ -82,6 +82,7 @@
                                 @case (LectureUnitType.ONLINE) {
                                     <jhi-online-unit [courseId]="lecture()!.course?.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                                 }
+                                @default {}
                             }
                         </div>
                     </div>

@@ -45,6 +45,11 @@ interface CombinedOption {
     providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
+    protected dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
+    private courseManagementService = inject(CourseManagementService);
+    private renderer = inject(Renderer2);
+
     channels = signal<(ChannelDTO | GroupChatDTO)[]>([]);
     users = signal<UserPublicInfoDTO[]>([]);
     postToForward = signal<Post | undefined>(undefined);
@@ -64,14 +69,9 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     readonly showFullForwardedMessage = signal(false);
     readonly isContentLong = signal(false);
 
-    protected dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
     readonly maxContentLength = MAX_CONTENT_LENGTH;
-
-    private courseManagementService = inject(CourseManagementService);
-    private renderer = inject(Renderer2);
 
     protected readonly faPeopleGroup = faPeopleGroup;
     protected readonly faHashtag = faHashtag;

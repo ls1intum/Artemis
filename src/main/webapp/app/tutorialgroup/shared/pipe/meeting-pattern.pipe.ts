@@ -1,5 +1,4 @@
-import { inject } from '@angular/core';
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TranslateService } from '@ngx-translate/core';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
@@ -12,9 +11,9 @@ import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
  */
 @Pipe({ name: 'meetingPattern' })
 export class MeetingPatternPipe implements PipeTransform {
-    removeSecondsPipe = new RemoveSecondsPipe();
-
     private translateService = inject(TranslateService);
+
+    removeSecondsPipe = new RemoveSecondsPipe();
 
     /**
      * Transforms a tutorial group schedule to a translated meeting pattern.

@@ -21,13 +21,14 @@ import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for managing the Organization entities
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("organizations/organizations")
+@FeatureUsage(UserFeature.ORGANIZATIONS)
 @RestController
 @RequestMapping("api/account/")
 public class OrganizationResource {

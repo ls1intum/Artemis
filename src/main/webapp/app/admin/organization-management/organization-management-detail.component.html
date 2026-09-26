@@ -24,7 +24,7 @@
         <h3 class="mt-4">
             <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
         </h3>
-        <tum-ui-table
+        <tumaet-ui-table
             [columns]="courseColumns()"
             [rows]="courses()"
             [totalRecords]="coursesTotal()"
@@ -40,12 +40,12 @@
             <h3 class="mb-0">
                 <span jhiTranslate="artemisApp.organizationManagement.users"></span>
             </h3>
-            <button tumUiButton type="button" size="small" (click)="openAddUsersModal()">
+            <button tumAetUiButton type="button" size="small" (click)="openAddUsersModal()">
                 <fa-icon [icon]="faUserPlus" class="me-1" />
                 <span jhiTranslate="artemisApp.organizationManagement.userSearch.addUsersButton"></span>
             </button>
         </div>
-        <tum-ui-table
+        <tumaet-ui-table
             [columns]="userColumns()"
             [rows]="users()"
             [totalRecords]="usersTotal()"
@@ -70,7 +70,7 @@
 
 <ng-template #userActions let-user>
     <button
-        tumUiButton
+        tumAetUiButton
         severity="danger"
         size="small"
         [renderButtonStyle]="false"

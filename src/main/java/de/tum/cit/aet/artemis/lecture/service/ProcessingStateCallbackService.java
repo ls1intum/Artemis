@@ -921,14 +921,6 @@ public class ProcessingStateCallbackService {
     // -------------------- Utility --------------------
 
     /**
-     * Broadcasts a processing state change to all subscribers of the lecture's processing state topic.
-     *
-     * @param state               the updated processing state
-     * @param transcriptionStatus the current transcription status (may be null)
-     */
-    /** Push a state change to clients, carrying the unit's current transcription status so the badge never loses it. */
-
-    /**
      * Masks a token for safe logging by showing only the first and last 3 characters.
      *
      * @param token the token to mask

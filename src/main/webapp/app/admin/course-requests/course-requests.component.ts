@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-    TumUiButtonComponent,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiPaginatorComponent,
-    TumUiTableDirective,
-    TumUiTagComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { faCheck, faExternalLinkAlt, faPencil, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -48,14 +48,14 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         FaIconComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        TumUiPaginatorComponent,
+        TumAetUiPaginatorComponent,
         CourseRequestFormComponent,
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiTableDirective,
-        TumUiTagComponent,
-        TumUiInputDirective,
-        TumUiTooltipDirective,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
+        TumAetUiInputDirective,
+        TumAetUiTooltipDirective,
     ],
 })
 export class CourseRequestsComponent implements OnInit {

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, signal } f
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumUiTagComponent, TumUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LectureUnitProcessingStatus, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -46,7 +46,7 @@ const LOST_CONTACT_SERVER_AGE_MS = 120_000;
     templateUrl: './ingestion-status-badge.component.html',
     styleUrls: ['./ingestion-status-badge.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, NgbTooltip, TumUiTagComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, NgbTooltip, TumAetUiTagComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class IngestionStatusBadgeComponent {
     protected readonly faSpinner = faSpinner;
@@ -240,7 +240,7 @@ export class IngestionStatusBadgeComponent {
         }
     });
 
-    severity = computed<TumUiTagSeverity>(() => {
+    severity = computed<TumAetUiTagSeverity>(() => {
         switch (this.state()) {
             case 'transcribing':
             case 'indexing':

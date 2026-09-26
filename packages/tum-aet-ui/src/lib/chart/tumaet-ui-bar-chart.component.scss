@@ -1,0 +1,15 @@
+@use './tumaet-ui-chart.layout';
+
+.tumaet-ui-bar-chart-bar-interactive {
+    cursor: pointer;
+}
+
+.tumaet-ui-bar-chart-bar:hover {
+    filter: brightness(1.08);
+}
+
+.tumaet-ui-bar-chart-data-label {
+    fill: var(--tumaet-ui-text-color);
+    font-size: var(--tumaet-ui-font-size-xs);
+    font-family: inherit;
+}

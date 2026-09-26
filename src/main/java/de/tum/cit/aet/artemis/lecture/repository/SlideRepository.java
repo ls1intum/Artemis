@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -84,9 +85,12 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     List<Slide> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Unhides a slide by setting its hidden property to null.
+     * Unhides a slide by setting its hidden property to null, but only if its hidden date has passed.
+     * A scheduled unhide task that is already running when the hidden date is moved to a later point therefore does not unhide the slide early.
      *
      * @param slideId The ID of the slide to unhide
+     * @param now     the current time, the hidden date must not be after it
+     * @return the number of updated slides, 0 if the slide is not hidden or its hidden date has not passed yet
      */
     @Transactional // ok because of modifying query
     @Modifying
@@ -94,8 +98,10 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
             UPDATE Slide s
             SET s.hidden = NULL
             WHERE s.id = :slideId
+                AND s.hidden IS NOT NULL
+                AND s.hidden <= :now
             """)
-    void unhideSlide(@Param("slideId") Long slideId);
+    int unhideSlideIfDue(@Param("slideId") Long slideId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideDTO(s.id, s.slideNumber, s.hidden, s.attachmentVideoUnit.id)

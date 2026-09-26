@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisPreparedLectureIngestionJobDTO;
@@ -48,7 +49,7 @@ import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
  * secret pair the two services already use in the other direction, compared in constant time.
  */
 @Lazy
-@FeatureUsage("internal/pyris-ingestion-worker")
+@FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
 @RestController
 @Conditional(IrisEnabled.class)
 @RequestMapping("api/iris/internal/ingestion/worker/")

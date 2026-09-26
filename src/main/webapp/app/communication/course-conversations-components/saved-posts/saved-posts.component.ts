@@ -16,14 +16,15 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
     imports: [TranslateDirective, FaIconComponent, PostingSummaryComponent],
 })
 export class SavedPostsComponent implements OnDestroy {
+    private readonly savedPostService = inject(SavedPostService);
+    private readonly alertService = inject(AlertService);
+    private readonly courseSidebarService = inject(CourseSidebarService);
+
     savedPostStatus = input.required<SavedPostStatus>();
     courseId = input.required<number>();
 
     readonly onNavigateToPost = output<Posting>();
 
-    private readonly savedPostService = inject(SavedPostService);
-    private readonly alertService = inject(AlertService);
-    private readonly courseSidebarService = inject(CourseSidebarService);
     private fetchSubscription?: Subscription;
 
     protected readonly posts = signal<Posting[]>([]);
