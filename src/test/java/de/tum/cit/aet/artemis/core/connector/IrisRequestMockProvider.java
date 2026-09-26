@@ -231,6 +231,18 @@ public class IrisRequestMockProvider {
         mockPostError(webhooksApiURL.toString(), "/lectures/ingest", httpStatus);
     }
 
+    /**
+     * Answers the lecture unit visibility webhook with an error and a body, so that a caller which distinguishes
+     * Pyris's own "not ingested" answer from any other 404 can be exercised.
+     *
+     * @param httpStatus the status to answer with
+     * @param body       the response body
+     */
+    public void mockLectureVisibilityWebhookError(int httpStatus, String body) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/visibility")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.valueOf(httpStatus)).body(body).contentType(MediaType.APPLICATION_JSON));
+    }
+
     public void mockDeletionWebhookRunError(int httpStatus) {
         mockPostError(webhooksApiURL.toString(), "/lectures/delete", httpStatus);
     }

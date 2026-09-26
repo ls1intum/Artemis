@@ -1,6 +1,6 @@
 ---
 name: local-setup
-description: Get a local Artemis development environment running from a fresh clone, or fix one that has stopped working. Use when setting up the project for the first time, when the server or client will not start, when Gradle or pnpm complain about versions, or when unsure which command to run for server-only versus full-stack development. Covers prerequisites, the two run modes, test users, and mail capture.
+description: Set up or troubleshoot a local Artemis server and client development environment.
 ---
 
 # Get Artemis running locally
@@ -98,6 +98,14 @@ alongside the server and point the mail configuration at it. See
 `documentation/docs/developer/mailpit-setup.mdx`.
 
 ## When it will not start
+
+**"Configure meaningful values for info.operatorName ...".** Every core node, development
+included, refuses to start without `info.operatorName`, `info.operatorAdminName` and
+`info.universityName`, even with telemetry off. Set all three in `application-local.yml`; empty and
+template values (`Admin`, `Your University`, `<name>`) are rejected. The repository's E2E runners,
+Docker dev env files and test profiles already set their own. It hits every start you configure
+yourself with the `core` profile: the IntelliJ run configurations, `bootRun --args` with `core`, and
+the `docker run` examples. A plain `./gradlew bootRun` activates only `dev` and skips the check.
 
 **"Unable to determine Dialect".** The Spring profile set does not include a database profile, or
 an `autoconfigure.exclude` is replacing rather than merging the expected exclusions.

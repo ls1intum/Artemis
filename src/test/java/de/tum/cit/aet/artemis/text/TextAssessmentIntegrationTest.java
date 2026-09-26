@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.text;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
@@ -47,7 +48,6 @@ import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -175,6 +175,27 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
         var result = resultRepository.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentRejectsMissingGradingInstruction(boolean submit) throws Exception {
+        var submission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var result = submission.getLatestResult();
+        var originalFeedback = new Feedback().credits(2.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("original assessment");
+        participationUtilService.addFeedbackToResult(originalFeedback, result);
+        var instruction = new GradingInstruction();
+        instruction.setId(Long.MAX_VALUE);
+        var feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("invalid instruction");
+        feedback.setGradingInstruction(instruction);
+
+        saveOrSubmitTextAssessment(submission.getParticipation().getId(), result.getId(), new TextAssessmentDTO(List.of(FeedbackDTO.of(feedback)), null, null), submit,
+                HttpStatus.BAD_REQUEST);
+
+        assertThat(resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId()).getFeedbacks()).singleElement()
+                .satisfies(item -> assertThat(item.getId()).isEqualTo(originalFeedback.getId()));
     }
 
     @Test
@@ -317,6 +338,31 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.BAD_REQUEST, TextParticipationDTO.class, params);
 
         assertThat(resultRepository.existsBySubmissionId(textSubmission.getId())).as("no result is created for a correction round the exercise does not have").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void retrieveParticipationForSubmission_resultOfComplaintResponse_ok() throws Exception {
+        TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result manualAssessment = textSubmission.getLatestResult();
+        manualAssessment.setAssessmentType(AssessmentType.MANUAL);
+        manualAssessment = resultRepository.save(manualAssessment);
+        AssessmentUpdate assessmentUpdate = complaintUtilService.createComplaintAndResponse(manualAssessment, TEST_PREFIX + "tutor2");
+        TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
+                new HashSet<>());
+        request.putWithResponseBody(
+                "/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
+                textAssessmentUpdate, ResultDTO.class, HttpStatus.OK);
+        assertThat(resultRepository.existsManualResultBySubmissionIdAndCorrectionRound(textSubmission.getId(), 1)).as("the complaint response is stored as the result of round 1")
+                .isTrue();
+        long numberOfResults = resultRepository.countBySubmissionId(textSubmission.getId());
+
+        var params = new LinkedMultiValueMap<String, String>();
+        // the course exercise has one correction round, but the result of the complaint response exists and can be opened
+        params.add("correction-round", "1");
+        request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class, params);
+
+        assertThat(resultRepository.countBySubmissionId(textSubmission.getId())).as("opening the existing result creates no further result").isEqualTo(numberOfResults);
     }
 
     @Test
@@ -1597,7 +1643,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(de.tum.cit.aet.artemis.programming.dto.ResultDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"), isA(de.tum.cit.aet.artemis.programming.dto.ResultDTO.class));
     }
 
     private void addAssessmentFeedbackAndCheckScore(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment, List<Feedback> feedbacks, double pointsAwarded,

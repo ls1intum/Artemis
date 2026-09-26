@@ -178,7 +178,7 @@ describe('ModelingEditorComponent', () => {
         fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
 
-        await component.ngAfterViewInit();
+        await component['initializeModelingEditorComponentView']();
         const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
         expect(editor).toBeDefined();
         expect(editor.subscribeToModelChange).toHaveBeenCalled();
@@ -201,7 +201,7 @@ describe('ModelingEditorComponent', () => {
 
         fixture.componentRef.setInput('umlModel', inputModel);
         fixture.detectChanges();
-        await component.ngAfterViewInit();
+        await component['initializeModelingEditorComponentView']();
 
         expect(inputModel.assessments).toEqual({ [assessment.modelElementId]: assessment });
         expect(component['apollonEditor']?.model.assessments).toEqual({});
@@ -212,7 +212,7 @@ describe('ModelingEditorComponent', () => {
         fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
-        await component.ngAfterViewInit();
+        await component['initializeModelingEditorComponentView']();
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('.modeling-editor__frame'))).toBeNull();
@@ -226,7 +226,7 @@ describe('ModelingEditorComponent', () => {
     it('ngOnDestroy', async () => {
         fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
-        await component.ngAfterViewInit();
+        await component['initializeModelingEditorComponentView']();
 
         const editor = component['apollonEditor'] as any;
         component.ngOnDestroy();
@@ -260,7 +260,7 @@ describe('ModelingEditorComponent', () => {
     it('updates the mounted editor when the model input changes', async () => {
         fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
-        await component.ngAfterViewInit();
+        await component['initializeModelingEditorComponentView']();
 
         const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
         const changedModel = deepClone(editor.model);
@@ -278,7 +278,7 @@ describe('ModelingEditorComponent', () => {
         fixture.componentRef.setInput('readOnly', false);
         fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
-        await component.ngAfterViewInit();
+        await component['initializeModelingEditorComponentView']();
 
         const statusHint = fixture.debugElement.query(By.css('.modeling-editor__status-island'));
         expect(statusHint).toBeNull();
@@ -597,7 +597,7 @@ describe('ModelingEditorComponent', () => {
         await fixture.whenStable();
 
         const overlayContainer = document.body.querySelector('.cdk-overlay-container');
-        expect(overlayContainer?.querySelector('.tum-ui-dialog')).not.toBeNull();
+        expect(overlayContainer?.querySelector('.tumaet-ui-dialog')).not.toBeNull();
         expect(overlayContainer?.parentElement).toBe(document.body);
 
         component.helpVisible.set(false);
@@ -648,7 +648,7 @@ describe('ModelingEditorComponent', () => {
         const receiver = vi.fn();
         component.onModelPatch.subscribe(receiver);
 
-        await component.ngAfterViewInit();
+        await component['initializeModelingEditorComponentView']();
 
         const editor = component['apollonEditor'] as any;
 

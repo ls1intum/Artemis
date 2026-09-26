@@ -86,6 +86,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly destroyRef = inject(DestroyRef);
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
+    private readonly courseStorageService = inject(CourseStorageService);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -97,7 +98,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
 
     lectureId?: number;
-    private readonly courseStorageService = inject(CourseStorageService);
 
     readonly courseId = signal<number | undefined>(undefined);
 

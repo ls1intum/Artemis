@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
+import static de.tum.cit.aet.artemis.lecture.web.LectureWebsocketTopics.UNIT_PROCESSING_STATE;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -84,8 +87,6 @@ public class ProcessingStateCallbackService {
 
     private static final JsonMapper objectMapper = JsonObjectMapper.get();
 
-    private static final String PROCESSING_STATE_TOPIC = "/topic/lectures/%d/unit-processing-state";
-
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
     private final LectureTranscriptionRepository transcriptionRepository;
@@ -96,13 +97,43 @@ public class ProcessingStateCallbackService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository;
+
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService,
+            IrisLectureUnitSyncStateRepository irisLectureUnitSyncStateRepository) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;
+        this.irisLectureUnitSyncStateRepository = irisLectureUnitSyncStateRepository;
+    }
+
+    /**
+     * Returns a synchronization state to the retry pass now that Pyris holds the lecture unit.
+     *
+     * <p>
+     * A row settled as {@link IrisLectureUnitSyncState#STATUS_NOT_INGESTED} or {@link IrisLectureUnitSyncState#STATUS_FAILED} is skipped by the retry query, and the backfill
+     * does not recreate it because a row already exists. Ingestion completing is the event that makes it worth trying again, so that is what reopens it.
+     *
+     * <p>
+     * A row that is {@link IrisLectureUnitSyncState#STATUS_IN_PROGRESS} is reopened as well, because the claim commits before the Pyris request leaves. Such a request was
+     * issued while the unit was not ingested and can still answer "not ingested" after this transition; reopening here is what tells the listener that its answer describes a
+     * state of the world that no longer holds.
+     *
+     * @param state the current synchronization state of the lecture unit
+     */
+    private static void reopenSynchronization(IrisLectureUnitSyncState state) {
+        boolean reopenable = IrisLectureUnitSyncState.STATUS_NOT_INGESTED.equals(state.getStatus()) || IrisLectureUnitSyncState.STATUS_FAILED.equals(state.getStatus())
+                || IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus());
+        if (!reopenable) {
+            return;
+        }
+        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+        state.setRetryCount(0);
+        state.setLastErrorKey(null);
+        state.setNextRetryAt(ZonedDateTime.now());
     }
 
     // -------------------- Capacity-Aware Dispatch --------------------
@@ -282,6 +313,20 @@ public class ProcessingStateCallbackService {
 
         if (success) {
             log.info("Processing completed successfully for unit {}", lectureUnitId);
+
+            // Pyris now holds the unit, so a synchronization settled or in flight because it did not is worth trying
+            // again. The transaction and the lock come from the repository method, which is why the transition is
+            // passed into it.
+            //
+            // First, and deliberately not guarded. It takes a row lock, so it is the step most likely to fail, and a
+            // settled row is unreachable afterwards: it carries no retry time and the backfill skips a lecture unit
+            // that already has a row. Swallowing the failure would therefore strand the unit for good. Letting it
+            // propagate before anything is persisted leaves the phase and the job token untouched, so the callback
+            // stays replayable and the recovery pass can pick the unit up, which is a visible stall rather than a
+            // silent one. The completion bookkeeping below cannot be replayed once the token is cleared, so nothing
+            // that can fail belongs after it.
+            irisLectureUnitSyncStateRepository.updateWithLectureUnitLock(lectureUnitId, ProcessingStateCallbackService::reopenSynchronization);
+
             state.transitionTo(ProcessingPhase.DONE);
             state.setIngestionJobToken(null);
             processingStateRepository.save(state);
@@ -630,7 +675,7 @@ public class ProcessingStateCallbackService {
         }
         long lectureId = unit.getLecture().getId();
         var dto = LectureUnitCombinedStatusDTO.of(unit.getId(), state, transcriptionStatus);
-        String topic = PROCESSING_STATE_TOPIC.formatted(lectureId);
+        var topic = UNIT_PROCESSING_STATE.at(lectureId);
         websocketMessagingService.sendMessage(topic, dto);
         log.debug("Sent processing state WebSocket update for unit {} on topic {}", unit.getId(), topic);
     }

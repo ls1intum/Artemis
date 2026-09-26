@@ -189,12 +189,18 @@
                             </span>
                         }
                         <button
+                            type="button"
                             class="btn btn-warning"
                             (click)="resetAll()"
                             [disabled]="!pendingChanges() || isSaving()"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                         ></button>
-                        <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            (click)="back()"
+                            jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"
+                        ></button>
                         <!-- The tooltip would only describe its host while open, so it leaves aria-describedby to this permanent list. -->
                         @if (!quizIsValid()) {
                             <ul [id]="saveReasonsId" class="sr-only">
@@ -206,14 +212,14 @@
                         <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
                              events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
                         <button
-                            tumUiButton
+                            tumAetUiButton
                             type="button"
                             severity="success"
                             size="small"
                             class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                             (click)="onSaveClick()"
-                            [tumUiTooltip]="invalidReasonTexts()"
-                            [tumUiTooltipDescribesHost]="false"
+                            [tumAetUiTooltip]="invalidReasonTexts()"
+                            [tumAetUiTooltipDescribesHost]="false"
                             [attr.aria-disabled]="isSaveDisabled()"
                             [attr.aria-describedby]="quizIsValid() ? null : saveReasonsId"
                             jhiTranslate="entity.action.save"

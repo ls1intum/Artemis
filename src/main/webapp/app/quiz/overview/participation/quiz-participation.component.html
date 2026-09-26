@@ -21,6 +21,7 @@
                                 @case ('solution') {
                                     <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
                                 }
+                                @default {}
                             }
                             <ng-template #modeBadge let-modeTranslation>
                                 <span class="small">
@@ -133,6 +134,7 @@
                                             }"
                                         />
                                     }
+                                    @default {}
                                 }
                                 <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
                                 <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
@@ -143,6 +145,12 @@
                                         (click)="navigateToQuestion(index)"
                                         [ngbTooltip]="!!questionAnswers.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                         [ngClass]="!!questionAnswers.get(question.id!)?.length ? 'changed-question' : ''"
+                                        #keyboardAction142
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction142.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction142.click() : undefined"
                                     >
                                         <b class="fa">{{ abbreviation }}</b>
                                     </span>

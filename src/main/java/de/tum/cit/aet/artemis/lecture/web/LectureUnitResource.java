@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -62,7 +63,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 @Conditional(LectureEnabled.class)
 @Lazy
-@FeatureUsage("units/unit-management")
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
 @RestController
 @RequestMapping("api/lecture/")
 public class LectureUnitResource {
@@ -155,6 +156,7 @@ public class LectureUnitResource {
      * @param completed     true if the lecture unit should be marked as completed, false for uncompleted
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.LECTURE_UNITS)
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId, @RequestParam("completed") boolean completed) {
@@ -218,6 +220,7 @@ public class LectureUnitResource {
      * @param lectureUnitId the id of the lecture unit that should be fetched
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.LEARNING_PATHS)
     @GetMapping("lecture-units/{lectureUnitId}/for-learning-path-node-details")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureUnitForLearningPathNodeDetailsDTO> getLectureUnitForLearningPathNodeDetails(@PathVariable long lectureUnitId) {
@@ -249,6 +252,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK) and the lecture unit in the body, projected as on the lecture details page, or with status 404 (Not Found) if the lecture
      *         unit could not be found
      */
+    @FeatureUsage(UserFeature.LECTURE_UNITS)
     @GetMapping("lecture-units/{lectureUnitId}")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureDetailsDTO.LectureUnitDetailsDTO> getLectureUnitById(@PathVariable @Valid long lectureUnitId) {
@@ -264,6 +268,7 @@ public class LectureUnitResource {
      * @param lectureId the id of the lecture
      * @return the ResponseEntity with status 200 (OK) and the list of combined statuses
      */
+    @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
     @GetMapping("lectures/{lectureId}/lecture-units/statuses")
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<LectureUnitCombinedStatusDTO>> getUnitStatuses(@PathVariable Long lectureId) {
@@ -304,6 +309,7 @@ public class LectureUnitResource {
      * @param lectureUnitId the id of the lecture unit to retry processing for
      * @return the ResponseEntity with status 200 (OK) and the updated combined status
      */
+    @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/retry-processing")
     @EnforceAtLeastEditorInLectureUnit
     public ResponseEntity<LectureUnitCombinedStatusDTO> retryProcessing(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {

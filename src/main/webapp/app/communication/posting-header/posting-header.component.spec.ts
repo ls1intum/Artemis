@@ -63,6 +63,32 @@ describe('PostingHeaderComponent', () => {
         debugElement = fixture.debugElement;
     });
 
+    it.each([
+        { isAuthor: true, authorRole: UserRole.USER, active: false },
+        { isAuthor: false, authorRole: undefined, active: false },
+        { isAuthor: false, authorRole: UserRole.USER, active: true },
+    ])('only exposes actionable author names ($isAuthor, $authorRole)', ({ isAuthor, authorRole, active }) => {
+        vi.spyOn(TestBed.inject(MetisService), 'metisUserIsAuthorOfPosting').mockReturnValue(isAuthor);
+        fixture.componentRef.setInput('posting', { ...metisPostLectureUser1, authorRole });
+        fixture.detectChanges();
+        const author = fixture.nativeElement.querySelector('#header-author-date .fw-semibold') as HTMLElement;
+        const activate = vi.spyOn(component.onUserNameClicked, 'emit');
+        expect(author.getAttribute('role')).toBe(active ? 'button' : null);
+        expect(author.tabIndex).toBe(active ? 0 : -1);
+        const keydown = new KeyboardEvent('keydown', { key: ' ', repeat: true, bubbles: true, cancelable: true });
+        author.dispatchEvent(keydown);
+        expect(keydown.defaultPrevented).toBe(active);
+        expect(activate).not.toHaveBeenCalled();
+        const keyup = new KeyboardEvent('keyup', { key: ' ', bubbles: true, cancelable: true });
+        author.dispatchEvent(keyup);
+        expect(keyup.defaultPrevented).toBe(false);
+        expect(activate).toHaveBeenCalledTimes(active ? 1 : 0);
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+        author.dispatchEvent(enter);
+        expect(enter.defaultPrevented).toBe(false);
+        expect(activate).toHaveBeenCalledTimes(active ? 2 : 0);
+    });
+
     it('should set date information correctly for post of today', () => {
         fixture.componentRef.setInput('posting', metisPostLectureUser1);
         fixture.detectChanges();

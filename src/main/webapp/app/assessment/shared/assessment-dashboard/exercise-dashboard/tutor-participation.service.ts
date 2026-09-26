@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
@@ -7,7 +7,7 @@ import { TutorParticipation, TutorParticipationDTO } from 'app/exercise/shared/e
 export type EntityResponseType = HttpResponse<TutorParticipationDTO>;
 export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TutorParticipationService {
     private http = inject(HttpClient);
     public resourceUrl = 'api/assessment/exercises';

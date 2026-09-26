@@ -1,9 +1,12 @@
 <div [style.background]="imageVisible() && backgroundColor()" #wrapper>
     @if (safeImgDataUrl()) {
+        <!-- The source is a data URL; its intrinsic dimensions are discovered by the load handler below. -->
         <img
             #sourceImage
             class="ngx-ic-source-image"
             [src]="safeImgDataUrl()"
+            [alt]="'global.imageCropper.sourceImage' | artemisTranslate"
+            decoding="async"
             [style.visibility]="imageVisible() ? 'visible' : 'hidden'"
             [style.transform]="safeTransformStyle()"
             (load)="imageLoadedInView()"

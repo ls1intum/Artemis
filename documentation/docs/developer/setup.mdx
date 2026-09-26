@@ -210,7 +210,19 @@ Instead, follow these best practices:
     - If you want to change application properties, you should do that in `application-local.yml`.
     - If needed, you can modify values such as database credentials, authentication and application settings.
 
-3. **Activate the correct profile**
+3. **Set the installation metadata**
+    - A server with the `core` profile, which every run configuration below includes, refuses to start until it knows who operates the installation. Add these three values to `application-local.yml`, replacing the examples with your own; they appear on the About page:
+
+    ```yaml
+    info:
+        operatorName: Research group of Applied Education Technologies
+        operatorAdminName: Jane Doe
+        universityName: Technical University of Munich
+    ```
+
+    - Empty values and template values such as `Admin`, `Your University` or `<name>` are rejected, and the error names the properties to fix. See [Telemetry](/admin/telemetry#required-configuration) for details.
+
+4. **Activate the correct profile**
     - When running Artemis, ensure the `local` profile is selected in the run configurations.
     - For additional custom configurations, create `application-<name>.yml` and activate the `<name>` profile.
 
@@ -250,6 +262,8 @@ artemis:
     # Required module feature toggles
     atlas:
       enabled: true
+      atlasllm:
+        enabled: false   # Atlas chat agent and competency orchestration; needs a chat model under spring.ai (see artemis-intelligence.mdx). Competencies and learning paths work without it.
     exam:
       enabled: true
     fileupload:
@@ -376,6 +390,11 @@ To provide the required configuration, one option is to create an `application-l
 ```yaml
 # application-local.yml
 # ... all other properties from Common Configuration Options
+info:
+    # The installation metadata from step 3 of the configuration setup
+    operatorName: <operator>
+    operatorAdminName: <administrator>
+    universityName: <university>
 spring:
     datasource:
         # If your database is running in another Docker container locally on your machine, replace `<db-host>` with `host.docker.internal` (macOS/Windows) or the host's IP address (Linux).
@@ -403,6 +422,9 @@ Alternatively, you can pass properties directly as Docker environment variables 
 ```bash
 docker run \
   -e ARTEMIS_ATLAS_ENABLED=true \
+  -e INFO_OPERATORNAME="<operator>" \
+  -e INFO_OPERATORADMINNAME="<administrator>" \
+  -e INFO_UNIVERSITYNAME="<university>" \
   -e SPRING_DATASOURCE_URL="jdbc:mysql://<db-host>:3306/Artemis?..." \
   ...
   -p 8080:8080 \

@@ -496,7 +496,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT c
             FROM Course c
-            WHERE (c.title LIKE %:partialTitle%)
+            WHERE (LOWER(c.title) LIKE CONCAT('%', LOWER(CAST(:partialTitle AS string)), '%'))
                 AND EXISTS (
                     SELECT ucr FROM UserCourseRole ucr
                     WHERE ucr.course.id = c.id AND ucr.user.id = :userId

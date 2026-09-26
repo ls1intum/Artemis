@@ -9,6 +9,7 @@ artemis:
     repo-download-clone-path: ./local/server-integration-test/repos-download
     data-export-path: ./local/server-integration-test/data-exports
     build-logs-path: ./local/server-integration-test/build-logs
+    failed-build-logs-path: ./local/server-integration-test/failed-build-logs
     file-upload-path: ./local/server-integration-test/uploads
     submission-export-path: ./local/server-integration-test/exports
     checked-out-repos-path: ./local/server-integration-test/checked-out-repos
@@ -84,6 +85,8 @@ artemis:
             trigger-cooldown: 1ms
     atlas:
         enabled: true
+        atlasllm:
+            enabled: true # Production defaults this off; the agent and orchestrator tests need their beans, and the shared ChatClient is mocked.
         orchestrator:
             responses-api-enabled: false # General integration tests mock the shared ChatClient; adapter tests enable Responses explicitly.
         atlasml:
@@ -105,8 +108,9 @@ artemis:
                 - 127.0.0.0/8
 
 info:
-    operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
-    operatorAdminName: Some Universities Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
+    operatorName: Artemis Test Operations
+    operatorAdminName: Artemis Test Administrator
+    universityName: Artemis Test University
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
 
 spring:

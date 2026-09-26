@@ -3,7 +3,7 @@
 @if (currentCourseId !== undefined) {
     <div *titleBarActions class="flex items-center gap-2">
         @if (!hasNoTutorialGroups()) {
-            <tum-ui-search-field
+            <tumaet-ui-search-field
                 class="w-40 lg:w-64"
                 size="small"
                 data-testid="tutorial-groups-search"
@@ -15,24 +15,24 @@
         @if (isAtLeastInstructor()) {
             @if (configuration(); as tutorialGroupsConfiguration) {
                 <a
-                    tumUiButton
+                    tumAetUiButton
                     size="small"
                     severity="secondary"
                     variant="outlined"
                     data-testid="edit-configuration-btn"
-                    [tumUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate"
                     [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'edit']"
                 >
                     <fa-icon [icon]="faGear" />
                     <span class="sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
                 </a>
                 <a
-                    tumUiButton
+                    tumAetUiButton
                     size="small"
                     severity="secondary"
                     variant="outlined"
                     data-testid="free-periods-btn"
-                    [tumUiTooltip]="'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate"
                     [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days']"
                 >
                     <fa-icon [icon]="faUmbrellaBeach" />
@@ -45,10 +45,10 @@
         }
         @if (isAtLeastEditor()) {
             <a
-                tumUiButton
+                tumAetUiButton
                 size="small"
                 data-testid="create-tutorial-group-btn"
-                [tumUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate"
+                [tumAetUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate"
                 [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'create']"
             >
                 <fa-icon [icon]="faPlus" />
@@ -60,19 +60,20 @@
     @if (hasNoTutorialGroups()) {
         <div class="flex flex-col items-start gap-3">
             <!-- The message projects into an inline span, so the call to action lives beside it rather than inside. -->
-            <tum-ui-message severity="info" data-testid="tutorial-groups-intro" [text]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate" />
+            <tumaet-ui-message severity="info" data-testid="tutorial-groups-intro" [text]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate" />
             @if (isAtLeastInstructor()) {
                 <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
             }
         </div>
     } @else {
-        <tum-ui-table
+        <tumaet-ui-table
             data-testid="tutorial-groups-table"
             [columns]="columns()"
             [rows]="pagedRows()"
             [totalRecords]="totalRecords()"
             [trackBy]="trackByRow"
             [rowActions]="rowActions"
+            [rowHighlighted]="isOwnGroup"
             [loading]="isLoading()"
             [showSearch]="false"
             [striped]="true"

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.util.junit_extensions;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.TestExecutionListener;
@@ -56,5 +57,11 @@ public class GlobalCleanupListener implements TestExecutionListener {
         TestBucketTiming.printSummary();
         RepositoryExportTestUtil.safeDeleteDirectory(Path.of("local", "server-integration-test"));
         RepositoryExportTestUtil.safeDeleteDirectory(Path.of("local", "server-integration-test-independent-batch"));
+        // The failed build logs of the remaining contexts. Their roots are not removed here, but this store has to be, because it is keyed by submission id and those restart
+        // with every run: a file left behind by one run is what the next run reads for an unrelated submission that happens to get the same id.
+        for (String root : List.of("server-integration-test-batch", "server-integration-test-template", "server-integration-test-localci",
+                "server-integration-test-localci-batch")) {
+            RepositoryExportTestUtil.safeDeleteDirectory(Path.of("local", root, "failed-build-logs"));
+        }
     }
 }

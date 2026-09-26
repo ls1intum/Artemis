@@ -2,12 +2,12 @@
     <jhi-code-editor-header [showTabSizeSelector]="false" [fileName]="selectedFile()" [isLoading]="loadingCount() > 0" [secondary]="secondaryHeader()" />
     <div class="card-body card-body-monaco">
         @if (selectedFile()) {
-            @for (feedback of feedbackForSelectedFile(); track feedback.id + feedback.reference) {
+            @for (feedback of feedbackForSelectedFile(); track feedback.id + feedback.reference!) {
                 <!-- actual, stored feedback -->
                 <jhi-code-editor-tutor-assessment-inline-feedback
                     class="monaco-hidden-element"
                     [selectedFile]="selectedFile()!"
-                    [codeLine]="feedback.line"
+                    [codeLine]="getFeedbackLine(feedback)"
                     [feedback]="feedback"
                     [readOnly]="readOnlyManualFeedback()"
                     [highlightDifferences]="highlightDifferences()"
@@ -32,16 +32,6 @@
                     (onCancelFeedback)="cancelFeedback($event)"
                 />
             }
-            <!-- feedback suggestions -->
-            @for (suggestion of feedbackSuggestionsForSelectedFile(); track suggestion.id + suggestion.reference) {
-                <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
-                    [codeLine]="suggestion.line"
-                    [feedback]="suggestion"
-                    [course]="course()"
-                    (onAcceptSuggestion)="acceptSuggestion($event)"
-                    (onDiscardSuggestion)="discardSuggestion($event)"
-                />
-            }
         }
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"
@@ -56,7 +46,7 @@
             <p id="no-file-selected" class="text-center lead text-body-secondary pt-5" jhiTranslate="artemisApp.editor.selectFile"></p>
         } @else if (imagePreviewUrl(); as url) {
             <div id="image-file-preview" class="image-file-preview">
-                <img [src]="url" [alt]="selectedFile()!" />
+                <img [src]="url" [alt]="selectedFile()!" decoding="async" />
             </div>
         } @else if (imagePreviewError()) {
             <p id="image-file-preview-error" class="text-center lead pt-5" jhiTranslate="artemisApp.editor.imageFileLoadingFailed"></p>

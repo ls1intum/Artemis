@@ -12,7 +12,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
@@ -96,8 +95,14 @@ public class IrisMessage extends DomainObject {
     @Column(name = "created_memories", columnDefinition = "json")
     private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
 
+    /**
+     * Deliberately not annotated {@code @Lob}. The column is plain text on both databases - Liquibase {@code clob}
+     * becomes {@code longtext} on MySQL and {@code text} on PostgreSQL - whereas a CLOB on PostgreSQL is a large
+     * object: Hibernate binds and extracts the column as an {@code oid}, so reading a row whose {@code tool_activity}
+     * holds the converted JSON fails with "Bad value for type long". Without the annotation the converted JSON is
+     * bound and extracted as a string, which round-trips on both databases.
+     */
     @Nullable
-    @Lob
     @Convert(converter = IrisMessageToolActivityConverter.class)
     @Column(name = "tool_activity")
     private List<PyrisActivityDTO> toolActivity;

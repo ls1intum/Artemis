@@ -13,7 +13,7 @@
         />
 
         <div class="carousel-navigation">
-            <button class="nav-btn" [disabled]="currentIndex() === 0" (click)="previousQuestion()">
+            <button type="button" class="nav-btn" [disabled]="currentIndex() === 0" (click)="previousQuestion()">
                 <fa-icon [icon]="faChevronLeft" />
             </button>
 
@@ -21,6 +21,7 @@
                 <div class="carousel-dots">
                     @for (q of mcqSetData().questions; track $index) {
                         <button
+                            type="button"
                             class="dot"
                             [class.active]="currentIndex() === $index"
                             [class.correct]="isQuestionCorrect($index)"
@@ -33,13 +34,13 @@
                 <span class="carousel-counter">{{ currentIndex() + 1 }} / {{ totalQuestions() }}</span>
             }
 
-            <button class="nav-btn" [disabled]="currentIndex() === totalQuestions() - 1" (click)="nextQuestion()">
+            <button type="button" class="nav-btn" [disabled]="currentIndex() === totalQuestions() - 1" (click)="nextQuestion()">
                 <fa-icon [icon]="faChevronRight" />
             </button>
         </div>
 
         @if (allAnswered()) {
-            <button class="view-score-btn" (click)="showScore.set(true)" jhiTranslate="artemisApp.iris.mcq.viewScore"></button>
+            <button type="button" class="view-score-btn" (click)="showScore.set(true)" jhiTranslate="artemisApp.iris.mcq.viewScore"></button>
         }
     } @else {
         <div class="score-summary">
@@ -53,6 +54,7 @@
                 <div class="carousel-dots score-dots">
                     @for (q of mcqSetData().questions; track $index) {
                         <button
+                            type="button"
                             class="dot"
                             [class.correct]="isQuestionCorrect($index)"
                             [class.incorrect]="isQuestionIncorrect($index)"
@@ -62,7 +64,7 @@
                 </div>
             }
 
-            <button class="review-btn" (click)="showScore.set(false)" jhiTranslate="artemisApp.iris.mcq.reviewQuestions"></button>
+            <button type="button" class="review-btn" (click)="showScore.set(false)" jhiTranslate="artemisApp.iris.mcq.reviewQuestions"></button>
         </div>
     }
 </div>

@@ -18,6 +18,8 @@
             "new": "Neu",
             "expand": "Erweitern",
             "collapse": "Einklappen",
+            "expandMenu": "Menü aufklappen (Strg + M)",
+            "collapseMenu": "Menü einklappen (Strg + M)",
             "enabled": "Aktiviert",
             "disabled": "Deaktiviert"
         },
@@ -362,6 +364,7 @@
                     "required": "Bitte gib dein aktuelles Passwort ein."
                 },
                 "newpassword": {
+                    "maxbytes": "Dein Passwort ist zu lang. Verwende höchstens {{max}} UTF-8-Bytes; Umlaute und Emojis können jeweils mehrere Bytes benötigen.",
                     "required": "Ein neues Passwort wird benötigt.",
                     "minlength": "Das neue Passwort muss mindestens {{min}} Zeichen lang sein",
                     "maxlength": "Das neue Passwort darf nicht länger als {{max}} Zeichen sein",
@@ -417,6 +420,9 @@
             "openTime": "Uhr öffnen",
             "timeDialog": "Uhrzeit wählen",
             "timePlaceholder": "HH:mm"
+        },
+        "imageCropper": {
+            "sourceImage": "Bild zum Zuschneiden"
         }
     },
     "entity": {

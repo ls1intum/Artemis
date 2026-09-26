@@ -8,10 +8,11 @@ import { CourseNotificationViewingStatus } from 'app/notification/shared/entitie
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChevronUp, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { ButtonModule } from 'primeng/button';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component that displays real-time notification popups.
@@ -20,18 +21,17 @@ import { ButtonModule } from 'primeng/button';
  */
 @Component({
     selector: 'jhi-course-notification-popup-overlay',
-    imports: [CourseNotificationComponent, CommonModule, FaIconComponent, ButtonModule],
+    imports: [CourseNotificationComponent, CommonModule, FaIconComponent, ButtonModule, ArtemisTranslatePipe],
     templateUrl: './course-notification-popup-overlay.component.html',
     styleUrls: ['./course-notification-popup-overlay.component.scss'],
 })
 export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestroy {
-    protected readonly popupTimeInMilliseconds = 40000;
-
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);
     private readonly courseNotificationService = inject(CourseNotificationService);
-
     private readonly route = inject(ActivatedRoute);
     private readonly communicationState = inject(ConversationSelectionState);
+
+    protected readonly popupTimeInMilliseconds = 40000;
 
     protected readonly notifications = signal<CourseNotification[]>([]);
     protected readonly isExpanded = signal(false);
@@ -41,6 +41,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     // Icons
     protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
+    protected readonly faChevronUp = faChevronUp;
 
     ngOnInit(): void {
         this.courseNotificationWebsocketSubscription = this.courseNotificationWebsocketService.websocketNotification$.subscribe((notification) => {
@@ -145,7 +146,10 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * Handles clicks on the notification overlay.
      * Expands the overlay if it's not already expanded and there are multiple notifications.
      */
-    overlayClicked() {
+    overlayClicked(event?: Event) {
+        if (event?.target instanceof Element && event.target.closest('button, a, [role="button"]')) {
+            return;
+        }
         if (this.isExpanded() || this.notifications().length <= 1) {
             return;
         }
