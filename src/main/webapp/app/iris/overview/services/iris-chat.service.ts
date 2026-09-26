@@ -30,6 +30,8 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -57,6 +59,8 @@ export class IrisChatService implements OnDestroy {
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly contextService = inject(IrisChatContextService);
+    private readonly materialVersionService = inject(IrisMaterialVersionService);
+    private readonly alertService = inject(AlertService);
 
     private modeRequiresLLMAcceptance = new Map<ChatServiceMode, boolean>([
         [ChatServiceMode.TEXT_EXERCISE, true],
@@ -1142,6 +1146,51 @@ export class IrisChatService implements OnDestroy {
      * @param pointOut the navigation target (the caller should set forceOpen to reopen a closed view)
      */
     public navigateToPointOut(pointOut: IrisPointOut): void {
+        this.navigateToVersionedPointOut(pointOut, true);
+    }
+
+    /** Checks a pinned point-out against the unit's current material before allowing its exact position to be used. */
+    private navigateToVersionedPointOut(pointOut: IrisPointOut, markerClick: boolean): void {
+        const pinnedVersion = pointOut.pinnedVersion;
+        if (!pinnedVersion) {
+            this.navigateToPointOutUnchecked(pointOut);
+            return;
+        }
+        this.materialVersionService.getMaterialVersions(pointOut.lectureUnitId).subscribe({
+            next: (versions) => {
+                const currentVersion = pinnedVersion.kind === 'video' ? versions.videoVersion : versions.attachmentVersion;
+                if (currentVersion != undefined && currentVersion === pinnedVersion.version) {
+                    this.navigateToPointOutUnchecked(pointOut);
+                    return;
+                }
+                if (!markerClick) {
+                    this.acknowledgeRejectedPointOut(pointOut);
+                    return;
+                }
+                if (currentVersion != undefined) {
+                    this.alertService.warning('artemisApp.iris.pointOut.outdated.stale');
+                } else if (pinnedVersion.kind === 'video' && versions.hasVideo) {
+                    this.alertService.warning('artemisApp.iris.pointOut.outdated.unverified');
+                } else {
+                    this.alertService.error('artemisApp.iris.pointOut.outdated.gone');
+                }
+                this.navigateToPointOutUnit(pointOut);
+            },
+            error: (response: HttpErrorResponse) => {
+                if (!markerClick) {
+                    this.acknowledgeRejectedPointOut(pointOut);
+                    return;
+                }
+                if (![403, 404].includes(response.status)) {
+                    this.alertService.warning('artemisApp.iris.pointOut.outdated.unverified');
+                }
+                this.navigateToPointOutUnit(pointOut);
+            },
+        });
+    }
+
+    /** Performs the existing exact navigation after either a successful version check or for a legacy point-out. */
+    private navigateToPointOutUnchecked(pointOut: IrisPointOut): void {
         const courseId = this.getCourseId();
         const pageContext = this.contextService.page();
         const showsMarkersLecture = pageContext?.mode === ChatServiceMode.LECTURE && pageContext.entityId === pointOut.lectureId;
@@ -1163,6 +1212,23 @@ export class IrisChatService implements OnDestroy {
             return;
         }
         this.pointOutSubject.next(pointOut);
+    }
+
+    /** Opens the pointed-out unit without reusing a page or timestamp that could belong to older material. */
+    private navigateToPointOutUnit(pointOut: IrisPointOut): void {
+        const courseId = this.getCourseId();
+        if (pointOut.lectureId != undefined && courseId) {
+            void this.router.navigate(['/courses', courseId, 'lectures', pointOut.lectureId], {
+                queryParams: { unit: pointOut.lectureUnitId, combined: true },
+            });
+        }
+    }
+
+    /** Releases a pipeline whose live point-out could not be verified. */
+    private acknowledgeRejectedPointOut(pointOut: IrisPointOut): void {
+        if (pointOut.correlationId) {
+            this.sendCommandAck(pointOut.correlationId, false);
+        }
     }
 
     /**
@@ -1192,7 +1258,7 @@ export class IrisChatService implements OnDestroy {
                     // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
                     pointOut.correlationId = command.correlationId;
                     pointOut.expiresAt = command.expiresAt;
-                    this.pointOutSubject.next(pointOut);
+                    this.navigateToVersionedPointOut(pointOut, false);
                     return;
                 }
                 break;

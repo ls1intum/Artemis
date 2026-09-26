@@ -325,6 +325,11 @@
                 "tooltip": "Enable or disable Iris for your course. To configure custom instructions, click the configure button."
             },
             "pointOut": {
+                "outdated": {
+                    "stale": "The material Iris pointed to has changed, so the exact page or timestamp is not opened.",
+                    "gone": "The material Iris pointed to no longer exists, so the exact page or timestamp cannot be opened.",
+                    "unverified": "The material Iris pointed to cannot be checked right now, so the exact page or timestamp is not opened as a precaution."
+                },
                 "label": "Navigated to {{target}} in lecture unit {{unit}}",
                 "labelNoUnit": "Navigated to {{target}}",
                 "page": "page {{page}}",

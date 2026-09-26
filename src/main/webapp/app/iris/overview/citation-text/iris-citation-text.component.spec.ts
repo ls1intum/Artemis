@@ -8,7 +8,7 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { IrisCitationMaterialVersionService } from './iris-citation-material-version.service';
+import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
 import { escapeHtml, formatCitationLabel, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 
 describe('IrisCitationTextComponent', () => {
@@ -297,7 +297,7 @@ describe('IrisCitationTextComponent', () => {
             navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
             warning = vi.spyOn(TestBed.inject(AlertService), 'warning').mockImplementation(() => undefined as any);
             error = vi.spyOn(TestBed.inject(AlertService), 'error').mockImplementation(() => undefined as any);
-            getMaterialVersions = vi.spyOn(TestBed.inject(IrisCitationMaterialVersionService), 'getMaterialVersions');
+            getMaterialVersions = vi.spyOn(TestBed.inject(IrisMaterialVersionService), 'getMaterialVersions');
         });
 
         /** Every citation navigation carries this, so the lecture page knows a specific unit was asked for and can say so when it cannot find it. */

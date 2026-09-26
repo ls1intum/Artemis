@@ -232,7 +232,7 @@ public class LectureUnitResource {
     /**
      * GET /lecture-units/:lectureUnitId/material-versions : get the versions of the material the lecture unit currently offers.
      * <p>
-     * Iris citations are pinned to the version of the material they were generated from. The client calls this the moment a citation is clicked, so that the comparison
+     * Iris citations and point-outs are pinned to the version of the material they were generated from. The client calls this when one is followed, so that the comparison
      * reflects the material as it is right now rather than as it was when the chat was loaded.
      *
      * @param lectureUnitId the id of the lecture unit whose material versions should be fetched

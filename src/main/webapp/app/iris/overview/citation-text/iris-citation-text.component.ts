@@ -8,7 +8,7 @@ import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisCitationParsed, IrisCitationVersion } from './iris-citation-text.model';
-import { IrisCitationMaterialVersionService } from './iris-citation-material-version.service';
+import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
 
@@ -41,7 +41,7 @@ export class IrisCitationTextComponent {
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
     private readonly alertService = inject(AlertService);
-    private readonly materialVersionService = inject(IrisCitationMaterialVersionService);
+    private readonly materialVersionService = inject(IrisMaterialVersionService);
     private readonly destroyRef = inject(DestroyRef);
 
     /**

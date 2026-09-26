@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 
 /**
  * Unit tests for {@link IrisCommandService#executeCommand}. Covers the point-out dispatch: the
@@ -124,12 +125,19 @@ class IrisCommandServiceTest {
      * Builds a point-out command the way Pyris sends it: type plus a parameters map, omitting the parameters that are not set.
      */
     private static PyrisCommandDTO pointOutCommand(@Nullable Long lectureUnitId, @Nullable Integer page) {
+        return pointOutCommand(lectureUnitId, page, null);
+    }
+
+    private static PyrisCommandDTO pointOutCommand(@Nullable Long lectureUnitId, @Nullable Integer page, @Nullable Integer timestamp) {
         var parameters = new LinkedHashMap<String, JsonNode>();
         if (lectureUnitId != null) {
             parameters.put("lectureUnitId", JsonNodeFactory.instance.numberNode(lectureUnitId));
         }
         if (page != null) {
             parameters.put("page", JsonNodeFactory.instance.numberNode(page));
+        }
+        if (timestamp != null) {
+            parameters.put("timestamp", JsonNodeFactory.instance.numberNode(timestamp));
         }
         return new PyrisCommandDTO("pointOut", parameters);
     }
@@ -200,6 +208,62 @@ class IrisCommandServiceTest {
         assertThat(marker.get("parameters").get("lectureUnitName").stringValue()).isEqualTo("Sorting");
         assertThat(marker.get("parameters").get("lectureId").asLong()).isEqualTo(LECTURE_ID);
         assertThat(marker.has("lectureUnitId")).isFalse();
+    }
+
+    @Test
+    void executeCommand_pinsSlidePointOutToTheIngestedAttachmentVersionInDispatchAndMarker() {
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        stubMarkerWriteLock();
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(List.of(LECTURE_UNIT_ID))).thenReturn(List.of(new LectureUnitIngestedVersionsDTO(LECTURE_UNIT_ID, 3, 7)));
+        when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
+        var dispatched = ArgumentCaptor.forClass(Object.class);
+        var savedMarker = ArgumentCaptor.forClass(IrisMessage.class);
+        when(irisMessageService.saveMessage(savedMarker.capture(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
+
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
+        var request = (IrisCommandRequestWebsocketDTO) dispatched.getValue();
+        assertThat(request.parameters().get("materialType").stringValue()).isEqualTo("attachment");
+        assertThat(request.parameters().get("materialVersion").asInt()).isEqualTo(3);
+        var markerParameters = ((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getJsonNode().get("parameters");
+        assertThat(markerParameters.get("materialType").stringValue()).isEqualTo("attachment");
+        assertThat(markerParameters.get("materialVersion").asInt()).isEqualTo(3);
+    }
+
+    @Test
+    void executeCommand_pinsPointOutWithATimestampToTheIngestedVideoVersion() {
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(List.of(LECTURE_UNIT_ID))).thenReturn(List.of(new LectureUnitIngestedVersionsDTO(LECTURE_UNIT_ID, 3, 7)));
+        when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
+        var dispatched = ArgumentCaptor.forClass(Object.class);
+
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3, 42), null);
+
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
+        var parameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
+        assertThat(parameters.get("materialType").stringValue()).isEqualTo("video");
+        assertThat(parameters.get("materialVersion").asInt()).isEqualTo(7);
+    }
+
+    @Test
+    void executeCommand_replacesUntrustedVersionParametersAndKeepsPointOutUnversionedWithoutAnIngestedVersion() {
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(List.of(LECTURE_UNIT_ID))).thenReturn(List.of(new LectureUnitIngestedVersionsDTO(LECTURE_UNIT_ID, null, null)));
+        when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
+        var parameters = new LinkedHashMap<>(pointOutCommand(LECTURE_UNIT_ID, 3).parameters());
+        parameters.put("materialType", JsonNodeFactory.instance.stringNode("video"));
+        parameters.put("materialVersion", JsonNodeFactory.instance.numberNode(99));
+        var dispatched = ArgumentCaptor.forClass(Object.class);
+
+        commandService.executeCommand(job, new PyrisCommandDTO("pointOut", parameters), null);
+
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
+        var stampedParameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
+        assertThat(stampedParameters).doesNotContainKeys("materialType", "materialVersion");
     }
 
     @Test

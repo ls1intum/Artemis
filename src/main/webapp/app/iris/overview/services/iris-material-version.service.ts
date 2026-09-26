@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 /**
@@ -17,11 +17,11 @@ export interface LectureUnitMaterialVersions {
 /**
  * Fetches the versions of a lecture unit's material.
  * <p>
- * Called at the moment an Iris citation is clicked, so that the comparison against the version pinned into the citation reflects the material as it is right now, rather
+ * Called immediately before an Iris citation or point-out is followed, so that the comparison against its pinned version reflects the material as it is right now, rather
  * than as it was when the chat was loaded.
  */
-@Injectable({ providedIn: 'root' })
-export class IrisCitationMaterialVersionService {
+@Service()
+export class IrisMaterialVersionService {
     private readonly http = inject(HttpClient);
 
     getMaterialVersions(lectureUnitId: number): Observable<LectureUnitMaterialVersions> {

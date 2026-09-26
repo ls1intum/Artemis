@@ -103,10 +103,10 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     List<LectureUnit> findAllByIdsWithLecture(@Param("ids") Collection<Long> ids);
 
     /**
-     * Loads the versions of the material Iris has ingested for the given lecture units, used to pin a citation to the material it was generated from.
+     * Loads the versions of the material Iris has ingested for the given lecture units, used to pin citations and point-outs to the material they were generated from.
      * <p>
      * The versions are only reported once processing reached {@link ProcessingPhase#DONE}: while a unit is being reprocessed, the vector database still serves the previous
-     * revision, so the live versions would not describe the material a citation was actually generated from.
+     * revision, so the live versions would not describe the material a citation or point-out was actually generated from.
      *
      * @param ids the IDs of the lecture units to load
      * @return one entry per lecture unit found; units whose ID is not found are simply absent from the result
@@ -126,7 +126,7 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     /**
      * Loads the versions of the material a lecture unit currently offers.
      * <p>
-     * Iris citations are pinned to the version of the material they were generated from. Fetching the current versions at the moment a citation is clicked — rather than
+     * Iris citations and point-outs are pinned to the version of the material they were generated from. Fetching the current versions when they are followed — rather than
      * carrying them along with the chat — is what makes the comparison reflect the material as it is right now.
      * <p>
      * The transcription version is only reported for a {@link TranscriptionStatus#COMPLETED} transcription, because the version describes the last completed one: a run in
