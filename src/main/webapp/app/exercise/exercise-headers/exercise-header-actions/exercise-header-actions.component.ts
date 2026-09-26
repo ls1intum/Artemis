@@ -52,16 +52,20 @@ import {
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 
 interface InstructorActionItem {
     routerLink: string;
     icon?: IconDefinition;
     translation: string;
 }
+
+export const AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY = 'artemisApp.aiFeedbackPopoverDismissed';
 
 @Component({
     selector: 'jhi-exercise-header-actions',
@@ -84,6 +88,7 @@ interface InstructorActionItem {
         RequestFeedbackButtonComponent,
         NgbPopover,
         TranslatePipe,
+        TumAetUiButtonComponent,
     ],
     providers: [ExternalCloningService],
 })
@@ -95,6 +100,7 @@ export class ExerciseHeaderActionsComponent {
     private readonly participationService = inject(ParticipationService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly localStorageService = inject(LocalStorageService);
     private readonly profileService = inject(ProfileService);
 
     private readonly actionButtons = viewChildren(ExerciseActionButtonComponent);
@@ -203,25 +209,29 @@ export class ExerciseHeaderActionsComponent {
     });
 
     readonly userLLMSelection = computed(() => this.accountService.userIdentity()?.selectedLLMUsage);
-    readonly hasUserAcceptedLLM = computed(() => {
-        const selection = this.userLLMSelection();
-        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
-    });
+    readonly aiFeedbackPopoverDisabledDescriptionKey = computed(() =>
+        this.userLLMSelection() === LLMSelectionDecision.NO_AI
+            ? 'artemisApp.exercise.aiFeedbackPopover.descriptionNoAi'
+            : 'artemisApp.exercise.aiFeedbackPopover.descriptionDisabled',
+    );
+    readonly hasUserAcceptedLLM = computed(() => isAcceptedLLMSelection(this.userLLMSelection()));
     readonly showFeedbackPopover = computed(() => {
         const exercise = this.exercise();
         if (exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType !== AssessmentType.SEMI_AUTOMATIC) {
             // Athena feedback requests for programming exercises require manual assessment to be enabled
             return false;
         }
+        // Not gated on hasUserAcceptedLLM(): the popover itself renders either the AI-feedback request or a
+        // recommendation to enable AI, so it must also be reachable before the assessor has accepted AI usage.
         return (
             !this.examMode() &&
-            this.hasUserAcceptedLLM() &&
             this.athenaEnabled &&
             (exercise.course?.athenaFormativeFeedbackEnabled ?? false) &&
             (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)
         );
     });
     readonly hasProgrammingSubmission = computed(() => !!this.activeParticipationForCode()?.submissions?.some((submission) => submission.submitted));
+    readonly aiFeedbackPopoverDismissed = signal(this.localStorageService.retrieve<boolean>(AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY) ?? false);
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();
@@ -539,10 +549,21 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        // The request limit only blocks another Athena request, which is only reachable once AI is accepted.
+        if (this.hasUserAcceptedLLM() && countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+            return;
+        }
+        // "Don't show this again" only suppresses the AI-disabled recommendation; once AI is enabled, the popover should reappear.
+        if (!this.hasUserAcceptedLLM() && this.aiFeedbackPopoverDismissed()) {
             return;
         }
         this.submitPopoverRef()?.open();
+    }
+
+    dismissAiFeedbackPopoverPermanently() {
+        this.aiFeedbackPopoverDismissed.set(true);
+        this.localStorageService.store(AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY, true);
+        this.closeSubmitPopover();
     }
 
     @HostListener('document:click', ['$event'])

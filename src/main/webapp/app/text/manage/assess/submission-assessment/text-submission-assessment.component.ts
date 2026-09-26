@@ -35,7 +35,7 @@ import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-t
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
@@ -47,6 +47,9 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -76,6 +79,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private athenaService = inject(AthenaService);
     private translateService = inject(TranslateService);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
+    private profileService = inject(ProfileService);
 
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
@@ -254,9 +259,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore.set(this.computeTotalScore(this.assessments));
         this.isLoading.set(false);
 
-        if (this.isFeedbackSuggestionsEnabled) {
-            this.loadFeedbackSuggestions();
-        }
+        void this.maybeAutoFetchFeedbackSuggestions();
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
@@ -290,8 +293,44 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
-    get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled);
+    // `exercise` is a plain field, not a signal, so these must stay getters: a `computed()` would only track
+    // `hasAcceptedAiUsage()` and never re-run when a new exercise is assigned in setPropertiesFromServerResponse().
+    isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(getCourseFromExercise(this.exercise)?.athenaGradingFeedbackEnabled) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
+    }
+
+    requiresAiExperienceOptIn(): boolean {
+        return this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage();
+    }
+
+    hasChosenNoAi(): boolean {
+        return this.aiExperienceOptInService.hasChosenNoAi();
+    }
+
+    onOptInToAiFeedbackSuggestions(): void {
+        this.aiExperienceOptInService.promptForAiUsage(() => this.loadFeedbackSuggestions());
+    }
+
+    /**
+     * Decides whether to auto-fetch Athena feedback suggestions for the current submission, and fetches them if
+     * so. Split out of setPropertiesFromServerResponse() (which many synchronous callers depend on) so the AI
+     * Experience choice can be refreshed from the server first: another tab may have changed it since this tab
+     * cached it, and firing the request on a stale "accepted" cache only to have the server reject it produces a
+     * confusing generic error instead of the opt-in hint.
+     */
+    private async maybeAutoFetchFeedbackSuggestions(): Promise<void> {
+        if (!this.isFeedbackSuggestionsEnabled()) {
+            return;
+        }
+        // The router can reuse this component for another submission while the refresh is pending; that
+        // submission starts its own fetch, so this continuation must not start a duplicate one for it.
+        const submissionAtStart = this.submission;
+        const resultAtStart = this.result();
+        await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+        if (this.submission !== submissionAtStart || this.result() !== resultAtStart || this.requiresAiExperienceOptIn()) {
+            return;
+        }
+        this.loadFeedbackSuggestions();
     }
 
     private checkPermissions(result?: Result): void {
@@ -394,8 +433,18 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         this.loadingFeedbackSuggestions.set(true);
 
+        // The router can reuse this component for the next submission while this request is still in flight.
+        // Capture the identity of the submission/result the request was made for, and discard the response if
+        // either has since been replaced, so a stale suggestion cannot cross an assessment boundary.
+        const requestedSubmissionId = this.submission!.id;
+        const requestedResultId = this.result()!.id;
+        const isStale = () => this.submission?.id !== requestedSubmissionId || this.result()?.id !== requestedResultId;
+
         this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe({
             next: (feedbackSuggestions) => {
+                if (isStale()) {
+                    return;
+                }
                 feedbackSuggestions.forEach((suggestion) => {
                     if (suggestion instanceof TextBlockRef) {
                         // referenced feedback suggestion - add to existing text blocks but avoid conflicts
@@ -412,7 +461,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.hasAutomaticFeedback.set(feedbackSuggestions.length > 0);
                 this.loadingFeedbackSuggestions.set(false);
             },
-            error: () => this.loadingFeedbackSuggestions.set(false),
+            error: (error: HttpErrorResponse) => {
+                if (isStale()) {
+                    return;
+                }
+                this.loadingFeedbackSuggestions.set(false);
+                if (error.error?.errorKey === 'llmSelectionRequired') {
+                    // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it
+                    // and this request; refresh so the opt-in hint reacts instead of leaving this silently failed.
+                    this.aiExperienceOptInService.refreshAiExperience().subscribe();
+                }
+            },
         });
     }
 

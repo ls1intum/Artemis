@@ -48,6 +48,9 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -84,6 +87,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
     private datePipe = inject(ArtemisDatePipe);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
+    private profileService = inject(ProfileService);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
@@ -203,7 +208,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             ),
     );
 
-    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled));
+    readonly isFeedbackSuggestionsEnabled = computed(
+        () => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA),
+    );
+
+    readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
+    readonly hasChosenNoAi = computed(() => this.aiExperienceOptInService.hasChosenNoAi());
 
     constructor() {
         this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -392,8 +402,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if ((this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
-            await this.loadFeedbackSuggestions();
+        if (this.isFeedbackSuggestionsEnabled() && (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
+            // Another tab may have changed the AI Experience choice since this tab cached it; re-check right before
+            // deciding whether to auto-fetch, so a stale "accepted" cache doesn't fire a request the server will reject.
+            // The router can reuse this component for another submission while the refresh is pending; that
+            // submission runs its own eligibility check, so this continuation must not fetch on its behalf.
+            const manualResultAtStart = this.manualResult();
+            await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+            if (this.submission() === submission && this.manualResult() === manualResultAtStart && !this.requiresAiExperienceOptIn()) {
+                await this.loadFeedbackSuggestions();
+            }
         }
     }
 
@@ -414,6 +432,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
     }
 
+    onOptInToAiFeedbackSuggestions(): void {
+        this.aiExperienceOptInService.promptForAiUsage(() => void this.loadFeedbackSuggestions());
+    }
+
     /**
      * Load the feedback suggestions for the current submission from Athena.
      */
@@ -423,9 +445,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // before mutating anything, mirroring the guard in ModelingAssessmentEditorComponent.fetchAndApplyFeedbackSuggestions.
         const submissionAtStart = this.submission();
         const manualResultAtStart = this.manualResult();
+        if (!submissionAtStart) {
+            return;
+        }
         this.loadingFeedbackSuggestions.set(true);
         try {
-            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submissionAtStart!.id!))) ?? [];
+            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submissionAtStart.id!))) ?? [];
             if (this.submission() !== submissionAtStart || this.manualResult() !== manualResultAtStart) {
                 return;
             }
@@ -448,6 +473,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 // Auto-accepted suggestions are unsaved changes: warn on navigation away like any other edit.
                 this.hasPendingChanges = true;
                 this.handleFeedback();
+            }
+        } catch (error) {
+            if ((error as HttpErrorResponse)?.error?.errorKey === 'llmSelectionRequired') {
+                // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it and
+                // this request; refresh so the opt-in hint reacts instead of leaving this silently failed.
+                await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
             }
         } finally {
             if (this.submission() === submissionAtStart) {
@@ -564,6 +595,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 // there are no unassessed submissions
                 if (!response) {
                     this.submission.set(undefined);
+                    this.manualResult.set(undefined);
+                    this.isAssessor.set(false);
+                    this.automaticFeedback.set([]);
+                    this.hasAcceptedFeedbackSuggestions.set(false);
                     return;
                 }
 

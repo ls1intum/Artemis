@@ -40,11 +40,7 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
-import {
-    FeedbackSuggestionsBannerComponent,
-    feedbackSuggestionsNotice as resolveFeedbackSuggestionsNotice,
-} from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
 import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } from 'app/modeling/manage/assess/modeling-assessment-legend/modeling-assessment-legend.component';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
@@ -52,6 +48,9 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -68,7 +67,6 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-an
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
-        ModelingAssessmentTopLeftDirective,
         ModelingAssessmentTopRightDirective,
         ModelingAssessmentLegendComponent,
         AssessmentNotPossibleYetComponent,
@@ -84,6 +82,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private accountService = inject(AccountService);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
     private location = inject(Location);
     private translateService = inject(TranslateService);
     private complaintService = inject(ComplaintService);
@@ -91,6 +90,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private submissionService = inject(SubmissionService);
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private athenaService = inject(AthenaService);
+    private profileService = inject(ProfileService);
 
     readonly totalScore = signal(0);
     readonly submission = signal<ModelingSubmission | undefined>(undefined);
@@ -110,8 +110,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.hasAutomaticFeedback() && !this.result()?.completionDate) {
             highlights.push({
                 color: FeedbackHighlightColor.CYAN,
-                text: this.isFeedbackSuggestionsEnabled ? 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions' : 'artemisApp.modelingAssessment.legend.automaticAssessment',
-                info: this.isFeedbackSuggestionsEnabled
+                text: this.isFeedbackSuggestionsEnabled()
+                    ? 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions'
+                    : 'artemisApp.modelingAssessment.legend.automaticAssessment',
+                info: this.isFeedbackSuggestionsEnabled()
                     ? 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo'
                     : 'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable',
             });
@@ -171,19 +173,16 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
     }
 
-    get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled);
-    }
-
-    readonly feedbackSuggestionsNotice = computed(() =>
-        resolveFeedbackSuggestionsNotice({
-            isLoading: this.loadingFeedbackSuggestions(),
-            hasAutomaticFeedback: this.hasAutomaticFeedback(),
-            isAssessor: this.isAssessor(),
-            resultCompletionDate: this.result()?.completionDate,
-            isFeedbackSuggestionsEnabled: this.isFeedbackSuggestionsEnabled,
-        }),
+    readonly isFeedbackSuggestionsEnabled = computed(
+        () => Boolean(getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA),
     );
+
+    readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
+    readonly hasChosenNoAi = computed(() => this.aiExperienceOptInService.hasChosenNoAi());
+
+    onOptInToAiFeedbackSuggestions(): void {
+        this.aiExperienceOptInService.promptForAiUsage(() => void this.fetchAndApplyFeedbackSuggestions());
+    }
 
     ngOnInit() {
         void this.accountService.identity().then((user) => {
@@ -222,7 +221,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         try {
             return (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(exercise, submission))) ?? [];
         } catch (error) {
-            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
+            if ((error as HttpErrorResponse)?.error?.errorKey === 'llmSelectionRequired') {
+                // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it and
+                // this request; refresh so the opt-in hint reacts instead of showing a generic failure.
+                await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+            } else {
+                this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadFeedbackSuggestionsFailed');
+            }
             return [];
         }
     }
@@ -243,7 +248,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
                 if (!submission) {
-                    this.submission.set(undefined);
+                    this.resetAssessmentState();
                     this.loadingInitialSubmission.set(false);
                     this.isLoading.set(false);
                     return;
@@ -333,24 +338,46 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.isLoading.set(false);
 
-        const feedbacks = this.result()?.feedbacks ?? [];
+        void this.maybeAutoFetchFeedbackSuggestions(this.result()?.feedbacks ?? []);
+    }
+
+    /**
+     * Decides whether to auto-fetch Athena feedback suggestions for a freshly opened, unassessed submission, and
+     * fetches them if so. Split out of handleReceivedSubmission() (which many synchronous call sites depend on)
+     * so the AI Experience choice can be refreshed from the server first: another tab may have changed it since
+     * this tab cached it, and firing the request on a stale "accepted" cache only to have the server reject it
+     * produces a confusing generic error instead of the opt-in hint.
+     */
+    private async maybeAutoFetchFeedbackSuggestions(feedbacks: Feedback[]): Promise<void> {
         const automaticFeedbackCount = feedbacks.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length;
         // Referenced modeling suggestions are typed AUTOMATIC (unlike programming/text, which use MANUAL), so an
         // adapted suggestion still counts toward automaticFeedbackCount above even though it is no longer a fresh
         // assessment. Excluding any feedback that already carries a suggestion marker keeps this a genuine
         // "nothing assessed yet" check instead of re-fetching (and re-appending) suggestions on every reload.
         const hasPersistedSuggestions = feedbacks.some((feedback) => Feedback.getFeedbackSuggestionType(feedback) !== FeedbackSuggestionType.NO_SUGGESTION);
-        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && !hasPersistedSuggestions && feedbacks.length === automaticFeedbackCount) {
-            void this.fetchAndApplyFeedbackSuggestions();
+        if (!this.isFeedbackSuggestionsEnabled() || hasPersistedSuggestions || feedbacks.length !== automaticFeedbackCount) {
+            return;
         }
+        // The router can reuse this component for another submission while the refresh is pending; that
+        // submission runs its own eligibility check, so this continuation must not fetch on its behalf.
+        const submissionAtStart = this.submission();
+        const resultAtStart = this.result();
+        await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+        if (this.submission() !== submissionAtStart || this.result() !== resultAtStart || this.requiresAiExperienceOptIn()) {
+            return;
+        }
+        void this.fetchAndApplyFeedbackSuggestions();
     }
 
     private async fetchAndApplyFeedbackSuggestions(): Promise<void> {
         const submissionAtStart = this.submission();
         const resultAtStart = this.result();
+        if (!submissionAtStart || !this.modelingExercise()) {
+            return;
+        }
         this.loadingFeedbackSuggestions.set(true);
         try {
-            const suggestions = await this.loadFeedbackSuggestions(this.modelingExercise()!, submissionAtStart!);
+            const suggestions = await this.loadFeedbackSuggestions(this.modelingExercise()!, submissionAtStart);
             if (this.submission() !== submissionAtStart || this.result() !== resultAtStart) {
                 return;
             }
@@ -480,6 +507,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingExercise.set(undefined);
         this.result.set(undefined);
         this.model.set(undefined);
+        this.isAssessor.set(false);
+        this.hasAutomaticFeedback.set(false);
+        this.loadingFeedbackSuggestions.set(false);
     }
 
     onError(): void {

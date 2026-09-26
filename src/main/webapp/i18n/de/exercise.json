@@ -236,8 +236,11 @@
             "noAthenaFeedbackOnEmptySubmission": "Du kannst kein KI-Feedback für eine leere Abgabe anfordern.",
             "aiFeedbackPopover": {
                 "title": "KI-Feedback",
-                "description": "Du kannst KI-generiertes Feedback zu deiner Abgabe anfordern. Dieses Feedback ist vorläufig und kann Fehler enthalten. Bitte überprüfe wichtige Informationen.",
-                "selectedAiType": "Deine aktuelle KI-Auswahl: {{ type }}",
+                "description": "Erhalte KI-generiertes Feedback zu deiner Abgabe. Es ist vorläufig und kann Fehler enthalten. Bitte überprüfe wichtige Informationen.",
+                "descriptionDisabled": "Diese Aufgabe unterstützt KI-generiertes Feedback zu deiner Abgabe. Wähle deine KI-Erfahrung, um es für diese und zukünftige Aufgaben zu nutzen.",
+                "descriptionNoAi": "Ändere deine KI-Erfahrung, um KI-generiertes Feedback zu erhalten.",
+                "selectedAiType": "Verwendet: {{ type }}",
+                "dontShowAgain": "Nicht mehr anzeigen",
                 "aiType": {
                     "CLOUD_AI": "Cloud KI",
                     "LOCAL_AI": "Lokale KI"

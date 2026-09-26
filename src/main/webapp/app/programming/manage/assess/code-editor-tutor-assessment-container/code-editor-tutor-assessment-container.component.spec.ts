@@ -45,6 +45,8 @@ import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -58,6 +60,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Typed view onto the component's private members and methods the spec needs to reach,
@@ -250,6 +255,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         // Mock the ResizeObserver, which is not available in the test environment. Assign the mock class directly:
         // a vi.fn().mockImplementation returning a new instance is not usable as a constructor under vitest.
         global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        // Athena active by default; the "module inactive" case is covered explicitly below.
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+        // AccountService is not mocked in this spec (individual methods are spied as needed), so without this,
+        // refreshAiExperience()'s real HTTP call would hang forever waiting for a response nothing ever flushes.
+        vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(of(undefined));
     });
 
     afterEach(() => {
@@ -729,12 +739,22 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should show a message if no more unassessed submissions are present', () => {
         comp.exercise.set(exercise);
         comp.ngOnInit();
+        comp.isAssessor.set(true);
+        comp.manualResult.set({ id: 1 } as Result);
+        comp.automaticFeedback.set([{ text: 'automatic' }]);
+        comp.hasAcceptedFeedbackSuggestions.set(true);
 
         getProgrammingSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(undefined));
         comp.nextSubmission();
 
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
         expect(comp.submission()).toBeUndefined();
+        // Regression: stale assessor/result/feedback state from the previous submission must not keep the opt-in
+        // banner alive, and loadFeedbackSuggestions() must no longer be callable with an undefined submission.
+        expect(comp.isAssessor()).toBe(false);
+        expect(comp.manualResult()).toBeUndefined();
+        expect(comp.automaticFeedback()).toEqual([]);
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
     });
 
     it.each([undefined, 'genericErrorKey', 'complaintLock'])('should update assessment after complaint, errorKeyFromServer=%s', async (errorKeyFromServer: string | undefined) => {
@@ -824,6 +844,138 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         await internals(comp).onSubmissionReceived('123', submission);
         expect(comp.assessmentsAreValid()).toBe(true);
+    });
+
+    describe('automatic feedback suggestion loading on submission received', () => {
+        const buildNewAssessmentSubmission = (): ProgrammingSubmission => {
+            const guardExercise = { id: 55, maxPoints: 100, course: { athenaGradingFeedbackEnabled: true } } as unknown as ProgrammingExercise;
+            const guardParticipation = new ProgrammingExerciseStudentParticipation();
+            guardParticipation.exercise = guardExercise;
+            guardParticipation.id = 555;
+            const guardSubmission = new ProgrammingSubmission();
+            guardSubmission.id = 557;
+            const guardResult: Result = { id: 556, feedbacks: [], submission: guardSubmission } as Result;
+            guardSubmission.results = [guardResult];
+            guardSubmission.latestResult = guardResult;
+            guardSubmission.participation = guardParticipation;
+            guardParticipation.submissions = [guardSubmission];
+            return guardSubmission;
+        };
+
+        it('should not automatically fetch feedback suggestions when the assessor has not accepted AI usage', async () => {
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should automatically fetch feedback suggestions once Athena is active and the assessor has accepted AI usage', async () => {
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
+
+        it('clears accepted-suggestions and loading state when the next submission does not start a new load', async () => {
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([{ id: 1, detailText: 'stale' } as Feedback]));
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+            expect(comp.hasAcceptedFeedbackSuggestions()).toBe(true);
+
+            const nextSubmission = buildNewAssessmentSubmission();
+            (nextSubmission.participation!.exercise as ProgrammingExercise).course = { athenaGradingFeedbackEnabled: false } as Course;
+            await internals(comp).onSubmissionReceived('557', nextSubmission);
+
+            expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('discards an in-flight request and clears the loading state when the next submission does not start a new load', async () => {
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const pendingResponse = new Subject<Feedback[]>();
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(pendingResponse.asObservable());
+
+            const firstLoad = internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+            await Promise.resolve();
+            expect(comp.loadingFeedbackSuggestions()).toBe(true);
+
+            // A different id, so the still-pending request above is recognisable as stale once it resolves.
+            const nextSubmission = buildNewAssessmentSubmission();
+            nextSubmission.id = 558;
+            (nextSubmission.participation!.exercise as ProgrammingExercise).course = { athenaGradingFeedbackEnabled: false } as Course;
+            await internals(comp).onSubmissionReceived('558', nextSubmission);
+
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+            expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+
+            pendingResponse.next([{ id: 1, detailText: 'stale' } as Feedback]);
+            pendingResponse.complete();
+            await firstLoad;
+
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
+            expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should re-check the AI Experience choice before auto-fetching, so a No AI choice made in another tab is honored', async () => {
+            // Regression test: the assessor accepted AI usage earlier, but switched to No AI in another tab since;
+            // this tab's cached AiExperienceOptInService state is still stale until refreshed.
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockImplementation(() => {
+                vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+                return of(LLMSelectionDecision.NO_AI);
+            });
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch suggestions for a later submission loaded into the reused component while the AI Experience refresh is pending', async () => {
+            // Regression test: "Assess next" reuses this component. The pending refresh continuation of the first
+            // submission must not fetch on behalf of the second, which ran (and here failed) its own eligibility check.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const pendingRefresh = new Subject<LLMSelectionDecision | undefined>();
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(pendingRefresh.asObservable());
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
+
+            const firstLoad = internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+            await Promise.resolve();
+
+            const nextSubmission = buildNewAssessmentSubmission();
+            nextSubmission.id = 558;
+            (nextSubmission.participation!.exercise as ProgrammingExercise).course = { athenaGradingFeedbackEnabled: false } as Course;
+            await internals(comp).onSubmissionReceived('558', nextSubmission);
+
+            pendingRefresh.next(LLMSelectionDecision.CLOUD_AI);
+            pendingRefresh.complete();
+            await firstLoad;
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should refresh the AI Experience choice and skip the generic alert when the server rejects a stale-accepted suggestion request', async () => {
+            // Regression test: the server rejects the request with errorKey "llmSelectionRequired" when the assessor's
+            // AI Experience turns out (on the server, freshly) to be No AI, even though this tab thought it was enabled.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(of(LLMSelectionDecision.NO_AI));
+            vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(
+                throwError(() => ({ error: { errorKey: 'llmSelectionRequired' } }) as HttpErrorResponse),
+            );
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+            expect(comp.loadingFeedbackSuggestions()).toBe(false);
+        });
     });
 
     it('should keep the exam route and query parameters when replacing new with the loaded submission id', async () => {
@@ -1028,13 +1180,49 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should return true for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is set on course', () => {
-        comp.exercise.set(Object.assign({}, exercise, { course: { athenaGradingFeedbackEnabled: true } }) as unknown as ProgrammingExercise);
+        comp.exercise.set(cloneWith(exercise, { course: { athenaGradingFeedbackEnabled: true } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(true);
     });
 
     it('should return false for isFeedbackSuggestionsEnabled when athenaGradingFeedbackEnabled is absent', () => {
-        comp.exercise.set(Object.assign({}, exercise, { course: { athenaGradingFeedbackEnabled: false } }) as unknown as ProgrammingExercise);
+        comp.exercise.set(cloneWith(exercise, { course: { athenaGradingFeedbackEnabled: false } }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
+    });
+
+    it('should return false for isFeedbackSuggestionsEnabled when the Athena module is inactive, even if the course flag is set', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+        comp.exercise.set(cloneWith(exercise, { course: { athenaGradingFeedbackEnabled: true } }) as unknown as ProgrammingExercise);
+        expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
+    });
+
+    describe('assessor AI Experience opt-in hint', () => {
+        let aiExperienceOptInService: AiExperienceOptInService;
+
+        beforeEach(() => {
+            aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
+            comp.exercise.set(cloneWith(exercise, { course: { athenaGradingFeedbackEnabled: true } }) as unknown as ProgrammingExercise);
+        });
+
+        it('should require opt-in when the assessor has not accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(comp.requiresAiExperienceOptIn()).toBe(true);
+        });
+
+        it('should not require opt-in when the assessor has accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(true);
+            expect(comp.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should fetch feedback suggestions once the assessor opts in via the hint', () => {
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+            comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+            comp.onOptInToAiFeedbackSuggestions();
+
+            expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
     });
 
     it('should set loadingFeedbackSuggestions to true while fetching and false after', async () => {

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
@@ -74,13 +75,16 @@ public class AthenaResource {
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
     public AthenaResource(UserRepository userRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, CourseAthenaConfigRepository courseAthenaConfigRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService) {
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
+            UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
@@ -91,6 +95,7 @@ public class AthenaResource {
         this.modelingSubmissionApi = modelingSubmissionApi;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+        this.userAiPreferenceService = userAiPreferenceService;
     }
 
     @FunctionalInterface
@@ -119,6 +124,14 @@ public class AthenaResource {
 
         final var submission = submissionFetcher.apply(submissionId);
         final var user = userRepository.getUser();
+        // The assessor's own AI Experience consent gates every graded feedback-suggestion request: submission content
+        // must never reach Athena for an assessor who has not opted into AI usage, regardless of what the client sends.
+        // Same errorKey as the student-facing non-graded check in AthenaFeedbackSuggestionsService.extractSelectedLLMUsage,
+        // so the client can react to either one identically; skipAlert since the assessment editors react to it locally
+        // (re-showing the AI Experience opt-in hint) instead of a generic "not authorized" toast.
+        if (!userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())) {
+            throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);
+        }
 
         try {
             return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true, user));

@@ -14,7 +14,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
-import { ReplaySubject, of, throwError } from 'rxjs';
+import { ReplaySubject, Subject, of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -64,7 +64,12 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -208,6 +213,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         router = TestBed.inject(Router);
         vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
         vi.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
+        // Athena active by default; the "module inactive" case is covered explicitly below.
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
 
         fixture.changeDetectorRef.detectChanges();
     });
@@ -231,6 +238,101 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
         expect(textAssessmentArea).not.toBeNull();
+    });
+
+    describe('automatic feedback suggestion loading on submission received', () => {
+        const buildNewAssessmentParticipation = (): StudentParticipation => {
+            const guardExercise = { id: 55, type: ExerciseType.TEXT, course: { athenaGradingFeedbackEnabled: true } } as unknown as TextExercise;
+            const guardSubmission = {
+                submissionExerciseType: SubmissionExerciseType.TEXT,
+                id: 9999,
+                submitted: true,
+                type: SubmissionType.MANUAL,
+                text: 'Some text',
+            } as unknown as TextSubmission;
+            const guardResult = { id: 9998, correctionRound: 0, feedbacks: [], submission: guardSubmission } as unknown as Result;
+            guardSubmission.results = [guardResult];
+            const guardParticipation = {
+                type: ParticipationType.STUDENT,
+                id: 9997,
+                exercise: guardExercise,
+                submissions: [guardSubmission],
+            } as unknown as StudentParticipation;
+            guardSubmission.participation = guardParticipation;
+            return guardParticipation;
+        };
+
+        it('should not automatically load feedback suggestions when the assessor has not accepted AI usage', async () => {
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should automatically load feedback suggestions once Athena is active and the assessor has accepted AI usage', async () => {
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([]));
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
+
+        it('should re-check the AI Experience choice before auto-fetching, so a No AI choice made in another tab is honored', async () => {
+            // Regression test: the assessor accepted AI usage earlier, but switched to No AI in another tab since;
+            // this tab's cached AiExperienceOptInService state is still stale until refreshed.
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockImplementation(() => {
+                vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+                return of(LLMSelectionDecision.NO_AI);
+            });
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not start a duplicate fetch for a later submission loaded into the reused component while the AI Experience refresh is pending', async () => {
+            // Regression test: "Assess next" reuses this component. The pending refresh continuation of the first
+            // submission must not fetch again for the second, which starts its own fetch after its own refresh.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const firstRefresh = new Subject<LLMSelectionDecision | undefined>();
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience')
+                .mockReturnValueOnce(firstRefresh.asObservable())
+                .mockReturnValue(of(LLMSelectionDecision.CLOUD_AI));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([]));
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
+
+            firstRefresh.next(LLMSelectionDecision.CLOUD_AI);
+            firstRefresh.complete();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should refresh the AI Experience choice and skip loading when the server rejects a stale-accepted suggestion request', async () => {
+            // Regression test: the server rejects the request with errorKey "llmSelectionRequired" when the assessor's
+            // AI Experience turns out (on the server, freshly) to be No AI, even though this tab thought it was enabled.
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const refreshSpy = vi.spyOn(TestBed.inject(AiExperienceOptInService), 'refreshAiExperience').mockReturnValue(of(LLMSelectionDecision.NO_AI));
+            vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(throwError(() => ({ error: { errorKey: 'llmSelectionRequired' } }) as HttpErrorResponse));
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+            await fixture.whenStable();
+
+            expect(refreshSpy).toHaveBeenCalled();
+            expect(component.loadingFeedbackSuggestions()).toBe(false);
+        });
     });
 
     it('should use jhi-assessment-layout', () => {
@@ -810,5 +912,55 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should not invalidate assessment after saving', async () => {
         component.save();
         expect(component.assessmentsAreValid()).toBe(true);
+    });
+
+    describe('assessor AI Experience opt-in hint', () => {
+        let aiExperienceOptInService: AiExperienceOptInService;
+
+        beforeEach(() => {
+            aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
+            component.exercise = cloneWith(exercise, { course: { ...exercise.course, athenaGradingFeedbackEnabled: true } as Course }) as TextExercise;
+        });
+
+        it('should require opt-in when the assessor has not accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(true);
+        });
+
+        it('should not require opt-in when the assessor has accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(true);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should not require opt-in when feedback suggestions are not enabled for the course', () => {
+            component.exercise = cloneWith(exercise, { course: { ...exercise.course, athenaGradingFeedbackEnabled: false } as Course }) as TextExercise;
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should report feedback suggestions not enabled when the Athena module is inactive, even if the course flag is set', () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+            expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
+        });
+
+        it('should reflect a new exercise assigned after the predicates were already read, as happens when "Assess Next" reuses the component', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(true);
+
+            component.exercise = cloneWith(exercise, { course: { ...exercise.course, athenaGradingFeedbackEnabled: false } as Course }) as TextExercise;
+
+            expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should reload feedback suggestions once the assessor opts in via the hint', () => {
+            const loadFeedbackSuggestionsSpy = vi.spyOn(component, 'loadFeedbackSuggestions');
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+
+            component.onOptInToAiFeedbackSuggestions();
+
+            expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
+            expect(loadFeedbackSuggestionsSpy).toHaveBeenCalled();
+        });
     });
 });
