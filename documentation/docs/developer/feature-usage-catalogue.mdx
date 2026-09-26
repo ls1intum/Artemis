@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 146 features, 1038 REST endpoints in 28 modules, and 62 interaction overrides.
+Currently 20 product areas, 147 features, 1043 REST endpoints in 28 modules, and 62 interaction overrides.
 
 ## Courses
 
@@ -396,6 +396,14 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | programming | `ProgrammingExerciseExportImportResource` | 4 | 1 | 0 | 0 |
 | programming | `ProgrammingExerciseRepositoryExportResource` | 0 | 4 | 0 | 0 |
+
+### Security framework
+
+`PROGRAMMING_SECURITY_FRAMEWORK`: Activating and versioning the security framework policy of a programming exercise.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| programming | `SecurityFrameworkResource` | 3 | 2 | 0 | 0 |
 
 ## Quizzes
 

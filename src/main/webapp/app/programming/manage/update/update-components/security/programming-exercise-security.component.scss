@@ -1,0 +1,150 @@
+// Lifecycle state drives three theme-aware TUM UI tokens, set by the `.sf-card--{state}` modifiers
+// below and inherited by the pill and sync line: `--sf-accent` tints the card, border and pill,
+// `--sf-foreground` colours the pill label, and `--sf-syncline-color` colours the sync line. These
+// state tokens deliberately differ in dark mode, so the card follows theme and contrast automatically.
+// color-mix over `transparent` keeps the tint subtle and lets the parent surface show through.
+.sf-card {
+    --sf-accent: var(--tumaet-ui-muted-color);
+    --sf-foreground: var(--tumaet-ui-muted-color);
+    --sf-syncline-color: var(--tumaet-ui-muted-color);
+
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-color: color-mix(in srgb, var(--sf-accent) 30%, var(--tumaet-ui-border-color));
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--sf-accent) 9%, transparent);
+
+    &__main {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding: 0.95rem 1.1rem;
+    }
+
+    &__left {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+    }
+}
+
+.sf-card--inactive {
+    --sf-accent: var(--tumaet-ui-muted-color);
+    --sf-foreground: var(--tumaet-ui-muted-color);
+}
+
+.sf-card--generating {
+    --sf-accent: var(--tumaet-ui-state-info);
+    --sf-foreground: var(--tumaet-ui-state-info-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-info-foreground);
+}
+
+.sf-card--active {
+    --sf-accent: var(--tumaet-ui-state-success);
+    --sf-foreground: var(--tumaet-ui-state-success-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-success-foreground);
+}
+
+.sf-card--deleting {
+    --sf-accent: var(--tumaet-ui-state-warning);
+    --sf-foreground: var(--tumaet-ui-state-warning-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-warning-foreground);
+}
+
+.sf-card--error {
+    --sf-accent: var(--tumaet-ui-state-danger);
+    --sf-foreground: var(--tumaet-ui-state-danger-foreground);
+    --sf-syncline-color: var(--tumaet-ui-state-danger-foreground);
+}
+
+.sf-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.sf-desc {
+    margin-top: 0.3rem;
+    color: var(--tumaet-ui-muted-color);
+}
+
+.sf-version {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+}
+
+.sf-caps {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    margin: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tumaet-ui-muted-color);
+}
+
+.sf-syncline {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1.1rem;
+    border-top: 1px solid var(--tumaet-ui-border-color);
+    font-size: 0.78rem;
+    color: var(--sf-syncline-color);
+}
+
+.sf-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.12rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--sf-accent) 18%, transparent);
+    color: var(--sf-foreground);
+}
+
+.sf-dot {
+    display: inline-block;
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentcolor;
+}
+
+.sf-retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--tumaet-ui-primary-color);
+    cursor: pointer;
+}
+
+.sf-warning {
+    margin: 0 1.1rem 0.9rem;
+}
+
+.sf-spin {
+    animation: sf-rotate 0.9s linear infinite;
+}
+
+@keyframes sf-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}

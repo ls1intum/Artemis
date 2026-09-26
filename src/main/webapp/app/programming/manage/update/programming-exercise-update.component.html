@@ -42,6 +42,16 @@
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
             <hr class="mb-5" />
+            @if (isSimpleMode() && !isImportFromExistingExercise && !isImportFromFile && !isImportFromSharing && securityFrameworkEnabled() && securityFrameworkInstructor()) {
+                <!-- Security Framework activation (Objective 1). Advanced-mode path-level permissions are a separate, not-yet-built step. -->
+                <jhi-programming-exercise-security
+                    [programmingExercise]="programmingExercise"
+                    [selectedProgrammingLanguage]="getProgrammingExerciseCreationConfig().selectedProgrammingLanguage"
+                    [stagedActivation]="stagedSecurityActivation()"
+                    (stagedActivationChange)="stagedSecurityActivation.set($event)"
+                />
+                <hr class="mb-5" />
+            }
             @if (!isSimpleMode()) {
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
                 <hr class="mb-5" />

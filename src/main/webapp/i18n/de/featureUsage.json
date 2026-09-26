@@ -297,6 +297,10 @@
                         "name": "Programmieraufgaben importieren und exportieren",
                         "description": "Aufgaben importieren, exportieren und Repositories herunterladen."
                     },
+                    "PROGRAMMING_SECURITY_FRAMEWORK": {
+                        "name": "Sicherheitsframework",
+                        "description": "Die Sicherheitsframework-Richtlinie einer Programmieraufgabe aktivieren und versionieren."
+                    },
                     "QUIZ_LIVE": {
                         "name": "Live-Quiz",
                         "description": "Teilnahme an einem synchronisierten, gruppierten oder individuellen Quiz."

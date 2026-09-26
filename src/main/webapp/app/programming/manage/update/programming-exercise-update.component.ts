@@ -3,7 +3,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -13,6 +13,7 @@ import { switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -40,11 +41,14 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI, PROFILE_SECURITY_FRAMEWORK } from 'app/app.constants';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
+import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
+import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
+import { SecurityStagedActivation } from 'app/programming/shared/entities/security-framework-config.model';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
@@ -100,6 +104,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseModeComponent,
         ProgrammingExerciseLanguageComponent,
+        ProgrammingExerciseSecurityComponent,
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
@@ -116,11 +121,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
+    private readonly securityFrameworkService = inject(SecurityFrameworkService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly fileService = inject(FileService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -147,6 +154,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
     exerciseGradingComponent = viewChild(ProgrammingExerciseGradingComponent);
+    /** Create-mode Security Framework activation, owned here so it survives the simple <-> advanced mode switch that destroys the card. */
+    readonly stagedSecurityActivation = signal<SecurityStagedActivation | undefined>(undefined);
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
@@ -279,6 +288,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public theiaEnabled = false;
+    readonly securityFrameworkEnabled = signal(false);
+    readonly securityFrameworkInstructor = computed(() => this.accountService.isAtLeastInstructorInCourseWithId(this.courseId()));
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
     hyperionEnabledForAi = signal<boolean>(false);
@@ -586,6 +597,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
+                        // Normalize the course id to a number so instructor-role checks (numeric course-role ids) match on every route (course, exam, import).
+                        if (params['courseId'] !== undefined) {
+                            this.courseId.set(Number(params['courseId']));
+                        }
                         if (this.isImportFromFile) {
                             this.createProgrammingExerciseForImportFromFile();
                         }
@@ -610,11 +625,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 });
                                 // we need the course id  to make the request to the server if it's an import from file
                                 if (this.isImportFromFile || this.isImportFromSharing) {
-                                    this.courseId.set(params['courseId']);
+                                    this.courseId.set(Number(params['courseId']));
                                     this.loadCourseExerciseCategories(params['courseId']);
                                 }
                             } else if (params['courseId']) {
-                                this.courseId.set(params['courseId']);
+                                this.courseId.set(Number(params['courseId']));
                                 this.isExamMode.set(false);
                                 this.courseService.find(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
@@ -649,6 +664,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
         this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+        this.securityFrameworkEnabled.set(this.profileService.isProfileActive(PROFILE_SECURITY_FRAMEWORK));
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -985,11 +1001,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private onSaveSuccess(exercise: ProgrammingExercise) {
-        this.isSaving.set(false);
+        this.commitStagedSecurityThenNavigate(exercise, () => this.navigateAfterSave(exercise));
+    }
 
+    private navigateAfterSave(exercise: ProgrammingExercise) {
         if (this.goBackAfterSaving) {
             this.navigationUtilService.navigateBack();
-
             return;
         }
 
@@ -998,12 +1015,38 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
+     * Persists a Security Framework activation staged during create mode (no-op in edit mode or when
+     * nothing was staged), then runs {@link navigate}. The form stays locked (isSaving) until the
+     * activation settles, and the instructor is warned if it failed instead of navigating away as if
+     * the sandbox were active.
+     */
+    private commitStagedSecurityThenNavigate(exercise: ProgrammingExercise, navigate: () => void) {
+        const staged = this.stagedSecurityActivation();
+        const commitStagedSecurity =
+            staged && exercise.id !== undefined
+                ? this.securityFrameworkService.activate(exercise.id, staged.frameworkVersion).pipe(
+                      map(() => true),
+                      catchError(() => of(false)),
+                  )
+                : of(true);
+        commitStagedSecurity.subscribe((activated) => {
+            this.isSaving.set(false);
+            if (!activated) {
+                this.alertService.addAlert({
+                    type: AlertType.WARNING,
+                    message: 'artemisApp.programmingExercise.security.activationFailedOnCreate',
+                });
+            }
+            navigate();
+        });
+    }
+
+    /**
      * Handles successful save and navigates to the template repository in the code editor.
      *
      * @param exercise the created exercise
      */
     private onSaveSuccessWithAi(exercise: ProgrammingExercise) {
-        this.isSaving.set(false);
         this.isGeneratingWithAi.set(false);
 
         if (!exercise?.id) {
@@ -1011,7 +1054,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        this.openCodeEditorForTemplate(exercise);
+        // Persist any staged Security Framework activation before navigating to the code editor.
+        this.commitStagedSecurityThenNavigate(exercise, () => this.openCodeEditorForTemplate(exercise));
     }
 
     /**
@@ -1021,12 +1065,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     private openCodeEditorForTemplate(exercise: ProgrammingExercise) {
         if (!exercise?.id || !exercise.templateParticipation?.id) {
-            this.onSaveSuccess(exercise);
+            this.navigateAfterSave(exercise);
             return;
         }
         const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
         if (!courseId) {
-            this.onSaveSuccess(exercise);
+            this.navigateAfterSave(exercise);
             return;
         }
         const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
@@ -1095,6 +1139,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
         this.programmingExerciseLanguageForAi.set(language);
+        // The Security Framework only supports Java, so discard any staged activation when switching to another
+        // language. Otherwise the staged signal would survive the (hidden) security card and trigger a doomed
+        // activation request on save, which the server now also rejects.
+        if (language !== ProgrammingLanguage.JAVA) {
+            this.stagedSecurityActivation.set(undefined);
+        }
         return language;
     }
 
