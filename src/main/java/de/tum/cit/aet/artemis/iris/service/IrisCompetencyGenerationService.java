@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.COMPETENCY_GENERATION;
+
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
@@ -86,7 +88,7 @@ public class IrisCompetencyGenerationService {
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
-                (runId, runState, error) -> websocketService.send(user.getLogin(), websocketTopic(course.getId()),
+                (runId, runState, error) -> websocketService.send(user.getLogin(), COMPETENCY_GENERATION.at(course.getId()),
                         new IrisCompetencyGenerationStatusDTO(runState, error, null))
         );
         // @formatter:on
@@ -106,13 +108,9 @@ public class IrisCompetencyGenerationService {
         }
 
         var user = userRepository.findById(job.userId()).orElseThrow();
-        websocketService.send(user.getLogin(), websocketTopic(job.courseId()), IrisCompetencyGenerationStatusDTO.of(statusUpdate));
+        websocketService.send(user.getLogin(), COMPETENCY_GENERATION.at(job.courseId()), IrisCompetencyGenerationStatusDTO.of(statusUpdate));
 
         return job;
-    }
-
-    private static String websocketTopic(long courseId) {
-        return "competencies/" + courseId;
     }
 
 }

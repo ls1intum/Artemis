@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for the autonomous competency management orchestrator.
@@ -32,7 +33,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
  */
 @Conditional(AtlasLLMEnabled.class)
 @Lazy
-@FeatureUsage("ai/competency-orchestration")
+@FeatureUsage(UserFeature.COMPETENCY_ORCHESTRATION)
 @RestController
 @RequestMapping("api/atlas/orchestrator/")
 public class CompetencyOrchestrationResource {

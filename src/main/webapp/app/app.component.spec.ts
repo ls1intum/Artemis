@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
-import { NgClass, NgStyle } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Router, RouterModule, RouterOutlet } from '@angular/router';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { of } from 'rxjs';
@@ -74,7 +74,6 @@ describe('AppComponent', () => {
                 set: {
                     imports: [
                         NgClass,
-                        NgStyle,
                         RouterOutlet,
                         CdkScrollable,
                         MockComponent(AlertOverlayComponent),

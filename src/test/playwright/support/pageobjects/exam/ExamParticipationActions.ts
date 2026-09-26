@@ -126,7 +126,7 @@ export class ExamParticipationActions {
 
     async verifyGradingKeyOnFinalPage(gradeName: string) {
         const gradingKeyCard = this.page.locator('jhi-collapsible-card').filter({ hasText: 'Grading Key Grade Interval' });
-        await gradingKeyCard.locator('button.rotate-icon').click();
+        await gradingKeyCard.getByTestId('collapsible-card-toggle').click();
         await expect(gradingKeyCard.locator('tr.highlighted').locator('td', { hasText: gradeName })).toBeVisible();
     }
 }

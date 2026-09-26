@@ -47,6 +47,17 @@ import { getErrorMessage } from 'app/foundation/util/global.utils';
     ],
 })
 export class CompetencyManagementComponent implements OnInit, OnDestroy {
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly dialogService = inject(DialogService);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly accountService = inject(AccountService);
+    private readonly pendingTasks = inject(PendingTasks);
+
     protected readonly faEdit = faEdit;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -58,17 +69,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'Competencies';
     readonly CourseCompetencyType = CourseCompetencyType;
-
-    private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
-    private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly profileService = inject(ProfileService);
-    private readonly irisSettingsService = inject(IrisSettingsService);
-    private readonly featureToggleService = inject(FeatureToggleService);
-    private readonly localStorageService = inject(LocalStorageService);
-    private readonly accountService = inject(AccountService);
-    private readonly pendingTasks = inject(PendingTasks);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);

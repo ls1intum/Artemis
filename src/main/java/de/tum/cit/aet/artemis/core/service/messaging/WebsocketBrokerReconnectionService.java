@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
 import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
 import org.springframework.messaging.tcp.TcpOperations;
@@ -77,6 +79,12 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     private volatile boolean lastKnownBrokerAvailable = false;
 
+    /**
+     * Set as soon as the application context closes, i.e. before any bean is destroyed. From then on, the distributed data provider may already be shut down,
+     * and a broker that becomes unavailable is part of the shutdown rather than a reason to update the status or to reconnect.
+     */
+    private volatile boolean shuttingDown = false;
+
     public WebsocketBrokerReconnectionService(@Qualifier("messageBrokerTaskScheduler") TaskScheduler messageBrokerTaskScheduler,
             Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler,
             @Qualifier("websocketBrokerTcpClientSupplier") Supplier<TcpOperations<byte[]>> stompTcpClientSupplier, DistributedDataProvider distributedDataProvider,
@@ -95,9 +103,14 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         scheduleStatusPublisher();
     }
 
+    @EventListener(ContextClosedEvent.class)
+    void onContextClosed() {
+        shuttingDown = true;
+    }
+
     @Override
     public void onApplicationEvent(BrokerAvailabilityEvent event) {
-        if (stompBrokerRelayMessageHandler.isEmpty()) {
+        if (stompBrokerRelayMessageHandler.isEmpty() || shuttingDown) {
             return;
         }
 
@@ -232,7 +245,13 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         stopReconnectAttempts("application shutdown");
         if (brokerStatusMap != null) {
             if (lastPublishedMemberId != null) {
-                brokerStatusMap.remove(lastPublishedMemberId);
+                try {
+                    brokerStatusMap.remove(lastPublishedMemberId);
+                }
+                catch (RuntimeException e) {
+                    // The distributed data provider may already be shut down; its entries of this node are gone with it
+                    log.debug("Could not remove the websocket broker status of this node during shutdown: {}", e.getMessage());
+                }
             }
         }
         if (statusPublishTask != null) {

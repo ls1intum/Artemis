@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
+import { OnDestroy, Service, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SubjectObservablePair } from 'app/foundation/util/rxjs.utils';
@@ -11,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
  * Some components update the course object and can use the {@link updateCourse} method to make the changes available to the entire application.
  * Components that need to be notified about these changes can use the {@link subscribeToCourseUpdates} method.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseStorageService implements OnDestroy {
     private readonly accountService = inject(AccountService);
 

@@ -21,9 +21,9 @@ Key principles:
 **Angular best practices**
 
 <Callout variant={CalloutVariant.danger}>
-    **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code.** Use Angular's signal-based
-    APIs instead. An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules and will fail the build if legacy decorators are reintroduced.
-    In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components.
+    **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in client code.** Use Angular's
+    signal-based APIs instead. The `localRules/enforce-signal-apis` ESLint rule rejects these decorators throughout `src/main/webapp/app/` and `src/test/javascript/`, including
+    tests. Use signal APIs when changing an existing component; there is no unmigrated-module exception.
 </Callout>
 
 - Use **standalone components** instead of Angular modules: https://angular.dev/reference/migrations/standalone
@@ -68,36 +68,63 @@ Key principles:
     doubled = computed(() => this.count() * 2);
     ```
 
+- A `computed()`, `linkedSignal()`, `effect()` or `afterRenderEffect()` must read at least one signal, otherwise it runs once and never again. Either a signal read is
+  missing (`count` instead of `count()`), or the value is a constant and belongs in a plain `readonly` field. The `@angular-eslint/reactive-context-must-read-signal` rule
+  reports this, and `@angular-eslint/computed-must-return` reports a `computed()` that returns nothing.
 - Use the `inject()` function for dependency injection instead of constructor injection: https://angular.dev/reference/migrations/inject-function
+- Declare every `inject()` field before any other class member. Fields initialize in the order they are declared, so a getter or method that an earlier field initializer
+  calls would read `undefined` from a service declared further down, and TypeScript does not catch that indirection. The `@angular-eslint/inject-at-top` rule enforces this.
+- Declare an application-wide service with `@Service()` instead of `@Injectable({ providedIn: 'root' })`. It is the same provider, it is what `ng generate service` emits,
+  and it rejects constructor injection at compile time. The autofixable `@angular-eslint/prefer-service-decorator` rule enforces this, and `@Injectable` stays only
+  for a service with other provider metadata. A pipe that is also injected as a service is the exception the rule does not know about: it still reports the pipe, but
+  `@Service()` cannot share a class with `@Pipe`, so its autofix breaks the build with NG1006. Only the AOT compiler (`ng build`) catches that, not Vitest. Keep
+  `@Injectable` on such a pipe with a justified line-level disable, and do not run the autofix on it.
+
+    ```ts
+    // Don't - @Injectable for a root service, and the injected field after another member
+    @Injectable({ providedIn: 'root' })
+    export class CourseService {
+        private readonly resourceUrl = 'api/core/courses';
+        private readonly http = inject(HttpClient);
+    }
+
+    // Do
+    @Service()
+    export class CourseService {
+        private readonly http = inject(HttpClient);
+        private readonly resourceUrl = 'api/core/courses';
+    }
+    ```
+
 - Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
 - See the migration example: https://github.com/ls1intum/Artemis/pull/9299
 
 ### UI components
 
 <Callout variant={CalloutVariant.danger}>
-    **TUM UI is the target Artemis component system; Bootstrap, ng-bootstrap, and PrimeNG are deprecated migration dependencies.** Prefer a component from
-    [`@tumaet/ui-angular`](/developer/tum-ui-reference) whenever one exists. The long-term direction is to migrate the client entirely to the [TUM UI component
-    kit](/developer/guidelines/tum-ui-kit), built on Angular CDK and Tailwind tokens. Use PrimeNG only for capabilities TUM UI does not yet provide, and do not introduce Bootstrap
-    or ng-bootstrap in new work.
+    **TUM AET UI is the target Artemis component system; Bootstrap, ng-bootstrap, and PrimeNG are deprecated migration dependencies.** Prefer a component from
+    [`@tumaet/ui-angular`](/developer/tum-aet-ui-reference) whenever one exists. The long-term direction is to migrate the client entirely to the [TUM AET UI component
+    kit](/developer/guidelines/tum-aet-ui-kit), built on Angular Aria, Angular CDK, and Tailwind tokens. Use PrimeNG only for capabilities TUM AET UI does not yet provide, and do
+    not introduce Bootstrap or ng-bootstrap in new work.
 </Callout>
 
 Choose the smallest stable abstraction that meets the requirement:
 
 1. Use semantic native HTML when the platform already supplies the required behavior.
-2. Use an existing TUM UI component for a reusable control or visual pattern.
-3. If a reusable pattern is missing, add or evolve a TUM UI component around native HTML and stable
-   Angular CDK primitives. The pull request must include a concrete Artemis consumer; a second
-   application is not required.
+2. Use an existing TUM AET UI component for a reusable control or visual pattern.
+3. If a reusable pattern is missing, add or evolve a TUM AET UI component around native HTML, Angular
+   Aria, and stable Angular CDK primitives. The pull request must include a concrete Artemis
+   consumer; a second application is not required.
 4. Keep domain-specific composition, routing, requests, and application translations in Artemis.
-   Compose those features from TUM UI primitives instead of exporting application policy as a
+   Compose those features from TUM AET UI primitives instead of exporting application policy as a
    package API.
-5. Use PrimeNG only when the TUM UI gap cannot reasonably be closed in the same change. State the
+5. Use PrimeNG only when the TUM AET UI gap cannot reasonably be closed in the same change. State the
    missing capability and migration path in the pull request, and isolate the fallback so it can be
    replaced.
 
 Do not reimplement keyboard navigation, focus management, overlays, selection, or virtual scrolling
-when native HTML or Angular CDK already provides the behavior. Follow the
-[TUM UI package guide](/developer/guidelines/tum-ui-kit) for ownership, public API, stories, and
+when native HTML, Angular Aria, or Angular CDK already provides the behavior. Follow the
+[TUM AET UI package guide](/developer/guidelines/tum-aet-ui-kit) for ownership, public API, stories, and
 validation.
 
 <Callout variant={CalloutVariant.danger}>
@@ -202,7 +229,7 @@ set course(course: Course) {
 
 **Never navigate, and avoid writing template-bound signals, from an `effect()` — it can crash the client.** Both are imperative side effects that feed back into change detection and can form an infinite loop:
 
-- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory ([PR #12976](https://github.com/ls1intum/Artemis/pull/12976)). Drive navigation from explicit user actions or route guards/resolvers. If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
+- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory. Drive navigation from explicit user actions, or from a route guard or resolver that returns a redirect (see [Redirecting from guards and resolvers](#redirecting-from-guards-and-resolvers)). If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
 - **Writing a signal in an effect** carries the same loop risk (an effect that writes a signal it also reads re-triggers itself forever). Prefer `computed()` for derived state; if a write is truly necessary, never write a signal the effect reads and wrap the write in `untracked()`. This case cannot be linted reliably (`.set()` / `.update()` are indistinguishable from `Map`/`Set` mutations at the syntax level), so it is on the author and reviewer to avoid it.
 
 ```ts
@@ -281,7 +308,7 @@ export class ExampleComponent {
 }
 ```
 
-An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **errors** on `ngOnChanges` across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs. The checked paths are free of the hook, and error severity prevents an accidental reintroduction from passing CI.
+An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **errors** on `ngOnChanges` across `src/main/webapp/app`, `packages/tum-aet-ui/src/lib`, and `src/test/javascript`, including specs. The checked paths are free of the hook, and error severity prevents an accidental reintroduction from passing CI.
 
 The rule deliberately does **not** require an `@Component` / `@Directive` decorator. Angular invokes `ngOnChanges` on the component _instance_, so a hook inherited from an undecorated base class runs exactly like one declared on the component — requiring the decorator would leave that route open. Type-only declarations (`interface X { ngOnChanges(...) }`), object-literal properties, and `static ngOnChanges` helpers are not flagged, because Angular never calls those.
 
@@ -407,6 +434,64 @@ It's recommended to thoroughly test the component after each change to ensure it
 Standalone components can be generated with the Angular CLI using `ng g c <component-name> --standalone`.
 
 More info about standalone components: https://angular.dev/guide/components/importing#standalone-components
+
+### Templates
+
+Use the built-in control flow blocks `@if`, `@for` and `@switch`, not the structural directives `*ngIf`, `*ngFor` and `*ngSwitch`.
+
+Every `@switch` has a `@default`, which the `@angular-eslint/template/require-switch-default` rule enforces. When the cases cover every member of a union or an enum, write
+`@default never;`. It renders nothing, and the strict template check fails as soon as a member is added without a matching case. Otherwise, for example when the value can
+also be `undefined`, write an empty `@default {}` to show that rendering nothing is intended.
+
+```ts
+type ImportStep = 'upload' | 'review' | 'done';
+
+readonly step = signal<ImportStep>('upload');
+```
+
+{/* prettier-ignore */}
+```html
+@switch (step()) {
+    @case ('upload') {
+        <p>Choose a file</p>
+    }
+    @case ('review') {
+        <p>Check the rows</p>
+    }
+    @case ('done') {
+        <p>Import finished</p>
+    }
+    @default never;
+}
+```
+
+Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, not with `NgStyle`, and write a constant style as a static `style` attribute. The
+`@angular-eslint/template/prefer-style-binding` rule enforces this. A `[style]` object is compared by reference, so replace the object instead of mutating it. It also does
+not accept the unit suffixes `NgStyle` understands: write `{ 'top.px': y }` as `[style.top.px]="y"`.
+
+```html
+<!-- Don't -->
+<div [ngStyle]="{ position: 'fixed', 'top.px': position.y, color: disabled ? 'grey' : undefined }"></div>
+
+<!-- Do -->
+<div style="position: fixed" [style.top.px]="position.y" [style.color]="disabled ? 'grey' : undefined"></div>
+```
+
+Never bind `outerHTML`: replacing the element Angular is bound to breaks the next update. Use `[innerHTML]` to render markup inside an element. The
+`@angular-eslint/template/no-outerhtml` rule enforces this.
+
+Avoid `$any()` in templates. The `@angular-eslint/template/no-any` rule enforces this. Read native input values through a template reference and handle library events in
+typed component methods. Call signals when checking their value; `@angular-eslint/no-uncalled-signals` catches checks of the signal function itself.
+
+Use `NgOptimizedImage` and `ngSrc` for images whose intrinsic dimensions are known. Supply `width` and `height`, or use `fill` inside a positioned container with a defined
+size. Mark an image `priority` when it is expected to be the largest visible image on initial load. For user supplied images with unknown dimensions that must keep their
+intrinsic layout, use native `src` with appropriate `loading` and `decoding` attributes.
+
+Give every image a text alternative that conveys its purpose. Localize descriptions that users hear through a screen reader. Use `alt=""` for a decorative image or one
+whose information is already stated next to it; do not omit the attribute. The `@angular-eslint/template/alt-text` rule enforces its presence.
+
+Keep keyboard focus in the same order as the page content. Use native controls and arrange the markup in the intended focus order instead of assigning positive `tabindex`
+values. The `@angular-eslint/template/no-positive-tabindex` rule enforces this.
 
 ### Comments & Documentation
 
@@ -643,6 +728,8 @@ assignments than as a copy — see the `GradingComponent.gradingScale` getter.
 
 - We use `prettier` to style code automatically and `eslint` to find additional issues.
 - You can find the corresponding commands to invoke those tools in `package.json`.
+- Keep Angular lifecycle hooks synchronous and start async work in a separate method (`@angular-eslint/no-async-lifecycle-method`). Avoid repeating entries in component
+  metadata arrays (`@angular-eslint/no-duplicates-in-metadata-arrays`).
 
 ### Preventing Memory Leaks
 
@@ -693,7 +780,7 @@ that selector.
 
 ### Styling
 
-Use Tailwind for application layout and TUM UI for reusable component styling. Add component SCSS
+Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
 only when semantic utilities and component contracts cannot express a genuinely component-specific
 rule. Keep global styles in `src/main/webapp/content/scss` limited to application-wide foundations
 and legacy integration.
@@ -712,19 +799,19 @@ When an application component needs owned class selectors, use [BEM](https://get
 }
 ```
 
-**Bootstrap → TUM UI/Tailwind quick reference** (apply when migrating a module):
+**Bootstrap → TUM AET UI/Tailwind quick reference** (apply when migrating a module):
 
 | Bootstrap                                                       | Target                                                                                                                                     |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `tum-ui-button` or `[tumUiButton]` with `severity`, `size`, and `variant`; `tum-ui-button-group`                                           |
-| `badge` / `bg-success` badge                                    | `tum-ui-tag` with a semantic `severity`                                                                                                    |
-| `alert alert-*`                                                 | `tum-ui-message` with a semantic `severity`                                                                                                |
-| `card` / collapsible panel                                      | `tum-ui-card` / `tum-ui-panel`; a semantic element with Tailwind utilities for a presentation-only box                                     |
-| `table table-striped table-responsive`                          | `tum-ui-table`, native `<table tumUiTable>`, or `tum-ui-table-virtual-scroll` when virtualization is justified                             |
-| `form-control` / `form-group` / `form-check`                    | `[tumUiInput]`, `tum-ui-select`, `tum-ui-checkbox`, or `tum-ui-radio-button`, composed with Tailwind layout                                |
-| a filter or search input                                        | `tum-ui-search-field`, which brings its own magnifier and clear control; `jhi-search-filter` wraps it for Artemis                          |
-| tabs / pagination / progress / tooltip / date picker            | `tum-ui-tabs`, `tum-ui-paginator`, TUM UI progress components, `[tumUiTooltip]`, or `tum-ui-date-picker`                                   |
-| modal                                                           | `tum-ui-dialog`; keep feature state and result handling in the Artemis host                                                                |
+| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `tumaet-ui-button` or `[tumAetUiButton]` with `severity`, `size`, and `variant`; `tumaet-ui-button-group`                                  |
+| `badge` / `bg-success` badge                                    | `tumaet-ui-tag` with a semantic `severity`                                                                                                 |
+| `alert alert-*`                                                 | `tumaet-ui-message` with a semantic `severity`                                                                                             |
+| `card` / collapsible panel                                      | `tumaet-ui-card` / `tumaet-ui-panel`; a semantic element with Tailwind utilities for a presentation-only box                               |
+| `table table-striped table-responsive`                          | `tumaet-ui-table`, native `<table tumAetUiTable>`, or `tumaet-ui-table-virtual-scroll` when virtualization is justified                    |
+| `form-control` / `form-group` / `form-check`                    | `[tumAetUiInput]`, `tumaet-ui-select`, `tumaet-ui-checkbox`, or `tumaet-ui-radio-button`, composed with Tailwind layout                    |
+| a filter or search input                                        | `tumaet-ui-search-field`, which brings its own magnifier and clear control; `jhi-search-filter` wraps it for Artemis                       |
+| tabs / pagination / progress / tooltip / date picker            | `tumaet-ui-tabs`, `tumaet-ui-paginator`, TUM AET UI progress components, `[tumAetUiTooltip]`, or `tumaet-ui-date-picker`                   |
+| modal                                                           | `tumaet-ui-dialog`; keep feature state and result handling in the Artemis host                                                             |
 | `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*`, or flexbox                                                                           |
 | `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                          |
 | `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                             |
@@ -738,21 +825,21 @@ When an application component needs owned class selectors, use [BEM](https://get
 | Need                                    | Use                                                                                                           | Never                                                                             |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | brand / neutral / surface               | an Artemis semantic property, or an app-owned semantic utility when one is defined                            | `text-blue-500`, `bg-surface-200`, `bg-[#…]`, or a framework-owned primitive      |
-| state on a **TUM UI component**         | the component's semantic `severity`, such as `tum-ui-message`, `tum-ui-tag`, or `tum-ui-button`               | a color class that overrides the component                                        |
+| state on a **TUM AET UI component**     | the component's semantic `severity`, such as `tumaet-ui-message`, `tumaet-ui-tag`, or `tumaet-ui-button`      | a color class that overrides the component                                        |
 | state on **plain markup** (static)      | `text-state-danger`, `bg-state-success`, `border-state-warning`, or `text-state-info`                         | `text-danger` (Bootstrap), `text-(--danger)`, or `text-(--p-red-500)`             |
 | state that is **dynamic / conditional** | a semantic component input, or `[style.color]="cond ? 'var(--danger)' : undefined"` for irreducible inline UI | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"`, or a raw color value |
 
 The Artemis state tokens are `--danger`, `--success`, `--warning`, and `--info`. They are generated
-for light and dark mode and feed the TUM UI host-token adapter. Legacy PrimeNG also receives these
-roles during migration, but it does not own them. Semantic markup and TUM UI therefore share one
+for light and dark mode and feed the TUM AET UI host-token adapter. Legacy PrimeNG also receives these
+roles during migration, but it does not own them. Semantic markup and TUM AET UI therefore share one
 source of truth without component-level `dark:` color branches.
 
 The `state-*` names are Artemis's semantic namespace and avoid collisions with Bootstrap's
 unlayered color utilities during migration. `@theme inline` maps them directly to Artemis theme
 properties in `src/main/webapp/tailwind.css`.
 
-**Pick the tool by meaning, not by syntax.** Render a labelled status with `tum-ui-tag` or
-`tum-ui-message` and its semantic `severity`; the component owns the theme-aware visual treatment.
+**Pick the tool by meaning, not by syntax.** Render a labelled status with `tumaet-ui-tag` or
+`tumaet-ui-message` and its semantic `severity`; the component owns the theme-aware visual treatment.
 Use `text-state-*` only for irreducible inline color with no suitable component host, such as a
 translated validation hint or a state-colored status glyph. Do not add a component wrapper solely
 to avoid an otherwise appropriate semantic utility.
@@ -769,7 +856,7 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 ```html
 <div class="flex items-center justify-between gap-2">
     <h5 class="mb-0" jhiTranslate="..."></h5>
-    <tum-ui-button size="small" (clicked)="save()"> {{ 'entity.action.save' | artemisTranslate }} </tum-ui-button>
+    <tumaet-ui-button size="small" (clicked)="save()"> {{ 'entity.action.save' | artemisTranslate }} </tumaet-ui-button>
 </div>
 ```
 
@@ -779,15 +866,15 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 
 1. **Closure first, not directory.** Map what actually _renders_: the section's component tree **plus** the global shell (footer, navbar, alert overlay) and any runtime dialogs (`jhiDeleteButton → delete-dialog → confirm-entity-name`). For each shared/leaf component in that closure — if already locked, reuse it; if small and section-local, migrate it first as its own locked unit; if app-wide and not yet migrated, **leave it Bootstrap and do not put a Tailwind utility on its host** (a half-migrated shared component loses the cascade everywhere it renders).
 2. **Enumerate + triage.** Grep the closure's `.html` for Bootstrap classes and its `.scss`/`.ts` for hex / `var(--bs-*)` / class-strings. Discount false positives (shared spacing `mb-*`/`me-*`/`gap-*` are allowed; many `row`/`table` hits are `p-table` `styleClass` or custom classes).
-3. **Convert templates fully** (never half). Use the TUM UI and Tailwind quick-reference table above,
+3. **Convert templates fully** (never half). Use the TUM AET UI and Tailwind quick-reference table above,
    and convert spacing by target size rather than copying the class index. Import package symbols
    from `@tumaet/ui-angular`, never through a deep path.
-4. **Replace legacy behavior with the target primitive.** Use `tum-ui-dialog` for modal presentation,
-   `[tumUiTooltip]` for tooltips, and the corresponding TUM UI control where it exists. Keep
-   application state and results in the Artemis component. If TUM UI lacks a capability, either add
+4. **Replace legacy behavior with the target primitive.** Use `tumaet-ui-dialog` for modal presentation,
+   `[tumAetUiTooltip]` for tooltips, and the corresponding TUM AET UI control where it exists. Keep
+   application state and results in the Artemis component. If TUM AET UI lacks a capability, either add
    the reusable contract or document a contained PrimeNG fallback.
 5. **Convert colors in `.html`, `.scss`, and `.ts`.** Template lint cannot see every color in
-   TypeScript class maps or SCSS. Replace Bootstrap classes and raw values with TUM UI inputs,
+   TypeScript class maps or SCSS. Replace Bootstrap classes and raw values with TUM AET UI inputs,
    Tailwind semantic utilities, or Artemis semantic properties.
 6. **Strip dead SCSS** — prefer deleting component SCSS in favour of utilities; remove `::ng-deep` bandaids.
 7. **Drive Bootstrap hits to zero** across the closure — a module must be 100% converted before it renders correctly. Run `pnpm migrate:check <path>` to list what Bootstrap remains in a path and whether it is ready to lock; `pnpm migrate:status` shows the remaining-Bootstrap burndown by section to pick the next one.
@@ -797,28 +884,28 @@ Keep the ESLint, Stylelint, and Tailwind source lists synchronized as described 
 9. **Prove it** — `pnpm run test:rules && pnpm run lint && pnpm run stylelint && pnpm run prettier:check`.
 10. **Restart the dev server + verify light AND dark.** `@source` changes need a fresh Tailwind scan (`ng serve` does not reliably HMR `tailwind.css`); also check a _not-yet-migrated_ page that shares the same closure components, for spillover.
 
-| Symptom                                          | Cause                                                      | Fix                                         |
-| ------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------- |
-| Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                             |
-| Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                                      |
-| A legacy control renders grey or unstyled        | a `p-*` root class hand-painted on a bare element          | use TUM UI or the actual fallback component |
-| A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1)          |
+| Symptom                                          | Cause                                                      | Fix                                             |
+| ------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------- |
+| Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                                 |
+| Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                                          |
+| A legacy control renders grey or unstyled        | a `p-*` root class hand-painted on a bare element          | use TUM AET UI or the actual fallback component |
+| A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1)              |
 
 **Exit criteria.** Bootstrap can be removed after every rendering closure is migrated and locked.
 That removal enables Tailwind Preflight, removes the source allowlist and Bootstrap dependency, and
 drops Bootstrap-specific token aliases. PrimeNG can be removed after its remaining capability gaps
-have TUM UI replacements and all imports, theme setup, and PrimeUI-specific utilities are gone. The
-TUM UI host adapter keeps these migrations behind one boundary, so package component APIs and
+have TUM AET UI replacements and all imports, theme setup, and PrimeUI-specific utilities are gone. The
+TUM AET UI host adapter keeps these migrations behind one boundary, so package component APIs and
 semantic tokens do not need to change as either legacy framework leaves.
 
 ### Chart Instantiation
 
-Charts come from the TUM UI kit: `tum-ui-bar-chart`, `tum-ui-line-chart` and `tum-ui-doughnut-chart` in
+Charts come from the TUM AET UI kit: `tumaet-ui-bar-chart`, `tumaet-ui-line-chart` and `tumaet-ui-doughnut-chart` in
 `@tumaet/ui-angular`. They render inline SVG, so every axis tick, category label and data label is a real
 `<text>` node that can be selected, copied and searched, and each chart renders a visually hidden data table
 beside it for assistive technology.
 
-Do not build the SVG yourself. `app/shared-ui/chart/tum-ui-chart-adapters.ts` maps Artemis' series models onto
+Do not build the SVG yourself. `app/shared-ui/chart/tum-aet-ui-chart-adapters.ts` maps Artemis' series models onto
 the shape the components consume, so a chart stays a matter of data plus a small config object:
 
 | Helper                                         | Purpose                                                                              |
@@ -834,7 +921,7 @@ chart's container:
 ```html
 <h4 id="score-distribution-heading" jhiTranslate="statistics.score_distribution"></h4>
 <div style="height: 250px">
-    <tum-ui-bar-chart
+    <tumaet-ui-bar-chart
         [labels]="chartData().labels"
         [series]="chartData().series"
         [config]="chartConfig()"
@@ -847,7 +934,7 @@ chart's container:
 
 ```ts
 readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.DARK_BLUE]));
-readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
     percentScale: true,
     xAxis: { label: this.xAxisLabel() },
     yAxis: { max: this.yScaleMax() },
@@ -873,13 +960,13 @@ Here are the rules to follow when adding a chart:
 
     ```html
     <!-- Preferred: reuse the translation key of the chart's own visible heading -->
-    <tum-ui-line-chart [labels]="…" [series]="…" [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate" />
+    <tumaet-ui-line-chart [labels]="…" [series]="…" [ariaLabel]="'artemisApp.courseStatistics.activeStudents' | artemisTranslate" />
 
     <!-- Or name it from the visible heading, when that heading has a stable unique id -->
-    <tum-ui-bar-chart [labels]="…" [series]="…" [ariaLabelledBy]="'active-students-heading'" />
+    <tumaet-ui-bar-chart [labels]="…" [series]="…" [ariaLabelledBy]="'active-students-heading'" />
 
     <!-- Or, ONLY if the chart is decorative because every figure it shows is also rendered as text next to it -->
-    <tum-ui-doughnut-chart [labels]="…" [series]="…" aria-hidden="true" />
+    <tumaet-ui-doughnut-chart [labels]="…" [series]="…" aria-hidden="true" />
     ```
 
     The `localRules/require-chart-accessible-name` ESLint rule enforces this for external templates and inline
@@ -946,6 +1033,140 @@ addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
 }
 ```
 
+### Redirecting from guards and resolvers
+
+A route guard or resolver runs while the router is in the middle of a navigation. To send the user somewhere else, it
+hands the router a redirect and never navigates itself:
+
+- **A guard** — a `CanActivateFn`, `CanActivateChildFn`, `CanMatchFn` or `CanDeactivateFn`, or a class implementing
+  `CanActivate`, `CanActivateChild`, `CanMatch` or `CanDeactivate` — returns or emits `router.createUrlTree(...)`. When the
+  redirect needs navigation options such as `replaceUrl`, `skipLocationChange` or `state`, it returns
+  `new RedirectCommand(router.createUrlTree(...), options)` instead.
+- **A resolver** — a `ResolveFn` or a class implementing `Resolve` — returns or emits a `RedirectCommand`. A `UrlTree`
+  returned from a resolver becomes the resolved route data; it does not redirect.
+- **Inside a resolver's observable or promise chain**, such as an RxJS `map` callback or a helper the resolver calls,
+  it can throw the `RedirectCommand`, which extends `Error`. The router handles it as a redirect.
+  **Guards must return or emit their redirect, including inside callbacks.** Throwing a `RedirectCommand` bypasses
+  guard-result ordering and can redirect before an earlier guard rejects the route.
+
+The router then cancels the running navigation with a `NavigationCancel` event whose code is
+`NavigationCancellationCode.Redirect`, not with a `NavigationError`, and navigates to the target. The redirect keeps
+the `replaceUrl` and `skipLocationChange` of the navigation it replaces, unless the `RedirectCommand` sets them. It
+does not keep the `state`; pass it in the `RedirectCommand` options when the target needs it. The first navigation
+after the page loads and every back or forward navigation run with `replaceUrl`, so a redirect from a bookmark, a
+reload or the **Back** button replaces the guarded URL in the browser history instead of adding an entry after it. A
+caller awaiting `router.navigate(...)` for the original navigation receives the redirect's result.
+
+Calling `router.navigate(...)` or `router.navigateByUrl(...)` from a guard or resolver cancels the running navigation
+on the spot, with the code `NavigationCancellationCode.SupersededByNewNavigation`, and starts a new one. That has
+three costs:
+
+- **The options of the original navigation are lost.** The new navigation has neither its `replaceUrl` nor its
+  `skipLocationChange`. For a bookmark, a reload or the **Back** button, the target is therefore added after the
+  guarded URL, so **Back** leads to the guarded URL, which redirects forward again and traps the user.
+- **The caller is told the navigation failed.** A caller awaiting `router.navigate(...)` for the original navigation
+  receives `false`, although the user ends up on the target.
+- **The navigation happens even when another guard rejects the route.** Once one guard rejects, the router stops
+  waiting for the others, but an asynchronous guard keeps running and still navigates when it finishes. A
+  synchronous guard navigates before the guards listed ahead of it have decided.
+
+A `return false` after the call, or a resolver completing with `EMPTY`, changes none of this: the navigation is
+already cancelled when the guard or resolver returns, so those values only satisfy the return type.
+
+```ts
+// Don't - navigate from the guard; the returned false has no effect any more
+canActivate(): boolean {
+    if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE)) {
+        void this.router.navigate(['/']);
+        return false;
+    }
+    return true;
+}
+
+// Do - return the redirect
+canActivate(): true | UrlTree {
+    if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE)) {
+        return this.router.createUrlTree(['/']);
+    }
+    return true;
+}
+```
+
+In a resolver that decides inside its RxJS pipeline, throwing the redirect keeps the resolver's type
+`Observable<Course>`, because a redirect is never emitted as data:
+
+```ts
+// Don't - navigate from the resolver; completing with EMPTY has no effect any more
+switchMap((course: Course) => {
+    if (!course.isAtLeastTutor) {
+        this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
+        void this.router.navigate(['/courses']);
+        return EMPTY;
+    }
+    return of(course);
+}),
+
+// Do - throw the redirect; the alert is shown before the router redirects
+map((course: Course) => {
+    if (!course.isAtLeastTutor) {
+        this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
+        throw new RedirectCommand(this.router.createUrlTree(['/courses']));
+    }
+    return course;
+}),
+```
+
+A thrown `RedirectCommand` travels through the rest of the pipeline like any other error, so a `catchError` after it
+must pass on what it does not handle (`return throwError(() => error)`) rather than swallow it.
+
+**Several guards on one route.** The guards in one `canActivate` array run together, and the router applies the first
+emitted result that is not `true`, in array order, waiting for the guards ahead of it. A returned or emitted redirect
+therefore takes effect only when every guard before it returns `true`. A thrown redirect bypasses this ordering.
+On a route guarded by `[UserRouteAccessService, LocalCIGuard]`, a user who lacks the route's authority is rejected and
+stays where they were, and only a user who passes the authority check is redirected. List the guard whose outcome takes precedence first.
+
+To test a guard or resolver, inject the real `Router` with `TestBed.inject(Router)` and assert the redirect itself,
+not a spy on `navigate`:
+
+```ts
+const result = guard.canActivate();
+expect(result).toBeInstanceOf(UrlTree);
+expect(router.serializeUrl(result as UrlTree)).toBe('/');
+```
+
+For a thrown redirect, subscribe with an `error` callback and check that it receives a `RedirectCommand` whose
+`redirectTo` serializes to the expected URL. To test how guards combine, or what ends up in the browser history,
+configure the routes with `provideRouter(...)` and `provideLocationMocks()`, navigate, and assert `router.url` and the
+`urlChanges` of the `SpyLocation`; `localci-guard.spec.ts` shows both.
+
+The `localRules/no-navigation-in-guard-or-resolver` ESLint rule enforces this under `src/main/webapp` at error level.
+It checks:
+
+- functional guards and resolvers declared with one of the types above, whether as a variable annotation, an `as` or
+  `satisfies` assertion, or the return type of a function that creates them;
+- the `canActivate`, `canActivateChild`, `canMatch`, `canDeactivate` and `resolve` methods of classes implementing the
+  matching interface;
+- guards and resolvers declared in a route, inline or by the name of a function or class in the same file.
+
+The check follows the guard or resolver into nested callbacks, into the methods of its own class that it reaches
+through `this`, and into functions of the same file that it references. It reports calls on a `Router` obtained with
+`inject(Router)` or through constructor injection. Navigation from components is unaffected, and so is a component's
+own `canDeactivate()` method, which is not one of Angular's guard interfaces. A navigation sequence that a single
+redirect cannot express needs a line-level `eslint-disable-next-line` with the reason.
+
+The check reads one file at a time and does not resolve types, so it does not report:
+
+- navigation inside an injected service that the guard or resolver calls;
+- a `Router` held in a field of a base class, copied into a local (`const router = this.router`), or obtained through
+  `injector.get(Router)`;
+- guard types and the `Router` imported through a namespace import (`import * as router from '@angular/router'`);
+- static methods called through the class name;
+- route objects that have none of `path`, `matcher`, `component`, `loadComponent`, `children`, `loadChildren` and
+  `redirectTo`.
+
+Moving the call into a service therefore silences the rule without solving the problem. Return the redirect from the
+guard or resolver itself.
+
 ## Advanced Topics
 
 ### WebSocket Subscriptions
@@ -970,6 +1191,6 @@ Use `placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}
 
 **Use ArtemisTimeAgoPipe instead of TimeAgoPipe**
 
-Do not use `<span [tumUiTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>`
+Do not use `<span [tumAetUiTooltip]="submittedDate | artemisDate">{{ submittedDate | amTimeAgo }}</span>`
 
-Use `<span [tumUiTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>`
+Use `<span [tumAetUiTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>`

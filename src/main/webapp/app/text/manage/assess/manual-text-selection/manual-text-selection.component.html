@@ -1,6 +1,16 @@
 <div>
     <!-- DO NOT ADD LINEBREAKS INSIDE div.manual-text-selection-area -->
     @for (word of submissionWords(); track $index; let i = $index) {
-        <span class="manual-text-selection-area" tabindex="-1" (click)="calculateIndex(i); selectWord(word)">{{ ' ' + word }}</span>
+        <span
+            class="manual-text-selection-area"
+            tabindex="0"
+            (click)="calculateIndex(i); selectWord(word)"
+            #keyboardAction4
+            role="button"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+            >{{ ' ' + word }}</span
+        >
     }
 </div>

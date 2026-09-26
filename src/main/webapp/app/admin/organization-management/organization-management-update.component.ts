@@ -4,7 +4,7 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CustomPatternValidatorDirective } from 'app/foundation/validators/custom-pattern-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,9 +19,9 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
-        TumUiButtonDirective,
-        TumUiInputDirective,
-        TumUiMessageComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
         TranslateDirective,
         CustomPatternValidatorDirective,
         FaIconComponent,

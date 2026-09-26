@@ -68,6 +68,14 @@ interface CreateLectureOption {
     ],
 })
 export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComponent {
+    private readonly alertService = inject(AlertService);
+    private readonly lectureService = inject(LectureService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly calendarService = inject(CalendarService);
+    private readonly translateService = inject(TranslateService);
+    private readonly router = inject(Router);
+
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
@@ -77,14 +85,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    private readonly alertService = inject(AlertService);
-    private readonly lectureService = inject(LectureService);
-    private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly calendarService = inject(CalendarService);
-    private readonly translateService = inject(TranslateService);
-    private readonly router = inject(Router);
 
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 

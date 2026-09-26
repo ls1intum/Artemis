@@ -113,7 +113,7 @@ test.describe('Modeling assessment workspace', { tag: '@fast' }, () => {
         ).toBe(true);
 
         const unreferencedFeedback = workspace.locator('.unreferenced-feedback');
-        await expect(unreferencedFeedback.locator('tum-ui-message')).toBeVisible();
+        await expect(unreferencedFeedback.locator('tumaet-ui-message')).toBeVisible();
         await expect(unreferencedFeedback.locator('jhi-unreferenced-feedback-detail')).toHaveCount(0);
     });
 });

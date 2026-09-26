@@ -13,6 +13,10 @@
                 "introText": "Dieser Dialog kann zum Hochladen von PDF-Dateien und zum Extrahieren von Bildern für registrierte Studenten verwendet werden.",
                 "dialogText": "Jeder Eintrag in der Eingabedatei muss entweder einen Wert für die Matrikelnummer, das Login oder die E-Mail enthalten.\nDie Angaben zu Name und Vorname sind optional.",
                 "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
+                "pdfExampleAlt": "Beispiel-PDF-Seite mit Kopfzeile und zwei Spalten mit Studierendenfotos und Angaben zur Identifizierung",
+                "studentPhotoAlt": "Foto von {{ login }}",
+                "studentPhotoMissingAlt": "Kein Foto für {{ login }} verfügbar",
+                "studentSignatureAlt": "Unterschrift von {{ login }}",
                 "pdfFile": {
                     "label": "PDF-Datei auswählen",
                     "tooltip": "Bitte wähle eine PDF-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."

@@ -11,7 +11,6 @@
 
 export interface CodeGenerationRequest {
     repositoryType?: CodeGenerationRequestRepositoryTypeEnum;
-    checkOnly?: boolean;
     initialAutoGeneration?: boolean;
     selectedFeedbackThreadIds?: Array<number>;
 }

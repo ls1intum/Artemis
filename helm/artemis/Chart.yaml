@@ -5,7 +5,7 @@ description: >-
 type: application
 
 # Chart version. Bump on every change to the chart or its templates (SemVer).
-version: 0.2.0
+version: 0.3.0
 
 # The Artemis application version this chart defaults to. Overridable via `image.tag`.
 # The application image must contain the LocalCI Kubernetes runner.

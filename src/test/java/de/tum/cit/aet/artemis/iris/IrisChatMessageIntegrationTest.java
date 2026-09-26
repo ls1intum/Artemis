@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.FINISHED;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.RUNNING;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
@@ -82,6 +83,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
@@ -146,6 +148,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisChatSessionService irisChatSessionService;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
 
     private AtomicBoolean pipelineDone;
 
@@ -283,7 +288,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         // (2) one RUNNING run-state status update emitted when the run is dispatched (PyrisPipelineService#executePipeline),
         // (3) the final LLM answer message (AbstractIrisChatSessionService#handleResultStatusUpdate).
         // Three sends per run, six for the two messages this test drives.
-        verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + session.getId()), any());
+        verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/" + session.getId()), any());
         assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).hasSize(4);
     }
 
@@ -695,6 +700,36 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
         assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PyrisRunState.class, names = { "RUNNING", "FINISHED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusUpdateForDeletedSession_isDroppedAndRemovesJob(PyrisRunState runState) throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        irisChatSessionRepository.deleteById(session.getId());
+
+        // a result on the terminal update, none on the intermediate one, so both session loads are covered
+        String result = runState == FINISHED ? "Hello World" : null;
+        sendStatus(jobId, result, runState, null, null);
+
+        assertThat(pyrisJobService.getJob(jobId)).isNull();
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void partialStatusUpdateForDeletedSession_isDroppedAndRemovesJob() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        irisChatSessionRepository.deleteById(session.getId());
+
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, headers);
+
+        assertThat(pyrisJobService.getJob(jobId)).isNull();
     }
 
     // =========================================================================

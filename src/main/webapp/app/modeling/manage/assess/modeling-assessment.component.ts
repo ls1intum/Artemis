@@ -203,7 +203,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         });
     }
 
-    async ngAfterViewInit(): Promise<void> {
+    ngAfterViewInit(): void {
+        void this.initializeModelingAssessmentComponentView();
+    }
+
+    private async initializeModelingAssessmentComponentView(): Promise<void> {
         const resultFeedbacks = this.resultFeedbacks();
         if (resultFeedbacks !== undefined) {
             this.referencedFeedbacks = resultFeedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
@@ -580,7 +584,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                             const newTitle = titleChanged ? assessment.title! : this.stripSuggestionPrefix(feedback.text ?? '');
                             feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + newTitle;
                             if (titleChanged) {
-                                this.shownTitleInApollon.set(assessment.modelElementId, assessment.title!);
+                                this.shownTitleInApollon.set(assessment.modelElementId, assessment.title);
                             }
                             if (detailChanged) {
                                 feedback.detailText = assessment.feedback;

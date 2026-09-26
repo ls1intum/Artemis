@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DummyPagingService extends ExercisePagingService<any> {
-    constructor(http: HttpClient) {
-        super(http, 'test');
+    constructor() {
+        super(inject(HttpClient), 'test');
     }
 }

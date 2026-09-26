@@ -363,7 +363,15 @@
 
 <ng-template titleBarActions>
     @if (exam) {
-        <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="resetToPreviousState()" [title]="'entity.action.cancel' | artemisTranslate">
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            (click)="resetToPreviousState()"
+            [title]="'entity.action.cancel' | artemisTranslate"
+        >
             <fa-icon [icon]="faBan" />
             <span class="title-bar-collapsible-label" jhiTranslate="entity.action.cancel"></span>
         </button>
@@ -371,7 +379,7 @@
             id="save-exam"
             form="editForm"
             type="submit"
-            tumUiButton
+            tumAetUiButton
             severity="primary"
             size="small"
             [disabled]="editForm.form?.invalid || !isValidConfiguration || isSaving()"

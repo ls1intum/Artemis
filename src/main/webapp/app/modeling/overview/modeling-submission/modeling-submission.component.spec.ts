@@ -554,26 +554,6 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()).toEqual(newResult);
     });
 
-    it('refreshes a non-collaborative editor from an automatic-submission snapshot', () => {
-        createModelingSubmissionComponent();
-
-        submission.submitted = false;
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
-        vi.spyOn(websocketService, 'subscribe');
-        const persistedModel = JSON.stringify({ ...JSON.parse(validMockModel), title: 'Persisted snapshot' });
-        const modelSubmission = <ModelingSubmission>(<unknown>{
-            id: submission.id,
-            model: persistedModel,
-            submitted: true,
-            participation,
-        });
-        fixture.detectChanges();
-        websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
-        expect(comp.submission()).toEqual(modelSubmission);
-        expect(comp.umlModel().title).toBe('Persisted snapshot');
-    });
-
     it('should not process results without completionDate except for failed Athena results', () => {
         createModelingSubmissionComponent();
 

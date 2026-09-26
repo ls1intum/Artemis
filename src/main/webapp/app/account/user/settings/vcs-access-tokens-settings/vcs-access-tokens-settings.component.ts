@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective, TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,11 +23,11 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
         TranslateDirective,
         FaIconComponent,
         DeleteButtonDirective,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiTableDirective,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiTableDirective,
         FormDateTimePickerComponent,
         FormsModule,
         ArtemisDatePipe,
@@ -36,13 +36,13 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
     ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+
     protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
-
-    private accountService = inject(AccountService);
-    private alertService = inject(AlertService);
 
     // `equal: () => false` so re-setting the same reference emits after the token fields are assigned in place.
     readonly currentUser = signal<User | undefined>(undefined, { equal: () => false });

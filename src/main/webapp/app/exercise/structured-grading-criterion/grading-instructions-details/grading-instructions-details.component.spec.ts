@@ -25,7 +25,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumUiConfirmationService, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -76,6 +76,40 @@ describe('GradingInstructionsDetailsComponent', () => {
         gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] };
         gradingInstructionWithoutId = { credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
         gradingCriterionWithoutId = { title: 'testCriteria', structuredGradingInstructions: [gradingInstructionWithoutId] };
+    });
+
+    it.each([false, true])('disables reset/delete keyboard actions when read-only (feedback used: %s)', (feedbackUsed) => {
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = feedbackUsed;
+        fixture.componentRef.setInput('editable', false);
+        fixture.detectChanges();
+        const controls = Array.from(fixture.nativeElement.querySelectorAll('span.btn-danger, .instruction-delete-button, #reset-button, #delete-button')) as HTMLElement[];
+        expect(controls).toHaveLength(feedbackUsed ? 3 : 2);
+        const deleteCriterion = vi.spyOn(component, 'deleteGradingCriterion').mockImplementation(() => {});
+        const deleteInstruction = vi.spyOn(component, 'deleteInstruction').mockImplementation(() => {});
+        const resetInstruction = vi.spyOn(component, 'resetInstruction').mockImplementation(() => {});
+        for (const control of controls) {
+            expect(control.hasAttribute('role')).toBe(false);
+            expect(control.tabIndex).toBe(-1);
+            for (const [type, key] of [
+                ['keydown', 'Enter'],
+                ['keydown', ' '],
+                ['keyup', ' '],
+            ]) {
+                const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+                control.dispatchEvent(event);
+                expect(event.defaultPrevented).toBe(false);
+            }
+        }
+        expect(deleteCriterion).not.toHaveBeenCalled();
+        expect(deleteInstruction).not.toHaveBeenCalled();
+        expect(resetInstruction).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('editable', true);
+        fixture.detectChanges();
+        for (const control of controls) {
+            expect(control.getAttribute('role')).toBe('button');
+            expect(control.tabIndex).toBe(0);
+        }
     });
 
     describe('assessment criteria generation', () => {
@@ -155,7 +189,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
                 const buttonHost = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"]') as HTMLElement;
                 const button = fixture.nativeElement.querySelector('[data-testid="generate-assessment-criteria"] button') as HTMLButtonElement;
-                const tooltipTrigger = fixture.debugElement.query(By.directive(TumUiTooltipDirective)).nativeElement as HTMLElement;
+                const tooltipTrigger = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective)).nativeElement as HTMLElement;
 
                 expect(button.disabled).toBe(true);
                 expect(tooltipTrigger.getAttribute('tabindex')).toBe('0');
@@ -413,7 +447,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         it('should confirm replacement and make no request when confirmation is cancelled', () => {
             exercise.gradingCriteria = [gradingCriterion];
-            const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
             const confirmSpy = vi.spyOn(confirmationService, 'confirm');
 
             component.generateAssessmentCriteria();
@@ -427,7 +461,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             exercise.gradingCriteria = [];
             const previousCriteria = [gradingCriterion];
             exercise.gradingCriteria = previousCriteria;
-            const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
             vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => confirmation.accept());
             generationService.generate.mockReturnValue(throwError(() => new Error('generation failed')));
 
