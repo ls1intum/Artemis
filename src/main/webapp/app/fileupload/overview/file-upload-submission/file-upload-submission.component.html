@@ -80,21 +80,16 @@
                     </div>
                     <div class="row">
                         @if (isOwnerOfParticipation() && result() && participation()) {
-                            <jhi-rating
-                                class="mt-2 alert alert-info"
-                                [result]="$any(result())"
-                                [participation]="$any(participation())"
-                                [isOwnerOfParticipation]="isOwnerOfParticipation()"
-                            />
+                            <jhi-rating class="mt-2 alert alert-info" [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
                         }
                     </div>
                 </div>
             }
             @if (fileUploadExercise() && result() && participation() && isAfterAssessmentDueDate() && !examMode()) {
                 <jhi-complaint-student-view
-                    [result]="$any(resultWithComplaint() ?? result())"
-                    [participation]="$any(participation())"
-                    [exercise]="$any(fileUploadExercise())"
+                    [result]="(resultWithComplaint() ?? result())!"
+                    [participation]="participation()!"
+                    [exercise]="fileUploadExercise()!"
                     [isCurrentUserSubmissionAuthor]="isOwnerOfParticipation()"
                 />
             }

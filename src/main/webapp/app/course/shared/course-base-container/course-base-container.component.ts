@@ -135,7 +135,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         });
     }
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeBaseCourseContainerComponent();
+    }
+
+    protected async initializeBaseCourseContainerComponent(): Promise<void> {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.isSidebarCollapsed.set(true);
         });

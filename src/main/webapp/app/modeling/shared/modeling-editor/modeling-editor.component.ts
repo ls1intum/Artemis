@@ -225,7 +225,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         });
     }
 
-    async ngAfterViewInit(): Promise<void> {
+    ngAfterViewInit(): void {
+        void this.initializeModelingEditorComponentView();
+    }
+
+    private async initializeModelingEditorComponentView(): Promise<void> {
         this.viewInitialized = true;
         if (this.readOnly()) {
             const model = this.umlModel();
