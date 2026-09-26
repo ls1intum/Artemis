@@ -39,35 +39,139 @@
                 }
             </div>
             <div class="form-group">
-                <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}</label>
+                <label id="fileLabel">{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}</label>
                 <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
                 <fa-icon
                     [icon]="faQuestionCircle"
-                    [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
+                    [tumAetUiTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                 />
-                <div class="input-group background-file">
-                    <div class="custom-file overflow-ellipsis">
-                        <input
-                            #fileInput
-                            id="fileInput"
-                            type="file"
-                            class="custom-file-input"
-                            [accept]="acceptedFileExtensionsFileBrowser"
-                            (change)="onFileChange($event)"
-                            aria-describedby="fileHelp"
-                            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
-                            (click)="fileInputTouched = true"
-                        />
-                    </div>
+                <!-- the native input stays hidden, the buttons below open it -->
+                <input
+                    #fileInput
+                    id="fileInput"
+                    data-testid="attachment-file-input"
+                    type="file"
+                    class="hidden"
+                    tabindex="-1"
+                    aria-hidden="true"
+                    [accept]="acceptedFileExtensionsFileBrowser"
+                    (change)="onFileChange($event)"
+                />
+                <div
+                    role="group"
+                    aria-labelledby="fileLabel"
+                    aria-describedby="fileHelp"
+                    class="mt-1"
+                    data-testid="file-field"
+                    (dragover)="onFileDragOver($event)"
+                    (drop)="onFileDrop($event)"
+                >
+                    @if (currentFileName(); as currentName) {
+                        <div class="flex flex-wrap items-center gap-2" data-testid="current-file">
+                            <span class="flex min-w-0 items-center gap-1">
+                                <span class="shrink-0" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.currentFile"></span>
+                                <strong class="min-w-0 truncate" data-testid="current-file-name" [title]="currentName">{{ currentName }}</strong>
+                                @if (currentFileVersion(); as version) {
+                                    <span class="shrink-0 text-muted-color" data-testid="current-file-version"
+                                        >({{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.version' | artemisTranslate }} {{ version }})</span
+                                    >
+                                }
+                            </span>
+                            <a
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="text"
+                                size="small"
+                                data-testid="open-current-file-button"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                [href]="currentFileUrl()"
+                            >
+                                <fa-icon [icon]="faArrowUpRightFromSquare" />
+                                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.openFile"></span>
+                            </a>
+                            <button
+                                #replaceFileButton
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                data-testid="replace-file-button"
+                                (click)="openFilePicker()"
+                            >
+                                <fa-icon [icon]="faFileArrowUp" />
+                                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replaceFile"></span>
+                            </button>
+                        </div>
+                        <div aria-live="polite">
+                            @if (isReplacingFile()) {
+                                <div class="mt-2 flex flex-wrap items-center gap-2" data-testid="replacement-file">
+                                    <span class="flex min-w-0 items-center gap-1">
+                                        <span class="shrink-0" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementFile"></span>
+                                        <strong class="min-w-0 truncate" data-testid="replacement-file-name" [title]="fileName() ?? ''">{{ fileName() }}</strong>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        severity="secondary"
+                                        variant="text"
+                                        size="small"
+                                        data-testid="keep-current-file-button"
+                                        (click)="keepCurrentFile()"
+                                    >
+                                        <fa-icon [icon]="faRotateLeft" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.keepCurrentFile"></span>
+                                    </button>
+                                </div>
+                                <tumaet-ui-message
+                                    class="mt-2"
+                                    severity="warn"
+                                    data-testid="replacement-hint"
+                                    [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementHint' | artemisTranslate"
+                                />
+                            }
+                        </div>
+                    } @else {
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="outlined"
+                                size="small"
+                                data-testid="choose-file-button"
+                                aria-describedby="chosenFileName"
+                                (click)="openFilePicker()"
+                            >
+                                <fa-icon [icon]="faFileArrowUp" />
+                                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile"></span>
+                            </button>
+                            <span id="chosenFileName" class="min-w-0 truncate" aria-live="polite" data-testid="chosen-file-name" [title]="fileName() ?? ''">{{
+                                fileName() ?? ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.noFileChosen' | artemisTranslate)
+                            }}</span>
+                        </div>
+                    }
                 </div>
                 @if (isFileTooBig()) {
-                    <div class="alert alert-danger">
-                        {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileTooBig' | artemisTranslate }}
-                        {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation' | artemisTranslate }}
-                    </div>
+                    <tumaet-ui-message
+                        class="mt-2"
+                        severity="error"
+                        data-testid="file-too-big-error"
+                        [text]="
+                            ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileTooBig' | artemisTranslate) +
+                            ' ' +
+                            ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation' | artemisTranslate)
+                        "
+                    />
                 }
-                @if (!fileName() && fileInputTouched) {
-                    <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
+                @if (!fileName() && !videoSourceSignal() && fileInputTouched()) {
+                    <tumaet-ui-message
+                        class="mt-2"
+                        severity="error"
+                        data-testid="file-required-error"
+                        [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError' | artemisTranslate"
+                    />
                 }
             </div>
             <div class="form-group">
@@ -98,10 +202,6 @@
                         }
                     </div>
                 }
-            </div>
-            <div class="form-group">
-                <label for="version" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.version"></label>
-                <input id="version" class="form-control disabled" type="text" readonly formControlName="version" />
             </div>
             <div class="container" style="padding: 0">
                 <div class="row">

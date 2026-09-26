@@ -2,12 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
+import {
+    AttachmentVideoUnitFormComponent,
+    AttachmentVideoUnitFormData,
+    FileProperties,
+} from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -20,6 +23,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { By } from '@angular/platform-browser';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
@@ -35,7 +39,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CompetencySelectionComponent),
-                MockDirective(NgbTooltip),
                 MockDirective(FeatureToggleHideDirective),
             ],
             providers: [
@@ -88,7 +91,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
         expect(attachmentVideoUnitFormComponent.releaseDateControl?.value).toEqual(formData.formProperties.releaseDate);
         expect(attachmentVideoUnitFormComponent.descriptionControl?.value).toEqual(formData.formProperties.description);
-        expect(attachmentVideoUnitFormComponent.versionControl?.value).toEqual(formData.formProperties.version);
+        expect(attachmentVideoUnitFormComponent.currentFileVersion()).toEqual(formData.formProperties.version);
         expect(attachmentVideoUnitFormComponent.updateNotificationTextControl?.value).toEqual(formData.formProperties.updateNotificationText);
         expect(attachmentVideoUnitFormComponent.fileName()).toEqual(formData.fileProperties.fileName);
         expect(attachmentVideoUnitFormComponent.file).toEqual(formData.fileProperties.file);
@@ -102,9 +105,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
         attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        attachmentVideoUnitFormComponent.versionControl!.enable();
-        const exampleVersion = 42;
-        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         const fakeFile = new File([''], 'Test-File.pdf', {
@@ -132,7 +132,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
                 competencyLinks: null,
-                version: exampleVersion,
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
@@ -153,8 +152,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
         attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleVersion = 42;
-        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         const fakeFile = new File([''], 'Test-File.pdf', {
@@ -212,9 +209,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
         attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        attachmentVideoUnitFormComponent.versionControl!.enable();
-        const exampleVersion = 42;
-        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         // Do not set file and ensure videoSource is empty
@@ -244,9 +238,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
         attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        attachmentVideoUnitFormComponent.versionControl!.enable();
-        const exampleVersion = 42;
-        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
@@ -270,7 +261,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
                 competencyLinks: null,
-                version: exampleVersion,
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
@@ -293,9 +283,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
         attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        attachmentVideoUnitFormComponent.versionControl!.enable();
-        const exampleVersion = 42;
-        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         // Set file and fileName
@@ -325,7 +312,6 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
                 competencyLinks: null,
-                version: exampleVersion,
                 updateNotificationText: exampleUpdateNotificationText,
                 videoSource: '',
                 urlHelper: null,
@@ -482,6 +468,185 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.fileName()).toBe('Lecture-01.mp4');
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('Lecture-01');
         expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBe(true);
+    });
+
+    describe('file field', () => {
+        const storedLink = 'attachments/attachment-video-units/7/AttachmentUnit_2026-09-23T20-43-00-961_Design_Patterns%C3%9C.pdf';
+        const query = (testId: string) => attachmentVideoUnitFormComponentFixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+        const pdf = (name: string) => new File(['content'], name, { type: 'application/pdf' });
+        const chooseFile = (file: File) => attachmentVideoUnitFormComponent.onFileChange({ target: { files: [file] } as unknown as EventTarget } as Event);
+
+        function openInEditMode(fileProperties: FileProperties = { fileName: storedLink }) {
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', {
+                formProperties: { name: 'Design Patterns', version: 3 },
+                fileProperties,
+            } as AttachmentVideoUnitFormData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+        }
+
+        it('should show the current file of an edited unit instead of an empty file picker', () => {
+            openInEditMode();
+
+            expect(query('current-file-name').nativeElement.textContent.trim()).toBe('Design PatternsÜ.pdf');
+            expect(query('current-file-version').nativeElement.textContent).toContain('3');
+            expect(query('open-current-file-button').nativeElement.getAttribute('href')).toBe(`api/core/files/${storedLink}?version=3`);
+            expect(query('replace-file-button')).not.toBeNull();
+            expect(query('choose-file-button')).toBeNull();
+            expect(query('replacement-file')).toBeNull();
+            expect(query('attachment-file-input').nativeElement.classList).toContain('hidden');
+        });
+
+        it('should replace the current file and allow keeping it again', () => {
+            openInEditMode();
+            const submitSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+            const fileInput: HTMLInputElement = query('attachment-file-input').nativeElement;
+            const clickSpy = vi.spyOn(fileInput, 'click').mockImplementation(() => {});
+
+            query('replace-file-button').nativeElement.click();
+            expect(clickSpy).toHaveBeenCalledOnce();
+
+            const replacement = pdf('Design Patterns v2.pdf');
+            chooseFile(replacement);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(attachmentVideoUnitFormComponent.isReplacingFile()).toBe(true);
+            expect(query('replacement-file-name').nativeElement.textContent.trim()).toBe('Design Patterns v2.pdf');
+            expect(query('current-file-name').nativeElement.textContent.trim()).toBe('Design PatternsÜ.pdf');
+            attachmentVideoUnitFormComponent.submitForm();
+            expect(submitSpy).toHaveBeenLastCalledWith(expect.objectContaining({ fileProperties: { file: replacement, fileName: 'Design Patterns v2.pdf' } }));
+
+            const focusSpy = vi.spyOn(query('replace-file-button').nativeElement as HTMLButtonElement, 'focus');
+            query('keep-current-file-button').nativeElement.click();
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('replacement-file')).toBeNull();
+            expect(focusSpy).toHaveBeenCalledOnce();
+            attachmentVideoUnitFormComponent.submitForm();
+            expect(submitSpy).toHaveBeenLastCalledWith(expect.objectContaining({ fileProperties: { file: undefined, fileName: storedLink } }));
+        });
+
+        it('should drop the error of a too big replacement when the current file is kept', () => {
+            openInEditMode();
+            const tooBig = pdf('Huge.pdf');
+            Object.defineProperty(tooBig, 'size', { value: MAX_FILE_SIZE + 1 });
+            chooseFile(tooBig);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(query('file-too-big-error')).not.toBeNull();
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBe(false);
+
+            attachmentVideoUnitFormComponent.keepCurrentFile();
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('file-too-big-error')).toBeNull();
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBe(true);
+        });
+
+        it('should take a file dropped onto the file field', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            const dropped = pdf('Observer Pattern.pdf');
+            const dragOver = { preventDefault: vi.fn() } as unknown as DragEvent;
+            const drop = { preventDefault: vi.fn(), dataTransfer: { files: [dropped] } } as unknown as DragEvent;
+
+            query('file-field').triggerEventHandler('dragover', dragOver);
+            query('file-field').triggerEventHandler('drop', drop);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(dragOver.preventDefault).toHaveBeenCalled();
+            expect(drop.preventDefault).toHaveBeenCalled();
+            expect(attachmentVideoUnitFormComponent.file).toBe(dropped);
+            expect(query('chosen-file-name').nativeElement.textContent.trim()).toBe('Observer Pattern.pdf');
+            expect(attachmentVideoUnitFormComponent.nameControl?.value).toBe('Observer Pattern');
+        });
+
+        it('should offer a styled file picker when a unit is created', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            const clickSpy = vi.spyOn(query('attachment-file-input').nativeElement as HTMLInputElement, 'click').mockImplementation(() => {});
+
+            expect(query('current-file')).toBeNull();
+            query('choose-file-button').nativeElement.click();
+            expect(clickSpy).toHaveBeenCalledOnce();
+
+            chooseFile(pdf('Observer Pattern.pdf'));
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('chosen-file-name').nativeElement.textContent.trim()).toBe('Observer Pattern.pdf');
+            expect(attachmentVideoUnitFormComponent.nameControl?.value).toBe('Observer Pattern');
+        });
+
+        it('should offer the file picker when an edited unit has no file yet', () => {
+            openInEditMode({});
+
+            expect(query('current-file')).toBeNull();
+            expect(query('choose-file-button')).not.toBeNull();
+        });
+
+        it('should only demand a file when there is no video either', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            vi.spyOn(query('attachment-file-input').nativeElement as HTMLInputElement, 'click').mockImplementation(() => {});
+            attachmentVideoUnitFormComponent.openFilePicker();
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('file-required-error')).not.toBeNull();
+
+            attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/8iU8LPEa4o0');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('file-required-error')).toBeNull();
+        });
+
+        it('should start empty when the form switches from editing a unit to creating one', () => {
+            openInEditMode();
+            expect(attachmentVideoUnitFormComponent.nameControl?.value).toBe('Design Patterns');
+            vi.spyOn(query('attachment-file-input').nativeElement as HTMLInputElement, 'click').mockImplementation(() => {});
+            query('replace-file-button').nativeElement.click();
+            chooseFile(pdf('Design Patterns v2.pdf'));
+            const submitSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', false);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(attachmentVideoUnitFormComponent.nameControl?.value).toBeNull();
+            expect(attachmentVideoUnitFormComponent.fileName()).toBeUndefined();
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBe(false);
+            expect(query('current-file')).toBeNull();
+            expect(query('choose-file-button')).not.toBeNull();
+            expect(query('file-required-error')).toBeNull();
+            attachmentVideoUnitFormComponent.submitForm();
+            expect(submitSpy).toHaveBeenLastCalledWith(expect.objectContaining({ fileProperties: { file: undefined, fileName: undefined } }));
+        });
+
+        it('should not keep the file of a previously edited unit', () => {
+            openInEditMode();
+            const tooBig = pdf('Replacement.pdf');
+            Object.defineProperty(tooBig, 'size', { value: MAX_FILE_SIZE + 1 });
+            chooseFile(tooBig);
+            const submitSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', {
+                formProperties: { name: 'Lecture recording', videoSource: 'https://www.youtube.com/embed/8iU8LPEa4o0' },
+                fileProperties: {},
+            } as AttachmentVideoUnitFormData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(attachmentVideoUnitFormComponent.fileName()).toBeUndefined();
+            expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBe(false);
+            expect(query('current-file')).toBeNull();
+            expect(query('file-too-big-error')).toBeNull();
+            attachmentVideoUnitFormComponent.submitForm();
+            expect(submitSpy).toHaveBeenLastCalledWith(expect.objectContaining({ fileProperties: { file: undefined, fileName: undefined } }));
+        });
+
+        it('should show too big files as an error', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            const tooBig = pdf('Huge.pdf');
+            Object.defineProperty(tooBig, 'size', { value: MAX_FILE_SIZE + 1 });
+
+            chooseFile(tooBig);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('file-too-big-error')).not.toBeNull();
+        });
     });
 
     it('isTransformable reflects urlHelper validity', () => {
