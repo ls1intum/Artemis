@@ -363,6 +363,56 @@ describe('CodeButtonComponent', () => {
             expect(component.copyEnabled()).toBe(true);
         });
 
+        it('should display password warning nudge when password is selected and switch to token on click', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
+            expect(useHTTPSButton).not.toBeNull();
+            useHTTPSButton.nativeElement.click();
+            fixture.detectChanges();
+
+            const warningNudge = fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'));
+            expect(warningNudge).not.toBeNull();
+
+            const switchButton = warningNudge.query(By.css('[data-testid="switch-to-token-button"]'));
+            expect(switchButton).not.toBeNull();
+            switchButton.nativeElement.click();
+            fixture.detectChanges();
+
+            expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Token);
+            expect(component.useToken()).toBe(true);
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+        });
+
+        it('should not display password warning nudge when token mechanism is not available in configuration', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+            component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password]);
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Password);
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+        });
+
+        it('should not display password warning nudge when token or SSH is selected', () => {
+            fixture.componentRef.setInput('participations', [participation]);
+            component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+
+            component.useSshUrl();
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
+        });
+
         it('should not show the manual VCS token warning for a base repository in course management', async () => {
             // In course management (e.g. the exercise detail page) the personal-token warning must never appear for base
             // repositories, because a repository-scoped staff token is provisioned automatically instead.
