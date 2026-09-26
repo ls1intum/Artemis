@@ -5,6 +5,7 @@
             #sourceImage
             class="ngx-ic-source-image"
             [src]="safeImgDataUrl()"
+            [alt]="'global.imageCropper.sourceImage' | artemisTranslate"
             decoding="async"
             [style.visibility]="imageVisible() ? 'visible' : 'hidden'"
             [style.transform]="safeTransformStyle()"

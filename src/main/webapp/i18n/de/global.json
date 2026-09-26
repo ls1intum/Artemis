@@ -418,6 +418,9 @@
             "openTime": "Uhr öffnen",
             "timeDialog": "Uhrzeit wählen",
             "timePlaceholder": "HH:mm"
+        },
+        "imageCropper": {
+            "sourceImage": "Bild zum Zuschneiden"
         }
     },
     "entity": {
