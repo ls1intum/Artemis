@@ -18,6 +18,8 @@
             "new": "Neu",
             "expand": "Erweitern",
             "collapse": "Einklappen",
+            "expandMenu": "Menü aufklappen (Strg + M)",
+            "collapseMenu": "Menü einklappen (Strg + M)",
             "enabled": "Aktiviert",
             "disabled": "Deaktiviert"
         },
@@ -438,6 +440,9 @@
             "openTime": "Uhr öffnen",
             "timeDialog": "Uhrzeit wählen",
             "timePlaceholder": "HH:mm"
+        },
+        "imageCropper": {
+            "sourceImage": "Bild zum Zuschneiden"
         }
     },
     "entity": {

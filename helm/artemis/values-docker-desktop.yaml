@@ -26,6 +26,10 @@ artemis:
     # The online UI works through a port-forward. LocalVC repository URLs must
     # remain reachable from build-agent pods, so the cluster service is used.
     serverUrl: http://artemis-http:8080
+    operator:
+      name: "Artemis Local Development"
+      adminName: "Artemis Development Team"
+      universityName: "Artemis Development Institution"
     admin:
       username: artemis_admin
       # Injected by run-localci-kubernetes.sh, like the JWT secret below. Not "artemis_admin": the prod profile these

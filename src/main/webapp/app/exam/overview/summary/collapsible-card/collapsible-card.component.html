@@ -1,9 +1,20 @@
 <div class="question card">
-    <div class="card-header d-flex align-items-center justify-content-between" (click)="toggleCollapse()()">
+    <div
+        class="card-header d-flex align-items-center justify-content-between"
+        data-testid="collapsible-card-toggle"
+        (click)="toggleCollapse()()"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        [attr.aria-expanded]="!isCardContentCollapsed()"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
         <ng-content select=".header" />
-        <button class="btn rotate-icon" [class.rotated]="!isCardContentCollapsed()" [attr.aria-expanded]="isCardContentCollapsed()" [attr.aria-controls]="isCardContentCollapsed()">
+        <span class="btn rotate-icon" [class.rotated]="!isCardContentCollapsed()" aria-hidden="true">
             <fa-icon size="2x" [icon]="faAngleRight" />
-        </button>
+        </span>
     </div>
 
     <div class="card-body question-card-body" [ngbCollapse]="isCardContentCollapsed()">

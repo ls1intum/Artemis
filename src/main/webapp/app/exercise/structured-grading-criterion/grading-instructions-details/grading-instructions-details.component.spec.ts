@@ -78,6 +78,40 @@ describe('GradingInstructionsDetailsComponent', () => {
         gradingCriterionWithoutId = { title: 'testCriteria', structuredGradingInstructions: [gradingInstructionWithoutId] };
     });
 
+    it.each([false, true])('disables reset/delete keyboard actions when read-only (feedback used: %s)', (feedbackUsed) => {
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = feedbackUsed;
+        fixture.componentRef.setInput('editable', false);
+        fixture.detectChanges();
+        const controls = Array.from(fixture.nativeElement.querySelectorAll('span.btn-danger, .instruction-delete-button, #reset-button, #delete-button')) as HTMLElement[];
+        expect(controls).toHaveLength(feedbackUsed ? 3 : 2);
+        const deleteCriterion = vi.spyOn(component, 'deleteGradingCriterion').mockImplementation(() => {});
+        const deleteInstruction = vi.spyOn(component, 'deleteInstruction').mockImplementation(() => {});
+        const resetInstruction = vi.spyOn(component, 'resetInstruction').mockImplementation(() => {});
+        for (const control of controls) {
+            expect(control.hasAttribute('role')).toBe(false);
+            expect(control.tabIndex).toBe(-1);
+            for (const [type, key] of [
+                ['keydown', 'Enter'],
+                ['keydown', ' '],
+                ['keyup', ' '],
+            ]) {
+                const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+                control.dispatchEvent(event);
+                expect(event.defaultPrevented).toBe(false);
+            }
+        }
+        expect(deleteCriterion).not.toHaveBeenCalled();
+        expect(deleteInstruction).not.toHaveBeenCalled();
+        expect(resetInstruction).not.toHaveBeenCalled();
+        fixture.componentRef.setInput('editable', true);
+        fixture.detectChanges();
+        for (const control of controls) {
+            expect(control.getAttribute('role')).toBe('button');
+            expect(control.tabIndex).toBe(0);
+        }
+    });
+
     describe('assessment criteria generation', () => {
         beforeEach(() => {
             exercise.type = ExerciseType.TEXT;
