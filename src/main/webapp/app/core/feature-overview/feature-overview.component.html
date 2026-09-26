@@ -1,167 +1,75 @@
-<div class="wrapper">
-    <div class="header">
-        <h1 jhiTranslate="featureOverview.title"></h1>
-    </div>
-    <div class="content mx-auto">
-        <div class="features-overview">
-            <h2>{{ 'featureOverview.' + targetAudience() + '.featureOverview' | artemisTranslate }}</h2>
-        </div>
-        <div class="custom-container">
-            @for (feature of features(); track feature) {
-                <div
-                    id="featureOverview{{ feature.id }}"
-                    class="box"
-                    (click)="navigateToFeature(feature.id)"
-                    #keyboardAction11
-                    role="button"
-                    tabindex="0"
-                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
-                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction11.click() : undefined"
-                >
-                    <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true" />
-                    <h3 class="title">{{ feature.title | artemisTranslate }}</h3>
-                    <div class="feature-short-description">
-                        {{ feature.shortDescription | artemisTranslate }}
-                    </div>
-                </div>
+@let audience = targetAudience();
+<div class="feature-overview mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8" data-testid="feature-overview">
+    <header class="flex flex-col items-center gap-3 text-center">
+        <span class="feature-overview__eyebrow text-sm text-muted-color" jhiTranslate="featureOverview.title"></span>
+        <h1 [jhiTranslate]="'featureOverview.' + audience + '.pageTitle'"></h1>
+        <nav class="flex flex-wrap justify-center gap-2" [attr.aria-label]="'featureOverview.audience.label' | artemisTranslate">
+            <a
+                tumAetUiButton
+                size="small"
+                routerLink="/features/students"
+                [severity]="audience === TargetAudience.STUDENTS ? 'primary' : 'secondary'"
+                [variant]="audience === TargetAudience.STUDENTS ? 'solid' : 'outlined'"
+                [attr.aria-current]="audience === TargetAudience.STUDENTS ? 'page' : null"
+                data-testid="feature-overview-students"
+                jhiTranslate="featureOverview.audience.students"
+            ></a>
+            <a
+                tumAetUiButton
+                size="small"
+                routerLink="/features/instructors"
+                [severity]="audience === TargetAudience.INSTRUCTORS ? 'primary' : 'secondary'"
+                [variant]="audience === TargetAudience.INSTRUCTORS ? 'solid' : 'outlined'"
+                [attr.aria-current]="audience === TargetAudience.INSTRUCTORS ? 'page' : null"
+                data-testid="feature-overview-instructors"
+                jhiTranslate="featureOverview.audience.instructors"
+            ></a>
+        </nav>
+    </header>
+
+    <section class="flex flex-col gap-4">
+        <h2 jhiTranslate="featureOverview.overview"></h2>
+        <ul class="feature-overview__list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @for (feature of features(); track feature.key) {
+                <li>
+                    <button
+                        type="button"
+                        class="feature-overview__card flex h-full w-full flex-col gap-2 text-start"
+                        (click)="scrollToFeature(feature.key)"
+                        [attr.data-testid]="'feature-card-' + feature.key"
+                    >
+                        <span class="flex items-center gap-2 font-semibold">
+                            <fa-icon class="text-primary" [icon]="feature.icon" [fixedWidth]="true" />
+                            <span>{{ 'featureOverview.' + audience + '.feature.' + feature.key + '.title' | artemisTranslate }}</span>
+                        </span>
+                        <span class="text-sm text-muted-color">{{ 'featureOverview.' + audience + '.feature.' + feature.key + '.shortDescription' | artemisTranslate }}</span>
+                    </button>
+                </li>
             }
-        </div>
+        </ul>
+    </section>
+
+    <section class="flex flex-col gap-4">
         <h2 jhiTranslate="featureOverview.featureDetails"></h2>
-        @for (feature of features(); track feature) {
-            <div id="feature{{ feature.id }}" class="feature-content">
-                <h3>{{ feature.title | artemisTranslate }}</h3>
-                <div class="feature-full-description">
-                    @if (feature.descriptionTextTwo) {
-                        @if (!feature.firstImageLeft) {
-                            @if (feature.imageOne) {
-                                <img
-                                    class="text-wrap-right"
-                                    [ngSrc]="feature.imageOne"
-                                    [width]="imageDimensions[feature.imageOne].width"
-                                    [height]="imageDimensions[feature.imageOne].height"
-                                    [alt]="feature.title | artemisTranslate"
-                                />
-                            }
-                            <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                            @if (feature.imageTwo) {
-                                <img
-                                    class="text-wrap-left"
-                                    [ngSrc]="feature.imageTwo"
-                                    [width]="imageDimensions[feature.imageTwo].width"
-                                    [height]="imageDimensions[feature.imageTwo].height"
-                                    [alt]="feature.title | artemisTranslate"
-                                />
-                            }
-                            <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
-                        } @else {
-                            @if (feature.imageOne) {
-                                <img
-                                    class="text-wrap-left"
-                                    [ngSrc]="feature.imageOne"
-                                    [width]="imageDimensions[feature.imageOne].width"
-                                    [height]="imageDimensions[feature.imageOne].height"
-                                    [alt]="feature.title | artemisTranslate"
-                                />
-                            }
-                            <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                            @if (feature.imageTwo) {
-                                <img
-                                    class="text-wrap-right"
-                                    [ngSrc]="feature.imageTwo"
-                                    [width]="imageDimensions[feature.imageTwo].width"
-                                    [height]="imageDimensions[feature.imageTwo].height"
-                                    [alt]="feature.title | artemisTranslate"
-                                />
-                            }
-                            <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
-                        }
-                    } @else {
-                        @if (!feature.centered) {
-                            @if (!feature.firstImageLeft) {
-                                @if (feature.imageOne) {
-                                    <img
-                                        class="text-wrap-right"
-                                        [ngSrc]="feature.imageOne"
-                                        [width]="imageDimensions[feature.imageOne].width"
-                                        [height]="imageDimensions[feature.imageOne].height"
-                                        [alt]="feature.title | artemisTranslate"
-                                    />
-                                }
-                                <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                                @if (feature.imageTwo) {
-                                    <img
-                                        class="center"
-                                        [ngSrc]="feature.imageTwo"
-                                        [width]="imageDimensions[feature.imageTwo].width"
-                                        [height]="imageDimensions[feature.imageTwo].height"
-                                        [alt]="feature.title | artemisTranslate"
-                                    />
-                                }
-                            } @else {
-                                @if (feature.imageOne) {
-                                    <img
-                                        class="text-wrap-left"
-                                        [ngSrc]="feature.imageOne"
-                                        [width]="imageDimensions[feature.imageOne].width"
-                                        [height]="imageDimensions[feature.imageOne].height"
-                                        [alt]="feature.title | artemisTranslate"
-                                    />
-                                }
-                                <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                                @if (feature.imageTwo) {
-                                    <img
-                                        class="center"
-                                        [ngSrc]="feature.imageTwo"
-                                        [width]="imageDimensions[feature.imageTwo].width"
-                                        [height]="imageDimensions[feature.imageTwo].height"
-                                        [alt]="feature.title | artemisTranslate"
-                                    />
-                                }
-                            }
-                        } @else {
-                            <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                            @if (feature.imageOne && !feature.expandedImage && !feature.shrunkImage) {
-                                <img
-                                    class="center"
-                                    [ngSrc]="feature.imageOne"
-                                    [width]="imageDimensions[feature.imageOne].width"
-                                    [height]="imageDimensions[feature.imageOne].height"
-                                    [alt]="feature.title | artemisTranslate"
-                                />
-                            }
-                            @if (feature.imageOne && feature.expandedImage) {
-                                <img
-                                    class="center"
-                                    [ngSrc]="feature.imageOne"
-                                    [width]="imageDimensions[feature.imageOne].width"
-                                    [height]="imageDimensions[feature.imageOne].height"
-                                    [alt]="feature.title | artemisTranslate"
-                                />
-                            }
-                            @if (feature.imageOne && feature.shrunkImage) {
-                                <img
-                                    class="center"
-                                    [ngSrc]="feature.imageOne"
-                                    [width]="imageDimensions[feature.imageOne].width"
-                                    [height]="imageDimensions[feature.imageOne].height"
-                                    [alt]="feature.title | artemisTranslate"
-                                />
-                            }
-                            @if (feature.imageTwo) {
-                                <img
-                                    class="center"
-                                    [ngSrc]="feature.imageTwo"
-                                    [width]="imageDimensions[feature.imageTwo].width"
-                                    [height]="imageDimensions[feature.imageTwo].height"
-                                    [alt]="feature.title | artemisTranslate"
-                                />
-                            }
-                        }
-                    }
-                </div>
-                <hr class="hr-text" />
-            </div>
+        @for (feature of features(); track feature.key) {
+            <article class="feature-overview__detail flex flex-col gap-3" [id]="'feature-' + feature.key" [attr.data-testid]="'feature-detail-' + feature.key">
+                <h3 class="flex items-center gap-2">
+                    <fa-icon class="text-primary" [icon]="feature.icon" [fixedWidth]="true" />
+                    <span>{{ 'featureOverview.' + audience + '.feature.' + feature.key + '.title' | artemisTranslate }}</span>
+                </h3>
+                <p class="feature-overview__description">{{ 'featureOverview.' + audience + '.feature.' + feature.key + '.descriptionTextOne' | artemisTranslate }}</p>
+                @for (image of feature.images ?? []; track image) {
+                    <a class="feature-overview__screenshot" [href]="image" target="_blank" rel="noopener noreferrer">
+                        <img
+                            [ngSrc]="image"
+                            [alt]="'featureOverview.' + audience + '.feature.' + feature.key + '.title' | artemisTranslate"
+                            width="1200"
+                            height="750"
+                            loading="lazy"
+                        />
+                    </a>
+                }
+            </article>
         }
-    </div>
+    </section>
 </div>

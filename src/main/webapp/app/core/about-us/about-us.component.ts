@@ -1,115 +1,83 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faArrowRight, faArrowUpRightFromSquare, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { MODULE_FEATURE_EXAM, VERSION } from 'app/app.constants';
+import { BUG_REPORT_URL, CITATION, CONTRIBUTORS_URL, FEATURE_REQUEST_URL, HIGHLIGHTS, ICONS, MAX_HIGHLIGHTS, MODULES, PROJECT_LINKS } from 'app/core/about-us/about-us-data';
+import { AboutUsMaintainer, AboutUsModel } from 'app/core/about-us/models/about-us-model';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { VERSION } from 'app/app.constants';
-import { StaticContentService } from 'app/foundation/service/static-content.service';
-import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
-import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { StaticContentService } from 'app/foundation/service/static-content.service';
 
-/** Minimal shape of a contributor entry as returned in about-us.json (plain object, before mapping into {@link ContributorModel}). */
-interface ContributorDto {
-    fullName: string;
-    photoDirectory: string;
-    sortBy?: string;
-    role?: string;
-    website?: string;
-}
+/** Pre-filled body of the mail to the installation's contact, which routes questions about course content to the instructors. */
+const CONTACT_MAIL_BODY =
+    'Note: Please send only support/feature requests or bug reports regarding the Artemis Platform to this address. ' +
+    'Please check our public bug tracker at https://github.com/ls1intum/Artemis for known bugs.\n' +
+    'For questions regarding exercises and their content, please contact your instructors.';
 
+/**
+ * The public About page. It describes this installation first (who runs it, how to get help, what is enabled) and the
+ * Artemis project second, and deliberately repeats neither the landing page nor the documentation.
+ */
 @Component({
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
-    styleUrls: ['./about-us.component.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    styleUrl: './about-us.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CdkCopyToClipboard, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTagComponent],
 })
 export class AboutUsComponent implements OnInit {
-    private profileService = inject(ProfileService);
-    private staticContentService = inject(StaticContentService);
+    private readonly profileService = inject(ProfileService);
+    private readonly staticContentService = inject(StaticContentService);
 
-    private readonly ISSUE_BASE_URL = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
-    readonly BUG_REPORT_URL = `${this.ISSUE_BASE_URL}&labels=bug&template=bug-report.yml`;
-    readonly FEATURE_REQUEST_URL = `${this.ISSUE_BASE_URL}&labels=feature&template=feature-request.yml`;
-    readonly RELEASE_NOTES_URL = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
+    protected readonly VERSION = VERSION;
+    protected readonly RELEASE_NOTES_URL = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
+    protected readonly BUG_REPORT_URL = BUG_REPORT_URL;
+    protected readonly FEATURE_REQUEST_URL = FEATURE_REQUEST_URL;
+    protected readonly CONTRIBUTORS_URL = CONTRIBUTORS_URL;
+    protected readonly PROJECT_LINKS = PROJECT_LINKS;
+    protected readonly CITATION = CITATION;
+    protected readonly ICONS = ICONS;
+    protected readonly faArrowRight = faArrowRight;
+    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    protected readonly faCheck = faCheck;
+    protected readonly faCopy = faCopy;
 
-    readonly email = signal<string>(undefined!);
-    readonly data = signal<AboutUsModel | undefined>(undefined);
-    readonly gitCommitId = signal<string | undefined>(undefined);
-    readonly gitBranchName = signal<string | undefined>(undefined);
-    readonly universityName = signal<string | undefined>(undefined);
-    readonly operatorName = signal<string | undefined>(undefined);
-    readonly operatorAdminName = signal<string | undefined>(undefined);
-    readonly operatorContactEmail = signal<string | undefined>(undefined);
+    protected readonly profileInfo = signal<ProfileInfo | undefined>(undefined);
+    protected readonly maintainers = signal<AboutUsMaintainer[]>([]);
+    protected readonly citationCopied = signal(false);
 
-    // Array of tuple containing translation keys and translation values
-    readonly SECTIONS: [string, { [key: string]: string }][] = [
-        ['exercises.programming', { programmingUrl: 'https://docs.artemis.tum.de/instructor/exercises/programming-exercise' }],
-        ['exercises.quiz', { quizUrl: 'https://docs.artemis.tum.de/instructor/exercises/quiz-exercise' }],
-        ['exercises.modeling', { modelingUrl: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
-        ['exercises.text', { textUrl: 'https://docs.artemis.tum.de/instructor/exercises/text-exercise', athenaUrl: 'https://github.com/ls1intum/edutelligence/tree/main/athena' }],
-        ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.tum.de/instructor/exercises/file-upload-exercise' }],
-        ['exam', { examModeUrl: 'https://docs.artemis.tum.de/instructor/exams/intro', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
-        ['grading', { gradingUrl: 'https://docs.artemis.tum.de/instructor/assessment-grading/grading' }],
-        ['assessment', { assessmentUrl: 'https://docs.artemis.tum.de/instructor/assessment-grading/assessment' }],
-        ['communication', { communicationUrl: 'https://docs.artemis.tum.de/student/communication-support/communication' }],
-        ['notifications', { notificationsURL: 'https://docs.artemis.tum.de/student/communication-support/notifications' }],
-        ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.tum.de/instructor/exercises/team-exercise' }],
-        ['lectures', { lecturesUrl: 'https://docs.artemis.tum.de/instructor/lectures' }],
-        ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.tum.de/student/tools-reference/markdown-support' }],
-        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.tum.de/instructor/assessment-grading/plagiarism-check' }],
-        ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.tum.de/instructor/analytics/learning-analytics' }],
-        ['adaptiveLearning', { adaptiveLearningUrl: 'https://docs.artemis.tum.de/instructor/analytics/adaptive-learning' }],
-        ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.tum.de/instructor/communication-support/tutorial-groups' }],
-        ['iris', { irisUrl: 'https://ls1intum.github.io/edutelligence/iris/' }],
-        ['scalable', { scalingUrl: 'https://docs.artemis.tum.de/admin/scaling' }],
-        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.tum.de/student/getting-started/user-experience' }],
-        ['customizable', { customizableUrl: 'https://docs.artemis.tum.de/instructor/course-management/course-configuration' }],
-        ['openSource', { openSourceUrl: 'https://docs.artemis.tum.de/developer/open-source' }],
-    ];
+    private readonly activeModules = computed(() => new Set(this.profileInfo()?.activeModuleFeatures ?? []));
 
-    /**
-     * On init get the json file from the Artemis server and save it.
-     * On init get the mail data needed for the contact
-     */
+    protected readonly enabledModules = computed(() => MODULES.filter((module) => this.activeModules().has(module.feature)));
+
+    protected readonly highlights = computed(() => HIGHLIGHTS.filter((highlight) => !highlight.module || this.activeModules().has(highlight.module)).slice(0, MAX_HIGHLIGHTS));
+
+    /** The exam feature pages describe the exam mode, so they are linked only where it exists. */
+    protected readonly examModeEnabled = computed(() => this.activeModules().has(MODULE_FEATURE_EXAM));
+
+    protected readonly contactMailto = computed(() => {
+        const contact = this.profileInfo()?.contact;
+        return contact ? `mailto:${contact}?body=${encodeURIComponent(CONTACT_MAIL_BODY)}` : undefined;
+    });
+
+    /** Only production servers must name their operator; development and test servers may leave any of these out, and the page omits what is missing. */
+    protected readonly hasInstallationDetails = computed(() => {
+        const info = this.profileInfo();
+        return !!(info?.universityName || info?.operatorName || info?.operatorAdminName || this.contactMailto());
+    });
+
+    protected readonly gitCommit = computed(() => this.profileInfo()?.git?.commit?.id?.abbrev);
+
+    /** Only a test server can run an arbitrary branch; a production installation runs a release, which the version already names. */
+    protected readonly gitBranch = computed(() => (this.profileInfo()?.testServer ? this.profileInfo()?.git?.branch : undefined));
+
     ngOnInit(): void {
-        this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data) => {
-            // Map contributors into the model, as the returned data are just plain objects
-            const mappedData: AboutUsModel = cloneWith(data, {
-                contributors: data.contributors.map((con: ContributorDto) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
-            });
-
-            // Sort by last name
-            // Either the last "word" in the name, or the dedicated sortBy field, if present
-            mappedData.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
-
-            this.data.set(mappedData);
-        });
-
-        const profileInfo = this.profileService.getProfileInfo();
-        this.contact = profileInfo.contact;
-        if (profileInfo.git) {
-            this.gitCommitId.set(profileInfo.git.commit.id.abbrev);
-            this.gitBranchName.set(profileInfo.git.branch);
-        }
-        this.universityName.set(profileInfo.universityName);
-        this.operatorName.set(profileInfo.operatorName);
-        this.operatorAdminName.set(profileInfo.operatorAdminName);
-        this.operatorContactEmail.set(profileInfo.contact);
-    }
-    /**
-     * Create the mail reference for the contact
-     */
-    set contact(mail: string) {
-        this.email.set(
-            'mailto:' +
-                mail +
-                '?body=Note%3A%20Please%20send%20only%20support%2Ffeature' +
-                '%20request%20or%20bug%20reports%20regarding%20the%20Artemis' +
-                '%20Platform%20to%20this%20address.%20Please%20check' +
-                '%20our%20public%20bug%20tracker%20at%20https%3A%2F%2Fgithub.com' +
-                '%2Fls1intum%2FArtemis%20for%20known%20bugs.%0AFor%20questions' +
-                '%20regarding%20exercises%20and%20their%20content%2C%20please%20contact%20your%20instructors.',
-        );
+        this.profileInfo.set(this.profileService.getProfileInfo());
+        this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data: AboutUsModel) => this.maintainers.set(data?.projectManagers ?? []));
     }
 }

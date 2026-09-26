@@ -1,125 +1,221 @@
-<div>
-    <div class="card-title ms-2">
-        <h2 class="mb-3 mt-3 font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.title"></h2>
-    </div>
-    <div>
-        <h3 class="mb-3 ms-2 font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.getInTouch"></h3>
-        <ul>
-            <li>
-                <a [href]="BUG_REPORT_URL" rel="noreferrer noopener" class="footer-text ms-3" target="_blank" jhiTranslate="bug"></a>
-            </li>
-            <li>
-                <a [href]="FEATURE_REQUEST_URL" class="footer-text ms-3" target="_blank" jhiTranslate="feature"></a>
-            </li>
-            <li>
-                <a [href]="email()" class="footer-text ms-3" target="_top" jhiTranslate="contact"></a>
-            </li>
-            <li>
-                <a [href]="RELEASE_NOTES_URL" class="footer-text ms-3" target="_blank" jhiTranslate="releaseNotes"></a>
-            </li>
-            <li>
-                <a routerLink="/course-requests" class="footer-text ms-3" jhiTranslate="artemisApp.aboutUsOverview.courseRequests"></a>
-            </li>
-        </ul>
-    </div>
-    <div class="mb-5 ms-2">
-        <h3 class="mb-3 font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.feature"></h3>
-        <ol>
-            @for (section of SECTIONS; track section) {
-                <li>
-                    <span [jhiTranslate]="'artemisApp.aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
-                </li>
+<div class="about mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8" data-testid="about-page">
+    <header class="flex flex-col items-center gap-2 text-center">
+        <h1 jhiTranslate="artemisApp.aboutUsOverview.title"></h1>
+        <p class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.subtitle"></p>
+    </header>
+
+    @let info = profileInfo();
+
+    <section class="flex flex-col gap-4" data-testid="about-help">
+        <div class="flex flex-col gap-1">
+            <h2 jhiTranslate="artemisApp.aboutUsOverview.help.title"></h2>
+            <p class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.help.courseQuestions"></p>
+        </div>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <a class="about__tile" [href]="BUG_REPORT_URL" target="_blank" rel="noopener noreferrer" data-testid="about-bug-report">
+                <fa-icon class="text-primary" [icon]="ICONS.bug" [fixedWidth]="true" />
+                <span jhiTranslate="bug"></span>
+            </a>
+            <a class="about__tile" [href]="FEATURE_REQUEST_URL" target="_blank" rel="noopener noreferrer" data-testid="about-feature-request">
+                <fa-icon class="text-primary" [icon]="ICONS.feature" [fixedWidth]="true" />
+                <span jhiTranslate="feature"></span>
+            </a>
+            @if (contactMailto(); as mailto) {
+                <a class="about__tile" [href]="mailto" data-testid="about-contact-tile">
+                    <fa-icon class="text-primary" [icon]="ICONS.contact" [fixedWidth]="true" />
+                    <span jhiTranslate="artemisApp.aboutUsOverview.help.contactAdministrator"></span>
+                </a>
             }
-        </ol>
-    </div>
-    @if (data(); as data) {
-        @if (data.projectManagers) {
-            <div class="row ms-4 me-4 mb-4">
-                @for (pm of data.projectManagers; track pm) {
-                    <div class="project-manager">
-                        <div class="card-body">
-                            <div class="row ms-1">
-                                <div class="col-md-4">
-                                    <img
-                                        class="img-fluid w-100 rounded"
-                                        loading="lazy"
-                                        decoding="async"
-                                        [src]="pm.photoDirectory"
-                                        [alt]="'artemisApp.aboutUsOverview.portraitAlt' | artemisTranslate: { name: pm.fullName }"
-                                    />
-                                </div>
-                                <div class="col-md-8">
-                                    <h4 class="font-weight-bold">{{ pm.fullName }}</h4>
-                                    <h5>{{ 'artemisApp.aboutUsOverview.roles.' + pm.role | artemisTranslate }}</h5>
-                                    <span>
-                                        <i></i>
-                                        <a href="{{ pm.website }}" target="_blank" rel="noopener noreferrer" jhiTranslate="artemisApp.aboutUsOverview.website"></a>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <a class="about__tile" routerLink="/course-requests" data-testid="about-course-request">
+                <fa-icon class="text-primary" [icon]="ICONS.courseRequest" [fixedWidth]="true" />
+                <span jhiTranslate="artemisApp.aboutUsOverview.courseRequests"></span>
+            </a>
+        </div>
+    </section>
+
+    @if (highlights().length) {
+        <section class="flex flex-col gap-4" data-testid="about-highlights">
+            <h2 jhiTranslate="artemisApp.aboutUsOverview.highlights.title"></h2>
+            <ul class="about__list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @for (highlight of highlights(); track highlight.catalogueKey) {
+                    <li class="about__card flex flex-col gap-2" [attr.data-testid]="'about-highlight-' + highlight.catalogueKey">
+                        <h3 class="flex items-center gap-2">
+                            <fa-icon class="text-primary" [icon]="highlight.icon" [fixedWidth]="true" />
+                            <span>{{ 'artemisApp.featureUsage.catalog.feature.' + highlight.catalogueKey + '.name' | artemisTranslate }}</span>
+                        </h3>
+                        <span class="text-sm text-muted-color">{{ 'artemisApp.featureUsage.catalog.feature.' + highlight.catalogueKey + '.description' | artemisTranslate }}</span>
+                    </li>
+                }
+            </ul>
+            @if (examModeEnabled()) {
+                <p class="flex flex-wrap items-center gap-x-4 gap-y-1" data-testid="about-exam-features">
+                    <span class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.highlights.examFeatures"></span>
+                    <a routerLink="/features/students" data-testid="about-exam-features-students">
+                        <span jhiTranslate="featureOverview.audience.students"></span>
+                        <fa-icon class="ms-1" [icon]="faArrowRight" />
+                    </a>
+                    <a routerLink="/features/instructors" data-testid="about-exam-features-instructors">
+                        <span jhiTranslate="featureOverview.audience.instructors"></span>
+                        <fa-icon class="ms-1" [icon]="faArrowRight" />
+                    </a>
+                </p>
+            }
+        </section>
+    }
+
+    @if (enabledModules().length) {
+        <section class="flex flex-col gap-4" data-testid="about-modules">
+            <div class="flex flex-col gap-1">
+                <h2 jhiTranslate="artemisApp.aboutUsOverview.modules.title"></h2>
+                <p class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.modules.description"></p>
+            </div>
+            <ul class="about__list flex flex-wrap gap-2">
+                @for (module of enabledModules(); track module.feature) {
+                    <li [attr.data-testid]="'about-module-' + module.feature">
+                        <tumaet-ui-tag severity="secondary" [value]="'artemisApp.aboutUsOverview.modules.' + module.translationKey | artemisTranslate" />
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
+    @if (hasInstallationDetails() || info?.testServer) {
+        <section class="flex flex-col gap-4" data-testid="about-installation">
+            <div class="flex flex-wrap items-center gap-3">
+                <h2 jhiTranslate="artemisApp.aboutUsOverview.installation.title"></h2>
+                @if (info?.testServer) {
+                    <tumaet-ui-tag severity="warn" [value]="'artemisApp.aboutUsOverview.installation.testServer' | artemisTranslate" data-testid="about-test-server" />
                 }
             </div>
-        }
-        @if (data.contributors) {
-            <div class="mt-5 ms-2 me-2">
-                <h3 class="font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.contributors"></h3>
-                <div class="row">
-                    @for (contributor of data.contributors; track contributor) {
-                        <div class="contributor text-center">
-                            <img
-                                class="img-fluid"
-                                loading="lazy"
-                                decoding="async"
-                                [src]="contributor.photoDirectory"
-                                [alt]="'artemisApp.aboutUsOverview.portraitAlt' | artemisTranslate: { name: contributor.fullName }"
-                            />
-                            <div class="text-center">
-                                <small id="contributorsName" class="font-weight-bold">{{ contributor.fullName }}</small>
-                            </div>
+            @if (hasInstallationDetails()) {
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    @if (info?.universityName) {
+                        <div class="about__card flex flex-col gap-1">
+                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.university"></dt>
+                            <dd class="font-semibold" data-testid="about-university">{{ info?.universityName }}</dd>
                         </div>
                     }
-                </div>
-            </div>
-        }
+                    @if (info?.operatorName) {
+                        <div class="about__card flex flex-col gap-1">
+                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.installation.operator"></dt>
+                            <dd class="font-semibold" data-testid="about-operator">{{ info?.operatorName }}</dd>
+                        </div>
+                    }
+                    @if (info?.operatorAdminName) {
+                        <div class="about__card flex flex-col gap-1">
+                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.admin"></dt>
+                            <dd class="font-semibold" data-testid="about-admin">{{ info?.operatorAdminName }}</dd>
+                        </div>
+                    }
+                    @if (contactMailto(); as mailto) {
+                        <div class="about__card flex flex-col gap-1">
+                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.adminEmail"></dt>
+                            <dd class="font-semibold break-all">
+                                <a [href]="mailto" data-testid="about-contact">{{ info?.contact }}</a>
+                            </dd>
+                        </div>
+                    }
+                </dl>
+            }
+        </section>
     }
-    <div class="mt-5 ms-2 me-2">
-        <h3 class="font-weight-bold" jhiTranslate="artemisApp.git.title"></h3>
-        <div>
-            <div class="inline-block fixed-width" jhiTranslate="artemisApp.git.branch"></div>
-            <div class="inline-block">{{ gitBranchName() }}</div>
-        </div>
-        <div>
-            <div class="inline-block fixed-width" jhiTranslate="artemisApp.git.commit"></div>
-            <div class="inline-block">{{ gitCommitId() }}</div>
-        </div>
-    </div>
-    <div class="mt-5 ms-2 me-2">
-        <h3 class="font-weight-bold" jhiTranslate="artemisApp.operatorInfo.title"></h3>
-        <div>
-            <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.university"></div>
-            <div class="inline-block">{{ universityName() }}</div>
-        </div>
-        <div>
-            <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.name"></div>
-            <div class="inline-block">{{ operatorName() }}</div>
-        </div>
-        @if (operatorAdminName()) {
-            <div>
-                <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.admin"></div>
-                <div class="inline-block">{{ operatorAdminName() }}</div>
-            </div>
+
+    <section class="flex flex-col gap-4" data-testid="about-project">
+        <h2 jhiTranslate="artemisApp.aboutUsOverview.project.title"></h2>
+        <p jhiTranslate="artemisApp.aboutUsOverview.project.description"></p>
+        @if (info?.operatorName; as operator) {
+            <p class="text-muted-color" [jhiTranslate]="'artemisApp.aboutUsOverview.project.operatedBy'" [translateValues]="{ operator }" data-testid="about-operated-by"></p>
         }
-        @if (operatorContactEmail()) {
-            <div>
-                <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.adminEmail"></div>
-                <div class="inline-block">
-                    <a [href]="email()" class="footer-text" target="_top">
-                        {{ operatorContactEmail() }}
-                    </a>
-                </div>
-            </div>
-        }
-    </div>
+        <div class="flex flex-wrap gap-2">
+            @for (link of PROJECT_LINKS; track link.url) {
+                <a tumAetUiButton severity="secondary" variant="outlined" size="small" [href]="link.url" target="_blank" rel="noopener noreferrer">
+                    <span [jhiTranslate]="'artemisApp.aboutUsOverview.project.links.' + link.translationKey"></span>
+                    <fa-icon [icon]="faArrowUpRightFromSquare" />
+                </a>
+            }
+        </div>
+    </section>
+
+    @if (maintainers().length) {
+        <section class="flex flex-col gap-4" data-testid="about-maintainers">
+            <h2 jhiTranslate="artemisApp.aboutUsOverview.maintainers.title"></h2>
+            <ul class="about__list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                @for (maintainer of maintainers(); track maintainer.fullName) {
+                    <li class="about__card flex items-center gap-3">
+                        <img
+                            class="about__avatar"
+                            [src]="maintainer.photoDirectory"
+                            [alt]="'artemisApp.aboutUsOverview.portraitAlt' | artemisTranslate: { name: maintainer.fullName }"
+                            width="48"
+                            height="48"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                        <div class="flex min-w-0 flex-col">
+                            @if (maintainer.website) {
+                                <a class="font-semibold" [href]="maintainer.website" target="_blank" rel="noopener noreferrer">{{ maintainer.fullName }}</a>
+                            } @else {
+                                <span class="font-semibold">{{ maintainer.fullName }}</span>
+                            }
+                            @if (maintainer.role) {
+                                <span class="text-sm text-muted-color">{{ 'artemisApp.aboutUsOverview.roles.' + maintainer.role | artemisTranslate }}</span>
+                            }
+                        </div>
+                    </li>
+                }
+            </ul>
+            <a class="self-start" [href]="CONTRIBUTORS_URL" target="_blank" rel="noopener noreferrer" data-testid="about-contributors">
+                <span jhiTranslate="artemisApp.aboutUsOverview.maintainers.contributors"></span>
+                <fa-icon class="ms-1" [icon]="faArrowUpRightFromSquare" />
+            </a>
+        </section>
+    }
+
+    <section class="flex flex-col gap-4" data-testid="about-citation">
+        <div class="flex flex-col gap-1">
+            <h2 jhiTranslate="artemisApp.aboutUsOverview.citation.title"></h2>
+            <p class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.citation.description"></p>
+        </div>
+        <div class="about__card flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <span class="text-sm">
+                {{ CITATION.text }}
+                <a [href]="CITATION.doiUrl" target="_blank" rel="noopener noreferrer">{{ CITATION.doiUrl }}</a>
+            </span>
+            <button
+                tumAetUiButton
+                type="button"
+                class="shrink-0"
+                size="small"
+                variant="outlined"
+                [severity]="citationCopied() ? 'success' : 'secondary'"
+                [cdkCopyToClipboard]="CITATION.text + ' ' + CITATION.doiUrl"
+                (cdkCopyToClipboardCopied)="citationCopied.set($event)"
+                [attr.data-copied]="citationCopied()"
+                data-testid="about-citation-copy"
+            >
+                <fa-icon [icon]="citationCopied() ? faCheck : faCopy" />
+                <span [jhiTranslate]="citationCopied() ? 'artemisApp.aboutUsOverview.citation.copied' : 'artemisApp.aboutUsOverview.citation.copy'"></span>
+            </button>
+        </div>
+    </section>
+
+    <section class="flex flex-col gap-4" data-testid="about-release">
+        <h2 jhiTranslate="artemisApp.aboutUsOverview.release.title"></h2>
+        <dl class="about__release grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1 text-sm">
+            <dt class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.release.version"></dt>
+            <dd data-testid="about-version">
+                <a [href]="RELEASE_NOTES_URL" target="_blank" rel="noopener noreferrer">{{ VERSION }}</a>
+            </dd>
+            @if (gitCommit(); as commit) {
+                <dt class="text-muted-color" jhiTranslate="artemisApp.git.commit"></dt>
+                <dd class="font-mono" data-testid="about-commit">{{ commit }}</dd>
+            }
+            @if (gitBranch(); as branch) {
+                <dt class="text-muted-color" jhiTranslate="artemisApp.git.branch"></dt>
+                <dd class="font-mono" data-testid="about-branch">{{ branch }}</dd>
+            }
+            <dt class="text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.release.license"></dt>
+            <dd>MIT</dd>
+        </dl>
+    </section>
 </div>

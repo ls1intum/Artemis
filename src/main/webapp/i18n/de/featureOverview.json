@@ -1,20 +1,25 @@
 {
     "featureOverview": {
         "title": "Onlineklausuren in Artemis",
-        "featureDetails": "Featuredetails",
+        "featureDetails": "Funktionen im Detail",
+        "overview": "Überblick",
+        "audience": {
+            "label": "Zielgruppe",
+            "students": "Für Studierende",
+            "instructors": "Für Lehrende"
+        },
         "instructor": {
             "pageTitle": "Klausurfeatures für Lehrende",
-            "featureOverview": "Features für Lehrende",
             "feature": {
                 "createConductAssess": {
                     "title": "Klausur Erstellen, Durchführen und Bewerten",
                     "shortDescription": "Erstelle, durchführe und bewerte Klausuren innerhalb der Artemis-Plattform.",
-                    "descriptionTextOne": "Artemis unterstützt jetzt einen Klausurmodus, der eine einzigartige Möglichkeit bietet, die Leistungen der Studierenden zu bewerten. Du kannst Klausuren für deinen Kurs erstellen und jeweils alle oder einige deiner Studierenden anmelden. Innerhalb der Klausur kannst du Programmier-, Modellierungs-, Text-, Datei-Upload- und Quizaufgaben einfügen oder bestehende Aufgaben importieren. Bevor du die Klausur für die Studierenden freigibst, kannst du Testläufe durchführen, um sicherzustellen, dass alles reibungslos verläuft. Definiere eine Arbeitszeit für die Klausur und passe sie bei Bedarf für einzelne Studierende an. Die Studierenden können frühzeitig abgeben.\n\nKeine stabile Internetverbindung? Artemis speichert alle Änderungen lokal und synchronisiert automatisch alle 30 Sekunden, um Probleme durch instabile Internetverbindungen zu vermeiden während der Durchführung der Klausur.\n\nSobald die Klausurdurchführung beendet ist, ist es Zeit die Abgaben zu bewerten. Dein Bewertungsteam startet die Bewertung über das Bewertungsdashboard, das auch den Fortschritt der Bewertung visualisiert.\n\nSobald alle Klausuren bewertet wurden, kannst du die Ergebnisse freigeben, sodass alle Studierenden ihr Ergebnis einsehen können. Wenn du glaubst, dass ein Fehler in der Bewertung ist, kannst du mit der Beschwerdefunktion eine erneute Überprüfung anfordern. Eine befugte Person, kann dann die spezifische Abgabe erneut bewerten und entscheiden, ob sie die Beschwerde akzeptiert oder ablehnt.\n\nDarüber hinaus erstellt Artemis auch einen statistischen Bericht über die Klausur, um die Leistungen der Studierenden zu bewerten und zu überprüfen.\n\nErstellen, durchführen & bewerten, alles innerhalb von Artemis!"
+                    "descriptionTextOne": "Artemis unterstützt einen Klausurmodus, der eine einzigartige Möglichkeit bietet, die Leistungen der Studierenden zu bewerten. Du kannst Klausuren für deinen Kurs erstellen und jeweils alle oder einige deiner Studierenden anmelden. Innerhalb der Klausur kannst du Programmier-, Modellierungs-, Text-, Datei-Upload- und Quizaufgaben einfügen oder bestehende Aufgaben importieren. Bevor du die Klausur für die Studierenden freigibst, kannst du Testläufe durchführen, um sicherzustellen, dass alles reibungslos verläuft. Definiere eine Arbeitszeit für die Klausur und passe sie bei Bedarf für einzelne Studierende an. Die Studierenden können frühzeitig abgeben.\n\nKeine stabile Internetverbindung? Artemis speichert Antworten in Text-, Quiz- und Modellierungsaufgaben lokal und synchronisiert sie alle 30 Sekunden, sodass eine instabile Verbindung während der Klausur keine Arbeit kostet.\n\nSobald die Klausurdurchführung beendet ist, ist es Zeit die Abgaben zu bewerten. Dein Bewertungsteam startet die Bewertung über das Bewertungsdashboard, das auch den Fortschritt der Bewertung visualisiert.\n\nSobald alle Klausuren bewertet wurden, kannst du die Ergebnisse freigeben, sodass alle Studierenden ihr Ergebnis einsehen können. Wenn Studierende glauben, dass ein Fehler in der Bewertung ist, können sie mit der Beschwerdefunktion eine erneute Überprüfung anfordern. Eine befugte Person, kann dann die spezifische Abgabe erneut bewerten und entscheiden, ob sie die Beschwerde akzeptiert oder ablehnt.\n\nDarüber hinaus erstellt Artemis auch einen statistischen Bericht über die Klausur, um die Leistungen der Studierenden zu bewerten und zu überprüfen.\n\nErstellen, durchführen & bewerten, alles innerhalb von Artemis!"
                 },
                 "configuration": {
                     "title": "Vollständig Konfigurierbar",
                     "shortDescription": "Konfiguriere die Klausur nach Bedürfnis. Studierenden-Import von CSV-Dateien.",
-                    "descriptionTextOne": "Artemis ermöglicht es, alle Aspekte einer Klausur zu konfigurieren. Du kannst den Namen der Klausur, die Modulnummer setzen, die prüfende Person und den Kursnamen festlegen. Außerdem kannst du den Zeitplan der Klausur frei nach deinen Bedürfnissen einstellen, indem du entscheidest, wann die Klausur für die Studierenden sichtbar wird, wann die Klausur automatisch beginnen und enden soll, wann die Ergebnisse veröffentlicht werden, sowie den Zeitraum, in dem die Studierenden ihre Ergebnisse überprüfen und sich ggf. beschweren können.\n\nDu kannst Aufgaben aus den Artemis-Aufgabentypen hinzufügen. Klausuraufgaben können mehrere Varianten haben und können als \"nicht obligatorisch\" markiert werden. Dies stellt sicher, dass jeder Studierende eine einzigartige Klausur erhält. Zusätzlich kannst du die Reihenfolge der Aufgaben bei der Klausur jedes Studierenden nach dem Zufallsprinzip festlegen, um den Betrug weiter zu erschweren.\n\nDu kannst Studierende per CSV-Import in großer Anzahl registrieren oder sie einzeln aus allen registrierten Nutzer:innen manuell auszuwählen. Zusätzlich kannst du auch einzelnen Studierenden mehr Zeit zuweisen."
+                    "descriptionTextOne": "Artemis ermöglicht es, alle Aspekte einer Klausur zu konfigurieren. Du kannst den Namen der Klausur, die Modulnummer setzen, die prüfende Person und den Kursnamen festlegen. Außerdem kannst du den Zeitplan der Klausur frei nach deinen Bedürfnissen einstellen, indem du entscheidest, wann die Klausur für die Studierenden sichtbar wird, wann die Klausur automatisch beginnen und enden soll, wann die Ergebnisse veröffentlicht werden, sowie den Zeitraum, in dem die Studierenden ihre Ergebnisse überprüfen und sich ggf. beschweren können.\n\nDu kannst Aufgaben aus den Artemis-Aufgabentypen hinzufügen. Aufgabengruppen können mehrere Varianten enthalten und als optional markiert werden, sodass Studierende unterschiedliche Klausuren erhalten. Zusätzlich kannst du die Reihenfolge der Aufgaben bei der Klausur jedes Studierenden nach dem Zufallsprinzip festlegen, um den Betrug weiter zu erschweren.\n\nDu kannst Studierende per CSV-Import in großer Anzahl registrieren oder sie einzeln aus allen registrierten Nutzer:innen manuell auszuwählen. Zusätzlich kannst du auch einzelnen Studierenden mehr Zeit zuweisen."
                 },
                 "examMode": {
                     "title": "Zwei Klausurmodi verfügbar",
@@ -24,12 +29,12 @@
                 "exerciseTypes": {
                     "title": "Verschiedene Aufgabentypen",
                     "shortDescription": "Programmier-, Modellierungs-, Text-, Datei-Upload- und Quizaufgaben.",
-                    "descriptionTextOne": "Artemis unterstützt Programmier-, Modellierungs-, Text-, Datei-Upload- und Quiz-Aufgaben wie Multiple-Choice-, Drag-and-Drop- und Lückentextfragen im Klausurmodus.\n\nBei den Programmieraufgaben entscheiden sich die Studierenden zwischen der Arbeit mit dem online Code-Editor oder sie können das Repository klonen und die Aufgabe in der integrierten Entwicklungsumgebung (IDE) ihrer Wahl bearbeiten. Artemis benutzt den integrierten und einfach zu bedienenden Apollon Editor für die Modellierungsaufgaben. Es unterstützt eine Vielzahl von Diagrammen, darunter Klassen-, Aktivitäts-, Objekt-, Anwendungsfall-, Kommunikations-, Komponenten-, Einsatzdiagramme, Petrinetze und Syntaxbäume. Die Studierenden können Modelle erstellen, indem sie Objekte intuitiv in den Editor ziehen und mit den entsprechenden Pfeilen verbinden. Durch die Vielfalt der verfügbaren Aufgabenarten erfüllt Artemis die Anforderungen der meisten Lehrveranstaltungen im Bereich der Softwaretechnik."
+                    "descriptionTextOne": "Artemis unterstützt Programmier-, Modellierungs-, Text-, Datei-Upload- und Quiz-Aufgaben wie Multiple-Choice-, Drag-and-Drop- und Lückentextfragen im Klausurmodus.\n\nBei den Programmieraufgaben entscheiden sich die Studierenden zwischen der Arbeit mit dem online Code-Editor oder sie können das Repository klonen und die Aufgabe in der integrierten Entwicklungsumgebung (IDE) ihrer Wahl bearbeiten. Artemis benutzt den integrierten und einfach zu bedienenden Apollon Editor für die Modellierungsaufgaben. Es unterstützt eine Vielzahl von Diagrammen, darunter Klassen-, Aktivitäts-, Objekt-, Anwendungsfall-, Kommunikations-, Komponenten-, Einsatzdiagramme, Petrinetze, Syntaxbäume, Flussdiagramme, BPMN-Diagramme und Sequential Function Charts. Die Studierenden können Modelle erstellen, indem sie Objekte intuitiv in den Editor ziehen und mit den entsprechenden Pfeilen verbinden. Durch die Vielfalt der verfügbaren Aufgabenarten erfüllt Artemis die Anforderungen der meisten Lehrveranstaltungen im Bereich der Softwaretechnik."
                 },
                 "exerciseVariants": {
                     "title": "Aufgaben Varianten",
-                    "shortDescription": "Mache jede Klausur einzigartig, indem du jeder Aufgabe Varianten hinzufügst.",
-                    "descriptionTextOne": "Artemis bietet die Möglichkeit, für jeden Studierenden eine individuelle Klausur zu erstellen. Du kannst Aufgabengruppen erstellen oder importieren, die mehrere Aufgaben enthalten. Die Anzahl der Aufgabengruppen spiegelt die Anzahl an Aufgaben in jeder Klausur wider. Bei der Erstellung der Klausur jedes Studierenden, wählt Artemis zufällig eine Aufgabe aus jeder Aufgabengruppe aus und kombiniert diese, um eine einzigartige Klausur für jeden Studierenden zu erstellen. Du kannst auch die Reihenfolge der Aufgaben nach dem Zufallsprinzip festlegen. Noch dazu kannst du zwischen obligatorischen und nicht obligatorischen Aufgaben unterscheiden."
+                    "shortDescription": "Gib Studierenden unterschiedliche Klausuren, indem du jeder Aufgabengruppe Varianten hinzufügst.",
+                    "descriptionTextOne": "Artemis bietet die Möglichkeit, für jeden Studierenden eine individuelle Klausur zu erstellen. Du kannst Aufgabengruppen erstellen oder importieren, die mehrere Aufgaben enthalten. Die Anzahl der Aufgabengruppen spiegelt die Anzahl an Aufgaben in jeder Klausur wider. Bei der Erstellung der Klausur jedes Studierenden, wählt Artemis zufällig eine Aufgabe aus jeder Aufgabengruppe aus und kombiniert diese, um eine individuelle Klausur für jeden Studierenden zu erstellen. Du kannst auch die Reihenfolge der Aufgaben nach dem Zufallsprinzip festlegen. Außerdem kannst du Aufgabengruppen als obligatorisch oder optional markieren."
                 },
                 "testRunConduction": {
                     "title": "Testläufe Durchführen",
@@ -39,12 +44,12 @@
                 "sessionMonitoring": {
                     "title": "Überwachung der Klausur",
                     "shortDescription": "Überwache die Klausursitzung, um ungewöhnliche Aktivitäten zu identifizieren.",
-                    "descriptionTextOne": "Ohne eine Aufsicht kann es sich so anfühlen, als würdest du deine Studierenden nicht genau beobachten. Um dem entgegenzuwirken, beinhaltet Artemis eine Überwachung der Klausuren. Für alle Teilnehmenden generiert Artemis eine Klausursitzung. Diese Klausursitzung enthält unter anderem, wann und wo die Klausur gestartet wurde, die öffentliche IP-Adresse und einen einzigartigen Fingerabdruck, der auf dem Browser und dem Betriebssystem basiert. Zusätzlich generiert die Klausur eine eindeutige Kennung, die mit jeder Anfrage gesendet wird. Studierende haben die Möglichkeit, während der Klausur zwischen den Computern zu wechseln und auch offline weiterzuarbeiten. Als Ausbilder hast du die Möglichkeit, alle Sitzungen und das Verhalten der Studierenden zu analysieren und verdächtig erscheinende Fälle zu markieren."
+                    "descriptionTextOne": "Ohne Aufsicht vor Ort kann es sich so anfühlen, als könntest du deine Studierenden nicht genau genug beobachten. Artemis zeichnet deshalb für alle Teilnehmenden eine Klausursitzung auf: wann die Klausur gestartet wurde, die öffentliche IP-Adresse, einen Fingerabdruck auf Basis von Browser und Betriebssystem sowie eine eindeutige Kennung, die mit jeder Anfrage gesendet wird.\n\nAuf der Seite Verdächtiges Verhalten wählst du die Kriterien, und nach Analysiere Sitzungen listet Artemis verdächtige Sitzungen auf, etwa mehrere Studierende mit derselben IP-Adresse oder demselben Browser-Fingerabdruck oder eine Person mit mehreren."
                 },
                 "plagiarismDetection": {
                     "title": "Plagiatserkennung",
                     "shortDescription": "Plagiatsversuche automatisch erkennen und kennzeichnen.",
-                    "descriptionTextOne": "Artemis kann Lehrende dabei unterstützen, Plagiatsversuche zu erkennen. Dies geschieht, indem die Ähnlichkeiten zwischen allen studentischen Abgaben analysiert werden und diejenigen, die einen bestimmten Schwellenwert überschreiten, markiert werden. Mit dem integrierten Plagiat-Editor kannst du alle markierten Abgaben nebeneinander vergleichen und diejenigen Fälle bestätigen, die als echte Plagiatsversuche gelten. Du kannst zwischen verschiedenen Plagiatserkennungsstrategien wählen, um diejenige auszuwählen, die deinen Bedürfnissen entspricht. Lehrende haben auch die Möglichkeit, einen CSV-Bericht über akzeptierte und abgelehnte Plagiatsversuche zur weiteren Verarbeitung auf externen Systemen herunterzuladen.\n\n"
+                    "descriptionTextOne": "Artemis kann Lehrende dabei unterstützen, Plagiatsversuche zu erkennen. Dies geschieht, indem die Ähnlichkeiten zwischen allen studentischen Abgaben analysiert werden und diejenigen, die einen bestimmten Schwellenwert überschreiten, markiert werden. Mit dem integrierten Plagiat-Editor kannst du alle markierten Abgaben nebeneinander vergleichen und diejenigen Fälle bestätigen, die als echte Plagiatsversuche gelten. Du kannst Ähnlichkeitsschwelle, Mindestpunktzahl und Mindestgröße anpassen; die Erkennung umfasst Text- und Programmieraufgaben. Lehrende haben auch die Möglichkeit, einen CSV-Bericht über akzeptierte und abgelehnte Plagiatsversuche zur weiteren Verarbeitung auf externen Systemen herunterzuladen."
                 },
                 "anonymousAssessment": {
                     "title": "Anonyme Bewertung",
@@ -53,8 +58,8 @@
                 },
                 "automaticAssessment": {
                     "title": "Automatische Bewertung",
-                    "shortDescription": "Automatische & halbautomatische Bewertung von allen unterstützten Aufgabentypen.",
-                    "descriptionTextOne": "Artemis unterstützt die Korrektur mit automatischen und halb automatischen Bewertungen für verschiedene Aufgabentypen. Für Quizaufgaben kannst du die richtige Lösung im Voraus festlegen. Nach Abschluss der Klausur kannst du Artemis zur automatischen Bewertung aller Abgaben veranlassen. Für Programmieraufgaben kannst du eine Testsuite erstellen, die z.B. Struktur- und Verhaltenstests verwendet. Diese werden dann nach Klausurende automatisch für jede Abgabe eines Studierenden ausgeführt und entsprechend bewertet. Du kannst auch das Gewicht jedes Tests verändern und Bonuspunktevergeben. Zusätzlich kannst du statische Analyse-Tools verwenden, um deine Beurteilung zu unterstützen. Alle Regeln der statischen Analyse können unterschiedlich gewichtet werden, und du kannst Grenzen definieren, wie viele Punkte abgezogen werden sollen, wenn ein Fehler mehrmals auftritt. Schließlich kann die Bewertung der automatischen Programmieraufgaben überprüft und durch eine manuelle Bewertung bestätigt oder überschrieben werden. \n\nFür Text- und Modellieraufgaben kannst du automatische Korrekturvorschläge aktivieren. Artemis verwendet maschinelles Lernen, um ähnliche Elemente in allen Abgaben zu identifizieren. Artemis analysiert die ausgegebenen Bewertungen, um richtige und falsche Elemente zu identifizieren und den Bewertenden Vorschläge zu geben. Das Ziel ist es, den Aufwand der Bewertung zu reduzieren und die Konsistenz und Fairness zu erhöhen."
+                    "shortDescription": "Automatische Bewertung von Programmier- und Quizaufgaben, bei Bedarf manuell überprüfbar.",
+                    "descriptionTextOne": "Artemis bewertet Quiz- und Programmieraufgaben automatisch. Für Quizaufgaben legst du die richtige Lösung im Voraus fest, und nach der Klausur kannst du Artemis alle Abgaben bewerten lassen. Für Programmieraufgaben erstellst du eine Testsuite, die z. B. Struktur- und Verhaltenstests verwendet. Standardmäßig laufen diese Tests bei einer Klausuraufgabe erst nach dem Ende der Klausur, sodass Studierende während der Klausur sehen, ob ihr Code kompiliert; das kannst du in der Build-Konfiguration ändern. Du kannst das Gewicht jedes Tests verändern und Bonuspunkte vergeben. Zusätzlich kannst du statische Analyse-Tools verwenden, um deine Beurteilung zu unterstützen. Alle Regeln der statischen Analyse können unterschiedlich gewichtet werden, und du kannst Grenzen definieren, wie viele Punkte abgezogen werden sollen, wenn ein Fehler mehrmals auftritt. Schließlich kann die automatische Bewertung der Programmieraufgaben überprüft und durch eine manuelle Bewertung bestätigt oder überschrieben werden."
                 },
                 "reviewIndividualExams": {
                     "title": "Individuelle Klausuren Überprüfen",
@@ -64,7 +69,7 @@
                 "assessmentMonitoring": {
                     "title": "Überwachung der Bewertung",
                     "shortDescription": "Behalte den Bewertungsfortschritt immer im Überblick durch das Bewertungs-Dashboard.",
-                    "descriptionTextOne": "Über das Bewertungs-Dashboard habt ihr immer einen Überblick darüber, wie die Bewertung der Klausur verläuft. Dies wird durch einen intuitiven Fortschrittsbalken für jede Aufgabe der Klausur angezeigt, der genau darstellt, wie viele Abgaben noch bewertet werden müssen. Verliere keine Zeit und veröffentliche sofort die Ergebnisse, wenn alle Klausuren bewertet worden sind. Du kannst auch die Ergebnisseite ansehen, um Einblicke in die Ergebnisse der Klausur zu gewinnen."
+                    "descriptionTextOne": "Über das Bewertungs-Dashboard hast du immer einen Überblick darüber, wie die Bewertung der Klausur verläuft. Dies wird durch einen intuitiven Fortschrittsbalken für jede Aufgabe der Klausur angezeigt, der genau darstellt, wie viele Abgaben noch bewertet werden müssen. Sobald alles bewertet ist, kannst du das Veröffentlichungsdatum der Ergebnisse vorziehen. Du kannst auch die Ergebnisseite ansehen, um Einblicke in die Ergebnisse der Klausur zu gewinnen."
                 },
                 "complaints": {
                     "title": "Online-Klausureinsicht Anbieten",
@@ -74,7 +79,7 @@
                 "statistics": {
                     "title": "Statistiken Erstellen",
                     "shortDescription": "Statistiken erstellen und Einblicke in die Leistungen der Studierenden gewinnen.",
-                    "descriptionTextOne": "Die Klausur ist vorbei, alle Klausuren wurden bewertet und die Beschwerden der Studierenden wurden ausgewertet. Was nun?\n\nDu kannst das Ergebnis der Klausur anhand der von Artemis generierten Statistiken auswerten. Überprüfe die Leistung der Studierenden anhand verschiedener Metriken wie Durchschnitt, Median und Standardabweichung. Überprüfe die wahrgenommenen Schwierigkeiten der Studierenden bei jeder Aufgabe, um die Klausuren in Zukunft zu verbessern. Zusätzlich kannst du alle Ergebnisse in eine CSV-Datei herunterladen, um sie in externe Systeme zu exportieren und Diagramme und Grafiken zur weiteren Analyse zu erstellen."
+                    "descriptionTextOne": "Die Klausur ist vorbei, alle Klausuren wurden bewertet und die Beschwerden der Studierenden wurden ausgewertet. Was nun?\n\nDu kannst das Ergebnis der Klausur anhand der von Artemis generierten Statistiken auswerten. Überprüfe die Leistung der Studierenden anhand verschiedener Metriken wie Durchschnitt, Median und Standardabweichung. Vergleiche die durchschnittlichen Punkte jeder Aufgabengruppe und Aufgabe, um künftige Klausuren zu verbessern. Zusätzlich kannst du alle Ergebnisse in eine CSV-Datei herunterladen, um sie in externe Systeme zu exportieren und Diagramme und Grafiken zur weiteren Analyse zu erstellen."
                 },
                 "checklist": {
                     "title": "Checkliste Befolgen",
@@ -100,7 +105,6 @@
         },
         "students": {
             "pageTitle": "Klausurfeatures für Studierende",
-            "featureOverview": "Features für Studierende",
             "feature": {
                 "localIDE": {
                     "title": "Verwende Deine IDE",
@@ -115,12 +119,12 @@
                 "textEditor": {
                     "title": "Integrierter Texteditor",
                     "shortDescription": "Löse Textaufgaben mit dem integrierten Texteditor.",
-                    "descriptionTextOne": "Um an Textaufgaben zu arbeiten, bietet Artemis einen integrierten Texteditor. Der Texteditor ist einfach zu bedienen und leicht zu navigieren. Es gibt keine Grenze für die zulässige Länge der Abgabe und er verfolgt automatisch die Anzahl der Wörter und Zeichen in deiner Abgabe."
+                    "descriptionTextOne": "Um an Textaufgaben zu arbeiten, bietet Artemis einen integrierten Texteditor. Der Texteditor ist einfach zu bedienen und leicht zu navigieren. Deine Antwort darf bis zu 30.000 Zeichen lang sein, und der Editor zeigt beim Schreiben die Anzahl der Wörter und Zeichen an."
                 },
                 "apollonEditor": {
                     "title": "Integrierter Model-Editor",
                     "shortDescription": "Erstelle komplexe Modelle einfach per Drag-and-Drop mit dem intuitiven Apollon-Editor.",
-                    "descriptionTextOne": "Angetrieben vom Apollon-Editor unterstützt der Artemis-Klausurmodus das Modellieren von Aufgaben unterschiedlicher Art. Dazu gehören Klassen-, Aktivitäts-, Objekt-, Anwendungsfall-, Kommunikations-, Komponenten-, Verteilungsdiagramme, Petri-Netze und Syntaxbäume. Mit dem integrierten Apollon-Editor kannst du auf einfache Weise komplexe Modelle erstellen, die über eine intuitive Drag-and-Drop-Benutzeroberfläche navigierbar sind."
+                    "descriptionTextOne": "Angetrieben vom Apollon-Editor unterstützt der Artemis-Klausurmodus das Modellieren von Aufgaben unterschiedlicher Art. Dazu gehören Klassen-, Aktivitäts-, Objekt-, Anwendungsfall-, Kommunikations-, Komponenten-, Verteilungsdiagramme, Petri-Netze, Syntaxbäume, Flussdiagramme, BPMN-Diagramme und Sequential Function Charts. Mit dem integrierten Apollon-Editor kannst du auf einfache Weise komplexe Modelle erstellen, die über eine intuitive Drag-and-Drop-Benutzeroberfläche navigierbar sind."
                 },
                 "quizExercises": {
                     "title": "Quizaufgaben",
@@ -128,9 +132,9 @@
                     "descriptionTextOne": "Der Artemis-Klausurmodus unterstützt Quizaufgaben die Multiple-Choice-, Drag-and-Drop- und Lückentextfragen enthalten können. Artemis-Multiple-Choice-Fragen können eine oder mehrere Lösungen haben und die Bewertung kann so angepasst werden, dass zum Beispiel bei einer falschen Antwort keine Punkte abgezogen werden. Auf diese Weise kann es den exakten Bewertungsstil eurer Offline-Klausuren imitieren. Für Drag-and-Drop-Fragen kannst du einfach das entsprechende Element an die passende Stelle ziehen. Für Lückentexte bekommst du Eingabefelder innerhalb eines Textes, die du mit deinen eigenen Worten ausfüllen kannst."
                 },
                 "login": {
-                    "title": "LRZ Login",
-                    "shortDescription": "Logge dich über dein LRZ-Konto ein. Kein spezielles Konto erforderlich.",
-                    "descriptionTextOne": "Benutze die gleichen LRZ-Zugangsdaten, die du für alle Universitätsanwendungen verwendest, um auf Artemis zuzugreifen. Es ist nicht nötig, ein neues Konto zu erstellen und ein anderes Passwort zu verwalten! Logge dich mit deiner TUMID und deinem Passwort ein und du kannst loslegen."
+                    "title": "TUM-Login",
+                    "shortDescription": "Melde dich mit deinem TUM-Konto an. Kein spezielles Konto erforderlich.",
+                    "descriptionTextOne": "Melde dich mit deiner TUM-Kennung und deinem Passwort an, denselben Zugangsdaten wie für alle Universitätsanwendungen. Ein neues Konto und ein weiteres Passwort brauchst du nicht."
                 },
                 "userInterface": {
                     "title": "Intuitive UI",
@@ -140,7 +144,7 @@
                 "conduction": {
                     "title": "Onlineklausur",
                     "shortDescription": "Klausuren auf Artemis durchführen.",
-                    "descriptionTextOne": "Artemis unterstützt jetzt die Erstellung und Durchführung von Onlineklausuren, die alle in die Plattform integriert sind! Als Student*in hast du die Möglichkeit, an Onlineklausuren teilzunehmen, die die meisten bekannten Artemis-Aufgabentypen wie Programmier-, Modellierungs-, Text- und Quiz-Aufgaben wie Multiple-Choice-Fragen beinhalten können. Mit der intuitiven und übersichtlichen Benutzeroberfläche kannst du einfach durch die Aufgaben navigieren. Dein Fortschritt wird lokal gespeichert und alle 30 Sekunden synchronisiert, sodass du auch bei Ausfall der Internetverbindung offline weiterarbeiten kannst. Wenn du die Klausur abgegeben hast, hast du immer Zugriff auf die Zusammenfassung, die dir einen Überblick über deine Lösungen gibt. Die Klausur wird anonym bewertet, unterstützt durch die automatische und halb automatische Bewertung von Artemis, die du direkt von zu Hause aus einsehen kannst, ohne geografische Einschränkungen. Du kannst deine Klausur von überall auf der Welt durchführen und überprüfen."
+                    "descriptionTextOne": "Artemis führt Onlineklausuren mit Programmier-, Modellierungs-, Text-, Datei-Upload- und Quizaufgaben durch, alle in die Plattform integriert. Mit der intuitiven und übersichtlichen Benutzeroberfläche kannst du einfach durch die Aufgaben navigieren. Antworten in Text-, Quiz- und Modellierungsaufgaben werden lokal gespeichert und alle 30 Sekunden synchronisiert, sodass du auch bei Ausfall der Internetverbindung an ihnen weiterarbeiten kannst. Wenn du die Klausur abgegeben hast, gibt dir die Zusammenfassung einen Überblick über deine Lösungen. Die Klausur wird anonym bewertet, unterstützt durch die automatische Bewertung von Quiz- und Programmieraufgaben. Deine Ergebnisse kannst du von überall aus einsehen, ohne geografische Einschränkungen."
                 },
                 "examMode": {
                     "title": "Zwei Klausurmodi",
@@ -154,23 +158,18 @@
                 },
                 "summary": {
                     "title": "Überblick auf deiner Abgabe",
-                    "shortDescription": "Greife immer auf deine Zusammenfassung zu.",
+                    "shortDescription": "Sieh dir nach der Abgabe die Zusammenfassung deiner Klausur an.",
                     "descriptionTextOne": "\"Was war deine Antwort auf Frage 2?\"\n\n- \"Ich kann mich nicht mehr erinnern, ich denke Option B\".\n\nMit Artemis kannst du auf deine persönliche Klausur zugreifen und deine Einsendung über die Zusammenfassungsseite der Klausur, die nach der Abgabe verfügbar wird, überprüfen. Die Zusammenfassung enthält eine Übersicht über alle deine Abgaben und zeigt sie in einer aggregierten Ansicht an. Zusätzlich enthält sie den letzten Commit-Hash sowie den Link zu deinem Repository, wo du den Code für Programmieraufgaben einsehen und analysieren kannst. Für den Fall, dass du die es lokal auf dem Gerät deiner Wahl speichern möchtest, bietet Artemis die Möglichkeit, die komplette Zusammenfassung als PDF Datei herunterzuladen."
                 },
                 "qualityAndFair": {
                     "title": "Qualität und Fairness der Bewertung",
                     "shortDescription": "Artemis ermöglicht eine anonyme Korrektur, unterstützt durch automatische Bewertungen.",
-                    "descriptionTextOne": "Artemis ermöglicht ein anonymisiertes Bewertungsverfahren, um eine faire Bewertung zu ermöglichen, frei von Vorurteilen und Abweichungen zwischen den verschiedenen Bewertungen. Alle, die Aufgaben bewerten, müssen Beispielvorlagen und Lösungen durcharbeiten, bevor sie mit der Bewertung der Klausuren beginnen kann. Zusätzlich unterstützt die Plattform den Bewertungsprozess mit automatischen und halbautomatischen Bewertungen für alle unterstützten Aufgabentypen. Quiz- und Programmieraufgaben werden automatisch bewertet. Diese automatische Bewertung kann durch eine manuellen Bewertung erweitert werden, um die Genauigkeit der Bewertung weiter zu erhöhen. Noch dazu lernt Artemis durch maschinelles Lernen, welche Elemente richtig und welche falsch sind. Diese Funktion kann für Text- und Modellierungsaufgaben aktiviert werden. Wenn es aktiviert ist, schlägt es vor, wie die Elemente der Abgaben im Verlauf der weiteren Korrektur bewertet werden sollen. Ziel ist es hier, den Aufwand zu reduzieren und die Qualität und Fairness der Bewertung zu erhöhen."
+                    "descriptionTextOne": "Artemis ermöglicht ein anonymisiertes Bewertungsverfahren, um eine faire Bewertung zu ermöglichen, frei von Vorurteilen und Abweichungen zwischen den verschiedenen Bewertenden. Hat eine Aufgabe Beispielabgaben, arbeiten die Bewertenden sie zuerst durch. Quiz- und Programmieraufgaben werden automatisch bewertet, und diese automatische Bewertung kann durch eine manuelle Bewertung ergänzt werden, um die Genauigkeit weiter zu erhöhen."
                 },
                 "onlineReview": {
                     "title": "Online-Klausureinsicht",
                     "shortDescription": "Die Bewertung deiner Klausur von überall in der Welt überprüfen.",
                     "descriptionTextOne": "Nachdem die Ergebnisse veröffentlicht wurden, kannst du auf deine Klausur zugreifen und die Bewertung bequem von deinem Computer aus überprüfen. Nimm dir die Zeit, die Aufgabenstellung und die Bewertung wirklich zu analysieren, um zu verstehen, welche Fehler du gemacht hast. Es gibt keine Ortsbeschränkungen für die Einsicht, du kannst von überall darauf zugreifen! \n\nManchmal passieren auch Fehler bei der Klausurbewertung. Mithilfe der Beschwerdefunktion kannst du dich über eine Bewertung beschweren und einige Gründe angeben, warum du dich nicht richtig bewertet fühlst. Alle Beschwerden von Studierenden werden gesammelt und ein anderer Bewerte, hat die Möglichkeit, deine Beschwerde entweder anzunehmen oder abzulehnen. Wenn deine Beschwerde akzeptiert wird, werden deine Punkte automatisch aktualisiert!"
-                },
-                "browserCompatibility": {
-                    "title": "Kompatibel Mit Allen Gängigen Browsern.",
-                    "shortDescription": "Verwende Artemis in allen gängigen Browsern.",
-                    "descriptionTextOne": "Der Artemis-Klausurmodus ist mit allen gängigen Browsern kompatibel, einschließlich Chrome, Safari, Edge und Opera. Wir bieten aktive Unterstützung für Google Chrome und Chromium-Browser."
                 },
                 "gradeKey": {
                     "title": "Notenschlüssel Anzeigen",

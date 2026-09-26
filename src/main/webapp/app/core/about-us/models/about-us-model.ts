@@ -1,11 +1,11 @@
-import { ContributorModel } from 'app/core/about-us/models/contributor-model';
+/** A maintainer as listed in about-us.json. An installation can override that file in its public/content directory. */
+export interface AboutUsMaintainer {
+    fullName: string;
+    photoDirectory: string;
+    role?: string;
+    website?: string;
+}
 
-export class AboutUsModel {
-    projectManagers: ContributorModel[];
-    contributors: ContributorModel[];
-
-    constructor(projectManagers: ContributorModel[], contributors: ContributorModel[]) {
-        this.projectManagers = projectManagers;
-        this.contributors = contributors;
-    }
+export interface AboutUsModel {
+    projectManagers?: AboutUsMaintainer[];
 }

@@ -1,49 +1,78 @@
-@media (min-width: 768px) and (max-width: 1024px) {
-    .page {
-        .contributor {
-            flex: 0 0 20%;
-            max-width: 20%;
+// Layout and spacing are Tailwind utilities in the template. What stays here are rules Bootstrap's unlayered Reboot
+// would otherwise win over a layered utility: the margins and sizes of headings, paragraphs and lists, and link colors.
+.about {
+    background: var(--module-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+
+    h1,
+    h2,
+    h3,
+    p,
+    dl,
+    dd {
+        margin: 0;
+    }
+
+    h1 {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    h3 {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    dt {
+        font-weight: 400;
+    }
+
+    &__list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__card {
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+    }
+
+    &__tile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        background: var(--body-bg);
+        color: var(--body-color);
+        text-decoration: none;
+        transition: background-color 0.15s;
+
+        &:hover {
+            background: var(--border-color);
+            color: var(--body-color);
+            text-decoration: none;
         }
 
-        .project-manager {
-            flex: 0 0 100%;
-            max-width: 100%;
+        &:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
     }
-}
 
-@media (max-width: 767px) {
-    .page {
-        .contributor {
-            flex: 0 0 33.3%;
-            max-width: 33.3%;
-        }
-
-        .project-manager {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
+    &__avatar {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        object-fit: cover;
     }
-}
-
-.contributor {
-    padding-right: 15px;
-    padding-left: 15px;
-    flex: 0 0 8.3333%;
-    max-width: 8.3333%;
-}
-
-.project-manager {
-    flex: 0 0 50%;
-    max-width: 50%;
-}
-
-.inline-block {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 20px;
-}
-
-.fixed-width {
-    width: 200px;
 }
