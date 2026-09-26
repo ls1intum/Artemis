@@ -56,6 +56,7 @@
         }
         @if (exercise()!.type === ExerciseType.PROGRAMMING && !isLocalCIEnabled() && dto.buildPlanId && exercise()!.isAtLeastInstructor) {
             <button
+                type="button"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                 jhiDeleteButton
                 [actionType]="ActionType.Cleanup"
@@ -68,13 +69,18 @@
             </button>
         }
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
-            <button (click)="addBasicPresentation(dto)" class="btn btn-info btn-sm">
+            <button type="button" (click)="addBasicPresentation(dto)" class="btn btn-info btn-sm">
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-xl-inline ms-1" jhiTranslate="artemisApp.participation.addPresentation.label"></span>
             </button>
         }
         @if (gradedPresentationEnabled() && !dto.testRun && hasGradedPresentationChanged(dto) && dto.presentationScore !== undefined) {
-            <button [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100" (click)="addGradedPresentation(dto)" class="btn btn-info btn-sm">
+            <button
+                type="button"
+                [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100"
+                (click)="addGradedPresentation(dto)"
+                class="btn btn-info btn-sm"
+            >
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-xl-inline ms-1" jhiTranslate="artemisApp.participation.savePresentation.label"></span>
             </button>
@@ -83,13 +89,14 @@
             (basicPresentationEnabled() && (dto.presentationScore ?? 0) > 0) ||
             (gradedPresentationEnabled() && (!hasGradedPresentationChanged(dto) || dto.presentationScore === undefined))
         ) {
-            <button (click)="removePresentation(dto)" class="btn btn-danger btn-sm">
+            <button type="button" (click)="removePresentation(dto)" class="btn btn-danger btn-sm">
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-xl-inline ms-1" jhiTranslate="artemisApp.participation.removePresentation.label"></span>
             </button>
         }
         @if (exercise()!.isAtLeastInstructor) {
             <button
+                type="button"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                 [skipFeatureToggle]="exercise()!.type !== ExerciseType.PROGRAMMING"
                 jhiDeleteButton
@@ -190,10 +197,16 @@
                 [labelName]="'artemisApp.participation.individualDueDate' | artemisTranslate"
                 [hideLabelName]="true"
             />
-            <button class="btn btn-outline-success btn-sm" [disabled]="isSaving() || individualDueDate.invalid" (click)="saveIndividualDueDate(cell.data)" title="Save">
+            <button
+                type="button"
+                class="btn btn-outline-success btn-sm"
+                [disabled]="isSaving() || individualDueDate.invalid"
+                (click)="saveIndividualDueDate(cell.data)"
+                title="Save"
+            >
                 <fa-icon [icon]="faCheck" />
             </button>
-            <button class="btn btn-outline-danger btn-sm" [disabled]="isSaving()" (click)="cancelEditDueDate(cell.data)" title="Discard">
+            <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="isSaving()" (click)="cancelEditDueDate(cell.data)" title="Discard">
                 <fa-icon [icon]="faTimes" />
             </button>
         </div>
@@ -205,7 +218,12 @@
                 <span class="text-secondary fst-italic" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
             }
             @if (exercise()!.isAtLeastInstructor) {
-                <button class="btn btn-link btn-sm p-0" (click)="startEditDueDate(cell.data)" [title]="'artemisApp.participation.editIndividualDueDate' | artemisTranslate">
+                <button
+                    type="button"
+                    class="btn btn-link btn-sm p-0"
+                    (click)="startEditDueDate(cell.data)"
+                    [title]="'artemisApp.participation.editIndividualDueDate' | artemisTranslate"
+                >
                     <fa-icon [icon]="faPencil" />
                 </button>
             }

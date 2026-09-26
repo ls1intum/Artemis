@@ -1,6 +1,7 @@
 @if (!isExamExercise() && requestFeedbackEnabled() && athenaEnabled()) {
     @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
         <button
+            type="button"
             class="btn btn-primary"
             (click)="requestAIFeedback()"
             [class.btn-sm]="smallButtons()"
@@ -12,6 +13,7 @@
         </button>
     } @else {
         <button
+            type="button"
             class="btn btn-primary"
             (click)="requestAIFeedback()"
             [class.btn-sm]="smallButtons()"

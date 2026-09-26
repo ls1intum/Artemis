@@ -8,6 +8,7 @@
             <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
                 <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
                     <button
+                        type="button"
                         class="btn btn-sm"
                         [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }"
                         ngbDropdownToggle
@@ -68,11 +69,21 @@
                     </ul>
                 </div>
                 <div class="d-flex-end text-end">
-                    <button (click)="openImportModal()" class="btn btn-primary btn-sm jh-create-entity import-lecture text-truncate" id="lecture-import-button">
+                    <button type="button" (click)="openImportModal()" class="btn btn-primary btn-sm jh-create-entity import-lecture text-truncate" id="lecture-import-button">
                         <fa-icon [icon]="faFileImport" />
                         <span jhiTranslate="artemisApp.lecture.import.label"></span>
                     </button>
-                    <a id="jh-create-entity" class="btn btn-primary btn-sm jh-create-entity create-lecture" (click)="navigateToLectureCreationPage()">
+                    <a
+                        id="jh-create-entity"
+                        class="btn btn-primary btn-sm jh-create-entity create-lecture"
+                        (click)="navigateToLectureCreationPage()"
+                        #keyboardAction75
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction75.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction75.click() : undefined"
+                    >
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
                     </a>
@@ -144,6 +155,7 @@
                                         }
                                         @if (lecture.isAtLeastInstructor) {
                                             <button
+                                                type="button"
                                                 class="mt-1"
                                                 jhiDeleteButton
                                                 data-testid="delete-lecture"

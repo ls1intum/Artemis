@@ -15,6 +15,7 @@ import {
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SidebarAccordionComponent } from './sidebar-accordion/sidebar-accordion.component';
 import { SidebarCardDirective } from './directive/sidebar-card.directive';
@@ -33,6 +34,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         SearchFilterComponent,
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
         NgbDropdown,
         NgbDropdownToggle,
         NgbDropdownMenu,

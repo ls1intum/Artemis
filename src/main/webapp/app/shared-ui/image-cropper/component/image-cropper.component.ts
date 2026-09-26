@@ -14,6 +14,7 @@ import { CropperPosition } from 'app/shared-ui/image-cropper/interfaces/cropper-
 import { ImageCroppedEvent } from 'app/shared-ui/image-cropper/interfaces/image-cropped-event.interface';
 import { captureException } from '@sentry/angular';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 // Note: this component and all files in the image-cropper folder were taken from https://github.com/Mawi137/ngx-image-cropper because the framework was not maintained anymore
 // Note: Partially adapted to fit Artemis needs
@@ -23,6 +24,7 @@ const defaultSettings = new CropperSettings();
 
 @Component({
     selector: 'image-cropper',
+    imports: [ArtemisTranslatePipe],
     templateUrl: './image-cropper.component.html',
     styleUrls: ['./image-cropper.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,

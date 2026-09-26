@@ -262,6 +262,7 @@ describe('SidebarComponent', () => {
             const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
 
             expect(filterLink).toBeTruthy();
+            expect(filterLink.nativeElement.getAttribute('aria-label')).toBe('artemisApp.exercise.filter');
         });
 
         it('should NOT display the filter link when sidebarType is NOT exercise', () => {

@@ -1,6 +1,16 @@
 @for (instruction of criterion().structuredGradingInstructions; track instruction) {
     <li>
-        <a (click)="updateAssessmentWithDropdown(instruction)" class="dropdown-item" [style.background-color]="getInstrColour(instruction)">
+        <a
+            (click)="updateAssessmentWithDropdown(instruction)"
+            class="dropdown-item"
+            [style.background-color]="getInstrColour(instruction)"
+            #keyboardAction3
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction3.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction3.click() : undefined"
+        >
             <table class="table layout-table">
                 <tbody>
                     <tr>

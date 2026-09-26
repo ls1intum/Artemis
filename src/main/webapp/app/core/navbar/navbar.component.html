@@ -36,7 +36,18 @@
                 <ul class="dropdown-menu" ngbDropdownMenu>
                     @for (language of languages; track language) {
                         <li>
-                            <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
+                            <a
+                                class="dropdown-item"
+                                [jhiActiveMenu]="language"
+                                (click)="changeLanguage(language); collapseNavbar()"
+                                #keyboardAction39
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction39.click() : undefined"
+                                >{{ language | findLanguageFromKey }}</a
+                            >
                         </li>
                     }
                 </ul>
@@ -101,9 +112,18 @@
                         <div>
                             @for (language of languages; track language) {
                                 <li>
-                                    <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{
-                                        language | findLanguageFromKey
-                                    }}</a>
+                                    <a
+                                        class="dropdown-item"
+                                        [jhiActiveMenu]="language"
+                                        (click)="changeLanguage(language); collapseNavbar()"
+                                        #keyboardAction104
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction104.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction104.click() : undefined"
+                                        >{{ language | findLanguageFromKey }}</a
+                                    >
                                 </li>
                             }
                         </div>
@@ -127,7 +147,17 @@
                     }
                     <li>
                         @if (currAccount()) {
-                            <a class="dropdown-item" (click)="logout()" data-testid="logout">
+                            <a
+                                class="dropdown-item"
+                                (click)="logout()"
+                                data-testid="logout"
+                                #keyboardAction130
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction130.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction130.click() : undefined"
+                            >
                                 <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.account.logout"></span>
                             </a>
@@ -179,6 +209,12 @@
                     [attr.aria-expanded]="!isNavbarCollapsed()"
                     aria-label="Toggle navigation"
                     (click)="toggleNavbar()"
+                    #keyboardAction174
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction174.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction174.click() : undefined"
                 >
                     <fa-icon [icon]="faBars" />
                 </a>

@@ -2,6 +2,7 @@
     @if (!reEvaluationInProgress()) {
         <div class="question-options question-card-header" [hidden]="showPreview()">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
                 [attr.aria-expanded]="!isQuestionCollapsed()"
@@ -58,6 +59,7 @@
     } @else {
         <div class="question-card-header-reevaluation">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="toggleCollapse()"
                 [attr.aria-expanded]="!isQuestionCollapsed()"
@@ -172,18 +174,31 @@
             @if (reEvaluationInProgress()) {
                 <div class="col-12 col-md-3 d-flex align-items-center gap-2">
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="question().invalid"
                         (click)="question().invalid = true"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                     ></button>
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="!question().invalid"
                         [disabled]="question().invalid"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                     ></button>
-                    <div id="delete-button" class="delete-button flex-shrink-0" (click)="deleteQuestion()">
+                    <div
+                        id="delete-button"
+                        [attr.aria-label]="'global.action.delete' | artemisTranslate"
+                        class="delete-button flex-shrink-0"
+                        (click)="deleteQuestion()"
+                        #keyboardAction186
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction186.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction186.click() : undefined"
+                    >
                         <fa-icon [icon]="faTrash" size="2x" />
                     </div>
                 </div>

@@ -19,7 +19,17 @@
                             <jhi-search-filter [size]="searchFieldSize()" (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
                             @if (showFilter()) {
                                 <div class="ms-2">
-                                    <a class="filter-link" (click)="openFilterExercisesDialog()">
+                                    <a
+                                        class="filter-link"
+                                        [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate"
+                                        (click)="openFilterExercisesDialog()"
+                                        #keyboardAction22
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction22.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction22.click() : undefined"
+                                    >
                                         @if (isFilterActive()) {
                                             <fa-icon [icon]="faFilterCurrentlyApplied" class="text-primary" />
                                         } @else {
@@ -37,26 +47,26 @@
 
                                     <div ngbDropdownMenu>
                                         @if (sidebarDataInternal()?.messagingEnabled) {
-                                            <button (click)="createDirectChat()" class="p-2" ngbDropdownItem>
+                                            <button type="button" (click)="createDirectChat()" class="p-2" ngbDropdownItem>
                                                 <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true" />
                                                 <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
                                             </button>
-                                            <button (click)="createGroupChat()" class="p-2" ngbDropdownItem>
+                                            <button type="button" (click)="createGroupChat()" class="p-2" ngbDropdownItem>
                                                 <fa-icon [icon]="faPeopleGroup" class="item-icon" [fixedWidth]="true" />
                                                 <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
                                             </button>
                                         }
                                         @if (sidebarDataInternal()?.canCreateChannel) {
-                                            <button (click)="createNewChannel()" class="p-2 createChannel" ngbDropdownItem>
+                                            <button type="button" (click)="createNewChannel()" class="p-2 createChannel" ngbDropdownItem>
                                                 <fa-icon [icon]="faHashtag" class="item-icon" />
                                                 <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
                                             </button>
                                         }
-                                        <button (click)="browseChannels()" class="p-2" ngbDropdownItem>
+                                        <button type="button" (click)="browseChannels()" class="p-2" ngbDropdownItem>
                                             <fa-icon [icon]="faSearch" class="item-icon" />
                                             <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>
                                         </button>
-                                        <button (click)="markAllMessagesAsChecked()" class="p-2" ngbDropdownItem>
+                                        <button type="button" (click)="markAllMessagesAsChecked()" class="p-2" ngbDropdownItem>
                                             <fa-icon [icon]="faCheckDouble" class="item-icon" />
                                             <span jhiTranslate="artemisApp.courseOverview.sidebar.setChannelAsRead"></span>
                                         </button>
