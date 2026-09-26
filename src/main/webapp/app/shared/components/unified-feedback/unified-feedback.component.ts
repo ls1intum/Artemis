@@ -300,6 +300,11 @@ export class UnifiedFeedbackComponent {
     /** Matches Apollon's give-feedback title cap, so a title stays a headline well under the 500-character text column. */
     protected readonly TITLE_MAX_LENGTH = 100;
 
+    /** Matches Apollon's give-feedback description cap, shown to the assessor as an `n/500` counter. */
+    protected readonly DETAIL_MAX_LENGTH = 500;
+
+    readonly detailLength = computed(() => (this.feedbackDetail() ?? '').length);
+
     /**
      * The credits input's raw, not-yet-committed text, captured on a stepper button's `mousedown` (which always
      * fires before the button steals focus and blurs the input). Without this, clicking a stepper after typing an

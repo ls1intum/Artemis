@@ -370,6 +370,12 @@
     }
 }
 
+.unified-feedback-detail-counter {
+    margin-top: 0.125rem;
+    font-size: 0.75rem;
+    color: var(--text-body-secondary);
+}
+
 .unified-feedback-correction-status {
     display: flex;
     align-items: center;

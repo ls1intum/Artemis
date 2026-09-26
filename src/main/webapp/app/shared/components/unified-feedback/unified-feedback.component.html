@@ -118,6 +118,7 @@
                         class="unified-feedback-detail-input"
                         [class.unified-feedback-detail-input-missing]="isDetailMissing()"
                         rows="2"
+                        [maxlength]="DETAIL_MAX_LENGTH"
                         [ngModel]="feedbackDetail() ?? ''"
                         (ngModelChange)="onDetailChange($event)"
                         (input)="onDetailInput()"
@@ -126,6 +127,7 @@
                         [attr.aria-label]="feedbackDetailAriaLabel()"
                     ></textarea>
                 </div>
+                <div class="unified-feedback-detail-counter">{{ detailLength() }}/{{ DETAIL_MAX_LENGTH }}</div>
                 @if (correctionStatusLabel()) {
                     <div class="unified-feedback-correction-status">
                         <span
