@@ -1,0 +1,59 @@
+# An aiworker-only Artemis node has no HTTP server or database. Do not combine
+# this profile with core; run a separate worker process for production.
+spring:
+    application:
+        name: Artemis
+    hazelcast:
+        localInstances: false
+    main:
+        web-application-type: none
+    liquibase:
+        enabled: false
+    data:
+        jpa:
+            repositories:
+                enabled: false
+    autoconfigure:
+        exclude:
+            - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+            - org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration
+            - org.springframework.boot.jdbc.autoconfigure.JdbcClientAutoConfiguration
+            - org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration
+            - org.redisson.spring.starter.RedissonAutoConfigurationV2
+            - org.redisson.spring.starter.RedissonAutoConfigurationV4
+            - org.springframework.ai.model.chat.memory.repository.jdbc.autoconfigure.JdbcChatMemoryRepositoryAutoConfiguration
+    ai:
+        model:
+            chat: none
+            embedding: none
+            image: none
+            moderation: none
+            audio:
+                speech: none
+            transcription: none
+artemis:
+    aiworker:
+        id: ${AI_WORKER_ID}
+        image: ${AI_WORKER_SANDBOX_IMAGE}
+        workload: ${AI_WORKER_WORKLOAD}
+        profile: ${AI_WORKER_PROFILE}
+management:
+    tracing:
+        export:
+            otlp:
+                enabled: false
+    logging:
+        export:
+            otlp:
+                enabled: false
+    otlp:
+        metrics:
+            export:
+                enabled: false
+eureka:
+    client:
+        enabled: true
+        register-with-eureka: false

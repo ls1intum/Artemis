@@ -24,7 +24,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerClientService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
@@ -53,12 +52,13 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
         "artemis.failed-build-logs-path=./local/server-integration-test-localci/failed-build-logs", "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos", "artemis.lti.enabled=true",
-        // Exercise generation runs in the common context; worker services are mocked, so no external worker is required.
-        "artemis.hyperion.exercise-generation.enabled=true" })
+        // Whole-exercise generation is enabled here so its coordination, guards and REST boundary run in the common context. The worker registry below is mocked, so no worker is
+        // required.
+        "artemis.hyperion.exercise-generation.enabled=true", "artemis.aiworker.ids=worker-1" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCTestBase {
 
-    /** The external worker registry is mocked so common integration tests do not need a worker process. */
+    /** The external worker registry is mocked in the common integration context. */
     @MockitoBean
     protected GenerationWorkerRegistryService workerRegistry;
 
@@ -66,7 +66,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected GenerationWorkerClientService workerClient;
 
     @MockitoBean
-    protected WorkerRegistryService aiWorkers;
+    protected de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService aiWorkers;
 
     @AfterEach
     @Override

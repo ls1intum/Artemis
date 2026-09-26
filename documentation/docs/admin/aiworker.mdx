@@ -11,11 +11,6 @@ through Artemis' distributed-data provider. Artemis core uses the same provider.
 the owning feature; [Hyperion](/admin/hyperion#whole-exercise-generation-workers) owns
 exercise generation and its teaching-quality review.
 
-> This coordination layer is not a deployable worker by itself. The worker-only
-> `ArtemisApp` profile, image recipe, and Hyperion generation workload arrive with
-> the dependent Java Gradle worker layer. The deployment steps below apply only to
-> the complete stack; do not start a worker from this branch alone.
-
 ## Deployment topology
 
 | Environment             | Recommended placement                                 | Required separation                                                                              |
@@ -64,7 +59,7 @@ Monitor the provider's memory, persistence and connection health.
 ## Core configuration
 
 Enable coordination only on a `core` node. The worker pool is independent of whether
-Hyperion is enabled. Set this flag on the coordinating core nodes:
+Hyperion is enabled:
 
 ```yaml
 artemis:
@@ -91,7 +86,8 @@ Never flush or replace the store under running writers.
 ## Worker configuration
 
 Build the normal Artemis WAR with `./gradlew -Pprod -Pwar bootWar -x webapp`.
-Start the normal `ArtemisApp` with
+The [worker image recipe](https://github.com/ls1intum/Artemis/blob/develop/docker/aiworker/worker.Dockerfile)
+uses that exact WAR and runs as UID 1000. It starts the normal `ArtemisApp` with
 `prod,aiworker`. On a worker-only node, component scanning loads only AI Worker
 services and the selected workload. The `aiworker` profile disables the HTTP
 server and database services and loads only the selected distributed-data client.
@@ -142,13 +138,11 @@ workloads/profiles with separate worker identities. An identifier does not insta
 implementation: unsupported combinations advertise no usable capacity. This keeps image,
 resource policy and credentials operator-controlled, not selectable by models or jobs.
 
-A workload is usable only when its implementation is installed. Configure the
-`hyperion-generation` Java Gradle workload for generation; transport alone
-advertises no capacity.
+The shipped workload is `hyperion-generation`, schema `1`, profile `java-gradle`.
 Configure its worker-local Spring AI chat model with `spring.ai.model.chat=openai` and
 `spring.ai.openai.*`, as described in [Hyperion setup](/admin/hyperion#configure-spring-ai).
-An installed generation workload sends model requests from the worker process directly to
-the configured provider. Core sends assignments and receives evidence through the
+Hyperion generation sends model requests from the worker process directly to the
+configured provider. Core sends the assignment and receives evidence through the
 distributed-data provider; it does not proxy generation model requests.
 Chat is disabled by default in the generic executable. Other workloads do not need model
 credentials unless their implementation uses a model. Use `max-retries: 0` when exact
@@ -202,9 +196,10 @@ whether a retained result is usable and whether persistence requires operator re
 
 ## Ansible and staging qualification
 
-The `ls1intum.artemis.ai_worker` role deploys the worker process. Select workload/profile
+The `ls1intum.artemis.ai_worker` role deploys the supervisor. Select workload/profile
 explicitly and provision provider access through `ai_worker_provider` and its
-connection settings. Set `artemis_aiworker_ids` and `artemis_aiworker_enabled` on eligible core nodes.
+connection settings. Set `artemis_aiworker_ids` on eligible core nodes. Set `artemis_aiworker_enabled` on coordinating core nodes, including
+Hyperion generation nodes.
 The role validates inputs, protects rendered secrets, preloads the sandbox image and
 requires an explicit maintenance confirmation before replacing a running worker.
 It does not provision the provider, firewall or isolation boundary.
