@@ -8,7 +8,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 /**
  * Dedicated course-level Athena settings page, reached from the course-management sidebar like Iris's settings page.
@@ -21,7 +21,15 @@ import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
     selector: 'jhi-athena-settings-update',
     templateUrl: './athena-settings-update.component.html',
     host: { class: 'block' },
-    imports: [CourseTitleBarTitleComponent, CourseTitleBarTitleDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe, TumAetUiToggleSwitchComponent],
+    imports: [
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiCardComponent,
+        TumAetUiToggleSwitchComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AthenaSettingsUpdateComponent {
