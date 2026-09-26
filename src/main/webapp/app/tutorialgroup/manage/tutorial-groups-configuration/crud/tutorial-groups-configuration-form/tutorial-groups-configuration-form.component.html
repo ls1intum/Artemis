@@ -67,9 +67,10 @@
 
                 @if (useTutorialGroupChannelsControl?.value) {
                     <div class="config-subfield">
-                        <label class="config-field-label" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
+                        <label id="usePublicChannelsLabel" class="config-field-label" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
                         <tumaet-ui-select-button
                             size="small"
+                            aria-labelledby="usePublicChannelsLabel"
                             formControlName="usePublicTutorialGroupChannels"
                             [options]="channelVisibilityOptions"
                             optionValue="value"

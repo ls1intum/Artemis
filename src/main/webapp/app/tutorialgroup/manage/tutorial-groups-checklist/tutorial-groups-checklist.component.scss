@@ -74,6 +74,20 @@
     color: var(--secondary);
 }
 
+// On narrow screens the fixed-width status and non-wrapping action would squeeze the text column, so let
+// the action drop onto its own full-width row below the description instead.
+@media (max-width: 600px) {
+    .checklist-step {
+        flex-wrap: wrap;
+    }
+
+    .checklist-step > a,
+    .checklist-step > button {
+        flex-basis: 100%;
+        justify-content: center;
+    }
+}
+
 .checklist-actions {
     display: flex;
 
