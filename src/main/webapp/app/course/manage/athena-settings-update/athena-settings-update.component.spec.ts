@@ -9,6 +9,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 describe('AthenaSettingsUpdateComponent', () => {
     let fixture: ComponentFixture<AthenaSettingsUpdateComponent>;
@@ -75,5 +77,31 @@ describe('AthenaSettingsUpdateComponent', () => {
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
         expect(comp.formativeEnabled()).toBe(expected.formativeFeedbackEnabled);
         expect(comp.gradingEnabled()).toBe(expected.gradingFeedbackEnabled);
+    });
+
+    it.each([
+        { testId: 'athena-settings-formative-feedback', feature: 'formativeFeedbackEnabled' },
+        { testId: 'athena-settings-grading-feedback', feature: 'gradingFeedbackEnabled' },
+    ])('should save $feature when its toggle is switched', ({ testId, feature }) => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
+        const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, [feature]: true } })));
+        createComponent();
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.css(`[data-testid="${testId}"]`)).triggerEventHandler('changed', true);
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
+    });
+
+    it('should name each toggle after its feature rather than its state', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+        createComponent();
+        fixture.detectChanges();
+
+        const toggles = fixture.debugElement.queryAll(By.directive(TumAetUiToggleSwitchComponent)).map((toggle) => toggle.componentInstance as TumAetUiToggleSwitchComponent);
+        expect(toggles.map((toggle) => toggle.ariaLabel())).toEqual([
+            'artemisApp.course.athenaConfig.formativeFeedbackEnabled.label',
+            'artemisApp.course.athenaConfig.gradingFeedbackEnabled.label',
+        ]);
     });
 });
