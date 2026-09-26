@@ -418,6 +418,9 @@
             "openTime": "Open clock",
             "timeDialog": "Choose time",
             "timePlaceholder": "HH:mm"
+        },
+        "imageCropper": {
+            "sourceImage": "Image to crop"
         }
     },
     "entity": {
