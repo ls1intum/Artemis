@@ -22,6 +22,8 @@ import {
     faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 
+import { ATHENA_LOGO_PATH } from 'app/shared-ui/athena-logo/athena-logo.component';
+
 /**
  * Service for creating common sidebar items used in both course overview and course management components
  */
@@ -235,6 +237,17 @@ export class CourseSidebarItemService {
             title: 'IRIS Settings',
             translation: 'artemisApp.iris.settings.button.course.title',
             testId: 'iris-settings',
+            hidden: false,
+        };
+    }
+
+    getAthenaSettingsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/athena-settings`,
+            iconImage: ATHENA_LOGO_PATH,
+            title: 'Athena Settings',
+            translation: 'artemisApp.course.athenaConfig.settingsPage.sidebarTitle',
+            testId: 'athena-settings',
             hidden: false,
         };
     }

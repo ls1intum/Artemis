@@ -608,6 +608,21 @@ describe('NavbarComponent', () => {
             } as MockBreadcrumb);
         });
 
+        it('should translate the Athena settings breadcrumb', () => {
+            router.setUrl('/course-management/1/athena-settings');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.course.athenaConfig.settingsPage.title',
+                translate: true,
+                uri: '/course-management/1/athena-settings/',
+            } as MockBreadcrumb);
+        });
+
         it('should show the exercise title and correct exercise link for generic exercise routes', () => {
             const exerciseService = TestBed.inject(ExerciseService);
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })));

@@ -1,0 +1,27 @@
+<div *titleBarTitle class="flex items-center">
+    <jhi-course-title-bar-title title="artemisApp.course.athenaConfig.settingsPage.title" />
+</div>
+
+<!-- As wide as Iris's settings page, so the two AI-feedback settings pages share the same content width. -->
+<div class="mx-auto flex max-w-[800px] flex-col gap-5 pt-4">
+    @for (feature of features; track feature.key) {
+        @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
+        <tumaet-ui-card>
+            <div class="flex items-start gap-3">
+                <tumaet-ui-toggle-switch
+                    [inputId]="feature.testId + '-toggle'"
+                    [ngModel]="feature.enabled()"
+                    [ngModelOptions]="{ standalone: true }"
+                    (changed)="setEnabled(feature.key, $event)"
+                    [ariaLabel]="featureKey + '.label' | artemisTranslate"
+                    [attr.data-testid]="feature.testId"
+                />
+                <!-- The title and hint describe the current state; the switch itself keeps the constant feature name. -->
+                <label class="cursor-pointer" [for]="feature.testId + '-toggle'">
+                    <span [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledLabel' : '.disabledLabel')"></span>
+                    <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
+                </label>
+            </div>
+        </tumaet-ui-card>
+    }
+</div>

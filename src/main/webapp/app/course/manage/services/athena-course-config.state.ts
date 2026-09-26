@@ -41,6 +41,13 @@ export class AthenaCourseConfigState {
     readonly gradingFeedbackEnabled: Signal<boolean> = computed(() => this.config()?.gradingFeedbackEnabled ?? false);
 
     /**
+     * Whether either feature is on, for the single course-overview toggle. There is no separate stored "master" flag:
+     * this is derived from the two features so that a course configured before this toggle existed still shows the
+     * right state.
+     */
+    readonly masterEnabled: Signal<boolean> = computed(() => this.formativeFeedbackEnabled() || this.gradingFeedbackEnabled());
+
+    /**
      * The state the server confirmed per feature; a failed switch rolls back to it. A feature the server has not
      * spoken about yet is missing here rather than stored as disabled, so that a load answering afterwards still
      * counts.
@@ -120,6 +127,20 @@ export class AthenaCourseConfigState {
                 onError(this.alertService, error);
             },
         });
+    }
+
+    /**
+     * Switches the single course-overview toggle. Since there is no stored master flag, switching it on and off is
+     * defined in terms of the two features it derives from: on turns both on, off turns both off. Reading it back is
+     * still the OR of the two (see {@link masterEnabled}), so a course set up from the settings page to run only one
+     * of them keeps showing as enabled here — switching this toggle off then on again does turn both on, though,
+     * rather than restoring that finer configuration.
+     *
+     * @param enabled whether Athena should be on for the course
+     */
+    setMasterEnabled(enabled: boolean): void {
+        this.setEnabled('gradingFeedbackEnabled', enabled);
+        this.setEnabled('formativeFeedbackEnabled', enabled);
     }
 
     /**
