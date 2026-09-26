@@ -34,6 +34,14 @@ export interface IrisPointOut {
     forceOpen?: boolean;
     /** Display name of the lecture unit, stored on history markers so they can be labelled. */
     lectureUnitName?: string;
+    /** Version of the slide deck or video transcription this position was generated from. */
+    pinnedVersion?: IrisPointOutVersion;
+}
+
+/** Material version pinned into a point-out by the server. */
+export interface IrisPointOutVersion {
+    kind: 'attachment' | 'video';
+    version: number;
 }
 
 /**
@@ -68,7 +76,21 @@ export function parsePointOut(parameters: Record<string, unknown> | undefined): 
     // rejecting the whole point-out: the navigation it describes is still perfectly good.
     const displayPageValue = parameters?.['displayPage'];
     const displayPage = typeof displayPageValue === 'number' && Number.isInteger(displayPageValue) && displayPageValue > 0 ? displayPageValue : undefined;
-    return { lectureUnitId, lectureId, page, displayPage, timestamp, lectureUnitName };
+    const materialType = parameters?.['materialType'];
+    const materialVersion = parameters?.['materialVersion'];
+    // Both fields are written together by the server. Reject a partial or malformed pair instead of silently treating
+    // a corrupted versioned marker as a legacy point-out and navigating to an unchecked position.
+    let pinnedVersion: IrisPointOutVersion | undefined;
+    if (materialType !== undefined || materialVersion !== undefined) {
+        if (materialType !== 'attachment' && materialType !== 'video') {
+            return undefined;
+        }
+        if (typeof materialVersion !== 'number' || !Number.isSafeInteger(materialVersion) || materialVersion <= 0) {
+            return undefined;
+        }
+        pinnedVersion = { kind: materialType, version: materialVersion };
+    }
+    return { lectureUnitId, lectureId, page, displayPage, timestamp, lectureUnitName, pinnedVersion };
 }
 
 /**

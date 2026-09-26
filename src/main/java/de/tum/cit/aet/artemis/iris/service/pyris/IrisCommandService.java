@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.SESSION_COMMANDS;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 
 /**
  * Executes commands that Iris performs on the client mid-pipeline (before its answer). A command is pushed to the user's browser over WebSocket and this service blocks until the
@@ -58,6 +60,14 @@ public class IrisCommandService {
      * The only command type Artemis implements so far. Every other type is dropped in {@link #executeCommand}.
      */
     private static final String POINT_OUT_TYPE = "pointOut";
+
+    private static final String MATERIAL_TYPE_PARAMETER = "materialType";
+
+    private static final String MATERIAL_VERSION_PARAMETER = "materialVersion";
+
+    private static final String ATTACHMENT_MATERIAL_TYPE = "attachment";
+
+    private static final String VIDEO_MATERIAL_TYPE = "video";
 
     private static final String MARKER_WRITE_LOCK_PREFIX = "iris-command-marker-write:";
 
@@ -136,24 +146,54 @@ public class IrisCommandService {
             return PyrisCommandResultDTO.notApplied();
         }
         // Safe to dereference: isValidPointOut guarantees lectureUnitId is present and numeric.
-        var lectureUnit = resolveLectureUnitInCourse(command.parameters().get("lectureUnitId").asLong(), job.courseId());
+        long lectureUnitId = command.parameters().get("lectureUnitId").asLong();
+        var lectureUnit = resolveLectureUnitInCourse(lectureUnitId, job.courseId());
         if (lectureUnit == null) {
             return PyrisCommandResultDTO.notApplied();
         }
+        var versionedCommand = stampPointOutVersion(command, lectureUnitId);
         var session = irisSessionRepository.findByIdElseThrow(job.sessionId());
-        if (!dispatchToClient(session, command, targetClientId)) {
+        if (!dispatchToClient(session, versionedCommand, targetClientId)) {
             return PyrisCommandResultDTO.notApplied();
         }
 
         // The client already navigated, so the point-out succeeded regardless of the marker write. Persisting the
         // history marker is best-effort: a failure here must not turn into a 500 for Pyris.
         try {
-            persistAndPushMarker(session, buildPointOutMarkerContent(command, lectureUnit));
+            persistAndPushMarker(session, buildPointOutMarkerContent(versionedCommand, lectureUnit));
         }
         catch (Exception e) {
             log.error("Point-out command was applied on the client but persisting its marker failed", e);
         }
         return PyrisCommandResultDTO.success();
+    }
+
+    /**
+     * Pins a point-out to the version of the material Iris generated it from.
+     * <p>
+     * A timestamp makes the point-out a video reference, even when Pyris also supplies the slide shown at that time; otherwise a page makes it a slide reference. This is the
+     * same distinction used for lecture citations. The version comes from the material that finished ingestion, not from the command's untrusted parameter bag. During
+     * reprocessing the repository deliberately reports no version because the vector database may still serve the previous revision; in that case the command stays
+     * unversioned and retains the compatibility behaviour of point-outs written before version pinning existed.
+     */
+    private PyrisCommandDTO stampPointOutVersion(PyrisCommandDTO command, long lectureUnitId) {
+        var parameters = new LinkedHashMap<>(command.parameters());
+        parameters.remove(MATERIAL_TYPE_PARAMETER);
+        parameters.remove(MATERIAL_VERSION_PARAMETER);
+
+        LectureUnitIngestedVersionsDTO ingestedVersions = lectureUnitRepositoryApi.orElseThrow().findIngestedVersionsByIds(List.of(lectureUnitId)).stream().findFirst()
+                .orElse(null);
+        if (ingestedVersions == null) {
+            return new PyrisCommandDTO(command.type(), parameters);
+        }
+
+        boolean pointsToVideo = parameters.containsKey("timestamp");
+        Integer version = pointsToVideo ? ingestedVersions.videoVersion() : ingestedVersions.attachmentVersion();
+        if (version != null) {
+            parameters.put(MATERIAL_TYPE_PARAMETER, objectMapper.getNodeFactory().stringNode(pointsToVideo ? VIDEO_MATERIAL_TYPE : ATTACHMENT_MATERIAL_TYPE));
+            parameters.put(MATERIAL_VERSION_PARAMETER, objectMapper.getNodeFactory().numberNode(version));
+        }
+        return new PyrisCommandDTO(command.type(), parameters);
     }
 
     /**
