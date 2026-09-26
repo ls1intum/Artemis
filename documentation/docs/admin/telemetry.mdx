@@ -13,7 +13,7 @@ to disable reporting.
 Only the node with both `core` and `scheduling` profiles reports telemetry. Configure exactly
 one scheduling node per installation. It sends one report **ten minutes after the application
 becomes ready**, allowing other nodes and build agents to connect. Counts are collected when
-the report is sent. A worker-only restart does not produce a report, and shutting down the
+the report is sent. Restarting another core node or a build agent does not produce a report, and shutting down the
 scheduling node before the delay expires cancels its pending report.
 
 Development servers and servers configured with `info.testServer: true` do not send telemetry.
@@ -51,10 +51,10 @@ artemis:
 
 info:
     testServer: false
-    operatorName: Research group of Applied Education Technologies
-    universityName: Technical University of Munich
-    operatorAdminName: Stephan Krusche
-    contact: contactMailAddress@cit.tum.de
+    operatorName: <organization operating Artemis>
+    universityName: <university or institution>
+    operatorAdminName: <administrator name>
+    contact: <administrator email address>
 ```
 
 ## Reported information
