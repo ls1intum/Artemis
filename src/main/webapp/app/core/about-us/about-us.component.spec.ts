@@ -65,6 +65,19 @@ describe('AboutUsComponent', () => {
         expect(element.textContent).toContain(profile.operatorAdminName);
     });
 
+    it('omits installation metadata that a development or test server leaves out', async () => {
+        vi.spyOn(TestBed.inject(StaticContentService), 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], [])));
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(new ProfileInfo());
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const element: HTMLElement = fixture.nativeElement;
+        for (const key of ['university', 'name', 'admin']) {
+            expect(element.querySelector(`[jhiTranslate="artemisApp.operatorInfo.${key}"]`)).toBeNull();
+        }
+    });
+
     it('load and display contributors', async () => {
         const staticContentService = TestBed.inject(StaticContentService);
         const profileService = TestBed.inject(ProfileService);
