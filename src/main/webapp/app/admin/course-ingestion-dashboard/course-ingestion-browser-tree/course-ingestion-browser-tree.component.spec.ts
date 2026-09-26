@@ -164,6 +164,26 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         expect(query('tree-node-coll:30:slides')).toBeTruthy();
     });
 
+    it('should mark a unit the index does not hold, and carry that up to its lecture', () => {
+        // Unit 30 is in the database and its slides reached Iris, but its own `lecture_unit` row never did. Reading
+        // completeness off the content alone drew it green under a green lecture 20, so a collapsed tree gave no sign
+        // that the branch held a gap at all.
+        fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 30, title: 'Late slides', lectureId: 20 }]);
+        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [30] }]);
+        fixture.detectChanges();
+
+        click('tree-toggle-lecture:20');
+
+        expect(query('tree-dot-unit:30')?.className).toContain('text-state-danger');
+        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-danger');
+        // The badge says which gap the red dot is about: the unit's own metadata, not content underneath it.
+        expect(query('unit-not-indexed:30')).toBeTruthy();
+
+        // Unit 11 is indexed and complete, so neither marker applies to it.
+        expect(query('tree-dot-unit:11')?.className).toContain('text-state-success');
+        expect(query('unit-not-indexed:11')).toBeFalsy();
+    });
+
     it('should leave a unit the database still has out of the tree when nothing is stored for it', () => {
         // Its metadata gap is already counted in the scoreboard, and there is nothing under it to open.
         fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 31, title: 'Nothing stored', lectureId: 20 }]);

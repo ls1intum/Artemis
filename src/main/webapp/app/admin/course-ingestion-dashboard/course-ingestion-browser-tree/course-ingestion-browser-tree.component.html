@@ -67,7 +67,7 @@
                                 @if (!lecture.indexed) {
                                     <span
                                         class="text-xs text-state-danger shrink-0"
-                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.lectureNotIndexed"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIndexed"
                                         data-testid="lecture-not-indexed"
                                     ></span>
                                 }
@@ -121,6 +121,13 @@
                                                         <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.untitledUnit"></span>
                                                     }
                                                 </span>
+                                                @if (!unit.indexed) {
+                                                    <span
+                                                        class="text-xs text-state-danger shrink-0"
+                                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIndexed"
+                                                        [attr.data-testid]="'unit-not-indexed:' + unit.unitId"
+                                                    ></span>
+                                                }
                                                 <span
                                                     class="inline-block size-2 shrink-0 rounded-full bg-current {{ unit.complete ? 'text-state-success' : 'text-state-danger' }}"
                                                     [attr.data-testid]="'tree-dot-' + unit.key"

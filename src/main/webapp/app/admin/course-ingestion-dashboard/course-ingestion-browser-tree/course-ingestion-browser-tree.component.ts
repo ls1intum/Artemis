@@ -68,7 +68,9 @@ interface UnitNode extends TreeNode {
     unitId: number;
     title: string;
     content: ContentNode[];
-    /** False when content the unit should have was never ingested. */
+    /** False when the index holds no `SearchableEntities` row for the unit, even though the database still has it. */
+    indexed: boolean;
+    /** False when the unit is not indexed, or content it should have was never ingested. */
     complete: boolean;
 }
 
@@ -187,9 +189,20 @@ export class CourseIngestionBrowserTreeComponent {
                     return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: content.key };
                 });
 
-        const unitNode = (unitId: number, title: string): UnitNode => {
+        // A unit missing from the index is not complete, whatever its content looks like. Reading completeness off the
+        // content alone let a unit whose own row was never written sit green under a green lecture, so a collapsed tree
+        // showed nothing wrong on the branch holding the gap.
+        const unitNode = (unitId: number, title: string, indexed: boolean): UnitNode => {
             const selection: BrowserSelection = { kind: 'unit', unitId };
-            return { key: selectionKey(selection), selection, unitId, title, content: contentNodesFor(unitId), complete: !unitsWithGaps.has(unitId) };
+            return {
+                key: selectionKey(selection),
+                selection,
+                unitId,
+                title,
+                content: contentNodesFor(unitId),
+                indexed,
+                complete: indexed && !unitsWithGaps.has(unitId),
+            };
         };
 
         const unitsByLecture = new Map<number, UnitNode[]>();
@@ -199,7 +212,7 @@ export class CourseIngestionBrowserTreeComponent {
             if (entity.type !== 'lecture_unit' || entity.lectureId === undefined) {
                 continue;
             }
-            addUnit(entity.lectureId, unitNode(entity.entityId, entity.title ?? ''));
+            addUnit(entity.lectureId, unitNode(entity.entityId, entity.title ?? '', true));
         }
 
         // A unit the database still has but the index does not belongs under its lecture like any other: only its
@@ -211,7 +224,7 @@ export class CourseIngestionBrowserTreeComponent {
             if (missing.type !== 'lecture_unit' || missing.lectureId === undefined || unitIdsFromTheIndex.has(missing.entityId)) {
                 continue;
             }
-            const unit = unitNode(missing.entityId, missing.title ?? '');
+            const unit = unitNode(missing.entityId, missing.title ?? '', false);
             if (unit.content.length > 0) {
                 addUnit(missing.lectureId, unit);
             }

@@ -103,7 +103,7 @@
                     "segment": "Segment @ {{ seconds }}s",
                     "position": "#{{ position }}"
                 },
-                "lectureNotIndexed": "nicht indexiert",
+                "notIndexed": "nicht indexiert",
                 "content_slides": "Folien",
                 "content_transcript": "Transkript",
                 "content_unit_summary": "Einheit-Zusammenfassung",
