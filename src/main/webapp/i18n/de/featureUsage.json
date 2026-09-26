@@ -577,6 +577,18 @@
                         "name": "KI-Codegenerierung",
                         "description": "Lösungs-, Vorlagen- oder Testcode einer Aufgabe erzeugen."
                     },
+                    "HYPERION_EXERCISE_GENERATION": {
+                        "name": "KI-Übungsgenerierung",
+                        "description": "Vollständige Programmieraufgaben aus einer Kurzbeschreibung oder ausgewähltem Feedback erstellen."
+                    },
+                    "HYPERION_GENERATION_MONITORING": {
+                        "name": "Überwachung der KI-Generierung",
+                        "description": "Generierung vollständiger Aufgaben überwachen und abbrechen."
+                    },
+                    "HYPERION_GENERATION_RECOVERY": {
+                        "name": "Wiederherstellung der KI-Generierung",
+                        "description": "Blockierte Mutations-Slots von Aufgaben prüfen und freigeben."
+                    },
                     "HYPERION_VARIANT_GENERATION": {
                         "name": "KI-Aufgabenvarianten",
                         "description": "Varianten einer bestehenden Aufgabe erzeugen."
@@ -676,6 +688,10 @@
                     "BUILD_AGENTS": {
                         "name": "Build-Agenten",
                         "description": "Alle Build-Jobs und die Build-Agenten des Servers."
+                    },
+                    "AI_WORKERS": {
+                        "name": "KI-Worker",
+                        "description": "Status und Kapazität von KI-Workern prüfen."
                     },
                     "USER_MANAGEMENT": {
                         "name": "Benutzerverwaltung",

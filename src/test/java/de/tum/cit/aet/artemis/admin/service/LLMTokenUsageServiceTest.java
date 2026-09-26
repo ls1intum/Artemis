@@ -32,6 +32,13 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
+    void reportedZeroCacheHitsNeedNoCachePriceButUnknownOrPositiveHitsDo() {
+        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 11, 7, "PIPE", null, 0L).costEstimateComplete()).isTrue();
+        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 11, 7, "PIPE", null, null).costEstimateComplete()).isFalse();
+        assertThat(llmTokenUsageService.buildLLMRequest("gpt-5-mini", 11, 7, "PIPE", null, 2L).costEstimateComplete()).isFalse();
+    }
+
+    @Test
     void absentProviderUsageDoesNotCreateZeroCostRecord() {
         llmTokenUsageService.trackChatResponseTokenUsage(new org.springframework.ai.chat.model.ChatResponse(java.util.List.of()),
                 de.tum.cit.aet.artemis.admin.domain.LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(1L));

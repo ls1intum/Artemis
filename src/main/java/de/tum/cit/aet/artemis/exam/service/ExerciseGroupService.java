@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 
 @Conditional(ExamEnabled.class)
@@ -17,16 +18,19 @@ public class ExerciseGroupService {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository) {
+    private final ExamRepository examRepository;
+
+    public ExerciseGroupService(ExerciseGroupRepository exerciseGroupRepository, ExamRepository examRepository) {
         this.exerciseGroupRepository = exerciseGroupRepository;
+        this.examRepository = examRepository;
     }
 
     /**
      * Moves an exam exercise into a different exercise group of the same exam.
      * <p>
      * Blocked once a student exam exists: generation has already picked one exercise per group, so a later move would
-     * desync those selections and the exam's point totals. The guard sits inside the update statement, so the check
-     * and the write cannot be interleaved.
+     * desync those selections and the exam's point totals. The update runs under the same exam-row lock as selection and assignment, so an in-flight
+     * selection cannot later commit a student exam built from the previous grouping.
      * <p>
      * Callers must have validated access to the exam and that both the exercise and the target group belong to it.
      *
@@ -36,7 +40,7 @@ public class ExerciseGroupService {
      * @throws ConflictException if student exams have already been generated for the exam
      */
     public void moveExerciseToGroup(Long examId, Long exerciseId, Long targetGroupId) {
-        boolean moved = exerciseGroupRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroupId, examId);
+        boolean moved = examRepository.withExerciseSelectionLock(examId, exam -> exerciseGroupRepository.moveToExerciseGroupIfNoStudentExams(exerciseId, targetGroupId, examId));
         if (!moved) {
             throw new ConflictException("The exercise group cannot be changed after student exams have been generated for this exam", ENTITY_NAME, "studentExamsAlreadyGenerated");
         }

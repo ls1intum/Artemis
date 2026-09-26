@@ -1,0 +1,216 @@
+---
+id: aiworker
+title: AI Worker Operations
+sidebar_label: AI Worker Setup
+---
+
+AI Worker runs bounded, explicitly installed workloads outside the Artemis server.
+The worker has no database connection, repository credentials, incoming HTTP server,
+or Hazelcast cluster membership. It connects as a Hazelcast client or to Redis/Valkey
+through Artemis' distributed-data provider. Artemis core uses the same provider. Workload-specific authorization and persistence remain in
+the owning feature; [Hyperion](/admin/hyperion#whole-exercise-generation-workers) owns
+exercise generation and its teaching-quality review.
+
+> This coordination layer is not a deployable worker by itself. The worker-only
+> `ArtemisApp` profile, image recipe, and Hyperion generation workload arrive with
+> the dependent Java Gradle worker layer. The deployment steps below apply only to
+> the complete stack; do not start a worker from this branch alone.
+
+## Deployment topology
+
+| Environment             | Recommended placement                                 | Required separation                                                                              |
+| ----------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Staging                 | Dedicated worker VM with one execution slot initially | Separate provider access, image qualification, model credentials and budgets from production     |
+| Production              | Dedicated worker VM or host                           | No core, database, LocalVC or exam-critical build services on the worker host                    |
+| Small test installation | Separate VM on the same physical machine              | Independent Docker daemon and restricted network; never mount the core/build-agent Docker socket |
+
+The supervisor's Docker socket grants control over its daemon and potentially its
+host. Running the supervisor as an unprivileged container does not remove that
+privilege. A separate rootful daemon on the core host is **not** equivalent to VM
+isolation. An explicitly isolated daemon is an advanced test-only deployment option;
+its host and network isolation must be established outside the application.
+
+Generated-code containers use network `none`, a read-only root filesystem, dropped
+capabilities, `no-new-privileges`, and bounded CPU, memory, processes and writable
+scratch mounts. They never receive the Docker socket or provider credentials.
+Restrict supervisor egress to approved provider, model, registry and telemetry endpoints.
+Block database, repository/NFS, management and cloud-metadata access.
+
+## Distributed-data access
+
+The worker host must reach the same distributed-data store as the core nodes. For
+Hazelcast, the worker is a **client**, not a cluster member. Enable Eureka on core
+nodes and on the worker. The worker reads the core nodes' Hazelcast addresses from
+the same Eureka registry as a Build Agent. It does not register itself. Set
+`eureka.client.service-url.defaultZone` to the registry URL on each process.
+The addresses that core nodes publish must be reachable from the worker host.
+Do not configure a fixed list of core addresses on the worker.
+For Redis/Valkey, configure the same `spring.data.redis.*` endpoint and credentials
+used by the core deployment. Redis turns Eureka off. The normal Artemis entry point in worker-only mode
+rejects `local`: process-local state cannot carry worker messages.
+
+Keep the provider port private to trusted hosts. A host-loopback Docker port map
+does **not** block containers on the same application bridge from reaching the
+core container's IP. Bind Hazelcast to a separate internal provider network, and
+allow only the worker host to reach that address and port. The worker JVM can read
+and write shared coordination data, so isolate the worker host and protect its
+credentials.
+Generated-code containers still have network `none` and never receive provider
+credentials. A provider outage stops new admission and delivery; do not treat a
+missing heartbeat as proof that a job completed. Worker commands and events have
+bounded time-to-live, and failed command admission is retained for bounded retry.
+Monitor the provider's memory, persistence and connection health.
+
+## Core configuration
+
+Enable coordination only on a `core` node. The worker pool is independent of whether
+Hyperion is enabled. Set this flag on the coordinating core nodes:
+
+```yaml
+artemis:
+    aiworker:
+        enabled: true
+        ids: [worker-1]
+        presence-ttl: PT30S
+        lease-ttl: PT45S
+```
+
+Use the same authoritative `DistributedDataProvider` and worker configuration on all
+coordinators. Presence and slot reservations have explicit lifetimes on both Hazelcast
+and Redis. A claim is bound to execution UUID, worker incarnation, slot, workload
+schema/profile and immutable image. Stale events cannot release a replacement claim.
+Workload resource identifiers are opaque to AI Worker.
+
+For Hyperion, all exercise writers must additionally satisfy its
+[coordination and recovery requirements](/admin/hyperion#whole-exercise-generation-workers).
+Redis/Valkey is not a disposable cache: use synchronous AOF (`appendonly yes`,
+`appendfsync always`, `no-appendfsync-on-rewrite no`) and `maxmemory-policy noeviction`.
+Automatic asynchronous failover is not qualified for ownership-sensitive persistence.
+Never flush or replace the store under running writers.
+
+## Worker configuration
+
+Build the normal Artemis WAR with `./gradlew -Pprod -Pwar bootWar -x webapp`.
+Start the normal `ArtemisApp` with
+`prod,aiworker`. On a worker-only node, component scanning loads only AI Worker
+services and the selected workload. The `aiworker` profile disables the HTTP
+server and database services and loads only the selected distributed-data client.
+Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
+and rejects any attempt to turn the HTTP server back on. Do not run this profile
+on a core node. Keep the core container away from the worker's Docker socket.
+Preload a qualified, digest-pinned sandbox image on the isolated daemon.
+Configuration files containing secrets must be readable only by the deployment account
+and worker UID, and mounted read-only.
+
+```yaml
+spring:
+    main:
+        web-application-type: none
+eureka:
+    client:
+        enabled: true # Hazelcast only; Redis turns discovery off.
+        register-with-eureka: false
+        service-url:
+            defaultZone: http://admin:<registry-password>@registry.internal:8761/eureka/
+artemis:
+    distributed-data:
+        provider: hazelcast # Or redis, matching the core nodes.
+    aiworker:
+        id: worker-1
+        image: registry.example/hyperion-java-gradle@sha256:<qualified-digest>
+        workload: hyperion-generation
+        workload-version: 1
+        profile: java-gradle
+        max-concurrent-executions: 1
+        runtime: runc
+        memory-bytes: 2147483648
+        cpu-quota: 200000
+        pids: 256
+        heartbeat-interval: PT10S
+        connection-grace: PT45S
+        shutdown-timeout: PT2M
+```
+
+Replace the digest placeholder with the image's actual 64-digit SHA-256 digest.
+The environment-based entry point also accepts `AI_WORKER_ID`, `AI_WORKER_SANDBOX_IMAGE`,
+`AI_WORKER_WORKLOAD` and `AI_WORKER_PROFILE`. Configure provider access through
+Spring properties or a protected, read-only configuration mount.
+A mounted Spring configuration can supply the corresponding properties directly.
+
+Each process selects **one installed workload capability** and one image. Scale different
+workloads/profiles with separate worker identities. An identifier does not install an
+implementation: unsupported combinations advertise no usable capacity. This keeps image,
+resource policy and credentials operator-controlled, not selectable by models or jobs.
+
+A workload is usable only when its implementation is installed. Configure the
+`hyperion-generation` Java Gradle workload for generation; transport alone
+advertises no capacity.
+Configure its worker-local Spring AI chat model with `spring.ai.model.chat=openai` and
+`spring.ai.openai.*`, as described in [Hyperion setup](/admin/hyperion#configure-spring-ai).
+An installed generation workload sends model requests from the worker process directly to
+the configured provider. Core sends assignments and receives evidence through the
+distributed-data provider; it does not proxy generation model requests.
+Chat is disabled by default in the generic executable. Other workloads do not need model
+credentials unless their implementation uses a model. Use `max-retries: 0` when exact
+provider accounting is required. Content telemetry stays off unless explicitly approved.
+
+## Capacity and administration
+
+Open **Administration → AI Workers**. It does not depend on Hyperion being enabled.
+If coordination is disabled, the status endpoint returns 404 and the view reports that
+status is unavailable rather than claiming an empty healthy pool.
+
+| Column                       | Meaning                                                                                             |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| Worker                       | Configured stable ID; a restarted process has a different incarnation                               |
+| Status                       | Available, busy, reserved by core, not ready, or offline                                            |
+| Available / total slots      | Current admission capacity, not CPU utilization; unknown for offline workers                        |
+| Last contact                 | Time core received the latest accepted heartbeat/evidence, not a worker-clock health guarantee      |
+| Workload / execution profile | Registered workload, qualified profile and payload schema version                                   |
+| Diagnostics                  | Exact executions and one-based slots, reservation indicator, incarnation and immutable image digest |
+
+The view refreshes every 15 seconds while visible, avoids overlapping requests, and
+marks a failed refresh rather than presenting stale data as healthy. Capacity is a
+snapshot, not a reservation. **Hyperion Generations** separately owns exercise links,
+review context and audited cancellation; infrastructure monitoring has no exercise-specific
+mutation controls.
+
+Budget memory and CPU for the worker JVM **plus every concurrent sandbox**. The slot
+range is 1–16, default 1. Increasing slots does not relax per-execution resource limits,
+feature budgets or provider rate limits. Keep the worker grace interval above heartbeat
+spacing and core's reservation lifetime longer than presence lifetime.
+
+## Maintenance and failure handling
+
+1. Stop new workload admission and wait for active executions and pending deliveries to finish.
+2. Confirm the workload's persistence/restore operations have also finished; worker idleness
+   alone does not prove core has stopped writing.
+3. Stop the worker with a container stop timeout longer than its two-minute shutdown budget.
+4. Deploy matching core, worker, provider access and image configuration; then verify readiness.
+5. Run a workload canary before reopening admission.
+
+Protocol **4** uses neutral envelopes and explicitly versioned workload capabilities.
+It is incompatible with earlier Hyperion-only wire protocols. Drain and stop old workers,
+reconcile their containers under the old ownership labels, and change provider
+configuration together. Do not keep old and new workers sharing an identity.
+
+Cancellation and lost coordinator renewals stop only the exact execution. Reliable
+accounting/checkpoint events precede completion; failed delivery keeps the slot occupied
+while that worker is alive. A worker process loss is not a durable local outbox or an
+exactly-once execution guarantee. Core fences stale incarnations; each workload decides
+whether a retained result is usable and whether persistence requires operator recovery.
+
+## Ansible and staging qualification
+
+The `ls1intum.artemis.ai_worker` role deploys the worker process. Select workload/profile
+explicitly and provision provider access through `ai_worker_provider` and its
+connection settings. Set `artemis_aiworker_ids` and `artemis_aiworker_enabled` on eligible core nodes.
+The role validates inputs, protects rendered secrets, preloads the sandbox image and
+requires an explicit maintenance confirmation before replacing a running worker.
+It does not provision the provider, firewall or isolation boundary.
+
+Before staging admission, verify provider reachability and access control, image digests, Docker runtime,
+store durability, worker capability and capacity. Then exercise successful completion,
+cancellation, worker restart/lost renewals, capacity exhaustion and workload-specific
+persistence/undo. Test with the deployment's intended distributed provider. Promote the
+same qualified artifacts and configuration shape to production with separate secrets.
