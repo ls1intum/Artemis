@@ -225,12 +225,28 @@ public class PyrisStatusUpdateService {
         boolean isThinking = runState == PyrisRunState.RUNNING;
 
         if (isThinking) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(), new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
+            if (statusUpdate.partialResult() != null) {
+                // Streamed draft of the answer while the LLM generates; the terminal update carries the authoritative answer.
+                // An empty partialResult is the provider's retry-clear signal for a stale draft (see PartialResultSender on
+                // the Pyris side); it is forwarded as clearDraft=true with partialResult omitted, since an empty string
+                // would not survive this DTO's NON_EMPTY serialization and reach the client indistinguishable from absent.
+                boolean clearDraft = statusUpdate.partialResult().isEmpty();
+                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(), new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null,
+                        clearDraft ? null : statusUpdate.partialResult(), statusUpdate.partialSeq(), clearDraft));
+            }
+            else {
+                // No streamed text yet: forward the stage name (and, once found, the distinct course names) so
+                // the client can show what is actually happening instead of one static "thinking" message for
+                // the whole wait. Both are null/empty for an older Pyris that never sends them, which the client
+                // already falls back on its own generic message for.
+                irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(),
+                        IrisGlobalSearchAnswerWebsocketDTO.thinking(job.jobId(), statusUpdate.stage(), statusUpdate.stageSources()));
+            }
             pyrisJobService.updateJob(job);
         }
         else if (isTerminal) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(),
-                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources()));
+            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(), new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(),
+                    statusUpdate.sources(), null, null, statusUpdate.entitySources(), false, runState == PyrisRunState.FAILED, null, null, statusUpdate.citationSourceTypes()));
             pyrisJobService.removeJob(job);
         }
         else {

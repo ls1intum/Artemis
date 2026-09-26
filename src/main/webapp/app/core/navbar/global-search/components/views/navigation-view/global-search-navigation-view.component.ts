@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChild, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
     faBook,
@@ -51,6 +51,10 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
+    /** Active course include/exclude filters, forwarded to the Iris answer so it scopes its retrieval
+     * the same way the visible results are already scoped. */
+    readonly courseIds = input<number[]>([]);
+    readonly excludeCourseIds = input<number[]>([]);
     /** True while the slides and videos filter is the active one, which searches content instead of metadata. */
     readonly contentSearchActive = input<boolean>(false);
 
@@ -86,6 +90,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const usage = this.accountService.userIdentity()?.selectedLLMUsage;
         return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
     });
+    private readonly irisAnswerComponent = viewChild(GlobalSearchIrisAnswerComponent);
+    /**
+     * Whether the results list needs its own top margin. `irisEnabled` alone says the feature exists,
+     * not whether the card is currently showing anything — conditioning the margin on that instead
+     * would leave it reserved even after a dismissed "nothing relevant" card has collapsed to nothing,
+     * defeating the point of collapsing it.
+     */
+    protected readonly irisOccupiesSpace = computed(() => this.irisAnswerComponent()?.occupiesSpace() ?? false);
     /** True when the slides and videos filter is active without a search term, which content search cannot run without. */
     protected readonly isContentSearchPrompt = computed(() => this.contentSearchActive() && this.searchQuery().trim().length === 0);
 
