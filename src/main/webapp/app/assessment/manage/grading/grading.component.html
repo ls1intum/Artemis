@@ -241,11 +241,12 @@
                                     @if (gradeEditMode === GradeEditMode.POINTS) {
                                         <td>
                                             <input
+                                                #pointsInput
                                                 [value]="getPointsInterval(gradeStep)"
                                                 type="number"
                                                 step="0.5"
                                                 min="0.5"
-                                                (change)="setPointsInterval(i, $any($event.target).valueAsNumber)"
+                                                (change)="setPointsInterval(i, pointsInput.valueAsNumber)"
                                                 [required]="maxPoints() !== undefined && maxPoints()! > 0"
                                                 [disabled]="maxPoints() === undefined || maxPoints()! <= 0"
                                             />
@@ -374,13 +375,14 @@
                                 </td>
                                 <td>
                                     <input
+                                        #pointsInput
                                         [value]="gradeStep.lowerBoundPoints"
                                         type="number"
                                         step="0.5"
                                         min="0"
                                         [required]="maxPoints() !== undefined && maxPoints()! > 0"
                                         [disabled]="!maxPointsValid()"
-                                        (change)="onDetailedPointsInput(i, true, $any($event.target).valueAsNumber)"
+                                        (change)="onDetailedPointsInput(i, true, pointsInput.valueAsNumber)"
                                     />
                                 </td>
                                 <td>
@@ -388,13 +390,14 @@
                                 </td>
                                 <td>
                                     <input
+                                        #pointsInput
                                         [value]="gradeStep.upperBoundPoints"
                                         type="number"
                                         step="0.5"
                                         min="0"
                                         [required]="maxPoints() !== undefined && maxPoints()! > 0"
                                         [disabled]="!maxPointsValid()"
-                                        (change)="onDetailedPointsInput(i, false, $any($event.target).valueAsNumber)"
+                                        (change)="onDetailedPointsInput(i, false, pointsInput.valueAsNumber)"
                                     />
                                 </td>
                                 @if (gradingScale.gradeType !== GradeType.BONUS) {
