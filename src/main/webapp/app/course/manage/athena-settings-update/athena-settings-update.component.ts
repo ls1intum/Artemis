@@ -20,7 +20,7 @@ import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-athena-settings-update',
     templateUrl: './athena-settings-update.component.html',
-    styleUrl: './athena-settings-update.component.scss',
+    host: { class: 'block' },
     imports: [CourseTitleBarTitleComponent, CourseTitleBarTitleDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe, TumAetUiToggleSwitchComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

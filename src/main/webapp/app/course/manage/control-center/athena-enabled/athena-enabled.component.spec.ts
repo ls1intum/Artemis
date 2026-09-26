@@ -134,7 +134,7 @@ describe('AthenaEnabledComponent', () => {
         const element = fixture.nativeElement;
         expect(element.querySelector('[data-testid="athena-enabled-enable"]')).toBeTruthy();
         expect(element.querySelector('[data-testid="athena-enabled-disable"]')).toBeTruthy();
-        expect(element.querySelector('.athena-configure-link')).toBeTruthy();
+        expect(element.querySelector('[data-testid="athena-configure-link"]')).toBeTruthy();
     });
 
     it('should save the switched state when the toggle button is clicked', () => {

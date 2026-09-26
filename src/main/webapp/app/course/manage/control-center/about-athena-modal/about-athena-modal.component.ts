@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { faClipboardCheck, faGaugeHigh, faLayerGroup, faPenSquare, faToggleOn, faUserCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
@@ -21,8 +21,7 @@ interface FeatureCard {
 @Component({
     selector: 'jhi-about-athena-modal',
     templateUrl: './about-athena-modal.component.html',
-    styleUrl: './about-athena-modal.component.scss',
-    imports: [AthenaLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiDialogComponent],
+    imports: [AthenaLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutAthenaModalComponent {

@@ -2,22 +2,23 @@
     <jhi-course-title-bar-title title="artemisApp.course.athenaConfig.settingsPage.title" />
 </div>
 
-<div class="athena-settings-content">
+<!-- As wide as Iris's settings page, so the two AI-feedback settings pages share the same content width. -->
+<div class="mx-auto flex max-w-[800px] flex-col gap-5 pt-4">
     @for (feature of features; track feature.key) {
-        @let stateLabelKey = 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledLabel' : '.disabledLabel');
-        @let stateHintKey = 'artemisApp.course.athenaConfig.' + feature.key + (feature.enabled() ? '.enabledHint' : '.disabledHint');
-        <div class="athena-toggle-row">
+        @let featureKey = 'artemisApp.course.athenaConfig.' + feature.key;
+        <div class="flex items-start gap-3 rounded-lg border border-solid border-(--border-color) bg-(--module-bg) px-6 py-5">
             <tumaet-ui-toggle-switch
                 [inputId]="feature.testId + '-toggle'"
                 [ngModel]="feature.enabled()"
                 [ngModelOptions]="{ standalone: true }"
                 (changed)="setEnabled(feature.key, $event)"
-                [ariaLabel]="stateLabelKey | artemisTranslate"
+                [ariaLabel]="featureKey + '.label' | artemisTranslate"
                 [attr.data-testid]="feature.testId"
             />
-            <label [for]="feature.testId + '-toggle'">
-                <span [jhiTranslate]="stateLabelKey"></span>
-                <small class="athena-toggle-hint block text-muted-color" [jhiTranslate]="stateHintKey"></small>
+            <!-- The title and hint describe the current state; the switch itself keeps the constant feature name. -->
+            <label class="cursor-pointer" [for]="feature.testId + '-toggle'">
+                <span [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledLabel' : '.disabledLabel')"></span>
+                <small class="block text-sm text-(--text-body-secondary)" [jhiTranslate]="featureKey + (feature.enabled() ? '.enabledHint' : '.disabledHint')"></small>
             </label>
         </div>
     }

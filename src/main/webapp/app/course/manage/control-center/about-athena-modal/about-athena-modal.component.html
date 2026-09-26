@@ -1,56 +1,68 @@
 <!-- Sized like the About Iris dialog on the same page: 40rem wide and at most 40rem tall, the header scrolling with
-     the content, and its own close button instead of the dialog header. -->
+     the content, and its own close button instead of the dialog header. The dialog panel caps the width at 90dvw on
+     narrow screens, and the negative margin cancels the dialog content's own padding, so this box is the whole panel. -->
 <tumaet-ui-dialog [(visible)]="visible" [dismissableMask]="true" [showHeader]="false" [ariaLabel]="'artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena' | artemisTranslate">
-    <div class="about-athena-panel">
-        <div class="close-btn-container">
-            <button type="button" class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.course.athenaConfig.aboutAthenaModal.close' | artemisTranslate">
-                <fa-icon [icon]="faXmark" aria-hidden="true" />
-            </button>
-        </div>
+    <div class="relative -mx-4 -mb-4 w-[40rem] max-w-[90dvw]">
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            variant="text"
+            size="small"
+            class="absolute top-3 right-3 z-10"
+            (click)="close()"
+            [attr.aria-label]="'artemisApp.course.athenaConfig.aboutAthenaModal.close' | artemisTranslate"
+        >
+            <fa-icon [icon]="faXmark" aria-hidden="true" />
+        </button>
 
-        <div class="modal-content-wrapper">
-            <div class="header-section">
-                <div class="logo-container">
+        <div class="max-h-[40rem] overflow-y-auto p-10 [scrollbar-gutter:stable]">
+            <div class="mb-4 flex items-start gap-4">
+                <!-- The top padding aligns the logo vertically with the header text. -->
+                <div class="pt-1.5">
                     <jhi-athena-logo [size]="40" />
                 </div>
-                <div class="header-text">
-                    <h2 jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
-                    <p class="subtitle" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.subtitle"></p>
-                    <p class="description" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.description"></p>
+                <div class="flex-1">
+                    <h2 class="m-0 mb-1 text-2xl font-semibold text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
+                    <p class="m-0 mb-2 text-base text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.subtitle"></p>
+                    <p class="m-0 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.description"></p>
                 </div>
             </div>
 
-            <hr class="divider" />
+            <hr class="my-8 border-0 border-t border-solid border-(--border-color) opacity-100" />
 
             <!-- Section: What Athena can do -->
-            <section>
-                <h3 class="section-title" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatAthenaCanDo"></h3>
+            <section class="flex flex-col gap-5">
+                <h3 class="m-0 text-lg font-semibold text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatAthenaCanDo"></h3>
                 @for (card of whatAthenaCanDo; track card.titleKey) {
-                    <div class="feature-card">
-                        <div class="icon-wrapper" aria-hidden="true">
+                    <div class="flex items-start gap-4">
+                        <div class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--primary)/10 text-(--primary)" aria-hidden="true">
                             <fa-icon [icon]="card.icon" />
                         </div>
                         <div>
-                            <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
-                            <p class="card-description" [jhiTranslate]="card.descKey"></p>
+                            <p class="m-0 mb-1 text-sm text-(--body-color)" [jhiTranslate]="card.titleKey"></p>
+                            <p class="m-0 text-sm text-(--text-body-secondary)" [jhiTranslate]="card.descKey"></p>
                         </div>
                     </div>
                 }
             </section>
 
-            <hr class="divider" />
+            <hr class="my-8 border-0 border-t border-solid border-(--border-color) opacity-100" />
 
             <!-- Section: What to expect -->
-            <section>
-                <h3 class="section-title" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatToExpect"></h3>
+            <section class="flex flex-col gap-5">
+                <h3 class="m-0 text-lg font-semibold text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatToExpect"></h3>
                 @for (card of whatToExpect; track card.titleKey) {
-                    <div class="feature-card">
-                        <div class="icon-wrapper icon-wrapper--expect" aria-hidden="true">
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--hover-slightly-darker-body-bg) text-(--text-body-secondary)"
+                            aria-hidden="true"
+                        >
                             <fa-icon [icon]="card.icon" />
                         </div>
                         <div>
-                            <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
-                            <p class="card-description" [jhiTranslate]="card.descKey"></p>
+                            <p class="m-0 mb-1 text-sm text-(--body-color)" [jhiTranslate]="card.titleKey"></p>
+                            <p class="m-0 text-sm text-(--text-body-secondary)" [jhiTranslate]="card.descKey"></p>
                         </div>
                     </div>
                 }

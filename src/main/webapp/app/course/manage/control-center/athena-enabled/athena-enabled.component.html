@@ -5,7 +5,7 @@
         testId="athena-enabled"
         (enabledChange)="setEnabled($event)"
     />
-    <a class="athena-configure-link" [routerLink]="settingsRoute()">
+    <a tumAetUiButton severity="secondary" variant="outlined" [routerLink]="settingsRoute()" data-testid="athena-configure-link">
         <span jhiTranslate="artemisApp.course.athenaConfig.configure"></span>
         <fa-icon [icon]="faArrowRight" />
     </a>
