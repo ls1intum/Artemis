@@ -23,7 +23,7 @@
                     }
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
-                    <button class="btn btn-secondary my-1" (click)="printPlagiarismCase()">
+                    <button type="button" class="btn btn-secondary my-1" (click)="printPlagiarismCase()">
                         <fa-icon [icon]="faPrint" />
                     </button>
                     <div class="btn-group m-1">
@@ -64,7 +64,12 @@
                 }
                 @if ((!posts() || posts()!.length === 0) && createdPost()) {
                     <div>
-                        <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notifyStudent"></button>
+                        <button
+                            type="button"
+                            class="btn btn-md btn-primary"
+                            (click)="createEditModal.open()"
+                            jhiTranslate="artemisApp.plagiarism.plagiarismCases.notifyStudent"
+                        ></button>
                         <jhi-post-create-edit-modal #createEditModal [posting]="createdPost()" [createOverride]="createPlagiarismPost" (onCreate)="onStudentNotified($event)" />
                     </div>
                 }

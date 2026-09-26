@@ -7,22 +7,23 @@
                     <fa-icon [icon]="faMagnifyingGlass" />
                 </p-inputicon>
                 <input
+                    #searchInput
                     pInputText
                     type="text"
                     class="competency-search-input"
                     [placeholder]="searchPlaceholder()"
                     [value]="filterText()"
-                    (input)="filterText.set($any($event.target).value)"
+                    (input)="filterText.set(searchInput.value)"
                 />
             </p-iconfield>
         }
         <div ngbDropdown class="d-inline">
-            <button id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
+            <button type="button" id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
                 <fa-icon [icon]="faFileImport" />
                 {{ 'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate }}
             </button>
             <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
-                <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
+                <button type="button" class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
                     <fa-icon [icon]="faFileImport" />
                     <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importAllButton'"></span>
                 </button>
@@ -111,6 +112,7 @@
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
                                     <button
+                                        type="button"
                                         jhiDeleteButton
                                         [entityTitle]="competency.title ?? ''"
                                         [deleteQuestion]="'artemisApp.' + competencyType() + '.competencyCard.delete.question'"

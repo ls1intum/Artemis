@@ -28,6 +28,7 @@
                 ></a>
             } @else if (userIsNotTutor()) {
                 <button
+                    type="button"
                     pButton
                     class="p-button-secondary p-button-sm"
                     (click)="createTutorChat()"
@@ -61,6 +62,7 @@
         }
         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN) {
             <button
+                type="button"
                 pButton
                 severity="danger"
                 class="p-button-primary p-button-sm"
@@ -191,6 +193,7 @@
         <div class="spacer"></div>
         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
             <button
+                type="button"
                 pButton
                 class="p-button-primary p-button-sm"
                 data-testid="new-session-button"
@@ -262,6 +265,7 @@
                             <td>
                                 <div class="session-actions">
                                     <button
+                                        type="button"
                                         [pTooltip]="editSessionButtonTooltipLabel()"
                                         tooltipPosition="left"
                                         data-testid="edit-session-button"
@@ -271,6 +275,7 @@
                                     </button>
                                     @if (session.isCancelled && !session.isCancelledByFreePeriod) {
                                         <button
+                                            type="button"
                                             [pTooltip]="activateSessionButtonTooltipLabel()"
                                             tooltipPosition="left"
                                             data-testid="activate-session-button"
@@ -280,6 +285,7 @@
                                         </button>
                                     } @else if (!session.isCancelled) {
                                         <button
+                                            type="button"
                                             [pTooltip]="cancelSessionButtonTooltipLabel()"
                                             tooltipPosition="left"
                                             data-testid="cancel-session-button"
@@ -289,6 +295,7 @@
                                         </button>
                                     }
                                     <button
+                                        type="button"
                                         [pTooltip]="deleteSessionButtonTooltipLabel()"
                                         class="danger"
                                         data-testid="delete-session-button"

@@ -211,6 +211,9 @@ export default tseslint.config(
             '@angular-eslint/computed-must-return': 'error',
             // takeUntilDestroyed() without a DestroyRef throws NG0203 outside an injection context (ngOnInit, methods).
             '@angular-eslint/no-implicit-take-until-destroyed': 'error',
+            '@angular-eslint/no-uncalled-signals': 'error',
+            '@angular-eslint/no-async-lifecycle-method': 'error',
+            '@angular-eslint/no-duplicates-in-metadata-arrays': 'error',
             // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
             // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
             // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
@@ -620,10 +623,12 @@ export default tseslint.config(
         },
         rules: {
             'prettier/prettier': ['error', { parser: 'angular' }],
-            '@angular-eslint/template/click-events-have-key-events': 'off',
-            '@angular-eslint/template/interactive-supports-focus': 'off',
+            '@angular-eslint/template/click-events-have-key-events': 'error',
+            '@angular-eslint/template/interactive-supports-focus': 'error',
+            '@angular-eslint/template/button-has-type': 'error',
             '@angular-eslint/template/label-has-associated-control': 'off',
-            '@angular-eslint/template/alt-text': 'off',
+            '@angular-eslint/template/alt-text': 'error',
+            '@angular-eslint/template/no-positive-tabindex': 'error',
             '@angular-eslint/template/elements-content': 'off',
             '@angular-eslint/template/prefer-control-flow': 'error',
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
@@ -637,6 +642,7 @@ export default tseslint.config(
             // as the Angular style guide recommends. A bound object is compared by reference, so replace it rather
             // than mutating it, and write a unit suffix such as `top.px` as its own [style.top.px] binding.
             '@angular-eslint/template/prefer-style-binding': 'error',
+            '@angular-eslint/template/no-any': 'error',
         },
     },
     {

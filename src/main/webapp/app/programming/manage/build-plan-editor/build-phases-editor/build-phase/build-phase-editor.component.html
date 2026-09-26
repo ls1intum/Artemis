@@ -6,6 +6,7 @@
         @if (!readonly()) {
             <div class="d-flex gap-1 ms-auto">
                 <button
+                    type="button"
                     [id]="'move-up-button-' + index()"
                     pButton
                     [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveUp' | artemisTranslate"
@@ -21,6 +22,7 @@
                 </button>
 
                 <button
+                    type="button"
                     [id]="'move-down-button-' + index()"
                     pButton
                     [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveDown' | artemisTranslate"
@@ -36,6 +38,7 @@
                 </button>
 
                 <button
+                    type="button"
                     [id]="'delete-phase-button-' + index()"
                     class="ms-2"
                     pButton
@@ -174,6 +177,7 @@
                         [disabled]="readonly()"
                     />
                     <button
+                        type="button"
                         [attr.data-testid]="'delete-result-path-button-' + $index"
                         pButton
                         [text]="true"
@@ -189,7 +193,16 @@
             }
 
             <div>
-                <button [id]="'add-result-path-button-' + index()" pButton [text]="true" size="small" severity="secondary" [hidden]="readonly()" (click)="addResultPath()">
+                <button
+                    type="button"
+                    [id]="'add-result-path-button-' + index()"
+                    pButton
+                    [text]="true"
+                    size="small"
+                    severity="secondary"
+                    [hidden]="readonly()"
+                    (click)="addResultPath()"
+                >
                     <fa-icon [icon]="faPlus" pButtonIcon />
                     <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addResultPath"></span>
                 </button>

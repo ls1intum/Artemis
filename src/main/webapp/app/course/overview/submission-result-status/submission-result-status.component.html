@@ -84,7 +84,7 @@
         </div>
     }
     <!-- For programming exercises -->
-    @if (exercise().type === ExerciseType.PROGRAMMING && studentParticipation()) {
+    @if (showTriggerBuildButton() && exercise().type === ExerciseType.PROGRAMMING && studentParticipation()) {
         <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise()" [participation]="studentParticipation()!" [triggerLastGraded]="triggerLastGraded()" />
     }
 </div>
