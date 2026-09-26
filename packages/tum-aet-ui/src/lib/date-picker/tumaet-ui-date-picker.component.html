@@ -14,7 +14,9 @@
         @if (!timeOnly()) {
             <tumaet-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
         }
-        <ng-container [ngTemplateOutlet]="timeControls" />
+        @if (!dateOnly()) {
+            <ng-container [ngTemplateOutlet]="timeControls" />
+        }
         @if (!hideValidationMessage() && showErrorBorder()) {
             <span [id]="inputId() + '-error'" role="alert" class="tumaet:mt-1 tumaet:block tumaet:text-sm tumaet:text-state-danger">
                 {{ invalidMessageKey() | tumAetUiTranslate }}
@@ -118,7 +120,9 @@
                 (monthChange)="activeMonth.set($event)"
             />
         }
-        <ng-container [ngTemplateOutlet]="timeControls" />
+        @if (!dateOnly()) {
+            <ng-container [ngTemplateOutlet]="timeControls" />
+        }
         <div class="tumaet:mt-3 tumaet:flex tumaet:justify-end">
             <tumaet-ui-button severity="secondary" variant="text" size="small" (clicked)="close()">
                 <span>{{ 'tumAetUi.datePicker.done' | tumAetUiTranslate }}</span>

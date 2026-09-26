@@ -11,6 +11,8 @@
                 <div class="input-cell">
                     <tumaet-ui-date-picker
                         inputId="tutorial-session-date-input"
+                        [dateOnly]="true"
+                        [openOnClick]="true"
                         [hideLabelName]="true"
                         [hideValidationMessage]="true"
                         [shouldDisplayTimeZoneWarning]="false"
@@ -44,7 +46,6 @@
                         [ariaRequired]="true"
                         [value]="startTime()"
                         (valueChange)="onStartTimeChange($event)"
-                        (touch)="startTimeInputTouched.set(true)"
                     />
                     @if (startTimeInvalid) {
                         <span class="field-error" role="alert" data-testid="start-time-error">{{ startTimeValidation.message | artemisTranslate }}</span>
@@ -68,7 +69,6 @@
                         [ariaRequired]="true"
                         [value]="endTime()"
                         (valueChange)="onEndTimeChange($event)"
-                        (touch)="endTimeInputTouched.set(true)"
                     />
                     @if (endTimeInvalid) {
                         <span class="field-error" role="alert" data-testid="end-time-error">{{ endTimeValidation.message | artemisTranslate }}</span>

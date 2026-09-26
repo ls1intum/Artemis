@@ -312,6 +312,7 @@
                         "attendance": "Anwesenheiten"
                     },
                     "validationError": {
+                        "dateInvalid": "Bitte ein gültiges Datum eingeben.",
                         "dateRequired": "Bitte wähle ein Datum.",
                         "startTimeRequired": "Bitte wähle eine Startzeit.",
                         "endTimeRequired": "Bitte wähle eine Endzeit.",

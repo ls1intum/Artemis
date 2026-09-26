@@ -60,9 +60,9 @@ export class TutorialSessionCreateOrEditModalComponent {
     date = signal<dayjs.Dayjs | undefined>(undefined);
     dateValidationResult = computed<Validation>(() => this.computeDateValidation());
     dateInputTouched = signal(false);
-    // The date field is typed; a picker keeps its last committed value when the text turns invalid, so a save is
-    // blocked while it shows text that does not parse - otherwise it would send the stale value behind it. The
-    // time fields are inline steppers with no text to be invalid.
+    // The date field is typed; the picker keeps its last committed value when the text turns invalid, so we flag
+    // the field invalid while it shows text that does not parse - otherwise a save would send the stale value
+    // behind it. The time fields are inline steppers with no text to be invalid.
     dateTextValid = signal(true);
     startTime = signal<dayjs.Dayjs | undefined>(undefined);
     startTimeValidationResult = computed<Validation>(() => this.computeStartTimeValidation());
@@ -111,6 +111,12 @@ export class TutorialSessionCreateOrEditModalComponent {
     }
 
     save() {
+        // Validate on submit: a click on an incomplete form reveals every missing field at once, rather than the
+        // form silently doing nothing behind a disabled button. The inline time steppers have no blur to touch them.
+        this.markInputsTouched();
+        if (this.inputsInvalid()) {
+            return;
+        }
         const session = this.session();
         if (session) {
             this.updateSession(session);
@@ -119,6 +125,13 @@ export class TutorialSessionCreateOrEditModalComponent {
         }
         this.clearData();
         this.isOpen.set(false);
+    }
+
+    private markInputsTouched() {
+        this.dateInputTouched.set(true);
+        this.startTimeInputTouched.set(true);
+        this.endTimeInputTouched.set(true);
+        this.locationInputTouched.set(true);
     }
 
     cancel() {
@@ -166,16 +179,19 @@ export class TutorialSessionCreateOrEditModalComponent {
     }
 
     private computeIfSaveButtonDisabled(): boolean {
-        const inputsInvalid = this.inputsInvalid();
-        if (inputsInvalid) return true;
+        // Editing an unchanged session is the only case with nothing to save. Otherwise Save stays enabled so a
+        // click can reveal the still-missing fields (see save()), rather than being an unexplained dead control.
         const session = this.session();
-        if (session) {
-            return !this.checkIfSessionChanged(session);
-        }
-        return false;
+        return session !== undefined && !this.checkIfSessionChanged(session);
     }
 
     private computeDateValidation(): Validation {
+        if (!this.dateTextValid()) {
+            return {
+                status: ValidationStatus.INVALID,
+                message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.dateInvalid',
+            };
+        }
         const date = this.date();
         if (date === undefined) {
             return {
@@ -241,7 +257,8 @@ export class TutorialSessionCreateOrEditModalComponent {
         const startTimeInvalid = this.startTimeValidationResult().status === ValidationStatus.INVALID;
         const endTimeInvalid = this.endTimeValidationResult().status === ValidationStatus.INVALID;
         const locationInvalid = this.locationValidationResult().status === ValidationStatus.INVALID;
-        return dateInvalid || startTimeInvalid || endTimeInvalid || locationInvalid || !this.dateTextValid();
+        // The date field's unparseable-text state is already folded into dateValidationResult().
+        return dateInvalid || startTimeInvalid || endTimeInvalid || locationInvalid;
     }
 
     private checkIfSessionChanged(session: TutorialGroupSession): boolean {

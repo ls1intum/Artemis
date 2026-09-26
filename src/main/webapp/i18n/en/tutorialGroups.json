@@ -312,6 +312,7 @@
                         "attendance": "Attendance"
                     },
                     "validationError": {
+                        "dateInvalid": "Please enter a valid date.",
                         "dateRequired": "Please choose a date.",
                         "startTimeRequired": "Please choose a start time.",
                         "endTimeRequired": "Please choose an end time.",

@@ -326,6 +326,38 @@ describe('TumAetUiDatePickerComponent', () => {
         });
     });
 
+    describe('dateOnly', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('dateOnly', true);
+            fixture.detectChanges();
+        });
+
+        it('shows an existing value as a date on its own', () => {
+            fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+            expect(input().value).toBe('13.06.2026');
+        });
+
+        it('parses a typed date and keeps it at the start of the day', () => {
+            input().value = '13.06.2026';
+            input().dispatchEvent(new Event('input'));
+            expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 00:00');
+        });
+
+        it('rejects a date and time, because that is not what this field accepts', () => {
+            input().value = '13.06.2026 09:15';
+            input().dispatchEvent(new Event('input'));
+            expect(component.isValid()).toBe(false);
+        });
+
+        it('opens a dialog with a calendar and no time steppers', () => {
+            fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
+            fixture.detectChanges();
+            expect(document.querySelector('tumaet-ui-calendar')).not.toBeNull();
+            expect(document.querySelector('[role="dialog"] input[aria-label="Hour"]')).toBeNull();
+        });
+    });
+
     describe('timeOnly', () => {
         beforeEach(() => {
             fixture.componentRef.setInput('timeOnly', true);

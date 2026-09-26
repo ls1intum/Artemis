@@ -79,6 +79,9 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     /** Edit `HH:mm` without a calendar, preserving the value's date or using today when empty. */
     readonly timeOnly = input(false, { transform: booleanAttribute });
 
+    /** Reduces the field to a date: the text is `DD.MM.YYYY`, the dialog drops the time steppers, and the value is kept at the start of the day. */
+    readonly dateOnly = input(false, { transform: booleanAttribute });
+
     /**
      * Renders the picker's controls in place instead of behind a field and overlay: no text input, no trigger
      * icon, no popup - just the calendar and time steppers, always visible. Pairs with `timeOnly` to show a bare
@@ -121,7 +124,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     // Equivalent Dayjs instances must not reset uncommitted text; key linked state by its displayed value.
     private readonly valueKey = computed(() => {
         const current = this.value();
-        return current ? formatDisplay(current, this.timeOnly()) : '';
+        return current ? formatDisplay(current, this.timeOnly(), this.dateOnly()) : '';
     });
     private readonly isInputValid = linkedSignal(() => {
         this.valueKey();
@@ -143,10 +146,18 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     private pendingHourFocus = false;
 
     protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
-    protected readonly placeholderKey = computed(() => (this.timeOnly() ? 'tumAetUi.datePicker.timePlaceholder' : 'tumAetUi.datePicker.placeholder'));
-    protected readonly dialogLabelKey = computed(() => (this.timeOnly() ? 'tumAetUi.datePicker.timeDialog' : 'tumAetUi.datePicker.dialog'));
-    protected readonly invalidMessageKey = computed(() => (this.timeOnly() ? 'tumAetUi.datePicker.invalidTime' : 'tumAetUi.datePicker.invalid'));
-    protected readonly openLabelKey = computed(() => (this.timeOnly() ? 'tumAetUi.datePicker.openTime' : 'tumAetUi.datePicker.open'));
+    protected readonly placeholderKey = computed(() =>
+        this.dateOnly() ? 'tumAetUi.datePicker.datePlaceholder' : this.timeOnly() ? 'tumAetUi.datePicker.timePlaceholder' : 'tumAetUi.datePicker.placeholder',
+    );
+    protected readonly dialogLabelKey = computed(() =>
+        this.dateOnly() ? 'tumAetUi.datePicker.dateDialog' : this.timeOnly() ? 'tumAetUi.datePicker.timeDialog' : 'tumAetUi.datePicker.dialog',
+    );
+    protected readonly invalidMessageKey = computed(() =>
+        this.dateOnly() ? 'tumAetUi.datePicker.invalidDate' : this.timeOnly() ? 'tumAetUi.datePicker.invalidTime' : 'tumAetUi.datePicker.invalid',
+    );
+    protected readonly openLabelKey = computed(() =>
+        this.dateOnly() ? 'tumAetUi.datePicker.open' : this.timeOnly() ? 'tumAetUi.datePicker.openTime' : 'tumAetUi.datePicker.open',
+    );
     protected readonly showClear = computed(() => !!this.inputText());
     protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : '00'));
     protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : '00'));
@@ -173,7 +184,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
 
     protected onInput(raw: string): void {
         this.inputText.set(raw);
-        const parsed = parseDisplay(raw, this.timeOnly(), this.value());
+        const parsed = parseDisplay(raw, this.timeOnly(), this.value(), this.dateOnly());
         if (parsed) {
             this.commit(parsed);
         } else if (!raw.trim()) {
@@ -189,7 +200,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
 
     protected onBlur(raw: string): void {
         const trimmed = raw.trim();
-        if (trimmed && !matchesDisplayFormat(trimmed, this.timeOnly())) {
+        if (trimmed && !matchesDisplayFormat(trimmed, this.timeOnly(), this.dateOnly())) {
             this.isInputValid.set(false);
         }
         this.touch.emit();
@@ -266,6 +277,10 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     }
 
     protected onDaySelect(day: dayjs.Dayjs): void {
+        if (this.dateOnly()) {
+            this.commit(day.startOf('day'));
+            return;
+        }
         const time = this.value() ?? dayjs().startOf('day');
         this.commit(combineDateAndTime(day, time));
     }
@@ -342,7 +357,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     private commit(next: dayjs.Dayjs): void {
         this.isInputValid.set(true);
         if (valuesEqual(this.value(), next)) {
-            this.inputText.set(formatDisplay(next, this.timeOnly()));
+            this.inputText.set(formatDisplay(next, this.timeOnly(), this.dateOnly()));
             return;
         }
         this.activeMonth.set(next.startOf('month'));
