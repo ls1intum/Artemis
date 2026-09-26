@@ -107,12 +107,15 @@
                                                                             (focusin)="previewFeedbackTarget(feedback)"
                                                                             (focusout)="clearFeedbackPreview()"
                                                                         >
-                                                                            <span class="feedback-row__score" [attr.data-tone]="feedbackTone(feedback)">
-                                                                                <fa-icon [icon]="feedbackToneIcon(feedback)" />
-                                                                                {{ feedbackPoints(feedback) }}
-                                                                            </span>
-                                                                            <span class="feedback-row__name">{{ feedbackElementName(feedback) }}</span>
-                                                                            <p class="feedback-row__text" [innerHTML]="buildFeedbackTextForReview(feedback)"></p>
+                                                                            <jhi-unified-feedback
+                                                                                [feedback]="feedback"
+                                                                                [points]="feedback.credits || 0"
+                                                                                [feedbackContent]="buildFeedbackTextForReview(feedback)"
+                                                                                [reference]="feedbackElementName(feedback)"
+                                                                                [referenceType]="feedbackElementType(feedback)"
+                                                                                [showReference]="true"
+                                                                                [scoreAccuracy]="course()?.accuracyOfScores"
+                                                                            />
                                                                         </li>
                                                                     }
                                                                 </ul>
@@ -125,11 +128,13 @@
                                                                 <ul class="feedback-list" id="additional-feedback">
                                                                     @for (feedback of unreferencedFeedback; track feedback.id) {
                                                                         <li class="feedback-row">
-                                                                            <span class="feedback-row__score" [attr.data-tone]="feedbackTone(feedback)">
-                                                                                <fa-icon [icon]="feedbackToneIcon(feedback)" />
-                                                                                {{ feedbackPoints(feedback) }}
-                                                                            </span>
-                                                                            <p class="feedback-row__text" [innerHTML]="buildFeedbackTextForReview(feedback)"></p>
+                                                                            <jhi-unified-feedback
+                                                                                [feedback]="feedback"
+                                                                                [points]="feedback.credits || 0"
+                                                                                [feedbackContent]="buildFeedbackTextForReview(feedback)"
+                                                                                [showReference]="false"
+                                                                                [scoreAccuracy]="course()?.accuracyOfScores"
+                                                                            />
                                                                         </li>
                                                                     }
                                                                 </ul>

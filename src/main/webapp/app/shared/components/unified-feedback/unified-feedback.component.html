@@ -2,6 +2,9 @@
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
+                @if (referenceType()) {
+                    <span class="unified-feedback-reference-label">{{ referenceType() }}</span>
+                }
                 <span class="unified-feedback-reference-text" [tumAetUiTooltip]="inferredReference()!">{{ inferredReference() }}</span>
             </div>
         }
@@ -17,6 +20,7 @@
                             #titleTextarea
                             class="unified-feedback-title-input"
                             rows="1"
+                            [maxlength]="TITLE_MAX_LENGTH"
                             [ngModel]="displayTitle()"
                             (ngModelChange)="onTitleInput($event)"
                             (input)="onTitleTextareaInput()"
@@ -114,6 +118,7 @@
                         class="unified-feedback-detail-input"
                         [class.unified-feedback-detail-input-missing]="isDetailMissing()"
                         rows="2"
+                        [maxlength]="DETAIL_MAX_LENGTH"
                         [ngModel]="feedbackDetail() ?? ''"
                         (ngModelChange)="onDetailChange($event)"
                         (input)="onDetailInput()"
@@ -122,6 +127,7 @@
                         [attr.aria-label]="feedbackDetailAriaLabel()"
                     ></textarea>
                 </div>
+                <div class="unified-feedback-detail-counter">{{ detailLength() }}/{{ DETAIL_MAX_LENGTH }}</div>
                 @if (correctionStatusLabel()) {
                     <div class="unified-feedback-correction-status">
                         <span

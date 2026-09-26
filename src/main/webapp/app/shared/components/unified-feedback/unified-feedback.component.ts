@@ -105,6 +105,9 @@ export class UnifiedFeedbackComponent {
     type = input<FeedbackType | undefined>(undefined);
     title = input<string | undefined>(undefined);
     reference = input<string | undefined>(undefined);
+    // Plain label shown before the reference chip (e.g. "Attribute"), matching how Apollon's own
+    // feedback popup separates the element's type from its highlighted name chip.
+    referenceType = input<string | undefined>(undefined);
     feedback = input<Feedback | undefined>(undefined);
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
@@ -293,6 +296,14 @@ export class UnifiedFeedbackComponent {
 
     /** Points are graded in half steps throughout Artemis, so the stepper moves in the same increments. */
     protected readonly CREDITS_STEP = 0.5;
+
+    /** Matches Apollon's give-feedback title cap, so a title stays a headline well under the 500-character text column. */
+    protected readonly TITLE_MAX_LENGTH = 100;
+
+    /** Matches Apollon's give-feedback description cap, shown to the assessor as an `n/500` counter. */
+    protected readonly DETAIL_MAX_LENGTH = 500;
+
+    readonly detailLength = computed(() => (this.feedbackDetail() ?? '').length);
 
     /**
      * The credits input's raw, not-yet-committed text, captured on a stepper button's `mousedown` (which always
