@@ -100,8 +100,8 @@
 </ng-template>
 
 <ng-template #commitHashTemplate let-params>
-    @if ($any(params.data).commitHash) {
-        <div>{{ $any(params.data).commitHash.slice(0, 11) }}</div>
+    @if (params.data.commitHash) {
+        <div>{{ params.data.commitHash.slice(0, 11) }}</div>
     } @else {
         {{ 'n.a' }}
     }

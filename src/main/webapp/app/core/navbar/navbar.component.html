@@ -85,7 +85,7 @@
                     }
                     @if (getImageUrl()) {
                         <span>
-                            <img [src]="getImageUrl()" class="profile-image img-circle rounded-3" alt="Avatar" />
+                            <img [ngSrc]="getImageUrl()!" width="30" height="30" class="profile-image img-circle rounded-3" alt="Avatar" />
                         </span>
                     }
                 </a>
@@ -171,7 +171,7 @@
 <nav class="navbar jh-navbar" [class.expanded]="!isCollapsed()">
     <div class="jh-logo-container">
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
-            <img [src]="'public/images/logo.svg'" width="32" height="30" alt="" style="object-fit: contain" />
+            <img ngSrc="public/images/logo.svg" width="32" height="30" alt="" style="object-fit: contain" />
             <div jhiTranslate="global.title" class="navbar-title"></div>
             <ng-template #gitInfo>
                 <div>

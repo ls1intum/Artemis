@@ -7,12 +7,13 @@
                     <fa-icon [icon]="faMagnifyingGlass" />
                 </p-inputicon>
                 <input
+                    #searchInput
                     pInputText
                     type="text"
                     class="competency-search-input"
                     [placeholder]="searchPlaceholder()"
                     [value]="filterText()"
-                    (input)="filterText.set($any($event.target).value)"
+                    (input)="filterText.set(searchInput.value)"
                 />
             </p-iconfield>
         }

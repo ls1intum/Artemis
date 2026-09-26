@@ -131,7 +131,7 @@
         </tumaet-ui-card>
     }
 
-    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="activeTab.set($any($event))">
+    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
         <tumaet-ui-tab-list>
             <tumaet-ui-tab [value]="TAB_FEATURES" jhiTranslate="artemisApp.featureUsage.tab.features" data-testid="tab-features" />
             <tumaet-ui-tab [value]="TAB_ATTENTION" jhiTranslate="artemisApp.featureUsage.tab.attention" data-testid="tab-attention" />

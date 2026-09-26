@@ -230,7 +230,7 @@ describe('CourseLearnerProfileComponent', () => {
             const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Act - Call ngOnInit which internally calls loadProfiles
-            await component.ngOnInit();
+            await component['initializeCourseLearnerProfileComponent']();
             await fixture.whenStable();
 
             // Assert

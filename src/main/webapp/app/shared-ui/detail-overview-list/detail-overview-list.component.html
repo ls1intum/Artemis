@@ -114,7 +114,7 @@
                     }
                     @case (DetailType.Image) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <img [alt]="detail.data.altText" class="details-image rounded-3" [src]="addPublicFilePrefix(detail.data.imageUrl)" />
+                            <img [alt]="detail.data.altText" class="details-image rounded-3" [ngSrc]="addPublicFilePrefix(detail.data.imageUrl)!" width="48" height="48" />
                         </dd>
                     }
                     @case (DetailType.DefaultProfilePicture) {

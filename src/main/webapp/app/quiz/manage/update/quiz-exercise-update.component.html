@@ -454,7 +454,7 @@
                             [placeholder]="'artemisApp.quizExercise.aiGeneration.refinement.globalPlaceholder' | artemisTranslate"
                             maxlength="2000"
                             [ngModel]="globalRefinementPrompt()"
-                            (ngModelChange)="globalRefinementPrompt.set($any($event))"
+                            (ngModelChange)="globalRefinementPrompt.set($event)"
                             [disabled]="isGlobalRefining()"
                             (keydown.enter)="onGlobalRefinementEnterKey($event)"
                         ></textarea>
