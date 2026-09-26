@@ -12,11 +12,11 @@
             },
             "help": {
                 "title": "Kontakt",
-                "courseQuestions": "Fragen zu einem Kurs, einer Aufgabe oder einer Bewertung? Wende dich an die Lehrenden des Kurses. Bei Problemen mit dem Zugang oder deinem Konto hilft die oben genannte Administration.",
+                "courseQuestions": "Fragen zu einem Kurs, einer Aufgabe oder einer Bewertung? Wende dich an die Lehrenden des Kurses. Bei Problemen mit dem Zugang oder deinem Konto hilft die Administration.",
                 "contactAdministrator": "Administration kontaktieren"
             },
             "highlights": {
-                "title": "Verfügbare Funktionen",
+                "title": "Ausgewählte Funktionen",
                 "examFeatures": "Klausurmodus im Detail:"
             },
             "modules": {
@@ -52,7 +52,7 @@
                 }
             },
             "maintainers": {
-                "title": "Maintainer",
+                "title": "Core-Maintainer",
                 "contributors": "Entwickelt mit Hunderten von Beitragenden"
             },
             "citation": {

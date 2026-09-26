@@ -5,46 +5,6 @@
     </header>
 
     @let info = profileInfo();
-    @if (hasInstallationDetails() || info?.testServer) {
-        <section class="flex flex-col gap-4" data-testid="about-installation">
-            <div class="flex flex-wrap items-center gap-3">
-                <h2 jhiTranslate="artemisApp.aboutUsOverview.installation.title"></h2>
-                @if (info?.testServer) {
-                    <tumaet-ui-tag severity="warn" [value]="'artemisApp.aboutUsOverview.installation.testServer' | artemisTranslate" data-testid="about-test-server" />
-                }
-            </div>
-            @if (hasInstallationDetails()) {
-                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    @if (info?.universityName) {
-                        <div class="about__card flex flex-col gap-1">
-                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.university"></dt>
-                            <dd class="font-semibold" data-testid="about-university">{{ info?.universityName }}</dd>
-                        </div>
-                    }
-                    @if (info?.operatorName) {
-                        <div class="about__card flex flex-col gap-1">
-                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.installation.operator"></dt>
-                            <dd class="font-semibold" data-testid="about-operator">{{ info?.operatorName }}</dd>
-                        </div>
-                    }
-                    @if (info?.operatorAdminName) {
-                        <div class="about__card flex flex-col gap-1">
-                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.admin"></dt>
-                            <dd class="font-semibold" data-testid="about-admin">{{ info?.operatorAdminName }}</dd>
-                        </div>
-                    }
-                    @if (contactMailto(); as mailto) {
-                        <div class="about__card flex flex-col gap-1">
-                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.adminEmail"></dt>
-                            <dd class="font-semibold break-all">
-                                <a [href]="mailto" data-testid="about-contact">{{ info?.contact }}</a>
-                            </dd>
-                        </div>
-                    }
-                </dl>
-            }
-        </section>
-    }
 
     <section class="flex flex-col gap-4" data-testid="about-help">
         <div class="flex flex-col gap-1">
@@ -116,6 +76,47 @@
                     </li>
                 }
             </ul>
+        </section>
+    }
+
+    @if (hasInstallationDetails() || info?.testServer) {
+        <section class="flex flex-col gap-4" data-testid="about-installation">
+            <div class="flex flex-wrap items-center gap-3">
+                <h2 jhiTranslate="artemisApp.aboutUsOverview.installation.title"></h2>
+                @if (info?.testServer) {
+                    <tumaet-ui-tag severity="warn" [value]="'artemisApp.aboutUsOverview.installation.testServer' | artemisTranslate" data-testid="about-test-server" />
+                }
+            </div>
+            @if (hasInstallationDetails()) {
+                <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    @if (info?.universityName) {
+                        <div class="about__card flex flex-col gap-1">
+                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.university"></dt>
+                            <dd class="font-semibold" data-testid="about-university">{{ info?.universityName }}</dd>
+                        </div>
+                    }
+                    @if (info?.operatorName) {
+                        <div class="about__card flex flex-col gap-1">
+                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.aboutUsOverview.installation.operator"></dt>
+                            <dd class="font-semibold" data-testid="about-operator">{{ info?.operatorName }}</dd>
+                        </div>
+                    }
+                    @if (info?.operatorAdminName) {
+                        <div class="about__card flex flex-col gap-1">
+                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.admin"></dt>
+                            <dd class="font-semibold" data-testid="about-admin">{{ info?.operatorAdminName }}</dd>
+                        </div>
+                    }
+                    @if (contactMailto(); as mailto) {
+                        <div class="about__card flex flex-col gap-1">
+                            <dt class="text-sm text-muted-color" jhiTranslate="artemisApp.operatorInfo.adminEmail"></dt>
+                            <dd class="font-semibold break-all">
+                                <a [href]="mailto" data-testid="about-contact">{{ info?.contact }}</a>
+                            </dd>
+                        </div>
+                    }
+                </dl>
+            }
         </section>
     }
 

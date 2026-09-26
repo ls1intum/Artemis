@@ -12,11 +12,11 @@
             },
             "help": {
                 "title": "Get in touch",
-                "courseQuestions": "Questions about a course, an exercise or a grade? Ask the instructors of that course. For access or account problems, contact the administrator named above.",
+                "courseQuestions": "Questions about a course, an exercise or a grade? Ask the instructors of that course. For access or account problems, contact the administrator.",
                 "contactAdministrator": "Contact the administrator"
             },
             "highlights": {
-                "title": "Available features",
+                "title": "Selected features",
                 "examFeatures": "Exam mode in detail:"
             },
             "modules": {
@@ -52,7 +52,7 @@
                 }
             },
             "maintainers": {
-                "title": "Maintainers",
+                "title": "Core maintainers",
                 "contributors": "Built with hundreds of contributors"
             },
             "citation": {
