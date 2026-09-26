@@ -244,7 +244,6 @@
                 "learnMore": "Learn more",
                 "formativeFeedbackEnabled": {
                     "label": "Formative feedback requests",
-                    "tooltip": "When enabled, students can request preliminary AI feedback from Athena before the due date.",
                     "enabledLabel": "Formative feedback requests are enabled",
                     "disabledLabel": "Formative feedback requests are disabled",
                     "enabledHint": "Students can request preliminary AI feedback on their submissions before the due date.",
@@ -252,7 +251,6 @@
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Grading feedback suggestions",
-                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for text, programming, and modeling exercises.",
                     "enabledLabel": "Grading feedback suggestions are enabled",
                     "disabledLabel": "Grading feedback suggestions are disabled",
                     "enabledHint": "Tutors see Athena feedback suggestions while assessing text, programming, and modeling submissions.",

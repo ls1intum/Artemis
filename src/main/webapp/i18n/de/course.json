@@ -244,7 +244,6 @@
                 "learnMore": "Mehr erfahren",
                 "formativeFeedbackEnabled": {
                     "label": "Formative Feedbackanfragen",
-                    "tooltip": "Wenn aktiviert, können Studierende vor dem Abgabedatum vorläufiges KI-Feedback von Athena anfordern.",
                     "enabledLabel": "Formative Feedbackanfragen sind aktiviert",
                     "disabledLabel": "Formative Feedbackanfragen sind deaktiviert",
                     "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihren Abgaben anfordern.",
@@ -252,7 +251,6 @@
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Feedbackvorschläge zur Bewertung",
-                    "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Abgaben von Text-, Programmier- und Modellierungsaufgaben vor.",
                     "enabledLabel": "Feedbackvorschläge zur Bewertung sind aktiviert",
                     "disabledLabel": "Feedbackvorschläge zur Bewertung sind deaktiviert",
                     "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",

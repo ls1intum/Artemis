@@ -175,11 +175,10 @@
     <ng-template #navIconAndTextHidden let-sidebarItem>
         @if (sidebarItem.iconImage) {
             <span class="sidebar-icon-image" [style.mask-image]="'url(' + sidebarItem.iconImage + ')'" [style.color]="sidebarItem.iconColor" aria-hidden="true"></span>
-            <span class="ms-2" [jhiTranslate]="sidebarItem.translation"></span>
         } @else if (sidebarItem.icon) {
             <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" [style.color]="sidebarItem.iconColor" />
-            <span class="ms-2" [jhiTranslate]="sidebarItem.translation"></span>
         }
+        <span class="ms-2" [jhiTranslate]="sidebarItem.translation"></span>
     </ng-template>
 
     <ng-template #navItem let-sidebarItem let-iconTextTemplate="iconTextTemplate">
