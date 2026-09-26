@@ -140,7 +140,11 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     activatedComponentReference = signal<SidebarView | undefined>(undefined);
 
-    override async ngOnInit() {
+    override ngOnInit() {
+        void this.initializeCourseManagementContainerComponent();
+    }
+
+    private async initializeCourseManagementContainerComponent(): Promise<void> {
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
@@ -179,7 +183,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 }
             });
 
-        await super.ngOnInit();
+        await super.initializeBaseCourseContainerComponent();
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {

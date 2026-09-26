@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
 import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
@@ -38,10 +38,10 @@ export class Theme {
  * Provides the current theme information to other components and services.
  * Applies new themes as requested from other components / services, usually the theme switcher component.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class ThemeService {
+    private localStorageService = inject(LocalStorageService);
+
     /**
      * The user preference changes as WritableSignal.
      * If changed, the theme is applied immediately.
@@ -74,8 +74,6 @@ export class ThemeService {
     private _appliedThemeRevision = signal(0);
 
     public readonly appliedThemeRevision = this._appliedThemeRevision.asReadonly();
-
-    private localStorageService = inject(LocalStorageService);
 
     private darkSchemeMediaQuery!: MediaQueryList; // set in initialize(), called once on application startup before any read
 

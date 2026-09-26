@@ -146,7 +146,7 @@
 .presentation-status-filter {
     flex: 0 0 auto;
 
-    tum-ui-button.active ::ng-deep .tum-ui-btn {
+    tumaet-ui-button.active ::ng-deep .tumaet-ui-btn {
         color: var(--p-primary-color);
         font-weight: 600;
     }

@@ -44,7 +44,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { defer, finalize } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -72,18 +72,18 @@ interface AssessmentCriteriaGenerationState {
         NgbTooltip,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiConfirmDialogComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiTooltipDirective,
     ],
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit, DoCheck {
     private injector = inject(Injector);
     private readonly profileService = inject(ProfileService);
     private readonly generationService = inject(AssessmentCriteriaGenerationService);
     private readonly alertService = inject(AlertService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly accountService = inject(AccountService);

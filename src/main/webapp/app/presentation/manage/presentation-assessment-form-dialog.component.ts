@@ -5,13 +5,13 @@ import { Observable } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
-    TumUiAutoCompleteComponent,
-    TumUiAutoCompleteSearchEvent,
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiInputDirective,
-    TumUiInputNumberComponent,
-    TumUiMessageComponent,
+    TumAetUiAutoCompleteComponent,
+    TumAetUiAutoCompleteSearchEvent,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
 } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -40,12 +40,12 @@ const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | nul
         TranslateDirective,
         ArtemisTranslatePipe,
         FaIconComponent,
-        TumUiAutoCompleteComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiInputDirective,
-        TumUiInputNumberComponent,
-        TumUiMessageComponent,
+        TumAetUiAutoCompleteComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiMessageComponent,
         DeleteButtonDirective,
     ],
 })
@@ -102,7 +102,7 @@ export class PresentationAssessmentFormDialogComponent {
         effect(() => (this.isSaving() ? this.editForm.disable({ emitEvent: false }) : this.editForm.enable({ emitEvent: false })));
     }
 
-    readonly filterExercises = (event: TumUiAutoCompleteSearchEvent): void => {
+    readonly filterExercises = (event: TumAetUiAutoCompleteSearchEvent): void => {
         const query = event.query.trim().toLocaleLowerCase();
         this.filteredExercises.set(query ? this.exercises().filter((exercise) => exercise.title?.toLocaleLowerCase().includes(query)) : this.exercises());
     };

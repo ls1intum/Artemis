@@ -15,8 +15,9 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
     styleUrls: ['./control-center.component.scss'],
 })
 export class ControlCenterComponent {
-    protected readonly IrisLogoSize = IrisLogoSize;
     private dialogService = inject(DialogService);
+
+    protected readonly IrisLogoSize = IrisLogoSize;
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
     course = input.required<Course>();

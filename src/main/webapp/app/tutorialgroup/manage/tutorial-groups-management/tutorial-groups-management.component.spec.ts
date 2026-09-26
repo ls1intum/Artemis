@@ -25,7 +25,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -122,7 +122,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
                 // The paginator and the table's empty row translate through this adapter, as they do in the app.
-                provideArtemisTumUiTranslator(),
+                provideArtemisTumAetUiTranslator(),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -316,7 +316,7 @@ describe('TutorialGroupsManagementComponent', () => {
 
         const highlighted = fixture.debugElement
             .queryAll(By.css('tr[cdk-row]'))
-            .map((row) => (row.nativeElement as HTMLElement).classList.contains('tum-ui-table-row-highlighted'));
+            .map((row) => (row.nativeElement as HTMLElement).classList.contains('tumaet-ui-table-row-highlighted'));
 
         expect(renderedRows().map((row) => row[0])).toEqual(['Other', 'Own']);
         expect(highlighted).toEqual([false, true]);

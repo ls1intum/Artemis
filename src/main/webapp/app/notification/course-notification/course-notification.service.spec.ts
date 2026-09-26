@@ -141,6 +141,22 @@ describe('CourseNotificationService', () => {
         });
     });
 
+    describe('markDisplayedNotificationsAsSeen', () => {
+        it('should make PUT request to the seen endpoint, not the status endpoint', () => {
+            const courseId = 123;
+            const notificationIds = [4, 5];
+
+            service.markDisplayedNotificationsAsSeen(courseId, notificationIds);
+
+            const req = httpMock.expectOne(`/api/notification/courses/${courseId}/seen`);
+            expect(req.request.method).toBe('PUT');
+            expect(req.request.body).toEqual({ notificationIds });
+            req.flush({});
+            vi.advanceTimersByTime(0);
+            httpMock.expectNone(`/api/notification/courses/${courseId}/status`);
+        });
+    });
+
     describe('archiveAll', () => {
         it('should make PUT request to archive all notifications', () => {
             const courseId = 123;

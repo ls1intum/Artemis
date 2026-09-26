@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
@@ -45,7 +46,7 @@ import de.tum.cit.aet.artemis.presentation.service.PresentationAssessmentService
 @RestController
 @RequestMapping("api/presentation/")
 @FeatureToggle(Feature.PresentationAssessments)
-@FeatureUsage("assessment/presentation-assessment")
+@FeatureUsage(UserFeature.PRESENTATION_ASSESSMENT)
 public class PresentationAssessmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(PresentationAssessmentResource.class);

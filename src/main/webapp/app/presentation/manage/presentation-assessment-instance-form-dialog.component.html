@@ -32,7 +32,7 @@
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-result" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
-            <tum-ui-input-number
+            <tumaet-ui-input-number
                 inputId="presentation-instance-result"
                 [fluid]="true"
                 [min]="0"
@@ -46,7 +46,7 @@
                 formControlName="resultPoints"
             />
             @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
-                <tum-ui-message severity="error">
+                <tumaet-ui-message severity="error">
                     <span
                         [jhiTranslate]="
                             editForm.controls.resultPoints.hasError('max')
@@ -55,19 +55,19 @@
                         "
                         [translateValues]="{ max: resultPointsUpperBound }"
                     ></span>
-                </tum-ui-message>
+                </tumaet-ui-message>
             }
             @if (editForm.hasError('resultPointsExceedMaxPoints')) {
-                <tum-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span></tum-ui-message>
+                <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span></tumaet-ui-message>
             }
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-language" jhiTranslate="artemisApp.presentationAssessment.language"></label>
-            <tum-ui-select inputId="presentation-instance-language" [options]="languageOptions()" optionLabel="label" optionValue="value" formControlName="language" />
+            <tumaet-ui-select inputId="presentation-instance-language" [options]="languageOptions()" optionLabel="label" optionValue="value" formControlName="language" />
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-mode" jhiTranslate="artemisApp.presentationAssessment.mode.label"></label>
-            <tum-ui-select inputId="presentation-instance-mode" [options]="modeOptions()" optionLabel="label" optionValue="value" formControlName="mode" />
+            <tumaet-ui-select inputId="presentation-instance-mode" [options]="modeOptions()" optionLabel="label" optionValue="value" formControlName="mode" />
         </div>
         @if (editForm.controls.mode.value === PresentationAssessmentMode.IN_PERSON) {
             <div class="flex flex-col gap-2">
@@ -81,12 +81,12 @@
                     [attr.aria-describedby]="editForm.controls.location.hasError('maxlength') ? 'presentation-instance-location-error' : undefined"
                 />
                 @if (editForm.controls.location.hasError('maxlength')) {
-                    <tum-ui-message severity="error" id="presentation-instance-location-error" role="alert">
+                    <tumaet-ui-message severity="error" id="presentation-instance-location-error" role="alert">
                         <span
                             jhiTranslate="artemisApp.presentationAssessment.locationTooLong"
                             [translateValues]="{ max: editForm.controls.location.getError('maxlength').requiredLength }"
                         ></span>
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
             </div>
         } @else {
@@ -102,12 +102,12 @@
                     [attr.aria-describedby]="editForm.controls.meetingLink.hasError('maxlength') ? 'presentation-instance-link-error' : undefined"
                 />
                 @if (editForm.controls.meetingLink.hasError('maxlength')) {
-                    <tum-ui-message severity="error" id="presentation-instance-link-error" role="alert">
+                    <tumaet-ui-message severity="error" id="presentation-instance-link-error" role="alert">
                         <span
                             jhiTranslate="artemisApp.presentationAssessment.meetingLinkTooLong"
                             [translateValues]="{ max: editForm.controls.meetingLink.getError('maxlength').requiredLength }"
                         ></span>
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
             </div>
         }
@@ -125,12 +125,12 @@
             [attr.aria-describedby]="editForm.controls.remark.hasError('maxlength') ? 'presentation-instance-remark-error' : undefined"
         ></textarea>
         @if (editForm.controls.remark.hasError('maxlength')) {
-            <tum-ui-message severity="error" id="presentation-instance-remark-error" role="alert">
+            <tumaet-ui-message severity="error" id="presentation-instance-remark-error" role="alert">
                 <span
                     jhiTranslate="artemisApp.presentationAssessment.remarkTooLong"
                     [translateValues]="{ max: editForm.controls.remark.getError('maxlength').requiredLength }"
                 ></span>
-            </tum-ui-message>
+            </tumaet-ui-message>
         }
     </div>
 
@@ -155,13 +155,13 @@
         <span><span jhiTranslate="artemisApp.presentationAssessment.presenters"></span> <span aria-hidden="true">*</span> ({{ assignedStudents().length }})</span>
     </jhi-course-group>
     @if (assignedStudents().length === 0 && editForm.touched) {
-        <tum-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></tum-ui-message>
+        <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></tumaet-ui-message>
     }
 
     <div class="flex justify-end gap-2">
-        <tum-ui-button severity="secondary" type="button" (clicked)="cancel()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></tum-ui-button>
-        <tum-ui-button type="submit" [disabled]="isSaving() || editForm.invalid || assignedStudents().length === 0">
+        <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></tumaet-ui-button>
+        <tumaet-ui-button type="submit" [disabled]="isSaving() || editForm.invalid || assignedStudents().length === 0">
             <fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
 </form>

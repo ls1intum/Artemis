@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationInfoDTO;
@@ -26,7 +29,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPres
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("course-notifications/notifications")
+@FeatureUsage(UserFeature.COURSE_NOTIFICATIONS)
 @RestController
 @RequestMapping("api/notification/courses/")
 public class CourseNotificationResource {
@@ -68,6 +71,7 @@ public class CourseNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and the list of all notification types and presets
      */
     @EnforceAtLeastStudent
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("info")
     public ResponseEntity<CourseNotificationInfoDTO> getCourseNotificationInfo() {
         var presetDTOs = courseNotificationSettingPresetRegistryService.getSettingPresetDTOs();

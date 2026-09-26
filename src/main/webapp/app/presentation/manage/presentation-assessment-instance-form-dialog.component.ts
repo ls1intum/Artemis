@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiInputNumberComponent, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -43,11 +43,11 @@ const minimumPresentationDate: ValidatorFn = (control: AbstractControl): Validat
         ArtemisTranslatePipe,
         FormDateTimePickerComponent,
         CourseGroupComponent,
-        TumUiButtonComponent,
-        TumUiInputDirective,
-        TumUiInputNumberComponent,
-        TumUiMessageComponent,
-        TumUiSelectComponent,
+        TumAetUiButtonComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
     ],
 })
 export class PresentationAssessmentInstanceFormDialogComponent {

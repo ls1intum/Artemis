@@ -9,19 +9,19 @@ import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTras
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiButtonGroupComponent,
-    TumUiDialogComponent,
-    TumUiIconFieldComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiPaginatorComponent,
-    TumUiSelectComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTagComponent,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
+    TumAetUiDialogComponent,
+    TumAetUiIconFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPaginatorComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
 
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -83,18 +83,18 @@ function studentRowKey(row: PresentationStudentRow | SelectedPresentationStudent
         RouterLink,
         PresentationAssessmentFormDialogComponent,
         PresentationAssessmentInstanceFormDialogComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiButtonGroupComponent,
-        TumUiDialogComponent,
-        TumUiIconFieldComponent,
-        TumUiInputDirective,
-        TumUiMessageComponent,
-        TumUiPaginatorComponent,
-        TumUiSelectComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+        TumAetUiDialogComponent,
+        TumAetUiIconFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiPaginatorComponent,
+        TumAetUiSelectComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTagComponent,
         SidebarComponent,
         DeleteButtonDirective,
     ],
@@ -293,7 +293,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.overviewPage.set(0);
     }
 
-    onStudentSort(event: TumUiTableSortEvent): void {
+    onStudentSort(event: TumAetUiTableSortEvent): void {
         this.studentSortField.set(event.field);
         this.studentSortOrder.set(event.order);
     }

@@ -1,6 +1,6 @@
 <div class="mt-2 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-[1.1fr_1fr]">
-    <tum-ui-panel class="h-full min-w-0">
-        <span tumUiPanelHeader class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.progressTitle"></span>
+    <tumaet-ui-panel class="h-full min-w-0">
+        <span tumAetUiPanelHeader class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.progressTitle"></span>
         <div class="mb-3 flex flex-wrap items-baseline gap-2">
             <span class="text-4xl font-bold leading-none text-color">{{ assessedSubmissions() }} / {{ totalProgressItems() }}</span>
             <span class="text-base text-muted-color">
@@ -49,9 +49,9 @@
                 {{ openSubmissions() }}
             </span>
         </div>
-    </tum-ui-panel>
+    </tumaet-ui-panel>
 
-    <tum-ui-panel class="h-full min-w-0 overflow-hidden [&_.tum-ui-panel-header]:!hidden">
+    <tumaet-ui-panel class="h-full min-w-0 overflow-hidden [&_.tumaet-ui-panel-header]:!hidden">
         <div class="-mx-[calc(var(--tumaet-ui-spacing)*4.5)] -mb-[calc(var(--tumaet-ui-spacing)*4.5)]">
             <table class="w-full table-fixed border-collapse text-base text-muted-color">
                 <colgroup>
@@ -182,5 +182,5 @@
                 </tbody>
             </table>
         </div>
-    </tum-ui-panel>
+    </tumaet-ui-panel>
 </div>

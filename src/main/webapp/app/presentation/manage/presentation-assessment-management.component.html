@@ -1,8 +1,8 @@
 <div class="presentation-page flex flex-col">
     <div *titleBarActions class="flex items-center justify-end">
-        <tum-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" (clicked)="startCreate()">
+        <tumaet-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" (clicked)="startCreate()">
             <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
 
     <div class="d-flex horizontal-scroll presentation-workspace" data-testid="presentation-master-detail">
@@ -32,16 +32,16 @@
                                             <span>{{ presentationAssessment.exerciseTitle }}</span>
                                         </a>
                                     }
-                                    <tum-ui-button size="small" severity="secondary" variant="outlined" [icon]="faPencilAlt" (clicked)="startEdit(presentationAssessment)">
+                                    <tumaet-ui-button size="small" severity="secondary" variant="outlined" [icon]="faPencilAlt" (clicked)="startEdit(presentationAssessment)">
                                         <span jhiTranslate="entity.action.edit"></span>
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 </div>
                             </header>
 
                             <div class="presentation-summary">{{ presentationAssessment.description || '-' }}</div>
 
                             <div class="presentation-grading-toolbar">
-                                <tum-ui-icon-field class="student-search" [icon]="faSearch">
+                                <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                     <input
                                         tumUiInput
                                         tumUiInputSize="small"
@@ -52,11 +52,11 @@
                                         placeholder="{{ 'artemisApp.presentationAssessment.searchStudent' | artemisTranslate }}"
                                         data-testid="selected-presentation-student-search"
                                     />
-                                </tum-ui-icon-field>
+                                </tumaet-ui-icon-field>
                                 <div class="flex items-center">
-                                    <tum-ui-button size="small" (clicked)="startCreateInstance(presentationAssessment)" data-testid="create-instance-button">
+                                    <tumaet-ui-button size="small" (clicked)="startCreateInstance(presentationAssessment)" data-testid="create-instance-button">
                                         <span jhiTranslate="artemisApp.presentationAssessment.enterGrade"></span>
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 </div>
                             </div>
 
@@ -104,14 +104,14 @@
                                                 </td>
                                                 <td>
                                                     @if (row.assessed) {
-                                                        <tum-ui-tag severity="success" [bold]="false" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
+                                                        <tumaet-ui-tag severity="success" [bold]="false" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
                                                     } @else {
-                                                        <tum-ui-tag severity="warn" [bold]="false" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
+                                                        <tumaet-ui-tag severity="warn" [bold]="false" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
                                                     }
                                                 </td>
                                                 <td>
                                                     @if (row.assessed) {
-                                                        <tum-ui-tag
+                                                        <tumaet-ui-tag
                                                             severity="info"
                                                             [bold]="false"
                                                             [value]="row.instance!.resultPoints + ' / ' + presentationAssessment.maxPoints"
@@ -125,14 +125,14 @@
                                                 <td>
                                                     @if (row.instance; as instance) {
                                                         <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
-                                                            <tum-ui-button
+                                                            <tumaet-ui-button
                                                                 size="small"
                                                                 variant="text"
                                                                 [icon]="faPencilAlt"
                                                                 [ariaLabel]="'entity.action.edit' | artemisTranslate"
                                                                 (clicked)="startEditInstance(presentationAssessment, instance, row.studentLogin)"
                                                             />
-                                                            <tum-ui-button
+                                                            <tumaet-ui-button
                                                                 size="small"
                                                                 severity="danger"
                                                                 variant="text"
@@ -208,7 +208,7 @@
                         </div>
 
                         <div class="presentation-overall-toolbar">
-                            <tum-ui-icon-field class="student-search" [icon]="faSearch">
+                            <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                 <input
                                     tumUiInput
                                     tumUiInputSize="small"
@@ -219,9 +219,9 @@
                                     placeholder="{{ 'artemisApp.presentationAssessment.searchOverview' | artemisTranslate }}"
                                     data-testid="student-search"
                                 />
-                            </tum-ui-icon-field>
-                            <tum-ui-button-group class="presentation-status-filter" [attr.aria-label]="'artemisApp.presentationAssessment.status' | artemisTranslate">
-                                <tum-ui-button
+                            </tumaet-ui-icon-field>
+                            <tumaet-ui-button-group class="presentation-status-filter" [attr.aria-label]="'artemisApp.presentationAssessment.status' | artemisTranslate">
+                                <tumaet-ui-button
                                     size="small"
                                     variant="text"
                                     severity="secondary"
@@ -229,8 +229,8 @@
                                     [ariaPressed]="assessmentStatusFilter() === 'all'"
                                     (clicked)="setAssessmentStatusFilter('all')"
                                     ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
-                                ></tum-ui-button>
-                                <tum-ui-button
+                                ></tumaet-ui-button>
+                                <tumaet-ui-button
                                     size="small"
                                     variant="text"
                                     severity="secondary"
@@ -238,8 +238,8 @@
                                     [ariaPressed]="assessmentStatusFilter() === 'assessed'"
                                     (clicked)="setAssessmentStatusFilter('assessed')"
                                     ><span jhiTranslate="artemisApp.presentationAssessment.assessed"></span
-                                ></tum-ui-button>
-                                <tum-ui-button
+                                ></tumaet-ui-button>
+                                <tumaet-ui-button
                                     size="small"
                                     variant="text"
                                     severity="secondary"
@@ -247,10 +247,10 @@
                                     [ariaPressed]="assessmentStatusFilter() === 'pending'"
                                     (clicked)="setAssessmentStatusFilter('pending')"
                                     ><span jhiTranslate="artemisApp.presentationAssessment.pending"></span
-                                ></tum-ui-button>
-                            </tum-ui-button-group>
+                                ></tumaet-ui-button>
+                            </tumaet-ui-button-group>
                             <span class="presentation-toolbar-divider" aria-hidden="true"></span>
-                            <tum-ui-select
+                            <tumaet-ui-select
                                 size="small"
                                 class="presentation-filter-select"
                                 [options]="presentationFilterOptions()"
@@ -260,7 +260,7 @@
                                 (ngModelChange)="updatePresentationFilter($event)"
                                 [ariaLabel]="'artemisApp.presentationAssessment.filter.presentation' | artemisTranslate"
                             />
-                            <tum-ui-select
+                            <tumaet-ui-select
                                 size="small"
                                 class="presentation-filter-select"
                                 [options]="typeFilterOptions()"
@@ -325,7 +325,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <tum-ui-tag
+                                                <tumaet-ui-tag
                                                     [severity]="row.presentationAssessment.exerciseId ? 'success' : 'info'"
                                                     [bold]="false"
                                                     [value]="
@@ -338,7 +338,7 @@
                                             </td>
                                             <td>{{ row.instance.presentationDate | artemisDate }}</td>
                                             <td>
-                                                <tum-ui-tag
+                                                <tumaet-ui-tag
                                                     [severity]="row.assessed ? 'success' : 'warn'"
                                                     [bold]="false"
                                                     [value]="
@@ -349,7 +349,7 @@
                                             </td>
                                             <td>
                                                 @if (row.assessed) {
-                                                    <tum-ui-tag
+                                                    <tumaet-ui-tag
                                                         severity="success"
                                                         [bold]="false"
                                                         [value]="row.instance.resultPoints + ' / ' + row.presentationAssessment.maxPoints"
@@ -360,14 +360,14 @@
                                             </td>
                                             <td>
                                                 <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
-                                                    <tum-ui-button
+                                                    <tumaet-ui-button
                                                         size="small"
                                                         variant="text"
                                                         [icon]="faPencilAlt"
                                                         [ariaLabel]="'entity.action.edit' | artemisTranslate"
                                                         (clicked)="startEditInstance(row.presentationAssessment, row.instance, row.studentLogin)"
                                                     />
-                                                    <tum-ui-button
+                                                    <tumaet-ui-button
                                                         size="small"
                                                         severity="danger"
                                                         variant="text"
@@ -430,7 +430,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <tum-ui-paginator
+                        <tumaet-ui-paginator
                             class="presentation-paginator"
                             [page]="effectiveOverviewPage()"
                             [pageSize]="overviewPageSize()"
@@ -442,14 +442,14 @@
                     </section>
                 }
             } @else {
-                <tum-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
+                <tumaet-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
                     <span jhiTranslate="artemisApp.presentationAssessment.noExisting"></span>
-                </tum-ui-message>
+                </tumaet-ui-message>
             }
         </main>
     </div>
 
-    <tum-ui-dialog
+    <tumaet-ui-dialog
         [(visible)]="presentationDialogVisible"
         size="medium"
         [closable]="!isSaving()"
@@ -470,9 +470,9 @@
                 (cancelled)="handlePresentationDialogCancel()"
             />
         }
-    </tum-ui-dialog>
+    </tumaet-ui-dialog>
 
-    <tum-ui-dialog
+    <tumaet-ui-dialog
         [(visible)]="instanceDialogVisible"
         size="large"
         [closable]="!isSaving()"
@@ -493,5 +493,5 @@
                 (cancelled)="handleInstanceDialogCancel()"
             />
         }
-    </tum-ui-dialog>
+    </tumaet-ui-dialog>
 </div>

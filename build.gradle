@@ -125,7 +125,7 @@ node {
     pnpmVersion = "${pnpm_version}"
 }
 
-ext.tumUiRuntimeSources = fileTree("packages/tum-ui/src") {
+ext.tumAetUiRuntimeSources = fileTree("packages/tum-aet-ui/src") {
     include "**/*.html", "**/*.scss", "**/*.ts"
     exclude "**/*.spec.ts", "**/*.stories.ts"
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 
 export const CustomBreakpointNames = {
     extraSmall: 'extraSmall',
@@ -9,9 +9,7 @@ export const CustomBreakpointNames = {
     extraLarge: 'extraLarge',
 };
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class BreakpointsService {
     breakpoints = new Map<string, string>();
 

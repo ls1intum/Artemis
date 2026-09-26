@@ -4,7 +4,7 @@
         "paths": {
             "app/*": ["./src/main/webapp/app/*"],
             "src/*": ["./src/*"],
-            "@tumaet/ui-angular": ["./packages/tum-ui/src/public-api.ts"]
+            "@tumaet/ui-angular": ["./packages/tum-aet-ui/src/public-api.ts"]
         }
     }
 }

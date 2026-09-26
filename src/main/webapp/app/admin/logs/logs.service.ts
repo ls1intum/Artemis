@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Level, LoggersResponse } from './log.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LogsService {
     private http = inject(HttpClient);
 

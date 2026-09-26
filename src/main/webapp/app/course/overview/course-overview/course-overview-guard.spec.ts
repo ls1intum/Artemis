@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, UrlTree } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
@@ -58,8 +58,13 @@ describe('CourseOverviewGuard', () => {
         availableTabsService = TestBed.inject(CourseAvailableTabsService);
         availableTabsService.clear();
         router = TestBed.inject(Router);
-        vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
     });
+
+    /** Asserts that a guard result is a redirect to the exercises tab of course 1. */
+    const expectRedirectToExercises = (result: boolean | UrlTree) => {
+        expect(result).toBeInstanceOf(UrlTree);
+        expect(router.serializeUrl(result as UrlTree)).toBe('/courses/1/exercises');
+    };
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -69,7 +74,7 @@ describe('CourseOverviewGuard', () => {
         it('should return false without fetching when courseId is not present', () => {
             const noCourseRoute = { parent: { paramMap: { get: () => undefined } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
             const fetchSpy = vi.spyOn(courseManagementService, 'getCourseAvailableTabs');
-            let resultValue = true;
+            let resultValue: boolean | UrlTree = true;
             guard.canActivate(noCourseRoute).subscribe((result) => (resultValue = result));
             expect(resultValue).toBe(false);
             expect(fetchSpy).not.toHaveBeenCalled();
@@ -77,7 +82,7 @@ describe('CourseOverviewGuard', () => {
 
         it('should fetch the available tabs and allow an available tab', () => {
             const fetchSpy = vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(of(allTabs));
-            let resultValue = false;
+            let resultValue: boolean | UrlTree = false;
             guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe((result) => (resultValue = result));
             expect(fetchSpy).toHaveBeenCalledExactlyOnceWith(1);
             expect(resultValue).toBe(true);
@@ -101,16 +106,14 @@ describe('CourseOverviewGuard', () => {
 
         it('should deny and redirect to exercises when the target tab is unavailable', () => {
             vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(of(tabs({ lectures: false })));
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            let resultValue = true;
+            let resultValue: boolean | UrlTree = true;
             guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe((result) => (resultValue = result));
-            expect(resultValue).toBe(false);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
+            expectRedirectToExercises(resultValue);
         });
 
         it('should allow activation when loading the available tabs fails (the container then handles the error)', () => {
             vi.spyOn(courseManagementService, 'getCourseAvailableTabs').mockReturnValue(throwError(() => new Error('network error')));
-            let resultValue = false;
+            let resultValue: boolean | UrlTree = false;
             guard.canActivate(route(CourseOverviewRoutePath.LECTURES)).subscribe((result) => (resultValue = result));
             expect(resultValue).toBe(true);
         });
@@ -130,21 +133,15 @@ describe('CourseOverviewGuard', () => {
             { path: CourseOverviewRoutePath.TRAINING, available: tabs({ training: true }) },
             { path: CourseOverviewRoutePath.TRAINING_QUIZ, available: tabs({ training: true }) },
         ])('should grant access to $path when its flag is set', ({ path, available }) => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
             expect(guard.decideAccess(1, available, path)).toBe(true);
-            expect(navigateSpy).not.toHaveBeenCalled();
         });
 
         it('should deny and redirect to exercises for a guarded tab whose flag is not set', () => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            expect(guard.decideAccess(1, tabs(), CourseOverviewRoutePath.EXAMS)).toBe(false);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
+            expectRedirectToExercises(guard.decideAccess(1, tabs(), CourseOverviewRoutePath.EXAMS));
         });
 
         it('should deny and redirect to exercises for an unknown path', () => {
-            const navigateSpy = vi.spyOn(router, 'navigate');
-            expect(guard.decideAccess(1, allTabs, 'unknown')).toBe(false);
-            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
+            expectRedirectToExercises(guard.decideAccess(1, allTabs, 'unknown'));
         });
     });
 });

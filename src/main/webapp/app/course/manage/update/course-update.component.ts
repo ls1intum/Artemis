@@ -20,15 +20,15 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import {
-    TumUiAutoCompleteComponent,
-    TumUiAutoCompleteSearchEvent,
-    TumUiButtonDirective,
-    TumUiCheckboxComponent,
-    TumUiChipComponent,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiTooltipDirective,
+    TumAetUiAutoCompleteComponent,
+    TumAetUiAutoCompleteSearchEvent,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiChipComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { faBan, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
@@ -45,7 +45,7 @@ import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { KeyValuePipe, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -65,7 +65,6 @@ import { FileService } from 'app/foundation/service/file.service';
         ImageComponent,
         FaIconComponent,
         TranslateDirective,
-        NgStyle,
         ColorSelectorComponent,
         FormDateTimePickerComponent,
         HelpIconComponent,
@@ -77,14 +76,14 @@ import { FileService } from 'app/foundation/service/file.service';
         RemoveKeysPipe,
         FeatureOverlayComponent,
         RouterLink,
-        TumUiDialogComponent,
-        TumUiCheckboxComponent,
-        TumUiTooltipDirective,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
-        TumUiChipComponent,
-        TumUiAutoCompleteComponent,
-        TumUiInputDirective,
+        TumAetUiDialogComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiChipComponent,
+        TumAetUiAutoCompleteComponent,
+        TumAetUiInputDirective,
         ImageCropperModalComponent,
         OrganizationSelectorComponent,
     ],
@@ -104,6 +103,7 @@ export class CourseUpdateComponent implements OnInit {
     private readonly accountService = inject(AccountService);
     private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly destroyRef = inject(DestroyRef);
+    private courseStorageService = inject(CourseStorageService);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -171,8 +171,6 @@ export class CourseUpdateComponent implements OnInit {
     // (or if the fetch fails) — the template falls back to a plain "Use default" label.
     readonly debounceWindowSecondsDefault = signal<number | undefined>(undefined);
     readonly maxDailyOrchestrationDefault = signal<number | undefined>(undefined);
-
-    private courseStorageService = inject(CourseStorageService);
 
     // Bound directly in the template, so it must be a signal for zoneless change detection to pick up the
     // ngOnInit assignment (the course, and therefore the semester list, is only known once ngOnInit runs).
@@ -352,7 +350,7 @@ export class CourseUpdateComponent implements OnInit {
         this.isAdmin.set(this.accountService.isAdmin());
         this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(this.course));
     }
-    onTimeZoneSearch(event: TumUiAutoCompleteSearchEvent): void {
+    onTimeZoneSearch(event: TumAetUiAutoCompleteSearchEvent): void {
         const term = event.query;
         this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
     }

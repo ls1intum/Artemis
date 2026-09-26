@@ -4,10 +4,10 @@ import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } fro
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 // TooltipModule remains for the still-PrimeNG `pTooltip`s on the label / timezone / visible-date hints; the
-// variant-group lock overlay uses the tum-ui kit tooltip.
+// variant-group lock overlay uses the tumaet-ui kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -37,7 +37,7 @@ export enum DateTimePickerType {
     imports: [
         FaStackComponent,
         TooltipModule,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         ButtonModule,
         FaIconComponent,
         FaStackItemSizeDirective,

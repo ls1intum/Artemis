@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -17,7 +17,7 @@ export interface CredentialRevocationChoice {
  * Service for managing password changes for authenticated users.
  * Communicates with the server to update user passwords.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PasswordService {
     private http = inject(HttpClient);
 

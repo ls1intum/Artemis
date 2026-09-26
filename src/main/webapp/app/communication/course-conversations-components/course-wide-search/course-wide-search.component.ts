@@ -29,6 +29,11 @@ import { UserPublicInfoDTO } from 'app/account/user/user.model';
     imports: [NgClass, TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, NgbTooltip, InfiniteScrollDirective, PostingThreadComponent, ArtemisTranslatePipe],
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
+    private courseSidebarService = inject(CourseSidebarService);
+    private metisService = inject(MetisService);
+    private metisConversationService = inject(MetisConversationService);
+    private formBuilder = inject(FormBuilder);
+
     courseWideSearchConfig = input.required<CourseWideSearchConfig>();
 
     readonly messages = viewChildren<ElementRef>('postingThread');
@@ -67,11 +72,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     formGroup!: FormGroup; // set in resetFormGroup() from ngOnInit()
 
     getAsChannel = getAsChannelDTO;
-
-    private courseSidebarService = inject(CourseSidebarService);
-    private metisService = inject(MetisService);
-    private metisConversationService = inject(MetisConversationService);
-    private formBuilder = inject(FormBuilder);
 
     ngOnInit() {
         this.subscribeToMetis();

@@ -11,15 +11,15 @@
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.title' | artemisTranslate"
             />
             @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
-                <tum-ui-message severity="error" data-testid="presentation-title-error">
+                <tumaet-ui-message severity="error" data-testid="presentation-title-error">
                     <span jhiTranslate="entity.validation.required"></span>
-                </tum-ui-message>
+                </tumaet-ui-message>
             }
         </div>
 
         <div class="presentation-assessment-field">
             <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
-            <tum-ui-input-number
+            <tumaet-ui-input-number
                 inputId="presentation-assessment-max-points"
                 [fluid]="true"
                 [min]="minPoints"
@@ -33,7 +33,7 @@
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
             />
             @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
-                <tum-ui-message severity="error" data-testid="presentation-max-points-error">
+                <tumaet-ui-message severity="error" data-testid="presentation-max-points-error">
                     <span
                         [jhiTranslate]="
                             editForm.controls.maxPoints.hasError('max')
@@ -42,13 +42,13 @@
                         "
                         [translateValues]="{ max: maxPointsUpperBound }"
                     ></span>
-                </tum-ui-message>
+                </tumaet-ui-message>
             }
         </div>
 
         <div class="presentation-assessment-field presentation-assessment-exercise-field">
             <label for="presentation-assessment-exercise" jhiTranslate="artemisApp.presentationAssessment.exercise"></label>
-            <tum-ui-autocomplete
+            <tumaet-ui-autocomplete
                 inputId="presentation-assessment-exercise"
                 class="w-full"
                 formControlName="exercise"
@@ -95,14 +95,14 @@
             </button>
         }
         <div class="presentation-assessment-actions-main flex gap-2">
-            <tum-ui-button severity="secondary" type="button" (clicked)="cancel()">
+            <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()">
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
-            </tum-ui-button>
-            <tum-ui-button type="submit" [disabled]="isSaving() || editForm.invalid">
+            </tumaet-ui-button>
+            <tumaet-ui-button type="submit" [disabled]="isSaving() || editForm.invalid">
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
         </div>
     </div>
 </form>

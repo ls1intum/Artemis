@@ -8,7 +8,7 @@
             >
                 <div class="my-2">
                     @if (showLeadingIcon()) {
-                        <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon())?.[groupKey]" />
+                        <fa-icon [fixedWidth]="true" [icon]="iconForGroup(groupKey)" />
                     }
                     @if (groupedData()[groupKey].translationKey; as translationKey) {
                         {{ translationKey | artemisTranslate | titlecase }}

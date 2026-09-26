@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
@@ -27,7 +27,7 @@ export interface LtiPlatformConfigurationQuery {
     sort?: string[];
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LtiConfigurationService {
     private http = inject(HttpClient);
 

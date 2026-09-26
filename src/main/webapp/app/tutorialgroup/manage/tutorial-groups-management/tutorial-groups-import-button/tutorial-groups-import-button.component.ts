@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output, signal, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { DialogModule } from 'primeng/dialog';
@@ -16,8 +16,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         TutorialGroupsRegistrationImportDialogComponent,
         DialogModule,
         FaIconComponent,
-        TumUiButtonDirective,
-        TumUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
     ],
 })

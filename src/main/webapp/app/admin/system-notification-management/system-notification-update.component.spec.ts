@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -65,11 +65,11 @@ describe('SystemNotificationManagementUpdateComponent', () => {
                         FaIconComponent,
                         MockPipe(ArtemisTranslatePipe),
                         MockComponent(FormDateTimePickerComponent),
-                        TumUiSelectComponent,
-                        TumUiCheckboxComponent,
-                        TumUiInputDirective,
-                        TumUiButtonDirective,
-                        TumUiMessageComponent,
+                        TumAetUiSelectComponent,
+                        TumAetUiCheckboxComponent,
+                        TumAetUiInputDirective,
+                        TumAetUiButtonDirective,
+                        TumAetUiMessageComponent,
                     ],
                 },
             })

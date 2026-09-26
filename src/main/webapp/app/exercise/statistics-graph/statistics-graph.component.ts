@@ -7,15 +7,15 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { yAxisTickFormatting } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiBarChartComponent, TumUiBarChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
-    imports: [FaIconComponent, TumUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class StatisticsGraphComponent {
     private service = inject(StatisticsService);
@@ -41,10 +41,10 @@ export class StatisticsGraphComponent {
     tooltipTranslation = '';
     readonly yScaleMax = signal<number | undefined>(undefined);
 
-    private readonly chartColors = computed(() => [GraphColors.DARK_BLUE]);
+    private readonly chartColors = [GraphColors.DARK_BLUE];
 
-    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.chartColors()));
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.chartColors));
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         yAxis: { max: this.yScaleMax(), tickFormatter: (value) => yAxisTickFormatting(String(value)) },
         tooltip: {
             label: (item) => `${this.translateService.instant(this.tooltipTranslation)}: ${item.value}`,
