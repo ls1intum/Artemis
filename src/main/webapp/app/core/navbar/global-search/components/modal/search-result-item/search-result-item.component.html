@@ -1,4 +1,13 @@
-<div class="search-result-item p-3 cursor-pointer position-relative" [class.selected]="isSelected()" (click)="onClick()" [attr.aria-selected]="isSelected()" role="option">
+<div
+    class="search-result-item p-3 cursor-pointer position-relative"
+    [class.selected]="isSelected()"
+    (click)="onClick()"
+    (keydown.enter)="onClick()"
+    (keydown.space)="$event.preventDefault(); onClick()"
+    [attr.aria-selected]="isSelected()"
+    role="option"
+    tabindex="-1"
+>
     <div class="d-flex align-items-start gap-3">
         <!-- Icon -->
         <div class="result-icon flex-shrink-0">

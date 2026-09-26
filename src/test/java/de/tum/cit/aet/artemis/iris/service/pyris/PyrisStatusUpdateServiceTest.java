@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -126,6 +129,18 @@ class PyrisStatusUpdateServiceTest {
         verifyLifecycle(job, runState);
     }
 
+    @Test
+    void tutorSuggestionJobIsRemovedWhenSessionNoLongerExists() {
+        var job = new TutorSuggestionJob("tutor-run", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new TutorSuggestionStatusUpdateDTO(null, null, PyrisRunState.RUNNING, null, List.of());
+        when(irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(null);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(pyrisJobService).removeJob(job);
+        verify(pyrisJobService, never()).updateJob(any());
+    }
+
     @ParameterizedTest
     @EnumSource(PyrisRunState.class)
     void autonomousTutorJobLifecycleUsesRunState(PyrisRunState runState) {
@@ -145,14 +160,16 @@ class PyrisStatusUpdateServiceTest {
 
         service.handleStatusUpdate(job, runningUpdate);
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null));
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null)));
         verify(pyrisJobService).updateJob(job);
 
         var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "answer", null);
 
         service.handleStatusUpdate(job, terminalUpdate);
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer", null));
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer", null)));
         verify(pyrisJobService).removeJob(job);
 
         var failedJob = new GlobalSearchAnswerJob("global-failed-run", "student1");
@@ -160,7 +177,8 @@ class PyrisStatusUpdateServiceTest {
 
         service.handleStatusUpdate(failedJob, failedUpdate);
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null));
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null)));
         verify(pyrisJobService).removeJob(failedJob);
     }
 
@@ -219,7 +237,8 @@ class PyrisStatusUpdateServiceTest {
 
         service.handleStatusUpdate(globalJob, new PyrisGlobalSearchAnswerStatusUpdateDTO(null, null, null, null));
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null));
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null)));
         verify(pyrisJobService).removeJob(globalJob);
 
         var lectureJob = new LectureIngestionWebhookJob("lecture-null", 1L, 2L, 42L);

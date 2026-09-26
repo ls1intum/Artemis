@@ -163,6 +163,7 @@
                 "bookmarkPostArchived": "Gespeicherten Beitrag archivieren",
                 "bookmarkPostComplete": "Gespeicherten Beitrag als Abgeschlossen markieren",
                 "thread": "Thread",
+                "openPost": "Beitrag öffnen: {{ title }}",
                 "saved": "Für später gespeichert",
                 "removeBookmarkError": "Fehler beim Entfernen des Lesezeichens. Bitte versuche es später erneut.",
                 "changeSavedStatusError": "Fehler beim Ändern des Status. Bitte versuche es später erneut."

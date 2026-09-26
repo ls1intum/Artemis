@@ -18,7 +18,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTabComponent, TumUiTabListComponent, TumUiTableDirective, TumUiTabsComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiMessageComponent,
+    TumAetUiPaginatorComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTableDirective,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
 /**
@@ -36,15 +43,15 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
         SortByDirective,
         FaIconComponent,
         ItemCountComponent,
-        TumUiPaginatorComponent,
+        TumAetUiPaginatorComponent,
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
-        TumUiMessageComponent,
-        TumUiTableDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
         FormDateTimePickerComponent,
-        TumUiTabsComponent,
-        TumUiTabListComponent,
-        TumUiTabComponent,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
     ],
 })
 export class AuditsComponent implements OnInit {

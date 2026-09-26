@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletio
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionMode;
 import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
@@ -65,6 +66,8 @@ import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
@@ -92,7 +95,7 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("users/user-administration")
+@FeatureUsage(UserFeature.USER_MANAGEMENT)
 @RestController
 @RequestMapping("api/account/admin/")
 public class AdminUserResource {
@@ -386,6 +389,7 @@ public class AdminUserResource {
         return ResponseEntity.ok(userDeletionPlanService.createImpact(target, UserDeletionMode.ADMIN_FORCED));
     }
 
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("users/deletion-impact")
     public ResponseEntity<BulkUserDeletionImpactDTO> getBulkUserDeletionImpact(@Valid @RequestBody BulkUserDeletionImpactRequestDTO request) {
         List<User> targets = loadDeletionTargets(request.logins());

@@ -10,7 +10,7 @@
                 }
                 {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
             </span>
-            <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
+            <button type="button" id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
                 <fa-icon [icon]="faPrint" />
                 <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
             </button>
@@ -93,6 +93,7 @@
                             }
                             @if (exercise.type !== QUIZ && exercise.type !== PROGRAMMING) {
                                 <button
+                                    type="button"
                                     [id]="'show-sample-solution-button-' + exercise.id"
                                     class="btn float-end"
                                     [class]="exerciseInfos()[exercise.id!].displayExampleSolution ? 'btn-primary' : 'btn-outline-primary'"
@@ -174,6 +175,7 @@
                                             [isAfterResultsArePublished]="resultsArePublished"
                                         />
                                     }
+                                    @default {}
                                 }
                                 @if (
                                     exerciseInfos()[exercise.id!]?.submission &&
@@ -218,7 +220,7 @@
         </jhi-collapsible-card>
     </div>
 }
-<button class="btn btn-light mx-auto d-block" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
+<button type="button" class="btn btn-light mx-auto d-block" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
     <fa-icon [icon]="faArrowUp" />
     <span>&nbsp; {{ 'artemisApp.exam.examSummary.backToOverview' | artemisTranslate }}&nbsp; </span>
 </button>

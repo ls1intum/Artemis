@@ -137,35 +137,35 @@
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown()) {
-    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition().y, 'left.px': dropdownPosition().x }" class="dropdown-menu show" data-testid="posting-context-menu">
-        <button class="dropdown-item d-flex" (click)="addReaction($event)" data-testid="posting-menu-react">
+    <div style="position: fixed" [style.top.px]="dropdownPosition().y" [style.left.px]="dropdownPosition().x" class="dropdown-menu show" data-testid="posting-context-menu">
+        <button type="button" class="dropdown-item d-flex" (click)="addReaction($event)" data-testid="posting-menu-react">
             <fa-icon [icon]="faSmile" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
         </button>
         @if (mayEdit()) {
-            <button class="dropdown-item d-flex" (click)="editPosting()" data-testid="posting-menu-edit">
+            <button type="button" class="dropdown-item d-flex" (click)="editPosting()" data-testid="posting-menu-edit">
                 <fa-icon [icon]="faPencilAlt" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
             </button>
         }
         @if (mayDelete()) {
-            <button class="dropdown-item d-flex" (click)="deletePost()" data-testid="posting-menu-delete">
+            <button type="button" class="dropdown-item d-flex" (click)="deletePost()" data-testid="posting-menu-delete">
                 <fa-icon [icon]="faTrash" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.answerPost.deleteAnswer"></span>
             </button>
         }
-        <button class="dropdown-item d-flex" (click)="toggleSavePost()" data-testid="posting-menu-bookmark">
+        <button type="button" class="dropdown-item d-flex" (click)="toggleSavePost()" data-testid="posting-menu-bookmark">
             <fa-icon [icon]="posting()?.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting()?.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
         </button>
-        <button class="dropdown-item d-flex" (click)="forwardMessage()" data-testid="posting-menu-forward">
+        <button type="button" class="dropdown-item d-flex" (click)="forwardMessage()" data-testid="posting-menu-forward">
             <fa-icon [icon]="faShare" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
         </button>
     </div>
 }
 
-<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin [ngStyle]="{ position: 'fixed', 'top.px': clickPosition.y, 'left.px': clickPosition.x }"></div>
+<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin style="position: fixed" [style.top.px]="clickPosition.y" [style.left.px]="clickPosition.x"></div>
 
 <ng-template
     cdkConnectedOverlay

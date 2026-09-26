@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -64,7 +65,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
  */
 @Conditional(TextEnabled.class)
 @Lazy
-@FeatureUsage("participation/submissions")
+@FeatureUsage(UserFeature.TEXT_EXERCISES)
 @RestController
 @RequestMapping("api/text/")
 public class TextSubmissionResource extends AbstractSubmissionResource {
@@ -262,6 +263,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextSubmissionResponseDTO>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
@@ -291,6 +293,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param lockSubmission                  optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/text-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<TextSubmissionWithoutAssessmentDTO> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,

@@ -10,7 +10,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
@@ -103,9 +103,9 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
         ReactiveFormsModule,
         TranslateDirective,
         FaIconComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         FormDateTimePickerComponent,
         CompetencySelectionComponent,
         ArtemisTranslatePipe,
@@ -113,6 +113,9 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     ],
 })
 export class AttachmentVideoUnitFormComponent {
+    private readonly formBuilder = inject(FormBuilder);
+    private readonly fileService = inject(FileService);
+
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
@@ -163,9 +166,6 @@ export class AttachmentVideoUnitFormComponent {
 
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
-
-    private readonly formBuilder = inject(FormBuilder);
-    private readonly fileService = inject(FileService);
 
     // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
     private appliedFormData?: AttachmentVideoUnitFormData;

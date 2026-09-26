@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -49,6 +50,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -87,7 +90,7 @@ import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
  */
 @Conditional(ExamEnabled.class)
 @Lazy
-@FeatureUsage("conduction/student-exam")
+@FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {
@@ -232,6 +235,7 @@ public class StudentExamResource {
      * @param message      the optional message to be sent to the student
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
+    @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @PostMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
     @EnforceAtLeastTutor
     public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
@@ -256,6 +260,7 @@ public class StudentExamResource {
      *         200 if successful
      *         400 if student exam was in an illegal state
      */
+    @FeatureUsage(UserFeature.EXAM_TAKE)
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/submit")
     @EnforceAtLeastStudent
     // NOTE: the body is intentionally NOT @Valid — the legacy full-entity endpoint activated no Bean Validation, and the
@@ -299,7 +304,7 @@ public class StudentExamResource {
         // The service reconstructs the transient graph from the slim DTO and then runs the (unchanged) submit machinery.
         studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
 
-        websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
+        websocketMessagingService.sendMessage(ExamWebsocketTopics.EXAM_SUBMITTED.at(examId), "");
 
         log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
                 formatDurationFrom(start));
@@ -315,6 +320,7 @@ public class StudentExamResource {
      * @param studentExamId the id of the student exam
      * @return 200 OK if the feedback request was accepted
      */
+    @FeatureUsage(UserFeature.AI_FEEDBACK_REQUEST)
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> requestAthenaFeedback(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
@@ -340,6 +346,7 @@ public class StudentExamResource {
      * @param studentExamId the id of the student exam
      * @return 200 OK with the usage information
      */
+    @FeatureUsage(UserFeature.AI_FEEDBACK_REQUEST)
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage")
     @EnforceAtLeastStudent
     public ResponseEntity<AthenaFeedbackUsageDTO> getAthenaFeedbackUsage(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
@@ -382,6 +389,8 @@ public class StudentExamResource {
      * @param request       the http request, used to extract headers
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
+    @FeatureUsage(UserFeature.EXAM_TAKE)
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamForConductionDTO> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
@@ -426,7 +435,7 @@ public class StudentExamResource {
         }
 
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {
-            websocketMessagingService.sendMessage("/topic/exam/" + examId + "/started", "");
+            websocketMessagingService.sendMessage(ExamWebsocketTopics.EXAM_STARTED.at(examId), "");
         }
 
         prepareStudentExamForConduction(request, currentUser, studentExam);
@@ -460,6 +469,7 @@ public class StudentExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
     // TODO: use the same REST call as for real exams and test exams
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction")
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamForConductionDTO> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId,
@@ -500,6 +510,7 @@ public class StudentExamResource {
      * @param courseId the course to which the student exam belongs to
      * @return all StudentExams (each including its nested exam and course) for test exam for the specified course and user
      */
+    @FeatureUsage(UserFeature.EXAM_TEST_EXAMS)
     @GetMapping("courses/{courseId}/test-exams-per-user")
     @EnforceAtLeastStudent
     public ResponseEntity<List<StudentExamDTO>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
@@ -522,6 +533,7 @@ public class StudentExamResource {
      * @param studentExamId the studentExamId for which the summary should be loaded
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
+    @FeatureUsage(UserFeature.EXAM_RESULTS)
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamForSummaryDTO> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
@@ -584,6 +596,7 @@ public class StudentExamResource {
      * @param userId        the user id of the student whose grade summary is requested
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
+    @FeatureUsage(UserFeature.EXAM_RESULTS)
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable long courseId, @PathVariable long examId, @PathVariable long studentExamId,
@@ -614,6 +627,7 @@ public class StudentExamResource {
      * @param examId   the id of the exam
      * @return the list of exam live events
      */
+    @FeatureUsage(UserFeature.EXAM_TAKE)
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/live-events")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ExamLiveEventBaseDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {

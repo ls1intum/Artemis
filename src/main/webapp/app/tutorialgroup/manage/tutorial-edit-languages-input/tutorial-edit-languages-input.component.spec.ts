@@ -54,7 +54,7 @@ describe('TutorialEditLanguagesInputComponent', () => {
     });
 
     it('should keep the error hidden until the field is touched, then show it', () => {
-        const errorAddon = () => fixture.nativeElement.querySelector('tum-ui-input-group-addon[tumuitooltip], .danger');
+        const errorAddon = () => fixture.nativeElement.querySelector('tumaet-ui-input-group-addon[tumuitooltip], .danger');
         expect(errorAddon()).toBeNull();
 
         component.onBlur();

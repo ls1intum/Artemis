@@ -122,10 +122,15 @@ artemis:
     # LocalVC repository URLs are based on this value.
     serverUrl: ""
 
+    # Installation metadata. REQUIRED: every core pod refuses to start without meaningful values,
+    # independently of telemetry. All three are shown on the About page.
     operator:
-      # Shown on the "About Us"/imprint pages.
-      name: "Example University"
-      adminName: "Max Mustermann"
+      # The organization operating Artemis, e.g. "Research group of Applied Education Technologies".
+      name: ""
+      # The administrator's name.
+      adminName: ""
+      # The university, school or institution using Artemis, e.g. "Technical University of Munich".
+      universityName: ""
 
     # Initial internal admin account (created on first startup). REQUIRED.
     admin:

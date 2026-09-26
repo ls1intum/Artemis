@@ -8,32 +8,32 @@
                     </h2>
                 }
                 @if (success()) {
-                    <tum-ui-message severity="success">
+                    <tumaet-ui-message severity="success">
                         <span jhiTranslate="settings.messages.success"><strong>Settings saved!</strong></span>
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
                 @if (isSaml2Active()) {
-                    <tum-ui-message severity="info">
+                    <tumaet-ui-message severity="info">
                         <span jhiTranslate="settings.saml2SyncedInfo"> Your name and email address are managed by your institution via SAML2 and cannot be changed here. </span>
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
                 @if (errorEmailExists()) {
-                    <tum-ui-message severity="error">
+                    <tumaet-ui-message severity="error">
                         <span jhiTranslate="settings.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</span>
-                    </tum-ui-message>
+                    </tumaet-ui-message>
                 }
                 @if (currentUser()) {
                     <form name="form" role="form" (ngSubmit)="saveSettings()" [formGroup]="settingsForm" novalidate>
-                        <tum-ui-form-field
+                        <tumaet-ui-form-field
                             class="mb-3"
                             controlId="firstName"
                             required
                             [invalid]="settingsForm.controls.firstName.invalid && (settingsForm.controls.firstName.dirty || settingsForm.controls.firstName.touched)"
                         >
-                            <span tumUiFormFieldLabel jhiTranslate="settings.form.firstname"></span>
+                            <span tumAetUiFormFieldLabel jhiTranslate="settings.form.firstname"></span>
                             <input
                                 type="text"
-                                tumUiInput
+                                tumAetUiInput
                                 class="w-full"
                                 id="firstName"
                                 name="firstName"
@@ -42,7 +42,7 @@
                                 [disabled]="!isInternalUser() || isSaml2Active()"
                                 required
                             />
-                            <ng-container tumUiFormFieldError>
+                            <ng-container tumAetUiFormFieldError>
                                 @if (settingsForm.controls.firstName.errors?.required) {
                                     <small jhiTranslate="settings.messages.validate.firstname.required"></small>
                                 }
@@ -53,17 +53,17 @@
                                     <small jhiTranslate="settings.messages.validate.firstname.maxlength"></small>
                                 }
                             </ng-container>
-                        </tum-ui-form-field>
-                        <tum-ui-form-field
+                        </tumaet-ui-form-field>
+                        <tumaet-ui-form-field
                             class="mb-3"
                             controlId="lastName"
                             required
                             [invalid]="settingsForm.controls.lastName.invalid && (settingsForm.controls.lastName.dirty || settingsForm.controls.lastName.touched)"
                         >
-                            <span tumUiFormFieldLabel jhiTranslate="settings.form.lastname"></span>
+                            <span tumAetUiFormFieldLabel jhiTranslate="settings.form.lastname"></span>
                             <input
                                 type="text"
-                                tumUiInput
+                                tumAetUiInput
                                 class="w-full"
                                 id="lastName"
                                 name="lastName"
@@ -72,7 +72,7 @@
                                 [disabled]="!isInternalUser() || isSaml2Active()"
                                 required
                             />
-                            <ng-container tumUiFormFieldError>
+                            <ng-container tumAetUiFormFieldError>
                                 @if (settingsForm.controls.lastName.errors?.required) {
                                     <small jhiTranslate="settings.messages.validate.lastname.required"></small>
                                 }
@@ -83,23 +83,23 @@
                                     <small jhiTranslate="settings.messages.validate.lastname.maxlength"></small>
                                 }
                             </ng-container>
-                        </tum-ui-form-field>
+                        </tumaet-ui-form-field>
                         @if (allowedEmailPatternReadable()) {
                             <div class="mb-3">
                                 <strong jhiTranslate="global.form.email.pattern"></strong>
                                 {{ allowedEmailPatternReadable() }}
                             </div>
                         }
-                        <tum-ui-form-field
+                        <tumaet-ui-form-field
                             class="mb-3"
                             controlId="email"
                             required
                             [invalid]="settingsForm.controls.email.invalid && (settingsForm.controls.email.dirty || settingsForm.controls.email.touched)"
                         >
-                            <span tumUiFormFieldLabel jhiTranslate="global.form.email"></span>
+                            <span tumAetUiFormFieldLabel jhiTranslate="global.form.email"></span>
                             <input
                                 type="email"
-                                tumUiInput
+                                tumAetUiInput
                                 class="w-full"
                                 id="email"
                                 name="email"
@@ -108,7 +108,7 @@
                                 [disabled]="!isInternalUser() || isSaml2Active()"
                                 required
                             />
-                            <ng-container tumUiFormFieldError>
+                            <ng-container tumAetUiFormFieldError>
                                 @if (settingsForm.controls.email.errors?.required) {
                                     <small jhiTranslate="global.messages.validate.email.required"></small>
                                 }
@@ -125,11 +125,11 @@
                                     <small jhiTranslate="global.messages.validate.email.pattern"></small>
                                 }
                             </ng-container>
-                        </tum-ui-form-field>
+                        </tumaet-ui-form-field>
                         @if (languages && languages.length > 0) {
-                            <tum-ui-form-field class="mb-3" controlId="langKey">
-                                <span tumUiFormFieldLabel jhiTranslate="settings.form.language"></span>
-                                <tum-ui-select
+                            <tumaet-ui-form-field class="mb-3" controlId="langKey">
+                                <span tumAetUiFormFieldLabel jhiTranslate="settings.form.language"></span>
+                                <tumaet-ui-select
                                     class="w-full"
                                     inputId="langKey"
                                     name="langKey"
@@ -138,11 +138,11 @@
                                     optionLabel="label"
                                     optionValue="value"
                                 />
-                            </tum-ui-form-field>
+                            </tumaet-ui-form-field>
                         }
-                        <tum-ui-button type="submit" [disabled]="settingsForm.invalid">
+                        <tumaet-ui-button type="submit" [disabled]="settingsForm.invalid">
                             <span jhiTranslate="settings.form.button"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     </form>
                 }
             </div>

@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING;
-import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING_TOPIC;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.ALL_BUILDS_TRIGGERED;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.EXERCISE_SUBMISSION_PROCESSING;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.SUBMISSION_PROCESSING;
 
 import java.util.Optional;
 
@@ -64,22 +64,14 @@ public class ProgrammingMessagingService {
         this.participationRepository = participationRepository;
     }
 
-    private static String getSubmissionProcessingTopicForTAAndAbove(Long exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + SUBMISSION_PROCESSING;
-    }
-
-    private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
-    }
-
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
-        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.RUNNING);
+        websocketMessagingService.sendMessage(ALL_BUILDS_TRIGGERED.at(programmingExercise.getId()), BuildRunState.RUNNING);
         // Send a notification to the client to inform the instructor about started builds.
         groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
     }
 
     public void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
-        websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
+        websocketMessagingService.sendMessage(ALL_BUILDS_TRIGGERED.at(programmingExercise.getId()), BuildRunState.COMPLETED);
         // Send a notification to the client to inform the instructor about the completed builds.
         groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
     }
@@ -140,13 +132,12 @@ public class ProgrammingMessagingService {
                 // Eagerly load the team with students so their information can be used for the messages below
                 studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
             }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), SUBMISSION_PROCESSING_TOPIC, submission));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), SUBMISSION_PROCESSING.at(), submission));
         }
 
         // send an update to tutors, editors and instructors about submissions for template and solution participations
         if (!(participation instanceof StudentParticipation)) {
-            String topicDestination = getSubmissionProcessingTopicForTAAndAbove(exerciseId);
-            websocketMessagingService.sendMessage(topicDestination, submission);
+            websocketMessagingService.sendMessage(EXERCISE_SUBMISSION_PROCESSING.at(exerciseId), submission);
         }
     }
 }

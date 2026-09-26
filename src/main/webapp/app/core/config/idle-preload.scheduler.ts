@@ -1,4 +1,4 @@
-import { ApplicationRef, Injectable, inject } from '@angular/core';
+import { ApplicationRef, Service, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, first, timeout } from 'rxjs/operators';
 
@@ -34,7 +34,7 @@ type RequestIdleCallback = (cb: () => void, opts?: { timeout: number }) => numbe
  * settles as soon as its own chunk is fetched (children return synchronously to the preloader), so a slot is
  * never held open waiting for a whole subtree.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IdlePreloadScheduler {
     private readonly appRef = inject(ApplicationRef);
 

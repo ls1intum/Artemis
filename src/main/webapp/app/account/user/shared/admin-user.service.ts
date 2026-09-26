@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -7,7 +7,7 @@ import { User } from 'app/account/user/user.model';
 import { UserFilter } from 'app/admin/user-management/user-management.component';
 import { BulkUserDeletionImpact, BulkUserDeletionRequest, UserDeletionImpact, UserDeletionResult } from 'app/account/user/shared/user-deletion.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AdminUserService {
     private http = inject(HttpClient);
 

@@ -1,22 +1,12 @@
 ---
 name: client-conventions
-description: Write Angular code for Artemis that passes lint and review the first time. Use when creating or changing anything under src/main/webapp/app or packages/tum-ui, when an ESLint localRules check fails, or when migrating a component to signals. Covers signal APIs, the ngOnChanges ban, template control flow, object cloning, and the TUM UI and Tailwind styling rules.
+description: Apply Artemis conventions when changing Angular application or TUM AET UI code, migrating components, or fixing client lint violations.
 ---
 
 # Artemis client conventions
 
-These are enforced, not advisory. Most have a custom ESLint rule in `rules/` behind them, so
-breaking one fails Client Code Style rather than merely attracting a review comment.
-
-Verify with:
-
-```bash
-pnpm run lint
-pnpm run prettier:check
-```
-
-`reference/migration-recipes.md` has the before-and-after for each migration. Read it when changing
-existing code rather than inventing a translation.
+Use `reference/migration-recipes.md` for migration examples. Check changes with `pnpm run lint`
+and `pnpm run prettier:check`. Prefer standalone components.
 
 ## Signals are mandatory for new code
 
@@ -24,17 +14,39 @@ Use `input()` / `input.required()`, `output()`, `viewChild()` / `viewChild.requi
 `viewChildren()`, `signal()`, `computed()`, `effect()`, and `inject()` for dependency injection.
 
 The legacy decorators `@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, and
-`@ContentChildren` must not appear in new code. Enforced by `localRules/enforce-signal-apis`
-(`rules/enforce-signal-apis.mjs`) in modules that have been migrated.
+`@ContentChildren` are banned throughout the application, including co-located specs and test
+helpers. `localRules/enforce-signal-apis` (`rules/enforce-signal-apis.mjs`) enforces this under
+`src/main/webapp/app/` and `src/test/javascript/`. Use signal APIs when changing an existing
+component; there is no unmigrated-module exception.
 
-In a module that is not yet fully migrated, prefer signals for new components but stay consistent
-within an existing component. Do not half-migrate a component.
+A `computed()`, `linkedSignal()`, `effect()` or `afterRenderEffect()` must read a signal, or it
+never re-runs; a value that reads none is a constant and belongs in a plain `readonly` field
+(`@angular-eslint/reactive-context-must-read-signal`).
+
+Read a signal with `()` when checking its value; `@angular-eslint/no-uncalled-signals` catches
+accidental checks of the signal function. Keep Angular lifecycle hooks synchronous. Delegate
+work that awaits to a separate async method (`@angular-eslint/no-async-lifecycle-method`).
+Do not repeat a declaration in a component's metadata arrays
+(`@angular-eslint/no-duplicates-in-metadata-arrays`).
+
+## Injection and services
+
+Declare every `inject()` field before any other class member (`@angular-eslint/inject-at-top`).
+Fields initialize in declaration order, so a getter called from an earlier initializer would read
+`undefined` from a service declared further down.
+
+Declare an application-wide service with `@Service()`, not `@Injectable({ providedIn: 'root' })`
+(`@angular-eslint/prefer-service-decorator`, autofixable). `@Service()` rejects constructor
+injection and cannot share a class with another Angular decorator. The rule still reports a `@Pipe`
+that is also injected as a service, and its autofix then breaks `ng build` with NG1006 (Vitest
+compiles JIT and does not notice), so keep `@Injectable` on such a pipe with a justified line-level
+disable and do not autofix it. Other provider metadata also keeps `@Injectable`.
 
 ## `ngOnChanges` is banned
 
 Use `computed()` or `effect()`. Enforced at error level by
 `localRules/prefer-signal-reactivity-over-ngonchanges` (`rules/prefer-signal-reactivity-over-ngonchanges.mjs`)
-across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs
+across `src/main/webapp/app`, `packages/tum-aet-ui/src/lib`, and `src/test/javascript`, including specs
 and undecorated base classes.
 
 This is a consistency ban, not a correctness fix. Angular does call inherited `ngOnChanges` hooks
@@ -48,77 +60,115 @@ or ordering before child initialisation, needs a detailed comment and a justifie
 
 Use `@if`, `@for`, `@switch`. Never `*ngIf`, `*ngFor`, `*ngSwitch`.
 
+Every `@switch` has a `@default` (`@angular-eslint/template/require-switch-default`). Use
+`@default never;` when the cases cover the whole union or enum, so the strict template check
+reports a missing case, and an empty `@default {}` otherwise. Both render nothing for an unmatched
+value.
+
+Bind styles with `[style.prop]`, `[style.prop.unit]` or `[style]`, never `[ngStyle]`
+(`@angular-eslint/template/prefer-style-binding`); a constant is a static `style` attribute. Never
+bind `outerHTML` (`@angular-eslint/template/no-outerhtml`).
+
+Do not use `$any()` in templates (`@angular-eslint/template/no-any`). Prefer a typed template
+reference for DOM input values and a typed component method for library event payloads.
+
+## Images and keyboard order
+
+Use `NgOptimizedImage` with `ngSrc` for images with known intrinsic dimensions or a positioned,
+sized container for `fill`. Mark an image `priority` only when it is expected to be the largest
+visible image on initial load. For arbitrary user images that must retain their intrinsic layout,
+keep native `src` and use appropriate loading and decoding hints.
+
+Give every `<img>` a useful, localized text alternative, or `alt=""` when the image is decorative
+or already described next to it (`@angular-eslint/template/alt-text`). Keep keyboard focus in DOM
+order; do not use a positive `tabindex` to reorder controls
+(`@angular-eslint/template/no-positive-tabindex`). Move markup when the DOM order is wrong.
+
+## Redirecting from guards and resolvers
+
+A guard returns or emits `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)`
+when it needs `replaceUrl`, `skipLocationChange` or `state`. This also applies inside RxJS and
+promise callbacks: return the redirect rather than throw it. The guards in one `canActivate`
+array run together, and the first emitted result that is not `true`, in array order, wins.
+A returned or emitted redirect waits for every guard ahead of it to return `true`; a thrown
+`RedirectCommand` bypasses that ordering and can redirect before an earlier authority check
+rejects the route.
+
+A resolver returns or emits a `RedirectCommand`; a `UrlTree` returned from a resolver becomes
+route data and does not redirect. Inside a resolver's RxJS operator or promise callback, it can
+throw the `RedirectCommand` instead. The router cancels the running navigation with a redirect
+that keeps its `replaceUrl` and `skipLocationChange`, and alerts shown before the throw still
+appear.
+
+Never call `router.navigate()` or `navigateByUrl()` in a guard or resolver. It cancels the running
+navigation on the spot and starts a new one, so the original `replaceUrl` and
+`skipLocationChange` are lost (Back then redirects forward again), a caller awaiting the original
+navigation receives `false`, and the navigation still happens when another guard rejects the
+route. A `return false` or `EMPTY` after the call changes nothing.
+
+`localRules/no-navigation-in-guard-or-resolver` (`rules/no-navigation-in-guard-or-resolver.mjs`)
+enforces this at error level under `src/main/webapp`. It follows the guard into nested callbacks,
+into methods of its own class reached through `this`, and into functions of the same file. It is
+file-local and does not resolve types, so it misses navigation in an injected service the guard
+calls, a `Router` from a base-class field, `const router = this.router` or `injector.get(Router)`,
+namespace imports, static helper calls and route objects without a marker key such as `path`.
+Moving the call into a service silences the rule without fixing anything. A `catchError` after a
+thrown redirect must rethrow what it does not handle.
+
+In specs, use the real router (`TestBed.inject(Router)`, no `MockRouter`) and assert the result:
+`router.serializeUrl(result as UrlTree)` for a returned redirect, or an `error` callback that
+receives a `RedirectCommand` for a thrown one. Do not assert a `navigate` spy. For guard
+combinations and browser history, route with `provideRouter(...)` and `provideLocationMocks()`
+as in `src/main/webapp/app/localci/shared/localci-guard.spec.ts`.
+
 ## Copying objects
 
-Use `deepClone` from `src/main/webapp/app/foundation/util/deep-clone.util.ts`. Never object spread,
-`Object.assign`, or `structuredClone`.
+In production `src/main/webapp/app/**/*.ts`, use the wrappers in
+`src/main/webapp/app/foundation/util/deep-clone.util.ts`:
 
-**Where it is enforced: `src/main/webapp/app/**/*.ts`, spec files exempt.** That boundary is set
-twice, by the `files:` scope in `eslint.config.mjs` and again inside `rules/prefer-deep-clone.mjs`,
-which registers no visitors unless the path contains `src/main/webapp/`.
+- `deepClone(x)` detaches nested state while preserving supported prototypes.
+- `cloneWith(x, { a, b })` deep-clones the source and applies overrides by reference.
+- `hydrate(new Course(), dto)` gives a parsed DTO its prototype.
 
-**Within that scope the ban is unconditional, not a judgement call.**
-`localRules/prefer-deep-clone` flags every object spread, `Object.assign` and `structuredClone`
-there. It does not inspect what the value holds, so `{ ...{ a: 1 } }` fails lint exactly like a
-spread of a `Course`. Do not reach for a spread because the object "looks plain".
+`rules/prefer-deep-clone.mjs` bans object spread, `Object.assign` and `structuredClone` in that
+scope, even for plain objects; specs are exempt. `eslint.config.mjs` also restricts direct lodash
+cloning imports. Array spread and object rest remain allowed.
 
-The reasoning behind it is about entity-like values, which is where the silent corruption happens:
+Shallow copies share nested state; `structuredClone` loses custom prototypes such as `dayjs`.
+Do not clone merely to notify a signal if nested identity must survive. For that case and the
+child-input identity boundary, read the cloning section of `reference/migration-recipes.md`.
 
-- `structuredClone()` is the worst option. It does not preserve prototypes, so a cloned `dayjs`
-  date comes back as a plain object with no methods, while `dayjs.isDayjs()` still returns `true`,
-  so no guard catches it.
-- Spread and `Object.assign` copy one level. Nested objects stay shared, so a later edit mutates
-  both. A non-empty `Object.assign` target is mutated in place, which emits no signal notification
-  because a signal compares with `Object.is`.
-
-Two companions live in the same file: `cloneWith(x, { a, b })` replaces `{ ...x, a, b }`, and
-`hydrate(new Course(), dto)` replaces `Object.assign(new Course(), dto)` for giving a parsed server
-DTO its prototype.
-
-Reaching for lodash directly is blocked too, over the same scope: `eslint.config.mjs` forbids
-importing `cloneDeep` and `cloneDeepWith` from `lodash-es`, and the `lodash-es/cloneDeep` subpath,
-so all copying goes through the wrappers.
-
-**`packages/tum-ui` is outside both.** Neither the rule nor the lodash restriction fires there, and
-the package is standalone: it imports nothing from `app/`, so `deepClone` is not reachable from it
-either. Nothing enforces this section inside the kit. The hazards are unchanged though, so a
-component that copies a `dayjs` date or a nested object still needs a deep copy; it just has to
-bring its own rather than reach across the package boundary.
-
-**Array spread and object rest stay legal.** The rule does not touch them:
-`items.update((items) => [...items, newItem])` is the documented way to append immutably, and
-`const { a, ...rest } = post` is fine.
-
-The signal interaction is subtle and is the part people get wrong. See the cloning section of
-`reference/migration-recipes.md`.
+`packages/tum-aet-ui` is outside these application rules and must not import `app/` utilities.
+Choose copying behavior appropriate to the package's data and identity requirements.
 
 ## Styling
 
-Use TUM UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Do not add Bootstrap or
+Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Do not add Bootstrap or
 ng-bootstrap in new work.
 
-Colours use semantic tokens. Use TUM UI component variants, or `text-state-danger`,
+Colours use semantic tokens. Use TUM AET UI component variants, or `text-state-danger`,
 `text-state-success`, `text-state-warning`, `text-state-info` for plain markup. Never `--p-<color>-N`
 primitives, never `text-red-500`, never `text-danger`, never the superseded arbitrary
 `text-(--danger)` form.
 
 `localRules/no-raw-tailwind-color-palette` enforces the palette part across
-`src/main/webapp/app/**/*.html` and `packages/tum-ui/src/lib/**/*.html`. **The Bootstrap ban is only partly enforced**:
-`localRules/no-bootstrap-classes` runs on an explicit allow-list of roughly two dozen already
-migrated directories in `eslint.config.mjs`, not on the whole client. Lint passing is therefore not
-evidence that a Bootstrap class is acceptable in an unmigrated area; the convention still applies
-everywhere, the rule has just not caught up. If you migrate a directory, add it to that list.
+`src/main/webapp/app/**/*.html` and `packages/tum-aet-ui/src/lib/**/*.html`. **The Bootstrap ban is
+only partly enforced**: `localRules/no-bootstrap-classes` covers the migrated directories listed
+in `eslint.config.mjs`.
+The convention applies throughout the client even where lint does not enforce it. Add newly
+migrated directories to that list.
 
 Never hand-write PrimeNG root classes such as `class="p-button"` or `class="p-inputtext"`. Render
 the real PrimeNG component so its styles load deterministically. Enforced by
 `localRules/no-primeng-component-classes`.
 
-PrimeNG itself is a transitional fallback, used only when a TUM UI gap cannot reasonably be closed
+PrimeNG itself is a transitional fallback, used only when a TUM AET UI gap cannot reasonably be closed
 in the same change. Explain the contained fallback in the pull request.
 
-If TUM UI lacks a reusable capability, add or evolve a package component around native HTML or
-stable Angular CDK primitives, and keep Artemis-specific composition in the application. See
-`documentation/docs/developer/guidelines/tum-ui-kit.mdx`.
+If TUM AET UI lacks a reusable capability, add or evolve a package component around native HTML,
+Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
+primitives, and keep Artemis-specific composition in the application. See
+`documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
 
 ## Other rules worth knowing
 

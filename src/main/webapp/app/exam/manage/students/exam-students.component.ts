@@ -93,10 +93,6 @@ interface MenuCommandEvent {
     providers: [DialogService, ConfirmationService],
 })
 export class ExamStudentsComponent implements OnDestroy {
-    protected readonly ActionType = ActionType;
-    protected readonly missingImage = '/content/images/missing_image.png';
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
-
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private accountService = inject(AccountService);
@@ -108,8 +104,11 @@ export class ExamStudentsComponent implements OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
     private examChecklistService = inject(ExamChecklistService);
-
     private destroyRef = inject(DestroyRef);
+
+    protected readonly ActionType = ActionType;
+    protected readonly missingImage = '/content/images/missing_image.png';
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     readonly usersImportDialog = viewChild.required(UsersImportDialogComponent);
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);

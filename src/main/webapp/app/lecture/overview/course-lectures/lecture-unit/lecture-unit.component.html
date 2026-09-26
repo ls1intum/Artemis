@@ -1,32 +1,41 @@
 <div class="lecture-unit-card col clickable">
-    <div class="lecture-unit-header row px-4 m-0" id="lecture-unit-toggle-button" (click)="toggleCollapse()">
+    <div class="lecture-unit-header row px-4 m-0">
         <div class="d-flex p-0 justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <fa-icon class="me-3" size="lg" [icon]="icon()" />
-                <h5 class="m-0" [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'">{{ lectureUnit().name ?? '' }}</h5>
-                @if (!isVisibleToStudents()) {
-                    <span
-                        class="badge bg-warning ms-2 me-2"
-                        ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ lectureUnit().releaseDate | artemisDate }}"
-                        jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"
-                    ></span>
-                }
-            </div>
+            <h5 class="m-0 flex min-w-0 flex-1">
+                <button
+                    type="button"
+                    id="lecture-unit-toggle-button"
+                    (click)="toggleCollapse()"
+                    [attr.aria-expanded]="!isCollapsed()"
+                    class="flex min-w-0 flex-1 items-center border-0 bg-transparent p-0 text-start text-base text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
+                >
+                    <fa-icon class="me-3" size="lg" [icon]="icon()" />
+                    <span class="text-xl font-medium leading-tight" [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'">{{ lectureUnit().name ?? '' }}</span>
+                    @if (!isVisibleToStudents()) {
+                        <span
+                            class="badge bg-warning ms-2 me-2"
+                            ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ lectureUnit().releaseDate | artemisDate }}"
+                            jhiTranslate="artemisApp.courseOverview.exerciseList.notReleased"
+                        ></span>
+                    }
+                </button>
+            </h5>
             <div class="d-flex align-items-center gap-2">
                 @if (showOriginalVersionButton() && !isStudentPath()) {
-                    <button id="view-original-version-button" class="btn btn-sm btn-primary" (click)="handleOriginalVersionView($event)">
+                    <button type="button" id="view-original-version-button" class="btn btn-sm btn-primary" (click)="handleOriginalVersionView($event)">
                         <fa-icon [icon]="faDownload" />
                         <span class="d-none d-md-inline" [jhiTranslate]="'artemisApp.textUnit.originalVersion'"></span>
                     </button>
                 }
                 @if (showViewIsolatedButton()) {
-                    <button id="view-isolated-button" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
+                    <button type="button" id="view-isolated-button" class="btn btn-sm btn-primary" (click)="handleIsolatedView($event)">
                         <fa-icon [icon]="viewIsolatedButtonIcon()" />
                         <span class="d-none d-md-inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
                     </button>
                 }
                 @if (showFullscreenButton()) {
                     <button
+                        type="button"
                         id="fullscreen-button"
                         class="btn btn-sm btn-primary"
                         [attr.aria-label]="'artemisApp.lectureUnit.openFullscreen' | artemisTranslate"

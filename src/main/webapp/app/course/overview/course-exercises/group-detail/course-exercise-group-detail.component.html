@@ -20,17 +20,17 @@
             -->
             <div class="flex items-center gap-2 shrink-0">
                 @if (exerciseSumMaxPoints() > 0) {
-                    <jhi-information-box [informationBoxData]="pointsInfoBoxData()" layout="inline">
+                    <jhi-information-box [informationBoxData]="pointsInfoBoxData" layout="inline">
                         <span contentComponent class="d-flex align-items-center gap-1">
                             <span>{{ achievedGroupPoints() }} / {{ effectiveGroupMaxPoints() }}</span>
                             @if (capReducesMaxPoints()) {
                                 <fa-icon
                                     [icon]="faCircleInfo"
                                     class="text-body-tertiary"
-                                    [tumUiTooltip]="
+                                    [tumAetUiTooltip]="
                                         'artemisApp.exerciseVariantGroup.detail.pointsTooltip' | artemisTranslate: { total: exerciseSumMaxPoints(), cap: group.maxPoints }
                                     "
-                                    tumUiTooltipPlacement="top"
+                                    tumAetUiTooltipPlacement="top"
                                 />
                             }
                         </span>
@@ -57,6 +57,7 @@
                             @case ('dateTime') {
                                 <span contentComponent>{{ dateBox.content.value | artemisDate }}</span>
                             }
+                            @default {}
                         }
                     </jhi-information-box>
                 }

@@ -43,7 +43,7 @@
                 <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
                 <fa-icon
                     [icon]="faQuestionCircle"
-                    [tumUiTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
+                    [tumAetUiTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                 />
                 <!-- the native input stays hidden, the buttons below open it -->
                 <input
@@ -78,7 +78,7 @@
                                 }
                             </span>
                             <a
-                                tumUiButton
+                                tumAetUiButton
                                 severity="secondary"
                                 variant="text"
                                 size="small"
@@ -93,7 +93,7 @@
                             <button
                                 #replaceFileButton
                                 type="button"
-                                tumUiButton
+                                tumAetUiButton
                                 severity="secondary"
                                 variant="outlined"
                                 size="small"
@@ -113,7 +113,7 @@
                                     </span>
                                     <button
                                         type="button"
-                                        tumUiButton
+                                        tumAetUiButton
                                         severity="secondary"
                                         variant="text"
                                         size="small"
@@ -124,7 +124,7 @@
                                         <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.keepCurrentFile"></span>
                                     </button>
                                 </div>
-                                <tum-ui-message
+                                <tumaet-ui-message
                                     class="mt-2"
                                     severity="warn"
                                     data-testid="replacement-hint"
@@ -136,7 +136,7 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
-                                tumUiButton
+                                tumAetUiButton
                                 severity="secondary"
                                 variant="outlined"
                                 size="small"
@@ -154,7 +154,7 @@
                     }
                 </div>
                 @if (isFileTooBig()) {
-                    <tum-ui-message
+                    <tumaet-ui-message
                         class="mt-2"
                         severity="error"
                         data-testid="file-too-big-error"
@@ -166,7 +166,7 @@
                     />
                 }
                 @if (!fileName() && !videoSourceSignal() && fileInputTouched()) {
-                    <tum-ui-message
+                    <tumaet-ui-message
                         class="mt-2"
                         severity="error"
                         data-testid="file-required-error"
