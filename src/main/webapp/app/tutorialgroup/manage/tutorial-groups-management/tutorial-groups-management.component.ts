@@ -240,7 +240,14 @@ export class TutorialGroupsManagementComponent {
     // TutorialGroup.id is optional, and two rows sharing an undefined key would be NG0955 plus lost row reuse.
     protected readonly trackByRow: TrackByFunction<TutorialGroupRow> = (index, row) => row.group.id ?? index;
 
-    protected readonly isOwnGroup = (row: TutorialGroupRow) => row.group.isUserTutor === true;
+    // The list shows every group in the course, so highlighting the ones the user tutors helps pick them out -
+    // but only when that distinguishes some rows. When the user tutors all of them the tint would cover the whole
+    // table and just hide the striping, so skip it then.
+    private readonly userTutorsEveryGroup = computed(() => {
+        const groups = this.tutorialGroups();
+        return groups.length > 0 && groups.every((group) => group.isUserTutor === true);
+    });
+    protected readonly isOwnGroup = (row: TutorialGroupRow) => !this.userTutorsEveryGroup() && row.group.isUserTutor === true;
 
     protected readonly faPlus = faPlus;
     protected readonly faUsers = faUsers;
