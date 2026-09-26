@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 
@@ -261,6 +263,31 @@ class ContentExtractionServiceFlavorStripTest {
         verify(usageService).trackChatResponseTokenUsage(eq(response), eq(LLMServiceType.ATLAS), eq("ATLAS_FLAVOR_STRIP"), argThat(context -> {
             var builder = context.apply(new LLMTokenUsageService.LLMTokenUsageBuilder());
             return builder.getCourseID().equals(java.util.Optional.of(42L)) && builder.getExerciseID().equals(java.util.Optional.of(7L)) && builder.getUserID().isEmpty();
+        }));
+    }
+
+    @Test
+    void extractContent_tracksTextUnitFlavorStripUsageWithLectureCourse() {
+        LLMTokenUsageService usageService = mock(LLMTokenUsageService.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        ContentExtractionService trackedService = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, usageService,
+                userRepository);
+        when(templateService.render(anyString(), any())).thenReturn("system prompt");
+        ChatResponse response = mock(ChatResponse.class);
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().responseEntity(eq(FlavorStripEditsDTO.class)))
+                .thenReturn(new ResponseEntity<>(response, new FlavorStripEditsDTO(List.of())));
+        Course course = new Course();
+        course.setId(42L);
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        TextUnit unit = new TextUnit();
+        unit.setLecture(lecture);
+        unit.setContent("Keep this text.");
+
+        assertThat(trackedService.extractContent(unit).extractedLearningText()).isEqualTo("Keep this text.");
+        verify(usageService).trackChatResponseTokenUsage(eq(response), eq(LLMServiceType.ATLAS), eq("ATLAS_FLAVOR_STRIP"), argThat(context -> {
+            var builder = context.apply(new LLMTokenUsageService.LLMTokenUsageBuilder());
+            return builder.getCourseID().equals(java.util.Optional.of(42L)) && builder.getExerciseID().isEmpty() && builder.getUserID().isEmpty();
         }));
     }
 }

@@ -191,6 +191,9 @@ public class AttachmentVideoUnitResource {
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
                 .collect(Collectors.toSet());
 
+        // The update service mutates the managed unit in place, so snapshot the content-bearing field first.
+        String previousDescription = existingAttachmentVideoUnit.getDescription();
+
         // Update competency links using the proper mechanism
         lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit);
 
@@ -198,6 +201,10 @@ public class AttachmentVideoUnitResource {
         Attachment attachmentUpdate = toTransientAttachment(attachment);
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachmentUpdate,
                 file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
+
+        if (!Objects.equals(previousDescription, savedAttachmentVideoUnit.getDescription())) {
+            lectureUnitService.publishContentChangedEvent(savedAttachmentVideoUnit);
+        }
 
         if (notificationText != null && attachment != null) {
             // The unit lecture is already loaded with its course, which is what the notification resolves the recipients from.
@@ -302,6 +309,11 @@ public class AttachmentVideoUnitResource {
         }
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+
+        // A newly created attachment/video unit with a non-blank description carries learning-relevant text; notify the pipeline.
+        if (persistedUnit.getDescription() != null && !persistedUnit.getDescription().isBlank()) {
+            lectureUnitService.publishContentChangedEvent(persistedUnit);
+        }
 
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {

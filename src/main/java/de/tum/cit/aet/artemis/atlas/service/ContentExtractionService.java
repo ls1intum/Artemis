@@ -37,8 +37,14 @@ import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO.EditDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
@@ -58,7 +64,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 /**
  * Extracts learning-relevant content from {@link LearningObject}s (exercises and lecture units)
  * into {@link ExtractedContentDTO}s for downstream LLM consumption. Supports all exercise types
- * (programming, text, modeling, file upload, quiz); lecture unit types are not yet supported.
+ * (programming, text, modeling, file upload, quiz) and the orchestratable lecture-unit types
+ * ({@link TextUnit}, {@link OnlineUnit}, {@link AttachmentVideoUnit}); {@link ExerciseUnit} is
+ * rejected because it is never orchestrated on its own — its exercise is orchestrated directly.
  * <p>
  * Text, modeling and file-upload exercises carry a prose problem statement (flavor-stripped) plus
  * their example/sample solution; quizzes have no problem statement, so their content is assembled
@@ -178,7 +186,30 @@ public class ContentExtractionService {
             case ModelingExercise modelingExercise -> extractFromModelingExercise(modelingExercise, stripFlavorText);
             case FileUploadExercise fileUploadExercise -> extractFromFileUploadExercise(fileUploadExercise, stripFlavorText);
             case QuizExercise quizExercise -> extractFromQuizExercise(quizExercise);
+            case TextUnit textUnit -> extractFromTextUnit(textUnit, stripFlavorText);
+            case OnlineUnit onlineUnit -> extractFromOnlineUnit(onlineUnit);
+            case AttachmentVideoUnit attachmentVideoUnit -> extractFromAttachmentVideoUnit(attachmentVideoUnit);
+            // An ExerciseUnit is a thin pointer to an exercise that is orchestrated directly; it carries no
+            // learning text of its own and CourseCompetency.prePersistOrUpdate silently strips any link to it.
+            case ExerciseUnit ignored -> throw new IllegalArgumentException("ExerciseUnit is never orchestrated");
             default -> throw new IllegalArgumentException("Unsupported learning object type: " + learningObject.getClass().getSimpleName());
+        };
+    }
+
+    /**
+     * Whether Atlas can inspect and mutate competency links for the given lecture unit.
+     * Attachment/video units require instructor-authored descriptive text because Atlas does not
+     * inspect attachments, videos, or transcripts.
+     *
+     * @param lectureUnit the lecture unit to validate
+     * @return whether the unit has a supported, learning-relevant representation
+     */
+    public static boolean isLectureUnitEligibleForOrchestration(LectureUnit lectureUnit) {
+        return switch (lectureUnit) {
+            case TextUnit ignored -> true;
+            case OnlineUnit ignored -> true;
+            case AttachmentVideoUnit attachmentVideoUnit -> attachmentVideoUnit.getDescription() != null && !attachmentVideoUnit.getDescription().isBlank();
+            default -> false;
         };
     }
 
@@ -198,10 +229,19 @@ public class ContentExtractionService {
      * @return the cleaned text, or the original text if stripping is disabled or fails
      */
     public String stripFlavorText(String rawText) {
-        return stripFlavorText(rawText, null);
+        return stripFlavorText(rawText, null, null);
     }
 
     private String stripFlavorText(String rawText, @Nullable Exercise exercise) {
+        Course course = exercise != null ? exercise.getCourseViaExerciseGroupOrCourseMember() : null;
+        return stripFlavorText(rawText, course != null ? course.getId() : null, exercise != null ? exercise.getId() : null);
+    }
+
+    /**
+     * Strips flavor text and attributes the provider usage to the given course and exercise. Lecture units
+     * pass their lecture's course, so course statistics include flavor stripping of text units.
+     */
+    private String stripFlavorText(String rawText, @Nullable Long courseId, @Nullable Long exerciseId) {
         if (rawText == null || rawText.isBlank()) {
             return "";
         }
@@ -214,7 +254,7 @@ public class ContentExtractionService {
             String systemPrompt = templateService.render(FLAVOR_STRIP_PROMPT_PATH, Map.of());
             OpenAiChatOptions.Builder options = buildChatOptions(flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
             var responseEntity = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().responseEntity(FlavorStripEditsDTO.class);
-            trackFlavorStripUsage(responseEntity.response(), exercise);
+            trackFlavorStripUsage(responseEntity.response(), courseId, exerciseId);
             FlavorStripEditsDTO parsedEdits = responseEntity.entity();
             if (parsedEdits == null || parsedEdits.edits() == null || parsedEdits.edits().isEmpty()) {
                 return rawText;
@@ -230,12 +270,10 @@ public class ContentExtractionService {
         }
     }
 
-    private void trackFlavorStripUsage(@Nullable ChatResponse response, @Nullable Exercise exercise) {
+    private void trackFlavorStripUsage(@Nullable ChatResponse response, @Nullable Long courseId, @Nullable Long exerciseId) {
         if (llmTokenUsageService == null) {
             return;
         }
-        Long courseId = exercise != null && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-        Long exerciseId = exercise != null ? exercise.getId() : null;
         Long userId = userRepository == null ? null : SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
         llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, FLAVOR_STRIP_PIPELINE_ID,
                 builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
@@ -393,6 +431,66 @@ public class ContentExtractionService {
         Map<String, String> metadata = baseMetadata(source);
         metadata.put("questionCount", Integer.toString(questions.size()));
         return new ExtractedContentDTO(title, renderQuizQuestions(questions), metadata);
+    }
+
+    /**
+     * Extracts a {@link TextUnit}: the unit name is the title and its prose {@code content} is the learning
+     * text, flavor-stripped like a programming problem statement (it is narrative markdown, the one lecture-unit
+     * body the strip pass targets). A null/blank content collapses to an empty learning text.
+     */
+    private ExtractedContentDTO extractFromTextUnit(TextUnit unit, boolean applyFlavorStrip) {
+        String title = Objects.requireNonNullElse(unit.getName(), "");
+        String raw = Objects.requireNonNullElse(unit.getContent(), "");
+        Course course = unit.getLecture() != null ? unit.getLecture().getCourse() : null;
+        String learningText = applyFlavorStrip ? stripFlavorText(raw, course != null ? course.getId() : null, null) : raw;
+        return new ExtractedContentDTO(title, learningText, lectureUnitMetadata(unit));
+    }
+
+    /**
+     * Extracts an {@link OnlineUnit}: the unit name is the title and its {@code description} is the learning
+     * text. The description is a short instructor blurb, not narrative prose, so it is NOT flavor-stripped
+     * (that would spend an LLM round for no benefit). The external {@code source} URL is recorded in metadata
+     * so the orchestrator can see what the unit links to.
+     */
+    private ExtractedContentDTO extractFromOnlineUnit(OnlineUnit unit) {
+        String title = Objects.requireNonNullElse(unit.getName(), "");
+        String learningText = Objects.requireNonNullElse(unit.getDescription(), "");
+        Map<String, String> metadata = lectureUnitMetadata(unit);
+        if (unit.getSource() != null && !unit.getSource().isBlank()) {
+            metadata.put("source", unit.getSource().strip());
+        }
+        return new ExtractedContentDTO(title, learningText, metadata);
+    }
+
+    /**
+     * Extracts an {@link AttachmentVideoUnit}: the unit name is the title and its {@code description} is the
+     * learning text (not flavor-stripped — it is a short blurb, and the real content lives in the attached
+     * file/video which is not text-extractable here). The video source and attachment link are exposed only as
+     * metadata; this service never fetches either. A blank description yields an empty learning text, so the
+     * orchestrator skips the unit instead of processing files, video, or transcripts.
+     */
+    private ExtractedContentDTO extractFromAttachmentVideoUnit(AttachmentVideoUnit unit) {
+        String title = Objects.requireNonNullElse(unit.getName(), "");
+        String learningText = Objects.requireNonNullElse(unit.getDescription(), "");
+        Map<String, String> metadata = lectureUnitMetadata(unit);
+        if (unit.getVideoSource() != null && !unit.getVideoSource().isBlank()) {
+            metadata.put("videoSource", unit.getVideoSource().strip());
+        }
+        if (unit.getAttachment() != null && unit.getAttachment().getLink() != null && !unit.getAttachment().getLink().isBlank()) {
+            metadata.put("attachmentLink", unit.getAttachment().getLink().strip());
+        }
+        return new ExtractedContentDTO(title, learningText, metadata);
+    }
+
+    /**
+     * Base metadata every lecture unit carries: the stable {@code lectureUnitType} discriminator (from
+     * {@link LectureUnit#getType()}) so downstream consumers can distinguish unit kinds without leaking Java
+     * class names. A {@link LinkedHashMap} preserves insertion order for deterministic JSON serialization.
+     */
+    private static Map<String, String> lectureUnitMetadata(LectureUnit unit) {
+        Map<String, String> metadata = new LinkedHashMap<>();
+        metadata.put("lectureUnitType", unit.getType());
+        return metadata;
     }
 
     /**

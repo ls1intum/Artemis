@@ -119,7 +119,28 @@
                     </div>
 
                     <div class="d-flex gap-1 flex-column justify-content-center action-buttons" role="group">
-                        <!-- Row 1: Retry Processing (only for failed attachment/video units, editors+) -->
+                        <!-- Row 1: Atlas orchestration + Linked Competencies -->
+                        <div class="d-flex gap-1 w-100">
+                            @if (lecture()!.isAtLeastInstructor && isOrchestrationAvailable(lectureUnit)) {
+                                <jhi-atlas-orchestration-trigger
+                                    class="flex-fill"
+                                    [lectureUnitId]="lectureUnit.id!"
+                                    [showLabel]="false"
+                                    [buttonClass]="'btn btn-primary btn-sm w-100'"
+                                />
+                            }
+                            @if (lecture()!.course?.id && showCompetencies()) {
+                                <div class="flex-fill">
+                                    <jhi-competencies-popover
+                                        [courseId]="lecture()!.course!.id!"
+                                        [competencyLinks]="lectureUnit.competencyLinks || []"
+                                        [navigateTo]="'competencyManagement'"
+                                        [ngbTooltip]="'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate"
+                                    />
+                                </div>
+                            }
+                        </div>
+                        <!-- Row 2: Retry Processing (only for failed attachment/video units, editors+) -->
                         @if (lecture()!.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
                             <div class="d-flex gap-1 w-100">
                                 <button
@@ -137,9 +158,9 @@
                                 </button>
                             </div>
                         }
-                        <!-- Row 2: View + Linked Competencies -->
-                        <div class="d-flex gap-1 w-100">
-                            @if (viewButtonAvailable()[lectureUnit.id!]) {
+                        <!-- Row 3: View attachment/video content -->
+                        @if (viewButtonAvailable()[lectureUnit.id!]) {
+                            <div class="d-flex gap-1 w-100">
                                 <div class="flex-fill">
                                     <a
                                         type="button"
@@ -159,19 +180,9 @@
                                         <fa-icon [icon]="faEye" />
                                     </a>
                                 </div>
-                            }
-                            @if (lecture()!.course?.id && showCompetencies()) {
-                                <div class="flex-fill">
-                                    <jhi-competencies-popover
-                                        [courseId]="lecture()!.course!.id!"
-                                        [competencyLinks]="lectureUnit.competencyLinks || []"
-                                        [navigateTo]="'competencyManagement'"
-                                        [ngbTooltip]="'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate"
-                                    />
-                                </div>
-                            }
-                        </div>
-                        <!-- Row 3: Edit + Delete -->
+                            </div>
+                        }
+                        <!-- Row 4: Edit + Delete -->
                         <div class="d-flex gap-1 w-100">
                             @if (emitEditEvents()) {
                                 @if (editButtonAvailable(lectureUnit)) {

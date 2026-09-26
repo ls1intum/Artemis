@@ -19,6 +19,8 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.AssistantMessage.ToolCall;
@@ -55,8 +57,9 @@ class AtlasToolCallBudgetTest {
         assertThat(response.getResult().getOutput().getText()).isEqualTo("done");
     }
 
-    @Test
-    void writesStopAt224WhileReadsAndCompletionRemainAvailable() {
+    @ParameterizedTest
+    @ValueSource(strings = { "getExerciseContent", "searchLectureContent" })
+    void writesStopAt224WhileReadsAndCompletionRemainAvailable(String readToolName) {
         AtlasToolCallBudget budget = new AtlasToolCallBudget();
         AtomicInteger writes = new AtomicInteger();
         ToolCallback write = decorate(callback("assignExerciseToCompetency", writes, false), budget);
@@ -67,7 +70,7 @@ class AtlasToolCallBudgetTest {
         assertThat(writes).hasValue(224);
         assertThat(budget.workBlocked()).isTrue();
         AtomicInteger reads = new AtomicInteger();
-        assertThat(decorate(callback("getExerciseContent", reads, false), budget).call("{}")).contains("ok", "226/256");
+        assertThat(decorate(callback(readToolName, reads, false), budget).call("{}")).contains("ok", "226/256");
         AtomicInteger completions = new AtomicInteger();
         decorate(callback("completeOrchestration", completions, false), budget).call("{}");
         assertThat(reads).hasValue(1);

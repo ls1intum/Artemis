@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO.Outcome;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
@@ -133,27 +134,29 @@ public class ContentChangeScheduler {
 
     private void processBatch(long courseId, String runId, BatchClaim claim) {
         Set<Long> exerciseIds = claim.exerciseIds();
-        int exerciseCount = exerciseIds.size();
-        log.info("atlas.automatic course {} firing run {} with {} exercise(s)", courseId, runId, exerciseCount);
+        Set<Long> lectureUnitIds = claim.lectureUnitIds();
+        // The toast counts total changed learning objects (exercises + lecture units) in this batch.
+        int changeCount = exerciseIds.size() + lectureUnitIds.size();
+        log.info("atlas.automatic course {} firing run {} with {} exercise(s) and {} lecture unit(s)", courseId, runId, exerciseIds.size(), lectureUnitIds.size());
 
         CompetencyOrchestrationResultDTO result;
         try {
-            result = orchestrationService.runBatch(courseId, exerciseIds);
+            result = orchestrationService.runBatch(courseId, exerciseIds, lectureUnitIds);
         }
         catch (Exception ex) {
-            // An exception escapes runBatch only from batch preparation (exercise resolution / run
+            // An exception escapes runBatch only from batch preparation (learning-object resolution / run
             // claim), before any competency is mutated — runBatch's lock release is best-effort and
             // cannot throw here — so the changes are safe to requeue rather than discard.
             log.warn("atlas.automatic batch run failed for course {} (run {}): {}", courseId, runId, ex.getMessage(), ex);
-            accumulator.requeueAfterFailedRun(courseId, exerciseIds);
-            broadcastSummary(courseId, runId, exerciseCount, false);
+            accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
+            broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
             return;
         }
 
         CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
         if (result != null && (result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
                 || result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)) {
-            broadcastSummary(courseId, runId, exerciseCount, false);
+            broadcastSummary(courseId, runId, changeCount, status == CompetencyOrchestrationResultDTO.Status.PARTIAL ? Outcome.PARTIAL : Outcome.FAILED);
             return;
         }
         switch (status) {
@@ -163,30 +166,33 @@ public class ContentChangeScheduler {
                 // refunds the daily-run reservation taken by claimDueBatch, so a long concurrent run
                 // does not let repeated retry ticks burn the per-course cap without an actual run. No
                 // completion to surface.
-                log.debug("atlas.automatic course {} run {} requeued all {} exercise(s); no summary broadcast", courseId, runId, exerciseCount);
-                accumulator.requeueAfterConcurrentRun(courseId, exerciseIds);
+                log.debug("atlas.automatic course {} run {} requeued all {} change(s); no summary broadcast", courseId, runId, changeCount);
+                accumulator.requeueAfterConcurrentRun(courseId, exerciseIds, lectureUnitIds);
             }
             case NO_OP ->
                 // Nothing was applicable (all claimed ids deleted / exam / wrong course) — nothing ran
                 // and nothing was discarded, so report no completion rather than a misleading success.
-                log.debug("atlas.automatic course {} run {} had no applicable exercises; no summary broadcast", courseId, runId);
+                log.debug("atlas.automatic course {} run {} had no applicable changes; no summary broadcast", courseId, runId);
             case FAILED -> {
                 // The run failed before committing any mutation — requeue so the changes are retried on
                 // a later tick. The daily-run reservation is kept (not refunded), so the per-course cap
                 // bounds how many failed retries a day can burn.
-                log.debug("atlas.automatic course {} run {} failed; requeueing {} exercise(s) for retry", courseId, runId, exerciseCount);
-                accumulator.requeueAfterFailedRun(courseId, exerciseIds);
-                broadcastSummary(courseId, runId, exerciseCount, false);
+                log.debug("atlas.automatic course {} run {} failed; requeueing {} change(s) for retry", courseId, runId, changeCount);
+                accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
+                broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
             }
-            case SUCCESS -> broadcastSummary(courseId, runId, exerciseCount, true);
-            // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply). null:
-            // unknown state, do not requeue. Both surface as a failure toast.
-            case null, default -> broadcastSummary(courseId, runId, exerciseCount, false);
+            case SUCCESS -> broadcastSummary(courseId, runId, changeCount, Outcome.SUCCESS);
+            // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply), and the
+            // toast must not claim that the whole batch failed.
+            case PARTIAL -> broadcastSummary(courseId, runId, changeCount, Outcome.PARTIAL);
+            // null: unknown state, do not requeue.
+            case null, default -> broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
         }
     }
 
-    private void broadcastSummary(long courseId, String runId, int exerciseCount, boolean success) {
-        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, exerciseCount, success ? exerciseCount : 0, success ? 0 : exerciseCount,
+    private void broadcastSummary(long courseId, String runId, int changeCount, Outcome outcome) {
+        boolean success = outcome == Outcome.SUCCESS;
+        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, changeCount, success ? changeCount : 0, success ? 0 : changeCount, outcome,
                 Instant.now(clock));
         websocketMessagingService.sendMessage(TOPIC_TEMPLATE.formatted(courseId), summary);
     }
