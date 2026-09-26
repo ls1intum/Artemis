@@ -50,6 +50,16 @@ public class LectureContentProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LectureContentProcessingService.class);
 
+    /**
+     * Dispatch priority of user- and content-triggered work: always first in the queue.
+     */
+    static final int FRESH_DISPATCH_PRIORITY = 0;
+
+    /**
+     * Dispatch priority of backfill and reconcile work: only dispatched when no fresh work waits.
+     */
+    static final int BACKLOG_DISPATCH_PRIORITY = 2;
+
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
     private final Optional<IrisLectureApi> irisLectureApi;
@@ -94,7 +104,19 @@ public class LectureContentProcessingService {
     @Async
     public void triggerProcessing(AttachmentVideoUnit unit) {
         SecurityUtils.setAuthorizationObject();
-        doTriggerProcessing(unit, Optional.empty(), false);
+        doTriggerProcessing(unit, Optional.empty(), false, FRESH_DISPATCH_PRIORITY);
+    }
+
+    /**
+     * Trigger processing with backlog priority: used by the backfill scheduler and the ingestion
+     * reconciler, whose work must never starve fresh, user-triggered uploads in the dispatch queue.
+     *
+     * @param unit the attachment video unit to process
+     */
+    @Async
+    public void triggerProcessingAsBacklog(AttachmentVideoUnit unit) {
+        SecurityUtils.setAuthorizationObject();
+        doTriggerProcessing(unit, Optional.empty(), false, BACKLOG_DISPATCH_PRIORITY);
     }
 
     /**
@@ -106,7 +128,7 @@ public class LectureContentProcessingService {
     @Async
     public void triggerProcessingForMetadataChange(AttachmentVideoUnit unit) {
         SecurityUtils.setAuthorizationObject();
-        doTriggerProcessing(unit, Optional.empty(), true);
+        doTriggerProcessing(unit, Optional.empty(), true, FRESH_DISPATCH_PRIORITY);
     }
 
     /**
@@ -117,11 +139,12 @@ public class LectureContentProcessingService {
      * up to 15 minutes for the backfill scheduler). Dispatch is only attempted
      * when the toggle is ON.
      *
-     * @param unit          the attachment video unit to process
-     * @param stateToDelete if present, delete this state after preflight checks pass (used by retryProcessing)
+     * @param unit             the attachment video unit to process
+     * @param stateToDelete    if present, delete this state after preflight checks pass (used by retryProcessing)
+     * @param dispatchPriority queue priority to enqueue with (fresh work before backlog)
      * @return true if preflight checks passed, false if preflight failed
      */
-    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete, boolean forceReprocessing) {
+    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete, boolean forceReprocessing, int dispatchPriority) {
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
             return false;
@@ -163,12 +186,11 @@ public class LectureContentProcessingService {
                 log.info("Forcing reprocessing for unit {} due to a metadata change in the ingestion payload", unit.getId());
             }
             state.resetRetryCount();
-            state.setPhase(ProcessingPhase.IDLE);
-            state.setStartedAt(null); // Back to queue
-            state.setIngestionJobToken(null);
-            state.setRetryEligibleAt(null);
-            state.setErrorKey(null);
-            state.setLastUpdated(ZonedDateTime.now());
+            state.requeue();
+            // The previous run's fingerprints describe content that no longer exists in this form.
+            // Leaving them would let the reconciler treat the unit as verified against stale evidence.
+            state.setContentFingerprint(null);
+            state.setConfirmedFingerprint(null);
         }
 
         // Skip if already processing or terminal (unchanged content)
@@ -184,12 +206,25 @@ public class LectureContentProcessingService {
             log.debug("Unit {} in failed state, skipping (use retryProcessing or change content)", unit.getId());
             return true;
         }
+        if (state.getPhase() == ProcessingPhase.SKIPPED) {
+            log.debug("Unit {} was declined by Iris, awaiting a content change before re-evaluation", unit.getId());
+            return true;
+        }
 
-        // Enqueue: save as IDLE with startedAt=null (not yet dispatched)
+        // Enqueue. A new row has nothing to race with, so it is saved outright; an existing one is committed through
+        // a targeted update instead, because the snapshot in hand predates the content check and a whole-entity save
+        // would revert a run claimed and activated while that check ran.
+        state.setDispatchPriority(dispatchPriority);
         if (state.getId() == null) {
             state.setStartedAt(null); // Ensure new states have no startedAt
+            processingStateRepository.save(state);
         }
-        processingStateRepository.save(state);
+        else if (shouldReprocess) {
+            processingStateRepository.requeueForContentChange(state.getId(), state.getVideoSourceHash(), state.getAttachmentVersion(), dispatchPriority, ZonedDateTime.now());
+        }
+        else {
+            processingStateRepository.updateContentMarkers(state.getId(), state.getVideoSourceHash(), state.getAttachmentVersion(), dispatchPriority, ZonedDateTime.now());
+        }
         log.info("Enqueued unit {} for processing (IDLE)", unit.getId());
 
         // Only dispatch if the feature toggle is ON — otherwise the IDLE state
@@ -258,7 +293,7 @@ public class LectureContentProcessingService {
         // Run processing, passing the FAILED state to delete after preflight passes
         // If preflight fails, the FAILED state is preserved (nothing deleted)
         // If preflight passes, the FAILED state is deleted and fresh state created
-        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState, false);
+        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState, false, FRESH_DISPATCH_PRIORITY);
         if (!preflightPassed) {
             // Services unavailable - FAILED state was NOT deleted, return null
             return null;
@@ -288,7 +323,7 @@ public class LectureContentProcessingService {
 
     // -------------------- Retry (no longer phase-specific) --------------------
     // Retries are handled by resetting to IDLE and going through dispatchPendingJobs().
-    // See ProcessingStateCallbackService.handleProcessingFailure().
+    // See ProcessingStateCallbackService.handleProcessingFailureIfStillLive().
 
     // -------------------- Helper Methods --------------------
 
@@ -323,6 +358,16 @@ public class LectureContentProcessingService {
         if (videoAdded || videoRemoved || videoChanged || attachmentAdded || attachmentRemoved || attachmentChanged) {
             log.info("Content changed for unit {}, videoAdded: {}, videoRemoved: {}, videoChanged: {}, attachmentAdded: {}, attachmentRemoved: {}, attachmentChanged: {}",
                     unit.getId(), videoAdded, videoRemoved, videoChanged, attachmentAdded, attachmentRemoved, attachmentChanged);
+
+            // Invalidate any in-flight run's token before the cleanup below deletes stored content: a
+            // checkpoint still holding this token then fails its own token-match check immediately,
+            // instead of succeeding on a stale snapshot and persisting content this cleanup is about
+            // to remove. The later full requeue() + save() this method's caller performs still clears
+            // the token again (harmless): this call only narrows the window before that happens.
+            String staleToken = state.getIngestionJobToken();
+            if (hasPersistedState && staleToken != null) {
+                processingStateRepository.invalidateTokenIfMatches(state.getId(), staleToken, ZonedDateTime.now());
+            }
 
             if (videoAdded || videoRemoved || videoChanged) {
                 // Delete stored transcription before Iris cleanup: dispatchPendingJobs() checks
@@ -361,16 +406,10 @@ public class LectureContentProcessingService {
             return;
         }
 
-        state.resetRetryCount();
-        state.setPhase(ProcessingPhase.DONE);
-        state.setStartedAt(null);
-        state.setIngestionJobToken(null);
-        state.setRetryEligibleAt(null);
-        state.setErrorKey(null);
-        state.setVideoSourceHash(null);
-        state.setAttachmentVersion(null);
-        state.setLastUpdated(ZonedDateTime.now());
-        processingStateRepository.save(state);
+        // DONE here means "nothing indexed"; a confirmed fingerprint from the previous content would falsely claim
+        // the index still holds verified data for this unit, so it is dropped with the rest. Committed as a targeted
+        // update rather than a whole-entity save, which would revert a run activated while the cleanup above ran.
+        processingStateRepository.settleAsNothingIndexed(state.getId(), ZonedDateTime.now());
     }
 
     private boolean cleanupForReprocessing(AttachmentVideoUnit unit) {

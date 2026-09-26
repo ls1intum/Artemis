@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Unique identity for a dispatch claim.
+
+        A claim used to be identified by the timestamp it wrote (started_at for an IDLE claim,
+        retry_eligible_at for a retry claim), which the activation, skip and failure guards matched for
+        exact equality. started_at and retry_eligible_at are legacy DATETIME columns holding whole seconds,
+        so that identity is only second-resolution: a content update that requeues a unit between two pull
+        claims taken in the same second leaves both claims carrying the same marker, and the earlier claim's
+        activation then matches the newer claim and attaches its stale job token and content fingerprint.
+        Pull claims are not serialized by the cluster-wide dispatch lock, so nothing else prevents it.
+
+        claim_token gives every claim its own identity instead. It is written afresh by each claim, matched
+        by every guard that commits a claim's outcome, and cleared by every path that releases a claim, so a
+        superseded claim can never match a newer one however close together they were taken.
+
+        Nullable, no data migration: rows are unclaimed most of the time, and a claim taken before this
+        column existed simply has none. Those in-flight claims cannot be matched by the new guards and are
+        released by the abandoned-claim sweep (IDLE) or their lapsing lease (retry), which is the same
+        recovery any interrupted claim already relies on.
+    -->
+    <changeSet id="20260922160000-1" author="artemis">
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="claim_token" type="VARCHAR(36)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

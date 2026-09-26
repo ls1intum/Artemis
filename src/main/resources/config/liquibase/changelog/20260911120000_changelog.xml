@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Bounded long-loop revivals for FAILED lecture units.
+
+        The reconciler revives a transient-class FAILED unit every cooldown until it succeeds. A genuinely
+        unprocessable unit that reports the generic (unclassified) error is not in the permanent-error set,
+        so without a bound it would be re-attempted forever. revival_count records how many revivals a unit
+        has had without an intervening successful completion; the reconciler stops reviving past a fixed cap
+        and leaves the unit FAILED for the manual retry button. It resets to 0 when the unit reaches DONE, so
+        a transient failure that later succeeds regains a full budget.
+
+        Existing rows default to 0. No data migration.
+    -->
+    <changeSet id="20260911120000-1" author="artemis">
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="revival_count" type="integer" defaultValueNumeric="0"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

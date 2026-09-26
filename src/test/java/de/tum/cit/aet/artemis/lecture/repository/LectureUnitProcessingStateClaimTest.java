@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,9 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private LectureUnitProcessingStateRepository processingStateRepository;
+
+    @Autowired
+    private LectureUnitProcessingStateReconcileRepository reconcileStateRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -100,8 +104,8 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(retryCandidateIds(now)).as("a retry whose backoff has passed must be a candidate").contains(retryable.getId());
 
         ZonedDateTime leaseExpiry = now.plusMinutes(20);
-        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), now, leaseExpiry)).as("the first caller claims the retry").isEqualTo(1);
-        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), now, leaseExpiry)).as("a second caller must lose the race").isZero();
+        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), "claim-1", now, leaseExpiry)).as("the first caller claims the retry").isEqualTo(1);
+        assertThat(processingStateRepository.claimRetryEligible(retryable.getId(), "claim-2", now, leaseExpiry)).as("a second caller must lose the race").isZero();
 
         assertThat(retryCandidateIds(now)).as("the claim must hide the row for the length of the lease").doesNotContain(retryable.getId());
         assertThat(retryCandidateIds(leaseExpiry.plusSeconds(1))).as("an abandoned claim recovers itself once the lease lapses").contains(retryable.getId());
@@ -114,8 +118,8 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         idle.setPhase(ProcessingPhase.IDLE);
         processingStateRepository.save(idle);
 
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), now)).as("the first caller claims the dispatch").isEqualTo(1);
-        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), now)).as("a second caller must lose the race").isZero();
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-1", now)).as("the first caller claims the dispatch").isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-2", now)).as("a second caller must lose the race").isZero();
         assertThat(idleCandidateIds(now)).as("a claimed row must leave the queue").doesNotContain(idle.getId());
 
         // Asserted on the row rather than on the return value: the sweep is table-wide, so its count depends on
@@ -126,6 +130,347 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         processingStateRepository.releaseAbandonedIdleClaims(now.plusMinutes(20), now);
         assertThat(startedAtOf(idle)).as("a claim older than the cutoff is abandoned and must be released").isNull();
         assertThat(idleCandidateIds(ZonedDateTime.now())).as("the released unit must be back in the queue").contains(idle.getId());
+    }
+
+    /**
+     * Claudia-Anthropica review finding on PR #13798. A claim used to be identified by the whole-second timestamp it
+     * wrote, so two claims of the same row taken within one second were indistinguishable and the earlier one could
+     * activate the newer, attaching its stale job token and content fingerprint. This reproduces that interleaving
+     * directly -- claim, requeue, re-claim, all with one timestamp -- and pins that the superseded claim now matches
+     * nothing. It is the regression this column exists for; with identity back on the timestamp it fails.
+     */
+    @Test
+    void testASupersededClaimCannotActivateAClaimTakenInTheSameSecond() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState idle = new LectureUnitProcessingState(unit);
+        idle.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(idle);
+
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now)).as("worker A claims the unit").isEqualTo(1);
+
+        // A content update requeues the unit while A is still preparing, and a concurrent pull claim takes it again.
+        // Same wall-clock second, so the timestamps of both claims are identical: only the identity tells them apart.
+        assertThat(processingStateRepository.requeueIfStillClaimed(idle.getId(), "claim-A", now)).as("the content update releases A's claim").isEqualTo(1);
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-B", now)).as("worker B claims the requeued unit in the same second").isEqualTo(1);
+
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "stale-token", "stale-fingerprint", "claim-A", ZonedDateTime.now()))
+                .as("A's activation must not take over B's claim").isZero();
+
+        LectureUnitProcessingState afterStaleActivation = processingStateRepository.findById(idle.getId()).orElseThrow();
+        assertThat(afterStaleActivation.getPhase()).as("B's claim must still be unactivated").isEqualTo(ProcessingPhase.IDLE);
+        assertThat(afterStaleActivation.getIngestionJobToken()).as("A's stale token must not have been attached").isNull();
+
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "current-token", "current-fingerprint", "claim-B", ZonedDateTime.now()))
+                .as("B's own activation must still succeed").isEqualTo(1);
+
+        LectureUnitProcessingState activated = processingStateRepository.findById(idle.getId()).orElseThrow();
+        assertThat(activated.getIngestionJobToken()).isEqualTo("current-token");
+        assertThat(activated.getContentFingerprint()).as("the current content's fingerprint must be the one certified").isEqualTo("current-fingerprint");
+        assertThat(activated.getClaimToken()).as("activation consumes the claim, so nothing can match it afterwards").isNull();
+    }
+
+    /** Every path that releases a claim must drop its identity, or a late activation could still match the dead claim. */
+    @Test
+    void testReleasingAClaimDropsItsIdentity() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState idle = new LectureUnitProcessingState(unit);
+        idle.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(idle);
+
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now)).isEqualTo(1);
+        processingStateRepository.releaseAbandonedIdleClaims(now.plusMinutes(20), now);
+
+        assertThat(processingStateRepository.findById(idle.getId()).orElseThrow().getClaimToken()).as("the abandoned-claim sweep must drop the identity").isNull();
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "late-token", "fingerprint", "claim-A", ZonedDateTime.now()))
+                .as("an activation for the released claim must match nothing").isZero();
+    }
+
+    /**
+     * The content check reads the row, hashes files and calls Iris before writing. A run claimed and activated during
+     * that window used to be reverted by the whole-entity save that followed, leaving Pyris working on a job the row
+     * no longer tracked. Recording the markers must leave the live run alone.
+     */
+    @Test
+    void testRecordingContentMarkersDoesNotRevertARunActivatedMeanwhile() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState idle = new LectureUnitProcessingState(unit);
+        idle.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(idle);
+
+        // A dispatch claims and activates the unit while the content check is still running.
+        assertThat(processingStateRepository.claimIdleForDispatch(idle.getId(), "claim-A", now)).isEqualTo(1);
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "live-token", "fp", "claim-A", now)).isEqualTo(1);
+
+        processingStateRepository.updateContentMarkers(idle.getId(), "video-hash", 7, 0, ZonedDateTime.now());
+
+        LectureUnitProcessingState after = processingStateRepository.findById(idle.getId()).orElseThrow();
+        assertThat(after.getPhase()).as("the live run must survive the marker update").isEqualTo(ProcessingPhase.INGESTING);
+        assertThat(after.getIngestionJobToken()).as("the live run's token must survive").isEqualTo("live-token");
+        assertThat(after.getVideoSourceHash()).as("the marker must still have been recorded").isEqualTo("video-hash");
+        assertThat(after.getAttachmentVersion()).isEqualTo(7);
+    }
+
+    /** A content change supersedes whatever was in flight, and drops the evidence describing the old content. */
+    @Test
+    void testRequeueForContentChangeSupersedesTheRunAndDropsStaleEvidence() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.IDLE);
+        processingStateRepository.save(state);
+        assertThat(processingStateRepository.claimIdleForDispatch(state.getId(), "claim-A", now)).isEqualTo(1);
+        assertThat(processingStateRepository.activatePushDispatch(unit.getId(), ProcessingPhase.INGESTING, "old-token", "old-fp", "claim-A", now)).isEqualTo(1);
+
+        processingStateRepository.requeueForContentChange(state.getId(), "new-video-hash", 9, 0, ZonedDateTime.now());
+
+        LectureUnitProcessingState after = processingStateRepository.findById(state.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(after.getIngestionJobToken()).as("the superseded run's token must be gone so its callback is dropped").isNull();
+        assertThat(after.getClaimToken()).isNull();
+        assertThat(after.getStartedAt()).as("the row must be back in the dispatch queue").isNull();
+        assertThat(after.getConfirmedFingerprint()).as("evidence describing the replaced content must not survive").isNull();
+        assertThat(after.getVideoSourceHash()).isEqualTo("new-video-hash");
+    }
+
+    /** Settling a unit with no processable content leaves nothing behind that claims the index still holds its data. */
+    @Test
+    void testSettlingAsNothingIndexedDropsEveryContentMarker() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.IDLE);
+        state.setVideoSourceHash("hash");
+        state.setAttachmentVersion(3);
+        state.setContentFingerprint("fp");
+        state.setConfirmedFingerprint("fp");
+        processingStateRepository.save(state);
+
+        assertThat(processingStateRepository.settleAsNothingIndexed(state.getId(), ZonedDateTime.now())).isEqualTo(1);
+
+        LectureUnitProcessingState after = processingStateRepository.findById(state.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        assertThat(after.getConfirmedFingerprint()).as("a confirmed fingerprint would falsely certify an empty index").isNull();
+        assertThat(after.getContentFingerprint()).isNull();
+        assertThat(after.getVideoSourceHash()).isNull();
+        assertThat(after.getAttachmentVersion()).isNull();
+    }
+
+    /**
+     * Restart recovery resets in-flight runs from a batch read. A terminal callback landing between that read and the
+     * reset used to revert the finished run to IDLE and re-ingest work that had already completed.
+     */
+    @Test
+    void testRecoveryDoesNotRevertARunThatCompletedSinceTheBatchRead() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState running = new LectureUnitProcessingState(unit);
+        running.setPhase(ProcessingPhase.INGESTING);
+        running.setIngestionJobToken("run-token");
+        processingStateRepository.save(running);
+
+        // The run completes between the batch read (which saw INGESTING/run-token) and the recovery write.
+        assertThat(processingStateRepository.completeIngestionIfLive(running.getId(), "run-token", ZonedDateTime.now())).isEqualTo(1);
+
+        assertThat(processingStateRepository.resetToIdleIfStillLive(running.getId(), ProcessingPhase.INGESTING, "run-token", ZonedDateTime.now()))
+                .as("recovery must not revert a run that finished since the read").isZero();
+        assertThat(processingStateRepository.findById(running.getId()).orElseThrow().getPhase()).isEqualTo(ProcessingPhase.DONE);
+    }
+
+    /** The same reset must still apply to a run that really is still in flight. */
+    @Test
+    void testRecoveryResetsARunThatIsStillInFlight() {
+        LectureUnitProcessingState running = new LectureUnitProcessingState(unit);
+        running.setPhase(ProcessingPhase.INGESTING);
+        running.setIngestionJobToken("run-token");
+        processingStateRepository.save(running);
+
+        assertThat(processingStateRepository.resetToIdleIfStillLive(running.getId(), ProcessingPhase.INGESTING, "run-token", ZonedDateTime.now())).isEqualTo(1);
+
+        LectureUnitProcessingState after = processingStateRepository.findById(running.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(after.getIngestionJobToken()).isNull();
+        assertThat(after.getStartedAt()).isNull();
+    }
+
+    /**
+     * Claudia-Anthropica review finding on PR #13798. The reconcile walk decides on a batch read, then hashes PDFs
+     * and asks Iris for a census before writing, so the decision is always older than the write. Committing it
+     * through a whole-entity save merged that stale snapshot back over every column. These pin the guard that now
+     * carries the decision's own conditions into the statement, so deciding and writing cannot drift apart.
+     */
+    @Test
+    void testReconcileRequeueIsRejectedWhenTheRowMovedOnSinceTheBatchRead() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState done = new LectureUnitProcessingState(unit);
+        done.setPhase(ProcessingPhase.DONE);
+        done.setConfirmedFingerprint("v1:confirmed");
+        done.setVideoSourceHash("hash-new");
+        processingStateRepository.save(done);
+
+        // A concurrent completion re-confirmed the unit against different content since the batch read.
+        done.setConfirmedFingerprint("v1:reconfirmed");
+        processingStateRepository.save(done);
+
+        assertThat(reconcileStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, null, 2, now))
+                .as("the fingerprint observed at batch-read time no longer matches, so nothing may be written").isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        assertThat(after.getConfirmedFingerprint()).as("the fresher confirmation must survive").isEqualTo("v1:reconfirmed");
+    }
+
+    /** A content requeue moves the row to IDLE, which the phase guard must reject — that was the reported case. */
+    @Test
+    void testReconcileRequeueIsRejectedAfterAContentRequeueAndLeavesItsMarkersIntact() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState done = new LectureUnitProcessingState(unit);
+        done.setPhase(ProcessingPhase.DONE);
+        done.setConfirmedFingerprint("v1:confirmed");
+        processingStateRepository.save(done);
+
+        // The content changed and the unit was requeued with the new content's markers.
+        assertThat(processingStateRepository.requeueForContentChange(done.getId(), "new-video-hash", 11, 0, ZonedDateTime.now())).isEqualTo(1);
+
+        assertThat(reconcileStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, null, 2, now))
+                .as("the row is no longer the DONE unit the walk decided on").isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
+        assertThat(after.getVideoSourceHash()).as("the new content's markers must survive").isEqualTo("new-video-hash");
+        assertThat(after.getAttachmentVersion()).isEqualTo(11);
+    }
+
+    /**
+     * A retry claim leaves the phase FAILED, so the claim clause is what has to stop a revival wiping it. The
+     * observed facts are read back <em>after</em> the claim so that the error, timestamp and count all match and
+     * the claim is the only thing that differs — otherwise the timestamp pin would reject the write on its own
+     * and this would pass with the claim clause deleted.
+     */
+    @Test
+    void testRevivalIsRejectedWhileTheUnitIsClaimed() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        failed.setRetryEligibleAt(now.minusMinutes(5));
+        processingStateRepository.save(failed);
+
+        assertThat(processingStateRepository.claimRetryEligible(failed.getId(), "claim-R", now, now.plusMinutes(20))).isEqualTo(1);
+        LectureUnitProcessingState claimed = processingStateRepository.findById(failed.getId()).orElseThrow();
+
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(claimed.getId(), claimed.getErrorKey(), claimed.getLastUpdated(), claimed.getRevivalCount(), 2,
+                ZonedDateTime.now())).as("a claim the dispatcher is about to activate must not be wiped by a revival").isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();
+        assertThat(after.getClaimToken()).isEqualTo("claim-R");
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+    }
+
+    /** The happy path: the row is untouched since the batch read, so the requeue applies with its intent. */
+    @Test
+    void testReconcileRequeueAppliesItsIntentWhenTheRowIsUnchanged() {
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LectureUnitProcessingState done = new LectureUnitProcessingState(unit);
+        done.setPhase(ProcessingPhase.DONE);
+        done.setConfirmedFingerprint("v1:confirmed");
+        done.setContentFingerprint("v1:content");
+        done.setVideoSourceHash("hash");
+        done.setAttachmentVersion(3);
+        done.setRetryCount(4);
+        done.setRevivalCount(1);
+        processingStateRepository.save(done);
+
+        assertThat(reconcileStateRepository.requeueForReconcileIfUnchanged(done.getId(), ProcessingPhase.DONE, "v1:confirmed", null, true, 7, 2, now)).isEqualTo(1);
+
+        LectureUnitProcessingState after = processingStateRepository.findById(done.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(after.getConfirmedFingerprint()).as("a forced rebuild drops the confirmation").isNull();
+        assertThat(after.isForceReingest()).isTrue();
+        assertThat(after.getLastQualityPipelineVersion()).isEqualTo(7);
+        assertThat(after.getRevivalCount()).as("only a revival spends the budget; a reconcile requeue leaves it").isEqualTo(1);
+        assertThat(after.getRetryCount()).isZero();
+        assertThat(after.getDispatchPriority()).isEqualTo(2);
+        // The content markers belong to the content-change path and must never be touched by a reconcile requeue.
+        assertThat(after.getVideoSourceHash()).isEqualTo("hash");
+        assertThat(after.getAttachmentVersion()).isEqualTo(3);
+        assertThat(after.getContentFingerprint()).isEqualTo("v1:content");
+    }
+
+    /**
+     * Claudia-Anthropica follow-up finding on PR #13798. A revival is authorized by three FAILED-state facts the
+     * general reconcile guard does not pin: {@code errorKey} (never revive a permanent error), {@code lastUpdated}
+     * (the cooldown is measured from it) and {@code revivalCount} (the bounded budget). Between the batch read and
+     * the write, the row can be claimed, dispatched, and fail right back to FAILED — {@code markFailed} clears the
+     * claim and restores the phase, so phase-and-claim alone cannot tell the two failures apart.
+     */
+    @Test
+    void testRevivalIsRejectedWhenTheUnitFailedAgainWithADifferentError() {
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        failed.setLastUpdated(ZonedDateTime.now().minusHours(4));
+        processingStateRepository.save(failed);
+        // What the batch read observed, read back at the database's own precision.
+        LectureUnitProcessingState observed = processingStateRepository.findById(failed.getId()).orElseThrow();
+
+        // Claimed, retried, and failed again — this time with a permanent error that must never be revived.
+        failed.markFailed("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
+        processingStateRepository.save(failed);
+
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+                ZonedDateTime.now())).as("the failure that authorized this revival is not the failure on the row now").isZero();
+
+        LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+        assertThat(after.getErrorKey()).as("the newer, permanent error must survive").isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
+        assertThat(after.getRevivalCount()).as("a rejected write spends no revival").isZero();
+    }
+
+    /**
+     * The budget pin on its own: another node's revival already spent a unit of it while the error and timestamp
+     * stayed exactly as observed, so only {@code revivalCount} can tell this decision is stale.
+     */
+    @Test
+    void testRevivalIsRejectedWhenAnotherRevivalAlreadySpentTheBudget() {
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        failed.setLastUpdated(ZonedDateTime.now().minusHours(4));
+        processingStateRepository.save(failed);
+        LectureUnitProcessingState observed = processingStateRepository.findById(failed.getId()).orElseThrow();
+
+        // The entity sets lastUpdated only explicitly, so this leaves the other two pinned facts untouched.
+        failed.setRevivalCount(1);
+        processingStateRepository.save(failed);
+
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+                ZonedDateTime.now())).as("the budget this decision counted on has already been spent").isZero();
+        assertThat(processingStateRepository.findById(failed.getId()).orElseThrow().getRevivalCount()).isEqualTo(1);
+    }
+
+    /** The happy path: the failure is still the one that was judged, so the revival applies and spends one unit. */
+    @Test
+    void testRevivalAppliesWhenTheFailureIsStillTheOneThatWasJudged() {
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+        failed.setLastUpdated(ZonedDateTime.now().minusHours(4));
+        failed.setRetryCount(3);
+        failed.setRevivalCount(1);
+        failed.setConfirmedFingerprint("v1:confirmed");
+        failed.setVideoSourceHash("hash");
+        failed.setAttachmentVersion(3);
+        processingStateRepository.save(failed);
+        LectureUnitProcessingState observed = processingStateRepository.findById(failed.getId()).orElseThrow();
+
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+                ZonedDateTime.now())).isEqualTo(1);
+
+        LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();
+        assertThat(after.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(after.getErrorKey()).isNull();
+        assertThat(after.getRetryCount()).as("the short retry budget starts over").isZero();
+        assertThat(after.getRevivalCount()).as("exactly one revival is spent, atomically").isEqualTo(2);
+        assertThat(after.getDispatchPriority()).isEqualTo(2);
+        // A revival re-runs the unit exactly as it stands: it owns none of these columns.
+        assertThat(after.getConfirmedFingerprint()).isEqualTo("v1:confirmed");
+        assertThat(after.getVideoSourceHash()).isEqualTo("hash");
+        assertThat(after.getAttachmentVersion()).isEqualTo(3);
     }
 
     /**
