@@ -115,6 +115,15 @@
 @source inline("aria-disabled:opacity-60");
 @source inline("aria-disabled:cursor-not-allowed");
 
+/* Plagiarism settings: the four Bootstrap form groups align label, input and validation message through a subgrid. */
+@source inline("grid");
+@source inline("grid-cols-1");
+@source inline("md:grid-cols-2");
+@source inline("xl:grid-cols-4");
+@source inline("gap-x-6");
+@source inline("grid-rows-subgrid");
+@source inline("row-span-3");
+
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
 
