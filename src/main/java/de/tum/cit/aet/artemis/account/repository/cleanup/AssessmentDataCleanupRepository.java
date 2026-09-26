@@ -128,6 +128,49 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
             """)
     int deleteTutorParticipations(@Param("userId") long userId);
 
+    @Query(nativeQuery = true, value = """
+            SELECT student_id AS userId, COUNT(*) AS count
+            FROM presentation_assessment_instance_student
+            WHERE student_id IN :userIds
+            GROUP BY student_id
+            """)
+    List<UserReferenceCount> countPresentationAssessmentInstanceStudents(@Param("userIds") Collection<Long> userIds);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query(nativeQuery = true, value = """
+            DELETE FROM presentation_assessment_instance_student
+            WHERE student_id = :userId
+            """)
+    int detachPresentationAssessmentInstanceStudents(@Param("userId") long userId);
+
+    @Query("""
+            SELECT instance.id FROM PresentationAssessmentInstance instance
+            JOIN instance.students student
+            WHERE student.id = :userId AND SIZE(instance.students) = 1
+            """)
+    List<Long> findSoleMemberPresentationAssessmentInstanceIds(@Param("userId") long userId);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM PresentationAssessmentInstance instance WHERE instance.id IN :instanceIds")
+    int deletePresentationAssessmentInstancesByIds(@Param("instanceIds") Collection<Long> instanceIds);
+
+    /**
+     * Removes individual instances with their sole presenter and only detaches the presenter from shared instances.
+     * Hibernate also removes the join-table rows for the entity bulk deletion.
+     *
+     * @param userId the account being deleted
+     * @return the number of removed presenter assignments
+     */
+    @Transactional
+    default int deletePresentationAssessmentInstanceStudents(long userId) {
+        // Materialize IDs before Hibernate removes the join rows, which would change the membership predicate.
+        List<Long> instanceIds = findSoleMemberPresentationAssessmentInstanceIds(userId);
+        int individualInstances = instanceIds.isEmpty() ? 0 : deletePresentationAssessmentInstancesByIds(instanceIds);
+        return individualInstances + detachPresentationAssessmentInstanceStudents(userId);
+    }
+
     /**
      * Deletes the responses to the complaints the account raised, so that the complaints themselves can be removed.
      * A response written by the account on somebody else's complaint is detached instead, by

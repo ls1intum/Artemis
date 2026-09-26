@@ -115,6 +115,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
     private learningPathsActive = signal(false);
+    private presentationAssessmentsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
 
@@ -128,6 +129,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     readonly removePadding = toSignal(this.finalizedUrl$.pipe(map((currentUrl) => currentUrl.includes('test-runs') && currentUrl.includes('conduction'))), {
         initialValue: this.router.url.includes('test-runs') && this.router.url.includes('conduction'),
+    });
+    readonly hasTransparentCourseBody = toSignal(this.finalizedUrl$.pipe(map((currentUrl) => currentUrl.split(/[?#]/)[0].endsWith('/presentations'))), {
+        initialValue: this.router.url.split(/[?#]/)[0].endsWith('/presentations'),
     });
 
     // we cannot use signals here because the child component doesn't expect it
@@ -152,6 +156,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isActive) => {
                 this.learningPathsActive.set(isActive);
+            });
+
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.PresentationAssessments)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.presentationAssessmentsActive.set(isActive);
+                this.sidebarItems.set(this.getSidebarItems());
             });
 
         this.featureToggleService
@@ -322,6 +334,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         sidebarItems.push(this.sidebarItemService.getExercisesItem(courseId));
         if (this.lectureEnabled && isEditor) {
             sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
+        }
+        if (isInstructor && this.presentationAssessmentsActive() && currentCourse.presentationAssessmentsEnabled) {
+            sidebarItems.push(this.sidebarItemService.getPresentationAssessmentsItem(courseId));
         }
         sidebarItems.push(...this.addTutorialGroupsItem(currentCourse, isInstructor));
         sidebarItems.push(this.sidebarItemService.getExamsItem(courseId));

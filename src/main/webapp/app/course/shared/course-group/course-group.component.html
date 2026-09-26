@@ -1,30 +1,34 @@
 <jhi-table-view
     [cols]="columns()"
-    [vals]="rows()"
-    [totalRows]="totalRows()"
+    [vals]="displayedRows()"
+    [totalRows]="displayedTotalRows()"
     [loading]="isLoading()"
     [tableActions]="tableActionsTemplate"
     [rowActions]="rowActionsTemplate"
-    [options]="tableOptions"
+    [options]="tableOptions()"
     (onLazyLoad)="onLazyLoad($event)"
 />
 
 <!-- Import / export buttons rendered in the table caption bar -->
 <ng-template #tableActionsTemplate>
-    @if (course().isAtLeastInstructor) {
+    @if (course().isAtLeastInstructor || !paginated()) {
         <div class="flex items-center gap-1">
-            <p-button size="small" data-testid="course-group-add-users-button" (onClick)="openAddUsersModal()">
-                <i class="pi pi-user-plus"></i>
-                <span jhiTranslate="artemisApp.course.courseGroup.addUsers"></span>
-            </p-button>
-            <p-button size="small" severity="secondary" (onClick)="openImportDialog($event)">
-                <i class="pi pi-file-import"></i>
-                <span jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
-            </p-button>
-            <p-button size="small" severity="secondary" (onClick)="exportUserInformation()">
-                <i class="pi pi-download"></i>
-                <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
-            </p-button>
+            @if (allowAddingUsers()) {
+                <p-button size="small" data-testid="course-group-add-users-button" [disabled]="isDisabled()" (onClick)="openAddUsersModal()">
+                    <i class="pi pi-user-plus"></i>
+                    <span jhiTranslate="artemisApp.course.courseGroup.addUsers"></span>
+                </p-button>
+            }
+            @if (paginated()) {
+                <p-button size="small" severity="secondary" [disabled]="isDisabled()" (onClick)="openImportDialog($event)">
+                    <i class="pi pi-file-import"></i>
+                    <span jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
+                </p-button>
+                <p-button size="small" severity="secondary" [disabled]="isDisabled()" (onClick)="exportUserInformation()">
+                    <i class="pi pi-download"></i>
+                    <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
+                </p-button>
+            }
         </div>
     }
 </ng-template>
@@ -53,24 +57,36 @@
 
 <!-- Row actions -->
 <ng-template #rowActionsTemplate let-user>
-    <button
-        type="button"
-        pButton
-        jhiDeleteButton
-        severity="danger"
-        outlined
-        size="small"
-        [renderButtonStyle]="false"
-        [actionType]="ActionType.Remove"
-        [entityTitle]="user.login"
-        deleteQuestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"
-        (delete)="removeFromGroup(user)"
-        [dialogError]="dialogError$"
-    >
-        <i class="pi pi-user-minus"></i>
-    </button>
+    @if (allowRemovingUsers()) {
+        <button
+            type="button"
+            pButton
+            jhiDeleteButton
+            severity="danger"
+            outlined
+            size="small"
+            [renderButtonStyle]="false"
+            [actionType]="ActionType.Remove"
+            [entityTitle]="user.login"
+            [deleteQuestion]="removeUserQuestionKey()"
+            (delete)="removeFromGroup(user)"
+            [dialogError]="dialogError$"
+            [disabled]="isDisabled()"
+        >
+            <i class="pi pi-user-minus"></i>
+        </button>
+    }
 </ng-template>
 
-<jhi-user-registration-modal [titleKey]="'artemisApp.course.courseGroup.addUsers'" [searchFn]="searchUsersFn()" [registerFn]="registerUsersFn()" (registered)="onMembersAdded()" />
+@if (allowAddingUsers()) {
+    <jhi-user-registration-modal
+        [titleKey]="'artemisApp.course.courseGroup.addUsers'"
+        [searchFn]="searchUsersFn()"
+        [registerFn]="registerUsersFn()"
+        (registered)="onMembersAdded()"
+    />
+}
 
-<jhi-users-import-dialog [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" [tutorialGroup]="tutorialGroup()" (importCompleted)="onMembersAdded()" />
+@if (paginated()) {
+    <jhi-users-import-dialog [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" [tutorialGroup]="tutorialGroup()" (importCompleted)="onMembersAdded()" />
+}

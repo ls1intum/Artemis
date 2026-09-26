@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input }
 
 export type TumAetUiTagSeverity = 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'contrast';
 
-const TAG_BASE = 'tumaet:inline-flex tumaet:items-center tumaet:gap-1 tumaet:px-2 tumaet:py-1 tumaet:text-sm tumaet:font-bold';
+const TAG_BASE = 'tumaet:inline-flex tumaet:items-center tumaet:gap-1 tumaet:px-2 tumaet:py-1 tumaet:text-sm';
 
 const TAG_SEVERITY: Record<TumAetUiTagSeverity, string> = {
     secondary: 'tumaet:bg-hover-background tumaet:text-text',
@@ -23,8 +23,11 @@ export class TumAetUiTagComponent {
     readonly severity = input<TumAetUiTagSeverity>('secondary');
     readonly value = input<string>();
     readonly rounded = input(false, { transform: booleanAttribute });
+    readonly bold = input(true, { transform: booleanAttribute });
 
     protected readonly tagClasses = computed(() =>
-        `${TAG_BASE} ${this.rounded() ? 'tumaet:rounded-full' : 'tumaet:rounded-md'} ${TAG_SEVERITY[this.severity()]}`.replace(/\s+/g, ' ').trim(),
+        `${TAG_BASE} ${this.bold() ? 'tumaet:font-bold' : 'tumaet:font-normal'} ${this.rounded() ? 'tumaet:rounded-full' : 'tumaet:rounded-md'} ${TAG_SEVERITY[this.severity()]}`
+            .replace(/\s+/g, ' ')
+            .trim(),
     );
 }

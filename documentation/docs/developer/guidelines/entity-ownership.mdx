@@ -26,7 +26,7 @@ Three things have to hold, and only the first is about the entity itself:
    produces a row belonging to nothing. Where an entity may belong to one of two parents, the
    alternative is a check constraint over both columns.
 2. **Deleting the parent reaches the child.** `ON DELETE CASCADE` removes it, `RESTRICT` refuses
-   until the application has removed it. `ON DELETE SET NULL` on an *owning* key does neither: it
+   until the application has removed it. `ON DELETE SET NULL` on an _owning_ key does neither: it
    manufactures the orphan on purpose. It is right for a reference (an assessor, a verifier), wrong
    for a parent.
 3. **The child holds the key, not the parent.** A one-to-one where the parent carries the pointer
@@ -74,251 +74,258 @@ refuses a row without its parent. `Held by the parent` is the inverse one-to-one
 
 ### Account
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `Authority` | — | Root | No | Reference data. |
-| `ConductAgreement` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
-| `Organization` | — | Root | No | Reference data. |
-| `PasskeyCredential` | User `user_id` | Required | No | Cascades on user deletion. |
-| `User` | — | Root | No | Account root. |
-| `UserActivity` | User `user_id` | Required | No | Cascades on user deletion. |
-| `UserAiPreference` | User `user_id` | Required | No | Cascades on user deletion. |
-| `UserRecoveryKey` | User `user_id` | Required | No | Cascades on user deletion. |
+| Entity              | Belongs to                            | Parent required | Orphan possible | Notes                      |
+| ------------------- | ------------------------------------- | --------------- | --------------- | -------------------------- |
+| `Authority`         | —                                     | Root            | No              | Reference data.            |
+| `ConductAgreement`  | Course `course_id` and User `user_id` | Required (all)  | No              | Cascades on both.          |
+| `Organization`      | —                                     | Root            | No              | Reference data.            |
+| `PasskeyCredential` | User `user_id`                        | Required        | No              | Cascades on user deletion. |
+| `User`              | —                                     | Root            | No              | Account root.              |
+| `UserActivity`      | User `user_id`                        | Required        | No              | Cascades on user deletion. |
+| `UserAiPreference`  | User `user_id`                        | Required        | No              | Cascades on user deletion. |
+| `UserRecoveryKey`   | User `user_id`                        | Required        | No              | Cascades on user deletion. |
 
 ### Admin
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `ApplicationAuditEvent` | — | Root | No | Audit trail, deliberately independent. |
-| `CleanupJobExecution` | — | Root | No | Operational log. |
-| `DataExport` | User `user_id` | Required | No |  |
-| `LLMTokenUsageRequest` | LLMTokenUsageTrace `trace_id` | Required | No |  |
-| `LLMTokenUsageTrace` | — | Root | No | Usage record; every id column is a nullable reference. |
-| `MigrationChangelog` | — | Root | No | Operational log. |
-| `PersistentAuditEvent` | — | Root | No | Audit trail, deliberately independent. |
-| `SecurityAuditEvent` | — | Root | No | Audit trail, deliberately independent. |
+| Entity                  | Belongs to                    | Parent required | Orphan possible | Notes                                                  |
+| ----------------------- | ----------------------------- | --------------- | --------------- | ------------------------------------------------------ |
+| `ApplicationAuditEvent` | —                             | Root            | No              | Audit trail, deliberately independent.                 |
+| `CleanupJobExecution`   | —                             | Root            | No              | Operational log.                                       |
+| `DataExport`            | User `user_id`                | Required        | No              |                                                        |
+| `LLMTokenUsageRequest`  | LLMTokenUsageTrace `trace_id` | Required        | No              |                                                        |
+| `LLMTokenUsageTrace`    | —                             | Root            | No              | Usage record; every id column is a nullable reference. |
+| `MigrationChangelog`    | —                             | Root            | No              | Operational log.                                       |
+| `PersistentAuditEvent`  | —                             | Root            | No              | Audit trail, deliberately independent.                 |
+| `SecurityAuditEvent`    | —                             | Root            | No              | Audit trail, deliberately independent.                 |
 
 ### Assessment
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `AssessmentNote` | Result `result_id` | Required | No |  |
-| `Bonus` | GradingScale `bonus_to_grading_scale_id` | Required | No |  |
-| `Complaint` | Result `result_id` | Required | No | Complainant is a student or a team; both columns are nullable. |
-| `ComplaintResponse` | Complaint `complaint_id` | Required | No |  |
-| `ExampleSubmission` | Exercise `exercise_id` | Required | No |  |
-| `Feedback` | Result `result_id` | Required | No | Cascades. |
-| `FeedbackMessage` | — | Root | No | Reference data. |
-| `GradeStep` | GradingScale `grading_scale_id` | Required | No |  |
-| `GradingCriterion` | Exercise `exercise_id` | Required | No |  |
-| `GradingInstruction` | GradingCriterion `grading_criterion_id` | Required | No |  |
-| `GradingScale` | Course `course_id` or Exam `exam_id` | Required (check constraint) | No | `CHECK_GRADING_SCALE_COURSE_OR_EXAM`. |
-| `LongFeedbackText` | Feedback `feedback_id` | Required | No | Cascades on feedback deletion. |
-| `ParticipantScore` and 2 subclasses | Exercise `exercise_id` | Required | No | Participant is a user or a team; both columns are nullable. |
-| `Rating` | Result `result_id` | Required | No |  |
-| `Result` | Submission `submission_id` | Required | No |  |
-| `ScaFeedback` | Result `result_id` | Required | No |  |
-| `TestCaseFeedback` | Result `result_id` | Required | No |  |
-| `TutorParticipation` | Exercise `assessed_exercise_id` | Required | No |  |
+| Entity                              | Belongs to                               | Parent required             | Orphan possible | Notes                                                          |
+| ----------------------------------- | ---------------------------------------- | --------------------------- | --------------- | -------------------------------------------------------------- |
+| `AssessmentNote`                    | Result `result_id`                       | Required                    | No              |                                                                |
+| `Bonus`                             | GradingScale `bonus_to_grading_scale_id` | Required                    | No              |                                                                |
+| `Complaint`                         | Result `result_id`                       | Required                    | No              | Complainant is a student or a team; both columns are nullable. |
+| `ComplaintResponse`                 | Complaint `complaint_id`                 | Required                    | No              |                                                                |
+| `ExampleSubmission`                 | Exercise `exercise_id`                   | Required                    | No              |                                                                |
+| `Feedback`                          | Result `result_id`                       | Required                    | No              | Cascades.                                                      |
+| `FeedbackMessage`                   | —                                        | Root                        | No              | Reference data.                                                |
+| `GradeStep`                         | GradingScale `grading_scale_id`          | Required                    | No              |                                                                |
+| `GradingCriterion`                  | Exercise `exercise_id`                   | Required                    | No              |                                                                |
+| `GradingInstruction`                | GradingCriterion `grading_criterion_id`  | Required                    | No              |                                                                |
+| `GradingScale`                      | Course `course_id` or Exam `exam_id`     | Required (check constraint) | No              | `CHECK_GRADING_SCALE_COURSE_OR_EXAM`.                          |
+| `LongFeedbackText`                  | Feedback `feedback_id`                   | Required                    | No              | Cascades on feedback deletion.                                 |
+| `ParticipantScore` and 2 subclasses | Exercise `exercise_id`                   | Required                    | No              | Participant is a user or a team; both columns are nullable.    |
+| `Rating`                            | Result `result_id`                       | Required                    | No              |                                                                |
+| `Result`                            | Submission `submission_id`               | Required                    | No              |                                                                |
+| `ScaFeedback`                       | Result `result_id`                       | Required                    | No              |                                                                |
+| `TestCaseFeedback`                  | Result `result_id`                       | Required                    | No              |                                                                |
+| `TutorParticipation`                | Exercise `assessed_exercise_id`          | Required                    | No              |                                                                |
 
 ### Atlas
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `Competency` and 2 subclasses | Course `course_id` | Required | No |  |
-| `CompetencyExerciseLink` | Competency `competency_id` and Exercise `exercise_id` | Required (all) | No |  |
-| `CompetencyLectureUnitLink` | Competency `competency_id` and LectureUnit `lecture_unit_id` | Required (all) | No |  |
-| `CompetencyProgress` | Competency `competency_id` and User `user_id` | Required (all) | No |  |
-| `CompetencyRelation` | Competency head and tail | Required (all) | No | Cascades on both. |
-| `CourseLearnerProfile` | Course `course_id` and LearnerProfile `learner_profile_id` | Required (all) | No |  |
-| `KnowledgeArea` | KnowledgeArea `parent_id` | Optional | **Yes** | Self-referencing tree; a null parent is a legitimate root. |
-| `LearnerProfile` | User `user_id` | Required | No | Unique per account, cascades on account deletion. |
-| `LearningPath` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
-| `ScienceEvent` | — | Root | No | Analytics event; `resource_id` is an untyped pointer with no foreign key. |
-| `ScienceSetting` | — | Root | No | Keyed by user login rather than by foreign key. |
-| `Source` | — | Root | No | Reference data. |
-| `StandardizedCompetency` | KnowledgeArea `knowledge_area_id` | Required | No |  |
+| Entity                        | Belongs to                                                   | Parent required | Orphan possible | Notes                                                                     |
+| ----------------------------- | ------------------------------------------------------------ | --------------- | --------------- | ------------------------------------------------------------------------- |
+| `Competency` and 2 subclasses | Course `course_id`                                           | Required        | No              |                                                                           |
+| `CompetencyExerciseLink`      | Competency `competency_id` and Exercise `exercise_id`        | Required (all)  | No              |                                                                           |
+| `CompetencyLectureUnitLink`   | Competency `competency_id` and LectureUnit `lecture_unit_id` | Required (all)  | No              |                                                                           |
+| `CompetencyProgress`          | Competency `competency_id` and User `user_id`                | Required (all)  | No              |                                                                           |
+| `CompetencyRelation`          | Competency head and tail                                     | Required (all)  | No              | Cascades on both.                                                         |
+| `CourseLearnerProfile`        | Course `course_id` and LearnerProfile `learner_profile_id`   | Required (all)  | No              |                                                                           |
+| `KnowledgeArea`               | KnowledgeArea `parent_id`                                    | Optional        | **Yes**         | Self-referencing tree; a null parent is a legitimate root.                |
+| `LearnerProfile`              | User `user_id`                                               | Required        | No              | Unique per account, cascades on account deletion.                         |
+| `LearningPath`                | Course `course_id` and User `user_id`                        | Required (all)  | No              | Cascades on both.                                                         |
+| `ScienceEvent`                | —                                                            | Root            | No              | Analytics event; `resource_id` is an untyped pointer with no foreign key. |
+| `ScienceSetting`              | —                                                            | Root            | No              | Keyed by user login rather than by foreign key.                           |
+| `Source`                      | —                                                            | Root            | No              | Reference data.                                                           |
+| `StandardizedCompetency`      | KnowledgeArea `knowledge_area_id`                            | Required        | No              |                                                                           |
 
 ### Communication
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `AnswerPost` | Post `post_id` | Required | No |  |
-| `Conversation` and 3 subclasses | Course `course_id` | Required | No |  |
-| `ConversationParticipant` | Conversation `conversation_id` and User `user_id` | Required (all) | No |  |
-| `Faq` | Course `course_id` | Required | No |  |
-| `ForwardedMessage` | Post `destination_post_id` or AnswerPost `destination_answer_id` | Required (check constraint) | No | `CHECK_DESTINATION_POST_OR_ANSWER`. |
-| `Post` | Conversation `conversation_id` or PlagiarismCase `plagiarism_case_id` | Required (alternatives) | No | `CK_POST_HAS_A_PARENT` requires one of the two. |
-| `Reaction` | Post `post_id` or AnswerPost `answer_post_id` | Required (check constraint) | No | `CHECK_REACTION_POST_OR_ANSWER`. |
-| `SavedPost` | User `user_id` | Required | No |  |
+| Entity                          | Belongs to                                                            | Parent required             | Orphan possible | Notes                                           |
+| ------------------------------- | --------------------------------------------------------------------- | --------------------------- | --------------- | ----------------------------------------------- |
+| `AnswerPost`                    | Post `post_id`                                                        | Required                    | No              |                                                 |
+| `Conversation` and 3 subclasses | Course `course_id`                                                    | Required                    | No              |                                                 |
+| `ConversationParticipant`       | Conversation `conversation_id` and User `user_id`                     | Required (all)              | No              |                                                 |
+| `Faq`                           | Course `course_id`                                                    | Required                    | No              |                                                 |
+| `ForwardedMessage`              | Post `destination_post_id` or AnswerPost `destination_answer_id`      | Required (check constraint) | No              | `CHECK_DESTINATION_POST_OR_ANSWER`.             |
+| `Post`                          | Conversation `conversation_id` or PlagiarismCase `plagiarism_case_id` | Required (alternatives)     | No              | `CK_POST_HAS_A_PARENT` requires one of the two. |
+| `Reaction`                      | Post `post_id` or AnswerPost `answer_post_id`                         | Required (check constraint) | No              | `CHECK_REACTION_POST_OR_ANSWER`.                |
+| `SavedPost`                     | User `user_id`                                                        | Required                    | No              |                                                 |
 
 ### Core
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `CalendarSubscriptionTokenStore` | User `jhi_user_id` | Required | No | Cascades on user deletion. |
-| `FeatureUsageDaily` | TrackedFeature `feature_id` | Required | No | Cascades. |
-| `FileUpload` | — | Root | No | Tracks an uploaded file by path. |
-| `TrackedFeature` | — | Root | No | Reference data. |
-| `UserCourseRole` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
+| Entity                           | Belongs to                            | Parent required | Orphan possible | Notes                            |
+| -------------------------------- | ------------------------------------- | --------------- | --------------- | -------------------------------- |
+| `CalendarSubscriptionTokenStore` | User `jhi_user_id`                    | Required        | No              | Cascades on user deletion.       |
+| `FeatureUsageDaily`              | TrackedFeature `feature_id`           | Required        | No              | Cascades.                        |
+| `FileUpload`                     | —                                     | Root            | No              | Tracks an uploaded file by path. |
+| `TrackedFeature`                 | —                                     | Root            | No              | Reference data.                  |
+| `UserCourseRole`                 | Course `course_id` and User `user_id` | Required (all)  | No              | Cascades on both.                |
 
 ### Course
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `Course` | — | Root | No | The main aggregate root. |
-| `CourseAthenaConfig` | Course `course.athena_config_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
-| `CourseConfiguration` | Course `course.course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
-| `CourseRequest` | User `requester_id` | Required | No | `created_course_id` is a result link, not a parent. |
+| Entity                | Belongs to                              | Parent required    | Orphan possible | Notes                                               |
+| --------------------- | --------------------------------------- | ------------------ | --------------- | --------------------------------------------------- |
+| `Course`              | —                                       | Root               | No              | The main aggregate root.                            |
+| `CourseAthenaConfig`  | Course `course.athena_config_id`        | Held by the parent | **Yes**         | The course points at it; nothing points back.       |
+| `CourseConfiguration` | Course `course.course_configuration_id` | Held by the parent | **Yes**         | The course points at it; nothing points back.       |
+| `CourseRequest`       | User `requester_id`                     | Required           | No              | `created_course_id` is a result link, not a parent. |
 
 ### Exam
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `Exam` | Course `course_id` | Required | No |  |
-| `ExamLiveEvent` and 4 subclasses | Exam `exam_id` | Required | No | Cascades on exam deletion. |
-| `ExamRoom` | — | Root | No | Shared infrastructure, reused across exams. |
-| `ExamRoomExamAssignment` | Exam `exam_id` and ExamRoom `exam_room_id` | Required (all) | No |  |
-| `ExamSession` | StudentExam `student_exam_id` | Required | No |  |
-| `ExamUser` | Exam `exam_id` | Required | No |  |
-| `ExerciseGroup` | Exam `exam_id` | Required | No |  |
-| `LayoutStrategy` | ExamRoom `exam_room_id` | Required | No |  |
-| `StudentExam` | Exam `exam_id` | Required | No | `user_id` is nullable for test runs. |
+| Entity                           | Belongs to                                 | Parent required | Orphan possible | Notes                                       |
+| -------------------------------- | ------------------------------------------ | --------------- | --------------- | ------------------------------------------- |
+| `Exam`                           | Course `course_id`                         | Required        | No              |                                             |
+| `ExamLiveEvent` and 4 subclasses | Exam `exam_id`                             | Required        | No              | Cascades on exam deletion.                  |
+| `ExamRoom`                       | —                                          | Root            | No              | Shared infrastructure, reused across exams. |
+| `ExamRoomExamAssignment`         | Exam `exam_id` and ExamRoom `exam_room_id` | Required (all)  | No              |                                             |
+| `ExamSession`                    | StudentExam `student_exam_id`              | Required        | No              |                                             |
+| `ExamUser`                       | Exam `exam_id`                             | Required        | No              |                                             |
+| `ExerciseGroup`                  | Exam `exam_id`                             | Required        | No              |                                             |
+| `LayoutStrategy`                 | ExamRoom `exam_room_id`                    | Required        | No              |                                             |
+| `StudentExam`                    | Exam `exam_id`                             | Required        | No              | `user_id` is nullable for test runs.        |
 
 ### Exercise
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `Comment` | CommentThread `thread_id` | Required | No | Cascades on thread deletion. |
-| `CommentThread` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
-| `CommentThreadGroup` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
-| `Exercise` and 5 subclasses | Course `course_id` or ExerciseGroup `exercise_group_id` | Required (check constraint) | No | `CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP`. |
-| `ExerciseVariantGroup` | Course `course_id` | Required | No | The key lives on the group, so a course-less group cannot be written. |
-| `ExerciseVersion` | Exercise `exercise_id` | Required | No | Cascades on exercise deletion. |
-| `Participation` and 2 subclasses | Exercise `exercise_id` | Optional | **Yes** | Nullable. Template and solution participations are reached from the exercise instead. |
-| `Submission` and 5 subclasses | Participation `participation_id` | Optional | **Yes** | Nullable. |
-| `SubmissionVersion` | Submission `submission_id` | Required | No | Cascades on submission deletion. |
-| `Team` | Exercise `exercise_id` | Required | No |  |
-| `TeamAssignmentConfig` | Exercise `exercise.team_assignment_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
+| Entity                           | Belongs to                                              | Parent required             | Orphan possible | Notes                                                                                 |
+| -------------------------------- | ------------------------------------------------------- | --------------------------- | --------------- | ------------------------------------------------------------------------------------- |
+| `Comment`                        | CommentThread `thread_id`                               | Required                    | No              | Cascades on thread deletion.                                                          |
+| `CommentThread`                  | Exercise `exercise_id`                                  | Required                    | No              | Cascades on exercise deletion.                                                        |
+| `CommentThreadGroup`             | Exercise `exercise_id`                                  | Required                    | No              | Cascades on exercise deletion.                                                        |
+| `Exercise` and 5 subclasses      | Course `course_id` or ExerciseGroup `exercise_group_id` | Required (check constraint) | No              | `CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP`.                                            |
+| `ExerciseVariantGroup`           | Course `course_id`                                      | Required                    | No              | The key lives on the group, so a course-less group cannot be written.                 |
+| `ExerciseVersion`                | Exercise `exercise_id`                                  | Required                    | No              | Cascades on exercise deletion.                                                        |
+| `Participation` and 2 subclasses | Exercise `exercise_id`                                  | Optional                    | **Yes**         | Nullable. Template and solution participations are reached from the exercise instead. |
+| `Submission` and 5 subclasses    | Participation `participation_id`                        | Optional                    | **Yes**         | Nullable.                                                                             |
+| `SubmissionVersion`              | Submission `submission_id`                              | Required                    | No              | Cascades on submission deletion.                                                      |
+| `Team`                           | Exercise `exercise_id`                                  | Required                    | No              |                                                                                       |
+| `TeamAssignmentConfig`           | Exercise `exercise.team_assignment_config_id`           | Held by the parent          | **Yes**         | The exercise points at it; nothing points back.                                       |
 
 ### Iris
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `IrisCourseSettingsEntity` | Course `course_id` | Required | No | Cascades. |
-| `IrisJsonMessageContent` | IrisMessageContent, shared primary key | Required | No | Cascades. |
-| `IrisMessage` | IrisSession `session_id` | Required | No | Cascades. |
-| `IrisMessageContent` | IrisMessage `message_id` | Required | No | Cascades. |
-| `IrisProactiveEpisode` | User `user_id` and Exercise `exercise_id` | Required (all) | No | Cascades on both. Carries the ids directly rather than associations, because a session cannot identify the episode. |
-| `IrisSession` and 2 subclasses | User `user_id` | Required | No | Cascades. The course or post it also names varies by subclass. |
-| `IrisTextMessageContent` | IrisMessageContent, shared primary key | Required | No | Cascades. |
+| Entity                         | Belongs to                                | Parent required | Orphan possible | Notes                                                                                                               |
+| ------------------------------ | ----------------------------------------- | --------------- | --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `IrisCourseSettingsEntity`     | Course `course_id`                        | Required        | No              | Cascades.                                                                                                           |
+| `IrisJsonMessageContent`       | IrisMessageContent, shared primary key    | Required        | No              | Cascades.                                                                                                           |
+| `IrisMessage`                  | IrisSession `session_id`                  | Required        | No              | Cascades.                                                                                                           |
+| `IrisMessageContent`           | IrisMessage `message_id`                  | Required        | No              | Cascades.                                                                                                           |
+| `IrisProactiveEpisode`         | User `user_id` and Exercise `exercise_id` | Required (all)  | No              | Cascades on both. Carries the ids directly rather than associations, because a session cannot identify the episode. |
+| `IrisSession` and 2 subclasses | User `user_id`                            | Required        | No              | Cascades. The course or post it also names varies by subclass.                                                      |
+| `IrisTextMessageContent`       | IrisMessageContent, shared primary key    | Required        | No              | Cascades.                                                                                                           |
 
 ### LTI
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `LtiPlatformConfiguration` | — | Root | No | Server-wide platform registration. |
-| `LtiResourceLaunch` | User `user_id` | Required | No | `exercise_id` is nullable. |
-| `OnlineCourseConfiguration` | Course `course.online_course_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
-| `UserLti` | User `user_id` | Required | No | Cascades. |
+| Entity                      | Belongs to                                     | Parent required    | Orphan possible | Notes                                         |
+| --------------------------- | ---------------------------------------------- | ------------------ | --------------- | --------------------------------------------- |
+| `LtiPlatformConfiguration`  | —                                              | Root               | No              | Server-wide platform registration.            |
+| `LtiResourceLaunch`         | User `user_id`                                 | Required           | No              | `exercise_id` is nullable.                    |
+| `OnlineCourseConfiguration` | Course `course.online_course_configuration_id` | Held by the parent | **Yes**         | The course points at it; nothing points back. |
+| `UserLti`                   | User `user_id`                                 | Required           | No              | Cascades.                                     |
 
 ### Lecture
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `Attachment` | AttachmentVideoUnit `attachment_unit_id` | Required | No |  |
-| `IrisLectureUnitSyncState` | LectureUnit `lecture_unit_id` | Required | No | Cascades. |
-| `Lecture` | Course `course_id` | Required | No |  |
-| `LectureTranscription` | LectureUnit `lecture_unit_id` | Required | No | Cascades. |
-| `LectureUnit` and 4 subclasses | Lecture `lecture_id` | Required | No |  |
-| `LectureUnitCompletion` | LectureUnit `lecture_unit_id` and User `user_id` | Required (all) | No |  |
-| `LectureUnitProcessingState` | LectureUnit `lecture_unit_id` | Required | No | Cascades. |
-| `Slide` | AttachmentVideoUnit `attachment_unit_id` | Required | No | Cascades. A slide the instructor replaced is marked `superseded` rather than detached. |
+| Entity                         | Belongs to                                       | Parent required | Orphan possible | Notes                                                                                  |
+| ------------------------------ | ------------------------------------------------ | --------------- | --------------- | -------------------------------------------------------------------------------------- |
+| `Attachment`                   | AttachmentVideoUnit `attachment_unit_id`         | Required        | No              |                                                                                        |
+| `IrisLectureUnitSyncState`     | LectureUnit `lecture_unit_id`                    | Required        | No              | Cascades.                                                                              |
+| `Lecture`                      | Course `course_id`                               | Required        | No              |                                                                                        |
+| `LectureTranscription`         | LectureUnit `lecture_unit_id`                    | Required        | No              | Cascades.                                                                              |
+| `LectureUnit` and 4 subclasses | Lecture `lecture_id`                             | Required        | No              |                                                                                        |
+| `LectureUnitCompletion`        | LectureUnit `lecture_unit_id` and User `user_id` | Required (all)  | No              |                                                                                        |
+| `LectureUnitProcessingState`   | LectureUnit `lecture_unit_id`                    | Required        | No              | Cascades.                                                                              |
+| `Slide`                        | AttachmentVideoUnit `attachment_unit_id`         | Required        | No              | Cascades. A slide the instructor replaced is marked `superseded` rather than detached. |
 
 ### Local CI
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `BuildJob` | — | Root | No | Build queue record; `result_id` is a reference, not a parent. |
+| Entity     | Belongs to | Parent required | Orphan possible | Notes                                                         |
+| ---------- | ---------- | --------------- | --------------- | ------------------------------------------------------------- |
+| `BuildJob` | —          | Root            | No              | Build queue record; `result_id` is a reference, not a parent. |
 
 ### Modeling
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `ApollonDiagram` | — | Root | No | Stores a course id as a plain column with no foreign key. |
+| Entity           | Belongs to | Parent required | Orphan possible | Notes                                                     |
+| ---------------- | ---------- | --------------- | --------------- | --------------------------------------------------------- |
+| `ApollonDiagram` | —          | Root            | No              | Stores a course id as a plain column with no foreign key. |
 
 ### Notification
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `CourseNotification` | Course `course_id` | Required | No |  |
-| `CourseNotificationParameter` | CourseNotification `course_notification_id` | Required | No |  |
-| `GlobalNotificationSetting` | User `user_id` | Required | No |  |
-| `PushNotificationDeviceConfiguration` | User `user_id` | Required | No |  |
-| `SystemNotification` | — | Root | No | Server-wide banner, belongs to nothing. |
-| `UserCourseNotificationSettingPreset` | Course `course_id` and User `user_id` | Required (all) | No |  |
-| `UserCourseNotificationSettingSpecification` | Course `course_id` and User `user_id` | Required (all) | No |  |
-| `UserCourseNotificationStatus` | CourseNotification `course_notification_id` and User `user_id` | Required (all) | No |  |
+| Entity                                       | Belongs to                                                     | Parent required | Orphan possible | Notes                                   |
+| -------------------------------------------- | -------------------------------------------------------------- | --------------- | --------------- | --------------------------------------- |
+| `CourseNotification`                         | Course `course_id`                                             | Required        | No              |                                         |
+| `CourseNotificationParameter`                | CourseNotification `course_notification_id`                    | Required        | No              |                                         |
+| `GlobalNotificationSetting`                  | User `user_id`                                                 | Required        | No              |                                         |
+| `PushNotificationDeviceConfiguration`        | User `user_id`                                                 | Required        | No              |                                         |
+| `SystemNotification`                         | —                                                              | Root            | No              | Server-wide banner, belongs to nothing. |
+| `UserCourseNotificationSettingPreset`        | Course `course_id` and User `user_id`                          | Required (all)  | No              |                                         |
+| `UserCourseNotificationSettingSpecification` | Course `course_id` and User `user_id`                          | Required (all)  | No              |                                         |
+| `UserCourseNotificationStatus`               | CourseNotification `course_notification_id` and User `user_id` | Required (all)  | No              |                                         |
 
 ### Plagiarism
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `PlagiarismCase` | Exercise `exercise_id` | Required | No |  |
-| `PlagiarismComparison` | PlagiarismResult `plagiarism_result_id` | Required | No |  |
-| `PlagiarismDetectionConfig` | Exercise `exercise.plagiarism_detection_config_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
-| `PlagiarismResult` | Exercise `exercise_id` | Required | No |  |
-| `PlagiarismSubmission` | PlagiarismComparison `plagiarism_comparison_id` | Required | No | Cascades. `comparison_side` says which half of the pair it is; the plagiarism case is a reference, not a parent. |
-| `PlagiarismSubmissionElement` | PlagiarismSubmission `plagiarism_submission_id` | Optional | **Yes** | Nullable, though it cascades when set. |
+| Entity                        | Belongs to                                         | Parent required    | Orphan possible | Notes                                                                                                            |
+| ----------------------------- | -------------------------------------------------- | ------------------ | --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `PlagiarismCase`              | Exercise `exercise_id`                             | Required           | No              |                                                                                                                  |
+| `PlagiarismComparison`        | PlagiarismResult `plagiarism_result_id`            | Required           | No              |                                                                                                                  |
+| `PlagiarismDetectionConfig`   | Exercise `exercise.plagiarism_detection_config_id` | Held by the parent | **Yes**         | The exercise points at it; nothing points back.                                                                  |
+| `PlagiarismResult`            | Exercise `exercise_id`                             | Required           | No              |                                                                                                                  |
+| `PlagiarismSubmission`        | PlagiarismComparison `plagiarism_comparison_id`    | Required           | No              | Cascades. `comparison_side` says which half of the pair it is; the plagiarism case is a reference, not a parent. |
+| `PlagiarismSubmissionElement` | PlagiarismSubmission `plagiarism_submission_id`    | Optional           | **Yes**         | Nullable, though it cascades when set.                                                                           |
+
+### Presentation
+
+| Entity                           | Belongs to                                          | Parent required | Orphan possible | Notes                                                                      |
+| -------------------------------- | --------------------------------------------------- | --------------- | --------------- | -------------------------------------------------------------------------- |
+| `PresentationAssessment`         | Course `course_id`                                  | Required        | No              | Cascades on course deletion. The linked exercise is an optional reference. |
+| `PresentationAssessmentInstance` | PresentationAssessment `presentation_assessment_id` | Required        | No              | Cascades on assessment deletion.                                           |
 
 ### Programming
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `AuxiliaryRepository` | ProgrammingExercise `exercise_id` | Required | No | Ordered by id, so the exercise's collection no longer owns the row's foreign key. |
-| `BuildLogEntry` | ProgrammingSubmission `programming_submission_id` | Required | No |  |
-| `BuildPlan` | Exercise `exercise.build_plan_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
-| `Ide` | — | Root | No | Reference data. |
-| `ParticipationVCSAccessToken` | Participation `participation_id` and User `user_id` | Required (all) | No |  |
-| `ProgrammingExerciseBuildConfig` | ProgrammingExercise, through the `programming_exercise_details` secondary table | Held by the parent | **Yes** | No foreign key in either direction. |
-| `ProgrammingExerciseBuildStatistics` | — | Root | No | Keyed by exercise id as a plain column with no foreign key. |
-| `ProgrammingExerciseTask` | ProgrammingExercise `exercise_id` | Required | No |  |
-| `ProgrammingExerciseTestCase` | ProgrammingExercise `exercise_id` | Required | No |  |
-| `RepositoryVCSAccessToken` | Exercise `exercise_id` and User `user_id` | Required | No |  |
-| `StaticCodeAnalysisCategory` | ProgrammingExercise `exercise_id` | Required | No |  |
-| `SubmissionPolicy` and 2 subclasses | Exercise `exercise.submission_policy_id` | Held by the parent | **Yes** | The exercise points at it; nothing points back. |
-| `UserIdeMapping` | Ide `ide_id` and User `user_id` | Required (all) | No |  |
-| `UserSshPublicKey` | User `user_id` | Required | No |  |
-| `UserVCSAccessToken` | User `user_id` | Required | No | Cascades on user deletion. |
-| `VcsAccessLog` | Participation `participation_id` | Required | No | Cascades. The account that acted is a reference and is cleared when it is deleted. |
+| Entity                               | Belongs to                                                                      | Parent required    | Orphan possible | Notes                                                                              |
+| ------------------------------------ | ------------------------------------------------------------------------------- | ------------------ | --------------- | ---------------------------------------------------------------------------------- |
+| `AuxiliaryRepository`                | ProgrammingExercise `exercise_id`                                               | Required           | No              | Ordered by id, so the exercise's collection no longer owns the row's foreign key.  |
+| `BuildLogEntry`                      | ProgrammingSubmission `programming_submission_id`                               | Required           | No              |                                                                                    |
+| `BuildPlan`                          | Exercise `exercise.build_plan_id`                                               | Held by the parent | **Yes**         | The exercise points at it; nothing points back.                                    |
+| `Ide`                                | —                                                                               | Root               | No              | Reference data.                                                                    |
+| `ParticipationVCSAccessToken`        | Participation `participation_id` and User `user_id`                             | Required (all)     | No              |                                                                                    |
+| `ProgrammingExerciseBuildConfig`     | ProgrammingExercise, through the `programming_exercise_details` secondary table | Held by the parent | **Yes**         | No foreign key in either direction.                                                |
+| `ProgrammingExerciseBuildStatistics` | —                                                                               | Root               | No              | Keyed by exercise id as a plain column with no foreign key.                        |
+| `ProgrammingExerciseTask`            | ProgrammingExercise `exercise_id`                                               | Required           | No              |                                                                                    |
+| `ProgrammingExerciseTestCase`        | ProgrammingExercise `exercise_id`                                               | Required           | No              |                                                                                    |
+| `RepositoryVCSAccessToken`           | Exercise `exercise_id` and User `user_id`                                       | Required           | No              |                                                                                    |
+| `StaticCodeAnalysisCategory`         | ProgrammingExercise `exercise_id`                                               | Required           | No              |                                                                                    |
+| `SubmissionPolicy` and 2 subclasses  | Exercise `exercise.submission_policy_id`                                        | Held by the parent | **Yes**         | The exercise points at it; nothing points back.                                    |
+| `UserIdeMapping`                     | Ide `ide_id` and User `user_id`                                                 | Required (all)     | No              |                                                                                    |
+| `UserSshPublicKey`                   | User `user_id`                                                                  | Required           | No              |                                                                                    |
+| `UserVCSAccessToken`                 | User `user_id`                                                                  | Required           | No              | Cascades on user deletion.                                                         |
+| `VcsAccessLog`                       | Participation `participation_id`                                                | Required           | No              | Cascades. The account that acted is a reference and is cleared when it is deleted. |
 
 ### Quiz
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `QuizBatch` | QuizExercise `quiz_id` | Required | No |  |
-| `QuizQuestion` and 3 subclasses | QuizExercise `exercise_id` | Required | No | Cascades. |
-| `QuizQuestionProgress` | Course, QuizQuestion and User | Required (all) | No | Cascades on all three. |
-| `QuizTrainingLeaderboard` | Course `course_id` and User `user_id` | Required (all) | No | Cascades on both. |
-| `SubmittedAnswer` and 3 subclasses | Submission `submission_id` | Required | No |  |
+| Entity                             | Belongs to                            | Parent required | Orphan possible | Notes                  |
+| ---------------------------------- | ------------------------------------- | --------------- | --------------- | ---------------------- |
+| `QuizBatch`                        | QuizExercise `quiz_id`                | Required        | No              |                        |
+| `QuizQuestion` and 3 subclasses    | QuizExercise `exercise_id`            | Required        | No              | Cascades.              |
+| `QuizQuestionProgress`             | Course, QuizQuestion and User         | Required (all)  | No              | Cascades on all three. |
+| `QuizTrainingLeaderboard`          | Course `course_id` and User `user_id` | Required (all)  | No              | Cascades on both.      |
+| `SubmittedAnswer` and 3 subclasses | Submission `submission_id`            | Required        | No              |                        |
 
 ### Text
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `TextAssessmentEvent` | — | Root | No | Analytics event; ids are plain columns with no foreign key. |
-| `TextBlock` | TextSubmission `submission_id` | Required | No |  |
+| Entity                | Belongs to                     | Parent required | Orphan possible | Notes                                                       |
+| --------------------- | ------------------------------ | --------------- | --------------- | ----------------------------------------------------------- |
+| `TextAssessmentEvent` | —                              | Root            | No              | Analytics event; ids are plain columns with no foreign key. |
+| `TextBlock`           | TextSubmission `submission_id` | Required        | No              |                                                             |
 
 ### Tutorial group
 
-| Entity | Belongs to | Parent required | Orphan possible | Notes |
-| --- | --- | --- | --- | --- |
-| `TutorialGroup` | Course `course_id` | Required | No |  |
-| `TutorialGroupFreePeriod` | TutorialGroupsConfiguration `tutorial_groups_configuration_id` | Required | No |  |
-| `TutorialGroupRegistration` | TutorialGroup `tutorial_group_id` and User `student_id` | Required (all) | No |  |
-| `TutorialGroupSchedule` | TutorialGroup `tutorial_group_id` | Required | No |  |
-| `TutorialGroupSession` | TutorialGroup `tutorial_group_id` | Required | No |  |
-| `TutorialGroupsConfiguration` | Course `course.tutorial_groups_configuration_id` | Held by the parent | **Yes** | The course points at it; nothing points back. |
+| Entity                        | Belongs to                                                     | Parent required    | Orphan possible | Notes                                         |
+| ----------------------------- | -------------------------------------------------------------- | ------------------ | --------------- | --------------------------------------------- |
+| `TutorialGroup`               | Course `course_id`                                             | Required           | No              |                                               |
+| `TutorialGroupFreePeriod`     | TutorialGroupsConfiguration `tutorial_groups_configuration_id` | Required           | No              |                                               |
+| `TutorialGroupRegistration`   | TutorialGroup `tutorial_group_id` and User `student_id`        | Required (all)     | No              |                                               |
+| `TutorialGroupSchedule`       | TutorialGroup `tutorial_group_id`                              | Required           | No              |                                               |
+| `TutorialGroupSession`        | TutorialGroup `tutorial_group_id`                              | Required           | No              |                                               |
+| `TutorialGroupsConfiguration` | Course `course.tutorial_groups_configuration_id`               | Held by the parent | **Yes**         | The course points at it; nothing points back. |
 
 ## Finding orphans
 
@@ -437,7 +444,7 @@ name.
 
 ## Where orphans are still possible
 
-Of the 147 tables behind the 186 entities, 87 have a required parent, 24 are roots by design, 18 are
+Of the 149 tables behind the 188 entities, 89 have a required parent, 24 are roots by design, 18 are
 join entities whose parents are all required and five carry a check constraint over alternative
 parents. That leaves **13 tables where the schema permits an orphan**, in two shapes.
 

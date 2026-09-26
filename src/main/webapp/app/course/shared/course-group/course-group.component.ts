@@ -1,6 +1,6 @@
-import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, model, signal, untracked, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, of } from 'rxjs';
+import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
@@ -20,10 +20,11 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
-import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { Button, ButtonDirective } from 'primeng/button';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-group',
@@ -66,13 +67,26 @@ export class CourseGroupComponent {
             }
             untracked(() => this.tableViewRef()?.reset());
         });
+        effect(() => this.handleUsersSizeChange()(this.displayedRows().length));
     }
 
     readonly isAdmin = input(false);
     readonly course = input.required<Course>();
     readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
     readonly courseRoleSlug = input.required<CourseRoleSlug>();
+    readonly allGroupUsers = model<User[]>([]);
+    readonly paginated = input(true);
+    readonly hiddenColumnFields = input<string[]>([]);
+    readonly profilePictureHeaderKey = input('artemisApp.course.courseGroup.profilePicture');
+    readonly allowAddingUsers = input(true);
+    readonly allowRemovingUsers = input(true);
+    readonly isDisabled = input(false);
+    readonly exportFileName = input<string>();
+    readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>();
+    readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly removeUserFromGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
+    readonly handleUsersSizeChange = input<(usersSize: number) => void>(() => {});
+    readonly removeUserQuestionKey = input('artemisApp.course.courseGroup.removeFromGroup.modalQuestion');
 
     protected readonly ActionType = ActionType;
 
@@ -83,8 +97,22 @@ export class CourseGroupComponent {
     readonly totalRows = signal<number>(0);
     readonly isLoading = signal<boolean>(false);
 
+    readonly displayedRows = computed<CourseRoleMember[]>(() => (this.paginated() ? this.rows() : this.allGroupUsers()));
+    readonly displayedTotalRows = computed(() => (this.paginated() ? this.totalRows() : this.allGroupUsers().length));
+
     /** searchFn passed to the registration modal — searches all Artemis users, marks already-enrolled ones. */
     readonly searchUsersFn = computed(() => {
+        const customSearch = this.userSearch();
+        if (customSearch) {
+            return (term: string, _page: number, _size: number): Observable<UserSearchResult> =>
+                customSearch(term).pipe(
+                    map((response) => {
+                        const assignedIds = new Set(this.allGroupUsers().map((user) => user.id));
+                        const content = (response.body ?? []).map((user) => this.toUserForRegistration(user, assignedIds.has(user.id)));
+                        return { content, totalElements: content.length };
+                    }),
+                );
+        }
         const courseId = this.course().id;
         const slug = this.courseRoleSlug();
         return (term: string, page: number, size: number) => this.courseManagementService.searchUsersForCourseRole(courseId!, slug, term, page, size);
@@ -92,6 +120,19 @@ export class CourseGroupComponent {
 
     /** registerFn passed to the registration modal — bulk-adds selected users via the existing import endpoint. */
     readonly registerUsersFn = computed(() => {
+        if (!this.paginated()) {
+            return (users: UserForRegistration[]): Observable<void> => {
+                if (users.length === 0) return of(void 0);
+                return forkJoin(users.map((user) => this.addUserToGroup()(user.login))).pipe(
+                    tap(() => {
+                        const existingIds = new Set(this.allGroupUsers().map((user) => user.id));
+                        const addedUsers = users.filter((user) => !existingIds.has(user.id)).map((user) => this.fromUserForRegistration(user));
+                        this.allGroupUsers.update((current) => [...current, ...addedUsers]);
+                    }),
+                    map(() => void 0),
+                );
+            };
+        }
         const courseId = this.course().id;
         const slug = this.courseRoleSlug();
         return (users: UserForRegistration[]): Observable<void> => {
@@ -112,46 +153,59 @@ export class CourseGroupComponent {
         };
     });
 
-    readonly tableOptions: TableViewOptions = {
+    readonly tableOptions = computed<TableViewOptions>(() => ({
+        lazy: this.paginated(),
+        paginated: this.paginated(),
         scrollable: true,
         scrollHeight: 'flex',
         searchPlaceholder: 'artemisApp.course.courseGroup.searchForUsers',
         initialSortField: 'name',
-    };
+    }));
 
-    readonly columns = computed<ColumnDef<CourseRoleMember>[]>(() => [
-        {
-            headerKey: 'artemisApp.course.courseGroup.profilePicture',
-            width: '5rem',
-            templateRef: this.profilePictureTemplate(),
-        },
-        {
-            field: 'login',
-            headerKey: 'artemisApp.course.courseGroup.login',
-            sort: true,
-            width: '10rem',
-            templateRef: this.loginTemplate(),
-        },
-        {
-            field: 'visibleRegistrationNumber',
-            headerKey: 'artemisApp.course.courseGroup.registrationNumber',
-            sort: true,
-            width: '10rem',
-        },
-        {
-            field: 'name',
-            headerKey: 'artemisApp.course.courseGroup.name',
-            sort: true,
-            width: '12rem',
-        },
-        {
-            field: 'email',
-            headerKey: 'artemisApp.course.courseGroup.email',
-            sort: true,
-        },
-    ]);
+    readonly columns = computed<ColumnDef<CourseRoleMember>[]>(() => {
+        const hiddenFields = new Set(this.hiddenColumnFields());
+        return [
+            {
+                headerKey: this.profilePictureHeaderKey(),
+                width: '5rem',
+                templateRef: this.profilePictureTemplate(),
+            },
+            {
+                field: 'login',
+                headerKey: 'artemisApp.course.courseGroup.login',
+                sort: true,
+                width: '10rem',
+                templateRef: this.loginTemplate(),
+            },
+            {
+                field: 'visibleRegistrationNumber',
+                headerKey: 'artemisApp.course.courseGroup.registrationNumber',
+                sort: true,
+                width: '10rem',
+            },
+            {
+                field: 'name',
+                headerKey: 'artemisApp.course.courseGroup.name',
+                sort: true,
+                width: '12rem',
+            },
+            {
+                field: 'email',
+                headerKey: 'artemisApp.course.courseGroup.email',
+                sort: true,
+            },
+        ].filter((column) => {
+            if (column.headerKey === this.profilePictureHeaderKey()) {
+                return !hiddenFields.has('imageUrl');
+            }
+            return !column.field || !hiddenFields.has(column.field);
+        });
+    });
 
     onLazyLoad(event: TableLazyLoadEvent): void {
+        if (!this.paginated()) {
+            return;
+        }
         const courseId = this.course().id;
         const slug = this.courseRoleSlug();
         if (!courseId || !slug) {
@@ -182,7 +236,9 @@ export class CourseGroupComponent {
 
     /** Called after a new member was added, whether via the registration modal or CSV import. */
     onMembersAdded(): void {
-        this.tableViewRef()?.reload();
+        if (this.paginated()) {
+            this.tableViewRef()?.reload();
+        }
     }
 
     openAddUsersModal(): void {
@@ -204,7 +260,11 @@ export class CourseGroupComponent {
             this.removeUserFromGroup()(member.login).subscribe({
                 next: () => {
                     this.dialogErrorSource.next('');
-                    this.tableViewRef()?.reloadAfterRemoval();
+                    if (this.paginated()) {
+                        this.tableViewRef()?.reloadAfterRemoval();
+                    } else {
+                        this.allGroupUsers.update((users) => users.filter((user) => user.login !== member.login));
+                    }
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
@@ -220,7 +280,7 @@ export class CourseGroupComponent {
         if (!courseId || !slug) {
             return;
         }
-        const fileName = CourseGroupComponent.buildExportFileName(slug, this.course().title);
+        const fileName = this.exportFileName() ?? CourseGroupComponent.buildExportFileName(slug, this.course().title);
         this.courseManagementService.getAllUsersInCourseRole(courseId, slug).subscribe({
             next: (res) => {
                 const users = res.body ?? [];
@@ -239,6 +299,29 @@ export class CourseGroupComponent {
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
+    private toUserForRegistration(user: User, isRegistered: boolean): UserForRegistration {
+        return {
+            id: user.id!,
+            login: user.login!,
+            name: user.name ?? '',
+            email: user.email,
+            registrationNumber: user.visibleRegistrationNumber,
+            profilePictureUrl: user.imageUrl,
+            isRegistered,
+        };
+    }
+
+    private fromUserForRegistration(user: UserForRegistration): User {
+        return hydrate(new User(), {
+            id: user.id,
+            login: user.login,
+            name: user.name,
+            email: user.email,
+            visibleRegistrationNumber: user.registrationNumber,
+            imageUrl: user.profilePictureUrl,
+        });
+    }
 
     /** Derives the export filename from the role slug and course title, e.g. "Students My Course". */
     private static buildExportFileName(slug: CourseRoleSlug, courseTitle: string | undefined): string {

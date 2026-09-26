@@ -568,6 +568,7 @@ function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUp
         unenrollmentEnabled: course.unenrollmentEnabled,
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
         learningPathsEnabled: course.learningPathsEnabled,
+        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,

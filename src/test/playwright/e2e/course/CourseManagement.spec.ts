@@ -178,8 +178,10 @@ test.describe('Course management', { tag: '@fast' }, () => {
             const { id: courseId } = await courseCreation.submit();
             course = new Course();
             course.id = courseId;
-
-            const storedCourse = await (await page.request.get(`api/course/courses/${courseId}`)).json();
+            expect(courseId).toBeDefined();
+            const courseResponse = await page.request.get(`api/course/courses/${courseId}`);
+            expect(courseResponse.ok()).toBeTruthy();
+            const storedCourse = await courseResponse.json();
 
             expect(storedCourse.title).toBe(courseData.title);
             expect(storedCourse.shortName).toBe(courseData.shortName);

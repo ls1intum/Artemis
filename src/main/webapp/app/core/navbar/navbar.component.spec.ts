@@ -340,6 +340,35 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
         });
 
+        it('should link a selected exercise-linked presentation to its exercise in the student view', () => {
+            router.setUrl('/course-management/123/presentations?presentationExerciseId=42');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exercises', '42']);
+        });
+
+        it('should link a standalone presentation to the student course overview', () => {
+            router.setUrl('/course-management/123/presentations');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
+        });
+
+        it.each(['invalid', '0', '-1', '1.5', '01', '1e3', '42%20', ''])('should ignore an invalid presentation exercise ID %s', (id) => {
+            router.setUrl(`/course-management/123/presentations?presentationExerciseId=${id}`);
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
+        });
+
+        it('should not infer a presentation route from query parameters', () => {
+            router.setUrl('/course-management/123/exercises?returnUrl=/presentations&presentationExerciseId=42');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exercises']);
+        });
+
+        it('should ignore presentation exercise parameters inside the URL fragment', () => {
+            router.setUrl('/course-management/123/presentations#details?presentationExerciseId=42');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
+        });
+
         it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])('should not provide perspective links outside course routes for %s', (url) => {
             router.setUrl(url);
 
@@ -499,6 +528,20 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special Cases for Breadcrumbs', () => {
+        it.each(['', '#details', '?presentationExerciseId=42#details', '#details?presentationExerciseId=42', '/#details'])(
+            'translates the presentation breadcrumb with suffix %s',
+            (suffix) => {
+                router.setUrl(`/course-management/1/presentations${suffix}`);
+                fixture.detectChanges();
+
+                expect(component.breadcrumbs().at(-1)).toEqual({
+                    label: 'artemisApp.presentationAssessment.home.title',
+                    translate: true,
+                    uri: '/course-management/1/presentations/',
+                });
+            },
+        );
+
         it('programming exercise import', () => {
             const testUrl = '/course-management/1/programming-exercises/import/2';
             router.setUrl(testUrl);

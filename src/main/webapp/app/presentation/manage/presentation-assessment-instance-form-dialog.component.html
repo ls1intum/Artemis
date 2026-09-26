@@ -1,0 +1,166 @@
+<form [formGroup]="editForm" (ngSubmit)="save()" class="instance-form">
+    <div class="instance-fields">
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-date">
+                <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
+                <span aria-hidden="true">*</span>
+            </label>
+            <jhi-date-time-picker
+                inputId="presentation-instance-date"
+                [hideLabelName]="true"
+                [requiredField]="editForm.controls.presentationDate.touched"
+                [pickerType]="DateTimePickerType.CALENDAR"
+                [min]="minPresentationDate"
+                [appendTo]="'self'"
+                [shouldDisplayTimeZoneWarning]="false"
+                [error]="editForm.controls.presentationDate.touched && editForm.controls.presentationDate.invalid"
+                formControlName="presentationDate"
+                name="presentationDate"
+            />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-time" jhiTranslate="artemisApp.presentationAssessment.presentationTime"></label>
+            <jhi-date-time-picker
+                inputId="presentation-instance-time"
+                [hideLabelName]="true"
+                [pickerType]="DateTimePickerType.TIMER"
+                [appendTo]="'self'"
+                [shouldDisplayTimeZoneWarning]="false"
+                formControlName="presentationTime"
+                name="presentationTime"
+            />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-result" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
+            <tumaet-ui-input-number
+                inputId="presentation-instance-result"
+                [fluid]="true"
+                [min]="0"
+                [max]="resultPointsUpperBound"
+                [step]="0.001"
+                [maxFractionDigits]="3"
+                [useGrouping]="false"
+                locale="en-US"
+                [acceptedDecimalSeparators]="acceptedPointsDecimalSeparators"
+                [placeholder]="'artemisApp.presentationAssessment.placeholder.resultPoints' | artemisTranslate"
+                formControlName="resultPoints"
+            />
+            @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
+                <tumaet-ui-message severity="error">
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.resultPoints.hasError('max')
+                                ? 'artemisApp.presentationAssessment.validation.pointsMax'
+                                : 'artemisApp.presentationAssessment.validation.resultPointsMin'
+                        "
+                        [translateValues]="{ max: resultPointsUpperBound }"
+                    ></span>
+                </tumaet-ui-message>
+            }
+            @if (editForm.hasError('resultPointsExceedMaxPoints')) {
+                <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span></tumaet-ui-message>
+            }
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-language" jhiTranslate="artemisApp.presentationAssessment.language"></label>
+            <tumaet-ui-select inputId="presentation-instance-language" [options]="languageOptions()" optionLabel="label" optionValue="value" formControlName="language" />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-mode" jhiTranslate="artemisApp.presentationAssessment.mode.label"></label>
+            <tumaet-ui-select inputId="presentation-instance-mode" [options]="modeOptions()" optionLabel="label" optionValue="value" formControlName="mode" />
+        </div>
+        @if (editForm.controls.mode.value === PresentationAssessmentMode.IN_PERSON) {
+            <div class="flex flex-col gap-2">
+                <label for="presentation-instance-location" jhiTranslate="artemisApp.presentationAssessment.location"></label>
+                <input
+                    id="presentation-instance-location"
+                    tumAetUiInput
+                    class="w-full"
+                    formControlName="location"
+                    [attr.aria-invalid]="editForm.controls.location.hasError('maxlength')"
+                    [attr.aria-describedby]="editForm.controls.location.hasError('maxlength') ? 'presentation-instance-location-error' : undefined"
+                />
+                @if (editForm.controls.location.hasError('maxlength')) {
+                    <tumaet-ui-message severity="error" id="presentation-instance-location-error" role="alert">
+                        <span
+                            jhiTranslate="artemisApp.presentationAssessment.locationTooLong"
+                            [translateValues]="{ max: editForm.controls.location.getError('maxlength').requiredLength }"
+                        ></span>
+                    </tumaet-ui-message>
+                }
+            </div>
+        } @else {
+            <div class="flex flex-col gap-2">
+                <label for="presentation-instance-link" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></label>
+                <input
+                    id="presentation-instance-link"
+                    tumAetUiInput
+                    class="w-full"
+                    type="url"
+                    formControlName="meetingLink"
+                    [attr.aria-invalid]="editForm.controls.meetingLink.hasError('maxlength')"
+                    [attr.aria-describedby]="editForm.controls.meetingLink.hasError('maxlength') ? 'presentation-instance-link-error' : undefined"
+                />
+                @if (editForm.controls.meetingLink.hasError('maxlength')) {
+                    <tumaet-ui-message severity="error" id="presentation-instance-link-error" role="alert">
+                        <span
+                            jhiTranslate="artemisApp.presentationAssessment.meetingLinkTooLong"
+                            [translateValues]="{ max: editForm.controls.meetingLink.getError('maxlength').requiredLength }"
+                        ></span>
+                    </tumaet-ui-message>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="flex flex-col gap-2">
+        <label for="presentation-instance-remark" jhiTranslate="artemisApp.presentationAssessment.remark"></label>
+        <textarea
+            id="presentation-instance-remark"
+            tumAetUiTextarea
+            class="w-full"
+            rows="3"
+            formControlName="remark"
+            [attr.aria-invalid]="editForm.controls.remark.hasError('maxlength')"
+            [attr.aria-describedby]="editForm.controls.remark.hasError('maxlength') ? 'presentation-instance-remark-error' : undefined"
+        ></textarea>
+        @if (editForm.controls.remark.hasError('maxlength')) {
+            <tumaet-ui-message severity="error" id="presentation-instance-remark-error" role="alert">
+                <span
+                    jhiTranslate="artemisApp.presentationAssessment.remarkTooLong"
+                    [translateValues]="{ max: editForm.controls.remark.getError('maxlength').requiredLength }"
+                ></span>
+            </tumaet-ui-message>
+        }
+    </div>
+
+    <jhi-course-group
+        [(allGroupUsers)]="assignedStudents"
+        [courseRoleSlug]="studentsCourseGroup"
+        [isAdmin]="false"
+        [course]="presentationStudentCourse()"
+        [addUserToGroup]="addStudent"
+        [removeUserFromGroup]="removeStudent"
+        [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
+        [exportFileName]="'Presentation Instance Students'"
+        [userSearch]="studentSearch"
+        [hiddenColumnFields]="hiddenStudentColumnFields"
+        [paginated]="false"
+        [allowAddingUsers]="!instance()"
+        [allowRemovingUsers]="!instance()"
+        removeUserQuestionKey="artemisApp.presentationAssessment.students.removeQuestion"
+        profilePictureHeaderKey="artemisApp.presentationAssessment.picture"
+    >
+        <span><span jhiTranslate="artemisApp.presentationAssessment.presenters"></span> <span aria-hidden="true">*</span> ({{ assignedStudents().length }})</span>
+    </jhi-course-group>
+    @if (assignedStudents().length === 0 && editForm.touched) {
+        <tumaet-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></tumaet-ui-message>
+    }
+
+    <div class="flex justify-end gap-2">
+        <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></tumaet-ui-button>
+        <tumaet-ui-button type="submit" [disabled]="isSaving() || editForm.invalid || assignedStudents().length === 0">
+            <fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span>
+        </tumaet-ui-button>
+    </div>
+</form>

@@ -422,7 +422,7 @@
                 <h4 class="form-group" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.title"></h4>
                 <span class="d-block form-text mb-3" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.info"></span>
                 <jhi-feature-overlay [enabled]="atlasEnabled()">
-                    <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
+                    <div id="learning-paths-setting" class="form-group" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
                         <div class="flex items-center gap-2">
                             <tumaet-ui-checkbox inputId="field_learningPathsEnabled" name="learningPathsEnabled" formControlName="learningPathsEnabled" />
                             <label jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
@@ -499,6 +499,16 @@
                         </div>
                     }
                 </jhi-feature-overlay>
+                <div id="presentation-assessments-setting" class="mb-4 flex items-center gap-2" [jhiFeatureToggleHide]="FeatureToggle.PresentationAssessments">
+                    <tumaet-ui-checkbox inputId="field_presentationAssessmentsEnabled" name="presentationAssessmentsEnabled" formControlName="presentationAssessmentsEnabled" />
+                    <label jhiTranslate="artemisApp.course.presentationAssessments.label" for="field_presentationAssessmentsEnabled"></label>
+                    <fa-icon
+                        [icon]="faQuestionCircle"
+                        class="text-muted-color"
+                        [tumAetUiTooltip]="'artemisApp.course.presentationAssessments.tooltip' | artemisTranslate"
+                        tumAetUiTooltipPlacement="right"
+                    />
+                </div>
                 <!-- Not part of model -->
                 <div class="nested-form-group-head flex items-center gap-2">
                     <tumaet-ui-checkbox
