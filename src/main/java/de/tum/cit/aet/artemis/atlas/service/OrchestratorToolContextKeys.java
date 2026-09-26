@@ -3,9 +3,13 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
+import de.tum.cit.aet.artemis.atlas.dto.WorkerCompletionDTO;
 
 /**
  * Keys under which the orchestrator tool services stash mutable state in the Spring AI
@@ -34,6 +38,33 @@ public final class OrchestratorToolContextKeys {
      */
     public static final String APPLIED_ACTIONS_KEY = "appliedActions";
 
+    /** Tool-context key carrying the exercise that anchored the current orchestration request. */
+    public static final String LEARNING_OBJECT_ID_KEY = "learningObjectId";
+
+    /** Worker-scoped one-shot holder populated by {@code completeWorkerTask}. */
+    public static final String WORKER_COMPLETION_KEY = "workerCompletion";
+
+    /** Sequence position at which the current worker accepted {@code completeWorkerTask}. */
+    public static final String WORKER_COMPLETION_SEQUENCE_KEY = "workerCompletionSequence";
+
+    /** Worker-local sequence used to detect calls after worker completion. */
+    public static final String TOOL_SEQUENCE_KEY = "toolSequence";
+
+    /** Worker-local marker set when any mutation tool returns an error outcome. */
+    public static final String WORKER_MUTATION_ERROR_KEY = "workerMutationError";
+
+    /** Count of completed mutation outcomes, including errors and explicit no-ops. */
+    public static final String WORKER_MUTATION_OUTCOME_COUNT_KEY = "workerMutationOutcomeCount";
+
+    /** Request-scoped counter reserving one slot per nested worker model round. */
+    public static final String DELEGATION_COUNT_KEY = "delegationCount";
+
+    /** Count of successful course-scoped read calls made by the current worker. */
+    public static final String WORKER_READ_COUNT_KEY = "workerReadCount";
+
+    /** Applied-action list offset captured immediately before the current worker starts. */
+    public static final String WORKER_ACTION_START_KEY = "workerActionStart";
+
     /**
      * Hard cap on the number of write tool calls per orchestrator run, shared across every write
      * tool ({@code createCompetency}, {@code editCompetency}, {@code assignExerciseToCompetency},
@@ -43,7 +74,22 @@ public final class OrchestratorToolContextKeys {
      */
     public static final int MAX_WRITE_CALLS = AtlasToolCallBudget.LIMIT;
 
+    /** Hard cap on nested worker model rounds per orchestrator run. */
+    public static final int MAX_DELEGATION_CALLS = 16;
+
     private OrchestratorToolContextKeys() {
+    }
+
+    static AtomicReference<WorkerCompletionDTO> newWorkerCompletionHolder() {
+        return new AtomicReference<>();
+    }
+
+    static AtomicLong newSequenceMarker() {
+        return new AtomicLong();
+    }
+
+    static AtomicBoolean newWorkerMutationErrorMarker() {
+        return new AtomicBoolean();
     }
 
     /**

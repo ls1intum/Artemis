@@ -106,16 +106,10 @@ class CompetencyOrchestrationServiceTest {
     private ToolCallbackProvider orchestratorPlanningToolCallbackProvider;
 
     @Mock
-    private ToolCallbackProvider creatorToolCallbackProvider;
-
-    @Mock
-    private ToolCallbackProvider editorToolCallbackProvider;
+    private ToolCallbackProvider orchestratorDelegationToolCallbackProvider;
 
     @Mock
     private ToolCallbackProvider terminalToolCallbackProvider;
-
-    @Mock
-    private ToolCallbackProvider assignerToolCallbackProvider;
 
     @Mock
     private DistributedDataProvider distributedDataProvider;
@@ -141,7 +135,7 @@ class CompetencyOrchestrationServiceTest {
 
     @BeforeEach
     void setUp() {
-        properties = new AtlasOrchestratorProperties("gpt-test-orchestrator", 1.0, "", false, 300, 10, 30000L, 10);
+        properties = new AtlasOrchestratorProperties("gpt-test-orchestrator", 1.0, "", "gpt-5.6-luna", "high", false, 300, 10, 30000L, 10);
         runMap = spy(new LocalMap<>());
         // The shortlist never returns null in production; stub it leniently so render-reaching tests that do
         // not care about the shortlist still get a non-null prompt variable (Map.of rejects null values). The
@@ -274,8 +268,7 @@ class CompetencyOrchestrationServiceTest {
         // The harness appends an action to the tool-context buffer (mirroring a successful write tool)
         // and then throws to model the LLM round failing mid-flight after one committed mutation.
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> ctx = invocation.getArgument(3);
                     OrchestratorToolContextKeys.AppliedActionsBuffer buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) ctx
@@ -304,8 +297,7 @@ class CompetencyOrchestrationServiceTest {
 
         // The native advisor returns a limit finish reason after a committed action.
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> ctx = invocation.getArgument(3);
                     OrchestratorToolContextKeys.AppliedActionsBuffer buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) ctx
@@ -394,8 +386,8 @@ class CompetencyOrchestrationServiceTest {
 
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class))).thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(16L);
 
@@ -404,16 +396,13 @@ class CompetencyOrchestrationServiceTest {
         verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
         verify(runMap).remove(COURSE_ID);
 
-        // Regression guard: the orchestrator must expose ALL SIX tool providers to the LLM — the read and
-        // planning surfaces plus the three write surfaces (creator/editor/assigner). If the write providers
-        // are ever unwired again, the orchestrator silently loses the ability to mutate competencies, so we
-        // capture the varargs and assert every expected provider (and specifically the three write ones).
+        // The main orchestrator delegates mutations; only workers receive role-specific write tools.
         ArgumentCaptor<ToolCallbackProvider> providerCaptor = ArgumentCaptor.forClass(ToolCallbackProvider.class);
         verify(delegationService).delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), providerCaptor.capture(),
-                providerCaptor.capture(), providerCaptor.capture(), providerCaptor.capture(), providerCaptor.capture(), providerCaptor.capture());
-        assertThat(providerCaptor.getAllValues()).containsExactly(orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, creatorToolCallbackProvider,
-                editorToolCallbackProvider, assignerToolCallbackProvider, terminalToolCallbackProvider);
-        assertThat(providerCaptor.getAllValues()).contains(creatorToolCallbackProvider, editorToolCallbackProvider, assignerToolCallbackProvider, terminalToolCallbackProvider);
+                providerCaptor.capture(), providerCaptor.capture(), providerCaptor.capture());
+        assertThat(providerCaptor.getAllValues()).containsExactly(orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider,
+                orchestratorDelegationToolCallbackProvider, terminalToolCallbackProvider);
+
     }
 
     @Test
@@ -429,8 +418,8 @@ class CompetencyOrchestrationServiceTest {
                 .keyValue(AtlasResponsesChatModel.USAGE_COMPLETE_METADATA_KEY, false).build();
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))), metadata);
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class))).thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(17L);
 
@@ -546,8 +535,8 @@ class CompetencyOrchestrationServiceTest {
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
         ChatClient mockChatClient = mock(ChatClient.class);
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class))).thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mockChatClient).runBatch(COURSE_ID, Set.of(10L, 12L));
 
@@ -573,8 +562,7 @@ class CompetencyOrchestrationServiceTest {
         when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     if (toolLimitReached) {
                         throw new AtlasToolCallBudget.LimitReachedException("Tool budget exhausted.");
                     }
@@ -614,8 +602,8 @@ class CompetencyOrchestrationServiceTest {
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
         ChatClient mockChatClient = mock(ChatClient.class);
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class))).thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
 
         CompetencyOrchestrationService service = createServiceWithRunMap(mockChatClient);
         // The requeue exception must not escape runBatch after committed actions; capture the result to assert on it.
@@ -704,8 +692,7 @@ class CompetencyOrchestrationServiceTest {
         when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         when(templateService.render(anyString(), anyMap())).thenReturn("system");
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
                     Map<String, Object> context = invocation.getArgument(3);
                     if (applied) {
                         ((OrchestratorToolContextKeys.AppliedActionsBuffer) context.get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY)).actions()
@@ -739,9 +726,8 @@ class CompetencyOrchestrationServiceTest {
         lenient().when(delegationService.isOrchestratorAvailable()).thenReturn(chatClient != null);
         return new CompetencyOrchestrationService(exerciseRepository, contentExtractionService, orchestratorPlanningToolsService, templateService, delegationService,
                 new AtlasToolSurface(terminalToolCallbackProvider), new AtlasToolSurface(orchestratorReadToolCallbackProvider),
-                new AtlasToolSurface(orchestratorPlanningToolCallbackProvider), new AtlasToolSurface(creatorToolCallbackProvider), new AtlasToolSurface(editorToolCallbackProvider),
-                new AtlasToolSurface(assignerToolCallbackProvider), Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService,
-                userRepository, shortlistService);
+                new AtlasToolSurface(orchestratorPlanningToolCallbackProvider), new AtlasToolSurface(orchestratorDelegationToolCallbackProvider),
+                Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository, shortlistService);
     }
 
     private CompetencyOrchestrationService createServiceWithRunMap(@Nullable ChatClient chatClient) {

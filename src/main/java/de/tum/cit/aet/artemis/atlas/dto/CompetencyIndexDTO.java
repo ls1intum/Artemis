@@ -5,6 +5,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 
 /**
  * Compact competency entry for the orchestrator's {@code listCompetencyIndex} tool.
@@ -13,7 +14,13 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  * additional tool calls for every competency.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyIndexDTO(Long id, String title, CompetencyTaxonomy taxonomy, String type, List<ExerciseLinkRefDTO> exercises, List<LectureUnitRefDTO> lectureUnits) {
+public record CompetencyIndexDTO(Long id, String title, CompetencyTaxonomy taxonomy, String type, List<ExerciseLinkRefDTO> exercises, List<LectureUnitRefDTO> lectureUnits,
+        List<RelationRefDTO> relations) {
+
+    /** Directed relation: the tail competency assumes, extends, or matches the head competency. */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record RelationRefDTO(long tailCompetencyId, long headCompetencyId, RelationType relationType) {
+    }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseLinkRefDTO(String title, String type, Double weight) {

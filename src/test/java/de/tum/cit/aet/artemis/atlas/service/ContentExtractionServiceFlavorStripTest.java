@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.atlas.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,10 +20,16 @@ import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ResponseEntity;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 
@@ -52,13 +60,13 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void responsesEnabledUsesLunaHighAndNeverFallsBackToSharedChat() {
         var responseClient = org.mockito.Mockito.mock(ChatClient.class, Answers.RETURNS_DEEP_STUBS);
-        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", true, 300, 10, 30000L, 10);
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", true, 300, 10, 30000L, 10);
         var selected = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties,
                 new de.tum.cit.aet.artemis.atlas.config.AtlasResponsesApiConfiguration.AtlasResponsesChatClient(responseClient));
         when(templateService.render(anyString(), any())).thenReturn("system");
         var options = org.mockito.ArgumentCaptor.forClass(OpenAiChatOptions.Builder.class);
-        when(responseClient.prompt().system(anyString()).user(anyString()).options(options.capture()).call().entity(eq(FlavorStripEditsDTO.class)))
-                .thenReturn(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("flavor", "Alice. ", ""))));
+        when(responseClient.prompt().system(anyString()).user(anyString()).options(options.capture()).call().responseEntity(eq(FlavorStripEditsDTO.class)))
+                .thenReturn(responseEntity(new FlavorStripEditsDTO(List.of(new FlavorStripEditsDTO.EditDTO("flavor", "Alice. ", "")))));
         assertThat(selected.stripFlavorText("Alice. Calculate 2 + 3.")).isEqualTo("Calculate 2 + 3.");
         assertThat(options.getValue().build().getDeploymentName()).isEqualTo("gpt-5.6-luna");
         assertThat(options.getValue().build().getReasoningEffort()).isEqualTo("high");
@@ -71,7 +79,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void responsesDisabledUsesSharedChatAndPreservesRawFallback() {
-        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", false, 300, 10, 30000L, 10);
+        var properties = new de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties("gpt-5.6-luna", 1.0, "xhigh", "gpt-5.6-luna", "high", false, 300, 10, 30000L, 10);
         service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, properties, null);
         stubLlm(new FlavorStripEditsDTO(List.of()));
         assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
@@ -79,8 +87,12 @@ class ContentExtractionServiceFlavorStripTest {
 
     private void stubLlm(FlavorStripEditsDTO edits) {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
-        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().entity(eq(FlavorStripEditsDTO.class)))
-                .thenReturn(edits);
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().responseEntity(eq(FlavorStripEditsDTO.class)))
+                .thenReturn(responseEntity(edits));
+    }
+
+    private static ResponseEntity<ChatResponse, FlavorStripEditsDTO> responseEntity(FlavorStripEditsDTO edits) {
+        return new ResponseEntity<>(mock(ChatResponse.class), edits);
     }
 
     @Test
@@ -138,7 +150,7 @@ class ContentExtractionServiceFlavorStripTest {
     @Test
     void stripFlavorText_llmThrows_returnsRaw() {
         when(templateService.render(anyString(), any())).thenReturn("system prompt");
-        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().entity(eq(FlavorStripEditsDTO.class)))
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().responseEntity(eq(FlavorStripEditsDTO.class)))
                 .thenThrow(new RuntimeException("LLM unreachable"));
 
         assertThat(service.stripFlavorText("Keep this.")).isEqualTo("Keep this.");
@@ -226,5 +238,29 @@ class ContentExtractionServiceFlavorStripTest {
 
         assertThat(result.extractedLearningText()).isEqualTo("Alice dreams of socks. The sum of 2 and 3 equals 5.");
         verify(chatClient, never()).prompt();
+    }
+
+    @Test
+    void extractContent_tracksFlavorStripUsageWithExerciseContext() {
+        LLMTokenUsageService usageService = mock(LLMTokenUsageService.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        ContentExtractionService trackedService = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.6-luna", "high", 1.0, usageService,
+                userRepository);
+        when(templateService.render(anyString(), any())).thenReturn("system prompt");
+        ChatResponse response = mock(ChatResponse.class);
+        when(chatClient.prompt().system(anyString()).user(anyString()).options(any(OpenAiChatOptions.Builder.class)).call().responseEntity(eq(FlavorStripEditsDTO.class)))
+                .thenReturn(new ResponseEntity<>(response, new FlavorStripEditsDTO(List.of())));
+        Course course = new Course();
+        course.setId(42L);
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(7L);
+        exercise.setCourse(course);
+        exercise.setProblemStatement("Keep this text.");
+
+        assertThat(trackedService.extractContent(exercise).extractedLearningText()).isEqualTo("Keep this text.");
+        verify(usageService).trackChatResponseTokenUsage(eq(response), eq(LLMServiceType.ATLAS), eq("ATLAS_FLAVOR_STRIP"), argThat(context -> {
+            var builder = context.apply(new LLMTokenUsageService.LLMTokenUsageBuilder());
+            return builder.getCourseID().equals(java.util.Optional.of(42L)) && builder.getExerciseID().equals(java.util.Optional.of(7L)) && builder.getUserID().isEmpty();
+        }));
     }
 }
