@@ -1,5 +1,5 @@
 import { OnDestroy, Service, inject } from '@angular/core';
-import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -47,6 +47,7 @@ export class CourseNotificationService implements OnDestroy {
         deregisteredFromTutorialGroupNotification: faPersonChalkboard,
         tutorialGroupDeletedNotification: faPersonChalkboard,
         irisResponseNeedsReviewNotification: faComments,
+        atlasCompetencyUpdateNotification: faWandMagicSparkles,
     };
 
     public static readonly DISABLE_NOTIFICATION_CHANNEL_TYPES: Record<string, Array<CourseNotificationChannel>> = {
@@ -77,7 +78,12 @@ export class CourseNotificationService implements OnDestroy {
         tutorialGroupDeletedNotification: [],
         // Server only supports the WEBAPP channel for this notification (see IrisResponseNeedsReviewNotification#getSupportedChannels).
         irisResponseNeedsReviewNotification: [CourseNotificationChannel.EMAIL, CourseNotificationChannel.PUSH],
+        // Server only supports the EMAIL channel for this notification (see AtlasCompetencyUpdateNotification#getSupportedChannels).
+        atlasCompetencyUpdateNotification: [CourseNotificationChannel.WEBAPP, CourseNotificationChannel.PUSH],
     };
+
+    // Notification types that only concern course instructors; their setting cards are hidden from everyone else.
+    public static readonly INSTRUCTOR_ONLY_NOTIFICATION_TYPES: ReadonlyArray<string> = ['atlasCompetencyUpdateNotification'];
 
     // Parameter keys that should be rendered as markdown
     public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent', 'replyMarkdownContent'];

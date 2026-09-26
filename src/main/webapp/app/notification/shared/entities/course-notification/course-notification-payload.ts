@@ -15,6 +15,20 @@ export interface AddedToChannelPayload {
     channelId?: number;
 }
 
+/** The values a atlasCompetencyUpdateNotification carries. */
+export interface AtlasCompetencyUpdatePayload {
+    outcome?: string;
+    exerciseCount?: number;
+    appliedCount?: number;
+    createdCount?: number;
+    editedCount?: number;
+    deletedCount?: number;
+    assignedCount?: number;
+    unassignedCount?: number;
+    changesMarkdown?: string;
+    omittedCount?: number;
+}
+
 /** The values a attachmentChangedNotification carries. */
 export interface AttachmentChangedPayload {
     attachmentName?: string;
@@ -247,6 +261,7 @@ export interface TutorialGroupUnassignedPayload {
 /** Maps a notification type to the payload it carries. */
 export interface CourseNotificationPayloadByType {
     addedToChannelNotification: AddedToChannelPayload;
+    atlasCompetencyUpdateNotification: AtlasCompetencyUpdatePayload;
     attachmentChangedNotification: AttachmentChangedPayload;
     channelDeletedNotification: ChannelDeletedPayload;
     deregisteredFromTutorialGroupNotification: DeregisteredFromTutorialGroupPayload;

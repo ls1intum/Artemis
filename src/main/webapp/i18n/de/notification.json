@@ -203,6 +203,11 @@
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "Iris-Antwort prüfen"
             },
+            "atlasCompetencyUpdateNotification": {
+                "title": "Automatische Kompetenzaktualisierung",
+                "content": "Automatische Kompetenzaktualisierung nach Änderungen an {{exerciseCount}} Aufgabe(n): {{appliedCount}} Änderung(en) übernommen. Die Details wurden per E-Mail verschickt.",
+                "settingsTitle": "Automatische Kompetenzaktualisierungen (Lehrende)"
+            },
             "newMentionNotification": {
                 "title": "Du wurdest markiert",
                 "content": "{{postMarkdownContent}}",
