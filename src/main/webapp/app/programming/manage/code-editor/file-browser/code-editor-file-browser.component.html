@@ -1,5 +1,16 @@
 <div data-testid="cardFiles" class="card file-browser" [style.height]="collapsed() ? '250px' : '100%'">
-    <div class="card-header code-editor-panel-header d-flex justify-content-center" [class.d-none]="!showHeader()" (click)="toggleEditorCollapse($event)">
+    <div
+        class="card-header code-editor-panel-header d-flex justify-content-center"
+        [class.d-none]="!showHeader()"
+        (click)="toggleEditorCollapse($event)"
+        [attr.aria-expanded]="!collapsed()"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
         <h3 class="card-title justify-content-center">
             @if (!collapsed()) {
                 <span>
@@ -22,6 +33,7 @@
     @if (!displayOnly()) {
         <div class="card-second-header">
             <button
+                type="button"
                 id="create_file_root"
                 [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
                 class="btn"
@@ -32,6 +44,7 @@
                 <fa-icon [icon]="faFile" class="ms-1" />
             </button>
             <button
+                type="button"
                 id="create_folder_root"
                 [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
                 class="btn ms-2"
@@ -42,6 +55,7 @@
                 <fa-icon [icon]="faFolder" class="ms-1" />
             </button>
             <button
+                type="button"
                 id="compress_tree"
                 [disabled]="isLoadingFiles()"
                 class="btn ms-auto"

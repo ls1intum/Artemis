@@ -73,7 +73,7 @@
                     <fa-icon class="ms-1" [hidden]="!isParsing()" animation="spin" [icon]="faCircleNotch" />
                 </button>
             } @else {
-                <button [ngClass]="hasParsed() && usersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
+                <button type="button" [ngClass]="hasParsed() && usersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
                     <fa-icon [icon]="faCheck" class="me-2" />
                     <span jhiTranslate="entity.action.finish"></span>
                 </button>

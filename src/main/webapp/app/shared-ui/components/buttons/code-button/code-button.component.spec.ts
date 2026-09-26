@@ -946,18 +946,36 @@ describe('CodeButtonComponent', () => {
         const useSSHButton = fixture.debugElement.query(By.css('#useSSHButton'));
         expect(useSSHButton).not.toBeNull();
         useSSHButton.nativeElement.click();
+        fixture.detectChanges();
+        expect(
+            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
+                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
+            ),
+        ).toEqual(['false', 'false', 'true']);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
         expect(component.useSsh()).toBeTruthy();
 
         const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
         expect(useHTTPSButton).not.toBeNull();
         useHTTPSButton.nativeElement.click();
+        fixture.detectChanges();
+        expect(
+            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
+                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
+            ),
+        ).toEqual(['true', 'false', 'false']);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
         expect(component.useSsh()).toBeFalsy();
 
         const useHTTPSWithTokenButton = fixture.debugElement.query(By.css('#useHTTPSWithTokenButton'));
         expect(useHTTPSWithTokenButton).not.toBeNull();
         useHTTPSWithTokenButton.nativeElement.click();
+        fixture.detectChanges();
+        expect(
+            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
+                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
+            ),
+        ).toEqual(['false', 'true', 'false']);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
         expect(component.useSsh()).toBeFalsy();
         expect(component.useToken()).toBeTruthy();

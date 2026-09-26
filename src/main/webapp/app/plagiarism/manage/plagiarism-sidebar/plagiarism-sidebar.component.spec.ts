@@ -87,6 +87,25 @@ describe('Plagiarism Sidebar Component', () => {
         expect(comp.currentPage()).toBe(3);
     });
 
+    it('supports keyboard paging and removes disabled paging controls from the tab order', () => {
+        const comparisons = Array.from({ length: 25 }, (_, index) => ({ id: index + 1, submissionA: {}, submissionB: {} }) as PlagiarismComparison);
+        fixture.componentRef.setInput('comparisons', comparisons);
+        fixture.detectChanges();
+        comp.currentPage.set(1);
+        fixture.detectChanges();
+
+        const nextPage = fixture.nativeElement.querySelector('.plagiarism-paging-right') as HTMLElement;
+        nextPage.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+        expect(comp.currentPage()).toBe(2);
+        fixture.detectChanges();
+        expect(nextPage.getAttribute('aria-disabled')).toBe('true');
+        expect(nextPage.tabIndex).toBe(-1);
+
+        nextPage.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+        expect(comp.currentPage()).toBe(2);
+    });
+
     it('should reset pagination on changes', () => {
         // submissionA/submissionB are populated so the rendered template (driven by detectChanges) can read studentLogin.
         const comparisons = Array.from({ length: 12 }, (_, index) => ({ id: index + 1, submissionA: {}, submissionB: {} }) as PlagiarismComparison);

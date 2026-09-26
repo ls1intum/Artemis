@@ -18,6 +18,8 @@
             "new": "New",
             "expand": "Expand",
             "collapse": "Collapse",
+            "expandMenu": "Expand menu (Ctrl + M)",
+            "collapseMenu": "Collapse menu (Ctrl + M)",
             "enabled": "Enabled",
             "disabled": "Disabled"
         },

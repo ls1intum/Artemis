@@ -8,6 +8,7 @@
     <div class="column d-flex justify-content-center align-content-center">
         @if (!downloadMode()) {
             <button
+                type="button"
                 jhiDataExportRequestButton
                 [adminDialog]="isAdmin()"
                 [expectedLogin]="currentLogin()!"

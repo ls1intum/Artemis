@@ -1,7 +1,7 @@
 <div class="col">
     <div class="row m-0 align-items-center justify-content-between">
         <h5 class="m-0 col-md-auto p-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsState.title"></h5>
-        <button class="btn btn-secondary btn-sm col-md-auto" (click)="loadLearningPathHealthState(courseId())">
+        <button type="button" class="btn btn-secondary btn-sm col-md-auto" (click)="loadLearningPathHealthState(courseId())">
             @if (isLoading()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
@@ -22,6 +22,7 @@
                     <span><strong [jhiTranslate]="translationKeys[healthState] + '.title'"></strong></span>
                     <p class="m-0"><small [jhiTranslate]="translationKeys[healthState] + '.description'"></small></p>
                     <button
+                        type="button"
                         [id]="'health-state-button-' + healthState"
                         class="mt-2 btn btn-outline-secondary btn-sm align-self-end"
                         (click)="handleHealthStateAction(healthState)"

@@ -51,7 +51,7 @@
                                                  jhiDeleteButton here: activating an item closes the menu and
                                                  destroys its content, so the directive would be gone before
                                                  the user confirms and the deletion would never run. -->
-                                            <button tumAetUiMenuItem (triggered)="confirmDeleteSshKey(key)">
+                                            <button type="button" tumAetUiMenuItem (triggered)="confirmDeleteSshKey(key)">
                                                 <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"></span>
                                             </button>
                                         </tumaet-ui-menu>

@@ -2,6 +2,7 @@
     @if (!reEvaluationInProgress()) {
         <div class="question-options question-card-header">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
@@ -49,6 +50,7 @@
     @if (reEvaluationInProgress()) {
         <div class="question-card-header-reevaluation">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
@@ -166,18 +168,31 @@
                 </div>
                 <div class="col-12 col-md-3 d-flex align-items-center gap-2">
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="!!question().invalid"
                         (click)="question().invalid = true"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                     ></button>
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="!question().invalid"
                         [disabled]="!!question().invalid"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                     ></button>
-                    <div id="delete-button" class="delete-button flex-shrink-0" (click)="deleteQuestion()">
+                    <div
+                        id="delete-button"
+                        [attr.aria-label]="'global.action.delete' | artemisTranslate"
+                        class="delete-button flex-shrink-0"
+                        (click)="deleteQuestion()"
+                        #keyboardAction180
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction180.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction180.click() : undefined"
+                    >
                         <fa-icon [icon]="faTrash" size="2x" />
                     </div>
                 </div>
@@ -234,7 +249,7 @@
             <div class="question-options row d-flex justify-content-start">
                 <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                     <div class="input-group-prepend">
-                        <button class="btn btn-outline-secondary" data-testid="background-file-input-button" (click)="backgroundFileInput.click()">
+                        <button type="button" class="btn btn-outline-secondary" data-testid="background-file-input-button" (click)="backgroundFileInput.click()">
                             <fa-icon [icon]="faPlus" />
                             @if (!reEvaluationInProgress()) {
                                 <span jhiTranslate="artemisApp.dragAndDropQuestion.selectBackgroundPicture" class="no-flex-shrink"></span>
@@ -299,17 +314,47 @@
                                     <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
                                     <div class="drop-location-buttons">
                                         @if (reEvaluationInProgress() && !dropLocation.invalid) {
-                                            <div class="re-evaluate-button" title="Set invalid" (click)="dropLocation.invalid = true">
+                                            <div
+                                                class="re-evaluate-button"
+                                                title="Set invalid"
+                                                (click)="dropLocation.invalid = true"
+                                                #keyboardAction302
+                                                role="button"
+                                                tabindex="0"
+                                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction302.click() : undefined"
+                                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction302.click() : undefined"
+                                            >
                                                 <fa-icon [icon]="faBan" size="lg" />
                                             </div>
                                         }
                                         @if (reEvaluationInProgress()) {
-                                            <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)">
+                                            <div
+                                                class="re-evaluate-button"
+                                                title="Reset"
+                                                (click)="resetDropLocation(dropLocation)"
+                                                #keyboardAction307
+                                                role="button"
+                                                tabindex="0"
+                                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction307.click() : undefined"
+                                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction307.click() : undefined"
+                                            >
                                                 <fa-icon [icon]="faUndo" size="lg" />
                                             </div>
                                         }
                                         @if (!reEvaluationInProgress()) {
-                                            <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)">
+                                            <div
+                                                class="duplicate-button"
+                                                title="Duplicate"
+                                                (click)="duplicateDropLocation(dropLocation)"
+                                                #keyboardAction312
+                                                role="button"
+                                                tabindex="0"
+                                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction312.click() : undefined"
+                                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction312.click() : undefined"
+                                            >
                                                 <fa-icon [icon]="faCopy" size="lg" />
                                             </div>
                                         }
@@ -317,6 +362,12 @@
                                             [ngClass]="reEvaluationInProgress() ? 're-evaluate-button' : 'delete-button'"
                                             title="Delete"
                                             (click)="deleteDropLocation(dropLocation)"
+                                            #keyboardAction316
+                                            role="button"
+                                            tabindex="0"
+                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction316.click() : undefined"
+                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction316.click() : undefined"
                                         >
                                             <fa-icon [icon]="faTrash" size="lg" />
                                         </div>
@@ -332,7 +383,17 @@
                                     @if (getMappingsForDropLocation(dropLocation).length) {
                                         <div [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) % 8)">
                                             {{ getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) }}
-                                            <div class="unlink-mapping" (click)="deleteMappingsForDropLocation(dropLocation)">
+                                            <div
+                                                class="unlink-mapping"
+                                                [attr.aria-label]="'global.action.unlink' | artemisTranslate"
+                                                (click)="deleteMappingsForDropLocation(dropLocation)"
+                                                #keyboardAction335
+                                                role="button"
+                                                tabindex="0"
+                                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction335.click() : undefined"
+                                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction335.click() : undefined"
+                                            >
                                                 <fa-icon [icon]="faUnlink" size="lg" />
                                             </div>
                                         </div>
@@ -369,30 +430,90 @@
                                 </div>
                             }
                             @if (!reEvaluationInProgress()) {
-                                <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)">
+                                <div
+                                    class="delete-button"
+                                    title="Delete"
+                                    (click)="deleteDragItem(dragItem)"
+                                    #keyboardAction372
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction372.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction372.click() : undefined"
+                                >
                                     <fa-icon [icon]="faTrash" size="lg" />
                                 </div>
                             }
                             @if (reEvaluationInProgress()) {
                                 <div class="delete-button">
                                     @if (dragItem.pictureFilePath) {
-                                        <div class="re-evaluate-button" title="Change to Text Drag Item" (click)="changeToTextDragItem(dragItem)">
+                                        <div
+                                            class="re-evaluate-button"
+                                            title="Change to Text Drag Item"
+                                            (click)="changeToTextDragItem(dragItem)"
+                                            #keyboardAction379
+                                            role="button"
+                                            tabindex="0"
+                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction379.click() : undefined"
+                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction379.click() : undefined"
+                                        >
                                             <fa-icon [icon]="faFont" size="lg" />
                                         </div>
                                     }
-                                    <div class="re-evaluate-button" title="Change to Picture Drag Item" (click)="reevalChangeToImageInput.click()">
+                                    <div
+                                        class="re-evaluate-button"
+                                        title="Change to Picture Drag Item"
+                                        (click)="reevalChangeToImageInput.click()"
+                                        #keyboardAction383
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction383.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction383.click() : undefined"
+                                    >
                                         <input #reevalChangeToImageInput [hidden]="true" type="file" accept="image/*" (change)="changeToPictureDragItem(dragItem, $event)" />
                                         <fa-icon [icon]="farFileImage" size="lg" />
                                     </div>
                                     @if (!dragItem.invalid) {
-                                        <div class="re-evaluate-button" title="Set invalid" (click)="dragItem.invalid = true">
+                                        <div
+                                            class="re-evaluate-button"
+                                            title="Set invalid"
+                                            (click)="dragItem.invalid = true"
+                                            #keyboardAction388
+                                            role="button"
+                                            tabindex="0"
+                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction388.click() : undefined"
+                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction388.click() : undefined"
+                                        >
                                             <fa-icon [icon]="faBan" size="lg" />
                                         </div>
                                     }
-                                    <div class="re-evaluate-button" title="Reset" (click)="resetDragItem(dragItem)">
+                                    <div
+                                        class="re-evaluate-button"
+                                        title="Reset"
+                                        (click)="resetDragItem(dragItem)"
+                                        #keyboardAction392
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction392.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction392.click() : undefined"
+                                    >
                                         <fa-icon [icon]="faUndo" size="lg" />
                                     </div>
-                                    <div class="re-evaluate-button" title="Delete" (click)="deleteDragItem(dragItem)">
+                                    <div
+                                        class="re-evaluate-button"
+                                        title="Delete"
+                                        (click)="deleteDragItem(dragItem)"
+                                        #keyboardAction395
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction395.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction395.click() : undefined"
+                                    >
                                         <fa-icon [icon]="faTrash" size="lg" />
                                     </div>
                                 </div>
@@ -411,7 +532,17 @@
                                 @for (mapping of getMappingsForDragItem(dragItem); track mapping) {
                                     <div [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
                                         {{ getMappingIndex(mapping) }}
-                                        <div class="unlink-mapping" (click)="deleteMapping(mapping)">
+                                        <div
+                                            class="unlink-mapping"
+                                            [attr.aria-label]="'global.action.unlink' | artemisTranslate"
+                                            (click)="deleteMapping(mapping)"
+                                            #keyboardAction414
+                                            role="button"
+                                            tabindex="0"
+                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction414.click() : undefined"
+                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction414.click() : undefined"
+                                        >
                                             <fa-icon [icon]="faUnlink" size="lg" />
                                         </div>
                                     </div>
@@ -447,7 +578,7 @@
         @if (!reEvaluationInProgress()) {
             <div class="question-options row d-flex justify-content-start">
                 <div class="col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
-                    <button class="btn btn-outline-secondary me-2" (click)="dragItemFileInput.click()">
+                    <button type="button" class="btn btn-outline-secondary me-2" (click)="dragItemFileInput.click()">
                         <fa-icon [icon]="faPlus" />
                         @if (reEvaluationInProgress()) {
                             <span jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
@@ -457,11 +588,12 @@
                         }
                     </button>
                     <input #dragItemFileInput id="dragItemFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
-                    <button class="btn btn-outline-secondary me-2" data-testid="add-text-drag-item" (click)="addTextDragItem()">
+                    <button type="button" class="btn btn-outline-secondary me-2" data-testid="add-text-drag-item" (click)="addTextDragItem()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
                     </button>
                     <button
+                        type="button"
                         class="btn btn-outline-secondary"
                         id="crop-drag-item"
                         [ngbTooltip]="'artemisApp.dragAndDropQuestion.cutImagesFromDropLocationTip' | artemisTranslate"
@@ -477,7 +609,7 @@
             <hr />
             <div class="question-options">
                 <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question().backgroundFilePath">
-                    <button class="btn btn-outline-secondary" [disabled]="!question().backgroundFilePath" (click)="togglePreview()">
+                    <button type="button" class="btn btn-outline-secondary" [disabled]="!question().backgroundFilePath" (click)="togglePreview()">
                         <fa-icon [icon]="faEye" />
                         <span jhiTranslate="entity.action.preview"></span>
                     </button>
@@ -490,9 +622,9 @@
     <div class="preview-dnd-question">
         <jhi-drag-and-drop-question [question]="question()" [mappings]="[]" [questionIndex]="questionIndex()" [filePreviewPaths]="filePreviewPaths()" />
         <hr />
-        <div class="btn btn-outline-secondary" (click)="togglePreview()">
+        <button type="button" class="btn btn-outline-secondary" (click)="togglePreview()">
             <fa-icon [icon]="faPencilAlt" />
             <span jhiTranslate="entity.action.edit"></span>
-        </div>
+        </button>
     </div>
 }
