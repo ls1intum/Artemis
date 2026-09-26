@@ -95,6 +95,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     private static final String TEST_PREFIX = "resultserviceintegration";
 
+    private static final ZonedDateTime RESULT_REFERENCE_DATE = ZonedDateTime.parse("2025-01-15T10:00:00Z");
+
     @Autowired
     private FeedbackRepository feedbackRepository;
 
@@ -207,6 +209,32 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         result2.setFeedbacks(feedbacks2);
         result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
+    }
+
+    @ParameterizedTest
+    @EnumSource(AssessmentType.class)
+    void reloadLatestResultWithFeedbackBeforeAssessmentDueDate(AssessmentType assessmentType) {
+        programmingExercise.setAssessmentDueDate(RESULT_REFERENCE_DATE.plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        var submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        var result = participationUtilService.addResultToSubmission(assessmentType, RESULT_REFERENCE_DATE.minusMinutes(1), submission);
+        var feedback = new Feedback().type(FeedbackType.AUTOMATIC).text("Athena feedback").detailText("Check the loop boundary.");
+        participationUtilService.addFeedbackToResult(feedback, result);
+
+        var reloaded = resultRepository.findLatestResultWithFeedbacksBySubmissionId(submission.getId(), RESULT_REFERENCE_DATE);
+        if (assessmentType == AssessmentType.AUTOMATIC || assessmentType == AssessmentType.AUTOMATIC_ATHENA) {
+            assertThat(reloaded).isPresent();
+            assertThat(reloaded.orElseThrow().getId()).isEqualTo(result.getId());
+            assertThat(reloaded.orElseThrow().getFeedbacks()).singleElement().satisfies(actual -> {
+                assertThat(actual.getText()).isEqualTo(feedback.getText());
+                assertThat(actual.getDetailText()).isEqualTo(feedback.getDetailText());
+            });
+        }
+        else {
+            assertThat(reloaded).isEmpty();
+        }
+
+        assertThat(resultRepository.findLatestResultWithFeedbacksBySubmissionId(submission.getId(), RESULT_REFERENCE_DATE.plusDays(2))).isPresent();
     }
 
     @Test
