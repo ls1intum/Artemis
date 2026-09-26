@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 146 features, 1038 REST endpoints in 28 modules, and 62 interaction overrides.
+Currently 20 product areas, 147 features, 1045 REST endpoints in 28 modules, and 62 interaction overrides.
 
 ## Courses
 
@@ -1408,6 +1408,15 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | iris | `IrisAdminDashboardResource` | 0 | 4 | 0 | 0 |
+
+### Index dashboard
+
+`INGESTION_DASHBOARD`: Coverage of the global search index against what the database expects.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| globalsearch | `IngestionBrowserResource` | 0 | 3 | 0 | 0 |
+| globalsearch | `IngestionCoverageResource` | 1 | 3 | 0 | 0 |
 
 ### Upcoming exams and exercises
 
