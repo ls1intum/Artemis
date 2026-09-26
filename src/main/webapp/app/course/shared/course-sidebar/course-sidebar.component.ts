@@ -5,6 +5,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -64,6 +65,7 @@ export interface SidebarItem {
         NgbDropdownMenu,
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
         NgbTooltip,
         RouterLink,
         RouterLinkActive,

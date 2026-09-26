@@ -33,6 +33,7 @@
                                         <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
                                     }
                                     <button
+                                        type="button"
                                         id="reset-course"
                                         *jhiHasAnyAuthority="'ROLE_ADMIN'"
                                         [buttonSize]="ButtonSize.SMALL"
@@ -53,6 +54,7 @@
                                         <fa-icon [icon]="faUndo" />
                                     </button>
                                     <button
+                                        type="button"
                                         id="delete-course"
                                         *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN"
                                         [buttonSize]="ButtonSize.SMALL"

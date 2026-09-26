@@ -107,6 +107,22 @@ describe('CodeEditorBuildOutputComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('announces the owning grid collapse state after keyboard activation', () => {
+        fixture.componentRef.setInput('participation', {});
+        fixture.detectChanges();
+        const header = fixture.nativeElement.querySelector('[role="button"]') as HTMLElement;
+        const toggle = vi.spyOn(comp.onToggleCollapse, 'emit');
+        expect(header.getAttribute('aria-expanded')).toBe('true');
+        header.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        expect(toggle).toHaveBeenCalledOnce();
+        fixture.componentRef.setInput('collapsed', true);
+        fixture.detectChanges();
+        expect(header.getAttribute('aria-expanded')).toBe('false');
+        fixture.componentRef.setInput('collapsed', false);
+        fixture.detectChanges();
+        expect(header.getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('should setup result websocket, fetch result details and build logs on participation change', () => {
         const result = { id: 1 };
         const submission = { id: 1, results: [result] };

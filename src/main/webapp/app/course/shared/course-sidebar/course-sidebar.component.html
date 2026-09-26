@@ -32,6 +32,12 @@
                                     [ngClass]="{ collapsed: isNavbarCollapsed() }"
                                     (click)="courseActionItemClick.emit(courseActionItem)"
                                     [title]="courseActionItem.title"
+                                    #keyboardAction30
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
                                 >
                                     <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: courseActionItem }" />
                                 </a>
@@ -54,6 +60,12 @@
                             [ngClass]="{ collapsed: isNavbarCollapsed() }"
                             (click)="courseActionItemClick.emit(courseActionItem)"
                             [title]="courseActionItem.title"
+                            #keyboardAction51
+                            role="button"
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction51.click() : undefined"
                         >
                             <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: courseActionItem }" />
                         </a>
@@ -100,12 +112,20 @@
                             <div
                                 class="double-arrow pe-1"
                                 [ngClass]="{ 'menu-collapsed': isNavbarCollapsed() }"
-                                [ngbTooltip]="'Collapse Menu (Ctrl + M)'"
+                                [ngbTooltip]="'global.generic.collapseMenu' | artemisTranslate"
                                 tooltipClass="double-arrow-tooltip"
                                 [container]="'body'"
                                 (click)="toggleCollapseState.emit()"
+                                #keyboardAction93
+                                role="button"
+                                tabindex="0"
+                                [attr.aria-label]="'global.generic.collapseMenu' | artemisTranslate"
+                                [attr.aria-expanded]="!isNavbarCollapsed()"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction93.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction93.click() : undefined"
                             >
-                                <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()">
+                                <div class="double-arrow-icon">
                                     <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
                                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
                                 </div>
@@ -120,10 +140,18 @@
                     class="double-arrow mb-3"
                     [ngClass]="{ 'menu-collapsed': isNavbarCollapsed() }"
                     [tooltipClass]="isNavbarCollapsed() ? 'double-arrow-tooltip-collapsed' : 'double-arrow-tooltip-no-bottom-items'"
-                    [ngbTooltip]="(isNavbarCollapsed() ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
+                    [ngbTooltip]="(isNavbarCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
                     (click)="toggleCollapseState.emit()"
+                    #keyboardAction112
+                    role="button"
+                    tabindex="0"
+                    [attr.aria-label]="(isNavbarCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
+                    [attr.aria-expanded]="!isNavbarCollapsed()"
+                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction112.click() : undefined"
+                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction112.click() : undefined"
                 >
-                    <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()">
+                    <div class="double-arrow-icon">
                         <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
                         <fa-icon class="fa-xs" [icon]="faChevronRight" />
                     </div>

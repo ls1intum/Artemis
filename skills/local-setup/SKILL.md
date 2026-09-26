@@ -99,6 +99,14 @@ alongside the server and point the mail configuration at it. See
 
 ## When it will not start
 
+**"Configure meaningful values for info.operatorName ...".** Every core node, development
+included, refuses to start without `info.operatorName`, `info.operatorAdminName` and
+`info.universityName`, even with telemetry off. Set all three in `application-local.yml`; empty and
+template values (`Admin`, `Your University`, `<name>`) are rejected. The repository's E2E runners,
+Docker dev env files and test profiles already set their own. It hits every start you configure
+yourself with the `core` profile: the IntelliJ run configurations, `bootRun --args` with `core`, and
+the `docker run` examples. A plain `./gradlew bootRun` activates only `dev` and skips the check.
+
 **"Unable to determine Dialect".** The Spring profile set does not include a database profile, or
 an `autoconfigure.exclude` is replacing rather than merging the expected exclusions.
 

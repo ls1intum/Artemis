@@ -18,6 +18,7 @@
                 <td>{{ plagiarismCasesPerExercise().get(exercise) }}</td>
                 <td>
                     <button
+                        type="button"
                         id="view-plagiarism-results-btn-{{ i }}"
                         class="btn btn-primary"
                         (click)="goToPlagiarismDetection(exercise)"
@@ -30,6 +31,7 @@
 </table>
 @if (anyPlagiarismCases()) {
     <button
+        type="button"
         class="btn btn-primary"
         id="view-plagiarism-cases-btn"
         (click)="goToPlagiarismCases()"

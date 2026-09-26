@@ -44,7 +44,7 @@
 
 <div class="quick-actions-grid">
     @if (course()?.isAtLeastEditor) {
-        <button class="quick-action-card quick-action-card--exercises" id="open-add-exercise-popover" (click)="addExercisePopover.showPopover($event)">
+        <button type="button" class="quick-action-card quick-action-card--exercises" id="open-add-exercise-popover" (click)="addExercisePopover.showPopover($event)">
             <div class="quick-action-icon">
                 <fa-icon [icon]="faCode" />
             </div>
@@ -52,7 +52,7 @@
         </button>
 
         @if (lectureEnabled) {
-            <button class="quick-action-card quick-action-card--lectures" (click)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)">
+            <button type="button" class="quick-action-card quick-action-card--lectures" (click)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)">
                 <div class="quick-action-icon">
                     <fa-icon [icon]="faChalkboardTeacher" />
                 </div>
@@ -62,7 +62,7 @@
     }
     @if (course()?.isAtLeastInstructor) {
         @if (tutorialGroupEnabled) {
-            <button class="quick-action-card quick-action-card--tutorial" (click)="navigateToCourseManagementSection(CourseManagementSection.TUTORIAL_GROUP)">
+            <button type="button" class="quick-action-card quick-action-card--tutorial" (click)="navigateToCourseManagementSection(CourseManagementSection.TUTORIAL_GROUP)">
                 <div class="quick-action-icon">
                     <fa-icon [icon]="faUsers" />
                 </div>
@@ -71,7 +71,7 @@
         }
 
         @if (examEnabled) {
-            <button class="quick-action-card quick-action-card--exams" (click)="navigateToCourseManagementSection(CourseManagementSection.EXAM)">
+            <button type="button" class="quick-action-card quick-action-card--exams" (click)="navigateToCourseManagementSection(CourseManagementSection.EXAM)">
                 <div class="quick-action-icon">
                     <fa-icon [icon]="faFileAlt" />
                 </div>
@@ -80,7 +80,7 @@
         }
 
         @if (atlasEnabled) {
-            <button class="quick-action-card quick-action-card--competencies" (click)="navigateToCourseManagementSection(CourseManagementSection.COMPETENCY)">
+            <button type="button" class="quick-action-card quick-action-card--competencies" (click)="navigateToCourseManagementSection(CourseManagementSection.COMPETENCY)">
                 <div class="quick-action-icon">
                     <fa-icon [icon]="faBullseye" />
                 </div>
@@ -89,7 +89,7 @@
         }
     }
     @if (course()?.isAtLeastTutor) {
-        <button class="quick-action-card quick-action-card--faqs" (click)="navigateToCourseManagementSection(CourseManagementSection.FAQ)">
+        <button type="button" class="quick-action-card quick-action-card--faqs" (click)="navigateToCourseManagementSection(CourseManagementSection.FAQ)">
             <div class="quick-action-icon">
                 <fa-icon [icon]="faQuestion" />
             </div>

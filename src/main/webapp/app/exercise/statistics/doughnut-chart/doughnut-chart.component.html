@@ -7,7 +7,17 @@
     @if (!titleLink()) {
         <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
     }
-    <div class="doughnut-chart-container position-relative" [ngClass]="titleLink() ? 'clickable' : ''" (click)="openCorrespondingPage()">
+    <div
+        class="doughnut-chart-container position-relative"
+        [ngClass]="titleLink() ? 'clickable' : ''"
+        (click)="openCorrespondingPage()"
+        #keyboardAction10
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+    >
         <div class="doughnut-chart-text">
             @if (receivedStats()) {
                 <h2 class="text-center">{{ currentPercentage() }}%</h2>

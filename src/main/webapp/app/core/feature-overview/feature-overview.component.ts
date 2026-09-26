@@ -1,3 +1,4 @@
+import { NgOptimizedImage } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -39,11 +40,48 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+const FEATURE_IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
+    '/content/images/feature-overview/instructors/anonymous_assessment.png': { width: 1785, height: 849 },
+    '/content/images/feature-overview/instructors/complaint_response.png': { width: 2200, height: 600 },
+    '/content/images/feature-overview/instructors/create_conduct_assess.png': { width: 4038, height: 1264 },
+    '/content/images/feature-overview/instructors/exam_checklist.png': { width: 1306, height: 2572 },
+    '/content/images/feature-overview/instructors/exam_checklist_overview.png': { width: 1840, height: 619 },
+    '/content/images/feature-overview/instructors/exam_exercise_update_notification.png': { width: 1811, height: 244 },
+    '/content/images/feature-overview/instructors/exam_live_statistics_section_overview_section.png': { width: 1762, height: 2376 },
+    '/content/images/feature-overview/instructors/exam_mode.png': { width: 897, height: 72 },
+    '/content/images/feature-overview/instructors/exam_statistics.png': { width: 2803, height: 2763 },
+    '/content/images/feature-overview/instructors/exercise_variants.png': { width: 1845, height: 793 },
+    '/content/images/feature-overview/instructors/fully_configurable.png': { width: 2834, height: 1830 },
+    '/content/images/feature-overview/instructors/grade_key_editor.png': { width: 1919, height: 1456 },
+    '/content/images/feature-overview/instructors/import_students.png': { width: 2900, height: 795 },
+    '/content/images/feature-overview/instructors/multiple_exercises.png': { width: 976, height: 101 },
+    '/content/images/feature-overview/instructors/plagiarism.png': { width: 3182, height: 2086 },
+    '/content/images/feature-overview/instructors/progress_monitoring.png': { width: 2671, height: 1697 },
+    '/content/images/feature-overview/instructors/session_monitoring.png': { width: 950, height: 430 },
+    '/content/images/feature-overview/instructors/student_exams.png': { width: 3767, height: 1783 },
+    '/content/images/feature-overview/instructors/submission-policy-lock-configure-grading.png': { width: 2874, height: 880 },
+    '/content/images/feature-overview/students/clone_repository.png': { width: 1078, height: 241 },
+    '/content/images/feature-overview/students/code_editor.png': { width: 1669, height: 784 },
+    '/content/images/feature-overview/students/complaint.png': { width: 2585, height: 2412 },
+    '/content/images/feature-overview/students/exam_mode.png': { width: 292, height: 714 },
+    '/content/images/feature-overview/students/exercise_diff_view.png': { width: 559, height: 120 },
+    '/content/images/feature-overview/students/exercise_update_notification.png': { width: 362, height: 118 },
+    '/content/images/feature-overview/students/login.png': { width: 600, height: 150 },
+    '/content/images/feature-overview/students/modeling_editor.png': { width: 3730, height: 1910 },
+    '/content/images/feature-overview/students/online_exams.png': { width: 3920, height: 910 },
+    '/content/images/feature-overview/students/quiz_exercises.png': { width: 2500, height: 2414 },
+    '/content/images/feature-overview/students/student_grade_key.png': { width: 946, height: 1123 },
+    '/content/images/feature-overview/students/summary.png': { width: 3956, height: 2124 },
+    '/content/images/feature-overview/students/text_editor.png': { width: 3729, height: 1790 },
+    '/content/images/feature-overview/students/user_interface.png': { width: 3844, height: 1894 },
+    '/content/images/feature-overview/students/workingOffline.png': { width: 3262, height: 1470 },
+};
+
 @Component({
     selector: 'jhi-feature-overview',
     templateUrl: './feature-overview.component.html',
     styleUrls: ['./feature-overview.scss'],
-    imports: [TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [NgOptimizedImage, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class FeatureOverviewComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -51,6 +89,7 @@ export class FeatureOverviewComponent implements OnInit {
 
     readonly features = signal<Feature[]>(undefined!);
     readonly targetAudience = signal(TargetAudience.INSTRUCTORS);
+    readonly imageDimensions = FEATURE_IMAGE_DIMENSIONS;
 
     /**
      * Initialises the feature overview page either for students or for instructors, depending on the url.

@@ -122,9 +122,13 @@ jobs:
         run: |
           set -Eeuo pipefail
           PROFILES=dev,localci,localvc,artemis,scheduling,buildagent,core,ldap
-          JAR=$(ls build/libs/Artemis*.jar | head -n1)
+          JARS=(build/libs/Artemis*.jar)
+          JAR=${JARS[0]}
           nohup java -jar "$JAR" \
             --spring.profiles.active="$PROFILES" \
+            --info.operatorName="Artemis CI Operations" \
+            --info.operatorAdminName="Artemis CI Administrator" \
+            --info.universityName="Artemis CI University" \
             --artemis.lti.enabled=true \
             --artemis.user-management.passkey.enabled=true \
             --artemis.user-management.use-external=false \
