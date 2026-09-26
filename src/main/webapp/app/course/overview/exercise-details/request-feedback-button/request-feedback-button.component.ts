@@ -226,7 +226,14 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         }
         // Another tab may have changed the AI Experience choice since this tab cached it (or since this component was
         // created); re-check right before an actual request goes out, so a No AI choice made elsewhere is still honored.
+        // The router can reuse this component for another exercise while the refresh is pending; pin the clicked
+        // exercise and participation so the continuation cannot send a request for one the student never clicked.
+        const exerciseIdAtClick = this.exercise().id;
+        const participationIdAtClick = this.participationId();
         await firstValueFrom(this.accountService.refreshSelectedLLMUsage());
+        if (this.exercise().id !== exerciseIdAtClick || this.participationId() !== participationIdAtClick) {
+            return;
+        }
         this.setUserAcceptedLLMUsage();
         if (!this.hasUserAcceptedLLMUsage()) {
             await this.showLLMSelectionModal();

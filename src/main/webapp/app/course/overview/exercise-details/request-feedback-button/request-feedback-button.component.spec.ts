@@ -352,6 +352,38 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(requestFeedbackSpy).not.toHaveBeenCalled();
     });
 
+    it('should not send a request for another exercise loaded into the reused component while the AI Experience refresh is pending', async () => {
+        // Regression test: the router reuses this component across exercises. A click on exercise A whose refresh
+        // is still pending must not continue and send a feedback request for exercise B.
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        await initAndTick();
+
+        const pendingRefresh = new Subject<LLMSelectionDecision | undefined>();
+        vi.spyOn(accountService, 'refreshSelectedLLMUsage').mockReturnValue(pendingRefresh.asObservable());
+        const requestFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+        const exerciseDetailsSpy = vi.spyOn(exerciseService, 'getExerciseDetails');
+
+        const click = component.requestAIFeedback();
+
+        const otherExercise = { ...createBaseExercise(ExerciseType.TEXT, false, participation), id: exercise.id! + 1 } as Exercise;
+        setupComponentInputs(otherExercise, true);
+        await initAndTick();
+        exerciseDetailsSpy.mockClear();
+
+        pendingRefresh.next(LLMSelectionDecision.CLOUD_AI);
+        pendingRefresh.complete();
+        await click;
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(exerciseDetailsSpy).not.toHaveBeenCalled();
+        expect(requestFeedbackSpy).not.toHaveBeenCalled();
+    });
+
     it('should unsubscribe from listeners on destroy', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);
