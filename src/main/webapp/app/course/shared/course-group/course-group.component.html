@@ -78,7 +78,12 @@
 </ng-template>
 
 @if (allowAddingUsers()) {
-    <jhi-user-registration-modal [titleKey]="'artemisApp.course.courseGroup.addUsers'" [searchFn]="searchUsersFn()" [registerFn]="registerUsersFn()" (registered)="onMembersAdded()" />
+    <jhi-user-registration-modal
+        [titleKey]="'artemisApp.course.courseGroup.addUsers'"
+        [searchFn]="searchUsersFn()"
+        [registerFn]="registerUsersFn()"
+        (registered)="onMembersAdded()"
+    />
 }
 
 @if (paginated()) {

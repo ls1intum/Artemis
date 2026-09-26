@@ -42,7 +42,7 @@ describe('TumAetUiTagComponent', () => {
         fixture.componentRef.setInput('bold', false);
         fixture.detectChanges();
 
-        expect(tag().classList).toContain('tum:font-normal');
-        expect(tag().classList).not.toContain('tum:font-bold');
+        expect(tag().classList).toContain('tumaet:font-normal');
+        expect(tag().classList).not.toContain('tumaet:font-bold');
     });
 });

@@ -24,6 +24,7 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { Button, ButtonDirective } from 'primeng/button';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-group',
@@ -165,34 +166,34 @@ export class CourseGroupComponent {
         const hiddenFields = new Set(this.hiddenColumnFields());
         return [
             {
-            headerKey: this.profilePictureHeaderKey(),
-            width: '5rem',
-            templateRef: this.profilePictureTemplate(),
+                headerKey: this.profilePictureHeaderKey(),
+                width: '5rem',
+                templateRef: this.profilePictureTemplate(),
             },
-        {
-            field: 'login',
-            headerKey: 'artemisApp.course.courseGroup.login',
-            sort: true,
-            width: '10rem',
-            templateRef: this.loginTemplate(),
-        },
-        {
-            field: 'visibleRegistrationNumber',
-            headerKey: 'artemisApp.course.courseGroup.registrationNumber',
-            sort: true,
-            width: '10rem',
-        },
-        {
-            field: 'name',
-            headerKey: 'artemisApp.course.courseGroup.name',
-            sort: true,
-            width: '12rem',
-        },
-        {
-            field: 'email',
-            headerKey: 'artemisApp.course.courseGroup.email',
-            sort: true,
-        },
+            {
+                field: 'login',
+                headerKey: 'artemisApp.course.courseGroup.login',
+                sort: true,
+                width: '10rem',
+                templateRef: this.loginTemplate(),
+            },
+            {
+                field: 'visibleRegistrationNumber',
+                headerKey: 'artemisApp.course.courseGroup.registrationNumber',
+                sort: true,
+                width: '10rem',
+            },
+            {
+                field: 'name',
+                headerKey: 'artemisApp.course.courseGroup.name',
+                sort: true,
+                width: '12rem',
+            },
+            {
+                field: 'email',
+                headerKey: 'artemisApp.course.courseGroup.email',
+                sort: true,
+            },
         ].filter((column) => {
             if (column.headerKey === this.profilePictureHeaderKey()) {
                 return !hiddenFields.has('imageUrl');
@@ -312,7 +313,9 @@ export class CourseGroupComponent {
     }
 
     private fromUserForRegistration(user: UserForRegistration): User {
-        return Object.assign(new User(user.id, user.login), {
+        return hydrate(new User(), {
+            id: user.id,
+            login: user.login,
             name: user.name,
             email: user.email,
             visibleRegistrationNumber: user.registrationNumber,

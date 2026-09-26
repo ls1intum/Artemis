@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 147 features, 1047 REST endpoints in 28 modules, and 62 interaction overrides.
+Currently 20 product areas, 147 features, 1047 REST endpoints in 29 modules, and 62 interaction overrides.
 
 ## Courses
 
@@ -542,14 +542,6 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | text | `TextAssessmentResource` | 5 | 1 | 0 | 0 |
 | text | `TextSubmissionResource` | 0 | 2 | 0 | 0 |
 
-### Presentation assessments
-
-`PRESENTATION_ASSESSMENT`: Managing presentation assessments, presentation instances, presenters, and their grades.
-
-| Module | Resource | Actions | Views | Automatic | System |
-|--------|----------|--------:|------:|----------:|-------:|
-| presentation | `PresentationAssessmentResource` | 7 | 2 | 0 | 0 |
-
 ### Complaints and feedback requests
 
 `COMPLAINTS`: Students complaining about an assessment and tutors responding.
@@ -615,6 +607,14 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | assessment | `ResultResource` | 0 | 3 | 0 | 0 |
 | communication | `ChannelResource` | 1 | 0 | 0 | 0 |
+
+### Presentation assessments
+
+`PRESENTATION_ASSESSMENT`: Managing presentation assessments, presentation instances, presenters, and their grades.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| presentation | `PresentationAssessmentResource` | 7 | 2 | 0 | 0 |
 
 ## Exams
 

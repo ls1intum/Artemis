@@ -104,7 +104,11 @@
                                                 </td>
                                                 <td>
                                                     @if (row.assessed) {
-                                                        <tumaet-ui-tag severity="success" [bold]="false" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
+                                                        <tumaet-ui-tag
+                                                            severity="success"
+                                                            [bold]="false"
+                                                            [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate"
+                                                        />
                                                     } @else {
                                                         <tumaet-ui-tag severity="warn" [bold]="false" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
                                                     }
