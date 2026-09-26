@@ -30,6 +30,7 @@ import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submis
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
@@ -96,11 +97,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return assessment?.name ? assessment.name.replace('::', ' › ') : undefined;
     }
 
-    // Reuses Apollon's own type-label wording (e.g. "attribute" -> "Attribute") so the type shown
+    // Reuses Apollon's own (translated) type-label wording (e.g. "attribute" -> "Attribute") so the type shown
     // here next to a feedback item reads the same as the type shown in Apollon's own feedback popup.
     protected feedbackElementType(feedback: Feedback): string | undefined {
         const assessment = this.assessmentFor(feedback);
-        return assessment?.type ? DEFAULT_LABELS.nodeTypeLabel(assessment.type) : undefined;
+        if (!assessment?.type) {
+            return undefined;
+        }
+        const nodeTypeLabel = createApollonLabels(this.translateService).nodeTypeLabel ?? DEFAULT_LABELS.nodeTypeLabel;
+        return nodeTypeLabel(assessment.type);
     }
 
     private assessmentFor(feedback: Feedback) {
