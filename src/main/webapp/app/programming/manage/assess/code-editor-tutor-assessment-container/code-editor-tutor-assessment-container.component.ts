@@ -224,7 +224,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * On init set up the route param subscription.
      * Will load the participation according to participation id with the latest result and result details.
      */
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
+        void this.initializeCodeEditorTutorAssessmentContainerComponent();
+    }
+
+    private async initializeCodeEditorTutorAssessmentContainerComponent(): Promise<void> {
         // Used to check if the assessor is the current user
         void this.accountService.identity().then((user) => {
             this.userId = user!.id!;

@@ -2,6 +2,7 @@
     @if (!reEvaluationInProgress()) {
         <div class="question-options question-card-header">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="toggleQuestionCollapse()"
                 [attr.aria-expanded]="!isQuestionCollapsed()"
@@ -56,6 +57,7 @@
     @if (reEvaluationInProgress()) {
         <div class="question-card-header-reevaluation">
             <button
+                type="button"
                 class="btn question-collapse"
                 (click)="toggleQuestionCollapse()"
                 [attr.aria-expanded]="!isQuestionCollapsed()"
@@ -193,18 +195,31 @@
                 </div>
                 <div class="col-12 col-md-6 d-flex align-items-center gap-2">
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="shortAnswerQuestion.invalid"
                         (click)="shortAnswerQuestion.invalid = true"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                     ></button>
                     <button
+                        type="button"
                         class="btn btn-outline-secondary invalid-button w-auto ms-auto"
                         [hidden]="!shortAnswerQuestion.invalid"
                         [disabled]="shortAnswerQuestion.invalid"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                     ></button>
-                    <div id="delete-button" class="delete-button flex-shrink-0" (click)="deleteQuestion()">
+                    <div
+                        id="delete-button"
+                        [attr.aria-label]="'global.action.delete' | artemisTranslate"
+                        class="delete-button flex-shrink-0"
+                        (click)="deleteQuestion()"
+                        #keyboardAction207
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction207.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction207.click() : undefined"
+                    >
                         <fa-icon [icon]="faTrash" size="2x" />
                     </div>
                 </div>
@@ -289,7 +304,12 @@
                 }
                 <hr />
                 @if (!reEvaluationInProgress()) {
-                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursorVisualMode()"></div>
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot"
+                        (click)="addSpotAtCursorVisualMode()"
+                    ></button>
                 }
                 @if (!reEvaluationInProgress()) {
                     <hr />
@@ -333,6 +353,12 @@
                                                                     shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion).invalid =
                                                                         true
                                                                 "
+                                                                #keyboardAction329
+                                                                role="button"
+                                                                tabindex="0"
+                                                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction329.click() : undefined"
+                                                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction329.click() : undefined"
                                                             >
                                                                 <fa-icon [icon]="faBan" size="lg" />
                                                             </div>
@@ -343,6 +369,12 @@
                                                             (click)="
                                                                 resetSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))
                                                             "
+                                                            #keyboardAction340
+                                                            role="button"
+                                                            tabindex="0"
+                                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
+                                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
                                                         >
                                                             <fa-icon [icon]="faUndo" size="lg" />
                                                         </div>
@@ -352,6 +384,12 @@
                                                             (click)="
                                                                 deleteSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))
                                                             "
+                                                            #keyboardAction349
+                                                            role="button"
+                                                            tabindex="0"
+                                                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction349.click() : undefined"
+                                                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction349.click() : undefined"
                                                         >
                                                             <fa-icon [icon]="faTrash" size="lg" />
                                                         </div>
@@ -400,7 +438,17 @@
                                 <div>
                                     <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                                 </div>
-                                <div class="delete-button" title="Delete" (click)="deleteSolution(solution)">
+                                <div
+                                    class="delete-button"
+                                    title="Delete"
+                                    (click)="deleteSolution(solution)"
+                                    #keyboardAction403
+                                    role="button"
+                                    tabindex="0"
+                                    (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction403.click() : undefined"
+                                    (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                    (keyup.space)="$event.target === $event.currentTarget ? keyboardAction403.click() : undefined"
+                                >
                                     <fa-icon [icon]="faTrash" size="lg" />
                                 </div>
                                 <div class="drag-handle drag-handle-wrapper" title="Move">
@@ -412,7 +460,17 @@
                                             @if (mapping.spot !== undefined) {
                                                 <div [ngClass]="'mapping-number mapping-color-' + ((mapping.spot!.spotNr || 0) % 8)">
                                                     {{ mapping.spot.spotNr }}
-                                                    <div class="unlink-mapping" (click)="deleteMapping(mapping)">
+                                                    <div
+                                                        class="unlink-mapping"
+                                                        [attr.aria-label]="'global.action.unlink' | artemisTranslate"
+                                                        (click)="deleteMapping(mapping)"
+                                                        #keyboardAction415
+                                                        role="button"
+                                                        tabindex="0"
+                                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction415.click() : undefined"
+                                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction415.click() : undefined"
+                                                    >
                                                         <fa-icon [icon]="faUnlink" size="lg" />
                                                     </div>
                                                 </div>
@@ -437,7 +495,7 @@
                     <ng-container>
                         <div class="question-options">
                             <div class="col">
-                                <button class="btn btn-outline-secondary" (click)="addTextSolution()">
+                                <button type="button" class="btn btn-outline-secondary" (click)="addTextSolution()">
                                     <i class="fa fa-plus"></i>
                                     <span jhiTranslate="artemisApp.shortAnswerQuestion.addShortAnswerSolution"></span>
                                 </button>
@@ -452,19 +510,26 @@
             <div class="toolbar">
                 <div class="btn-group">
                     <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text"></div>
-                    <div
+                    <button
+                        type="button"
                         class="btn btn-outline-secondary"
                         data-testid="short-answer-show-visual"
                         jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual"
                         (click)="togglePreview()"
-                    ></div>
+                    ></button>
                 </div>
             </div>
         }
         @if (showVisualMode() && !reEvaluationInProgress()) {
             <div class="toolbar">
                 <div class="btn-group">
-                    <div class="btn btn-outline-secondary" id="short-answer-show-text" jhiTranslate="artemisApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        id="short-answer-show-text"
+                        jhiTranslate="artemisApp.shortAnswerQuestion.editor.text"
+                        (click)="togglePreview()"
+                    ></button>
                     <div class="btn btn-outline-secondary active" jhiTranslate="artemisApp.shortAnswerQuestion.editor.visual"></div>
                 </div>
             </div>

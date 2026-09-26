@@ -37,6 +37,7 @@
     }
     @if (canCleanup() && archiveMode() === 'Course') {
         <button
+            type="button"
             [title]="'entity.action.cleanup' | artemisTranslate"
             tumAetUiButton
             severity="danger"
@@ -59,6 +60,7 @@
     }
     @if (canCleanup() && archiveMode() === 'Exam') {
         <button
+            type="button"
             [title]="'entity.action.cleanup' | artemisTranslate"
             tumAetUiButton
             severity="danger"

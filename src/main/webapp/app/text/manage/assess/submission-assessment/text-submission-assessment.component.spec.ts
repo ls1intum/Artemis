@@ -225,7 +225,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should create and set parameters correctly', async () => {
         expect(component).not.toBeNull();
-        await component.ngOnInit();
+        await component['initializeTextSubmissionAssessmentComponent']();
         expect(component.isTestRun()).toBe(false);
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
@@ -392,7 +392,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 data: of({ textAssessmentData: { participation, correctionRound: 0 } }),
             } as unknown as ActivatedRoute;
 
-            await component.ngOnInit();
+            await component['initializeTextSubmissionAssessmentComponent']();
             expect(component.correctionRound()).toBe(0);
 
             queryParams.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
@@ -630,7 +630,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         const routerSpy = vi.spyOn(router, 'navigate');
 
-        await component.ngOnInit();
+        await component['initializeTextSubmissionAssessmentComponent']();
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -899,7 +899,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should validate assessments on component init', async () => {
         component.assessmentsAreValid.set(false);
-        await component.ngOnInit();
+        await component['initializeTextSubmissionAssessmentComponent']();
         expect(component.assessmentsAreValid()).toBe(true);
     });
 

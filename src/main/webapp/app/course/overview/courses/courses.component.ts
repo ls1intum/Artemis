@@ -90,7 +90,11 @@ export class CoursesComponent implements OnInit {
     readonly coursesLoaded = signal(false);
     readonly isSortAscending = signal(true);
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeCoursesComponent();
+    }
+
+    private async initializeCoursesComponent(): Promise<void> {
         this.loadAndFilterCourses();
         (await this.teamService.teamAssignmentUpdates).subscribe();
     }

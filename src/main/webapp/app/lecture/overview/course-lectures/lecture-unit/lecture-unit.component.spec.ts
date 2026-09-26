@@ -79,6 +79,36 @@ describe('LectureUnitComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should keep the collapse button separate from the lecture toolbar', () => {
+        fixture.componentRef.setInput('showOriginalVersionButton', true);
+        fixture.componentRef.setInput('showFullscreenButton', true);
+        fixture.detectChanges();
+        const toggle = fixture.nativeElement.querySelector('#lecture-unit-toggle-button') as HTMLButtonElement;
+        const collapsed = vi.spyOn(component.onCollapse, 'emit');
+        const fullscreen = vi.spyOn(component.onFullscreen, 'emit');
+        const isolated = vi.spyOn(component.onShowIsolated, 'emit');
+        const original = vi.spyOn(component.onShowOriginalVersion, 'emit');
+        expect(toggle.tagName).toBe('BUTTON');
+        expect(toggle.type).toBe('button');
+        expect(toggle.closest('h5')).not.toBeNull();
+        expect(toggle.querySelector('button, input, a, [role="button"]')).toBeNull();
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+        for (const id of ['fullscreen-button', 'view-isolated-button', 'view-original-version-button']) {
+            const action = fixture.nativeElement.querySelector('#' + id) as HTMLButtonElement;
+            expect(action.parentElement!.closest('button, [role="button"]')).toBeNull();
+            action.click();
+        }
+        expect(fullscreen).toHaveBeenCalledOnce();
+        expect(isolated).toHaveBeenCalledOnce();
+        expect(original).toHaveBeenCalledOnce();
+        expect(collapsed).not.toHaveBeenCalled();
+        toggle.click();
+        expect(collapsed).toHaveBeenCalledExactlyOnceWith(false);
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    });
+
     it('should handle isolated view', async () => {
         const emitSpy = vi.spyOn(component.onShowIsolated, 'emit');
         const handleIsolatedViewSpy = vi.spyOn(component, 'handleIsolatedView');

@@ -13,6 +13,7 @@
                 @if (attachmentVideoUnit()) {
                     @if (hasHiddenPages()) {
                         <button
+                            type="button"
                             class="btn btn-success text-truncate"
                             aria-label="Show selected pages"
                             [disabled]="isPdfLoading() || selectedPages().size === 0 || !hasHiddenSelectedPages()"
@@ -27,6 +28,7 @@
                         </button>
                     }
                     <button
+                        type="button"
                         class="btn btn-primary text-truncate"
                         aria-label="Hide selected pages"
                         [disabled]="isPdfLoading() || selectedPages().size === 0"
@@ -69,10 +71,10 @@
                                     }
                                 </div>
                                 <div class="submit-container mt-3 d-flex justify-content-between">
-                                    <button class="btn btn-secondary" (click)="showPopover().close()">
+                                    <button type="button" class="btn btn-secondary" (click)="showPopover().close()">
                                         <span jhiTranslate="entity.action.cancel"></span>
                                     </button>
-                                    <button class="btn btn-primary" (click)="showPages(selectedPages()); showPopover().close()">
+                                    <button type="button" class="btn btn-primary" (click)="showPages(selectedPages()); showPopover().close()">
                                         <span jhiTranslate="entity.action.show"></span>
                                     </button>
                                 </div>
@@ -104,7 +106,13 @@
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
                 <input type="file" #fileInput style="display: none" accept="application/pdf" (change)="mergePDF($event)" />
-                <button (click)="triggerFileInput()" class="btn btn-primary text-truncate" aria-label="Append PDF file" [disabled]="!currentPdfUrl() || isPdfLoading()">
+                <button
+                    type="button"
+                    (click)="triggerFileInput()"
+                    class="btn btn-primary text-truncate"
+                    aria-label="Append PDF file"
+                    [disabled]="!currentPdfUrl() || isPdfLoading()"
+                >
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.appendPDFButton"></span>
                 </button>

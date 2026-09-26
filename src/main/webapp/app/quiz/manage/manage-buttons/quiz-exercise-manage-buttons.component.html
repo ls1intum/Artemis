@@ -78,6 +78,7 @@
         @if (isDetailPage()) {
             <div class="d-flex">
                 <button
+                    type="button"
                     jhiDeleteButton
                     [entityTitle]="quizExercise().title || ''"
                     [actionType]="ActionType.Reset"
@@ -99,6 +100,7 @@
 
         <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
             <button
+                type="button"
                 jhiDeleteButton
                 [entityTitle]="quizExercise().title || ''"
                 deleteQuestion="artemisApp.exercise.delete.question"

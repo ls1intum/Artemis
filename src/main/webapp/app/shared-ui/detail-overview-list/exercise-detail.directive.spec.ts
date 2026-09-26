@@ -95,7 +95,7 @@ describe('ExerciseDetailDirective', () => {
         const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
         detail.set(detailToBeChecked);
         fixture.detectChanges();
-        await fixture.directiveInstance.ngOnInit();
+        await fixture.directiveInstance['initializeExerciseDetailDirective']();
 
         expect(createComponentSpy).not.toHaveBeenCalled();
     }
@@ -104,7 +104,7 @@ describe('ExerciseDetailDirective', () => {
         const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent').mockReturnValue({ setInput: vi.fn(), destroy: vi.fn() } as any);
         detail.set(detailToBeChecked);
         fixture.detectChanges();
-        await fixture.directiveInstance.ngOnInit();
+        await fixture.directiveInstance['initializeExerciseDetailDirective']();
 
         expect(createComponentSpy).toHaveBeenCalledWith(expectedComponent);
     }

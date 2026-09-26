@@ -84,7 +84,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
 
-    override async ngOnInit() {
+    override ngOnInit() {
+        void this.initializeCourseOverviewComponent();
+    }
+
+    private async initializeCourseOverviewComponent(): Promise<void> {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed() ?? !value);
         });
@@ -110,7 +114,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                 });
             }
         });
-        await super.ngOnInit();
+        await super.initializeBaseCourseContainerComponent();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
             this.isExamStarted.set(isStarted);

@@ -10,7 +10,7 @@
     }
     @if (exercise().isAtLeastTutor) {
         <div ngbDropdown class="d-inline">
-            <button id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
+            <button type="button" id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
                 <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate }}</span
@@ -40,6 +40,7 @@
                 #submitPopoverRef="ngbPopover"
             >
                 <button
+                    type="button"
                     data-testid="submit-exercise-popover"
                     jhi-exercise-action-button
                     [buttonIcon]="faPaperPlane"
@@ -50,6 +51,7 @@
             </span>
         } @else {
             <button
+                type="button"
                 id="submit-exercise"
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
@@ -62,6 +64,7 @@
     }
     @if (onContinueExercise()) {
         <button
+            type="button"
             jhi-exercise-action-button
             [buttonIcon]="faPlayCircle"
             [buttonLabel]="'entity.action.continue' | artemisTranslate"
@@ -95,6 +98,7 @@
             <div class="d-flex flex-wrap gap-1">
                 @if (isTeamAvailable()) {
                     <button
+                        type="button"
                         class="view-team"
                         jhi-exercise-action-button
                         [buttonIcon]="faUsers"
@@ -110,6 +114,7 @@
                         [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
                     >
                         <button
+                            type="button"
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
                             jhi-exercise-action-button
@@ -161,6 +166,7 @@
                     isResumeExerciseAvailable(gradedParticipation())
                 ) {
                     <button
+                        type="button"
                         [id]="'resume-exercise-' + exercise().id"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
@@ -178,6 +184,7 @@
                     isResumeExerciseAvailable(practiceParticipation())
                 ) {
                     <button
+                        type="button"
                         [id]="'resume-practice-exercise-' + exercise().id"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
@@ -197,6 +204,7 @@
             <div class="btn-group gap-1">
                 @if (isTeamAvailable()) {
                     <button
+                        type="button"
                         class="view-team"
                         jhi-exercise-action-button
                         [buttonIcon]="faUsers"
@@ -212,6 +220,7 @@
                         [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
                     >
                         <button
+                            type="button"
                             [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
                             jhi-exercise-action-button
@@ -242,6 +251,7 @@
 
 <ng-template #quizActionButton let-button>
     <button
+        type="button"
         jhi-exercise-action-button
         [id]="button.id"
         [buttonIcon]="button.icon"
@@ -267,16 +277,15 @@
                 [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
                 [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
             ></p>
-            <span (click)="closeSubmitPopover()">
-                <jhi-request-feedback-button
-                    [exercise]="exercise()"
-                    [isSubmitted]="true"
-                    [participationId]="activeParticipationForCode()?.id"
-                    [asTumAetUiButton]="true"
-                    [alwaysShowLabel]="true"
-                    [smallButtons]="true"
-                />
-            </span>
+            <jhi-request-feedback-button
+                [exercise]="exercise()"
+                [isSubmitted]="true"
+                [participationId]="activeParticipationForCode()?.id"
+                [asTumAetUiButton]="true"
+                [alwaysShowLabel]="true"
+                [smallButtons]="true"
+                (click)="closeSubmitPopover()"
+            />
         </div>
     } @else {
         <p class="mb-2" [jhiTranslate]="aiFeedbackPopoverDisabledDescriptionKey()"></p>
@@ -290,17 +299,16 @@
             >
                 <span jhiTranslate="artemisApp.exercise.aiFeedbackPopover.dontShowAgain"></span>
             </tumaet-ui-button>
-            <span (click)="closeSubmitPopover()">
-                <jhi-request-feedback-button
-                    [exercise]="exercise()"
-                    [isSubmitted]="true"
-                    [participationId]="activeParticipationForCode()?.id"
-                    [asTumAetUiButton]="true"
-                    [alwaysShowLabel]="true"
-                    [smallButtons]="true"
-                    [showAiExperiencePrompt]="true"
-                />
-            </span>
+            <jhi-request-feedback-button
+                [exercise]="exercise()"
+                [isSubmitted]="true"
+                [participationId]="activeParticipationForCode()?.id"
+                [asTumAetUiButton]="true"
+                [alwaysShowLabel]="true"
+                [smallButtons]="true"
+                [showAiExperiencePrompt]="true"
+                (click)="closeSubmitPopover()"
+            />
         </div>
     }
 </ng-template>
