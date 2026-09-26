@@ -20,6 +20,7 @@
                             #titleTextarea
                             class="unified-feedback-title-input"
                             rows="1"
+                            [maxlength]="TITLE_MAX_LENGTH"
                             [ngModel]="displayTitle()"
                             (ngModelChange)="onTitleInput($event)"
                             (input)="onTitleTextareaInput()"

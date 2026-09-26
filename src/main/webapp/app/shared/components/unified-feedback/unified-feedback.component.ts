@@ -297,6 +297,9 @@ export class UnifiedFeedbackComponent {
     /** Points are graded in half steps throughout Artemis, so the stepper moves in the same increments. */
     protected readonly CREDITS_STEP = 0.5;
 
+    /** Matches Apollon's give-feedback title cap, so a title stays a headline well under the 500-character text column. */
+    protected readonly TITLE_MAX_LENGTH = 100;
+
     /**
      * The credits input's raw, not-yet-committed text, captured on a stepper button's `mousedown` (which always
      * fires before the button steals focus and blurs the input). Without this, clicking a stepper after typing an

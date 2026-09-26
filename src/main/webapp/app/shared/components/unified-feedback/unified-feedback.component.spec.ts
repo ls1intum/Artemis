@@ -701,6 +701,15 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback-title')).toBeNull();
     });
 
+    it('should cap the title input at 100 characters, matching Apollon', async () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const titleInput = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
+        expect(titleInput.maxLength).toBe(100);
+    });
+
     it('should render the read-only title instead of the title input when titleEditable is false', async () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('titleEditable', false);
