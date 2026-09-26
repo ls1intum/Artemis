@@ -532,6 +532,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {
+            case 'configuration':
+                // Under tutorial groups, `configuration/:id` is an internal routing layer that carries the holidays
+                // and edit pages; it has no page of its own and its admin label misnames the step. Skip it there.
+                // Admin's own `/admin/configuration` keeps its crumb (and admin routes build no breadcrumbs anyway).
+                if (this.lastRouteUrlSegment !== 'tutorial-groups') {
+                    this.addTranslationAsCrumb(currentPath, segment);
+                }
+                break;
             // No breadcrumbs for those segments
             case 'reset':
             case 'group':

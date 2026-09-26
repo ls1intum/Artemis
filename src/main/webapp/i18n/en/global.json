@@ -419,7 +419,10 @@
             "invalidTime": "Please enter a valid time.",
             "openTime": "Open clock",
             "timeDialog": "Choose time",
-            "timePlaceholder": "HH:mm"
+            "timePlaceholder": "HH:mm",
+            "dateDialog": "Choose date",
+            "invalidDate": "Please enter a valid date.",
+            "datePlaceholder": "DD.MM.YYYY"
         },
         "imageCropper": {
             "sourceImage": "Image to crop"
@@ -431,6 +434,7 @@
         "controlCenter": "Control Center",
         "action": {
             "add": "Add",
+            "create": "Create",
             "addblob": "Add blob",
             "addimage": "Add image",
             "back": "Back",

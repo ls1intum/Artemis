@@ -1,6 +1,3 @@
 <jhi-loading-indicator-container [isLoading]="isLoading()">
-    <tumaet-ui-message severity="info">
-        <span jhiTranslate="artemisApp.pages.createTutorialGroupsConfiguration.explanation"></span>
-    </tumaet-ui-message>
     <jhi-tutorial-groups-configuration-form [isEditMode]="false" (formSubmitted)="createTutorialsGroupConfiguration($event)" [course]="course()" />
 </jhi-loading-indicator-container>

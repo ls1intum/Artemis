@@ -1,84 +1,95 @@
-<div class="row">
-    <div class="col-12">
-        @if (form) {
-            <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
-                <!-- Period -->
-                <div class="col-auto" [class.invalid-date-input]="isPeriodInvalid">
-                    <h5 jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></h5>
-                    <p-datepicker
-                        inputId="period"
-                        name="period"
-                        formControlName="period"
-                        selectionMode="range"
-                        [firstDayOfWeek]="1"
-                        dateFormat="dd.mm.yy"
-                        keepInvalid="true"
-                        [showIcon]="true"
-                        iconDisplay="input"
-                        showOnFocus="false"
-                        appendTo="body"
-                        [baseZIndex]="1060"
-                        styleClass="w-100"
-                        panelStyleClass="jhi-date-time-picker-panel"
-                        [invalid]="isPeriodInvalid"
-                        [attr.aria-label]="'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate"
-                        (onFocus)="markPeriodAsTouched()"
-                    />
-                    <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.periodInput.explanation"></div>
-                    @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
-                        @if (periodControl?.errors?.required) {
-                            <div class="invalid-feedback" jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"></div>
-                        }
-                        @if (periodControl?.errors?.invalidRange) {
-                            <div class="invalid-feedback" jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"></div>
-                        }
-                    }
-                    <!-- Do not show options if the course has communication disabled -->
-                    <div class="mt-3" [hidden]="!isMessagingEnabled(course())">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
-                            <label
-                                class="form-check-label"
-                                for="useTutorialGroupChannels"
-                                jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label"
-                            ></label>
-                            <small
-                                id="channelHelp"
-                                class="form-text text-body-secondary d-block"
-                                jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation"
-                            ></small>
-                            @if (showChannelDeletionWarning) {
-                                <div
-                                    class="alert alert-danger"
-                                    role="alert"
-                                    id="channelDeletionWarning"
-                                    jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning"
-                                ></div>
-                            }
-                        </div>
-                        <!--Public Channel / Private Channel -->
-                        <div class="form-group mt-3" [hidden]="!useTutorialGroupChannelsControl?.value">
-                            <h5 jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></h5>
-                            <div class="btn-group" role="group">
-                                <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
-                                <label class="btn btn-outline-secondary" for="public" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.public"></label>
-                                <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
-                                <label class="btn btn-outline-secondary" for="private" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.private"></label>
-                            </div>
-                            <small
-                                id="isPublicHelp"
-                                class="form-text text-body-secondary d-block"
-                                jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation"
-                            ></small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 mt-3 d-flex justify-content-end">
-                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span jhiTranslate="{{ isEditMode() ? 'entity.action.save' : 'global.generic.create' }}"></span>
-                    </button>
-                </div>
-            </form>
-        }
+@if (form) {
+    <div class="config-hero">
+        <div class="config-hero-icon" aria-hidden="true">
+            <fa-icon [icon]="faGear" />
+        </div>
+        <div class="config-hero-text">
+            <h2 class="config-hero-title" jhiTranslate="artemisApp.forms.configurationForm.hero.title"></h2>
+            <p class="config-hero-desc" jhiTranslate="artemisApp.forms.configurationForm.hero.description"></p>
+        </div>
     </div>
-</div>
+    <form class="config-form" [formGroup]="form" (ngSubmit)="submitForm()">
+        <!-- Period -->
+        <section class="config-field">
+            <label class="config-field-label" for="period" jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></label>
+            <div class="config-period" [class.invalid-date-input]="isPeriodInvalid">
+                <p-datepicker
+                    inputId="period"
+                    name="period"
+                    formControlName="period"
+                    selectionMode="range"
+                    [firstDayOfWeek]="1"
+                    dateFormat="dd.mm.yy"
+                    keepInvalid="true"
+                    [showIcon]="true"
+                    iconDisplay="input"
+                    showOnFocus="false"
+                    appendTo="body"
+                    [baseZIndex]="1060"
+                    styleClass="w-100"
+                    panelStyleClass="jhi-date-time-picker-panel"
+                    [invalid]="isPeriodInvalid"
+                    [attr.aria-label]="'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate"
+                    (onFocus)="markPeriodAsTouched()"
+                />
+            </div>
+            <p class="config-field-hint" jhiTranslate="artemisApp.forms.configurationForm.periodInput.explanation"></p>
+            @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
+                @if (periodControl?.errors?.required) {
+                    <p class="config-field-error" data-testid="period-error" jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"></p>
+                }
+                @if (periodControl?.errors?.invalidRange) {
+                    <p class="config-field-error" data-testid="period-error" jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"></p>
+                }
+            }
+        </section>
+
+        <!-- Channels: only when the course has communication enabled. -->
+        @if (isMessagingEnabled(course())) {
+            <section class="config-field">
+                <div class="config-checkbox-row">
+                    <tumaet-ui-checkbox
+                        inputId="useTutorialGroupChannels"
+                        name="useTutorialGroupChannels"
+                        formControlName="useTutorialGroupChannels"
+                        [checked]="!!useTutorialGroupChannelsControl?.value"
+                    />
+                    <label for="useTutorialGroupChannels" jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label"></label>
+                </div>
+                <p class="config-field-hint" jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation"></p>
+                @if (showChannelDeletionWarning) {
+                    <tumaet-ui-message
+                        id="channelDeletionWarning"
+                        severity="error"
+                        [text]="'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning' | artemisTranslate"
+                    />
+                }
+
+                @if (useTutorialGroupChannelsControl?.value) {
+                    <div class="config-subfield">
+                        <label id="usePublicChannelsLabel" class="config-field-label" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
+                        <tumaet-ui-select-button
+                            size="small"
+                            aria-labelledby="usePublicChannelsLabel"
+                            formControlName="usePublicTutorialGroupChannels"
+                            [options]="channelVisibilityOptions"
+                            optionValue="value"
+                            [allowEmpty]="false"
+                            [itemTemplate]="visibilityItem"
+                        />
+                        <ng-template #visibilityItem let-item>
+                            <span [jhiTranslate]="item.labelKey"></span>
+                        </ng-template>
+                        <p class="config-field-hint" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation"></p>
+                    </div>
+                }
+            </section>
+        }
+
+        <div class="config-form-actions">
+            <button id="submitButton" tumAetUiButton type="submit" [disabled]="!isSubmitPossible">
+                <span jhiTranslate="{{ isEditMode() ? 'entity.action.save' : 'global.generic.create' }}"></span>
+            </button>
+        </div>
+    </form>
+}

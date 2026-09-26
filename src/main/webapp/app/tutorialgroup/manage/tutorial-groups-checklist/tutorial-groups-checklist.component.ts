@@ -6,7 +6,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { faCog, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faListCheck, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -19,6 +19,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
+    styleUrl: './tutorial-groups-checklist.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TumAetUiButtonDirective, LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
 })
@@ -34,6 +35,7 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     readonly isTutorialGroupConfigurationCreated = signal(false);
 
     protected readonly faCog = faCog;
+    protected readonly faListCheck = faListCheck;
     protected readonly faPlus = faPlus;
 
     ngUnsubscribe = new Subject<void>();
