@@ -8,7 +8,7 @@
             >
                 <div class="my-2">
                     @if (showLeadingIcon()) {
-                        <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon())?.[groupKey]" />
+                        <fa-icon [fixedWidth]="true" [icon]="iconForGroup(groupKey)" />
                     }
                     {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
                     @if (!groupedData()[groupKey].isHideCount) {

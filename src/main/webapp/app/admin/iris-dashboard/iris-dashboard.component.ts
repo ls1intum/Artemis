@@ -65,6 +65,12 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
     readonly error = signal(false);
     readonly activeBreakdownTab = signal(0);
 
+    onBreakdownTabChange(value: number | string | undefined): void {
+        if (typeof value === 'number') {
+            this.activeBreakdownTab.set(value);
+        }
+    }
+
     readonly chatModeBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
     readonly courseBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);
     readonly modelBreakdown = signal<IrisDashboardBreakdownEntry[]>([]);

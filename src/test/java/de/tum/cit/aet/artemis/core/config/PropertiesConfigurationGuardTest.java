@@ -34,7 +34,7 @@ class PropertiesConfigurationGuardTest {
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = { "  ", "Admin", "Some Artemis Operator", "Your University", "<university>", "TODO", "Example University", "Max Mustermann", "Anonymous University",
-            "anonymous university admin", "Example University IT Services" })
+            "anonymous university admin", "Example University IT Services", "N/A", "None" })
     void rejectsMissingAndPlaceholderMetadata(String invalid) {
         assertThatIllegalArgumentException().isThrownBy(guard(invalid, "Erika Muster", "Technical University of Munich")::afterPropertiesSet)
                 .withMessageContaining("info.operatorName (INFO_OPERATORNAME)");
@@ -83,17 +83,18 @@ class PropertiesConfigurationGuardTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "core,scheduling", "core", "buildagent", "dev,core", "prod,core,buildagent" })
-    void rejectsInvalidMetadataOnEveryCoreNodeAndBuildAgent(String profiles) {
+    @ValueSource(strings = { "core,scheduling", "core", "dev,core", "prod,core,buildagent" })
+    void rejectsInvalidMetadataOnEveryCoreNode(String profiles) {
         try (var context = contextWithOperatorNameOnly(profiles)) {
             assertThatThrownBy(context::refresh).hasRootCauseInstanceOf(IllegalArgumentException.class).hasStackTraceContaining("info.operatorAdminName")
                     .hasStackTraceContaining("info.universityName");
         }
     }
 
-    @Test
-    void isNotRegisteredOnNodesThatAreNeitherCoreNorBuildAgent() {
-        try (var context = contextWithOperatorNameOnly("prod,scheduling")) {
+    @ParameterizedTest
+    @ValueSource(strings = { "buildagent", "prod,buildagent", "prod,scheduling" })
+    void isNotRegisteredOnNodesWithoutTheCoreProfile(String profiles) {
+        try (var context = contextWithOperatorNameOnly(profiles)) {
             context.refresh();
             assertThat(context.getBeansOfType(PropertiesConfigurationGuard.class)).isEmpty();
         }

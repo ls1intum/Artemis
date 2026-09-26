@@ -96,9 +96,9 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
     textAssessmentAnalyticsEnabled: true
-    operatorName: # Required on every server start; displayed on the About page
-    operatorAdminName: # Required on every server start; displayed on the About page
-    universityName: # Required on every server start; displayed on the About page
+    operatorName: # Required on every core node, set it in application-local.yml; displayed on the About page
+    operatorAdminName: # Required on every core node, set it in application-local.yml; displayed on the About page
+    universityName: # Required on every core node, set it in application-local.yml; displayed on the About page
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 

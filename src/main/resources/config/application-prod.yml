@@ -15,8 +15,9 @@
 
 artemis:
     push-notification-relay: https://hermes-prod.artemis.cit.tum.de
-    # Artemis sends the artemis version, the university name, the universities main admin contact, (email + name), the server url,
-    # and used profiles (localVC, ...) to a telemetry collection service.
+    # The core node with the scheduling profile sends one report ten minutes after startup to a telemetry collection service: the
+    # version, server url, operator, university, active profiles, enabled module features, node and build agent counts, and,
+    # only with sendAdminDetails, the administrator's name and contact. See documentation/docs/admin/telemetry.mdx.
     telemetry:
         enabled: true # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: true # Include personal identifiable information of the admin, including email and name in the telemetry data
@@ -138,10 +139,10 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false in production
     textAssessmentAnalyticsEnabled: false
-    operatorName: # Required on every server start; the organization operating Artemis, displayed on the About page
-    operatorAdminName: # Required on every server start; displayed on the About page, sent only when sendAdminDetails is true
-    universityName: # Required on every server start; the university or institution, displayed on the About page
-    contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service
+    operatorName: # Required on every core node; the organization operating Artemis, displayed on the About page
+    operatorAdminName: # Required on every core node; displayed on the About page, sent only when sendAdminDetails is true
+    universityName: # Required on every core node; the university or institution, displayed on the About page
+    contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service only when sendAdminDetails is true
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
 # Overrides for sample rate and environment

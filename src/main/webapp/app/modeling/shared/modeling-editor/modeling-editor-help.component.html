@@ -18,7 +18,7 @@
                     @for (walkthrough of walkthroughs(); track walkthrough.topic) {
                         <li class="modeling-editor-help__step">
                             <div class="modeling-editor-help__image" aria-hidden="true">
-                                <img [src]="walkthrough.image" [attr.width]="walkthrough.width" [attr.height]="walkthrough.height" alt="" loading="lazy" />
+                                <img [ngSrc]="walkthrough.image" [width]="walkthrough.width" [height]="walkthrough.height" alt="" />
                             </div>
                             <div class="modeling-editor-help__step-copy">
                                 <span class="modeling-editor-help__step-number" aria-hidden="true">{{ $index + 1 }}</span>

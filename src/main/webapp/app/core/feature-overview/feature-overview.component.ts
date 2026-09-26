@@ -1,3 +1,4 @@
+import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -13,7 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './feature-overview.component.html',
     styleUrl: './feature-overview.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective],
+    imports: [NgOptimizedImage, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class FeatureOverviewComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);

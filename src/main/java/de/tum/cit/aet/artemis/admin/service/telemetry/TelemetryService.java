@@ -32,7 +32,8 @@ public class TelemetryService {
 
     private final ProfileService profileService;
 
-    // Resolve the lazy sender only when the report runs, keeping its dependencies out of excluded instances' readiness path.
+    // Resolves the lazy sender when the report runs instead of injecting it, so that scheduling on ApplicationReadyEvent does not pull the sender and
+    // its dependencies into the startup bean graph; the deferred eager initialization creates them after startup.
     private final ApplicationContext applicationContext;
 
     private final TaskScheduler taskScheduler;

@@ -92,7 +92,12 @@ Keep your values in a file of your own, for example `docker/artemis/config/local
 ```bash
 JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<output of: openssl rand -base64 64 | tr -d '\n'>"
 ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="<a unique password>"
+INFO_OPERATORNAME="<organization operating this installation>"
+INFO_OPERATORADMINNAME="<name of its administrator>"
+INFO_UNIVERSITYNAME="<university or institution>"
 ```
+
+The last three lines are the installation metadata that every core node requires; they appear on the About page.
 
 If your setup also activates `localvc` **without** `localci` - the Jenkins with LocalVC shape - add a build-agent git password of your own, because the shipped one is rejected as well:
 
@@ -114,11 +119,6 @@ services:
 ```bash
 docker compose --env-file .env -f docker/artemis-prod-postgres.yml -f docker/local-secrets.yml up
 ```
-
-Every core and build-agent node also requires `INFO_OPERATORNAME`, `INFO_OPERATORADMINNAME`, and
-`INFO_UNIVERSITYNAME` in the environment override. Use the installation's actual operator, administrator, and
-university or institution. The shipped dev configurations provide local development identities; the development profile does not send
-telemetry. Production configurations require identity values in the application configuration or environment override.
 
 The `docker/test-server-*.yml` setups take a full replacement for `prod.env` through `ARTEMIS_ENV_FILE`, so there you point that variable at your own copy of `prod.env` rather than at a file that only holds the credentials. See [Security](/admin/production-setup/security) for the properties that are validated. If you just want a running Artemis without configuring anything, use one of the dev setups.
 

@@ -29,7 +29,7 @@
             jvmArgs = [
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
-                // Every node refuses to start without installation metadata.
+                // Every core node refuses to start without installation metadata.
                 "-Dinfo.operatorName=Artemis OpenAPI Generation",
                 "-Dinfo.operatorAdminName=Artemis OpenAPI Administrator",
                 "-Dinfo.universityName=Artemis OpenAPI University",

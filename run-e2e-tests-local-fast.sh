@@ -465,7 +465,7 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONALALLOWEDORIGINS="http://localhost:9000"
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
-    # Every node refuses to start without installation metadata. Matches docker/artemis/config/playwright.env.
+    # Every core node refuses to start without installation metadata. Matches docker/artemis/config/playwright.env.
     export INFO_OPERATORNAME="TUM"
     export INFO_OPERATORADMINNAME="Artemis E2E Administrator"
     export INFO_UNIVERSITYNAME="Artemis E2E University"

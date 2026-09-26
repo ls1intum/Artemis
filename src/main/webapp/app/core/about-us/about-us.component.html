@@ -128,7 +128,7 @@
             <ul class="about__list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 @for (maintainer of maintainers(); track maintainer.fullName) {
                     <li class="about__card flex items-center gap-3">
-                        <img class="about__avatar" [src]="maintainer.photoDirectory" [alt]="maintainer.fullName" width="48" height="48" loading="lazy" />
+                        <img class="about__avatar" [src]="maintainer.photoDirectory" [alt]="maintainer.fullName" width="48" height="48" loading="lazy" decoding="async" />
                         <div class="flex min-w-0 flex-col">
                             @if (maintainer.website) {
                                 <a class="font-semibold" [href]="maintainer.website" target="_blank" rel="noopener noreferrer">{{ maintainer.fullName }}</a>

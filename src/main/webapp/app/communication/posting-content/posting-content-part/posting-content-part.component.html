@@ -41,8 +41,8 @@
                     [alt]="postingContentPart()?.referenceStr"
                     [title]="postingContentPart()?.referenceStr"
                     (error)="toggleImageNotFound()"
-                    height="auto"
-                    width="100%"
+                    loading="lazy"
+                    decoding="async"
                 />
             }
         </a>
@@ -64,8 +64,8 @@
                     [alt]="postingContentPart()?.referenceStr"
                     [title]="postingContentPart()?.referenceStr"
                     (error)="toggleImageNotFound()"
-                    height="auto"
-                    width="100%"
+                    loading="lazy"
+                    decoding="async"
                 />
             </a>
         } @else if (imageNotFound()) {

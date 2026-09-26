@@ -181,8 +181,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     /**
      * Life cycle hook to indicate component creation is done
      */
-    override async ngOnInit(): Promise<void> {
-        await super.ngOnInit();
+    override ngOnInit(): void {
+        void this.initializeTextSubmissionAssessmentComponent();
+    }
+
+    private async initializeTextSubmissionAssessmentComponent(): Promise<void> {
+        await super.initializeTextAssessmentBaseComponent();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
         });

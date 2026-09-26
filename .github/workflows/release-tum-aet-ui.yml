@@ -144,5 +144,5 @@ jobs:
           const bytes = readFileSync(`artifact/${process.env.PACKAGE_FILE}`);
           assert.equal(`sha512-${createHash('sha512').update(bytes).digest('base64')}`, process.env.PACKAGE_INTEGRITY);
           NODE
-          npm stage publish "artifact/$PACKAGE_FILE" --ignore-scripts --access public
+          npm stage publish "./artifact/$PACKAGE_FILE" --ignore-scripts --access public
           echo 'Review the staged TUM AET UI package on npm and approve it with 2FA to complete publication.' >> "$GITHUB_STEP_SUMMARY"

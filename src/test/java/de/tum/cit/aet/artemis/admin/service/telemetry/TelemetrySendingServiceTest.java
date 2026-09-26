@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -15,14 +17,17 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.localci.api.LocalCITelemetryApi;
 
 class TelemetrySendingServiceTest {
@@ -57,7 +62,7 @@ class TelemetrySendingServiceTest {
     }
 
     private TelemetrySendingService sender(Optional<LocalCITelemetryApi> api) {
-        var sender = new TelemetrySendingService(env, rest, profiles, JsonObjectMapper.get(), nodes, api);
+        var sender = new TelemetrySendingService(env, rest, profiles, nodes, api);
         ReflectionTestUtils.setField(sender, "version", "10.0.0");
         ReflectionTestUtils.setField(sender, "serverUrl", "https://artemis.example");
         ReflectionTestUtils.setField(sender, "operator", "Operator");
@@ -94,7 +99,6 @@ class TelemetrySendingServiceTest {
         assertThat(data.buildAgentCount()).isNull();
         assertThat(data.adminName()).isNull();
         assertThat(data.contact()).isNull();
-        assertThat(JsonObjectMapper.get().writeValueAsString(data)).doesNotContain("adminName", "contact", "numberOfNodes", "buildAgentCount", "isMultiNode");
     }
 
     @Test
@@ -117,11 +121,25 @@ class TelemetrySendingServiceTest {
     }
 
     @Test
-    void distinguishesAnEmptyFeatureListFromAnOlderSenderWithoutFeatureData() {
+    void postsTheReportAsJson() {
+        when(nodes.getLiveNodeIds()).thenReturn(Set.of("node1", "node2"));
+        when(agents.getConnectedBuildAgentCount()).thenReturn(3);
+        server.expect(requestTo("https://telemetry.example/api/telemetry")).andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.universityName").value("University")).andExpect(jsonPath("$.moduleFeatures[0]").value("iris"))
+                .andExpect(jsonPath("$.numberOfNodes").value(2)).andExpect(jsonPath("$.buildAgentCount").value(3)).andExpect(jsonPath("$.isMultiNode").value(true))
+                .andExpect(jsonPath("$.startupId").value("startup-id")).andExpect(jsonPath("$.startedAt").value("1970-01-01T00:00:00Z"))
+                .andExpect(jsonPath("$.adminName").doesNotExist()).andExpect(jsonPath("$.contact").doesNotExist()).andRespond(withSuccess());
+        service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH);
+        server.verify();
+    }
+
+    @Test
+    void omitsEmptyAndUnknownValues() {
         env.setProperty("artemis.iris.enabled", "false");
-        server.expect(requestTo("https://telemetry.example/api/telemetry"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath("$.moduleFeatures").isArray())
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath("$.moduleFeatures").isEmpty()).andRespond(withSuccess());
+        when(nodes.getLiveNodeIds()).thenReturn(Set.of());
+        when(agents.getConnectedBuildAgentCount()).thenReturn(null);
+        server.expect(requestTo("https://telemetry.example/api/telemetry")).andExpect(jsonPath("$.moduleFeatures").doesNotExist())
+                .andExpect(jsonPath("$.numberOfNodes").doesNotExist()).andExpect(jsonPath("$.buildAgentCount").doesNotExist()).andRespond(withSuccess());
         service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH);
         server.verify();
     }
@@ -135,5 +153,27 @@ class TelemetrySendingServiceTest {
         server.expect(requestTo("https://telemetry.example/api/telemetry")).andRespond(withServerError());
         assertThatNoException().isThrownBy(() -> service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH));
         server.verify();
+    }
+
+    @Test
+    void logsTheStatusOfARejectedReportButNotTheEchoedBody() {
+        server.expect(requestTo("https://telemetry.example/api/telemetry")).andRespond(withBadRequest().body("{\"adminName\":\"Erika Muster\"}"));
+        var logger = (Logger) LoggerFactory.getLogger(TelemetrySendingService.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            service.sendTelemetryByPostRequest(true, "startup-id", Instant.EPOCH);
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+        server.verify();
+        assertThat(appender.list).anySatisfy(event -> assertThat(event.getFormattedMessage()).contains("rejected the report with status 400"));
+        assertThat(appender.list).allSatisfy(event -> {
+            assertThat(event.getFormattedMessage()).doesNotContain("Erika Muster");
+            assertThat(event.getThrowableProxy()).isNull();
+        });
     }
 }
