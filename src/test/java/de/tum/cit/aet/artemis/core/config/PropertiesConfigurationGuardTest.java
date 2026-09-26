@@ -34,7 +34,7 @@ class PropertiesConfigurationGuardTest {
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = { "  ", "Admin", "Some Artemis Operator", "Your University", "<university>", "TODO", "Example University", "Max Mustermann", "Anonymous University",
-            "anonymous university admin", "Example University IT Services" })
+            "anonymous university admin", "Example University IT Services", "N/A", "None" })
     void rejectsMissingAndPlaceholderMetadata(String invalid) {
         assertThatIllegalArgumentException().isThrownBy(guard(invalid, "Erika Muster", "Technical University of Munich")::afterPropertiesSet)
                 .withMessageContaining("info.operatorName (INFO_OPERATORNAME)");

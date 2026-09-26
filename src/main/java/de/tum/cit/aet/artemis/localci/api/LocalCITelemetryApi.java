@@ -44,8 +44,7 @@ public class LocalCITelemetryApi implements AbstractApi {
             if (information == null || information.buildAgent() == null) {
                 continue;
             }
-            var agent = information.buildAgent();
-            if (clients.contains(agent.name()) || clients.contains(agent.memberAddress()) || members.contains(agent.memberAddress())) {
+            if (DistributedDataAccessService.appearsInMembership(information.buildAgent(), clients, members)) {
                 count++;
             }
             else if (clientMembershipUnknown) {

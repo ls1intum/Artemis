@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -116,6 +117,10 @@ public class TelemetrySendingService {
             // NOTE: there should be no module in the following URL
             var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
             log.info("Successfully sent telemetry data: {}", response.getStatusCode());
+        }
+        catch (RestClientResponseException e) {
+            // Neither the exception nor its message is logged: both carry the response body, in which a collector may echo the report and its administrator details.
+            log.warn("The telemetry service at {} rejected the report with status {}", destination, e.getStatusCode());
         }
         catch (Exception e) {
             log.warn("Exception in sendTelemetry, with dst URI: {}", destination, e);

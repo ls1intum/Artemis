@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -16,11 +17,15 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
 import de.tum.cit.aet.artemis.localci.api.LocalCITelemetryApi;
@@ -148,5 +153,27 @@ class TelemetrySendingServiceTest {
         server.expect(requestTo("https://telemetry.example/api/telemetry")).andRespond(withServerError());
         assertThatNoException().isThrownBy(() -> service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH));
         server.verify();
+    }
+
+    @Test
+    void logsTheStatusOfARejectedReportButNotTheEchoedBody() {
+        server.expect(requestTo("https://telemetry.example/api/telemetry")).andRespond(withBadRequest().body("{\"adminName\":\"Erika Muster\"}"));
+        var logger = (Logger) LoggerFactory.getLogger(TelemetrySendingService.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            service.sendTelemetryByPostRequest(true, "startup-id", Instant.EPOCH);
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+        server.verify();
+        assertThat(appender.list).anySatisfy(event -> assertThat(event.getFormattedMessage()).contains("rejected the report with status 400"));
+        assertThat(appender.list).allSatisfy(event -> {
+            assertThat(event.getFormattedMessage()).doesNotContain("Erika Muster");
+            assertThat(event.getThrowableProxy()).isNull();
+        });
     }
 }
