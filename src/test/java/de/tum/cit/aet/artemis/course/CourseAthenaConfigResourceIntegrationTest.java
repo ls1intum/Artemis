@@ -11,6 +11,8 @@ import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -231,10 +233,17 @@ class CourseAthenaConfigResourceIntegrationTest extends AbstractSpringIntegratio
         assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, false, 0, 1));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = { -1, 4 })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAthenaConfig_feedbackStyleDefaultOutOfRange_isBadRequest() throws Exception {
-        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null, 4, null), CourseAthenaConfigDTO.class, HttpStatus.BAD_REQUEST);
+    void updateAthenaConfig_feedbackStyleDefaultOutOfRange_isBadRequest(int value) throws Exception {
+        persistAthenaConfig(false, false, 2, 2);
+
+        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null, value, null), CourseAthenaConfigDTO.class, HttpStatus.BAD_REQUEST);
+        request.patchWithResponseBody(configPath, new CourseAthenaConfigUpdateDTO(null, null, null, value), CourseAthenaConfigDTO.class, HttpStatus.BAD_REQUEST);
+
+        // A rejected value leaves the stored defaults as they were.
+        assertThat(storedConfig()).isEqualTo(new CourseAthenaConfigDTO(false, false, 2, 2));
     }
 
     @Test
