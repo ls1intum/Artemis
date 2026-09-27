@@ -2,25 +2,39 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { EMPTY } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { AthenaFeature, AthenaFeedbackStyleField, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiCardComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { ATHENA_FEEDBACK_STYLE_EXAMPLES } from './athena-feedback-style-examples';
 
-/**
- * One clickable tick of a feedback style slider: its stored value (1-3), the i18n key for its label, and the i18n
- * key for the example feedback text shown - via {@link UnifiedFeedbackComponent}, the same widget a student sees
- * feedback in - so an instructor can see what that level actually reads like, the way Iris's support-level slider
- * shows an example conversation per level.
- */
+const MIN_LEVEL = 1;
+const NEUTRAL_LEVEL = 2;
+const MAX_LEVEL = 3;
+
+/** The level each key moves a feedback style slider to, from the level it shows. */
+const FEEDBACK_STYLE_KEY_STEPS: Readonly<Record<string, (level: number) => number>> = {
+    ArrowLeft: (level) => level - 1,
+    ArrowDown: (level) => level - 1,
+    ArrowRight: (level) => level + 1,
+    ArrowUp: (level) => level + 1,
+    Home: () => MIN_LEVEL,
+    End: () => MAX_LEVEL,
+};
+
+/** One clickable tick of a feedback style slider: its stored value (1-3) and the i18n key for its label. */
 interface FeedbackStyleTick {
     value: number;
     labelKey: string;
-    exampleKey: string;
 }
 
 /**
@@ -33,6 +47,7 @@ interface FeedbackStyleTick {
 @Component({
     selector: 'jhi-athena-settings-update',
     templateUrl: './athena-settings-update.component.html',
+    styleUrl: './athena-settings-update.component.scss',
     host: { class: 'block' },
     imports: [
         CourseTitleBarTitleComponent,
@@ -42,12 +57,13 @@ interface FeedbackStyleTick {
         ArtemisTranslatePipe,
         TumAetUiCardComponent,
         TumAetUiToggleSwitchComponent,
-        UnifiedFeedbackComponent,
+        TextResultComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AthenaSettingsUpdateComponent {
     private readonly route = inject(ActivatedRoute);
+    private readonly translateService = inject(TranslateService);
 
     private readonly courseId = toSignal(this.route.params.pipe(map((params) => Number(params['courseId']))), { requireSync: true });
 
@@ -62,8 +78,8 @@ export class AthenaSettingsUpdateComponent {
 
     /** The two toggle rows, rendered by one @for so the markup stays in a single place. */
     readonly features = [
-        { key: 'formativeFeedbackEnabled' as const, testId: 'athena-settings-formative-feedback', enabled: this.formativeEnabled },
         { key: 'gradingFeedbackEnabled' as const, testId: 'athena-settings-grading-feedback', enabled: this.gradingEnabled },
+        { key: 'formativeFeedbackEnabled' as const, testId: 'athena-settings-formative-feedback', enabled: this.formativeEnabled },
     ];
 
     /**
@@ -74,63 +90,86 @@ export class AthenaSettingsUpdateComponent {
     readonly defaultFeedbackFormality = computed(() => this.state()?.defaultFeedbackFormality() ?? 0);
 
     /**
-     * Ticks for the two feedback style sliders, styled after Iris's "Level of Instructional Support" slider. Unlike
-     * that slider, a value of 0 (no tick active) is a valid, meaningful state here - "no course default" - so ticks
-     * are plain buttons on a custom track rather than a PrimeNG `p-slider`, which always shows its handle at some
-     * position and has no way to display "unset".
+     * The level each slider shows (1-3). A course without a default (0) shows as neutral, because that is what its
+     * students get: the course default then falls back to a student's untouched learner profile, which is neutral too.
+     * The stored 0 stays until the instructor picks a level, so such a course keeps following the built-in default.
      */
+    readonly feedbackDetailLevel = computed(() => this.defaultFeedbackDetail() || NEUTRAL_LEVEL);
+    readonly feedbackFormalityLevel = computed(() => this.defaultFeedbackFormality() || NEUTRAL_LEVEL);
+
+    /** Ticks for the two feedback style sliders, styled after Iris's "Level of Instructional Support" slider. */
     protected readonly feedbackDetailTicks: readonly FeedbackStyleTick[] = [
-        {
-            value: 1,
-            labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.brief',
-            exampleKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.example.brief',
-        },
-        {
-            value: 2,
-            labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.neutral',
-            exampleKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.example.neutral',
-        },
-        {
-            value: 3,
-            labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.detailed',
-            exampleKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.example.detailed',
-        },
+        { value: 1, labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.brief' },
+        { value: 2, labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.neutral' },
+        { value: 3, labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackDetail.detailed' },
     ];
     protected readonly feedbackFormalityTicks: readonly FeedbackStyleTick[] = [
+        { value: 1, labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.formal' },
+        { value: 2, labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.neutral' },
+        { value: 3, labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.friendly' },
+    ];
+
+    /** Changes whenever the language does, so the examples below are translated again. */
+    private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
+
+    /** The example for the level each slider shows. */
+    readonly feedbackDetailExample = computed(() => this.buildExampleResult('defaultFeedbackDetail', this.feedbackDetailLevel()));
+    readonly feedbackFormalityExample = computed(() => this.buildExampleResult('defaultFeedbackFormality', this.feedbackFormalityLevel()));
+
+    /** The two sliders of the feedback style section, rendered by one @for so the markup stays in a single place. */
+    protected readonly feedbackStyles = [
         {
-            value: 1,
-            labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.formal',
-            exampleKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.example.formal',
+            field: 'defaultFeedbackDetail' as const,
+            testId: 'default-feedback-detail',
+            level: this.feedbackDetailLevel,
+            ticks: this.feedbackDetailTicks,
+            example: this.feedbackDetailExample,
         },
         {
-            value: 2,
-            labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.neutral',
-            exampleKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.example.neutral',
-        },
-        {
-            value: 3,
-            labelKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.friendly',
-            exampleKey: 'artemisApp.course.athenaConfig.defaultFeedbackFormality.example.friendly',
+            field: 'defaultFeedbackFormality' as const,
+            testId: 'default-feedback-formality',
+            level: this.feedbackFormalityLevel,
+            ticks: this.feedbackFormalityTicks,
+            example: this.feedbackFormalityExample,
         },
     ];
 
     /**
-     * The example feedback text for the currently selected tick of each slider, falling back to the neutral (2)
-     * example while no course default is set (0) - purely for this preview, so the card is never empty; it does not
-     * change what is actually stored.
+     * The track position, in percent, of a level (1/2/3 -> 0/50/100), so the template can position ticks, the fill
+     * and the handle without repeating the mapping.
+     *
+     * @param level the level to position
      */
-    readonly feedbackDetailExampleKey = computed(() => this.feedbackDetailTicks.find((tick) => tick.value === (this.defaultFeedbackDetail() || 2))?.exampleKey);
-    readonly feedbackFormalityExampleKey = computed(() => this.feedbackFormalityTicks.find((tick) => tick.value === (this.defaultFeedbackFormality() || 2))?.exampleKey);
+    protected tickPercent(level: number): number {
+        return (level - 1) * 50;
+    }
 
     /**
-     * The track position, in percent, of a tick's value (1/2/3 -> 0/50/100), so the template can position ticks,
-     * the fill and the handle without repeating the mapping. The unset value (0) also maps to 0, so the fill
-     * width stays valid (never negative) while no course default is selected.
+     * Builds the example shown below a slider the way a student sees Athena's feedback on a text exercise: the sample
+     * submission with the feedback item Athena returned for that level attached to its sentence (see
+     * {@link ATHENA_FEEDBACK_STYLE_EXAMPLES}). The title and description go where a student's result puts Athena's,
+     * the title as the feedback text and the description as its detail text (see `TextExerciseFeedbackService`).
      *
-     * @param value the tick value (0-3, 0 meaning unset) to position
+     * @param field the slider
+     * @param level the level the slider shows
      */
-    protected tickPercent(value: number): number {
-        return value > 0 ? (value - 1) * 50 : 0;
+    private buildExampleResult(field: AthenaFeedbackStyleField, level: number): Result {
+        this.languageChange();
+        const examples = ATHENA_FEEDBACK_STYLE_EXAMPLES[this.translateService.getCurrentLang() ?? 'en'] ?? ATHENA_FEEDBACK_STYLE_EXAMPLES['en'];
+        const submission: TextSubmission = { text: examples.submission };
+        const item = examples[field][level];
+        return {
+            submission,
+            feedbacks: [
+                {
+                    text: item.title,
+                    detailText: item.description,
+                    reference: item.reference,
+                    credits: item.credits,
+                    type: FeedbackType.AUTOMATIC,
+                },
+            ],
+        };
     }
 
     /**
@@ -144,14 +183,33 @@ export class AthenaSettingsUpdateComponent {
     }
 
     /**
-     * Clicks a feedback style tick and saves it right away: clicking the value already shown clears it back to 0
-     * ("no course default"), clicking any other tick sets that value.
+     * Selects a feedback style level and saves it right away. The level the slider already shows is left alone, so
+     * a course without a default does not get one just because the neutral tick was clicked.
      *
-     * @param field the field the clicked tick belongs to
-     * @param value the value of the clicked tick
+     * @param field the slider
+     * @param level the level to select (1-3)
      */
-    onFeedbackStyleTickClick(field: AthenaFeedbackStyleField, value: number) {
-        const current = field === 'defaultFeedbackDetail' ? this.defaultFeedbackDetail() : this.defaultFeedbackFormality();
-        this.state()?.setFeedbackStyleDefault(field, current === value ? 0 : value);
+    selectFeedbackStyleLevel(field: AthenaFeedbackStyleField, level: number) {
+        const shown = field === 'defaultFeedbackDetail' ? this.feedbackDetailLevel() : this.feedbackFormalityLevel();
+        if (level !== shown) {
+            this.state()?.setFeedbackStyleDefault(field, level);
+        }
+    }
+
+    /**
+     * Moves a slider with the keyboard, as the WAI-ARIA slider pattern describes: the arrow keys step one level, Home
+     * and End jump to the ends. Other keys are left to the browser.
+     *
+     * @param field the slider
+     * @param event the key press on the slider
+     */
+    onFeedbackStyleKeydown(field: AthenaFeedbackStyleField, event: KeyboardEvent) {
+        const shown = field === 'defaultFeedbackDetail' ? this.feedbackDetailLevel() : this.feedbackFormalityLevel();
+        const target = FEEDBACK_STYLE_KEY_STEPS[event.key]?.(shown);
+        if (target === undefined) {
+            return;
+        }
+        event.preventDefault();
+        this.selectFeedbackStyleLevel(field, Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, target)));
     }
 }

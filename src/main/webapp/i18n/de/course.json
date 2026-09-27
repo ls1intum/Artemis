@@ -247,7 +247,7 @@
                     "enabledLabel": "Formative Feedbackanfragen sind aktiviert",
                     "disabledLabel": "Formative Feedbackanfragen sind deaktiviert",
                     "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihren Abgaben anfordern.",
-                    "disabledHint": "Studierende können in diesem Kurs kein vorläufiges KI-Feedback anfordern."
+                    "disabledHint": "Studierende können in diesem Kurs kein vorläufiges KI-Feedback anfordern. Aktiviere es, um auch den Feedback-Stil für Textaufgaben festzulegen."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Feedbackvorschläge zur Bewertung",
@@ -256,30 +256,24 @@
                     "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",
                     "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge von Athena."
                 },
+                "feedbackStyle": {
+                    "title": "Feedback-Stil für Textaufgaben",
+                    "hint": "Gilt für KI-Feedbackanfragen von Studierenden zu Textaufgaben, sofern sie keine eigene Feedback-Präferenz festgelegt haben. Bewertungsvorschläge für Tutor:innen sind davon nicht betroffen."
+                },
                 "exampleFeedbackLabel": "Beispiel-Feedback",
                 "defaultFeedbackDetail": {
                     "label": "Feedback-Detailgrad",
-                    "tooltip": "Legt fest, wie detailliert KI-Feedback in diesem Kurs standardmäßig ausfällt. Gilt nur für Studierende, die keine eigene Feedback-Präferenz festgelegt haben.",
+                    "tooltip": "Wähle, ob du kurzes und direkt auf den Punkt oder detailliertes Feedback mit Erklärungen und Beispielen bevorzugst.",
                     "brief": "Kurz",
                     "neutral": "Neutral",
-                    "detailed": "Ausführlich",
-                    "example": {
-                        "brief": "Prüfung auf leere Eingabe fehlt.",
-                        "neutral": "Deine Lösung behandelt eine leere Eingabe nicht - füge vor der Verarbeitung der Liste eine Prüfung hinzu.",
-                        "detailed": "Deine Implementierung wirft einen Fehler, wenn die Eingabeliste leer ist, da Zeile 4 auf das erste Element zugreift, ohne vorher dessen Länge zu prüfen. Füge eine Schutzbedingung wie <code>if not items: return None</code> hinzu und ergänze einen Testfall für den Fall einer leeren Liste."
-                    }
+                    "detailed": "Detailliert"
                 },
                 "defaultFeedbackFormality": {
                     "label": "Feedback-Förmlichkeit",
-                    "tooltip": "Legt fest, wie förmlich KI-Feedback in diesem Kurs standardmäßig ausfällt. Gilt nur für Studierende, die keine eigene Feedback-Präferenz festgelegt haben.",
-                    "formal": "Förmlich",
+                    "tooltip": "Wähle, ob du formelles und professionelles oder freundliches und zugängliches Feedback bevorzugst.",
+                    "formal": "Formell",
                     "neutral": "Neutral",
-                    "friendly": "Freundlich",
-                    "example": {
-                        "formal": "Die Abgabe validiert negative Eingabewerte nicht. Bitte überarbeiten Sie die Eingabebehandlung entsprechend.",
-                        "neutral": "Dein Code prüft negative Eingabewerte noch nicht. Erwäge, einen Validierungsschritt hinzuzufügen.",
-                        "friendly": "Bisher gute Arbeit! Ein Punkt zum Nachbessern: Negative Eingaben werden noch nicht geprüft - das lohnt sich noch schnell zu ergänzen."
-                    }
+                    "friendly": "Freundlich"
                 },
                 "settingsPage": {
                     "title": "Athena-Einstellungen",
