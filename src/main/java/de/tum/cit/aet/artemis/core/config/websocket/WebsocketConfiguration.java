@@ -402,7 +402,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     @NonNull Map<String, Object> attributes) {
                 log.debug("beforeHandshake: {}, {}, {}", request, response, wsHandler);
                 String origin = request.getHeaders().getOrigin();
-                if (!isAllowedOrigin(origin, WebUtils.isSameOrigin(request), serverOrigin, corsConfiguration)) {
+                if (!isAllowedOrigin(origin, isSameOrigin(request), serverOrigin, corsConfiguration)) {
                     log.warn("Refused a websocket handshake from the origin {} to {}", origin, request.getURI().getHost());
                     response.setStatusCode(HttpStatus.FORBIDDEN);
                     return false;
@@ -457,6 +457,18 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             return true;
         }
         return corsConfiguration.checkOrigin(origin) != null;
+    }
+
+    /**
+     * Returns whether the {@code Origin} header names the origin of the request itself. An origin that cannot be parsed, e.g. {@code https://[}, is another origin.
+     */
+    private static boolean isSameOrigin(ServerHttpRequest request) {
+        try {
+            return WebUtils.isSameOrigin(request);
+        }
+        catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     /**

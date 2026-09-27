@@ -94,6 +94,8 @@ class WebsocketHandshakeOriginTest {
         assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, "https://artemis.example.org:8443")).isEqualTo(HandshakeOutcome.REFUSED);
         assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, "http://artemis.example.org")).isEqualTo(HandshakeOutcome.REFUSED);
         assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, "https://evil.example")).isEqualTo(HandshakeOutcome.REFUSED);
+        // an origin that cannot be parsed is refused like any other foreign origin
+        assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, "https://[")).isEqualTo(HandshakeOutcome.REFUSED);
 
         // a proxy whose forwarded headers are not used: only the origin of server.url matches
         assertThat(handshake(tokenProvider, "http", "artemis-app", 8080, "https://artemis.example.org")).isEqualTo(HandshakeOutcome.ACCEPTED);
