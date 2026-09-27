@@ -74,13 +74,12 @@ public class CoverageRecomputeService {
 
     private static final String LOCK_NAME = "ingestion-coverage-recompute";
 
-    private static final Duration LOCK_WAIT = Duration.ofSeconds(1);
-
     /**
-     * How long an explicit refresh waits for a recompute that is already running. It waits rather than skipping because
-     * that recompute may have read the data before the change the admin is refreshing for.
+     * How long a caller waits for a recompute that is already running. A refresh waits because that recompute may have
+     * read the data before the change the admin is refreshing for; a stale read waits because giving up served it the
+     * old rows while the new ones were being computed.
      */
-    private static final Duration FORCED_LOCK_WAIT = Duration.ofMinutes(5);
+    private static final Duration LOCK_WAIT = Duration.ofMinutes(5);
 
     private final IngestionCoverageSetLoader setLoader;
 
@@ -100,8 +99,8 @@ public class CoverageRecomputeService {
 
     /**
      * If the stored projection is older than {@link #FRESHNESS_WINDOW} (or missing), recomputes it under the cluster lock
-     * before returning, so the caller reads the result. Cheap to call on every dashboard open: it returns at once if the
-     * data is fresh or another node already holds the lock.
+     * before returning, so the caller reads the result; if another recompute is already running, waits for it instead.
+     * Cheap to call on every dashboard open: fresh data returns at once without touching the lock.
      */
     public void triggerRecomputeIfStale() {
         runUnderLock(true, LOCK_WAIT);
@@ -109,12 +108,12 @@ public class CoverageRecomputeService {
 
     /**
      * Recomputes the whole projection under the cluster lock, ignoring freshness, and returns once it is done. Backs the
-     * refresh button. Waits up to {@link #FORCED_LOCK_WAIT} for a recompute that is already running, then runs its own.
+     * refresh button. Waits up to {@link #LOCK_WAIT} for a recompute that is already running, then runs its own.
      *
      * @return {@code true} if the recompute ran, {@code false} if the lock was not acquired or the recompute failed
      */
     public boolean forceRecompute() {
-        return runUnderLock(false, FORCED_LOCK_WAIT);
+        return runUnderLock(false, LOCK_WAIT);
     }
 
     /**
@@ -126,12 +125,16 @@ public class CoverageRecomputeService {
      * @return {@code true} if a recompute ran, {@code false} if it was skipped (lock held by another node, or fresh)
      */
     boolean runUnderLock(boolean onlyIfStale, Duration lockWait) {
+        // Checked before the lock too, so reading fresh data never waits behind a recompute someone else started.
+        if (onlyIfStale && !isStale()) {
+            return false;
+        }
         DistributedLock lock = distributedDataProvider.getLock(LOCK_NAME);
         boolean locked = false;
         try {
             locked = lock.tryLock(lockWait);
             if (!locked) {
-                log.debug("Coverage recompute skipped: another node is already recomputing");
+                log.warn("Coverage recompute skipped: another recompute held the lock for longer than {}", lockWait);
                 return false;
             }
             // Re-check freshness inside the lock so a queued trigger does not redo work a just-finished recompute did.

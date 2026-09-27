@@ -302,14 +302,46 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
     @Test
     void forcedRecomputeWaitsForARunningOneInsteadOfSkipping() throws Exception {
         // A refresh clicked while another recompute holds the lock must still run: that recompute may have read the
-        // data before the change the admin is refreshing for. The holder is a different thread, standing in for a node.
+        // data before the change the admin is refreshing for.
+        Thread holder = holdRecomputeLockElsewhere(2000);
+
+        assertThat(coverageRecomputeService.forceRecompute()).isTrue();
+        holder.join(5000);
+    }
+
+    @Test
+    void aStaleReadWaitsForTheRunningRecomputeInsteadOfServingOldRows() throws Exception {
+        // The table is empty, so the projection is stale. Giving up on the held lock left the caller reading the old
+        // table; waiting and re-checking under the lock is what hands it the new rows.
+        Thread holder = holdRecomputeLockElsewhere(2000);
+
+        coverageRecomputeService.triggerRecomputeIfStale();
+
+        assertThat(coverageRepository.findByCourseId(course.getId())).isPresent();
+        holder.join(5000);
+    }
+
+    @Test
+    void aFreshReadDoesNotWaitForTheLock() throws Exception {
+        coverageRecomputeService.recomputeAllCourses();
+        Thread holder = holdRecomputeLockElsewhere(2000);
+
+        long start = System.nanoTime();
+        coverageRecomputeService.triggerRecomputeIfStale();
+
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(1));
+        holder.join(5000);
+    }
+
+    /** Holds the recompute lock on a different thread, standing in for another node, and returns once it is held. */
+    private Thread holdRecomputeLockElsewhere(long millis) throws InterruptedException {
         DistributedLock lock = distributedDataProvider.getLock("ingestion-coverage-recompute");
         CountDownLatch locked = new CountDownLatch(1);
         Thread holder = new Thread(() -> {
             lock.lock();
             locked.countDown();
             try {
-                Thread.sleep(1000);
+                Thread.sleep(millis);
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -320,9 +352,7 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         });
         holder.start();
         assertThat(locked.await(5, TimeUnit.SECONDS)).isTrue();
-
-        assertThat(coverageRecomputeService.forceRecompute()).isTrue();
-        holder.join(5000);
+        return holder;
     }
 
     private IngestionTypeCountDTO typeCount(IngestionCoverageEntry entry, String type) {
