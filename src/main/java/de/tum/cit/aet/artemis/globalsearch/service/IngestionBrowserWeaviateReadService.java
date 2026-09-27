@@ -218,10 +218,11 @@ public class IngestionBrowserWeaviateReadService {
         if (collectionName == null) {
             throw new IllegalArgumentException("Unknown content key '" + contentKey + "'; expected one of " + CONTENT_KEY_ORDER);
         }
-        if (!contentCollectionReadable(collectionName)) {
-            return List.of();
-        }
         try {
+            // Absent is a normal state (Iris may never have run here) and reads as empty; unreadable is an error below.
+            if (!weaviateService.externalCollectionExists(collectionName)) {
+                return List.of();
+            }
             CollectionHandle<Map<String, Object>> collection = weaviateService.getExternalCollection(collectionName);
             Filter filter = Filter.and(Filter.property(CONTENT_COURSE_ID_PROPERTY).eq(courseId), Filter.property(CONTENT_LECTURE_UNIT_ID_PROPERTY).eq(unitId));
 
@@ -236,20 +237,6 @@ public class IngestionBrowserWeaviateReadService {
         catch (Exception exception) {
             throw new WeaviateException("Failed to read '" + contentKey + "' content for lecture unit " + unitId + " in course " + courseId + ": " + exception.getMessage(),
                     exception);
-        }
-    }
-
-    /**
-     * Whether an Iris collection exists on this instance. Absent is a normal state (Iris may never have run here), so it
-     * reads as empty rather than as a failure.
-     */
-    private boolean contentCollectionReadable(String collectionName) {
-        try {
-            return weaviateService.externalCollectionExists(collectionName);
-        }
-        catch (Exception exception) {
-            log.warn("Could not check for Iris content collection '{}' (treating as absent): {}", collectionName, exception.getMessage());
-            return false;
         }
     }
 

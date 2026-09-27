@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.seedUnitWithAttachment;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.seedUnitWithVideoSource;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -17,7 +19,6 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageExpectedIdsRepository;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -124,13 +125,13 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
         textUnit = lectureUtilService.createTextUnit(lectureA);
         onlineUnit = lectureUtilService.createOnlineUnit(lectureA);
-        videoUnit = seedUnitWithVideoSource(lectureA, "https://video.example/lecture-a");
+        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lectureA, null, "https://video.example/lecture-a");
         // A whitespace-only video source is treated as absent by the content-processing trigger, so it must not appear in
         // the video expected set.
-        blankVideoUnit = seedUnitWithVideoSource(lectureA, "   ");
-        pdfUnit = seedUnitWithAttachmentLink(lectureA, "attachments/attachment-unit/slides.pdf");
+        blankVideoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lectureA, null, "   ");
+        pdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lectureA, null, "attachments/attachment-unit/slides.pdf", AttachmentType.FILE);
         // An attachment whose link does not end in .pdf is still an indexable unit, but its slides are not ingested.
-        nonPdfUnit = seedUnitWithAttachmentLink(lectureA, "attachments/attachment-unit/notes.txt");
+        nonPdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lectureA, null, "attachments/attachment-unit/notes.txt", AttachmentType.FILE);
 
         courseExerciseA = exerciseRepository.save(TextExerciseFactory.generateTextExercise(past, future, farFuture, courseA));
         Exam examA = examUtilService.addExamWithExerciseGroup(courseA, true);
@@ -148,11 +149,13 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
         Course courseC = courseUtilService.createCourse();
         courseCId = courseC.getId();
         Lecture lectureC = lectureUtilService.createLecture(courseC);
-        upperCasePdfUnit = seedUnitWithAttachment(lectureC, "attachments/attachment-unit/slides.PDF", AttachmentType.FILE);
-        urlAttachmentPdfUnit = seedUnitWithAttachment(lectureC, "https://example.org/slides.pdf", AttachmentType.URL);
+        upperCasePdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lectureC, null, "attachments/attachment-unit/slides.PDF",
+                AttachmentType.FILE);
+        urlAttachmentPdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lectureC, null, "https://example.org/slides.pdf", AttachmentType.URL);
         Lecture tutorialLectureC = createTutorialLecture(courseC);
-        tutorialPdfUnit = seedUnitWithAttachment(tutorialLectureC, "attachments/attachment-unit/tutorial.pdf", AttachmentType.FILE);
-        tutorialVideoUnit = seedUnitWithVideoSource(tutorialLectureC, "https://video.example/tutorial");
+        tutorialPdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, tutorialLectureC, null, "attachments/attachment-unit/tutorial.pdf",
+                AttachmentType.FILE);
+        tutorialVideoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, tutorialLectureC, null, "https://video.example/tutorial");
     }
 
     @Test
@@ -236,41 +239,10 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
         assertThat(units).doesNotContain(new CourseEntityIdDTO(courseAId, textUnitB.getId()));
     }
 
-    private AttachmentVideoUnit seedUnitWithVideoSource(Lecture lecture, String videoSource) {
-        AttachmentVideoUnit unit = new AttachmentVideoUnit();
-        unit.setDescription("Test");
-        unit.setLecture(lecture);
-        unit.setVideoSource(videoSource);
-        return attachmentVideoUnitRepository.save(unit);
-    }
-
     private Lecture createTutorialLecture(Course course) {
         Lecture lecture = lectureUtilService.createLecture(course);
         lecture.setIsTutorialLecture(true);
         return lectureRepository.save(lecture);
     }
 
-    private AttachmentVideoUnit seedUnitWithAttachmentLink(Lecture lecture, String link) {
-        return seedUnitWithAttachment(lecture, link, AttachmentType.FILE);
-    }
-
-    private AttachmentVideoUnit seedUnitWithAttachment(Lecture lecture, String link, AttachmentType attachmentType) {
-        AttachmentVideoUnit unit = new AttachmentVideoUnit();
-        unit.setDescription("Test");
-        unit.setLecture(lecture);
-        unit = attachmentVideoUnitRepository.save(unit);
-
-        Attachment attachment = new Attachment();
-        attachment.setAttachmentType(attachmentType);
-        attachment.setName("Attachment");
-        attachment.setVersion(1);
-        attachment.setReleaseDate(ZonedDateTime.now().minusDays(1));
-        attachment.setUploadDate(ZonedDateTime.now().minusDays(1));
-        attachment.setLink(link);
-        attachment.setAttachmentVideoUnit(unit);
-        attachment = attachmentRepository.save(attachment);
-
-        unit.setAttachment(attachment);
-        return attachmentVideoUnitRepository.save(unit);
-    }
 }

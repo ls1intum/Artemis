@@ -2,17 +2,19 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURES_COLLECTION;
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION;
-import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION;
-import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.dropIrisContentCollections;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertContent;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertMetadata;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.recreateIrisContentCollections;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.seedUnitWithAttachment;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.seedUnitWithVideoSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,11 +27,13 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.MissingContentDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.MissingEntityDTO;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -39,8 +43,6 @@ import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import io.weaviate.client6.v1.api.WeaviateClient;
-import io.weaviate.client6.v1.api.collections.Property;
-import io.weaviate.client6.v1.api.collections.VectorConfig;
 
 /**
  * Integration test for the browser's gap lists against a real Weaviate Testcontainer and database.
@@ -62,6 +64,9 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
 
     @Autowired
     private CoverageRecomputeService coverageRecomputeService;
+
+    @Autowired
+    private IngestionCoverageRepository coverageRepository;
 
     @Autowired
     private WeaviateService weaviateService;
@@ -86,13 +91,6 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
 
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
-    private static final String CONTENT_COURSE_ID = "course_id";
-
-    private static final String CONTENT_LECTURE_UNIT_ID = "lecture_unit_id";
-
-    private static final List<String> IRIS_CONTENT_COLLECTIONS = List.of(LECTURES_COLLECTION, LECTURE_TRANSCRIPTIONS_COLLECTION, LECTURE_UNIT_SEGMENTS_COLLECTION,
-            LECTURE_UNITS_COLLECTION);
-
     private Course course;
 
     private Exercise presentExercise;
@@ -109,7 +107,7 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
 
     @BeforeEach
     void setUp() throws Exception {
-        recreateIrisContentCollections();
+        recreateIrisContentCollections(weaviateClient);
 
         ZonedDateTime past = ZonedDateTime.now().minusDays(1);
         ZonedDateTime future = ZonedDateTime.now().plusDays(1);
@@ -119,33 +117,34 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
         presentExercise = exerciseRepository.save(TextExerciseFactory.generateTextExercise(past, future, farFuture, course));
         missingExercise = exerciseRepository.save(TextExerciseFactory.generateTextExercise(past, future, farFuture, course));
         Lecture lecture = lectureUtilService.createLecture(course);
-        pdfUnit = seedUnitWithAttachmentLink(lecture, "Slides unit", "attachments/attachment-unit/slides.pdf");
-        videoUnit = seedUnitWithVideoSource(lecture, "Video unit", "https://video.example/lecture");
+        pdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lecture, "Slides unit", "attachments/attachment-unit/slides.pdf",
+                AttachmentType.FILE);
+        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, "Video unit", "https://video.example/lecture");
 
         // Indexed: the course, the lecture, one of the two exercises, both units. The second exercise is deliberately
         // absent, so it is the one the browser must name.
         long courseId = course.getId();
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId);
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.EXERCISE, presentExercise.getId());
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.LECTURE_UNIT, pdfUnit.getId());
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.LECTURE_UNIT, videoUnit.getId());
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, null);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.LECTURE, lecture.getId(), null);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.EXERCISE, presentExercise.getId(), null);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.LECTURE_UNIT, pdfUnit.getId(), null);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.LECTURE_UNIT, videoUnit.getId(), null);
 
         // Content: slides for the PDF unit, so slides are complete; no transcript for the video unit, so it is a gap.
-        insertContent(LECTURES_COLLECTION, courseId, pdfUnit.getId());
+        insertContent(weaviateService, LECTURES_COLLECTION, courseId, pdfUnit.getId(), null);
     }
 
     @AfterEach
     void tearDown() throws Exception {
         if (weaviateClient != null) {
-            dropIrisContentCollections();
+            dropIrisContentCollections(weaviateClient);
         }
     }
 
     @Test
     void namesTheEntitiesTheIndexDoesNotHold() {
         await().atMost(TIMEOUT).untilAsserted(() -> {
-            List<MissingEntityDTO> missing = browserService.loadCourseBrowserData(course.getId()).missingEntities();
+            List<MissingEntityDTO> missing = browserService.loadCourseBrowserData(course).missingEntities();
 
             assertThat(missing).extracting(MissingEntityDTO::type, MissingEntityDTO::entityId, MissingEntityDTO::title)
                     .contains(tuple(SearchableEntitySchema.TypeValues.EXERCISE, missingExercise.getId(), missingExercise.getTitle()));
@@ -160,7 +159,7 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
     @Test
     void namedGapsMatchTheMatrixCountsForTheSameCourse() {
         await().atMost(TIMEOUT).untilAsserted(() -> {
-            List<MissingEntityDTO> missing = browserService.loadCourseBrowserData(course.getId()).missingEntities();
+            List<MissingEntityDTO> missing = browserService.loadCourseBrowserData(course).missingEntities();
             IngestionCoverageDTO coverage = coverageRecomputeService.computeCoverageLive(List.of(course)).getFirst();
 
             for (IngestionTypeCountDTO typeCount : coverage.typeCounts()) {
@@ -175,7 +174,7 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
     @Test
     void namesTheUnitsWhoseContentWasNeverIngested() {
         await().atMost(TIMEOUT).untilAsserted(() -> {
-            List<MissingContentDTO> gaps = browserService.loadCourseBrowserData(course.getId()).contentGaps();
+            List<MissingContentDTO> gaps = browserService.loadCourseBrowserData(course).contentGaps();
 
             // The video unit has no transcript; the PDF unit has slides, so it must not appear.
             assertThat(gaps).extracting(MissingContentDTO::lectureUnitId, MissingContentDTO::kind, MissingContentDTO::title)
@@ -185,9 +184,23 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
 
     @Test
     void reportsNoGapsOnceTheMissingContentIsIndexed() throws Exception {
-        insertContent(LECTURE_TRANSCRIPTIONS_COLLECTION, course.getId(), videoUnit.getId());
+        insertContent(weaviateService, LECTURE_TRANSCRIPTIONS_COLLECTION, course.getId(), videoUnit.getId(), null);
 
-        await().atMost(TIMEOUT).untilAsserted(() -> assertThat(browserService.loadCourseBrowserData(course.getId()).contentGaps()).isEmpty());
+        await().atMost(TIMEOUT).untilAsserted(() -> assertThat(browserService.loadCourseBrowserData(course).contentGaps()).isEmpty());
+    }
+
+    @Test
+    void openingACourseReplacesItsStoredRowWithTheCountsItShows() {
+        IngestionCoverageEntry stale = new IngestionCoverageEntry();
+        stale.setCourseId(course.getId());
+        stale.setTypeCounts(List.of(new IngestionTypeCountDTO("faq", 9, 0, 9, 0)));
+        stale.setStatus(IngestionCoverageStatus.INCOMPLETE);
+        stale.setComputedAt(ZonedDateTime.now().minusDays(1));
+        coverageRepository.save(stale);
+
+        List<IngestionTypeCountDTO> shown = browserService.loadCourseBrowserData(course).typeCounts();
+
+        assertThat(coverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts()).isEqualTo(shown);
     }
 
     /** The metadata types the browser enumerates; the content and summary types are not entity types. */
@@ -195,68 +208,4 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
         return IngestionCoverageWeaviateReadService.METADATA_TYPES.contains(type);
     }
 
-    private void insertMetadata(long courseId, String type, long entityId) throws Exception {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableEntitySchema.Properties.TYPE, type);
-        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, entityId);
-        weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data.insert(properties);
-    }
-
-    private void insertContent(String collectionName, long courseId, long unitId) throws Exception {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(CONTENT_COURSE_ID, courseId);
-        properties.put(CONTENT_LECTURE_UNIT_ID, unitId);
-        weaviateService.getExternalCollection(collectionName).data.insert(properties);
-    }
-
-    private void recreateIrisContentCollections() throws Exception {
-        dropIrisContentCollections();
-        for (String name : IRIS_CONTENT_COLLECTIONS) {
-            weaviateClient.collections.create(name, collection -> {
-                collection.vectorConfig(VectorConfig.selfProvided());
-                collection.properties(Property.integer(CONTENT_COURSE_ID));
-                collection.properties(Property.integer(CONTENT_LECTURE_UNIT_ID));
-                return collection;
-            });
-        }
-    }
-
-    private void dropIrisContentCollections() throws Exception {
-        for (String name : IRIS_CONTENT_COLLECTIONS) {
-            if (weaviateClient.collections.exists(name)) {
-                weaviateClient.collections.delete(name);
-            }
-        }
-    }
-
-    private AttachmentVideoUnit seedUnitWithVideoSource(Lecture lecture, String name, String videoSource) {
-        AttachmentVideoUnit unit = new AttachmentVideoUnit();
-        unit.setName(name);
-        unit.setDescription("Test");
-        unit.setLecture(lecture);
-        unit.setVideoSource(videoSource);
-        return attachmentVideoUnitRepository.save(unit);
-    }
-
-    private AttachmentVideoUnit seedUnitWithAttachmentLink(Lecture lecture, String name, String link) {
-        AttachmentVideoUnit unit = new AttachmentVideoUnit();
-        unit.setName(name);
-        unit.setDescription("Test");
-        unit.setLecture(lecture);
-        unit = attachmentVideoUnitRepository.save(unit);
-
-        Attachment attachment = new Attachment();
-        attachment.setAttachmentType(AttachmentType.FILE);
-        attachment.setName("Attachment");
-        attachment.setVersion(1);
-        attachment.setReleaseDate(ZonedDateTime.now().minusDays(1));
-        attachment.setUploadDate(ZonedDateTime.now().minusDays(1));
-        attachment.setLink(link);
-        attachment.setAttachmentVideoUnit(unit);
-        attachmentRepository.save(attachment);
-
-        unit.setAttachment(attachment);
-        return attachmentVideoUnitRepository.save(unit);
-    }
 }

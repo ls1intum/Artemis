@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentPresenceDTO;
@@ -38,22 +39,29 @@ public class IngestionBrowserService {
 
     private final IngestionBrowserGapService gapService;
 
-    public IngestionBrowserService(IngestionCoverageSetLoader setLoader, IngestionBrowserWeaviateReadService browserReadService, IngestionBrowserGapService gapService) {
+    private final CoverageRecomputeService coverageRecomputeService;
+
+    public IngestionBrowserService(IngestionCoverageSetLoader setLoader, IngestionBrowserWeaviateReadService browserReadService, IngestionBrowserGapService gapService,
+            CoverageRecomputeService coverageRecomputeService) {
         this.setLoader = setLoader;
         this.browserReadService = browserReadService;
         this.gapService = gapService;
+        this.coverageRecomputeService = coverageRecomputeService;
     }
 
     /**
-     * Loads the stored entities, the content presence, and both gap lists for one course.
+     * Loads the stored entities, the content presence, and both gap lists for one course, and stores the course's
+     * coverage row from the same sets, so the matrix shows these numbers once the browser closes.
      *
-     * @param courseId the course to inspect
+     * @param course the course to inspect
      * @return everything the browser renders when it opens
      */
-    public CourseBrowserDataDTO loadCourseBrowserData(long courseId) {
+    public CourseBrowserDataDTO loadCourseBrowserData(Course course) {
+        long courseId = course.getId();
         List<Long> courseIds = List.of(courseId);
         ExpectedSets expected = setLoader.loadExpected(courseIds);
         PresentSets present = setLoader.loadPresent(courseIds);
+        coverageRecomputeService.storeCourseCoverage(course, expected, present);
 
         return new CourseBrowserDataDTO(browserReadService.listIndexedEntitiesForCourse(courseId), contentPresence(courseId, present),
                 gapService.missingEntities(courseId, expected, present), gapService.contentGaps(courseId, expected, present),

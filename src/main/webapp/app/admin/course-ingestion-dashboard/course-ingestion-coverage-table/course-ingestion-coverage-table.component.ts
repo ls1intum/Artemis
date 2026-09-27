@@ -102,6 +102,9 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     /** Emitted when a course row is activated, so the page can open the content browser for it. */
     readonly courseSelected = output<IngestionCoverage>();
 
+    /** Emitted when a refresh starts, so the page can reload the rest of the dashboard with it. */
+    readonly refreshed = output<void>();
+
     protected readonly faSync = faSync;
     protected readonly metadataTypes = METADATA_TYPES;
     protected readonly contentTypes = CONTENT_TYPES;
@@ -176,7 +179,8 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
         this.load();
     }
 
-    private load(): void {
+    /** (Re)loads the current page for the current sort, filters and search. */
+    load(): void {
         this.pendingRequest?.unsubscribe();
         this.loading.set(true);
         this.error.set(false);
@@ -197,7 +201,7 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
             next: (result) => {
                 this.rows.set(result.content);
                 this.totalRecords.set(result.totalElements);
-                this.lastUpdated.set(result.content[0]?.computedAt);
+                this.lastUpdated.set(oldestComputedAt(result.content));
                 this.loading.set(false);
             },
             error: () => {
@@ -269,6 +273,11 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     }
 
     protected onRefresh(): void {
+        // A second click can land before the button renders disabled.
+        if (this.refreshing()) {
+            return;
+        }
+        this.refreshed.emit();
         this.refreshing.set(true);
         this.dashboardService
             .refreshCoverage()
@@ -308,4 +317,14 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     protected statusClass(status: IngestionCoverageStatus): string {
         return STATUS_CLASS[status];
     }
+}
+
+/**
+ * The oldest computation time on the page. Opening a course stores its row afresh, so rows can differ, and the label
+ * must not claim the whole page is as recent as its newest row.
+ */
+function oldestComputedAt(rows: IngestionCoverage[]): string | undefined {
+    return rows
+        .map((row) => row.computedAt)
+        .reduce<string | undefined>((oldest, next) => (oldest === undefined || Date.parse(next) < Date.parse(oldest) ? next : oldest), undefined);
 }

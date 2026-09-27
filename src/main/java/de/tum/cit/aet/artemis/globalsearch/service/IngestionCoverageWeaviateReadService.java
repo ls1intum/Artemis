@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.aggregate.GroupBy;
@@ -81,6 +82,9 @@ public class IngestionCoverageWeaviateReadService {
     /** Weaviate's default {@code QUERY_MAXIMUM_RESULTS}: {@code offset + limit} may not exceed this. */
     private static final int QUERY_MAXIMUM_RESULTS = 10_000;
 
+    /** The most objects one filtered metadata read returns; a field rather than the constant so tests can lower it. */
+    private int metadataReadLimit = QUERY_MAXIMUM_RESULTS;
+
     /** Upper bound on distinct content-unit groups returned per course; a course never has this many units. */
     private static final int CONTENT_GROUP_LIMIT = 10_000;
 
@@ -115,10 +119,10 @@ public class IngestionCoverageWeaviateReadService {
      * @return the object count, or empty if it could not be read
      */
     public OptionalLong countExternalCollection(String collectionName) {
-        if (!contentCollectionReadable(collectionName)) {
-            return OptionalLong.empty();
-        }
         try {
+            if (!weaviateService.externalCollectionExists(collectionName)) {
+                return OptionalLong.empty();
+            }
             return OptionalLong.of(countObjects(weaviateService.getExternalCollection(collectionName)));
         }
         catch (Exception exception) {
@@ -160,9 +164,7 @@ public class IngestionCoverageWeaviateReadService {
         List<String> returnProperties = List.of(SearchableEntitySchema.Properties.COURSE_ID, SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.Properties.ENTITY_ID);
 
         for (List<Long> chunk : chunk(courseIds, COURSE_CHUNK_SIZE)) {
-            Filter filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).containsAny(chunk.toArray(new Long[0])),
-                    Filter.property(SearchableEntitySchema.Properties.TYPE).containsAny(METADATA_TYPES.toArray(new String[0])));
-            readFilteredChunk(collection, filter, returnProperties, true, object -> {
+            readMetadataChunk(collection, chunk, returnProperties, object -> {
                 Map<String, Object> properties = object.properties();
                 Long courseId = readLong(properties.get(SearchableEntitySchema.Properties.COURSE_ID));
                 String type = asString(properties.get(SearchableEntitySchema.Properties.TYPE));
@@ -182,10 +184,39 @@ public class IngestionCoverageWeaviateReadService {
     }
 
     /**
+     * Reads the metadata of a chunk of courses. A read that comes back full may be missing objects, and the ones it drops
+     * are not necessarily the big course's: they can belong to any course in the chunk. So a full read is discarded and
+     * the chunk is split and read again, down to a single course, which is truncated only if that course alone holds more
+     * objects than one read returns.
+     */
+    private void readMetadataChunk(CollectionHandle<Map<String, Object>> collection, List<Long> courseChunk, List<String> returnProperties,
+            Consumer<WeaviateObject<Map<String, Object>>> consumer) {
+        Filter filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).containsAny(courseChunk.toArray(new Long[0])),
+                Filter.property(SearchableEntitySchema.Properties.TYPE).containsAny(METADATA_TYPES.toArray(new String[0])));
+        var objects = collection.query
+                .fetchObjects(builder -> builder.filters(filter).returnProperties(returnProperties).limit(metadataReadLimit).returnMetadata(Metadata.LAST_UPDATE_TIME_UNIX))
+                .objects();
+        if (objects.size() < metadataReadLimit) {
+            objects.forEach(consumer);
+            return;
+        }
+        if (courseChunk.size() > 1) {
+            int half = courseChunk.size() / 2;
+            readMetadataChunk(collection, courseChunk.subList(0, half), returnProperties, consumer);
+            readMetadataChunk(collection, courseChunk.subList(half, courseChunk.size()), returnProperties, consumer);
+            return;
+        }
+        log.warn("Course {} holds at least {} indexed metadata objects; its coverage is read from the first {} only.", courseChunk.getFirst(), metadataReadLimit,
+                metadataReadLimit);
+        objects.forEach(consumer);
+    }
+
+    /**
      * Reads the exact set of distinct lecture-unit ids that actually have ingested content in the given Iris collection,
      * per course, via a per-course server-side {@code groupBy(lecture_unit_id)} aggregation. Bounded by unit count, not
      * chunk count, so it is exact without shipping bodies or hitting the offset cap. A collection that does not exist on
-     * this instance yields an empty result (not an error), so coverage still reports the metadata side.
+     * this instance yields an empty result (not an error), so coverage still reports the metadata side. A collection that
+     * cannot be read is an error: reporting it as empty would present an outage as content that was never ingested.
      * <p>
      * Pass every course being reported on. Which of them actually hold content is discovered here, in one grouped
      * aggregation per chunk, so asking about a course that holds nothing costs a share of that query rather than one of
@@ -195,10 +226,11 @@ public class IngestionCoverageWeaviateReadService {
      *                           {@link #LECTURE_TRANSCRIPTIONS_COLLECTION})
      * @param courseIds      the course ids to read (deduplicated internally)
      * @return course id -> the distinct lecture-unit ids with content present (courses with none are omitted)
+     * @throws WeaviateException if the collection cannot be read
      */
     public Map<Long, Set<Long>> readPresentContentUnitIds(String collectionName, Collection<Long> courseIds) {
         Map<Long, Set<Long>> presentUnitsByCourse = new HashMap<>();
-        if (courseIds.isEmpty() || !contentCollectionReadable(collectionName)) {
+        if (courseIds.isEmpty() || !weaviateService.externalCollectionExists(collectionName)) {
             return presentUnitsByCourse;
         }
         CollectionHandle<Map<String, Object>> collection = weaviateService.getExternalCollection(collectionName);
@@ -245,16 +277,6 @@ public class IngestionCoverageWeaviateReadService {
         return holdingContent;
     }
 
-    private boolean contentCollectionReadable(String collectionName) {
-        try {
-            return weaviateService.externalCollectionExists(collectionName);
-        }
-        catch (Exception exception) {
-            log.warn("Could not check for Iris content collection '{}' (treating as absent): {}", collectionName, exception.getMessage());
-            return false;
-        }
-    }
-
     private Set<Long> readDistinctContentUnitIdsForCourse(CollectionHandle<Map<String, Object>> collection, String collectionName, long courseId) {
         try {
             Filter courseFilter = Filter.property(CONTENT_COURSE_ID_PROPERTY).eq(courseId);
@@ -269,30 +291,7 @@ public class IngestionCoverageWeaviateReadService {
             return unitIds;
         }
         catch (Exception exception) {
-            log.warn("Could not read Iris content collection '{}' for course {} (treating as empty): {}", collectionName, courseId, exception.getMessage());
-            return Set.of();
-        }
-    }
-
-    /**
-     * Reads a filtered chunk in a single query, applying the consumer to every returned object. A cursor ({@code after})
-     * cannot combine with a {@code where} filter, and offset pagination is capped by {@link #QUERY_MAXIMUM_RESULTS}, so a
-     * filtered read returns at most that many objects. Chunks are sized to stay under the cap; hitting it means the chunk
-     * may be truncated, which is logged so {@link #COURSE_CHUNK_SIZE} can be reduced.
-     */
-    private void readFilteredChunk(CollectionHandle<Map<String, Object>> collection, Filter filter, List<String> returnProperties, boolean withLastUpdateTime,
-            Consumer<WeaviateObject<Map<String, Object>>> consumer) {
-        var response = collection.query.fetchObjects(builder -> {
-            builder.filters(filter).returnProperties(returnProperties).limit(QUERY_MAXIMUM_RESULTS);
-            if (withLastUpdateTime) {
-                builder.returnMetadata(Metadata.LAST_UPDATE_TIME_UNIX);
-            }
-            return builder;
-        });
-        List<WeaviateObject<Map<String, Object>>> objects = response.objects();
-        objects.forEach(consumer);
-        if (objects.size() >= QUERY_MAXIMUM_RESULTS) {
-            log.warn("A coverage metadata chunk returned the maximum {} objects and may be truncated; reduce COURSE_CHUNK_SIZE.", QUERY_MAXIMUM_RESULTS);
+            throw new WeaviateException("Failed to read Iris content collection '" + collectionName + "' for course " + courseId + ": " + exception.getMessage(), exception);
         }
     }
 

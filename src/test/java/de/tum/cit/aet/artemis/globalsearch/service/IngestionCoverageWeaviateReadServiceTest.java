@@ -1,12 +1,16 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.IRIS_CONTENT_COLLECTIONS;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.dropIrisContentCollections;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertContent;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertMetadata;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.recreateIrisContentCollections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,12 +19,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import io.weaviate.client6.v1.api.WeaviateClient;
-import io.weaviate.client6.v1.api.collections.Property;
-import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -54,14 +57,6 @@ class IngestionCoverageWeaviateReadServiceTest extends AbstractProgrammingIntegr
 
     private static final long COURSE_B = 880002L;
 
-    private static final String CONTENT_COURSE_ID = "course_id";
-
-    private static final String CONTENT_LECTURE_UNIT_ID = "lecture_unit_id";
-
-    private static final List<String> IRIS_CONTENT_COLLECTIONS = List.of(IngestionCoverageWeaviateReadService.LECTURES_COLLECTION,
-            IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION, IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION,
-            IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION);
-
     static boolean isWeaviateEnabled() {
         return weaviateContainer != null && weaviateContainer.isRunning();
     }
@@ -69,28 +64,28 @@ class IngestionCoverageWeaviateReadServiceTest extends AbstractProgrammingIntegr
     @BeforeEach
     void setUp() throws Exception {
         clearMetadataForTestCourses();
-        recreateIrisContentCollections();
+        recreateIrisContentCollections(weaviateClient);
     }
 
     @AfterEach
     void tearDown() throws Exception {
         if (weaviateClient != null) {
             clearMetadataForTestCourses();
-            dropIrisContentCollections();
+            dropIrisContentCollections(weaviateClient);
         }
     }
 
     @Test
     void readsExactMetadataPresentSetsBucketedByCourseAndTypeExcludingPosts() throws Exception {
-        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.EXERCISE, 1L);
-        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.EXERCISE, 2L);
-        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.LECTURE_UNIT, 10L);
-        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.LECTURE, 20L);
-        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.FAQ, 30L);
+        insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.EXERCISE, 1L, null);
+        insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.EXERCISE, 2L, null);
+        insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.LECTURE_UNIT, 10L, null);
+        insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.LECTURE, 20L, null);
+        insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.FAQ, 30L, null);
         // Posts and answer posts are the firehose the coverage read must NOT id-diff.
-        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.POST, 99L);
-        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.ANSWER_POST, 98L);
-        insertMetadata(COURSE_B, SearchableEntitySchema.TypeValues.EXERCISE, 3L);
+        insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.POST, 99L, null);
+        insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.ANSWER_POST, 98L, null);
+        insertMetadata(weaviateService, COURSE_B, SearchableEntitySchema.TypeValues.EXERCISE, 3L, null);
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             var present = coverageReadService.readPresentMetadata(List.of(COURSE_A, COURSE_B));
@@ -106,9 +101,31 @@ class IngestionCoverageWeaviateReadServiceTest extends AbstractProgrammingIntegr
     }
 
     @Test
+    void aFullReadIsSplitSoNoCourseLosesObjectsToAnotherCoursesVolume() throws Exception {
+        // Two courses of two objects each fill a read capped at three. Kept as is, that read drops an object of either
+        // course, so it is split and each course read on its own.
+        ReflectionTestUtils.setField(coverageReadService, "metadataReadLimit", 3);
+        try {
+            insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.EXERCISE, 1L, null);
+            insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.EXERCISE, 2L, null);
+            insertMetadata(weaviateService, COURSE_B, SearchableEntitySchema.TypeValues.EXERCISE, 3L, null);
+            insertMetadata(weaviateService, COURSE_B, SearchableEntitySchema.TypeValues.EXERCISE, 4L, null);
+
+            await().atMost(TIMEOUT).untilAsserted(() -> {
+                var byCourse = coverageReadService.readPresentMetadata(List.of(COURSE_A, COURSE_B)).presentIdsByCourseAndType();
+                assertThat(byCourse.get(COURSE_A).get(SearchableEntitySchema.TypeValues.EXERCISE)).containsExactlyInAnyOrder(1L, 2L);
+                assertThat(byCourse.get(COURSE_B).get(SearchableEntitySchema.TypeValues.EXERCISE)).containsExactlyInAnyOrder(3L, 4L);
+            });
+        }
+        finally {
+            ReflectionTestUtils.setField(coverageReadService, "metadataReadLimit", 10_000);
+        }
+    }
+
+    @Test
     void capturesLastIngestedAtPerCourse() throws Exception {
         Instant before = Instant.now().minus(5, ChronoUnit.MINUTES);
-        insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.EXERCISE, 1L);
+        insertMetadata(weaviateService, COURSE_A, SearchableEntitySchema.TypeValues.EXERCISE, 1L, null);
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             var present = coverageReadService.readPresentMetadata(List.of(COURSE_A));
@@ -120,10 +137,10 @@ class IngestionCoverageWeaviateReadServiceTest extends AbstractProgrammingIntegr
     void readsDistinctContentUnitIdsForEachIrisCollection() throws Exception {
         for (String collection : IRIS_CONTENT_COLLECTIONS) {
             // Unit 10 has two objects (chunks/segments), unit 11 one - the read must return the DISTINCT unit set {10, 11}.
-            insertContent(collection, COURSE_A, 10L);
-            insertContent(collection, COURSE_A, 10L);
-            insertContent(collection, COURSE_A, 11L);
-            insertContent(collection, COURSE_B, 40L);
+            insertContent(weaviateService, collection, COURSE_A, 10L, null);
+            insertContent(weaviateService, collection, COURSE_A, 10L, null);
+            insertContent(weaviateService, collection, COURSE_A, 11L, null);
+            insertContent(weaviateService, collection, COURSE_B, 40L, null);
         }
 
         for (String collection : IRIS_CONTENT_COLLECTIONS) {
@@ -141,43 +158,9 @@ class IngestionCoverageWeaviateReadServiceTest extends AbstractProgrammingIntegr
         assertThat(result).isEmpty();
     }
 
-    private void insertMetadata(long courseId, String type, long entityId) throws Exception {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableEntitySchema.Properties.TYPE, type);
-        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, entityId);
-        weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data.insert(properties);
-    }
-
-    private void insertContent(String collectionName, long courseId, long unitId) throws Exception {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(CONTENT_COURSE_ID, courseId);
-        properties.put(CONTENT_LECTURE_UNIT_ID, unitId);
-        weaviateService.getExternalCollection(collectionName).data.insert(properties);
-    }
-
     private void clearMetadataForTestCourses() throws Exception {
         weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data
                 .deleteMany(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).containsAny(COURSE_A, COURSE_B));
     }
 
-    private void recreateIrisContentCollections() throws Exception {
-        dropIrisContentCollections();
-        for (String name : IRIS_CONTENT_COLLECTIONS) {
-            weaviateClient.collections.create(name, collection -> {
-                collection.vectorConfig(VectorConfig.selfProvided());
-                collection.properties(Property.integer(CONTENT_COURSE_ID));
-                collection.properties(Property.integer(CONTENT_LECTURE_UNIT_ID));
-                return collection;
-            });
-        }
-    }
-
-    private void dropIrisContentCollections() throws Exception {
-        for (String name : IRIS_CONTENT_COLLECTIONS) {
-            if (weaviateClient.collections.exists(name)) {
-                weaviateClient.collections.delete(name);
-            }
-        }
-    }
 }

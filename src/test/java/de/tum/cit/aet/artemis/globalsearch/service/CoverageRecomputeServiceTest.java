@@ -4,14 +4,18 @@ import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeavi
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION;
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION;
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.dropIrisContentCollections;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertContent;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertMetadata;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.recreateIrisContentCollections;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.seedUnitWithAttachment;
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.seedUnitWithVideoSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -37,7 +41,6 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -47,8 +50,6 @@ import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import io.weaviate.client6.v1.api.WeaviateClient;
-import io.weaviate.client6.v1.api.collections.Property;
-import io.weaviate.client6.v1.api.collections.VectorConfig;
 
 /**
  * Integration test for {@link CoverageRecomputeService} against a real Weaviate Testcontainer and database.
@@ -96,13 +97,6 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
-    private static final String CONTENT_COURSE_ID = "course_id";
-
-    private static final String CONTENT_LECTURE_UNIT_ID = "lecture_unit_id";
-
-    private static final List<String> IRIS_CONTENT_COLLECTIONS = List.of(LECTURES_COLLECTION, IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION,
-            LECTURE_UNIT_SEGMENTS_COLLECTION, LECTURE_UNITS_COLLECTION);
-
     private Course course;
 
     private Exercise presentExercise;
@@ -128,7 +122,7 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
     @BeforeEach
     void setUp() throws Exception {
         coverageRepository.deleteAll();
-        recreateIrisContentCollections();
+        recreateIrisContentCollections(weaviateClient);
 
         ZonedDateTime past = ZonedDateTime.now().minusDays(1);
         ZonedDateTime future = ZonedDateTime.now().plusDays(1);
@@ -138,29 +132,29 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         presentExercise = exerciseRepository.save(TextExerciseFactory.generateTextExercise(past, future, farFuture, course));
         missingExercise = exerciseRepository.save(TextExerciseFactory.generateTextExercise(past, future, farFuture, course));
         Lecture lecture = lectureUtilService.createLecture(course);
-        pdfUnit = seedUnitWithAttachmentLink(lecture, "attachments/attachment-unit/slides.pdf");
-        videoUnit = seedUnitWithVideoSource(lecture, "https://video.example/lecture");
+        pdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lecture, null, "attachments/attachment-unit/slides.pdf", AttachmentType.FILE);
+        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, null, "https://video.example/lecture");
 
         // Metadata present in Weaviate: the course, one of the two exercises, both indexable units. The second exercise
         // is deliberately absent, so it must surface as a missing exercise.
         long courseId = course.getId();
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId);
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.EXERCISE, presentExercise.getId());
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.LECTURE_UNIT, pdfUnit.getId());
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.LECTURE_UNIT, videoUnit.getId());
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, null);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.LECTURE, lecture.getId(), null);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.EXERCISE, presentExercise.getId(), null);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.LECTURE_UNIT, pdfUnit.getId(), null);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.LECTURE_UNIT, videoUnit.getId(), null);
 
         // Content present: slides for the pdf unit (so slides are complete) and both summaries; NO transcript for the
         // video unit (so transcript is an exact gap).
-        insertContent(LECTURES_COLLECTION, courseId, pdfUnit.getId());
-        insertContent(LECTURE_UNIT_SEGMENTS_COLLECTION, courseId, pdfUnit.getId());
-        insertContent(LECTURE_UNITS_COLLECTION, courseId, pdfUnit.getId());
+        insertContent(weaviateService, LECTURES_COLLECTION, courseId, pdfUnit.getId(), null);
+        insertContent(weaviateService, LECTURE_UNIT_SEGMENTS_COLLECTION, courseId, pdfUnit.getId(), null);
+        insertContent(weaviateService, LECTURE_UNITS_COLLECTION, courseId, pdfUnit.getId(), null);
     }
 
     @AfterEach
     void tearDown() throws Exception {
         if (weaviateClient != null) {
-            dropIrisContentCollections();
+            dropIrisContentCollections(weaviateClient);
         }
     }
 
@@ -193,8 +187,8 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         // stale exercise object is planted for an id the database does not have, which is exactly the orphan shape.
         Course orphanOnly = courseUtilService.createCourse();
         long orphanCourseId = orphanOnly.getId();
-        insertMetadata(orphanCourseId, SearchableEntitySchema.TypeValues.COURSE, orphanCourseId);
-        insertMetadata(orphanCourseId, SearchableEntitySchema.TypeValues.EXERCISE, 999_999_999L);
+        insertMetadata(weaviateService, orphanCourseId, SearchableEntitySchema.TypeValues.COURSE, orphanCourseId, null);
+        insertMetadata(weaviateService, orphanCourseId, SearchableEntitySchema.TypeValues.EXERCISE, 999_999_999L, null);
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             coverageRecomputeService.recomputeAllCourses();
@@ -216,8 +210,8 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         // every recompute: a gap that no amount of re-ingesting could ever close.
         Course irisDisabled = courseUtilService.createCourse();
         Lecture lecture = lectureUtilService.createLecture(irisDisabled);
-        seedUnitWithAttachmentLink(lecture, "attachments/attachment-unit/slides.pdf");
-        seedUnitWithVideoSource(lecture, "https://video.example/iris-disabled");
+        seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lecture, null, "attachments/attachment-unit/slides.pdf", AttachmentType.FILE);
+        seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, null, "https://video.example/iris-disabled");
         disableIrisForCourse(irisDisabled.getId());
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
@@ -237,10 +231,10 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         // no orphans, so nothing ever pointed at the data still sitting in the index.
         Course noUnitsLeft = courseUtilService.createCourse();
         long courseId = noUnitsLeft.getId();
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId);
-        insertContent(LECTURES_COLLECTION, courseId, 777_001L);
-        insertContent(LECTURE_TRANSCRIPTIONS_COLLECTION, courseId, 777_002L);
-        insertContent(LECTURE_UNITS_COLLECTION, courseId, 777_003L);
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, null);
+        insertContent(weaviateService, LECTURES_COLLECTION, courseId, 777_001L, null);
+        insertContent(weaviateService, LECTURE_TRANSCRIPTIONS_COLLECTION, courseId, 777_002L, null);
+        insertContent(weaviateService, LECTURE_UNITS_COLLECTION, courseId, 777_003L, null);
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             coverageRecomputeService.recomputeAllCourses();
@@ -296,79 +290,43 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         assertThat(locked.await(5, TimeUnit.SECONDS)).isTrue();
 
         // Another thread (node) holds the lock, so a triggered recompute must skip rather than run.
-        assertThat(coverageRecomputeService.runUnderLock(false)).isFalse();
+        assertThat(coverageRecomputeService.runUnderLock(false, Duration.ofSeconds(1))).isFalse();
 
         release.countDown();
         holder.join(5000);
 
         // With the lock free, it runs.
-        assertThat(coverageRecomputeService.runUnderLock(false)).isTrue();
+        assertThat(coverageRecomputeService.runUnderLock(false, Duration.ofSeconds(1))).isTrue();
+    }
+
+    @Test
+    void forcedRecomputeWaitsForARunningOneInsteadOfSkipping() throws Exception {
+        // A refresh clicked while another recompute holds the lock must still run: that recompute may have read the
+        // data before the change the admin is refreshing for. The holder is a different thread, standing in for a node.
+        DistributedLock lock = distributedDataProvider.getLock("ingestion-coverage-recompute");
+        CountDownLatch locked = new CountDownLatch(1);
+        Thread holder = new Thread(() -> {
+            lock.lock();
+            locked.countDown();
+            try {
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            finally {
+                lock.unlock();
+            }
+        });
+        holder.start();
+        assertThat(locked.await(5, TimeUnit.SECONDS)).isTrue();
+
+        assertThat(coverageRecomputeService.forceRecompute()).isTrue();
+        holder.join(5000);
     }
 
     private IngestionTypeCountDTO typeCount(IngestionCoverageEntry entry, String type) {
         return entry.getTypeCounts().stream().filter(count -> count.type().equals(type)).findFirst().orElseThrow();
     }
 
-    private void insertMetadata(long courseId, String type, long entityId) throws Exception {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableEntitySchema.Properties.TYPE, type);
-        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, entityId);
-        weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data.insert(properties);
-    }
-
-    private void insertContent(String collectionName, long courseId, long unitId) throws Exception {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(CONTENT_COURSE_ID, courseId);
-        properties.put(CONTENT_LECTURE_UNIT_ID, unitId);
-        weaviateService.getExternalCollection(collectionName).data.insert(properties);
-    }
-
-    private void recreateIrisContentCollections() throws Exception {
-        dropIrisContentCollections();
-        for (String name : IRIS_CONTENT_COLLECTIONS) {
-            weaviateClient.collections.create(name, collection -> {
-                collection.vectorConfig(VectorConfig.selfProvided());
-                collection.properties(Property.integer(CONTENT_COURSE_ID));
-                collection.properties(Property.integer(CONTENT_LECTURE_UNIT_ID));
-                return collection;
-            });
-        }
-    }
-
-    private void dropIrisContentCollections() throws Exception {
-        for (String name : IRIS_CONTENT_COLLECTIONS) {
-            if (weaviateClient.collections.exists(name)) {
-                weaviateClient.collections.delete(name);
-            }
-        }
-    }
-
-    private AttachmentVideoUnit seedUnitWithVideoSource(Lecture lecture, String videoSource) {
-        AttachmentVideoUnit unit = new AttachmentVideoUnit();
-        unit.setDescription("Test");
-        unit.setLecture(lecture);
-        unit.setVideoSource(videoSource);
-        return attachmentVideoUnitRepository.save(unit);
-    }
-
-    private AttachmentVideoUnit seedUnitWithAttachmentLink(Lecture lecture, String link) {
-        AttachmentVideoUnit unit = new AttachmentVideoUnit();
-        unit.setDescription("Test");
-        unit.setLecture(lecture);
-        unit = attachmentVideoUnitRepository.save(unit);
-
-        Attachment attachment = new Attachment();
-        attachment.setAttachmentType(AttachmentType.FILE);
-        attachment.setName("Attachment");
-        attachment.setVersion(1);
-        attachment.setReleaseDate(ZonedDateTime.now().minusDays(1));
-        attachment.setUploadDate(ZonedDateTime.now().minusDays(1));
-        attachment.setLink(link);
-        attachment.setAttachmentVideoUnit(unit);
-        attachmentRepository.save(attachment);
-
-        unit.setAttachment(attachment);
-        return attachmentVideoUnitRepository.save(unit);
-    }
 }

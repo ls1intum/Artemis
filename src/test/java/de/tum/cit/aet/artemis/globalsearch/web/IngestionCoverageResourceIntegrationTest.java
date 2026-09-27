@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.globalsearch.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -143,6 +144,33 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void pagesOfTiedRowsShowEveryCourseExactlyOnce() throws Exception {
+        // Three courses tie on both sort keys used here: the same start date live, the same gap score stored.
+        List<Long> courseIds = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Course tied = courseUtilService.createCourse();
+            tied.setTitle(TEST_PREFIX + "-tied-" + tied.getId());
+            tied.setStartDate(course.getStartDate());
+            courseIds.add(courseRepository.save(tied).getId());
+            IngestionCoverageEntry entry = storedEntry(IngestionCoverageStatus.INCOMPLETE);
+            entry.setCourseId(tied.getId());
+            entry.setCourseTitle(tied.getTitle());
+            ingestionCoverageRepository.save(entry);
+        }
+        List<Long> live = new ArrayList<>();
+        List<Long> stored = new ArrayList<>();
+        for (int page = 0; page < 3; page++) {
+            String query = "size=1&page=" + page + "&search=" + TEST_PREFIX + "-tied-";
+            request.getList(BASE + "coverage/page?sort=startDate,desc&" + query, HttpStatus.OK, IngestionCoverageDTO.class).forEach(dto -> live.add(dto.courseId()));
+            request.getList(BASE + "coverage?sort=coverageGapScore,desc&" + query, HttpStatus.OK, IngestionCoverageDTO.class).forEach(dto -> stored.add(dto.courseId()));
+        }
+
+        assertThat(live).containsExactlyInAnyOrderElementsOf(courseIds);
+        assertThat(stored).containsExactlyInAnyOrderElementsOf(courseIds);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void liveCoveragePageStillServesTheLargestPageSizeThePaginatorOffers() throws Exception {
         // The dashboard's paginator offers 10/20/50/100/200 rows and the default (unfiltered, sort-by-name) view reads
         // this endpoint, so the cap must sit at or above 200 or picking "200 rows per page" would fail the whole table.
@@ -159,8 +187,14 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void refreshIsAccepted() throws Exception {
+    void refreshAnswersOnceTheRecomputeHasFinished() throws Exception {
+        ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
+
         request.postWithoutResponseBody(BASE + "coverage/refresh", null, HttpStatus.OK);
+
+        // The seeded row claims one missing exercise the course does not have, so a finished recompute has replaced it.
+        assertThat(ingestionCoverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts())
+                .noneMatch(count -> count.type().equals("exercise") && count.missing() > 0);
     }
 
     /**

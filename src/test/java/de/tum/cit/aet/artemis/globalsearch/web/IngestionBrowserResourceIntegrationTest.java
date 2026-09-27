@@ -1,13 +1,12 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
+import static de.tum.cit.aet.artemis.globalsearch.util.IngestionCoverageTestUtil.insertMetadata;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -100,7 +99,7 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
     @WithMockUser(username = "admin", roles = "ADMIN")
     void returnsTheStoredRecordsOfOneType() throws Exception {
         long courseId = course.getId();
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, course.getTitle());
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, course.getTitle());
 
         await().atMost(TIMEOUT).until(() -> !browserReadService.listIndexedEntityRecords(courseId, SearchableEntitySchema.TypeValues.COURSE).isEmpty());
 
@@ -120,7 +119,7 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
     @WithMockUser(username = "admin", roles = "ADMIN")
     void returnsTheBrowserPayloadForACourse() throws Exception {
         long courseId = course.getId();
-        insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, course.getTitle());
+        insertMetadata(weaviateService, courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, course.getTitle());
 
         // Weaviate indexes asynchronously, so wait for the row to become readable before asserting through the API. The
         // wait polls the read service rather than the endpoint because Awaitility polls on its own thread, where the mock
@@ -152,12 +151,4 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
         assertThat(data.contentGaps()).isNotNull();
     }
 
-    private void insertMetadata(long courseId, String type, long entityId, String title) throws Exception {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        properties.put(SearchableEntitySchema.Properties.TYPE, type);
-        properties.put(SearchableEntitySchema.Properties.ENTITY_ID, entityId);
-        properties.put(SearchableEntitySchema.Properties.TITLE, title);
-        weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME).data.insert(properties);
-    }
 }

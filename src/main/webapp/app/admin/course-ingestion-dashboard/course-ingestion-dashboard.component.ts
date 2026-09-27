@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
 import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -26,9 +26,26 @@ export class CourseIngestionDashboardComponent {
 
     protected readonly browserVisible = signal(false);
 
+    private readonly overview = viewChild.required(CourseIngestionOverviewComponent);
+
+    private readonly coverageTable = viewChild.required(CourseIngestionCoverageTableComponent);
+
     /** Opens the content browser for the course whose row was activated in the matrix. */
     protected openBrowser(course: IngestionCoverage): void {
         this.selectedCourse.set(course);
         this.browserVisible.set(true);
+    }
+
+    /** Reloads the matrix when the browser closes: opening the course stored its row afresh, so the matrix shows it. */
+    protected onBrowserVisibleChange(visible: boolean): void {
+        this.browserVisible.set(visible);
+        if (!visible) {
+            this.coverageTable().load();
+        }
+    }
+
+    /** A refresh of the matrix reloads the index overview too, so the whole page is fresh after one click. */
+    protected onCoverageRefreshed(): void {
+        this.overview().reload();
     }
 }

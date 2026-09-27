@@ -122,8 +122,7 @@ public class IngestionCoverageResource {
     /**
      * GET .../coverage : the stored per-course coverage projection for the cross-course matrix views (worst-first,
      * release-date, most-recent-ingestion, status/active filter), paginated and sorted on the projection columns and
-     * optionally narrowed by a course-title search. Serves the stored table instantly and triggers a background recompute
-     * when it is stale (stale-while-revalidate).
+     * optionally narrowed by a course-title search. Recomputes the projection first when it is stale.
      *
      * @param status   an optional status to filter by
      * @param active   an optional active/inactive course filter
@@ -135,7 +134,6 @@ public class IngestionCoverageResource {
     @GetMapping("coverage")
     public ResponseEntity<List<IngestionCoverageDTO>> getStoredCoverage(@RequestParam(required = false) IngestionCoverageStatus status,
             @RequestParam(required = false) Boolean active, @RequestParam(required = false) String search, Pageable pageable) {
-        // Cross-bean call so the @Async recompute actually runs off the request thread.
         coverageRecomputeService.triggerRecomputeIfStale();
         Page<IngestionCoverageDTO> page = coverageRecomputeService.readStoredCoverage(status, active, search, pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -162,15 +160,14 @@ public class IngestionCoverageResource {
     }
 
     /**
-     * POST .../coverage/refresh : forces a background recompute of the whole projection (backs the "Refresh data"
-     * button), lease-guarded so it is a no-op if one is already running.
+     * POST .../coverage/refresh : recomputes the whole projection (backs the refresh button) and answers once it is done,
+     * so the reload that follows reads the new rows.
      *
-     * @return 200 once the recompute has been triggered
+     * @return 200 once the recompute has finished, or 503 if it could not run or failed
      */
     @PostMapping("coverage/refresh")
     public ResponseEntity<Void> refreshCoverage() {
-        coverageRecomputeService.forceRecompute();
-        return ResponseEntity.ok().build();
+        return coverageRecomputeService.forceRecompute() ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 
     private static IndexedCollectionCountDTO toCountDto(String collection, OptionalLong count) {

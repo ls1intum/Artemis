@@ -77,4 +77,21 @@ describe('CourseIngestionDashboardComponent', () => {
 
         expect(fixture.nativeElement.querySelector('jhi-course-ingestion-browser')).toBeTruthy();
     });
+
+    it('reloads the matrix when the browser closes and the overview when the matrix refreshes', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const table = fixture.debugElement.query((node) => node.name === 'jhi-course-ingestion-coverage-table').componentInstance;
+        const overviewComponent = fixture.debugElement.query((node) => node.name === 'jhi-course-ingestion-overview').componentInstance;
+        const loadSpy = vi.spyOn(table, 'load');
+        const reloadSpy = vi.spyOn(overviewComponent, 'reload');
+
+        component['onBrowserVisibleChange'](true);
+        expect(loadSpy).not.toHaveBeenCalled();
+        component['onBrowserVisibleChange'](false);
+        expect(loadSpy).toHaveBeenCalledOnce();
+
+        table.refreshed.emit();
+        expect(reloadSpy).toHaveBeenCalledOnce();
+    });
 });

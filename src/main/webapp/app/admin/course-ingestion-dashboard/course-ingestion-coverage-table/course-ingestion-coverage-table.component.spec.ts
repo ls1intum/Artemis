@@ -100,6 +100,13 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(element.textContent).toContain('5/5');
     });
 
+    it('labels the page with its oldest row, since opening a course stores that row afresh', () => {
+        liveSpy.mockReturnValue(pageOf([{ ...rows[0], computedAt: '2026-08-05T12:00:00Z' }, rows[1]]));
+        fixture.detectChanges();
+
+        expect(component.lastUpdated()).toBe('2026-08-05T10:00:00Z');
+    });
+
     it('clears the rows and sets the error signal when the load fails', () => {
         liveSpy.mockReturnValue(throwError(() => new Error('boom')));
         fixture.detectChanges();
@@ -165,13 +172,26 @@ describe('CourseIngestionCoverageTableComponent', () => {
         // Refresh recomputes then reloads, clearing the flag on both success and failure.
         refreshSpy.mockClear();
         liveSpy.mockClear();
+        const refreshed = vi.fn();
+        component.refreshed.subscribe(refreshed);
         component['onRefresh']();
+        expect(refreshed).toHaveBeenCalledOnce();
         expect(refreshSpy).toHaveBeenCalled();
         expect(component.refreshing()).toBe(false);
         expect(liveSpy).toHaveBeenCalled();
 
         refreshSpy.mockReturnValue(throwError(() => new Error('nope')));
         component['onRefresh']();
+        expect(component.refreshing()).toBe(false);
+
+        // A second click while a refresh is still running sends nothing.
+        const pending = new Subject<void>();
+        refreshSpy.mockReturnValue(pending);
+        refreshSpy.mockClear();
+        component['onRefresh']();
+        component['onRefresh']();
+        expect(refreshSpy).toHaveBeenCalledOnce();
+        pending.next();
         expect(component.refreshing()).toBe(false);
     });
 

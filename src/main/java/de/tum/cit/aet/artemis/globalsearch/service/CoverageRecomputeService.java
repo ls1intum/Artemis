@@ -14,10 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
@@ -39,9 +41,9 @@ import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageSetLoader.Pr
  * and Weaviate (the present id-sets), diffing them per type, and upserting the result. It never trusts the write path -
  * coverage is derived from what Weaviate actually holds versus what the database expects.
  * <p>
- * The recompute is expensive and runs OFF the request path: the dashboard serves the last stored projection instantly and
- * triggers a background recompute only when the data is stale (stale-while-revalidate) or on an explicit refresh. A
- * cluster-wide lock ensures at most one recompute runs across all nodes at a time, so concurrent dashboard opens
+ * The recompute is expensive, so it runs only when the stored projection is stale or on an explicit refresh, and the
+ * request that triggers it waits for it: answering first and recomputing afterwards served the old rows to exactly the
+ * request that asked for newer ones. A cluster-wide lock ensures at most one recompute runs across all nodes at a time, so concurrent dashboard opens
  * (which can land on any node behind the load balancer) never fan out into duplicate recomputes.
  * <p>
  * Content coverage: slides and transcript are diffed at lecture-unit granularity (expected units from the DB vs the
@@ -74,6 +76,12 @@ public class CoverageRecomputeService {
 
     private static final Duration LOCK_WAIT = Duration.ofSeconds(1);
 
+    /**
+     * How long an explicit refresh waits for a recompute that is already running. It waits rather than skipping because
+     * that recompute may have read the data before the change the admin is refreshing for.
+     */
+    private static final Duration FORCED_LOCK_WAIT = Duration.ofMinutes(5);
+
     private final IngestionCoverageSetLoader setLoader;
 
     private final CourseRepository courseRepository;
@@ -91,22 +99,22 @@ public class CoverageRecomputeService {
     }
 
     /**
-     * Stale-while-revalidate trigger: if the stored projection is older than {@link #FRESHNESS_WINDOW} (or missing),
-     * recompute in the background under the cluster lock. Cheap and safe to call on every dashboard open - it returns
-     * immediately if the data is fresh or another node already holds the lock.
+     * If the stored projection is older than {@link #FRESHNESS_WINDOW} (or missing), recomputes it under the cluster lock
+     * before returning, so the caller reads the result. Cheap to call on every dashboard open: it returns at once if the
+     * data is fresh or another node already holds the lock.
      */
-    @Async
     public void triggerRecomputeIfStale() {
-        runUnderLock(true);
+        runUnderLock(true, LOCK_WAIT);
     }
 
     /**
-     * Forces a full recompute in the background under the cluster lock, ignoring freshness. Backs the "Refresh data"
-     * button. A no-op if another recompute is already running.
+     * Recomputes the whole projection under the cluster lock, ignoring freshness, and returns once it is done. Backs the
+     * refresh button. Waits up to {@link #FORCED_LOCK_WAIT} for a recompute that is already running, then runs its own.
+     *
+     * @return {@code true} if the recompute ran, {@code false} if the lock was not acquired or the recompute failed
      */
-    @Async
-    public void forceRecompute() {
-        runUnderLock(false);
+    public boolean forceRecompute() {
+        return runUnderLock(false, FORCED_LOCK_WAIT);
     }
 
     /**
@@ -114,13 +122,14 @@ public class CoverageRecomputeService {
      * returning whether a recompute actually ran so tests can drive it synchronously and assert the lease behavior.
      *
      * @param onlyIfStale when {@code true}, recompute only if the stored projection is older than the freshness window
+     * @param lockWait    how long to wait for a recompute already running elsewhere
      * @return {@code true} if a recompute ran, {@code false} if it was skipped (lock held by another node, or fresh)
      */
-    boolean runUnderLock(boolean onlyIfStale) {
+    boolean runUnderLock(boolean onlyIfStale, Duration lockWait) {
         DistributedLock lock = distributedDataProvider.getLock(LOCK_NAME);
         boolean locked = false;
         try {
-            locked = lock.tryLock(LOCK_WAIT);
+            locked = lock.tryLock(lockWait);
             if (!locked) {
                 log.debug("Coverage recompute skipped: another node is already recomputing");
                 return false;
@@ -189,6 +198,25 @@ public class CoverageRecomputeService {
     }
 
     /**
+     * Stores coverage for one course from sets the caller has already loaded, so the stored views show what the content
+     * browser just showed for it rather than the last full recompute's numbers.
+     *
+     * @param course   the course the sets were loaded for
+     * @param expected what the database expects indexed
+     * @param present  what the index holds
+     */
+    public void storeCourseCoverage(Course course, ExpectedSets expected, PresentSets present) {
+        Map<Long, IngestionCoverageEntry> existing = coverageRepository.findByCourseId(course.getId()).map(entry -> Map.of(course.getId(), entry)).orElse(Map.of());
+        try {
+            upsert(buildEntry(course, expected, present, existing, Instant.now()));
+        }
+        catch (DataIntegrityViolationException exception) {
+            // A full recompute inserted this course's first row in the meantime, from reads just as recent as these.
+            log.debug("Coverage row for course {} was written concurrently: {}", course.getId(), exception.getMessage());
+        }
+    }
+
+    /**
      * Computes coverage for a set of courses live (reading the DB + Weaviate and diffing) and returns it as DTOs WITHOUT
      * persisting, for the default matrix page view. The visible page selects its courses by DB-native sort/search, so this
      * is called with only the ~25 courses on screen; the (heavier) content aggregations are read only for the ones that
@@ -230,7 +258,7 @@ public class CoverageRecomputeService {
     public Page<IngestionCoverageDTO> readStoredCoverage(IngestionCoverageStatus status, Boolean active, String search, Pageable pageable) {
         // The repository takes the empty string, not null, for "no search"; see its javadoc for why.
         String titleSearch = search == null || search.isBlank() ? "" : search.trim();
-        return coverageRepository.findFiltered(status, active, titleSearch, pageable).map(this::toDto);
+        return coverageRepository.findFiltered(status, active, titleSearch, withTieBreaker(pageable, "courseId")).map(this::toDto);
     }
 
     /**
@@ -244,8 +272,18 @@ public class CoverageRecomputeService {
     public Page<IngestionCoverageDTO> computeLiveCoveragePage(String search, Pageable pageable) {
         // Trimmed the same way as readStoredCoverage, so a search with incidental leading/trailing whitespace (e.g.
         // pasted from elsewhere) matches the same courses whichever view is currently active.
-        Page<Course> courses = search == null || search.isBlank() ? courseRepository.findAll(pageable) : courseRepository.findByTitleIgnoreCaseContaining(search.trim(), pageable);
+        Pageable stablePageable = withTieBreaker(pageable, "id");
+        Page<Course> courses = search == null || search.isBlank() ? courseRepository.findAll(stablePageable)
+                : courseRepository.findByTitleIgnoreCaseContaining(search.trim(), stablePageable);
         return new PageImpl<>(computeCoverageLive(courses.getContent()), pageable, courses.getTotalElements());
+    }
+
+    /**
+     * Appends a unique property to the sort. Many courses share a release date or a gap score, and without it the database
+     * may order tied rows differently for each page, so a course could appear on two pages and another on none.
+     */
+    private static Pageable withTieBreaker(Pageable pageable, String uniqueProperty) {
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort().and(Sort.by(uniqueProperty)));
     }
 
     private IngestionCoverageDTO toDto(IngestionCoverageEntry entry) {

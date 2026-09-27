@@ -69,8 +69,7 @@ public class IngestionBrowserResource {
      */
     @GetMapping("courses/{courseId}/browser")
     public ResponseEntity<CourseBrowserDataDTO> getCourseBrowserData(@PathVariable long courseId) {
-        requireCourse(courseId);
-        return ResponseEntity.ok(browserService.loadCourseBrowserData(courseId));
+        return ResponseEntity.ok(browserService.loadCourseBrowserData(courseRepository.findByIdElseThrow(courseId)));
     }
 
     /**
