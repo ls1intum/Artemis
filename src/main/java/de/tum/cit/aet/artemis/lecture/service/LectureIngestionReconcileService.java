@@ -114,7 +114,8 @@ public class LectureIngestionReconcileService {
     /**
      * How many times a FAILED unit is revived without an intervening successful completion before it is left
      * FAILED for manual attention. The backstop for a generic (unclassified) error that is really permanent:
-     * with the ~hours-long cooldown this spans days of retrying, far longer than any transient outage, and the
+     * each revival waits out the cooldown and the next walk visit of its course, so this spans at least ten hours of retrying, longer than
+     * any transient outage, and the
      * count resets on a successful DONE, so it never shortens genuine transient recovery.
      */
     private final int maxRevivals;
@@ -123,10 +124,10 @@ public class LectureIngestionReconcileService {
 
     public LectureIngestionReconcileService(LectureUnitProcessingStateRepository processingStateRepository, LectureUnitProcessingStateReconcileRepository reconcileStateRepository,
             AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<IrisLectureApi> irisLectureApi, LectureUnitContentFingerprintService contentFingerprintService,
-            LectureContentProcessingService processingService, @Value("${artemis.iris.ingestion.reconcile.courses-per-run:5}") int coursesPerRun,
-            @Value("${artemis.iris.ingestion.reconcile.requeue-limit-per-run:10}") int requeueLimitPerRun,
+            LectureContentProcessingService processingService, @Value("${artemis.iris.ingestion.reconcile.courses-per-run:10}") int coursesPerRun,
+            @Value("${artemis.iris.ingestion.reconcile.requeue-limit-per-run:3}") int requeueLimitPerRun,
             @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold,
-            @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT3H}") Duration failedRevivalCooldown,
+            @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT1H}") Duration failedRevivalCooldown,
             @Value("${artemis.iris.ingestion.reconcile.max-revivals:10}") int maxRevivals) {
         this.processingStateRepository = processingStateRepository;
         this.reconcileStateRepository = reconcileStateRepository;

@@ -75,7 +75,8 @@ public class LectureContentProcessingScheduler {
      * unpredictable duration of an AI stage: a lapse is a strong infrastructure signal (worker
      * process dead or partitioned). Recovery through this path therefore preserves the retry budget.
      * Sized like the Kubernetes node-lease grace: several missed intervals, so one dropped request
-     * never reclaims a healthy run. Effective detection latency adds the scan interval of
+     * never reclaims a healthy run. That includes one heartbeat request hanging for the worker's full
+     * 30-second request timeout, which a 30-second lease would not survive. Effective detection latency adds the scan interval of
      * {@link #processScheduledRetries}.
      */
     private final Duration leaseExpiry;
@@ -122,7 +123,7 @@ public class LectureContentProcessingScheduler {
             ProcessingStateRecoveryService recoveryService, FeatureToggleService featureToggleService, @Value("${artemis.iris.ingestion.stall-window:30m}") Duration stallWindow,
             @Value("${artemis.iris.ingestion.slow-stage-warning-after:45m}") Duration slowStageWarningAfter,
             @Value("${artemis.iris.ingestion.no-callback-timeout-minutes:20}") int noCallbackTimeoutMinutes,
-            @Value("${artemis.iris.ingestion.lease-expiry:30s}") Duration leaseExpiry, @Value("${artemis.iris.ingestion.absolute-timeout-hours:12}") int absoluteTimeoutHours) {
+            @Value("${artemis.iris.ingestion.lease-expiry:60s}") Duration leaseExpiry, @Value("${artemis.iris.ingestion.absolute-timeout-hours:12}") int absoluteTimeoutHours) {
         requirePositive(stallWindow, "artemis.iris.ingestion.stall-window");
         requirePositive(slowStageWarningAfter, "artemis.iris.ingestion.slow-stage-warning-after");
         requirePositive(noCallbackTimeoutMinutes, "artemis.iris.ingestion.no-callback-timeout-minutes");
@@ -464,7 +465,7 @@ public class LectureContentProcessingScheduler {
      * orphaned index rows. Walks a budgeted slice of courses per run, so a full pass over all courses
      * takes several runs and never floods the queue; see {@link LectureIngestionReconcileService}.
      */
-    @Scheduled(initialDelayString = "${artemis.iris.ingestion.reconcile.initial-delay:PT15M}", fixedDelayString = "${artemis.iris.ingestion.reconcile.interval:PT1H}")
+    @Scheduled(initialDelayString = "${artemis.iris.ingestion.reconcile.initial-delay:PT15M}", fixedDelayString = "${artemis.iris.ingestion.reconcile.interval:PT15M}")
     public void reconcileIngestionState() {
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
             log.debug("LectureContentProcessing feature is disabled, skipping ingestion reconcile");
