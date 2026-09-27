@@ -331,9 +331,12 @@ const main = async () => {
 
     // The generator writes its banner as a leading comment on the file's first statement, so removing an unused first
     // import or replacing a first-statement interface takes the banner with it. Snapshot it up front, restore on write.
+    // The banner is the "/** ... */" block at the very start of the file, plus the line break that ends it.
+    // The s flag lets "." match line breaks too, and "*?" stops at the first "*/", so the match never runs into later comments.
+    const generatedBanner = /^\/\*\*.*?\*\/\r?\n/s;
     const leadingBanners = new Map<SourceFile, string>();
     for (const sourceFile of project.getSourceFiles()) {
-        const banner = /^\/\*\*[\s\S]*?\*\/\r?\n/.exec(sourceFile.getFullText())?.[0];
+        const banner = generatedBanner.exec(sourceFile.getFullText())?.[0];
         if (banner) {
             leadingBanners.set(sourceFile, banner);
         }
