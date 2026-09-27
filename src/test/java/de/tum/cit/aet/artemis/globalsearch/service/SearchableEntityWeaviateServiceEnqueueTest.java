@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -8,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataAccessResourceFailureException;
 
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
@@ -198,6 +202,22 @@ class SearchableEntityWeaviateServiceEnqueueTest {
         assertThat(entry.getOperation()).isEqualTo(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE);
         assertThat(entry.getOrigin()).isEqualTo(WeaviateOutboxOrigin.LIVE);
         assertThat(entry.getEntityId()).as("a bulk delete has no single entity").isNull();
+    }
+
+    @Test
+    void testFailedOutboxSave_doesNotFailTheRequestPathButStillFailsAReconcilePass() {
+        // The request path enqueues after the user's change is already committed, so a failed save must not turn it into an error.
+        when(outboxRepository.save(any(WeaviateOutboxEntry.class))).thenThrow(new DataAccessResourceFailureException("outbox unavailable"));
+
+        assertThatCode(() -> service.upsertFaqAsync(new FaqSearchableEntityDTO(5L, 10L, "q", "a", "ACCEPTED"))).doesNotThrowAnyException();
+        assertThatCode(() -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, 6L)).doesNotThrowAnyException();
+        assertThatCode(() -> service.deleteAllLectureUnitsForLectureAsync(7L)).doesNotThrowAnyException();
+        assertThatCode(() -> service.updateExercisesAsync(List.of(exerciseDto(10L), exerciseDto(11L)), 99L)).doesNotThrowAnyException();
+        // A reconcile pass relies on the failure to leave the entity unverified and retry it on its next tick.
+        assertThatThrownBy(() -> service.enqueueUpsert(SearchableEntitySchema.TypeValues.FAQ, 5L, WeaviateOutboxOrigin.RECONCILE_DRIFT))
+                .isInstanceOf(DataAccessResourceFailureException.class);
+        assertThatThrownBy(() -> service.enqueueDeleteEntity(SearchableEntitySchema.TypeValues.FAQ, 5L, WeaviateOutboxOrigin.RECONCILE_DRIFT))
+                .isInstanceOf(DataAccessResourceFailureException.class);
     }
 
     private WeaviateOutboxEntry captureSavedEntry() {

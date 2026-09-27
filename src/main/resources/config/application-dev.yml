@@ -174,11 +174,11 @@ artemis:
         #     initial-delay-seconds: 30              # Delay before the first schema-migration attempt after startup
         #     max-attempts: 5                        # Bounded in-process retries for a failed schema migration
         #     retry-delay-seconds: 120               # Delay between schema-migration retries
-        # Reconcile passes that heal the index against the database. All three are off by default; switch them on one
-        # at a time, orphan last since it is the only one that deletes.
+        # Reconcile passes that heal the index against the database. Missing and drift are on by default; orphan is off,
+        # since it is the only one whose deletions are inferred from the index alone. Switch it on last.
         # reconcile:
-        #     missing-sweep-enabled: false           # Queue writes for entities the index has never confirmed holding
-        #     drift-sweep-enabled: false             # Re-derive entities and queue a repair where content no longer matches
+        #     missing-sweep-enabled: true            # Queue writes for entities the index has never confirmed holding
+        #     drift-sweep-enabled: true              # Re-derive entities and queue a repair where content no longer matches
         #     orphan-sweep-enabled: false            # Scan the index for rows whose entity is gone or whose content disagrees
         #     entity-types: [course, lecture, lecture_unit, exam, exercise, faq, channel]  # Posts are excluded on purpose (volume)
         #     max-outbox-depth: 500                  # Stop queueing above this; bounds how long a live write waits behind reconcile work.

@@ -150,6 +150,23 @@ class SearchableEntityIndexScanIntegrationTest extends AbstractProgrammingIntegr
     }
 
     @Test
+    void testExistingEntityIdsDoesNotMistakeALectureUnitForTheLectureSharingItsId() throws Exception {
+        // `type` is word-tokenized, so a lecture_unit row also carries the token "lecture". Lecture 1 is indexed; lectures 2
+        // and 3 were lost from the index while the lecture units with the same ids are still there.
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE, 1L, Map.of(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE,
+                SearchableEntitySchema.Properties.ENTITY_ID, 1L, SearchableEntitySchema.Properties.TITLE, "Lecture 1"));
+        for (long unitId = 1; unitId <= 3; unitId++) {
+            seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId,
+                    Map.of(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.Properties.ENTITY_ID, unitId,
+                            SearchableEntitySchema.Properties.TITLE, "Unit " + unitId));
+        }
+
+        var present = indexScanService.existingEntityIds(SearchableEntitySchema.TypeValues.LECTURE, List.of(1L, 2L, 3L));
+
+        assertThat(present).as("lectures 2 and 3 are missing even though lecture units 2 and 3 exist").containsExactly(1L);
+    }
+
+    @Test
     void testExistingEntityIdsOnAnEmptyListMakesNoRequest() {
         var present = indexScanService.existingEntityIds(COURSE_TYPE, List.of());
 

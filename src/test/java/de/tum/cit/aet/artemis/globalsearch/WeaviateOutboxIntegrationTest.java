@@ -19,6 +19,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +35,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
@@ -344,6 +347,23 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         assertLectureNotInWeaviate(weaviateService, sharedId);
         assertLectureUnitExistsInWeaviate(weaviateService, sharedId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testEnqueuedRow_isDueAtItsOwnEnqueueTimeIncludingFractionalSeconds() {
+        // An hour ahead so the running dispatcher cannot drain the row while it is asserted on. The .6 s fraction is
+        // what a column without fractional seconds rounds up to the next second on MySQL.
+        ZonedDateTime enqueuedAt = ZonedDateTime.now().plusHours(1).truncatedTo(ChronoUnit.SECONDS).plusNanos(600_000_000);
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE_TYPE, course.getId(), WeaviateOutboxOrigin.LIVE);
+        entry.setNextAttemptAt(enqueuedAt);
+        entry = outboxRepository.save(entry);
+        try {
+            assertThat(outboxRepository.findDueForDispatch(enqueuedAt, 1_000)).extracting(WeaviateOutboxEntry::getId).contains(entry.getId());
+        }
+        finally {
+            outboxRepository.delete(entry);
+        }
     }
 
     private boolean hasOutboxRowFor(String type, long entityId) {

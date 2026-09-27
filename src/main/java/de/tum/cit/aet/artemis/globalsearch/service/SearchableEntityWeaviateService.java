@@ -219,8 +219,9 @@ public class SearchableEntityWeaviateService {
                 log.warn("Cannot upsert exercise without an ID for exam {}", examId);
                 continue;
             }
-            saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE);
-            enqueued++;
+            if (saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE)) {
+                enqueued++;
+            }
         }
         if (enqueued > 0) {
             log.debug("Enqueued upserts for {} exercises of exam {}", enqueued, examId);
@@ -418,8 +419,32 @@ public class SearchableEntityWeaviateService {
      * identity; the dispatcher re-derives the current property map from the database when it applies the row.
      * Used both directly (single-entity upserts, followed by a signal) and in the exam-refresh loop.
      */
-    private void saveUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
-        outboxRepository.save(WeaviateOutboxEntry.forUpsert(type, entityId, origin));
+    private boolean saveUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
+        return save(WeaviateOutboxEntry.forUpsert(type, entityId, origin));
+    }
+
+    /**
+     * Saves an outbox row. A request-path ({@link WeaviateOutboxOrigin#LIVE}) save that fails is logged instead of thrown:
+     * the user's change is not undone by it, so it must not turn into an error for the user, just as the previous
+     * asynchronous index write never could. The index then stays stale for that entity until it is written again or a
+     * reconcile pass repairs it. A reconcile pass keeps the exception, which it relies on to retry the entity next tick.
+     *
+     * @return whether the row was saved
+     */
+    private boolean save(WeaviateOutboxEntry entry) {
+        if (entry.getOrigin() != WeaviateOutboxOrigin.LIVE) {
+            outboxRepository.save(entry);
+            return true;
+        }
+        try {
+            outboxRepository.save(entry);
+            return true;
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to enqueue {} (params {}); the search index stays stale for it until it is written again or a reconcile pass repairs it: {}", entry,
+                    entry.getParams(), e.getMessage(), e);
+            return false;
+        }
     }
 
     /**
@@ -435,7 +460,9 @@ public class SearchableEntityWeaviateService {
      * @param origin   which path is asking
      */
     public void enqueueUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
-        saveUpsert(type, entityId, origin);
+        if (!saveUpsert(type, entityId, origin)) {
+            return;
+        }
         log.debug("Enqueued upsert for {} {} ({})", type, entityId, origin);
         signalEnqueued();
     }
@@ -449,14 +476,18 @@ public class SearchableEntityWeaviateService {
      * @param origin   which path is asking
      */
     public void enqueueDeleteEntity(String type, long entityId, WeaviateOutboxOrigin origin) {
-        outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(type, entityId, origin));
+        if (!save(WeaviateOutboxEntry.forDeleteEntity(type, entityId, origin))) {
+            return;
+        }
         log.debug("Enqueued delete for {} {} ({})", type, entityId, origin);
         signalEnqueued();
     }
 
     private void enqueueBulkDelete(WeaviateOutboxOperation operation, Map<String, Object> params) {
         // Only the request path issues bulk deletes; a reconcile pass works entity by entity.
-        outboxRepository.save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE));
+        if (!save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE))) {
+            return;
+        }
         log.debug("Enqueued {} with params {}", operation, params);
         signalEnqueued();
     }
@@ -664,9 +695,13 @@ public class SearchableEntityWeaviateService {
     }
 
     /**
-     * Fence for bulk deletes. Matches only rows whose {@link SearchableEntitySchema.Properties#SOURCE_SEQ} is
-     * strictly less than the bulk delete's own outbox id, or that carry no {@code source_seq} at all (rows written
-     * before this fence existed or seeded outside the outbox, which predate every delete).
+     * Fence for bulk deletes. Matches every row except those whose {@link SearchableEntitySchema.Properties#SOURCE_SEQ}
+     * is at least the bulk delete's own outbox id, so rows with a smaller {@code source_seq} and rows without one (written
+     * before this fence existed or seeded outside the outbox, which predate every delete) are both in scope.
+     * <p>
+     * It is phrased as a negation rather than {@code source_seq < id OR source_seq IS NULL} because Weaviate keeps no
+     * null state for objects that already existed when a property was added to the collection: on an upgraded
+     * installation those rows match neither branch, and a bulk delete would silently skip every one of them.
      * <p>
      * Because a per-entity upsert enqueued after this delete has a larger outbox id, its row's {@code source_seq}
      * is larger and the fence spares it. This closes the last ordering hazard the per-entity collapse cannot: a
@@ -676,7 +711,7 @@ public class SearchableEntityWeaviateService {
      * @return a filter selecting only rows written strictly before this delete
      */
     private static Filter writtenBefore(long deleteOutboxId) {
-        return Filter.or(Filter.property(SearchableEntitySchema.Properties.SOURCE_SEQ).lt(deleteOutboxId), Filter.property(SearchableEntitySchema.Properties.SOURCE_SEQ).isNull());
+        return Filter.not(Filter.property(SearchableEntitySchema.Properties.SOURCE_SEQ).gte(deleteOutboxId));
     }
 
     /**

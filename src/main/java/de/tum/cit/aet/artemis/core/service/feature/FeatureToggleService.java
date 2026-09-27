@@ -57,8 +57,8 @@ public class FeatureToggleService {
 
     public FeatureToggleService(WebsocketMessagingService websocketMessagingService, DistributedDataProvider distributedDataProvider, ProfileService profileService,
             RateLimitConfigurationService rateLimitConfigurationService, @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart,
-            @Value("${artemis.weaviate.reconcile.missing-sweep-enabled:false}") boolean missingSweepEnabledOnStart,
-            @Value("${artemis.weaviate.reconcile.drift-sweep-enabled:false}") boolean driftSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.missing-sweep-enabled:true}") boolean missingSweepEnabledOnStart,
+            @Value("${artemis.weaviate.reconcile.drift-sweep-enabled:true}") boolean driftSweepEnabledOnStart,
             @Value("${artemis.weaviate.reconcile.orphan-sweep-enabled:false}") boolean orphanSweepEnabledOnStart) {
         this.websocketMessagingService = websocketMessagingService;
         this.distributedDataProvider = distributedDataProvider;
@@ -66,9 +66,7 @@ public class FeatureToggleService {
         this.rateLimitConfigurationService = rateLimitConfigurationService;
         this.globalSearchEnabledOnStart = globalSearchEnabledOnStart;
         // A single combined toggle can't honor two conflicting YAML values, so an asymmetric seed (one true, one
-        // false) resolves to off rather than guessing which pass the operator actually meant to enable; that
-        // matches WeaviateReconcileProperties' own stance that enabling a pass is an operational decision, not
-        // something a deployment should do on its behalf.
+        // false) resolves to off rather than guessing which pass the operator actually meant to enable.
         this.globalSearchReconcileEnabledOnStart = missingSweepEnabledOnStart && driftSweepEnabledOnStart;
         this.globalSearchReconcileOrphanEnabledOnStart = orphanSweepEnabledOnStart;
     }

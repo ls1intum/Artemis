@@ -15,10 +15,11 @@ import org.springframework.validation.annotation.Validated;
  * <p>
  * The three {@code *SweepEnabled} flags only seed the runtime feature toggle's first-ever value (see
  * {@code FeatureToggleService.initFeatures}); once that toggle exists, it — not these flags — decides whether a
- * pass runs, live, from the admin feature toggle page, no restart needed. They default to false because the
- * missing pass queues the entire corpus the first time it runs, and the orphan pass deletes, so enabling either
- * is an operational decision rather than a deployment side effect; the same caution applies to switching the
- * matching toggle on.
+ * pass runs, live, from the admin feature toggle page, no restart needed. Missing and drift default to on, since
+ * they are what repairs a write that never reached the index; their first run queues the entire corpus against an
+ * empty ledger, which the outbox depth limit trickles through. Orphan defaults to off: it is the only pass whose
+ * deletions are inferred from the index rather than confirmed against the database, so enabling it is an
+ * operational decision rather than a deployment side effect.
  * <p>
  * The two throttles protect different resources. {@code maxOutboxDepth} limits work handed to Weaviate; the
  * per-pass budgets limit queries against the database. A healthy system queues nothing, so the depth limit never
@@ -48,7 +49,7 @@ import org.springframework.validation.annotation.Validated;
  */
 @Validated
 @ConfigurationProperties(prefix = "artemis.weaviate.reconcile", ignoreUnknownFields = false)
-public record WeaviateReconcileProperties(@DefaultValue("false") boolean missingSweepEnabled, @DefaultValue("false") boolean driftSweepEnabled,
+public record WeaviateReconcileProperties(@DefaultValue("true") boolean missingSweepEnabled, @DefaultValue("true") boolean driftSweepEnabled,
         @DefaultValue("false") boolean orphanSweepEnabled, @DefaultValue( {
                 "course", "lecture", "lecture_unit", "exam", "exercise", "faq", "channel" }) List<String> entityTypes,
         @DefaultValue("500") @Positive int maxOutboxDepth, @DefaultValue("100") @Positive int missingBatchSize, @DefaultValue("200") @Positive int driftBatchSize,

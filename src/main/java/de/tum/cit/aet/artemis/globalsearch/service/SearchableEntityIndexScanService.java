@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
-import io.weaviate.client6.v1.api.collections.query.FilterOperand;
 
 /**
  * Reads the {@code SearchableEntities} collection itself, a bounded slice at a time and resumably.
@@ -112,6 +111,9 @@ public class SearchableEntityIndexScanService {
      * external loss, such as restoring Weaviate from a snapshot older than the ledger, leaves the ledger row
      * behind with nothing backing it. The missing sweep uses this to catch exactly that case for the entities its
      * ledger check would otherwise treat as settled.
+     * <p>
+     * Rows are looked up by the deterministic UUID they are written under, not by a {@code type} filter: that property is
+     * word-tokenized, so {@code type Equal "lecture"} also matches {@code lecture_unit} rows sharing an id.
      *
      * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator, shared by every given id
      * @param entityIds  the database ids to check
@@ -123,8 +125,8 @@ public class SearchableEntityIndexScanService {
         }
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            List<FilterOperand> idOperands = entityIds.stream().<FilterOperand>map(id -> Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(id)).toList();
-            Filter filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(entityType), Filter.or(idOperands));
+            String[] uuids = entityIds.stream().map(id -> WeaviateUuidUtil.deterministicUuid(entityType, id)).toArray(String[]::new);
+            Filter filter = Filter.uuid().containsAny(uuids);
             var result = collection.query.fetchObjects(builder -> builder.limit(entityIds.size()).returnProperties(SearchableEntitySchema.Properties.ENTITY_ID).filters(filter));
             return result.objects().stream().map(object -> asLong(object.properties().get(SearchableEntitySchema.Properties.ENTITY_ID))).filter(Objects::nonNull)
                     .collect(Collectors.toCollection(LinkedHashSet::new));
