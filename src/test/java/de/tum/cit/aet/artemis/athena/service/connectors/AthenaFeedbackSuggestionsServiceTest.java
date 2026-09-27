@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.athena.service.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -312,6 +313,50 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         assertThat(suggestions.getFirst().lineStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFeedbackSuggestionsProgrammingSendsNoLearnerProfile() throws NetworkingException {
+        LearnerProfileApi learnerProfileApi = mockLearnerProfileForEveryStudent();
+        programmingExercise.setCourse(autoCourse);
+        var currentUser = ((StudentParticipation) programmingSubmission.getParticipation()).getStudent().orElseThrow();
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.submission.id").value(programmingSubmission.getId()),
+                jsonPath("$.learnerProfile").doesNotExist());
+
+        athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, false, currentUser);
+
+        athenaRequestMockProvider.verify();
+        // Athena's programming module does not read the profile, so it is not even looked up.
+        verify(learnerProfileApi, never()).getOrCreateLearnerProfile(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFeedbackSuggestionsModelingSendsNoLearnerProfile() throws NetworkingException {
+        LearnerProfileApi learnerProfileApi = mockLearnerProfileForEveryStudent();
+        modelingExercise.setCourse(autoCourse);
+        var currentUser = ((StudentParticipation) modelingSubmission.getParticipation()).getStudent().orElseThrow();
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", jsonPath("$.submission.id").value(modelingSubmission.getId()),
+                jsonPath("$.learnerProfile").doesNotExist());
+
+        athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, false, currentUser);
+
+        athenaRequestMockProvider.verify();
+        // Athena's modeling module does not read the profile, so it is not even looked up.
+        verify(learnerProfileApi, never()).getOrCreateLearnerProfile(any());
+    }
+
+    /**
+     * Makes a learner profile available for every student, so a request that looked one up would carry it.
+     */
+    private LearnerProfileApi mockLearnerProfileForEveryStudent() {
+        LearnerProfile profile = new LearnerProfile();
+        profile.setId(42L);
+        LearnerProfileApi learnerProfileApi = mock(LearnerProfileApi.class);
+        when(learnerProfileApi.getOrCreateLearnerProfile(any())).thenReturn(profile);
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "learnerProfileApi", Optional.of(learnerProfileApi));
+        return learnerProfileApi;
     }
 
     @Test

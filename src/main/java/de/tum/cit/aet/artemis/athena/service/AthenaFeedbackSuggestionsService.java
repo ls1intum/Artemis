@@ -197,13 +197,13 @@ public class AthenaFeedbackSuggestionsService {
      * Builds the learner profile DTO sent to Athena for a submission, applying the course's feedback style defaults
      * where the student has not set a preference of their own (see {@link LearnerProfileDTO#withCourseDefaults}).
      * <p>
-     * Athena only adapts the style of non-graded text feedback to the learner profile; graded suggestions and the
-     * programming and modeling modules ignore it. The course defaults are therefore only looked up for such a request,
-     * which saves the query for every other one.
+     * Only used for text requests: Athena's programming and modeling modules do not read the learner profile. Within
+     * text, only non-graded feedback is adapted to it, so the course defaults are only looked up for such a request,
+     * which saves the query for graded ones.
      *
      * @param submission          the submission to extract the profile from
      * @param exercise            the exercise the submission belongs to, used to look up the course's Athena configuration
-     * @param applyCourseDefaults whether the request is one Athena adapts to the learner profile, so that the course
+     * @param applyCourseDefaults whether the request is non-graded, so that Athena adapts it to the profile and the course
      *                                defaults apply
      * @return the resulting DTO, or null if no learner profile is available for the submission
      */
@@ -323,8 +323,10 @@ public class AthenaFeedbackSuggestionsService {
             return List.of();
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                buildLearnerProfileDTO(submission, exercise, false), isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
+        // No learner profile: Athena's programming and modeling modules do not read it, and looking it up would query,
+        // or even create, a profile for every submission, including each one processed at the due date.
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
+                isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         final long startNanos = System.nanoTime();
         // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
         boolean failed = true;
@@ -367,8 +369,10 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
-        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                buildLearnerProfileDTO(submission, exercise, false), isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
+        // No learner profile: Athena's programming and modeling modules do not read it, and looking it up would query,
+        // or even create, a profile for every submission, including each one processed at the due date.
+        final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
+                isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         final long startNanos = System.nanoTime();
         // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
         boolean failed = true;
