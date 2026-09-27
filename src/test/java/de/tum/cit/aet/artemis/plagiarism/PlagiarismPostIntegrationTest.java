@@ -309,6 +309,16 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetPostsForCourse_withCourseIdQueryParameterOtherThanPath_badRequest() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("plagiarismCaseId", plagiarismCaseId.toString());
+        params.add("courseId", String.valueOf(courseId + 1));
+
+        request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, PostResponseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
