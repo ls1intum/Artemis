@@ -26,8 +26,6 @@ import { StaticContentService } from 'app/foundation/service/static-content.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import enAboutUs from 'src/main/webapp/i18n/en/aboutUs.json';
 import deAboutUs from 'src/main/webapp/i18n/de/aboutUs.json';
-import enFeatureUsage from 'src/main/webapp/i18n/en/featureUsage.json';
-import deFeatureUsage from 'src/main/webapp/i18n/de/featureUsage.json';
 
 describe('AboutUsComponent', () => {
     let fixture: ComponentFixture<AboutUsComponent>;
@@ -177,13 +175,13 @@ describe('AboutUsComponent', () => {
         expect(testIdsStartingWith('about-highlight-')).toEqual(['PROGRAMMING_ONLINE_EDITOR', 'PROGRAMMING_RESULTS', 'QUIZ_LIVE', 'MESSAGING', 'IRIS_CHAT']);
     });
 
-    it('names the AI features in the words of the people who use them', () => {
+    it('names and describes the highlights with the texts of the About page', () => {
         render(profile({ activeModuleFeatures: [MODULE_FEATURE_IRIS, MODULE_FEATURE_ATHENA, MODULE_FEATURE_HYPERION] }));
 
-        expect(byTestId('about-highlight-IRIS_CHAT')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.iris.name');
-        expect(byTestId('about-highlight-AI_FEEDBACK_REQUEST')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.aiFeedback.description');
-        expect(byTestId('about-highlight-HYPERION_PROBLEM_STATEMENT')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.exerciseGeneration.name');
-        expect(byTestId('about-highlight-QUIZ_LIVE')?.textContent).toContain('artemisApp.featureUsage.catalog.feature.QUIZ_LIVE.name');
+        expect(byTestId('about-highlight-QUIZ_LIVE')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.liveQuiz.name');
+        expect(byTestId('about-highlight-IRIS_CHAT')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.iris.description');
+        expect(byTestId('about-highlight-AI_FEEDBACK_REQUEST')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.aiFeedback.name');
+        expect(byTestId('about-highlight-HYPERION_PROBLEM_STATEMENT')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.exerciseGeneration.description');
     });
 
     it(`highlights at most ${MAX_HIGHLIGHTS} features`, () => {
@@ -238,18 +236,20 @@ describe('AboutUsComponent', () => {
     });
 
     describe('translations', () => {
-        const catalogues = { en: enFeatureUsage.artemisApp.featureUsage.catalog.feature, de: deFeatureUsage.artemisApp.featureUsage.catalog.feature };
         const modules = { en: enAboutUs.artemisApp.aboutUsOverview.modules, de: deAboutUs.artemisApp.aboutUsOverview.modules };
         const ownTexts = { en: enAboutUs.artemisApp.aboutUsOverview.highlights.features, de: deAboutUs.artemisApp.aboutUsOverview.highlights.features };
         const links = { en: enAboutUs.artemisApp.aboutUsOverview.project.links, de: deAboutUs.artemisApp.aboutUsOverview.project.links };
 
-        it.each(['en', 'de'] as const)('names and describes every highlight, through its own texts or the feature catalogue (%s)', (language) => {
+        it.each(['en', 'de'] as const)('names and describes every highlight (%s)', (language) => {
             for (const highlight of HIGHLIGHTS) {
-                const texts = highlight.translationKey ? ownTexts[language] : catalogues[language];
-                const entry = (texts as Record<string, { name?: string; description?: string }>)[highlight.translationKey ?? highlight.catalogueKey];
-                expect(entry?.name, highlight.catalogueKey).toBeTruthy();
-                expect(entry?.description, highlight.catalogueKey).toBeTruthy();
+                const entry = (ownTexts[language] as Record<string, { name?: string; description?: string }>)[highlight.translationKey];
+                expect(entry?.name, highlight.translationKey).toBeTruthy();
+                expect(entry?.description, highlight.translationKey).toBeTruthy();
             }
+        });
+
+        it.each(['en', 'de'] as const)('keeps no texts for features the page does not highlight (%s)', (language) => {
+            expect(Object.keys(ownTexts[language]).sort()).toEqual(HIGHLIGHTS.map((highlight) => highlight.translationKey).sort());
         });
 
         it.each(['en', 'de'] as const)('names every project link (%s)', (language) => {

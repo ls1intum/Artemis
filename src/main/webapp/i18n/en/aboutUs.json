@@ -19,17 +19,45 @@
                 "title": "Selected features",
                 "examFeatures": "Exam mode in detail:",
                 "features": {
+                    "onlineEditor": {
+                        "name": "Online code editor",
+                        "description": "Start coding right away: write, commit and submit your solution in the browser, with nothing to install."
+                    },
+                    "testFeedback": {
+                        "name": "Automatic test feedback",
+                        "description": "Learn from every attempt: see which tests your submission passes, which it fails and why."
+                    },
+                    "exam": {
+                        "name": "Take an exam",
+                        "description": "Show what you have learned in online exams, with the same editors you practice with."
+                    },
+                    "liveQuiz": {
+                        "name": "Live quiz",
+                        "description": "Check your understanding in live quizzes, together in the lecture or at your own pace."
+                    },
+                    "learningPaths": {
+                        "name": "Learning paths",
+                        "description": "Follow a learning path that adapts to your progress, from one competency to the next."
+                    },
+                    "messaging": {
+                        "name": "Messages and threads",
+                        "description": "Ask questions, discuss exercises and learn together with your course in channels and threads."
+                    },
                     "iris": {
                         "name": "Iris AI tutor",
-                        "description": "Chatting with Iris about a course, an exercise or a lecture."
+                        "description": "Ask Iris whenever you are stuck. Iris already knows your exercise and your latest submission, and guides you to the solution instead of giving it away."
                     },
                     "aiFeedback": {
                         "name": "Personalized AI feedback",
-                        "description": "Requesting individual AI feedback on a draft before the due date and improving it."
+                        "description": "Request individual AI feedback on your draft before the due date, improve it and submit again."
                     },
                     "exerciseGeneration": {
                         "name": "AI-supported exercise generation",
-                        "description": "Generating and refining problem statements, code and quiz questions for new exercises."
+                        "description": "Generate and refine problem statements, code and quiz questions, and give your students more exercises to learn from."
+                    },
+                    "lectures": {
+                        "name": "Lectures",
+                        "description": "Work through slides, videos and lecture units at your own pace, alongside the exercises that go with them."
                     }
                 }
             },

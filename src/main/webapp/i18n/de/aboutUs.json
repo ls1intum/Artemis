@@ -19,17 +19,45 @@
                 "title": "Ausgewählte Funktionen",
                 "examFeatures": "Klausurmodus im Detail:",
                 "features": {
+                    "onlineEditor": {
+                        "name": "Online-Code-Editor",
+                        "description": "Leg sofort los: Schreibe, committe und reiche deine Lösung direkt im Browser ein, ohne etwas zu installieren."
+                    },
+                    "testFeedback": {
+                        "name": "Automatisches Test-Feedback",
+                        "description": "Lerne aus jedem Versuch: Sieh, welche Tests deine Abgabe besteht, welche fehlschlagen und warum."
+                    },
+                    "exam": {
+                        "name": "Klausur schreiben",
+                        "description": "Zeige in Onlineklausuren, was du gelernt hast, mit denselben Editoren, mit denen du auch übst."
+                    },
+                    "liveQuiz": {
+                        "name": "Live-Quiz",
+                        "description": "Prüfe dein Verständnis in Live-Quizzen, gemeinsam in der Vorlesung oder in deinem eigenen Tempo."
+                    },
+                    "learningPaths": {
+                        "name": "Lernpfade",
+                        "description": "Folge einem Lernpfad, der sich an deinen Fortschritt anpasst, von einer Kompetenz zur nächsten."
+                    },
+                    "messaging": {
+                        "name": "Nachrichten und Threads",
+                        "description": "Stelle Fragen, diskutiere Aufgaben und lerne gemeinsam mit deinem Kurs in Kanälen und Threads."
+                    },
                     "iris": {
                         "name": "KI-Tutor Iris",
-                        "description": "Mit Iris über einen Kurs, eine Aufgabe oder eine Vorlesung chatten."
+                        "description": "Frag Iris, wann immer du nicht weiterkommst. Iris kennt deine Aufgabe und deine letzte Abgabe und führt dich zur Lösung, statt sie dir zu verraten."
                     },
                     "aiFeedback": {
                         "name": "Persönliches KI-Feedback",
-                        "description": "Vor der Abgabefrist individuelles KI-Feedback zu einem Entwurf anfordern und ihn verbessern."
+                        "description": "Fordere vor der Abgabefrist individuelles KI-Feedback zu deinem Entwurf an, verbessere ihn und reiche erneut ein."
                     },
                     "exerciseGeneration": {
                         "name": "KI-gestützte Aufgabenerstellung",
-                        "description": "Aufgabenstellungen, Code und Quizfragen für neue Aufgaben generieren und überarbeiten."
+                        "description": "Generiere und überarbeite Aufgabenstellungen, Code und Quizfragen und gib deinen Studierenden mehr Aufgaben zum Lernen."
+                    },
+                    "lectures": {
+                        "name": "Vorlesungen",
+                        "description": "Arbeite Folien, Videos und Vorlesungseinheiten in deinem eigenen Tempo durch, zusammen mit den passenden Aufgaben."
                     }
                 }
             },

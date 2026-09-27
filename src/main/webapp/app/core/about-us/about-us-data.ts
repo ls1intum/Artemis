@@ -37,41 +37,31 @@ import {
 } from 'app/app.constants';
 
 /**
- * A feature the About page highlights, named after its entry in the feature catalogue ({@code UserFeature} on the server).
- * Name and description come from the catalogue translations, so the page and the admin feature usage page describe it alike.
+ * A feature the About page highlights. It is identified by its entry in the feature catalogue ({@code UserFeature} on the server), but the page names and
+ * describes it with its own texts: the catalogue describes features for administrators, while the page speaks to the people learning and teaching with them.
  */
 export interface AboutUsHighlight {
-    /** The {@code UserFeature} constant, which keys {@code artemisApp.featureUsage.catalog.feature.*}. */
+    /** The {@code UserFeature} constant of the feature. */
     readonly catalogueKey: string;
+    /** Key below {@code artemisApp.aboutUsOverview.highlights.features}, whose {@code name} and {@code description} the page shows. */
+    readonly translationKey: string;
     readonly icon: IconDefinition;
     /** The module that must be enabled for the feature to exist on this installation; absent for features every installation has. */
     readonly module?: ModuleFeature;
-    /**
-     * Key below {@code artemisApp.aboutUsOverview.highlights.features} for a feature whose catalogue entry is written for administrators, or which the
-     * catalogue splits into several entries. The page then names and describes it with these texts instead.
-     */
-    readonly translationKey?: string;
-}
-
-/** The translation key prefix that names ({@code .name}) and describes ({@code .description}) a highlight. */
-export function highlightTranslationBase(highlight: AboutUsHighlight): string {
-    return highlight.translationKey
-        ? `artemisApp.aboutUsOverview.highlights.features.${highlight.translationKey}`
-        : `artemisApp.featureUsage.catalog.feature.${highlight.catalogueKey}`;
 }
 
 /** Candidates in display order. The page shows the first {@link MAX_HIGHLIGHTS} whose module is enabled. */
 export const HIGHLIGHTS: readonly AboutUsHighlight[] = [
-    { catalogueKey: 'PROGRAMMING_ONLINE_EDITOR', icon: faCode },
-    { catalogueKey: 'PROGRAMMING_RESULTS', icon: faListCheck },
-    { catalogueKey: 'EXAM_TAKE', icon: faFileSignature, module: MODULE_FEATURE_EXAM },
-    { catalogueKey: 'QUIZ_LIVE', icon: faStopwatch },
-    { catalogueKey: 'LEARNING_PATHS', icon: faRoute, module: MODULE_FEATURE_ATLAS },
-    { catalogueKey: 'MESSAGING', icon: faComments },
-    { catalogueKey: 'IRIS_CHAT', icon: faRobot, module: MODULE_FEATURE_IRIS, translationKey: 'iris' },
-    { catalogueKey: 'AI_FEEDBACK_REQUEST', icon: faLightbulb, module: MODULE_FEATURE_ATHENA, translationKey: 'aiFeedback' },
-    { catalogueKey: 'HYPERION_PROBLEM_STATEMENT', icon: faWandMagicSparkles, module: MODULE_FEATURE_HYPERION, translationKey: 'exerciseGeneration' },
-    { catalogueKey: 'LECTURE_PAGES', icon: faChalkboardUser, module: MODULE_FEATURE_LECTURE },
+    { catalogueKey: 'PROGRAMMING_ONLINE_EDITOR', translationKey: 'onlineEditor', icon: faCode },
+    { catalogueKey: 'PROGRAMMING_RESULTS', translationKey: 'testFeedback', icon: faListCheck },
+    { catalogueKey: 'EXAM_TAKE', translationKey: 'exam', icon: faFileSignature, module: MODULE_FEATURE_EXAM },
+    { catalogueKey: 'QUIZ_LIVE', translationKey: 'liveQuiz', icon: faStopwatch },
+    { catalogueKey: 'LEARNING_PATHS', translationKey: 'learningPaths', icon: faRoute, module: MODULE_FEATURE_ATLAS },
+    { catalogueKey: 'MESSAGING', translationKey: 'messaging', icon: faComments },
+    { catalogueKey: 'IRIS_CHAT', translationKey: 'iris', icon: faRobot, module: MODULE_FEATURE_IRIS },
+    { catalogueKey: 'AI_FEEDBACK_REQUEST', translationKey: 'aiFeedback', icon: faLightbulb, module: MODULE_FEATURE_ATHENA },
+    { catalogueKey: 'HYPERION_PROBLEM_STATEMENT', translationKey: 'exerciseGeneration', icon: faWandMagicSparkles, module: MODULE_FEATURE_HYPERION },
+    { catalogueKey: 'LECTURE_PAGES', translationKey: 'lectures', icon: faChalkboardUser, module: MODULE_FEATURE_LECTURE },
 ];
 
 /** Three rows of three: with every module enabled, the six features all installations have and the three AI features. */
