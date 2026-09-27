@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UserRegistrationModalComponent } from './user-registration-modal.component';
@@ -76,6 +76,39 @@ describe('UserRegistrationModalComponent', () => {
             expect(component.selectedUsers()).toEqual([]);
             expect(component.isViewingSelected()).toBe(false);
         });
+
+        it('should cancel a pending search and clear loading on close()', () => {
+            vi.useFakeTimers();
+            try {
+                component.onSearch('alice');
+
+                component.close();
+                vi.advanceTimersByTime(300);
+
+                expect(component.hasSearched()).toBe(false);
+                expect(component.isLoading()).toBe(false);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    describe('onVisibleChange (close button or backdrop)', () => {
+        it('should close like cancel, so the selection does not reappear on the next open', () => {
+            component.open();
+            component.selectedUsers.set([makeUser(1)]);
+
+            component.onVisibleChange(false);
+
+            expect(component.isOpen()).toBe(false);
+            expect(component.selectedUsers()).toEqual([]);
+        });
+
+        it('should open when the dialog becomes visible', () => {
+            component.onVisibleChange(true);
+
+            expect(component.isOpen()).toBe(true);
+        });
     });
 
     describe('onSearch', () => {
@@ -110,6 +143,58 @@ describe('UserRegistrationModalComponent', () => {
 
             expect(component.searchTerm()).toBe('alice');
             expect(component.hasSearched()).toBe(false);
+        });
+
+        it('should drop the previous results and show loading immediately while the debounce is pending', () => {
+            component.hasSearched.set(true);
+            component.searchResults.set([makeUser(1)]);
+            component.totalSearchResults.set(1);
+
+            component.onSearch('bob');
+
+            expect(component.searchResults()).toEqual([]);
+            expect(component.totalSearchResults()).toBe(0);
+            expect(component.isLoading()).toBe(true);
+            expect(component.isRegisterDisabled()).toBe(true);
+        });
+
+        it('should ignore a pending response for the previous term once the term changes', () => {
+            let resolvePrevious!: (v: any) => void;
+            mockSearchFn.mockReturnValueOnce(
+                new Observable((obs: any) => {
+                    resolvePrevious = (v) => {
+                        obs.next(v);
+                        obs.complete();
+                    };
+                }),
+            );
+            component.searchTerm.set('alice');
+            component.onTableLazyLoad(lazyEvent); // pending request for 'alice'
+
+            component.onSearch('bob');
+            resolvePrevious({ content: [makeUser(1)], totalElements: 1 });
+
+            expect(component.searchResults()).toEqual([]);
+            expect(component.isLoading()).toBe(true);
+        });
+
+        it('should ignore a pending response once the term is cleared', () => {
+            let resolvePrevious!: (v: any) => void;
+            mockSearchFn.mockReturnValueOnce(
+                new Observable((obs: any) => {
+                    resolvePrevious = (v) => {
+                        obs.next(v);
+                        obs.complete();
+                    };
+                }),
+            );
+            component.searchTerm.set('alice');
+            component.onTableLazyLoad(lazyEvent);
+
+            component.onSearch('');
+            resolvePrevious({ content: [makeUser(1)], totalElements: 1 });
+
+            expect(component.searchResults()).toEqual([]);
             expect(component.isLoading()).toBe(false);
         });
 
@@ -129,10 +214,10 @@ describe('UserRegistrationModalComponent', () => {
             component.onSearch('alice');
 
             vi.advanceTimersByTime(299);
-            expect(component.isLoading()).toBe(false);
+            expect(component.hasSearched()).toBe(false);
 
             vi.advanceTimersByTime(1);
-            expect(component.isLoading()).toBe(true);
+            expect(component.hasSearched()).toBe(true);
             expect(component.searchTerm()).toBe('alice');
         });
     });

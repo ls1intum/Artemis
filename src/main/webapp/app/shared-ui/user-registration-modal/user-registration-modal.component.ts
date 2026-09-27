@@ -117,20 +117,33 @@ export class UserRegistrationModalComponent {
         this.isOpen.set(false);
     }
 
+    /** Dismissing the dialog with the close button or the backdrop closes it like cancel, so no selection or pending search survives. */
+    onVisibleChange(visible: boolean): void {
+        if (visible) {
+            this.isOpen.set(true);
+        } else {
+            this.close();
+        }
+    }
+
     onSearch(searchTerm: string): void {
         const trimmed = searchTerm.trim();
         this.searchTerm.set(trimmed);
         clearTimeout(this.debounceTimer);
+        // Drop the previous term's rows and ignore its pending response right away, not only when the debounce fires.
+        // Otherwise those rows stay selectable while typing and would be registered for a search the user no longer sees.
+        this.requestId++;
+        this.searchResults.set([]);
+        this.totalSearchResults.set(0);
 
         if (!trimmed) {
             this.hasSearched.set(false);
-            this.searchResults.set([]);
-            this.totalSearchResults.set(0);
+            this.isLoading.set(false);
             return;
         }
 
+        this.isLoading.set(true);
         this.debounceTimer = setTimeout(() => {
-            this.isLoading.set(true);
             this.hasSearched.set(true);
             // A new search term always starts from page 0 — reload() defaults to the current page, which would be wrong here.
             this.tableViewRef()?.reload(0);
@@ -215,7 +228,9 @@ export class UserRegistrationModalComponent {
     }
 
     private resetState(): void {
+        clearTimeout(this.debounceTimer);
         this.requestId++;
+        this.isLoading.set(false);
         this.searchTerm.set('');
         this.hasSearched.set(false);
         this.searchResults.set([]);
