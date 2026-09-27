@@ -446,7 +446,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         MvcResult participationResponse = request.performMvcRequest(post("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation")).andExpect(status().isOk())
                 .andReturn();
         JsonNode participationJson = objectMapper.readTree(participationResponse.getResponse().getContentAsString());
-        assertThat(participationJson.get("quizQuestionsType").asText()).isEqualTo("live-quiz");
+        assertThat(participationJson.get("quizQuestionsType").asString()).isEqualTo("live-quiz");
 
         assertThat(participation).isNotNull();
         Exercise exercise = participation.getExercise();
@@ -748,7 +748,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         MvcResult startParticipationResponse = request.performMvcRequest(post("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation"))
                 .andExpect(status().isOk()).andReturn();
         JsonNode startParticipationJson = objectMapper.readTree(startParticipationResponse.getResponse().getContentAsString());
-        assertThat(startParticipationJson.get("quizQuestionsType").asText()).isEqualTo("before-quiz-start");
+        assertThat(startParticipationJson.get("quizQuestionsType").asString()).isEqualTo("before-quiz-start");
 
         // check that submission fails
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
