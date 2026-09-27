@@ -82,8 +82,6 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     void shouldReturnFalseForInvalidTokenAndSecurityString() {
         assertThat(exerciseSharingService.validate("invalidToken", "invalid sec")).isFalse();
-        // the token is invalid, however it would return the path
-        // assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isEmpty();
         assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isEmpty();
     }
 
