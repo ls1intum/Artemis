@@ -7,6 +7,8 @@ import { MockProvider } from 'ng-mocks';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AthenaCourseConfigState, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('AthenaCourseConfigState', () => {
     let athenaCourseConfigService: AthenaCourseConfigService;
@@ -279,7 +281,7 @@ describe('createAthenaCourseConfigState', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(AthenaCourseConfigService), MockProvider(AlertService)],
+            providers: [MockProvider(AthenaCourseConfigService), MockProvider(AlertService), { provide: AccountService, useClass: MockAccountService }],
         });
         athenaCourseConfigService = TestBed.inject(AthenaCourseConfigService);
         courseId.set(5);

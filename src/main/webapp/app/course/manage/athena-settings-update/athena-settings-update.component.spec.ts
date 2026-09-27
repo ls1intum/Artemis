@@ -7,6 +7,8 @@ import { AthenaSettingsUpdateComponent } from 'app/course/manage/athena-settings
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
@@ -31,6 +33,7 @@ describe('AthenaSettingsUpdateComponent', () => {
             providers: [
                 MockProvider(AthenaCourseConfigService),
                 MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: { params: routeParamsSubject.asObservable() } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
