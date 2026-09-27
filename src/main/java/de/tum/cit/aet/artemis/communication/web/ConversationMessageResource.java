@@ -113,6 +113,7 @@ public class ConversationMessageResource {
     /**
      * GET /courses/{courseId}/posts : Get all messages for a conversation by its id or in a list of course-wide channels
      *
+     * @param courseId          id of the course the messages belong to
      * @param pageable          pagination settings to fetch messages in smaller batches
      * @param postContextFilter request param for filtering messages
      * @param principal         contains the login of the user for the purpose of logging
@@ -121,12 +122,15 @@ public class ConversationMessageResource {
      */
     @GetMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<PostResponseDTO>> getMessages(Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
+    public ResponseEntity<List<PostResponseDTO>> getMessages(@PathVariable Long courseId, Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
         Page<Post> posts;
+        if (!courseId.equals(postContextFilter.courseId())) {
+            throw new BadRequestAlertException("Course ID in path and filter do not match", conversationMessagingService.getEntityName(), "courseIdMismatch");
+        }
 
         final var requestingUser = userRepository.getUserWithAuthorities();
-        final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
+        final var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
         if (postContextFilter.conversationIds() != null && postContextFilter.conversationIds().length > 0) {

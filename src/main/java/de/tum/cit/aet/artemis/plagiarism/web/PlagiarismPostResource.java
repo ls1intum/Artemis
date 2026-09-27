@@ -104,13 +104,17 @@ public class PlagiarismPostResource {
     /**
      * GET /courses/{courseId}/posts: Get all posts for a course by its id
      *
+     * @param courseId          id of the course the posts belong to
      * @param postContextFilter request param for filtering posts
      * @return ResponseEntity with status 200 (OK) and with body all posts for the plagiarism case as
      *         cycle-free DTOs, or 400 (Bad Request) if the checks on user, course, or post-validity fail
      */
     @GetMapping("courses/{courseId}/posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<PostResponseDTO>> getPostsInCourse(PostContextFilterDTO postContextFilter) {
+    public ResponseEntity<List<PostResponseDTO>> getPostsInCourse(@PathVariable Long courseId, PostContextFilterDTO postContextFilter) {
+        if (!courseId.equals(postContextFilter.courseId())) {
+            throw new BadRequestAlertException("Course ID in path and filter do not match", plagiarismPostService.getEntityName(), "courseIdMismatch");
+        }
         Page<Post> coursePosts;
         if (postContextFilter.plagiarismCaseId() != null) {
             coursePosts = new PageImpl<>(plagiarismPostService.getAllPlagiarismCasePosts(postContextFilter));
