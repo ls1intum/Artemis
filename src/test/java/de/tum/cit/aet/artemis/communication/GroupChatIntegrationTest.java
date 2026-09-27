@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topicMatching;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
@@ -414,8 +416,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
      *
      * @return a Mockito matcher for a canonical post broadcast destination
      */
-    private static String aCanonicalPostBroadcastTopic() {
-        return argThat((String topic) -> topic != null && (topic.matches("/topic/user/\\d+/notifications/conversations") || topic.matches("/topic/communication/courses/\\d+")));
+    private static WebsocketDestination aCanonicalPostBroadcastTopic() {
+        return topicMatching("/topic/user/\\d+/notifications/conversations|/topic/communication/courses/\\d+");
     }
 
 }

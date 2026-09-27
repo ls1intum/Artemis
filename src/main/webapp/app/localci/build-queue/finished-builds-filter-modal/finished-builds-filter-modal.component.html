@@ -1,4 +1,4 @@
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="visible"
     [closable]="true"
     [closeOnEscape]="true"
@@ -17,7 +17,7 @@
                 <ul class="grid grid-cols-2 gap-2 whitespace-nowrap list-none my-0 p-0 sm:grid-cols-4">
                     @for (status of this.buildStatusFilterValues; track status) {
                         <li class="flex items-center gap-2">
-                            <tum-ui-radio-button
+                            <tumaet-ui-radio-button
                                 inputId="buildStatusFilter-{{ status }}"
                                 name="buildStatusFilter"
                                 [value]="status"
@@ -30,7 +30,7 @@
                         </li>
                     }
                     <li class="flex items-center gap-2">
-                        <tum-ui-radio-button
+                        <tumaet-ui-radio-button
                             inputId="buildStatusFilter-none"
                             name="buildStatusFilter"
                             [value]="undefined"
@@ -51,7 +51,7 @@
                     </h5>
                 </div>
                 <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
-                    <tum-ui-autocomplete
+                    <tumaet-ui-autocomplete
                         [ariaLabel]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         class="w-full"
                         [placeholder]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
@@ -105,9 +105,9 @@
             <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.lowerBound"></span>
-                    <input tumUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound" (change)="filterDurationChanged()" />
+                    <input tumAetUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound" (change)="filterDurationChanged()" />
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.upperBound"></span>
-                    <input tumUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound" (change)="filterDurationChanged()" />
+                    <input tumAetUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound" (change)="filterDurationChanged()" />
                     @if (!finishedBuildJobFilter.areDurationFiltersValid) {
                         <span class="text-state-danger" jhiTranslate="artemisApp.buildQueue.filter.buildDuration.invalidState"></span>
                     }
@@ -116,7 +116,7 @@
         </div>
     </div>
     <ng-template #footer>
-        <tum-ui-button severity="secondary" size="small" (clicked)="cancel()">{{ 'artemisApp.buildQueue.filter.close' | artemisTranslate }}</tum-ui-button>
-        <tum-ui-button size="small" (clicked)="confirm()">{{ 'artemisApp.buildQueue.filter.apply' | artemisTranslate }}</tum-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="cancel()">{{ 'artemisApp.buildQueue.filter.close' | artemisTranslate }}</tumaet-ui-button>
+        <tumaet-ui-button size="small" (clicked)="confirm()">{{ 'artemisApp.buildQueue.filter.apply' | artemisTranslate }}</tumaet-ui-button>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

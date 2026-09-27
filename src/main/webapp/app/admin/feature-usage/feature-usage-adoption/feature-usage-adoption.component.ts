@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { TumUiProgressBarComponent, TumUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiProgressBarComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -26,7 +26,7 @@ interface AdoptionRow {
     selector: 'jhi-feature-usage-adoption',
     templateUrl: './feature-usage-adoption.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DecimalPipe, TranslateDirective, ArtemisTranslatePipe, TumUiProgressBarComponent, TumUiTableDirective],
+    imports: [DecimalPipe, TranslateDirective, ArtemisTranslatePipe, TumAetUiProgressBarComponent, TumAetUiTableDirective],
 })
 export class FeatureUsageAdoptionComponent {
     readonly adoption = input.required<FeatureAdoption[]>();

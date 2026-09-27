@@ -9,14 +9,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
 import {
-    TumUiCheckboxComponent,
-    TumUiSelectComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTagComponent,
-    TumUiTagSeverity,
-    TumUiTooltipDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -32,7 +32,7 @@ import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-r
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 
 /**
- * Value of the group dropdown's "no group" entry. Not `undefined`, which `tum-ui-select` reads as "nothing
+ * Value of the group dropdown's "no group" entry. Not `undefined`, which `tumaet-ui-select` reads as "nothing
  * selected" and renders as a blank trigger. A negative id cannot collide with a real group id.
  */
 export const NO_GROUP_OPTION_VALUE = -1;
@@ -60,14 +60,14 @@ interface ExerciseRow {
     releaseDate: dayjs.Dayjs | undefined;
     dueDate: dayjs.Dayjs | undefined;
     assessmentDueDate: dayjs.Dayjs | undefined;
-    difficultySeverity: TumUiTagSeverity;
+    difficultySeverity: TumAetUiTagSeverity;
     owningGroupId: number | undefined;
     isQuizNonIndividual: boolean;
     nonIndividualQuizTooltip: string | undefined;
     /** i18n key for the quiz status badge, or `undefined` when no badge should be shown. */
     quizStatusLabel: string | undefined;
     /** Severity of the quiz status badge. Only read when {@link quizStatusLabel} is set, so non-quiz rows carry a default. */
-    quizStatusSeverity: TumUiTagSeverity;
+    quizStatusSeverity: TumAetUiTagSeverity;
     /** i18n key for the quiz mode badge, or `undefined` when the quiz has no mode. */
     quizModeKey: string | undefined;
     hasCategories: boolean;
@@ -86,12 +86,12 @@ interface ExerciseRow {
         RouterLink,
         FormsModule,
         FaIconComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiSelectComponent,
-        TumUiCheckboxComponent,
-        TumUiTagComponent,
-        TumUiTooltipDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiSelectComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         CdkDropList,
         CdkDrag,
         CdkDragHandle,
@@ -267,10 +267,10 @@ export class ExerciseTableComponent {
     }
 
     /**
-     * Applies a sort requested by a `[tumUiSortableColumn]` header. The kit table is controlled: it only reports the
+     * Applies a sort requested by a `[tumAetUiSortableColumn]` header. The kit table is controlled: it only reports the
      * field and order (1 ascending / -1 descending), the state stays here. Its toggle rule mirrors {@link sortBy}.
      */
-    protected onSortChange(event: TumUiTableSortEvent): void {
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
         this.sortColumn.set(event.field as SortColumn);
         this.sortAsc.set(event.order > 0);
     }
@@ -319,7 +319,7 @@ export class ExerciseTableComponent {
         return effectiveDate(exercise, this.effectiveGroupFor(exercise), 'assessmentDueDate');
     }
 
-    difficultySeverity(exercise: Exercise): TumUiTagSeverity {
+    difficultySeverity(exercise: Exercise): TumAetUiTagSeverity {
         switch (exercise.difficulty) {
             case DifficultyLevel.EASY:
                 return 'success';
@@ -396,7 +396,7 @@ export class ExerciseTableComponent {
      * The practice state shares `info` with the visible state: the kit tag has no `primary`, and its `secondary`
      * default would be indistinguishable from the badges beside it. A quiz has one status, so the two never collide.
      */
-    quizStatusSeverity(exercise: QuizExercise): TumUiTagSeverity {
+    quizStatusSeverity(exercise: QuizExercise): TumAetUiTagSeverity {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:
                 return 'secondary';

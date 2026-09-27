@@ -2,6 +2,7 @@
     "artemisApp": {
         "aboutUsOverview": {
             "title": "Artemis: Interaktives Lernen mit individuellem Feedback",
+            "portraitAlt": "Porträt von {{ name }}",
             "feature": "Haupteigenschaften",
             "exercises": {
                 "programming": {

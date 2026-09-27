@@ -155,6 +155,22 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.1: Installation Metadata on Core Nodes
+
+Every core node refuses to start until three settings describe who runs the installation, whether or not telemetry is enabled:
+
+- `info.operatorName` (`INFO_OPERATORNAME`): the organization operating Artemis.
+- `info.operatorAdminName` (`INFO_OPERATORADMINNAME`): the administrator's name.
+- `info.universityName` (`INFO_UNIVERSITYNAME`): the university, school, or institution using Artemis. This setting is new.
+
+Empty values and template values such as `Admin`, `Some Artemis Operator`, `Your University`, or `Anonymous University` are rejected, and the error names each setting to correct. Build agents do not need the settings. Add all three to the configuration of every core node before you upgrade:
+
+- **Ansible:** `artemis_operator_name`, `artemis_operator_admin_name`, and `artemis_university_name`. The collection has no defaults for them and stops the play on a core node where one is missing. Run the configuration update before the version update, because a version update does not rewrite the configuration.
+- **Helm:** `artemis.config.operator.name`, `artemis.config.operator.adminName`, and `artemis.config.operator.universityName`. The chart does not render while one of them is empty.
+- **Docker Compose and manual installations:** the environment variables or `application-prod.yml`.
+
+All three values appear on the About page. See [Telemetry](/admin/telemetry#required-configuration) for the settings and for what the installation reports.
+
 ### 9.9: Accounts Provisioned Through SAML2
 
 The sign-in page asks for the identifier first and then decides, from the account's internal flag, whether to offer a password field or to send the user to the configured identity provider. Only an account marked as internal authenticates against a password stored in Artemis; every other account is sent to the identity provider.

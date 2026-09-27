@@ -1,9 +1,9 @@
 @let currentExercise = exercise();
 @let generationUnavailableReason = generationDisabledReason();
-<tum-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
+<tumaet-ui-confirm-dialog key="assessment-criteria-generation-confirmation" />
 <div>
     <div class="mb-1 flex w-full flex-wrap items-start justify-between gap-3" data-testid="assessment-criteria-header">
-        <tum-ui-select-button
+        <tumaet-ui-select-button
             id="edit-mode"
             size="small"
             [options]="editModeOptions"
@@ -26,9 +26,9 @@
                     <span
                         class="inline-flex"
                         [attr.tabindex]="generationUnavailableReason ? 0 : null"
-                        [tumUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
+                        [tumAetUiTooltip]="generationUnavailableReason ? (generationUnavailableReason | artemisTranslate) : ''"
                     >
-                        <tum-ui-button
+                        <tumaet-ui-button
                             type="button"
                             severity="secondary"
                             data-testid="generate-assessment-criteria"
@@ -43,7 +43,7 @@
                             } @else {
                                 <span jhiTranslate="artemisApp.exercise.assessmentCriteriaGeneration.generate"></span>
                             }
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     </span>
                 </div>
             </div>
@@ -65,7 +65,7 @@
                                     [attr.for]="'criterionTitle-' + criterionIndex"
                                 ></label>
                                 <input
-                                    tumUiInput
+                                    tumAetUiInput
                                     class="w-full max-w-[22.5rem]"
                                     type="text"
                                     [id]="'criterionTitle-' + criterionIndex"
@@ -77,8 +77,9 @@
                                     [placeholder]="'artemisApp.exercise.criterionTitlePlaceholder' | artemisTranslate"
                                 />
                             </div>
-                            <tum-ui-button
+                            <tumaet-ui-button
                                 type="button"
+                                data-testid="delete-criterion-button"
                                 class="shrink-0"
                                 severity="danger"
                                 variant="outlined"
@@ -88,7 +89,7 @@
                                 (clicked)="deleteGradingCriterion(criterion)"
                             >
                                 <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
-                            </tum-ui-button>
+                            </tumaet-ui-button>
                         </div>
                         <div class="flex flex-col gap-3 px-6 pt-3 pb-5 ps-[1.625rem]">
                             <div class="grid grid-cols-1 gap-4 @[58rem]:grid-cols-2">
@@ -106,7 +107,7 @@
                                                     <jhi-help-icon text="artemisApp.exercise.creditsHint" />
                                                 </label>
                                                 <input
-                                                    tumUiInput
+                                                    tumAetUiInput
                                                     data-testid="instruction-credits"
                                                     [id]="'instruction-credits-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.credits"
@@ -127,7 +128,7 @@
                                                     <jhi-help-icon text="artemisApp.exercise.gradingScaleHint" />
                                                 </label>
                                                 <input
-                                                    tumUiInput
+                                                    tumAetUiInput
                                                     [id]="'instruction-grading-scale-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.gradingScale"
                                                     [ngModelOptions]="{ standalone: true }"
@@ -146,7 +147,7 @@
                                                     <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
                                                 </label>
                                                 <input
-                                                    tumUiInput
+                                                    tumAetUiInput
                                                     data-testid="instruction-usage-count"
                                                     [id]="'instruction-usage-count-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.usageCount"
@@ -161,11 +162,12 @@
                                             </div>
                                             <button
                                                 type="button"
+                                                data-testid="delete-instruction-button"
                                                 class="inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center justify-self-end self-end border-0 bg-transparent p-0 text-state-danger disabled:cursor-not-allowed disabled:opacity-40"
                                                 [id]="'delete-instruction-row-' + criterionIndex + '-' + instructionIndex"
                                                 [disabled]="!editable()"
                                                 [attr.aria-label]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
-                                                [tumUiTooltip]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
+                                                [tumAetUiTooltip]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
                                                 (click)="deleteInstruction(instruction, criterion)"
                                             >
                                                 <fa-icon class="text-lg" [icon]="faTrash" />
@@ -182,7 +184,7 @@
                                                     <jhi-help-icon text="artemisApp.exercise.descriptionHint" />
                                                 </label>
                                                 <textarea
-                                                    tumUiTextarea
+                                                    tumAetUiTextarea
                                                     class="box-border max-w-full w-full resize-y"
                                                     [id]="'instruction-description-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.instructionDescription"
@@ -202,7 +204,7 @@
                                                     <jhi-help-icon text="artemisApp.exercise.feedbackHint" />
                                                 </label>
                                                 <textarea
-                                                    tumUiTextarea
+                                                    tumAetUiTextarea
                                                     class="box-border max-w-full w-full resize-y"
                                                     [id]="'instruction-feedback-' + criterionIndex + '-' + instructionIndex"
                                                     [(ngModel)]="instruction.feedback"
@@ -217,7 +219,7 @@
                                     </div>
                                 }
                             </div>
-                            <tum-ui-button
+                            <tumaet-ui-button
                                 type="button"
                                 [id]="'add-instruction-button-' + criterionIndex"
                                 severity="secondary"
@@ -228,11 +230,11 @@
                                 (clicked)="addNewInstruction(criterion)"
                             >
                                 <span jhiTranslate="artemisApp.exercise.addAssessmentInstruction"></span>
-                            </tum-ui-button>
+                            </tumaet-ui-button>
                         </div>
                     </div>
                 }
-                <tum-ui-button
+                <tumaet-ui-button
                     type="button"
                     id="add-criterion-button"
                     severity="primary"
@@ -242,7 +244,7 @@
                     (clicked)="addNewGradingCriterion()"
                 >
                     <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
-                </tum-ui-button>
+                </tumaet-ui-button>
             </div>
         </div>
     }

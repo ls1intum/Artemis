@@ -7,16 +7,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faFlag } from '@fortawesome/free-solid-svg-icons';
-import { TumUiInputDirective, TumUiInputGroupAddonComponent, TumUiInputGroupComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective, TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-edit-languages-input',
     imports: [
         FaIconComponent,
-        TumUiInputDirective,
-        TumUiInputGroupComponent,
-        TumUiInputGroupAddonComponent,
-        TumUiTooltipDirective,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupComponent,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiTooltipDirective,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,

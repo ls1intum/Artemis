@@ -20,7 +20,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -39,7 +39,7 @@ const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
     templateUrl: './exam-exercise-row-buttons.component.html',
-    imports: [ExerciseActionBarComponent, FaIconComponent, TumUiTooltipDirective, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
+    imports: [ExerciseActionBarComponent, FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
 })
 export class ExamExerciseRowButtonsComponent {
     private textExerciseService = inject(TextExerciseService);

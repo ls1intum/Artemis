@@ -48,6 +48,23 @@ describe('AboutUsComponent', () => {
         expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledOnce();
     });
 
+    it('displays university, operator and administrator from the instance configuration', async () => {
+        vi.spyOn(TestBed.inject(StaticContentService), 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], [])));
+        const profile = new ProfileInfo();
+        profile.operatorName = 'Research group of Applied Education Technologies';
+        profile.operatorAdminName = 'Erika Muster';
+        profile.universityName = 'Technical University of Munich';
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(profile);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.textContent).toContain(profile.universityName);
+        expect(element.textContent).toContain(profile.operatorName);
+        expect(element.textContent).toContain(profile.operatorAdminName);
+    });
+
     it('load and display contributors', async () => {
         const staticContentService = TestBed.inject(StaticContentService);
         const profileService = TestBed.inject(ProfileService);

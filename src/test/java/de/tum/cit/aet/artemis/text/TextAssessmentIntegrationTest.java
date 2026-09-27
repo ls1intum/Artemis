@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.text;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUpdate;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -1644,7 +1643,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(de.tum.cit.aet.artemis.programming.dto.ResultDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"), isA(de.tum.cit.aet.artemis.programming.dto.ResultDTO.class));
     }
 
     private void addAssessmentFeedbackAndCheckScore(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment, List<Feedback> feedbacks, double pointsAwarded,

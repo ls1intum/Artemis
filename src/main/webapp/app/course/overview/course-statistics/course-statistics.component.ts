@@ -17,7 +17,7 @@ import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { TumUiChartData, singleSeriesChart, stackedBarChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { TumAetUiChartData, singleSeriesChart, stackedBarChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ScoreType } from 'app/foundation/constants/score-type.constants';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -37,13 +37,13 @@ import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import {
-    TumUiBarChartComponent,
-    TumUiBarChartConfig,
-    TumUiChartDatumContext,
-    TumUiChartSelectEvent,
-    TumUiDoughnutChartComponent,
-    TumUiDoughnutChartConfig,
-    TumUiEmptyStateComponent,
+    TumAetUiBarChartComponent,
+    TumAetUiBarChartConfig,
+    TumAetUiChartDatumContext,
+    TumAetUiChartSelectEvent,
+    TumAetUiDoughnutChartComponent,
+    TumAetUiDoughnutChartConfig,
+    TumAetUiEmptyStateComponent,
 } from '@tumaet/ui-angular';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
@@ -120,14 +120,14 @@ enum ChartBarTitle {
         TranslateDirective,
         NgbDropdownMenu,
         DocumentationButtonComponent,
-        TumUiBarChartComponent,
-        TumUiDoughnutChartComponent,
+        TumAetUiBarChartComponent,
+        TumAetUiDoughnutChartComponent,
         NgbTooltip,
         RouterLink,
         ExerciseScoresChartComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
-        TumUiEmptyStateComponent,
+        TumAetUiEmptyStateComponent,
     ],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
@@ -263,7 +263,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const translated = this.doughnutChartEntries().map((entry) => cloneWith(entry, { name: this.translateService.instant(entry.name) }));
         return singleSeriesChart(translated, this.doughnutColors());
     });
-    readonly doughnutConfig: TumUiDoughnutChartConfig = {
+    readonly doughnutConfig: TumAetUiDoughnutChartConfig = {
         legend: false,
         tooltip: {
             title: (items) => items[0]?.label ?? '',
@@ -272,7 +272,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     readonly groupChartData = computed(() => {
-        const dataPerGroup = new Map<ExerciseType, TumUiChartData>();
+        const dataPerGroup = new Map<ExerciseType, TumAetUiChartData>();
         for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
             // Adapt each NgxExercise to a ChartMultiSeriesEntry: its title is optional, so fall back to an empty
             // label (the stacked-bar adapter requires a string name); series is already structurally compatible.
@@ -285,7 +285,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         return dataPerGroup;
     });
     readonly groupChartConfigs = computed(() => {
-        const configPerGroup = new Map<ExerciseType, TumUiBarChartConfig>();
+        const configPerGroup = new Map<ExerciseType, TumAetUiBarChartConfig>();
         for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
             configPerGroup.set(exerciseType, {
                 horizontal: true,
@@ -861,7 +861,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param event the event identifying the clicked bar
      * @param exerciseType the exercise group whose chart was clicked
      */
-    onSelect(event: TumUiChartSelectEvent) {
+    onSelect(event: TumAetUiChartSelectEvent) {
         const exerciseId = (event.meta as Series | undefined)?.['exerciseId'];
         if (exerciseId === undefined) {
             return;
@@ -874,7 +874,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * and the properties of the corresponding exercise (mirrors the former ngx-charts tooltip template).
      * @param item the hovered tooltip item provided by the chart
      */
-    private barTooltipLines(item: TumUiChartDatumContext): string[] {
+    private barTooltipLines(item: TumAetUiChartDatumContext): string[] {
         const series = item.meta as Series | undefined;
         if (!series) {
             return [];

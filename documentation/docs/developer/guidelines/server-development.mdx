@@ -43,7 +43,7 @@ The main application is stored under `/src/main` and separated into modules:
     * **repository** - used to access or change objects in the database. There are several techniques to query a database: named queries, queries with SpEL expressions and Entity Graphs.
     * security - contains different POJOs (simple classes that don't implement/extend any interface/class and don't have annotations) and component classes related to security.
     * **service** - represents the controller of the server application. Add the application logic here. Retrieve and change objects using repositories.
-    * **web** - contains REST and websocket controllers that act as the view of the server application. Validate input and security here but do not include complex application logic. For websockets, use the `MessagingTemplate` to push small data to the client or to notify the client about events.
+    * **web** - contains REST and websocket controllers that act as the view of the server application. Validate input and security here but do not include complex application logic. For websockets, declare every topic together with who may subscribe and send through `WebsocketMessagingService` to push small data to the client or to notify the client about events; see the [WebSocket Topics](/developer/guidelines/websocket) guideline.
 
 ### Naming convention
 

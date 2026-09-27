@@ -27,12 +27,12 @@ import { defer, finalize } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import {
-    TumUiButtonComponent,
-    TumUiConfirmDialogComponent,
-    TumUiConfirmationService,
-    TumUiInputDirective,
-    TumUiSelectButtonComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiInputDirective,
+    TumAetUiSelectButtonComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -65,19 +65,19 @@ type ReconciliationPlan = {
         HelpIconComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiConfirmDialogComponent,
-        TumUiInputDirective,
-        TumUiSelectButtonComponent,
-        TumUiTooltipDirective,
+        TumAetUiButtonComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectButtonComponent,
+        TumAetUiTooltipDirective,
     ],
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     private readonly profileService = inject(ProfileService);
     private readonly generationService = inject(AssessmentCriteriaGenerationService);
     private readonly alertService = inject(AlertService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly accountService = inject(AccountService);
@@ -260,7 +260,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * leftover text from older sessions must not become part of the title.
      */
     private stripLegacyIdentityMarker(text: string): string {
-        const match = /^\{@id:\d+\}\s*(.*)$/s.exec(text);
+        const match = /^\{@id:\d+}\s*(.*)$/s.exec(text);
         return match ? match[1] : text;
     }
 

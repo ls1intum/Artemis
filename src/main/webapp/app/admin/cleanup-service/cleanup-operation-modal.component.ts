@@ -11,7 +11,7 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiDialogComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 /**
  * Modal component for executing and monitoring cleanup operations.
  * Shows counts of entities to be cleaned up and allows executing the operation.
@@ -19,7 +19,7 @@ import { TumUiButtonDirective, TumUiDialogComponent, TumUiMessageComponent } fro
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, TumUiDialogComponent, TumUiButtonDirective, TumUiMessageComponent],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, TumAetUiDialogComponent, TumAetUiButtonDirective, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupOperationModalComponent {

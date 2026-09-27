@@ -304,7 +304,7 @@ public class StudentExamResource {
         // The service reconstructs the transient graph from the slim DTO and then runs the (unchanged) submit machinery.
         studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
 
-        websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
+        websocketMessagingService.sendMessage(ExamWebsocketTopics.EXAM_SUBMITTED.at(examId), "");
 
         log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
                 formatDurationFrom(start));
@@ -435,7 +435,7 @@ public class StudentExamResource {
         }
 
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {
-            websocketMessagingService.sendMessage("/topic/exam/" + examId + "/started", "");
+            websocketMessagingService.sendMessage(ExamWebsocketTopics.EXAM_STARTED.at(examId), "");
         }
 
         prepareStudentExamForConduction(request, currentUser, studentExam);

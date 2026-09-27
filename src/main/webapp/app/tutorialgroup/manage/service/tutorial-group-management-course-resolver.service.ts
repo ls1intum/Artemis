@@ -1,10 +1,10 @@
 import { Service, inject } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RedirectCommand, Resolve, Router, RouterStateSnapshot } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { EMPTY, Observable, combineLatest, filter, map, of, throwError } from 'rxjs';
+import { Observable, combineLatest, filter, map, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, HttpStatusCode } from '@angular/common/http';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
@@ -32,30 +32,28 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
                 }
                 return course;
             }),
-            // Every redirect returns EMPTY so the resolver completes without emitting and Angular cancels this
-            // navigation. Emitting as well would activate the target route alongside the redirect.
-            switchMap((course: Course) => {
+            // Every redirect is a thrown RedirectCommand: the router cancels this navigation and redirects instead,
+            // so the tutorial group route never activates. It passes through the catchError below unchanged,
+            // because that only handles HTTP errors.
+            map((course: Course) => {
                 if (!course.isAtLeastTutor) {
                     this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
-                    void this.router.navigate(['/courses']);
-                    return EMPTY;
+                    throw this.redirectTo(['/courses']);
                 }
                 if (course.tutorialGroupsConfiguration) {
                     const editUrl = '/course-management/' + course.id + '/tutorial-groups/configuration/' + course.tutorialGroupsConfiguration.id + '/edit';
                     if (state.url === editUrl) {
-                        return of(course);
+                        return course;
                     }
                 }
                 if (!course.tutorialGroupsConfiguration || !course.timeZone) {
                     if (course.isAtLeastInstructor) {
-                        void this.router.navigate(['/course-management', course.id, 'tutorial-groups-checklist']);
-                    } else {
-                        this.alertService.warning('artemisApp.pages.tutorialGroupsManagement.configurationRequiredForTutor');
-                        void this.router.navigate(['/courses']);
+                        throw this.redirectTo(['/course-management', course.id, 'tutorial-groups-checklist']);
                     }
-                    return EMPTY;
+                    this.alertService.warning('artemisApp.pages.tutorialGroupsManagement.configurationRequiredForTutor');
+                    throw this.redirectTo(['/courses']);
                 }
-                return of(course);
+                return course;
             }),
             // Both endpoints require at least student in the course, so a user below that gets a 403 and the
             // isAtLeastTutor check above is never reached. Without this the navigation just fails and drops the
@@ -63,11 +61,15 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
             catchError((error: unknown) => {
                 if (error instanceof HttpErrorResponse && error.status === HttpStatusCode.Forbidden) {
                     this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
-                    void this.router.navigate(['/courses']);
-                    return EMPTY;
+                    return throwError(() => this.redirectTo(['/courses']));
                 }
                 return throwError(() => error);
             }),
         );
+    }
+
+    /** A redirect the router performs instead of activating the tutorial group route. */
+    private redirectTo(commands: readonly unknown[]): RedirectCommand {
+        return new RedirectCommand(this.router.createUrlTree(commands));
     }
 }

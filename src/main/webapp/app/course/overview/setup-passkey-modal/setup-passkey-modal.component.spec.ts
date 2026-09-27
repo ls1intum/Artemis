@@ -18,7 +18,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { TumUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 
 describe('SetupPasskeyModalComponent', () => {
     let component: SetupPasskeyModalComponent;
@@ -100,8 +100,8 @@ describe('SetupPasskeyModalComponent', () => {
             component.visible.set(true);
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('tum-ui-dialog')).toBeTruthy();
-            const buttons = fixture.debugElement.queryAll(By.directive(TumUiButtonComponent));
+            expect(fixture.nativeElement.querySelector('tumaet-ui-dialog')).toBeTruthy();
+            const buttons = fixture.debugElement.queryAll(By.directive(TumAetUiButtonComponent));
             expect(buttons).toHaveLength(3);
         });
 
@@ -110,7 +110,7 @@ describe('SetupPasskeyModalComponent', () => {
             component.visible.set(true);
             fixture.detectChanges();
 
-            const buttons = fixture.debugElement.queryAll(By.directive(TumUiButtonComponent));
+            const buttons = fixture.debugElement.queryAll(By.directive(TumAetUiButtonComponent));
             buttons[0].triggerEventHandler('clicked', null);
 
             expect(spy).toHaveBeenCalledOnce();
@@ -121,7 +121,7 @@ describe('SetupPasskeyModalComponent', () => {
             component.visible.set(true);
             fixture.detectChanges();
 
-            const buttons = fixture.debugElement.queryAll(By.directive(TumUiButtonComponent));
+            const buttons = fixture.debugElement.queryAll(By.directive(TumAetUiButtonComponent));
             buttons[1].triggerEventHandler('clicked', null);
 
             expect(spy).toHaveBeenCalledOnce();
@@ -132,7 +132,7 @@ describe('SetupPasskeyModalComponent', () => {
             component.visible.set(true);
             fixture.detectChanges();
 
-            const buttons = fixture.debugElement.queryAll(By.directive(TumUiButtonComponent));
+            const buttons = fixture.debugElement.queryAll(By.directive(TumAetUiButtonComponent));
             buttons[2].triggerEventHandler('clicked', null);
 
             expect(spy).toHaveBeenCalledOnce();

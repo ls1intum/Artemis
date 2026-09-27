@@ -12,8 +12,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { CellTemplateRef, ColumnDef, TumUiButtonDirective, TumUiTableComponent, TumUiTableQueryEvent } from '@tumaet/ui-angular';
-import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui-integration/tum-ui-table-request-builder';
+import { CellTemplateRef, ColumnDef, TumAetUiButtonDirective, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-aet-ui-integration/tumaet-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
@@ -32,9 +32,9 @@ import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-
         FaIconComponent,
         DeleteButtonDirective,
         AdminTitleBarTitleDirective,
-        TumUiTableComponent,
+        TumAetUiTableComponent,
         UserRegistrationModalComponent,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class OrganizationManagementDetailComponent implements OnInit {
@@ -91,7 +91,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
     ]);
 
     /** Last load event for users table, used to refresh after add/remove */
-    private lastUsersLoadEvent: TumUiTableQueryEvent | undefined;
+    private lastUsersLoadEvent: TumAetUiTableQueryEvent | undefined;
 
     private usersLoadId = 0;
     private coursesLoadId = 0;
@@ -143,7 +143,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
         }
     }
 
-    loadUsers(event: TumUiTableQueryEvent): void {
+    loadUsers(event: TumAetUiTableQueryEvent): void {
         const id = this.organizationId();
         if (id === undefined) {
             return;
@@ -169,7 +169,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
         });
     }
 
-    loadCourses(event: TumUiTableQueryEvent): void {
+    loadCourses(event: TumAetUiTableQueryEvent): void {
         const id = this.organizationId();
         if (id === undefined) {
             return;

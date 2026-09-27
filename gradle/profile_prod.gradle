@@ -78,22 +78,22 @@ if (prebuiltWebappDir.exists()) {
         inputs.dir("src/main/webapp/")
             .withPropertyName("webapp-source-dir")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files(tumUiRuntimeSources)
-            .withPropertyName("tum-ui-source-dir")
+        inputs.files(tumAetUiRuntimeSources)
+            .withPropertyName("tum-aet-ui-source-dir")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(
-            "packages/tum-ui/package.json",
-            "packages/tum-ui/ng-package.json",
-            "packages/tum-ui/tsconfig.base.json",
-            "packages/tum-ui/tsconfig.lib.json",
-            "packages/tum-ui/tsconfig.lib.prod.json",
-            "packages/tum-ui/tailwind.css",
-            "packages/tum-ui/tailwind-theme.css",
-            "packages/tum-ui/themes.css",
-            "packages/tum-ui/build-styles.mjs",
-            "packages/tum-ui/check-styles.mjs",
+            "packages/tum-aet-ui/package.json",
+            "packages/tum-aet-ui/ng-package.json",
+            "packages/tum-aet-ui/tsconfig.base.json",
+            "packages/tum-aet-ui/tsconfig.lib.json",
+            "packages/tum-aet-ui/tsconfig.lib.prod.json",
+            "packages/tum-aet-ui/tailwind.css",
+            "packages/tum-aet-ui/tailwind-theme.css",
+            "packages/tum-aet-ui/themes.css",
+            "packages/tum-aet-ui/build-styles.mjs",
+            "packages/tum-aet-ui/check-styles.mjs",
         )
-            .withPropertyName("tum-ui-build-config")
+            .withPropertyName("tumaet-ui-build-config")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         outputs.dir(webappBuildDir).withPropertyName("webapp-build-dir")
         args = ["run", "webapp:prod"]

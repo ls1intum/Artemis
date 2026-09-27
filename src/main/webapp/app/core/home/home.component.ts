@@ -19,7 +19,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { HttpClient } from '@angular/common/http';
 import { LoginOptionsDTO } from '../auth/login-options.model';
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { NgTemplateOutlet } from '@angular/common';
 
 // Keep aligned with Constants.SIMPLE_EMAIL_REGEX, used by SecurityUtils.isEmail on the server.
@@ -35,10 +35,10 @@ const SIMPLE_EMAIL_REGEX = '^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$';
         RouterLink,
         FaIconComponent,
         Saml2LoginComponent,
-        TumUiButtonComponent,
-        TumUiInputDirective,
-        TumUiCheckboxComponent,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiInputDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
         NgTemplateOutlet,
     ],
 })

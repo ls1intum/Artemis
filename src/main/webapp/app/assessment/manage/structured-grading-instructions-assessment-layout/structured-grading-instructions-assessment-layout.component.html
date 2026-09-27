@@ -19,7 +19,7 @@
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
             <ng-container expandableSectionHeaderActions>
                 @if (selectable()) {
-                    <tum-ui-tag
+                    <tumaet-ui-tag
                         severity="secondary"
                         styleClass="font-normal!"
                         [value]="
@@ -52,7 +52,7 @@
                                                 isLockedByReferencedFeedback(instruction) ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
                                             "
                                         >
-                                            <tum-ui-checkbox
+                                            <tumaet-ui-checkbox
                                                 [checked]="isApplied(instruction)"
                                                 [disabled]="isLockedByReferencedFeedback(instruction)"
                                                 [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"

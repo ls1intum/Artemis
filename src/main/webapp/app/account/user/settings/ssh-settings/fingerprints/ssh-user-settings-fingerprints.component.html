@@ -1,8 +1,8 @@
 <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshFingerprints"></h2>
 
-<tum-ui-list [ariaLabel]="'artemisApp.userSettings.sshSettingsPage.sshFingerprints' | artemisTranslate">
+<tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.sshSettingsPage.sshFingerprints' | artemisTranslate">
     <!-- Viewing existing key and creating a new key -->
-    <li tumUiListItem>
+    <li tumAetUiListItem>
         <div class="flex flex-wrap">
             <p class="font-medium">
                 <span class="mt-4" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprintsExplanation"> </span>
@@ -33,9 +33,9 @@
         </dl>
 
         <div class="mt-4 flex items-center justify-end">
-            <a tumUiButton class="rounded-btn" size="small" [routerLink]="['..']">
+            <a tumAetUiButton class="rounded-btn" size="small" [routerLink]="['..']">
                 <span class="text-sm" jhiTranslate="artemisApp.userSettings.sshSettingsPage.back"></span>
             </a>
         </div>
     </li>
-</tum-ui-list>
+</tumaet-ui-list>

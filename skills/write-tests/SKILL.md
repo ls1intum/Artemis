@@ -52,8 +52,15 @@ It enforces member visibility, which Vitest does not. A spec that reaches a priv
 `component.privateThing` passes locally and fails in CI. Use bracket access,
 `component['privateThing']`, and run `compile:tests` before pushing.
 
-Read `reference/client.md` for the rest: the monaco stub, zoneless test setup, `model()` versus
-`input()` plus `output()`, and why template errors need a build rather than a test run.
+**Test a directive with `TestBed.createDirective`, not a throwaway host component.** Keep a host
+only when the directive is structural or needs a template around it: something around or beside
+it, content Angular keeps rendering inside it, a static attribute its constructor reads, or an input
+that takes a `TemplateRef` or a component instance from the same template. Input bindings apply
+on the first `detectChanges()`.
+
+Read `reference/client.md` for the rest: the `createDirective` pattern and its limits, the monaco
+stub, zoneless test setup, `model()` versus `input()` plus `output()`, and why template errors need
+a build rather than a test run.
 
 ## Both
 
