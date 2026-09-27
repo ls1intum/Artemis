@@ -5,8 +5,11 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 // TODO: convert to Record, use composition for common attributes
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(name = "UserPageableSearchDTO")
 public class UserPageableSearchDTO extends SearchTermPageableSearchDTO<String> {
 
     /**
