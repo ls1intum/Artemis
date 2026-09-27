@@ -110,8 +110,10 @@ public class PyrisWebhookService {
         String base64EncodedPdf;
         String lectureUnitLink;
         if (attachmentVideoUnit.getAttachment() != null) {
-            base64EncodedPdf = attachmentToBase64(attachmentVideoUnit);
-            lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
+            // Only a stored PDF is page content; any other attachment (no file, an external link, another file type) is sent like a unit without one, so a
+            // video next to it is still ingested instead of the whole unit failing preparation on every claim.
+            base64EncodedPdf = PyrisLectureUnitEligibility.hasPdf(attachmentVideoUnit) ? attachmentToBase64(attachmentVideoUnit) : "";
+            lectureUnitLink = attachmentVideoUnit.getAttachment().getLink() != null ? artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink() : "";
         }
         else {
             base64EncodedPdf = "";
