@@ -21,9 +21,9 @@ export interface AthenaFeedbackStyleExamples {
  * solution and grading instructions, a student without feedback preferences of their own submitted the answer below,
  * and feedback was requested once per level with the course default set to it, keeping the other slider at neutral.
  * Athena returned a few items per request; each level keeps the one it credited least, which is where the level shows
- * best and which points at the same sentence throughout. The item is kept as Athena returned it: its credits, and the
- * "Next step" part of the description in English even for the German submission, since that is how the text module
- * writes it.
+ * best. That item points at the last sentence for every level but the English "detailed" one, whose run attached its
+ * items to the earlier sentences. The item is kept as Athena returned it: its credits, and the "Next step" part of the
+ * description in English even for the German submission, since that is how the text module writes it.
  */
 export const ATHENA_FEEDBACK_STYLE_EXAMPLES: Readonly<Record<string, AthenaFeedbackStyleExamples>> = {
     en: {

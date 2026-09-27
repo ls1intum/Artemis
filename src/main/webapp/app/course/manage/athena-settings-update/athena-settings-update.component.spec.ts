@@ -174,6 +174,26 @@ describe('AthenaSettingsUpdateComponent', () => {
         expect(slider.getAttribute('aria-valuenow')).toBe(String(expected));
     });
 
+    it('should save a clicked tick and leave the focus on the slider rather than the tick', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ ...bothDisabled, formativeFeedbackEnabled: true }));
+        const updateSpy = vi
+            .spyOn(athenaCourseConfigService, 'updateCourseConfig')
+            .mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, formativeFeedbackEnabled: true, defaultFeedbackDetail: 3 } })));
+        createComponent();
+        fixture.detectChanges();
+
+        const tick: HTMLElement = fixture.nativeElement.querySelector('[data-testid="athena-settings-default-feedback-detail-3"]');
+        const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        tick.dispatchEvent(mousedown);
+        tick.click();
+        fixture.detectChanges();
+
+        // The tick is hidden from assistive technology, so it must not keep the focus; the slider takes it instead.
+        expect(mousedown.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="athena-settings-default-feedback-detail-slider"]'));
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { defaultFeedbackDetail: 3 });
+    });
+
     it('should stay at the end of the slider and leave other keys to the browser', () => {
         vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ ...bothDisabled, formativeFeedbackEnabled: true, defaultFeedbackDetail: 3 }));
         const updateSpy = vi.spyOn(athenaCourseConfigService, 'updateCourseConfig');
@@ -295,6 +315,7 @@ describe('AthenaSettingsUpdateComponent', () => {
         fixture.detectChanges();
 
         const example: HTMLElement = fixture.nativeElement.querySelector('[data-testid="athena-settings-default-feedback-detail-example"]');
+        expect(example.closest('[data-testid="athena-settings-default-feedback-detail-example-box"]')).toBeTruthy();
         expect(example.textContent).toContain(ATHENA_FEEDBACK_STYLE_EXAMPLES['en'].defaultFeedbackDetail[2].reference);
         expect(example.querySelectorAll('jhi-unified-feedback')).toHaveLength(1);
     });
