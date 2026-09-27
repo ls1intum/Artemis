@@ -97,14 +97,18 @@
     </div>
     <div class="mt-5 ms-2 me-2">
         <h3 class="font-weight-bold" jhiTranslate="artemisApp.operatorInfo.title"></h3>
-        <div>
-            <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.university"></div>
-            <div class="inline-block">{{ universityName() }}</div>
-        </div>
-        <div>
-            <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.name"></div>
-            <div class="inline-block">{{ operatorName() }}</div>
-        </div>
+        @if (universityName()) {
+            <div>
+                <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.university"></div>
+                <div class="inline-block">{{ universityName() }}</div>
+            </div>
+        }
+        @if (operatorName()) {
+            <div>
+                <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.name"></div>
+                <div class="inline-block">{{ operatorName() }}</div>
+            </div>
+        }
         @if (operatorAdminName()) {
             <div>
                 <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.admin"></div>
