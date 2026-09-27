@@ -473,8 +473,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Apply the filter and close the modal.
      */
     applyFilter() {
-        this.loadAll();
         this.filterModalVisible.set(false);
+        // The current page may not exist for the new filters
+        if (this.page() === 1) {
+            this.loadAll();
+        } else {
+            this.goToFirstPage();
+        }
     }
 
     /**
@@ -563,10 +568,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
+        const searchTermChanged = this.searchControl.value !== this.searchTerm();
         this.searchTerm.set(this.searchControl.value);
         if (this.searchTerm().length >= 3 || this.searchTerm().length === 0) {
             this.searchInvalid.set(false);
-            this.search.next();
+            // The current page may not exist for the new search term; the navigation reloads the users
+            if (searchTermChanged && this.page() !== 1) {
+                this.goToFirstPage();
+            } else {
+                this.search.next();
+            }
         } else {
             this.searchInvalid.set(true);
         }
@@ -604,6 +615,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /** Handles a tumaet-ui paginator page size change by applying the new size and returning to the first page. */
     onPageSizeChange(pageSize: number): void {
         this.itemsPerPage.set(pageSize);
+        this.goToFirstPage();
+    }
+
+    /** Navigates to the first page; the resulting route change reloads the users. */
+    private goToFirstPage(): void {
         this.page.set(1);
         this.transition();
     }

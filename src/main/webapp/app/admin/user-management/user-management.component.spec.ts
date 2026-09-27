@@ -2,13 +2,14 @@
  * Vitest tests for UserManagementComponent.
  * Tests the main user management list view with filtering, sorting, and CRUD operations.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormControl, FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
@@ -148,6 +149,55 @@ describe('UserManagementComponent', () => {
                 route.queryParamMap = originalQueryParamMap;
                 vi.useRealTimers();
             }
+        });
+    });
+
+    describe('returning to the first page', () => {
+        let router: Router;
+        let searchSpy: MockInstance;
+
+        beforeEach(() => {
+            router = TestBed.inject(Router);
+            searchSpy = vi.spyOn(component.search, 'next');
+            component.userSearchForm = new FormGroup({ searchControl: new FormControl('') });
+        });
+
+        it('applies filters on the first page when the current page is a later one', () => {
+            component.page.set(6);
+
+            component.applyFilter();
+
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1 }) }));
+            expect(component.filterModalVisible()).toBe(false);
+        });
+
+        it('reloads directly when filters are applied on the first page', () => {
+            component.applyFilter();
+
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+
+        it('searches from the first page when the search term changes', () => {
+            component.page.set(6);
+            component.searchControl.setValue('student');
+
+            component.loadAll();
+
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1 }) }));
+            expect(searchSpy).not.toHaveBeenCalled();
+        });
+
+        it('stays on the current page when the search term is unchanged', () => {
+            component.page.set(6);
+
+            component.loadAll();
+
+            expect(component.page()).toBe(6);
+            expect(searchSpy).toHaveBeenCalledOnce();
+            expect(router.navigate).not.toHaveBeenCalled();
         });
     });
 

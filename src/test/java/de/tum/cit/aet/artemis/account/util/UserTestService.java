@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.account.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -567,6 +569,24 @@ public class UserTestService {
         List<UserDTO> users = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(1);
         assertThat(users.getFirst().getEmail()).isEqualTo(student.getEmail());
+    }
+
+    // Test
+    public void getUsersViaAuthorityFilter_pageSmallerThanMatches_totalCountIsCorrect() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "2");
+        params.add("searchTerm", TEST_PREFIX);
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        params.add("authorities", "USER");
+        params.add("origins", "");
+        params.add("status", "");
+        params.add("registrationNumbers", "");
+        params.add("courseIds", "");
+        // Only the first page fits, so the total has to come from the count query
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/account/admin/users").params(params)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
+                .andExpect(header().string("X-Total-Count", String.valueOf(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS)));
     }
 
     // Test
