@@ -20,11 +20,11 @@
             </div>
         </div>
         <div class="row right-section ml-2">
-            <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(currentFeedback)">
+            <button type="button" class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(currentFeedback)">
                 <fa-icon [icon]="faCheck" />
                 <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
             </button>
-            <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(currentFeedback)">
+            <button type="button" class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(currentFeedback)">
                 <fa-icon [icon]="faTrash" />
                 <span jhiTranslate="artemisApp.assessment.detail.discard"></span>
             </button>
