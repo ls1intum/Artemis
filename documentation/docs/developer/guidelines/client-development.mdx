@@ -480,6 +480,19 @@ not accept the unit suffixes `NgStyle` understands: write `{ 'top.px': y }` as `
 Never bind `outerHTML`: replacing the element Angular is bound to breaks the next update. Use `[innerHTML]` to render markup inside an element. The
 `@angular-eslint/template/no-outerhtml` rule enforces this.
 
+Avoid `$any()` in templates. The `@angular-eslint/template/no-any` rule enforces this. Read native input values through a template reference and handle library events in
+typed component methods. Call signals when checking their value; `@angular-eslint/no-uncalled-signals` catches checks of the signal function itself.
+
+Use `NgOptimizedImage` and `ngSrc` for images whose intrinsic dimensions are known. Supply `width` and `height`, or use `fill` inside a positioned container with a defined
+size. Mark an image `priority` when it is expected to be the largest visible image on initial load. For user supplied images with unknown dimensions that must keep their
+intrinsic layout, use native `src` with appropriate `loading` and `decoding` attributes.
+
+Give every image a text alternative that conveys its purpose. Localize descriptions that users hear through a screen reader. Use `alt=""` for a decorative image or one
+whose information is already stated next to it; do not omit the attribute. The `@angular-eslint/template/alt-text` rule enforces its presence.
+
+Keep keyboard focus in the same order as the page content. Use native controls and arrange the markup in the intended focus order instead of assigning positive `tabindex`
+values. The `@angular-eslint/template/no-positive-tabindex` rule enforces this.
+
 ### Comments & Documentation
 
 - Use JSDoc style comments for functions, interfaces, enums, and classes.
@@ -715,6 +728,8 @@ assignments than as a copy — see the `GradingComponent.gradingScale` getter.
 
 - We use `prettier` to style code automatically and `eslint` to find additional issues.
 - You can find the corresponding commands to invoke those tools in `package.json`.
+- Keep Angular lifecycle hooks synchronous and start async work in a separate method (`@angular-eslint/no-async-lifecycle-method`). Avoid repeating entries in component
+  metadata arrays (`@angular-eslint/no-duplicates-in-metadata-arrays`).
 
 ### Preventing Memory Leaks
 

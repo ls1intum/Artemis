@@ -181,7 +181,7 @@ const observeFullResponseForHeaderOperations = (sourceFile: SourceFile, observed
             throw new Error(`No HttpClient call to observe in ${method.getName()} in ${sourceFile.getBaseName()}`);
         }
 
-        returnTypeNode.replaceWithText(`Observable<HttpResponse<${returnType.slice("Observable<".length, -1)}>>`);
+        returnTypeNode.replaceWithText("Observable<HttpResponse<" + returnType.slice("Observable<".length, -1) + ">>");
         httpCall.addArgument("{ observe: 'response' }");
 
         const httpImport = sourceFile.getImportDeclaration(declaration => declaration.getModuleSpecifierValue() === "@angular/common/http");

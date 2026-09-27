@@ -19,7 +19,7 @@
 
 <ng-template #logoCell let-params>
     @if (params.value) {
-        <img [height]="36" [src]="params.value" (error)="$event.target.style.display = 'none'" alt="" />
+        <img [height]="36" loading="lazy" decoding="async" [src]="params.value" (error)="$event.target.style.display = 'none'" alt="" />
     }
 </ng-template>
 

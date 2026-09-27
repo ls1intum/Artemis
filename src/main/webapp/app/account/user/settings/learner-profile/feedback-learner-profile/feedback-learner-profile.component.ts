@@ -65,7 +65,11 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Icon for save button */
     protected readonly faSave = faSave;
 
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
+        void this.initializeFeedbackLearnerProfileComponent();
+    }
+
+    private async initializeFeedbackLearnerProfileComponent(): Promise<void> {
         await this.loadProfile();
     }
 

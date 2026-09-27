@@ -13,14 +13,14 @@ import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
+import { NgClass, NgOptimizedImage } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-student-upload-images-dialog',
     templateUrl: './students-upload-images-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, ArtemisTranslatePipe],
+    imports: [NgOptimizedImage, FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
     private dialogRef = inject(DynamicDialogRef);

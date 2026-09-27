@@ -1,3 +1,5 @@
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,7 +15,7 @@ describe('ExpandableSectionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ExpandableSectionComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [LocalStorageService],
+            providers: [LocalStorageService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -24,6 +26,24 @@ describe('ExpandableSectionComponent', () => {
     });
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it.each([false, true])('announces expansion after keyboard activation for subheader %s', (isSubHeader) => {
+        fixture.componentRef.setInput('headerKey', 'Instructions');
+        fixture.componentRef.setInput('hasTranslation', false);
+        fixture.componentRef.setInput('isSubHeader', isSubHeader);
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(true);
+        fixture.detectChanges();
+        const header = fixture.nativeElement.querySelector('.expandable-header') as HTMLElement;
+        expect(header.getAttribute('aria-expanded')).toBe('false');
+        header.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        fixture.detectChanges();
+        expect(component.isCollapsed()).toBe(false);
+        expect(header.getAttribute('aria-expanded')).toBe('true');
+        header.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        fixture.detectChanges();
+        expect(component.isCollapsed()).toBe(true);
+        expect(header.getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should get correct key', () => {

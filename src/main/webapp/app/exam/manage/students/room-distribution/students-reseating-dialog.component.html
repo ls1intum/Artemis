@@ -71,7 +71,7 @@
         <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
             <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel" class="m-1"></span>
         </button>
-        <button class="btn btn-success" id="finish-button" (click)="attemptReseatAndCloseDialogOnSuccess()">
+        <button type="button" class="btn btn-success" id="finish-button" (click)="attemptReseatAndCloseDialogOnSuccess()">
             <fa-icon [icon]="faChair" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.reseat" class="m-1"></span>
         </button>
     </ng-template>

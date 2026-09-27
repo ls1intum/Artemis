@@ -284,7 +284,7 @@ describe('CourseOverviewComponent', () => {
         findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         expect(getCourseStub).toHaveBeenCalled();
         // The sidebar is built twice on purpose: once up front with the always-available items, and again when the
@@ -416,7 +416,7 @@ describe('CourseOverviewComponent', () => {
         findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         expect(getCourseStub).toHaveBeenCalled();
 
@@ -449,7 +449,7 @@ describe('CourseOverviewComponent', () => {
         vi.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
         vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/communication');
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
@@ -516,7 +516,7 @@ describe('CourseOverviewComponent', () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         expect(getCourseStub).toHaveBeenCalled();
     });
@@ -567,7 +567,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should fetch the course content exactly once when navigating into the course', async () => {
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(findCourseForOverviewStub).toHaveBeenCalledExactlyOnceWith(course1.id);
     });
 
@@ -576,7 +576,7 @@ describe('CourseOverviewComponent', () => {
         // and switching to another course in place must not reuse the previous course's tabs.
         const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
         (route as any).params = paramsSubject.asObservable();
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(getCourseAvailableTabsStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 
         paramsSubject.next({ courseId: 999 });
@@ -590,7 +590,7 @@ describe('CourseOverviewComponent', () => {
         availableTabsService.load(course1.id!).subscribe();
         getCourseAvailableTabsStub.mockClear();
 
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
 
         expect(getCourseAvailableTabsStub).not.toHaveBeenCalled();
     });
@@ -599,7 +599,7 @@ describe('CourseOverviewComponent', () => {
         const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
         (route as any).params = paramsSubject.asObservable();
         const clearTabDataSpy = vi.spyOn(TestBed.inject(CourseOverviewTabDataService), 'clear');
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(findCourseForOverviewStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 
         const getSidebarItemsSpy = vi.spyOn(component, 'getSidebarItems');
@@ -620,7 +620,7 @@ describe('CourseOverviewComponent', () => {
             courseId === course1.id ? of(availableTabs({ exams: true, lectures: true, faq: true })) : newCourseTabs.asObservable(),
         );
         component.lectureEnabled = true;
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(component.availableTabs()?.exams).toBe(true);
         expect(component.sidebarItems().some((item) => item.title?.includes('Exams'))).toBe(true);
 
@@ -774,7 +774,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
-        await component.ngOnInit();
+        await component['initializeCourseOverviewComponent']();
         expect(component.isExamStarted()).toBe(true);
     });
 

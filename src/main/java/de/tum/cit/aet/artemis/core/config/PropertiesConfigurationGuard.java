@@ -1,33 +1,69 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+/**
+ * Refuses to start a core node without meaningful installation metadata, which the About page shows and the scheduling node reports as telemetry. Build agents
+ * neither show nor report it, so they are not checked.
+ */
 @Component
-@Lazy
-@Profile(PROFILE_CORE_AND_SCHEDULING)
+@Lazy(false)
+@Profile(PROFILE_CORE)
 public class PropertiesConfigurationGuard implements InitializingBean {
 
-    private static final Logger log = LoggerFactory.getLogger(PropertiesConfigurationGuard.class);
+    /**
+     * Template values, compared case-insensitively. Besides generic placeholders, this lists the defaults that Artemis configuration files, the Helm chart
+     * ({@code Example University}, {@code Max Mustermann}) and the Ansible collection ({@code Anonymous University}, {@code Anonymous University Admin}) have
+     * shipped, so an installation that kept one of them is asked for its own value.
+     */
+    private static final Set<String> PLACEHOLDERS = Set.of("admin", "some artemis operator", "some universities admin", "your university", "your name", "your operator",
+            "university name", "operator name", "admin name", "todo", "tbd", "changeme", "example university", "max mustermann", "anonymous university",
+            "anonymous university admin", "example university it services", "some artemis dev", "n/a", "none", "unknown");
+
+    @Value("${info.operatorAdminName:#{null}}")
+    private String operatorAdminName;
+
+    @Value("${info.universityName:#{null}}")
+    private String universityName;
 
     @Value("${info.operatorName:#{null}}")
     private String operatorName;
 
-    /**
-     * Checks if the info.operatorName value is set in the configuration ymls, and exits the application if not.
-     */
+    /** Rejects incomplete installation metadata on every core node before readiness. */
+    @Override
     public void afterPropertiesSet() {
-        if (this.operatorName == null || this.operatorName.isEmpty()) {
-            log.error(
-                    "The name of the operator (University) is not configured in the application-prod.yml! It is needed to be displayed in the /about page, and for the telemetry service.");
-            throw new IllegalArgumentException("The name of the operator (university) must be configured, but is not!");
+        List<String> invalid = new ArrayList<>();
+        if (isInvalid(operatorName)) {
+            invalid.add("info.operatorName (INFO_OPERATORNAME)");
         }
+        if (isInvalid(operatorAdminName)) {
+            invalid.add("info.operatorAdminName (INFO_OPERATORADMINNAME)");
+        }
+        if (isInvalid(universityName)) {
+            invalid.add("info.universityName (INFO_UNIVERSITYNAME)");
+        }
+        if (!invalid.isEmpty()) {
+            throw new IllegalArgumentException("Configure meaningful values for " + String.join(", ", invalid)
+                    + "; these installation properties are required on every core node, independently of telemetry settings, and displayed on the About page.");
+        }
+    }
+
+    private static boolean isInvalid(String value) {
+        if (value == null || value.isBlank()) {
+            return true;
+        }
+        String normalized = value.strip().toLowerCase(Locale.ROOT);
+        return PLACEHOLDERS.contains(normalized) || (normalized.startsWith("<") && normalized.endsWith(">"));
     }
 }

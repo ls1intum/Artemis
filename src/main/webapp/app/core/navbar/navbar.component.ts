@@ -25,7 +25,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { NgClass, NgOptimizedImage, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -50,6 +50,7 @@ import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise
     templateUrl: './navbar.component.html',
     styleUrls: ['navbar.scss'],
     imports: [
+        NgOptimizedImage,
         NgClass,
         ThemeSwitchComponent,
         NgbDropdown,

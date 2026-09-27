@@ -44,7 +44,7 @@
                 <ng-template #languageMenu>
                     <tumaet-ui-menu aria-labelledby="dropdown">
                         @for (programmingLanguage of remainingProgrammingLanguages(); track programmingLanguage) {
-                            <button tumAetUiMenuItem (triggered)="addProgrammingLanguage(programmingLanguage)">
+                            <button type="button" tumAetUiMenuItem (triggered)="addProgrammingLanguage(programmingLanguage)">
                                 {{ programmingLanguage }}
                             </button>
                         }

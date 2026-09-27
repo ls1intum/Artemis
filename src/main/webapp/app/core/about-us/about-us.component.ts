@@ -37,6 +37,7 @@ export class AboutUsComponent implements OnInit {
     readonly data = signal<AboutUsModel | undefined>(undefined);
     readonly gitCommitId = signal<string | undefined>(undefined);
     readonly gitBranchName = signal<string | undefined>(undefined);
+    readonly universityName = signal<string | undefined>(undefined);
     readonly operatorName = signal<string | undefined>(undefined);
     readonly operatorAdminName = signal<string | undefined>(undefined);
     readonly operatorContactEmail = signal<string | undefined>(undefined);
@@ -91,6 +92,7 @@ export class AboutUsComponent implements OnInit {
             this.gitCommitId.set(profileInfo.git.commit.id.abbrev);
             this.gitBranchName.set(profileInfo.git.branch);
         }
+        this.universityName.set(profileInfo.universityName);
         this.operatorName.set(profileInfo.operatorName);
         this.operatorAdminName.set(profileInfo.operatorAdminName);
         this.operatorContactEmail.set(profileInfo.contact);
