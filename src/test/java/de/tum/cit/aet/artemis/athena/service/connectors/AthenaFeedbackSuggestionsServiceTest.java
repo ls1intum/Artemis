@@ -593,6 +593,51 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    void testBuildLearnerProfileDTO_IgnoresCourseDefaultWhenNotApplicable() throws Exception {
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setId(999L);
+
+        LearnerProfile profile = new LearnerProfile();
+        profile.setId(42L);
+        profile.setHasSetupFeedbackPreferences(false);
+
+        CourseAthenaConfigRepository mockConfigRepository = mock(CourseAthenaConfigRepository.class);
+        when(mockConfigRepository.findConfigByCourseId(999L)).thenReturn(Optional.of(new CourseAthenaConfigDTO(true, true, 3, 1)));
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "courseAthenaConfigRepository", mockConfigRepository);
+
+        LearnerProfileDTO result = invokeBuildLearnerProfileDTO(profile, false);
+
+        // Athena does not adapt such a request to the learner profile, so the course default is not even looked up.
+        assertThat(result).isNotNull();
+        assertThat(result.feedbackDetail()).isEqualTo(LearnerProfile.DEFAULT_PROFILE_VALUE);
+        assertThat(result.feedbackFormality()).isEqualTo(LearnerProfile.DEFAULT_PROFILE_VALUE);
+        verify(mockConfigRepository, never()).findConfigByCourseId(anyLong());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testFeedbackSuggestionsTextGradedDoesNotApplyCourseDefault() throws NetworkingException {
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setId(999L);
+
+        LearnerProfile profile = new LearnerProfile();
+        profile.setId(42L);
+        profile.setHasSetupFeedbackPreferences(false);
+        stubLearnerProfile(profile);
+
+        CourseAthenaConfigRepository mockConfigRepository = mock(CourseAthenaConfigRepository.class);
+        when(mockConfigRepository.findConfigByCourseId(999L)).thenReturn(Optional.of(new CourseAthenaConfigDTO(true, true, 3, 1)));
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "courseAthenaConfigRepository", mockConfigRepository);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.isGraded").value(true),
+                jsonPath("$.learnerProfile.feedbackDetail").value(LearnerProfile.DEFAULT_PROFILE_VALUE),
+                jsonPath("$.learnerProfile.feedbackFormality").value(LearnerProfile.DEFAULT_PROFILE_VALUE));
+
+        athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, null);
+
+        athenaRequestMockProvider.verify();
+        verify(mockConfigRepository, never()).findConfigByCourseId(anyLong());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackSuggestionsTextWithNullLatestSubmission() throws NetworkingException {
         // Test that the service handles null latest submission gracefully
@@ -628,18 +673,30 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     /**
+     * Invokes the private buildLearnerProfileDTO method via reflection for a request the course defaults apply to.
+     */
+    private LearnerProfileDTO invokeBuildLearnerProfileDTO(LearnerProfile learnerProfile) throws Exception {
+        return invokeBuildLearnerProfileDTO(learnerProfile, true);
+    }
+
+    /**
      * Invokes the private buildLearnerProfileDTO method via reflection, stubbing the learner profile API so
      * {@code textSubmission}'s student resolves to the given profile.
      */
-    private LearnerProfileDTO invokeBuildLearnerProfileDTO(LearnerProfile learnerProfile) throws Exception {
-        User student = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
+    private LearnerProfileDTO invokeBuildLearnerProfileDTO(LearnerProfile learnerProfile, boolean applyCourseDefaults) throws Exception {
+        stubLearnerProfile(learnerProfile);
+        Method buildLearnerProfileDTOMethod = AthenaFeedbackSuggestionsService.class.getDeclaredMethod("buildLearnerProfileDTO", Submission.class, Exercise.class, boolean.class);
+        buildLearnerProfileDTOMethod.setAccessible(true);
+        return (LearnerProfileDTO) buildLearnerProfileDTOMethod.invoke(athenaFeedbackSuggestionsService, textSubmission, textExercise, applyCourseDefaults);
+    }
 
+    /**
+     * Stubs the learner profile API so {@code textSubmission}'s student resolves to the given profile.
+     */
+    private void stubLearnerProfile(LearnerProfile learnerProfile) {
+        User student = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
         LearnerProfileApi mockLearnerProfileApi = mock(LearnerProfileApi.class);
         when(mockLearnerProfileApi.getOrCreateLearnerProfile(student)).thenReturn(learnerProfile);
         ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "learnerProfileApi", Optional.of(mockLearnerProfileApi));
-
-        Method buildLearnerProfileDTOMethod = AthenaFeedbackSuggestionsService.class.getDeclaredMethod("buildLearnerProfileDTO", Submission.class, Exercise.class);
-        buildLearnerProfileDTOMethod.setAccessible(true);
-        return (LearnerProfileDTO) buildLearnerProfileDTOMethod.invoke(athenaFeedbackSuggestionsService, textSubmission, textExercise);
     }
 }
