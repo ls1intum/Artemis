@@ -78,6 +78,7 @@ public class OpenAPIConfiguration {
      * <li>Remove any trailing underscore plus digit characters from operation IDs.</li>
      * <li>Remove the “Dto” suffix from any response schemas.</li>
      * <li>Remove the “Dto” suffix from any request-body schemas, if present.</li>
+     * <li>Remove the “Dto” suffix from any parameter schemas.</li>
      * <li>Remove any resource-name suffix from operation tags.</li>
      * </ul>
      * </li>
@@ -112,6 +113,7 @@ public class OpenAPIConfiguration {
                     stripTrailingUnderscoreDigitCharacter(operation);
                     removeDtoSuffixFromResponseSchemas(operation);
                     removeDtoSuffixFromRequestBodyIfExisting(operation);
+                    removeDtoSuffixFromParameters(operation);
 
                     removeResourceSuffixFromTags(operation);
                 });
@@ -208,6 +210,12 @@ public class OpenAPIConfiguration {
             requestBodyContent.forEach((contentType, mediaType) -> {
                 removeDTOSuffixesFromSchemaRecursively(mediaType.getSchema());
             });
+        }
+    }
+
+    private void removeDtoSuffixFromParameters(Operation operation) {
+        if (operation.getParameters() != null) {
+            operation.getParameters().forEach(parameter -> removeDTOSuffixesFromSchemaRecursively(parameter.getSchema()));
         }
     }
 
