@@ -943,13 +943,59 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.feedbackSuggestions()).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
     });
 
-    it('should show a confirmation dialog if there are pending feedback suggestions', async () => {
+    it('should keep feedback suggestions after confirming until submission succeeds', async () => {
         const modalOpenStub = vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef); // Confirm dismissal
         comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
-        await comp.discardPendingSubmissionsWithConfirmation();
+        expect(await comp.discardPendingSubmissionsWithConfirmation()).toBe(true);
         expect(modalOpenStub).toHaveBeenCalled();
-        // Dismissal should clear all feedback suggestions
-        expect(comp.feedbackSuggestions()).toHaveLength(0);
+        expect(comp.feedbackSuggestions()).toHaveLength(1);
+    });
+
+    it('should clear suggestions only after a successful submission', async () => {
+        const suggestion = { id: 1, credits: 1 };
+        const saveResponse = new Subject<EntityResponseType>();
+        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);
+        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(saveResponse);
+        comp.participation.set(participation);
+        comp.submission.set({ results: [new Result()] } as ProgrammingSubmission);
+        comp.manualResult.set(new Result());
+        comp.feedbackSuggestions.set([suggestion]);
+
+        await comp.submit();
+        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
+
+        saveResponse.next(new HttpResponse({ body: new Result() }));
+        expect(comp.feedbackSuggestions()).toEqual([]);
+    });
+
+    it('should keep suggestions if submission fails', async () => {
+        const suggestion = { id: 1, credits: 1 };
+        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);
+        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp.participation.set(participation);
+        comp.manualResult.set(new Result());
+        comp.feedbackSuggestions.set([suggestion]);
+
+        await comp.submit();
+
+        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
+    });
+
+    it('should keep suggestions when saving succeeds or fails', () => {
+        const suggestion = { id: 1, credits: 1 };
+        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment')
+            .mockReturnValueOnce(of(new HttpResponse({ body: new Result() })))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        comp.participation.set(participation);
+        comp.submission.set({ results: [new Result()] } as ProgrammingSubmission);
+        comp.manualResult.set(new Result());
+        comp.feedbackSuggestions.set([suggestion]);
+
+        comp.save();
+        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
+
+        comp.save();
+        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
     });
 
     it('should keep feedback suggestions if the confirmation dialog is cancelled', async () => {

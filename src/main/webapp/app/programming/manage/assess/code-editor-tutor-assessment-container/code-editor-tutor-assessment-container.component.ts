@@ -499,7 +499,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             if (!suggestionsDiscardConfirmed) {
                 return false;
             }
-            this.feedbackSuggestions.set([]); // Discard all pending suggestions
         }
         return true;
     }
@@ -524,7 +523,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
         this.avoidCircularStructure();
         this.manualResultService.saveAssessment(this.participation().id!, this.manualResult()!, submit).subscribe({
-            next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
+            next: (response) => {
+                this.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
+                if (submit) {
+                    this.feedbackSuggestions.set([]);
+                }
+            },
             error: (error: HttpErrorResponse) => {
                 if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
                     this.onError(`error.${error?.error?.errorKey}`);
