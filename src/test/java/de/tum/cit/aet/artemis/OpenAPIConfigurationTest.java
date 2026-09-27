@@ -49,4 +49,16 @@ class OpenAPIConfigurationTest {
         assertThat(openApi.getComponents().getSchemas()).containsKey("PostFilter");
         assertThat(filter.getSchema().get$ref()).isEqualTo("#/components/schemas/PostFilter");
     }
+
+    @Test
+    void shouldKeepSpringsPageableSchema() {
+        Parameter pageable = new QueryParameter().name("pageable").schema(new Schema<>().$ref("#/components/schemas/Pageable"));
+        OpenAPI openApi = new OpenAPI().components(new Components().addSchemas("Pageable", new ObjectSchema().addProperty("page", new IntegerSchema())))
+                .paths(new Paths().addPathItem("/api/audits", new PathItem().get(new Operation().operationId("getAudits").addParametersItem(pageable))));
+
+        new OpenAPIConfiguration().schemaCustomizer().customise(openApi);
+
+        assertThat(openApi.getComponents().getSchemas()).containsKey("Pageable");
+        assertThat(pageable.getSchema().get$ref()).isEqualTo("#/components/schemas/Pageable");
+    }
 }
