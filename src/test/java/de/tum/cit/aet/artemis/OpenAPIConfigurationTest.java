@@ -7,11 +7,18 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.media.BooleanSchema;
 import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.QueryParameter;
 
 class OpenAPIConfigurationTest {
 
@@ -29,5 +36,17 @@ class OpenAPIConfigurationTest {
         OpenAPIConfiguration.markPrimitiveRecordComponentsRequired(schemas);
 
         assertThat(schema.getRequired()).containsExactlyInAnyOrder("title", "count", "active");
+    }
+
+    @Test
+    void shouldPointParameterSchemasAtTheRenamedDtoSchema() {
+        Parameter filter = new QueryParameter().name("filter").schema(new Schema<>().$ref("#/components/schemas/PostFilterDTO"));
+        OpenAPI openApi = new OpenAPI().components(new Components().addSchemas("PostFilterDTO", new ObjectSchema().addProperty("courseId", new IntegerSchema())))
+                .paths(new Paths().addPathItem("/api/posts", new PathItem().get(new Operation().operationId("getPosts").addParametersItem(filter))));
+
+        new OpenAPIConfiguration().schemaCustomizer().customise(openApi);
+
+        assertThat(openApi.getComponents().getSchemas()).containsKey("PostFilter");
+        assertThat(filter.getSchema().get$ref()).isEqualTo("#/components/schemas/PostFilter");
     }
 }
