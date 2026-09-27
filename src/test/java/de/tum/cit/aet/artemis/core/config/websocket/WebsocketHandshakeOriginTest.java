@@ -42,37 +42,32 @@ class WebsocketHandshakeOriginTest {
     void testOriginsOfArtemisPagesAreAllowed() {
         var noCors = new CorsConfiguration();
         // clients that are not browsers send no origin
-        assertThat(isAllowedOrigin(null, "artemis.example.org", SERVER_ORIGIN, noCors)).isTrue();
-        // the page was loaded from the host the handshake was sent to, on any port and in any spelling
-        assertThat(isAllowedOrigin("https://artemis.example.org", "artemis.example.org", SERVER_ORIGIN, noCors)).isTrue();
-        assertThat(isAllowedOrigin("https://Artemis.Example.org", "artemis.example.org", SERVER_ORIGIN, noCors)).isTrue();
-        assertThat(isAllowedOrigin("http://localhost:9000", "localhost", SERVER_ORIGIN, noCors)).isTrue();
-        assertThat(isAllowedOrigin("https://other-name.example.org", "other-name.example.org", SERVER_ORIGIN, noCors)).isTrue();
-        // a proxy that replaces the Host header, and the origin of server.url written with its default port
-        assertThat(isAllowedOrigin("https://artemis.example.org", "artemis-app", SERVER_ORIGIN, noCors)).isTrue();
-        assertThat(isAllowedOrigin("https://artemis.example.org:443", "artemis-app", SERVER_ORIGIN, noCors)).isTrue();
+        assertThat(isAllowedOrigin(null, false, SERVER_ORIGIN, noCors)).isTrue();
+        // the page has the origin of the handshake request itself, e.g. another host name of Artemis behind a proxy that forwards its headers
+        assertThat(isAllowedOrigin("https://other-name.example.org", true, SERVER_ORIGIN, noCors)).isTrue();
+        // the origin of server.url, in any spelling
+        for (String origin : List.of("https://artemis.example.org", "https://Artemis.Example.org", "https://artemis.example.org:443")) {
+            assertThat(isAllowedOrigin(origin, false, SERVER_ORIGIN, noCors)).as(origin).isTrue();
+        }
     }
 
     @Test
-    void testOriginsOfOtherSitesAreRefused() {
+    void testOriginsOfOtherPagesAreRefused() {
         var noCors = new CorsConfiguration();
-        for (String origin : List.of("https://evil.example", "https://artemis.example.org.evil.example", "https://evil.example:443", "null", "not a url", "")) {
-            assertThat(isAllowedOrigin(origin, "artemis.example.org", SERVER_ORIGIN, noCors)).as(origin).isFalse();
+        for (String origin : List.of("https://evil.example", "https://artemis.example.org.evil.example", "https://artemis.example.org:8443", "http://artemis.example.org", "null",
+                "not a url", "")) {
+            assertThat(isAllowedOrigin(origin, false, SERVER_ORIGIN, noCors)).as(origin).isFalse();
         }
-        // without a Host header, only server.url counts
-        assertThat(isAllowedOrigin("https://evil.example", null, SERVER_ORIGIN, noCors)).isFalse();
-        // http is another origin than the https of server.url, unless the page came from the host the handshake was sent to
-        assertThat(isAllowedOrigin("http://artemis.example.org", "artemis-app", SERVER_ORIGIN, noCors)).isFalse();
         // an unusable server.url allows nothing extra
-        assertThat(isAllowedOrigin("https://evil.example", "artemis-app", "", noCors)).isFalse();
+        assertThat(isAllowedOrigin("https://evil.example", false, "", noCors)).isFalse();
     }
 
     @Test
     void testOriginsAllowedForTheRestApiAreAllowed() {
         var cors = new CorsConfiguration();
         cors.setAllowedOriginPatterns(List.of("https://*.example.edu"));
-        assertThat(isAllowedOrigin("https://client.example.edu", "artemis-app", SERVER_ORIGIN, cors)).isTrue();
-        assertThat(isAllowedOrigin("https://evil.example", "artemis-app", SERVER_ORIGIN, cors)).isFalse();
+        assertThat(isAllowedOrigin("https://client.example.edu", false, SERVER_ORIGIN, cors)).isTrue();
+        assertThat(isAllowedOrigin("https://evil.example", false, SERVER_ORIGIN, cors)).isFalse();
     }
 
     @Test
@@ -87,20 +82,30 @@ class WebsocketHandshakeOriginTest {
     }
 
     @Test
-    void testHandshakeFromAnotherSiteIsRefusedBeforeTheToken() throws Exception {
+    void testHandshakeIsCheckedAgainstTheOriginOfTheRequest() throws Exception {
         TokenProvider tokenProvider = mock(TokenProvider.class);
         when(tokenProvider.validateTokenForAuthority(anyString(), anyString())).thenReturn(true);
 
-        var foreignSite = new MockHttpServletResponse();
-        assertThat(handshake(tokenProvider, "https://evil.example", foreignSite)).isFalse();
-        assertThat(foreignSite.getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
+        // as the request arrives from a proxy that forwards Host and X-Forwarded-Proto
+        assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, "https://artemis.example.org")).isEqualTo(HandshakeOutcome.ACCEPTED);
+        assertThat(handshake(tokenProvider, "https", "other-name.example.org", 443, "https://other-name.example.org")).isEqualTo(HandshakeOutcome.ACCEPTED);
+        assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, null)).isEqualTo(HandshakeOutcome.ACCEPTED);
+        // another port or scheme of the same host is another origin
+        assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, "https://artemis.example.org:8443")).isEqualTo(HandshakeOutcome.REFUSED);
+        assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, "http://artemis.example.org")).isEqualTo(HandshakeOutcome.REFUSED);
+        assertThat(handshake(tokenProvider, "https", "artemis.example.org", 443, "https://evil.example")).isEqualTo(HandshakeOutcome.REFUSED);
 
-        assertThat(handshake(tokenProvider, SERVER_ORIGIN, new MockHttpServletResponse())).isTrue();
-        assertThat(handshake(tokenProvider, null, new MockHttpServletResponse())).isTrue();
+        // a proxy whose forwarded headers are not used: only the origin of server.url matches
+        assertThat(handshake(tokenProvider, "http", "artemis-app", 8080, "https://artemis.example.org")).isEqualTo(HandshakeOutcome.ACCEPTED);
+        assertThat(handshake(tokenProvider, "http", "artemis-app", 8080, "https://other-name.example.org")).isEqualTo(HandshakeOutcome.REFUSED);
+    }
+
+    private enum HandshakeOutcome {
+        ACCEPTED, REFUSED
     }
 
     @SuppressWarnings("unchecked")
-    private static boolean handshake(TokenProvider tokenProvider, @Nullable String origin, MockHttpServletResponse servletResponse) throws Exception {
+    private static HandshakeOutcome handshake(TokenProvider tokenProvider, String scheme, String host, int port, @Nullable String origin) throws Exception {
         var properties = new ArtemisProperties();
         properties.setCors(new CorsConfiguration());
         var configuration = new WebsocketConfiguration(new MappingJackson2HttpMessageConverter(), mock(TaskScheduler.class), tokenProvider,
@@ -108,12 +113,22 @@ class WebsocketHandshakeOriginTest {
                 mock(ObjectProvider.class), mock(ObjectProvider.class), mock(ObjectProvider.class), mock(ObjectProvider.class), SERVER_ORIGIN + "/", properties);
 
         var request = new MockHttpServletRequest("GET", "/websocket/websocket");
-        request.addHeader(HttpHeaders.HOST, "artemis-app:8080");
+        request.setScheme(scheme);
+        request.setServerName(host);
+        request.setServerPort(port);
+        request.addHeader(HttpHeaders.HOST, host);
         if (origin != null) {
             request.addHeader(HttpHeaders.ORIGIN, origin);
         }
+        // a valid token, so that only the origin decides
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer header.payload.signature");
-        return configuration.httpSessionHandshakeInterceptor().beforeHandshake(new ServletServerHttpRequest(request), new ServletServerHttpResponse(servletResponse),
+        var response = new MockHttpServletResponse();
+        boolean accepted = configuration.httpSessionHandshakeInterceptor().beforeHandshake(new ServletServerHttpRequest(request), new ServletServerHttpResponse(response),
                 mock(WebSocketHandler.class), new HashMap<>());
+        if (accepted) {
+            return HandshakeOutcome.ACCEPTED;
+        }
+        assertThat(response.getStatus()).as("a refused origin is answered with 403").isEqualTo(HttpStatus.FORBIDDEN.value());
+        return HandshakeOutcome.REFUSED;
     }
 }
