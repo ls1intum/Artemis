@@ -968,6 +968,62 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.feedbackSuggestions()).toEqual([]);
     });
 
+    it('should ignore a successful submission response after navigating to another submission', async () => {
+        const saveResponse = new Subject<EntityResponseType>();
+        const nextResult = new Result();
+        const nextSubmission = { id: 42, results: [nextResult] } as ProgrammingSubmission;
+        const nextSuggestion = { id: 2, credits: 1 };
+        const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);
+        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(saveResponse);
+        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
+            comp.submission.set(received);
+            comp.manualResult.set(nextResult);
+        });
+        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => {});
+        comp.participation.set(participation);
+        comp.submission.set({ id: 41, results: [new Result()] } as ProgrammingSubmission);
+        comp.manualResult.set(new Result());
+        comp.feedbackSuggestions.set([{ id: 1, credits: 1 }]);
+
+        await comp.submit();
+        expect(comp.submitBusy()).toBe(true);
+        await internals(comp).onSubmissionReceived('42', nextSubmission);
+        expect(comp.submitBusy()).toBe(false);
+        comp.feedbackSuggestions.set([nextSuggestion]);
+
+        saveResponse.next(new HttpResponse({ body: new Result() }));
+        expect(comp.submission()?.results?.[0]).toBe(nextResult);
+        expect(comp.manualResult()).toBe(nextResult);
+        expect(comp.feedbackSuggestions()).toEqual([nextSuggestion]);
+        expect(successSpy).not.toHaveBeenCalled();
+    });
+
+    it('should ignore a failed save response after navigating to another submission', async () => {
+        const oldResponse = new Subject<EntityResponseType>();
+        const newResponse = new Subject<EntityResponseType>();
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValueOnce(oldResponse).mockReturnValueOnce(newResponse);
+        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
+            comp.submission.set(received);
+        });
+        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => {});
+        comp.participation.set(participation);
+        comp.submission.set({ id: 41, results: [new Result()] } as ProgrammingSubmission);
+        comp.manualResult.set(new Result());
+
+        comp.save();
+        expect(comp.saveBusy()).toBe(true);
+        await internals(comp).onSubmissionReceived('42', { id: 42 } as ProgrammingSubmission);
+        expect(comp.saveBusy()).toBe(false);
+        comp.save();
+        expect(comp.saveBusy()).toBe(true);
+
+        oldResponse.error(new HttpErrorResponse({ status: 500 }));
+        expect(comp.saveBusy()).toBe(true);
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
     it('should keep suggestions if submission fails', async () => {
         const suggestion = { id: 1, credits: 1 };
         vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);

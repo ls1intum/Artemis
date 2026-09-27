@@ -301,6 +301,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
         this.feedbackSuggestions.set([]);
         this.loadingFeedbackSuggestions.set(false);
+        this.saveBusy.set(false);
+        this.submitBusy.set(false);
         if (!submission) {
             // there are no unassessed submissions
             this.submission.set(submission);
@@ -521,15 +523,22 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param translationKey key for the alert to be shown on success
      */
     private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
+        const submissionId = this.submission()?.id;
         this.avoidCircularStructure();
         this.manualResultService.saveAssessment(this.participation().id!, this.manualResult()!, submit).subscribe({
             next: (response) => {
+                if (this.submission()?.id !== submissionId) {
+                    return;
+                }
                 this.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
                 if (submit) {
                     this.feedbackSuggestions.set([]);
                 }
             },
             error: (error: HttpErrorResponse) => {
+                if (this.submission()?.id !== submissionId) {
+                    return;
+                }
                 if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
                     this.onError(`error.${error?.error?.errorKey}`);
                 }
