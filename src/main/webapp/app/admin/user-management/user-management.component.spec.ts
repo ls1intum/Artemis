@@ -108,6 +108,49 @@ describe('UserManagementComponent', () => {
         });
     });
 
+    describe('onPageSizeChange (tumaet-ui paginator)', () => {
+        it('applies the new page size, returns to the first page and puts the size in the URL', () => {
+            const router = TestBed.inject(Router);
+            component.page.set(4);
+
+            component.onPageSizeChange(100);
+
+            expect(component.itemsPerPage()).toBe(100);
+            expect(component.page()).toBe(1);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/user-management'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 1, size: 100 }) }));
+        });
+
+        it.each`
+            size         | expected
+            ${'20'}      | ${20}
+            ${'7'}       | ${50}
+            ${'abc'}     | ${50}
+            ${undefined} | ${50}
+        `('reads the page size $size from the URL as $expected', async ({ size, expected }) => {
+            vi.useFakeTimers();
+            const queryParams = new Map<string, string>([['page', '2']]);
+            if (size !== undefined) {
+                queryParams.set('size', size);
+            }
+            const route = mockRoute as unknown as { queryParamMap: unknown };
+            const originalQueryParamMap = route.queryParamMap;
+            route.queryParamMap = of(queryParams);
+            vi.spyOn(userService, 'query').mockReturnValue(of(new HttpResponse({ body: [new User(1)] })));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
+
+            try {
+                fixture.detectChanges();
+                await vi.advanceTimersByTimeAsync(1000);
+
+                expect(component.itemsPerPage()).toBe(expected);
+                expect(component.page()).toBe(2);
+            } finally {
+                route.queryParamMap = originalQueryParamMap;
+                vi.useRealTimers();
+            }
+        });
+    });
+
     it('should parse user search result into component state', async () => {
         vi.useFakeTimers();
 
