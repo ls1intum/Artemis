@@ -65,6 +65,7 @@ import org.springframework.web.socket.messaging.StompSubProtocolErrorHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
+import org.springframework.web.util.WebUtils;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -402,9 +403,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     @NonNull Map<String, Object> attributes) {
                 log.debug("beforeHandshake: {}, {}, {}", request, response, wsHandler);
                 String origin = request.getHeaders().getOrigin();
-                InetSocketAddress host = request.getHeaders().getHost();
-                if (!isAllowedOrigin(origin, host != null ? host.getHostString() : null, serverOrigin, corsConfiguration)) {
-                    log.warn("Refused a websocket handshake from the origin {} to the host {}", origin, host);
+                if (!isAllowedOrigin(origin, WebUtils.isSameOrigin(request), serverOrigin, corsConfiguration)) {
+                    log.warn("Refused a websocket handshake from the origin {} to {}", origin, request.getURI().getHost());
                     response.setStatusCode(HttpStatus.FORBIDDEN);
                     return false;
                 }
@@ -438,24 +438,20 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * names the page in the {@code Origin} header, so only pages of Artemis itself are accepted:
      * <ul>
      * <li>no origin: clients that are not browsers, like the mobile apps and the VS Code extension, send none</li>
-     * <li>the host of the page is the host the handshake was sent to. A reverse proxy has to forward the {@code Host} header for this, as the documented nginx
-     * configuration does. The port does not matter, because cookies do not depend on it either.</li>
-     * <li>the origin of {@code server.url}, for a proxy that replaces the {@code Host} header</li>
+     * <li>the same origin as the handshake request, i.e. the same scheme, host and port. Behind a reverse proxy, this relies on the {@code Host} and
+     * {@code X-Forwarded-Proto} headers it forwards, as the nginx configuration of Artemis does.</li>
+     * <li>the origin of {@code server.url}, for a proxy whose forwarded headers are not used</li>
      * <li>an origin that may call the REST API ({@code jhipster.cors}), e.g. the development server of the client</li>
      * </ul>
      *
      * @param origin            the {@code Origin} header of the handshake, if any
-     * @param requestHost       the host of the {@code Host} header of the handshake, if any
+     * @param sameOrigin        whether the origin is the origin of the handshake request itself
      * @param serverOrigin      the origin of {@code server.url}
      * @param corsConfiguration the origins that may call the REST API
      * @return whether the handshake may continue
      */
-    static boolean isAllowedOrigin(@Nullable String origin, @Nullable String requestHost, String serverOrigin, CorsConfiguration corsConfiguration) {
-        if (origin == null) {
-            return true;
-        }
-        String originHost = hostOf(origin);
-        if (originHost != null && originHost.equalsIgnoreCase(requestHost)) {
+    static boolean isAllowedOrigin(@Nullable String origin, boolean sameOrigin, String serverOrigin, CorsConfiguration corsConfiguration) {
+        if (origin == null || sameOrigin) {
             return true;
         }
         if (!serverOrigin.isEmpty() && serverOrigin.equals(normalizeOrigin(origin))) {
@@ -483,15 +479,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         }
         catch (URISyntaxException e) {
             return "";
-        }
-    }
-
-    private static @Nullable String hostOf(String origin) {
-        try {
-            return new URI(origin.trim()).getHost();
-        }
-        catch (URISyntaxException e) {
-            return null;
         }
     }
 

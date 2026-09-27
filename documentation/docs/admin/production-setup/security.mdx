@@ -445,15 +445,16 @@ stream {
 ## Websocket Connections
 
 Artemis only accepts a websocket connection that a browser opens from a page of Artemis itself. Browsers name that page
-in the `Origin` header of the connection request, and Artemis accepts it if the page was loaded from the host the request
-was sent to, or from the origin of `server.url`. Clients that are not browsers, such as the iOS and Android apps and the
-VS Code extension, send no `Origin` header and are not affected.
+in the `Origin` header of the connection request, and Artemis accepts it if the page has the same origin as the request
+(scheme, host and port), or the origin of `server.url`. Clients that are not browsers, such as the iOS and Android apps
+and the VS Code extension, send no `Origin` header and are not affected.
 
-This requires no configuration when Artemis is reachable under `server.url`, or when the reverse proxy forwards the
-`Host` header of the browser, as the nginx configuration of Artemis does (`proxy_set_header Host $host;`). If browsers
-reach Artemis under another name and the proxy replaces the `Host` header, add that origin to
-`jhipster.cors.allowed-origins` or `jhipster.cors.allowed-origin-patterns`. This allows these origins to call the REST
-API as well. The server logs every refused connection request with its origin.
+This requires no configuration when browsers reach Artemis under `server.url`. Other host names work when the reverse
+proxy forwards the `Host` and `X-Forwarded-Proto` headers, as the nginx configuration of Artemis does
+(`proxy_set_header Host $host;` and `proxy_set_header X-Forwarded-Proto $scheme;`), and runs on a private or local
+address, whose forwarded headers Artemis uses. Otherwise, add these origins to `jhipster.cors.allowed-origins` or
+`jhipster.cors.allowed-origin-patterns`. This allows them to call the REST API as well. The server logs every refused
+connection request with its origin.
 
 ## Rate Limiting
 
