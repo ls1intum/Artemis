@@ -1,5 +1,5 @@
 <span class="course-notification-overview d-inline-block">
-    <button (click)="toggleOverlay()" class="course-notification-overview-toggle">
+    <button type="button" (click)="toggleOverlay()" class="course-notification-overview-toggle">
         <fa-icon [icon]="faBell" />
 
         <jhi-course-notification-bubble class="course-notification-overview-bubble" [totalAmount]="courseNotificationCount()" [isSmall]="true" />
@@ -21,6 +21,7 @@
                     />
                 }
                 <button
+                    type="button"
                     pButton
                     severity="secondary"
                     [outlined]="true"
@@ -37,12 +38,24 @@
         <div class="course-notification-overview-category-wrap pb-1">
             @for (category of courseCategories(); track category) {
                 @if (isCategoryVisible(category)) {
-                    <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
+                    <div
+                        (click)="selectCategory(category)"
+                        [ngClass]="isCategorySelected(category) ? 'is-selected' : ''"
+                        class="course-notification-overview-category"
+                        [attr.aria-pressed]="isCategorySelected(category)"
+                        #keyboardAction40
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction40.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction40.click() : undefined"
+                    >
                         <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
                     </div>
                 }
             }
             <button
+                type="button"
                 id="mark-all-as-read-button"
                 pButton
                 [text]="true"

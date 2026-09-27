@@ -78,9 +78,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         const modal = this.answerPostCreateEditModal();
-        if (modal && typeof modal.createEditAnswerPostContainerRef === 'function') {
-            modal.createEditAnswerPostContainerRef()?.clear();
-        }
+        modal?.createEditAnswerPostContainerRef()?.clear();
     }
 
     /**

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.GLOBAL_SEARCH_ANSWER;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -45,8 +47,6 @@ import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 public class PyrisStatusUpdateService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
-
-    private static final String GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC = "global-search-answer";
 
     private final PyrisJobService pyrisJobService;
 
@@ -225,11 +225,11 @@ public class PyrisStatusUpdateService {
         boolean isThinking = runState == PyrisRunState.RUNNING;
 
         if (isThinking) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
+            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(), new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
             pyrisJobService.updateJob(job);
         }
         else if (isTerminal) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
+            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(),
                     new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources()));
             pyrisJobService.removeJob(job);
         }

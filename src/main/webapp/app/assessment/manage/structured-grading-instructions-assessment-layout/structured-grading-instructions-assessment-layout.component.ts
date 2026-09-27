@@ -8,7 +8,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiMessageComponent, TumUiTagComponent, TumUiTagSeverity, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { pointsLabel, pointsSeverity } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
@@ -26,7 +33,7 @@ export interface SortedGradingInstruction {
     canIncrementApplication: boolean;
     isLockedByReferencedFeedback: boolean;
     isApplied: boolean;
-    pointsSeverity: TumUiTagSeverity;
+    pointsSeverity: TumAetUiTagSeverity;
     pointsLabel: string;
     scaleElementId: string | undefined;
     descriptionElementId: string;
@@ -49,11 +56,11 @@ export interface SortedGradingCriterion {
         HelpIconComponent,
         MarkdownDirective,
         FaIconComponent,
-        TumUiCheckboxComponent,
-        TumUiTagComponent,
-        TumUiButtonComponent,
-        TumUiMessageComponent,
-        TumUiTooltipDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
     ],
 })
@@ -233,7 +240,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /** Tag severity of an instruction's point pill (green awarded / red deducted / neutral zero). */
-    pointsSeverity(credits: number): TumUiTagSeverity {
+    pointsSeverity(credits: number): TumAetUiTagSeverity {
         return pointsSeverity(credits);
     }
 

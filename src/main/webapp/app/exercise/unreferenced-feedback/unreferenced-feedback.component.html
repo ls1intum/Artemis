@@ -31,7 +31,7 @@
                 </dl>
             }
             @if (!placeAddButtonWithOtherGroup()) {
-                <button type="button" tumUiButton severity="primary" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+                <button type="button" tumAetUiButton severity="primary" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
                     <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
                 </button>
             }
@@ -39,7 +39,7 @@
     </div>
 
     @if (unreferencedFeedback.length + feedbackSuggestions().length === 0) {
-        <tum-ui-message severity="secondary" class="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
+        <tumaet-ui-message severity="secondary" class="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
     @for (group of feedbackGroups(); track $index) {
@@ -52,11 +52,11 @@
                         <h5 class="m-0 text-base font-semibold">{{ group.title }}</h5>
                     }
                     <div class="ms-auto flex flex-wrap items-center gap-2">
-                        <tum-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
+                        <tumaet-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
                         @if (placeAddButtonWithOtherGroup() && group.translateTitle) {
                             <button
                                 type="button"
-                                tumUiButton
+                                tumAetUiButton
                                 severity="primary"
                                 size="small"
                                 class="add-unreferenced-feedback"

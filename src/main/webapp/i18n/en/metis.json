@@ -163,6 +163,7 @@
                 "bookmarkPostArchived": "Archive saved post",
                 "bookmarkPostComplete": "Mark saved post as done",
                 "thread": "Thread",
+                "openPost": "Open post: {{ title }}",
                 "saved": "Saved for later",
                 "removeBookmarkError": "An error occurred while removing the bookmark. Please try again later.",
                 "changeSavedStatusError": "An error occurred while changing the status. Please try again later."

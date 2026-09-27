@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiTableDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -31,7 +31,7 @@ interface AttentionSection {
     selector: 'jhi-feature-usage-attention',
     templateUrl: './feature-usage-attention.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective, TumUiTableDirective, TumUiTooltipDirective],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTooltipDirective],
 })
 export class FeatureUsageAttentionComponent {
     readonly features = input.required<UserFeatureUsage[]>();

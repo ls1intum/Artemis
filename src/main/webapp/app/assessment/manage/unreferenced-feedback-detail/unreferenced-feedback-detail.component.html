@@ -1,4 +1,4 @@
-<tum-ui-card
+<tumaet-ui-card
     (drop)="updateFeedbackOnDrop($event)"
     (dragover)="$event.preventDefault()"
     class="unreferenced-feedback-detail relative w-full min-w-0 overflow-hidden rounded-[1.25rem] border border-[var(--border-color)]"
@@ -7,7 +7,7 @@
 >
     <div class="feedback-card flex w-full min-w-0 flex-col gap-3 [overflow-wrap:anywhere]">
         @if (isKeyboardDropTarget()) {
-            <tum-ui-button
+            <tumaet-ui-button
                 severity="primary"
                 size="small"
                 class="self-start"
@@ -42,8 +42,8 @@
                     } @else {
                         <input
                             [id]="headerInputId"
-                            tumUiInput
-                            [tumUiInputId]="headerInputId"
+                            tumAetUiInput
+                            [tumAetUiInputId]="headerInputId"
                             class="feedback-card__header-input box-border min-w-0 flex-1"
                             type="text"
                             [ngModel]="displayTitle() ?? ''"
@@ -54,10 +54,10 @@
                         />
                     }
                     @if (pointsDisabled()) {
-                        <tum-ui-tag class="shrink-0 text-base" [severity]="pointsSeverityFor(feedback().credits)" [value]="pointsLabelFor(feedback().credits)" />
+                        <tumaet-ui-tag class="shrink-0 text-base" [severity]="pointsSeverityFor(feedback().credits)" [value]="pointsLabelFor(feedback().credits)" />
                     } @else {
-                        <tum-ui-input-group class="w-auto shrink-0">
-                            <tum-ui-input-group-addon>
+                        <tumaet-ui-input-group class="w-auto shrink-0">
+                            <tumaet-ui-input-group-addon>
                                 <button
                                     type="button"
                                     class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
@@ -66,11 +66,11 @@
                                 >
                                     <fa-icon [icon]="faMinus" />
                                 </button>
-                            </tum-ui-input-group-addon>
+                            </tumaet-ui-input-group-addon>
                             <input
                                 [id]="pointsInputId"
-                                tumUiInput
-                                [tumUiInputId]="pointsInputId"
+                                tumAetUiInput
+                                [tumAetUiInputId]="pointsInputId"
                                 class="feedback-card__points-input rounded-none text-center font-semibold"
                                 type="number"
                                 [step]="CREDITS_STEP"
@@ -79,7 +79,7 @@
                                 (ngModelChange)="updateCredits($event)"
                                 [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                             />
-                            <tum-ui-input-group-addon>
+                            <tumaet-ui-input-group-addon>
                                 <button
                                     type="button"
                                     class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
@@ -88,21 +88,22 @@
                                 >
                                     <fa-icon [icon]="faPlus" />
                                 </button>
-                            </tum-ui-input-group-addon>
-                        </tum-ui-input-group>
+                            </tumaet-ui-input-group-addon>
+                        </tumaet-ui-input-group>
                     }
                     @if (isSuggestion()) {
-                        <tum-ui-button severity="success" size="small" [icon]="faCheck" (clicked)="onAcceptSuggestion.emit(feedback())">
+                        <tumaet-ui-button severity="success" size="small" [icon]="faCheck" (clicked)="onAcceptSuggestion.emit(feedback())">
                             <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
-                        </tum-ui-button>
-                        <tum-ui-button severity="danger" size="small" variant="outlined" [icon]="faTrash" (clicked)="onDiscardSuggestion.emit(feedback())">
+                        </tumaet-ui-button>
+                        <tumaet-ui-button severity="danger" size="small" variant="outlined" [icon]="faTrash" (clicked)="onDiscardSuggestion.emit(feedback())">
                             <span jhiTranslate="artemisApp.assessment.detail.discard"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     }
                     @if (!readOnly()) {
                         <button
+                            type="button"
                             jhiDeleteButton
-                            tumUiButton
+                            tumAetUiButton
                             severity="secondary"
                             variant="outlined"
                             size="small"
@@ -123,10 +124,10 @@
         } @else {
             <div class="flex min-w-0 items-center justify-between gap-2">
                 @if (pointsDisabled()) {
-                    <tum-ui-tag class="text-base" [severity]="pointsSeverityFor(feedback().credits)" [value]="pointsLabelFor(feedback().credits)" />
+                    <tumaet-ui-tag class="text-base" [severity]="pointsSeverityFor(feedback().credits)" [value]="pointsLabelFor(feedback().credits)" />
                 } @else {
-                    <tum-ui-input-group class="w-auto">
-                        <tum-ui-input-group-addon>
+                    <tumaet-ui-input-group class="w-auto">
+                        <tumaet-ui-input-group-addon>
                             <button
                                 type="button"
                                 class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
@@ -135,11 +136,11 @@
                             >
                                 <fa-icon [icon]="faMinus" />
                             </button>
-                        </tum-ui-input-group-addon>
+                        </tumaet-ui-input-group-addon>
                         <input
                             [id]="pointsInputId"
-                            tumUiInput
-                            [tumUiInputId]="pointsInputId"
+                            tumAetUiInput
+                            [tumAetUiInputId]="pointsInputId"
                             class="feedback-card__points-input rounded-none text-center font-semibold"
                             type="number"
                             [step]="CREDITS_STEP"
@@ -148,7 +149,7 @@
                             (ngModelChange)="updateCredits($event)"
                             [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                         />
-                        <tum-ui-input-group-addon>
+                        <tumaet-ui-input-group-addon>
                             <button
                                 type="button"
                                 class="feedback-card__step flex self-stretch cursor-pointer items-center justify-center border-0 bg-transparent text-inherit"
@@ -157,22 +158,23 @@
                             >
                                 <fa-icon [icon]="faPlus" />
                             </button>
-                        </tum-ui-input-group-addon>
-                    </tum-ui-input-group>
+                        </tumaet-ui-input-group-addon>
+                    </tumaet-ui-input-group>
                 }
                 <div class="flex shrink-0 flex-wrap items-center gap-1.5">
                     @if (isSuggestion()) {
-                        <tum-ui-button severity="success" size="small" [icon]="faCheck" (clicked)="onAcceptSuggestion.emit(feedback())">
+                        <tumaet-ui-button severity="success" size="small" [icon]="faCheck" (clicked)="onAcceptSuggestion.emit(feedback())">
                             <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
-                        </tum-ui-button>
-                        <tum-ui-button severity="danger" size="small" variant="outlined" [icon]="faTrash" (clicked)="onDiscardSuggestion.emit(feedback())">
+                        </tumaet-ui-button>
+                        <tumaet-ui-button severity="danger" size="small" variant="outlined" [icon]="faTrash" (clicked)="onDiscardSuggestion.emit(feedback())">
                             <span jhiTranslate="artemisApp.assessment.detail.discard"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     }
                     @if (!readOnly()) {
                         <button
+                            type="button"
                             jhiDeleteButton
-                            tumUiButton
+                            tumAetUiButton
                             severity="secondary"
                             variant="outlined"
                             size="small"
@@ -207,8 +209,8 @@
             }
             <textarea
                 [id]="textareaId"
-                tumUiTextarea
-                [tumUiInputId]="textareaId"
+                tumAetUiTextarea
+                [tumAetUiInputId]="textareaId"
                 class="feedback-card__textarea box-border w-full max-w-full resize-none"
                 rows="2"
                 [(ngModel)]="feedback().detailText"
@@ -241,4 +243,4 @@
         }
         <jhi-assessment-correction-round-badge [feedback]="feedback()" [highlightDifferences]="highlightDifferences()" />
     </div>
-</tum-ui-card>
+</tumaet-ui-card>

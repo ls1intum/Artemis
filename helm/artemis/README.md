@@ -54,6 +54,14 @@ Required secret values are:
 Every node here runs under the `prod` profile, which refuses to start on a credential that Artemis publishes as an
 example. `artemis.config.admin.password` must therefore not be `artemis_admin`.
 
+The installation metadata is required as well. The shared ConfigMap supplies it to every pod; core pods
+refuse to start without meaningful values even when telemetry is disabled, and all three are shown on the About
+page. The chart refuses to render while one is empty:
+
+- `artemis.config.operator.name`: the organization operating Artemis
+- `artemis.config.operator.adminName`: the administrator's name
+- `artemis.config.operator.universityName`: the university, school or institution using Artemis
+
 Set `gateway.enabled=false` when using only `kubectl port-forward`. For a plain-HTTP local port-forward, also set `artemis.config.secureCookies=false`; the Docker Desktop values file already does this. Otherwise install the Gateway API CRDs/controller and configure the gateway values.
 
 ## Docker Desktop acceptance cluster

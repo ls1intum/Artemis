@@ -11,7 +11,7 @@ import { ActivatedRoute } from '@angular/router';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -19,7 +19,7 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
     selector: 'jhi-text-block-assessment-card',
     templateUrl: './text-block-assessment-card.component.html',
     styleUrls: ['./text-block-assessment-card.component.scss'],
-    imports: [TextBlockFeedbackEditorComponent, ArtemisTranslatePipe, TranslateDirective, TumUiButtonDirective],
+    imports: [TextBlockFeedbackEditorComponent, ArtemisTranslatePipe, TranslateDirective, TumAetUiButtonDirective],
 })
 export class TextBlockAssessmentCardComponent {
     private route = inject(ActivatedRoute);

@@ -4,7 +4,7 @@
         class="relative variant-tray-toggle"
         data-testid="variant-tray-button"
         [attr.aria-label]="'artemisApp.exerciseVariantGeneration.tray.ariaLabel' | artemisTranslate"
-        [tumUiPopoverTrigger]="trayPopover"
+        [tumAetUiPopoverTrigger]="trayPopover"
     >
         <fa-icon [icon]="faWandMagicSparkles" />
         <!-- A bare wand icon does not say what the tray holds — the short label makes it self-explanatory.
@@ -35,7 +35,7 @@
     </button>
     <!-- Open re-sync: websocket events keep phases live but carry neither the planned variant title nor the
              request, so entries opened mid-job would miss the "source → variant" line without a REST refresh. -->
-    <tum-ui-popover #trayPopover placement="bottom" [ariaLabel]="'artemisApp.exerciseVariantGeneration.tray.title' | artemisTranslate" (openChange)="$event && refreshJobs()">
+    <tumaet-ui-popover #trayPopover placement="bottom" [ariaLabel]="'artemisApp.exerciseVariantGeneration.tray.title' | artemisTranslate" (openChange)="$event && refreshJobs()">
         <div class="variant-tray-list flex flex-col gap-2" data-testid="variant-tray-list">
             <div>
                 <div class="variant-tray-list__title">
@@ -53,7 +53,7 @@
                         @if (!isTerminalVariantPhase(job.phase)) {
                             <!-- Sibling of the activation target below, not nested inside it: a role="button" element
                                      must not contain another interactive control. -->
-                            <tum-ui-button
+                            <tumaet-ui-button
                                 severity="danger"
                                 variant="outlined"
                                 [rounded]="true"
@@ -63,7 +63,7 @@
                                 (clicked)="cancelJob(job, $event)"
                             >
                                 {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
-                            </tum-ui-button>
+                            </tumaet-ui-button>
                         }
                         <div
                             class="variant-tray-entry__target"
@@ -133,8 +133,8 @@
                 }
             </div>
         </div>
-    </tum-ui-popover>
-    <tum-ui-confirm-dialog />
+    </tumaet-ui-popover>
+    <tumaet-ui-confirm-dialog />
     <!-- Tray-hosted generation modal in monitor mode: no source exercise, initialized from the job-detail
              endpoint via monitorJobId. "Open in Editor" navigates from inside the wizard. -->
     <jhi-exercise-variant-ai-modal-wizard [visible]="monitorVisible()" (visibleChange)="monitorVisible.set($event)" [monitorJobId]="monitorJobId()" />

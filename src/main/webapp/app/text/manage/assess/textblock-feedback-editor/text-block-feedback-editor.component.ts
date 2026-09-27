@@ -18,7 +18,7 @@ import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedbac
 import { FormsModule } from '@angular/forms';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',
@@ -38,7 +38,7 @@ import { TumUiButtonDirective } from '@tumaet/ui-angular';
         FormsModule,
         AssessmentCorrectionRoundBadgeComponent,
         ArtemisTranslatePipe,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class TextBlockFeedbackEditorComponent implements AfterViewInit {

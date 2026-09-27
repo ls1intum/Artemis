@@ -14,6 +14,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FeedbackSuggestionBadgeComponent, TranslateDirective, FaIconComponent],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
+    // Needed for the outer editor to access the DOM node of this component
+    public elementRef = inject(ElementRef);
+
     // Needed for the outer editor to handle the DOM node of the component (the parent
     // CodeEditorMonacoComponent matches `comp.codeLine() === line` in getInlineFeedbackNode).
     readonly codeLine = input.required<number>();
@@ -31,7 +34,4 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     // Icons
     faCheck = faCheck;
     faTrash = faTrash;
-
-    // Needed for the outer editor to access the DOM node of this component
-    public elementRef = inject(ElementRef);
 }

@@ -1,5 +1,5 @@
 @let feedback = currentFeedback();
-<tum-ui-card id="code-editor-inline-feedback-{{ codeLine() }}" class="inline-feedback" [attr.data-tone]="tone(currentFeedback())">
+<tumaet-ui-card id="code-editor-inline-feedback-{{ codeLine() }}" class="inline-feedback" [attr.data-tone]="tone(currentFeedback())">
     <div class="inline-feedback__content">
         @if (Feedback.isFeedbackSuggestion(feedback) && !readOnly()) {
             <div class="inline-feedback__badges">
@@ -12,15 +12,15 @@
                  points are edited with a half-point stepper while the feedback is open. -->
             @if (viewOnly() || currentFeedback().gradingInstruction) {
                 @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
-                    <tum-ui-tag
+                    <tumaet-ui-tag
                         class="inline-feedback__points-pill"
                         [severity]="pointsSeverity(currentFeedback())"
                         [value]="roundScoreSpecifiedByCourseSettings(currentFeedback().credits, course()) + 'P'"
                     />
                 }
             } @else {
-                <tum-ui-input-group class="inline-feedback__stepper">
-                    <tum-ui-input-group-addon>
+                <tumaet-ui-input-group class="inline-feedback__stepper">
+                    <tumaet-ui-input-group-addon>
                         <button
                             type="button"
                             class="inline-feedback__step"
@@ -29,20 +29,21 @@
                         >
                             <fa-icon [icon]="faMinus" />
                         </button>
-                    </tum-ui-input-group-addon>
+                    </tumaet-ui-input-group-addon>
                     <input
                         id="feedback-points"
                         data-testid="feedback-editor-points-input"
-                        tumUiInput
+                        #pointsInput
+                        tumAetUiInput
                         class="inline-feedback__points-input"
                         type="number"
                         [step]="CREDITS_STEP"
                         [value]="currentFeedback().credits ?? ''"
-                        (change)="updateCredits($any($event.target).valueAsNumber)"
+                        (change)="updateCredits(pointsInput.valueAsNumber)"
                         [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                         (keydown)="handleKeydown($event)"
                     />
-                    <tum-ui-input-group-addon>
+                    <tumaet-ui-input-group-addon>
                         <button
                             type="button"
                             class="inline-feedback__step"
@@ -51,20 +52,20 @@
                         >
                             <fa-icon [icon]="faPlus" />
                         </button>
-                    </tum-ui-input-group-addon>
-                </tum-ui-input-group>
+                    </tumaet-ui-input-group-addon>
+                </tumaet-ui-input-group>
             }
 
             <div class="inline-feedback__actions">
                 @if (viewOnly()) {
                     @if (!readOnly()) {
-                        <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="editFeedback(codeLine())">
+                        <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="editFeedback(codeLine())">
                             <fa-icon [icon]="faPencilAlt" />
                             <span jhiTranslate="entity.action.edit"></span>
                         </button>
                     }
                     @if (readOnly() && feedback.isSubsequent) {
-                        <fa-icon class="text-muted-color" [icon]="faExclamationTriangle" [tumUiTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
+                        <fa-icon class="text-muted-color" [icon]="faExclamationTriangle" [tumAetUiTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
                     }
                 } @else {
                     <!-- Only editable feedback offers to unlink its grading instruction. -->
@@ -73,7 +74,7 @@
                     }
                 }
                 @if (!readOnly() && feedback.type === MANUAL) {
-                    <div class="inline-feedback__delete" (click)="$event.stopPropagation()">
+                    <div class="inline-feedback__delete" role="group" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                         <jhi-confirm-icon
                             [initialIcon]="faTrashAlt"
                             [confirmIcon]="faTimes"
@@ -100,7 +101,7 @@
                 @if (isKeyboardDropTarget()) {
                     <button
                         type="button"
-                        tumUiButton
+                        tumAetUiButton
                         severity="secondary"
                         variant="outlined"
                         size="small"
@@ -128,7 +129,7 @@
                     <textarea
                         id="feedback-textarea"
                         data-testid="feedback-editor-text-input"
-                        tumUiTextarea
+                        tumAetUiTextarea
                         class="inline-feedback__textarea"
                         rows="3"
                         [ngModel]="currentFeedback().detailText"
@@ -145,7 +146,7 @@
                 </div>
 
                 <div class="inline-feedback__footer">
-                    <button type="button" tumUiButton severity="secondary" variant="outlined" size="small" (click)="cancelFeedback()">
+                    <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="cancelFeedback()">
                         <fa-icon [icon]="faBan" />
                         <span jhiTranslate="entity.action.cancel"></span>
                     </button>
@@ -153,7 +154,7 @@
                         id="feedback-save"
                         data-testid="feedback-save"
                         type="submit"
-                        tumUiButton
+                        tumAetUiButton
                         severity="primary"
                         size="small"
                         [disabled]="!saveEnabled()"
@@ -170,4 +171,4 @@
             <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="true" />
         }
     </div>
-</tum-ui-card>
+</tumaet-ui-card>

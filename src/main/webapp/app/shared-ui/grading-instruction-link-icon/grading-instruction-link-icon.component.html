@@ -1,11 +1,11 @@
 @if (!showConfirm()) {
-    <fa-icon [icon]="linkIcon()" [tumUiTooltip]="setTooltip(instruction()!)" (click)="toggle()" />
+    <fa-icon [icon]="linkIcon()" [tumAetUiTooltip]="setTooltip(instruction()!)" (click)="toggle()" />
 }
 @if (showConfirm()) {
     <fa-icon
         class="grading-instruction-link-icon-danger"
         [icon]="confirmIcon"
-        [tumUiTooltip]="'artemisApp.assessment.messages.removeAssessmentInstructionLink' | artemisTranslate"
+        [tumAetUiTooltip]="'artemisApp.assessment.messages.removeAssessmentInstructionLink' | artemisTranslate"
         (mouseleave)="toggle()"
         (click)="removeLink()"
     />

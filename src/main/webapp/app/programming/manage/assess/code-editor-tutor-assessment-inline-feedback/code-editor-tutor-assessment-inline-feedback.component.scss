@@ -8,7 +8,7 @@
     padding-block: 0.5rem;
 }
 
-/* The widget is the feedback card of the assessment editor, narrowed to fit next to the code: the tum-ui-card brings
+/* The widget is the feedback card of the assessment editor, narrowed to fit next to the code: the tumaet-ui-card brings
    the surface and radius, the tone accent (awarded / deducted / neutral) is a stripe on the leading edge. */
 .inline-feedback {
     position: relative;
@@ -35,7 +35,7 @@
     }
 
     /* Tighter than the card default: the widget shares its space with the code around it. */
-    ::ng-deep .tum-ui-card-body {
+    ::ng-deep .tumaet-ui-card-body {
         padding: 0.75rem;
     }
 

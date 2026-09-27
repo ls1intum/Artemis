@@ -16,14 +16,14 @@ import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.co
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import {
-    TumUiButtonDirective,
-    TumUiCardComponent,
-    TumUiInputDirective,
-    TumUiInputGroupAddonComponent,
-    TumUiInputGroupComponent,
-    TumUiTagComponent,
-    TumUiTagSeverity,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiCardComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { CREDITS_STEP, normalizedCredits, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
@@ -41,13 +41,13 @@ import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail
         ConfirmIconComponent,
         AssessmentCorrectionRoundBadgeComponent,
         ArtemisTranslatePipe,
-        TumUiCardComponent,
-        TumUiButtonDirective,
-        TumUiTagComponent,
-        TumUiInputDirective,
-        TumUiInputGroupComponent,
-        TumUiInputGroupAddonComponent,
-        TumUiTooltipDirective,
+        TumAetUiCardComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupComponent,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiTooltipDirective,
     ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
@@ -236,7 +236,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /** Severity of the point pill (green awarded / red deducted / neutral). */
-    protected pointsSeverity(feedback: Feedback): TumUiTagSeverity {
+    protected pointsSeverity(feedback: Feedback): TumAetUiTagSeverity {
         return this.isExcludedFromScore(feedback) ? 'secondary' : pointsSeverity(feedback.credits);
     }
 

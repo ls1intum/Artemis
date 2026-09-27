@@ -69,19 +69,7 @@ public final class Constants {
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
-    public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
-
-    public static final String NEW_RESULT_TOPIC = "/topic/newResults";
-
     public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
-
-    public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
-
-    public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
-
-    public static final String SUBMISSION_PROCESSING = "/submissionProcessing";
-
-    public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
 

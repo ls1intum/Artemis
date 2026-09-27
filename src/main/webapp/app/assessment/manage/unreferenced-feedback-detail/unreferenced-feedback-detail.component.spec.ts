@@ -223,7 +223,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
         fixture.detectChanges();
 
-        const card = () => fixture.nativeElement.querySelector('tum-ui-card') as HTMLElement;
+        const card = () => fixture.nativeElement.querySelector('tumaet-ui-card') as HTMLElement;
         expect(card().getAttribute('data-tone')).toBe('positive');
 
         comp.stepCredits(-comp.CREDITS_STEP);

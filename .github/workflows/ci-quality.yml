@@ -18,8 +18,8 @@ on:
         description: 'Whether Java sources changed — gates the Java-specific analyses.'
         required: true
         type: boolean
-      has_tum_ui:
-        description: 'Whether TUM UI or its application integration changed.'
+      has_tum_aet_ui:
+        description: 'Whether TUM AET UI or its application integration changed.'
         required: true
         type: boolean
 
@@ -103,9 +103,9 @@ jobs:
       - name: TypeScript Code Style
         run: pnpm run lint
         if: ${{ !cancelled() }}
-      - name: TUM UI Styles
-        run: pnpm run tum-ui:stylelint
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: TUM AET UI Styles
+        run: pnpm run tum-aet-ui:stylelint
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright
@@ -142,45 +142,45 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
-      - name: Compile Artemis With TUM UI Source
-        run: pnpm run tum-ui:source:check:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI in Isolation
-        run: pnpm run tum-ui:test:coverage
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Prepare TUM UI Storybook
-        run: pnpm --dir packages/tum-ui run storybook:prepare
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Type Check TUM UI Stories
-        run: pnpm --dir packages/tum-ui run storybook:typecheck:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Install TUM UI Storybook Browser
-        run: pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI Stories
-        run: pnpm --dir packages/tum-ui run storybook:test:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Build TUM UI Storybook
-        run: pnpm --dir packages/tum-ui run storybook:build:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI AutoDocs
-        run: pnpm --dir packages/tum-ui run storybook:docs:test:built
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Validate TUM UI Package Artifact
-        id: tum-ui-package
-        run: pnpm run tum-ui:pack:check
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI With Minimum Peer Versions
-        run: pnpm run tum-ui:test:consumer minimum
-        if: ${{ !cancelled() && inputs.has_tum_ui && steps.tum-ui-package.outcome == 'success' }}
-      - name: Test TUM UI With Latest Compatible Peer Versions
-        run: pnpm run tum-ui:test:consumer latest
-        if: ${{ !cancelled() && inputs.has_tum_ui && steps.tum-ui-package.outcome == 'success' }}
+      - name: Compile Artemis With TUM AET UI Source
+        run: pnpm run tum-aet-ui:source:check:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI in Isolation
+        run: pnpm run tum-aet-ui:test:coverage
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Prepare TUM AET UI Storybook
+        run: pnpm --dir packages/tum-aet-ui run storybook:prepare
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Type Check TUM AET UI Stories
+        run: pnpm --dir packages/tum-aet-ui run storybook:typecheck:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Install TUM AET UI Storybook Browser
+        run: pnpm --dir packages/tum-aet-ui exec playwright install --with-deps --only-shell chromium
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI Stories
+        run: pnpm --dir packages/tum-aet-ui run storybook:test:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Build TUM AET UI Storybook
+        run: pnpm --dir packages/tum-aet-ui run storybook:build:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI AutoDocs
+        run: pnpm --dir packages/tum-aet-ui run storybook:docs:test:built
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Validate TUM AET UI Package Artifact
+        id: tum-aet-ui-package
+        run: pnpm run tum-aet-ui:pack:check
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI With Minimum Peer Versions
+        run: pnpm run tum-aet-ui:test:consumer minimum
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
+      - name: Test TUM AET UI With Latest Compatible Peer Versions
+        run: pnpm run tum-aet-ui:test:consumer latest
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
       - uses: actions/upload-artifact@v7
-        if: failure() && inputs.has_tum_ui
+        if: failure() && inputs.has_tum_aet_ui
         with:
-          name: tum-ui-consumer
-          path: build/test-results/tum-ui-consumer/
+          name: tum-aet-ui-consumer
+          path: build/test-results/tum-aet-ui-consumer/
           if-no-files-found: ignore
           retention-days: 7
 

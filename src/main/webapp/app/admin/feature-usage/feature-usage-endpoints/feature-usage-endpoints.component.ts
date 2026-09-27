@@ -3,13 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { faChartLine } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    TumUiButtonDirective,
-    TumUiSelectComponent,
-    TumUiTableDirective,
-    TumUiTableSortEvent,
-    TumUiTableSortableColumnComponent,
-    TumUiTagComponent,
-    TumUiTagSeverity,
+    TumAetUiButtonDirective,
+    TumAetUiSelectComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
 } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -29,7 +29,7 @@ interface EndpointRow {
 
 const ALL_MODULES = '';
 
-const INTERACTION_SEVERITY: Record<FeatureInteraction, TumUiTagSeverity> = {
+const INTERACTION_SEVERITY: Record<FeatureInteraction, TumAetUiTagSeverity> = {
     [FeatureInteraction.ACTION]: 'info',
     [FeatureInteraction.VIEW]: 'secondary',
     [FeatureInteraction.AUTOMATIC]: 'contrast',
@@ -50,11 +50,11 @@ const INTERACTION_SEVERITY: Record<FeatureInteraction, TumUiTagSeverity> = {
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumUiButtonDirective,
-        TumUiSelectComponent,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiTagComponent,
+        TumAetUiButtonDirective,
+        TumAetUiSelectComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTagComponent,
     ],
 })
 export class FeatureUsageEndpointsComponent {
@@ -101,11 +101,11 @@ export class FeatureUsageEndpointsComponent {
         return rows.sort(this.comparator());
     });
 
-    interactionSeverity(interaction: FeatureInteraction): TumUiTagSeverity {
+    interactionSeverity(interaction: FeatureInteraction): TumAetUiTagSeverity {
         return INTERACTION_SEVERITY[interaction];
     }
 
-    onSort(event: TumUiTableSortEvent): void {
+    onSort(event: TumAetUiTableSortEvent): void {
         this.sortField.set(event.field as SortField);
         this.sortAscending.set(event.order === 1);
     }

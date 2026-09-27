@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
-import { TumUiButtonComponent, TumUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { MetricsModalThreadsComponent } from '../metrics-modal-threads/metrics-modal-threads.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -10,7 +10,7 @@ import { toPercentage } from 'app/admin/metrics/filterNaN-util';
     selector: 'jhi-jvm-threads',
     templateUrl: './jvm-threads.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, TumUiProgressBarComponent, TumUiButtonComponent, DecimalPipe, MetricsModalThreadsComponent],
+    imports: [TranslateDirective, TumAetUiProgressBarComponent, TumAetUiButtonComponent, DecimalPipe, MetricsModalThreadsComponent],
 })
 export class JvmThreadsComponent {
     /** Thread data from parent */

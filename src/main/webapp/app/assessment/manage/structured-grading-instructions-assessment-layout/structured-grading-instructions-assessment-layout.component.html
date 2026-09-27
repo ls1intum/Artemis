@@ -1,5 +1,5 @@
 @if (allowDrop()) {
-    <tum-ui-message
+    <tumaet-ui-message
         severity="info"
         class="mb-3 block"
         [icon]="faInfoCircle"
@@ -8,13 +8,13 @@
 }
 @if (sortedCriteria().length) {
     <div class="mb-3 flex items-center gap-1">
-        <tum-ui-button variant="text" severity="secondary" size="small" (clicked)="expandAll()">
+        <tumaet-ui-button variant="text" severity="secondary" size="small" (clicked)="expandAll()">
             <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
         <span class="text-muted-color" aria-hidden="true">·</span>
-        <tum-ui-button variant="text" severity="secondary" size="small" (clicked)="collapseAll()">
+        <tumaet-ui-button variant="text" severity="secondary" size="small" (clicked)="collapseAll()">
             <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
 }
 @for (criterion of sortedCriteria(); track criterionIndex; let criterionIndex = $index) {
@@ -22,7 +22,7 @@
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
             <ng-container expandableSectionHeaderActions>
                 @if (selectable()) {
-                    <tum-ui-tag
+                    <tumaet-ui-tag
                         severity="secondary"
                         class="font-normal!"
                         [value]="
@@ -57,7 +57,7 @@
                     >
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="flex min-w-0 items-center gap-2">
-                                <tum-ui-tag class="shrink-0" [severity]="item.pointsSeverity" [value]="item.pointsLabel" />
+                                <tumaet-ui-tag class="shrink-0" [severity]="item.pointsSeverity" [value]="item.pointsLabel" />
                                 @if (instruction.gradingScale) {
                                     <span [id]="item.scaleElementId" class="min-w-0 text-lg font-bold [overflow-wrap:anywhere]">{{ instruction.gradingScale }}</span>
                                 }
@@ -72,7 +72,7 @@
                                             class="sgi-item__control inline-flex size-7 cursor-pointer items-center justify-center rounded-md border border-[var(--border-color)] bg-transparent p-0 text-inherit"
                                             [attr.aria-label]="armLabel"
                                             [attr.aria-describedby]="item.accessibleNameIds"
-                                            [tumUiTooltip]="armLabel"
+                                            [tumAetUiTooltip]="armLabel"
                                             (click)="armInstruction($event, instruction)"
                                         >
                                             <fa-icon [icon]="faCrosshairs" />
@@ -95,7 +95,7 @@
                                             </button>
                                             <span
                                                 class="text-muted-color flex h-full min-w-11 cursor-help items-center justify-center px-1.5 text-xs font-semibold tabular-nums"
-                                                [tumUiTooltip]="usageTooltip"
+                                                [tumAetUiTooltip]="usageTooltip"
                                             >
                                                 {{ useCount }} / {{ usageLimit > 0 ? usageLimit : '∞' }}
                                             </span>
@@ -111,9 +111,11 @@
                                         </div>
                                     }
                                     <span
-                                        [tumUiTooltip]="item.isLockedByReferencedFeedback ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''"
+                                        [tumAetUiTooltip]="
+                                            item.isLockedByReferencedFeedback ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
+                                        "
                                     >
-                                        <tum-ui-checkbox
+                                        <tumaet-ui-checkbox
                                             [checked]="item.isApplied"
                                             [disabled]="item.isLockedByReferencedFeedback"
                                             [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"

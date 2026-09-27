@@ -6,7 +6,7 @@
         <!-- Deleting is not selecting: the host of this editor treats any click as "select this text block", and selecting
              re-creates the feedback that was just removed (TextBlockRef.initFeedback). Keep the close control's clicks,
              including the confirm-icon's two-step click, from reaching it. -->
-        <div class="close" (click)="$event.stopPropagation()">
+        <div class="close" role="group" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
             @if (canDismiss) {
                 <button
                     type="button"
@@ -54,7 +54,7 @@
                 @if (isKeyboardDropTarget()) {
                     <button
                         type="button"
-                        tumUiButton
+                        tumAetUiButton
                         severity="secondary"
                         variant="outlined"
                         size="small"

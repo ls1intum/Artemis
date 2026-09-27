@@ -202,7 +202,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         });
     }
 
-    async ngAfterViewInit(): Promise<void> {
+    ngAfterViewInit(): void {
+        void this.initializeModelingAssessmentComponentView();
+    }
+
+    private async initializeModelingAssessmentComponentView(): Promise<void> {
         const resultFeedbacks = this.resultFeedbacks();
         if (resultFeedbacks !== undefined) {
             this.referencedFeedbacks = resultFeedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);

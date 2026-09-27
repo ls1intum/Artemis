@@ -16,14 +16,14 @@ import { FeedbackContentPipe } from 'app/foundation/pipes/feedback-content.pipe'
 import { QuotePipe } from 'app/foundation/pipes/quote.pipe';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiCardComponent,
-    TumUiInputDirective,
-    TumUiInputGroupAddonComponent,
-    TumUiInputGroupComponent,
-    TumUiTagComponent,
-    TumUiTagSeverity,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCardComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputGroupAddonComponent,
+    TumAetUiInputGroupComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
 } from '@tumaet/ui-angular';
 import { CREDITS_STEP, normalizedCredits, pointsLabel, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 
@@ -45,13 +45,13 @@ export type FeedbackTone = 'positive' | 'negative' | 'neutral';
         ArtemisTranslatePipe,
         FeedbackContentPipe,
         QuotePipe,
-        TumUiCardComponent,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiInputDirective,
-        TumUiTagComponent,
-        TumUiInputGroupComponent,
-        TumUiInputGroupAddonComponent,
+        TumAetUiCardComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiInputGroupAddonComponent,
     ],
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
@@ -117,7 +117,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     }
 
     /** Severity of the read-only point pill (green awarded / red deducted / neutral). */
-    protected pointsSeverityFor(credits: number | undefined): TumUiTagSeverity {
+    protected pointsSeverityFor(credits: number | undefined): TumAetUiTagSeverity {
         return pointsSeverity(credits);
     }
 

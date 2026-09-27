@@ -51,7 +51,7 @@ import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-vali
 import { countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/modeling-markdown-explanation-editor/modeling-markdown-explanation-editor.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
@@ -82,13 +82,13 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         FormFooterComponent,
         ArtemisTranslatePipe,
         ExerciseTimelineComponent,
-        TumUiConfirmDialogComponent,
-        TumUiSelectComponent,
+        TumAetUiConfirmDialogComponent,
+        TumAetUiSelectComponent,
         ModelingMarkdownExplanationEditorComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseGroupDateNoticeComponent,
     ],
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private static readonly SCROLL_SNAP_CLASS = 'modeling-exercise-editor-scroll-snap';
@@ -107,7 +107,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
     private readonly translateService = inject(TranslateService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
     timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 

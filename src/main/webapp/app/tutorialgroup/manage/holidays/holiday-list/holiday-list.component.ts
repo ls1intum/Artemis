@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -44,7 +44,7 @@ interface HolidayListEntry {
     selector: 'jhi-holiday-list',
     templateUrl: './holiday-list.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective, TumUiTagComponent, TumUiTooltipDirective],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective],
 })
 export class HolidayListComponent {
     private readonly translateService = inject(TranslateService);

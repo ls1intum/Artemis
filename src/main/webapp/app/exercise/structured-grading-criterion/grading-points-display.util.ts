@@ -1,4 +1,4 @@
-import { TumUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiTagSeverity } from '@tumaet/ui-angular';
 
 /**
  * Presentation helpers shared by the structured grading instruction panel and the feedback cards, so a point
@@ -6,7 +6,7 @@ import { TumUiTagSeverity } from '@tumaet/ui-angular';
  */
 
 /** Tag severity for a point value: `success` (awarded), `danger` (deducted), or `secondary` (neutral / zero). */
-export function pointsSeverity(credits: number | undefined): TumUiTagSeverity {
+export function pointsSeverity(credits: number | undefined): TumAetUiTagSeverity {
     const value = credits ?? 0;
     if (value > 0) {
         return 'success';

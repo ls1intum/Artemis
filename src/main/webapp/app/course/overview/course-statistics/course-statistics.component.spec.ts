@@ -27,7 +27,7 @@ import { CourseOverviewExercisesService } from 'app/course/overview/services/cou
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -388,7 +388,7 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should show the translated doughnut chart label as tooltip title and the value as body', () => {
-        const tooltip = comp.doughnutConfig.tooltip as TumUiChartTooltipConfig;
+        const tooltip = comp.doughnutConfig.tooltip as TumAetUiChartTooltipConfig;
         const datum = { seriesIndex: 0, index: 0, label: 'artemisApp.courseOverview.statistics.missingPointsLabel', value: 400 };
 
         expect(tooltip.title!([datum])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');

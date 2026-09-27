@@ -29,6 +29,10 @@
             jvmArgs = [
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
+                // Every core node refuses to start without installation metadata.
+                "-Dinfo.operatorName=Artemis OpenAPI Generation",
+                "-Dinfo.operatorAdminName=Artemis OpenAPI Administrator",
+                "-Dinfo.universityName=Artemis OpenAPI University",
                 "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web.openapi",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.weaviate.enabled=true",

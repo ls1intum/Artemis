@@ -182,7 +182,7 @@ such as `top.px`, and it is compared by reference. Remove `NgStyle` from the com
 <span class="text-state-danger">…</span>
 ```
 
-For a component, prefer the TUM UI variant over a utility class on plain markup.
+For a component, prefer the TUM AET UI variant over a utility class on plain markup.
 
 ## Verifying a migration
 

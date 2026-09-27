@@ -1,4 +1,10 @@
-import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiPopoverComponent, TumUiPopoverTriggerDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+} from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -29,20 +35,20 @@ type TrayStatus = 'running' | 'success' | 'attention';
     templateUrl: './variant-generation-tray.component.html',
     styleUrl: './variant-generation-tray.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     imports: [
         FaIconComponent,
-        TumUiPopoverComponent,
-        TumUiPopoverTriggerDirective,
-        TumUiButtonComponent,
-        TumUiConfirmDialogComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiButtonComponent,
+        TumAetUiConfirmDialogComponent,
         ArtemisTranslatePipe,
         ExerciseVariantAiModalWizardComponent,
     ],
 })
 export class VariantGenerationTrayComponent {
     protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
 
@@ -53,7 +59,7 @@ export class VariantGenerationTrayComponent {
     readonly monitorJobId = signal<string | undefined>(undefined);
     readonly monitorVisible = signal(false);
 
-    private readonly trayPopover = viewChild<TumUiPopoverComponent>('trayPopover');
+    private readonly trayPopover = viewChild<TumAetUiPopoverComponent>('trayPopover');
 
     /**
      * Icon-only status of the tray button: spinner while any job runs, warning once all finished but at least
