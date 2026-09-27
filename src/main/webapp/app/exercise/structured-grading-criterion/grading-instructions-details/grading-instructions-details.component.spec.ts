@@ -1029,9 +1029,9 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(instructions[1].id).toBe(10);
     });
 
-    it('should keep instruction id when content and structure both change', () => {
+    it('should reject an ambiguous insertion and edit without replacing the model', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        const originalInstruction = gradingInstruction;
+        const originalCriteria = exercise.gradingCriteria;
         const domainActions = getDomainActionArray();
         domainActions[5] = { text: 'edited feedback', action: domainActions[5].action };
         const instructionAction = domainActions[1].action;
@@ -1051,12 +1051,8 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(domainActions);
 
-        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
-        expect(instructions).toHaveLength(2);
-        expect(instructions[0]).toBe(originalInstruction);
-        expect(instructions[0].id).toBe(1);
-        expect(instructions[0].feedback).toBe('edited feedback');
-        expect(instructions[1].id).toBeUndefined();
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingInstruction.feedback).toBe('feedback');
     });
 
     it('should not transfer a persisted instruction id to an edited copy placed before the original', () => {
@@ -1218,6 +1214,34 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].feedback).toBe('unknown feedback');
     });
 
+    it('should reject deleting one instruction while editing another without replacing the model', () => {
+        const instructionB = { id: 2, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
+        gradingCriterion.structuredGradingInstructions.push(instructionB);
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructions = 'original text';
+        component.ngOnInit();
+        component.showEditMode.set(false);
+        const originalCriteria = exercise.gradingCriteria;
+        const domainActions = getDomainActionArray();
+        domainActions[2] = { text: '2', action: domainActions[2].action };
+        domainActions[3] = { text: 'b', action: domainActions[3].action };
+        domainActions[4] = { text: 'b', action: domainActions[4].action };
+        domainActions[5] = { text: 'edited b', action: domainActions[5].action };
+        Object.defineProperty(component, 'markdownEditor', {
+            value: () => ({
+                currentMarkdown: () => 'edited instructions',
+                flushLiveMarkdownAndParse: () => component.onDomainActionsFound(domainActions),
+            }),
+        });
+
+        expect(component.prepareForSave()).toBe(false);
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction, instructionB]);
+        expect(instructionB.feedback).toBe('b');
+        expect(exercise.gradingInstructions).toBe('original text');
+    });
+
     it('should apply a cross-criterion content move without preserving the moved instruction id', () => {
         const instructionA = { id: 10, credits: 1, gradingScale: 'a', instructionDescription: 'a', feedback: 'a', usageCount: 0 } as GradingInstruction;
         const instructionB = { id: 20, credits: 2, gradingScale: 'b', instructionDescription: 'b', feedback: 'b', usageCount: 0 } as GradingInstruction;
@@ -1260,9 +1284,9 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![1].structuredGradingInstructions[1].feedback).toBe('a');
     });
 
-    it('should assign the persisted instruction id positionally when both duplicate copies are edited', () => {
+    it('should reject two edited copies with only one persisted instruction', () => {
         exercise.gradingCriteria = [gradingCriterion];
-        const originalInstruction = gradingInstruction;
+        const originalCriteria = exercise.gradingCriteria;
         const domainActions = getDomainActionArray();
         const instructionAction = domainActions[1].action;
         const creditsAction = domainActions[2].action;
@@ -1284,13 +1308,8 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         component.onDomainActionsFound(domainActions);
 
-        const instructions = exercise.gradingCriteria![0].structuredGradingInstructions;
-        expect(instructions).toHaveLength(2);
-        expect(instructions[0]).toBe(originalInstruction);
-        expect(instructions[0].id).toBe(1);
-        expect(instructions[0].feedback).toBe('edited copy feedback');
-        expect(instructions[1].id).toBeUndefined();
-        expect(instructions[1].feedback).toBe('edited original feedback');
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingInstruction.feedback).toBe('feedback');
     });
 
     it('should create two new criteria when both duplicate copies are renamed away from the persisted title', () => {

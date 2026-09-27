@@ -103,6 +103,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      */
     private identityBaseline: GradingCriterion[] = [];
     private readonly instructionBaseline = new Map<GradingCriterion, GradingInstruction[]>();
+    private parseAccepted = true;
 
     backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
@@ -317,17 +318,17 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * before setting isSaving (which sets editable=false and would no-op this method) or sending
      * the update DTO, otherwise a save inside the markdownChange debounce window keeps stale text.
      *
-     * @returns always true; content-only reconciliation never rejects a parse.
+     * @returns false when instruction identity cannot be reconciled unambiguously.
      */
     prepareForSave(): boolean {
-        this.flushMarkdown(true);
-        return true;
+        return this.flushMarkdown(true);
     }
 
-    private flushMarkdown(commitEmpty: boolean): void {
+    private flushMarkdown(commitEmpty: boolean): boolean {
         if (!this.editable() || this.showEditMode()) {
-            return;
+            return true;
         }
+        const previousGradingInstructions = this.exercise().gradingInstructions;
         this.cleanupExerciseGradingInstructions();
         const editor = this.markdownEditor();
         editor?.flushLiveMarkdownAndParse();
@@ -338,7 +339,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         const liveMarkdown = editor?.currentMarkdown?.();
         if (liveMarkdown !== undefined && !liveMarkdown.trim()) {
             this.clearGradingCriteria(commitEmpty);
+            this.parseAccepted = true;
         }
+        if (!this.parseAccepted) {
+            this.exercise().gradingInstructions = previousGradingInstructions;
+        }
+        return this.parseAccepted;
     }
 
     /**
@@ -508,11 +514,19 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return;
         }
         const previousCriteria = this.exercise().gradingCriteria ?? [];
+        const previousInstructions = this.instructions;
+        const previousGradingInstructions = this.exercise().gradingInstructions;
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
-        this.reconcileParsedCriteria(previousCriteria);
+        this.parseAccepted = this.reconcileParsedCriteria(previousCriteria);
+        if (!this.parseAccepted) {
+            this.instructions = previousInstructions;
+            this.criteria.set(previousCriteria);
+            this.exercise().gradingCriteria = previousCriteria;
+            this.exercise().gradingInstructions = previousGradingInstructions;
+        }
     }
 
     /**
@@ -520,9 +534,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * rows keep their database IDs and feedback links. Identity is content-only — no markers in text.
      * honey: two instructions with identical fingerprints that swap order can keep the wrong ids.
      */
-    private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): void {
+    private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): boolean {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
         const plan = this.planReconciliation(previousCriteria, parsedCriteria);
+        if (!plan) {
+            return false;
+        }
         for (const criterion of previousCriteria) {
             if (criterion.id != undefined) {
                 const baseline = this.instructionBaseline.get(criterion) ?? [];
@@ -552,6 +569,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         this.exercise().gradingCriteria = reconciled;
         this.criteria.set(reconciled);
         this.identityBaseline = [...new Set([...this.identityBaseline, ...previousCriteria, ...reconciled].filter((criterion) => criterion.id != undefined))];
+        return true;
     }
 
     /**
@@ -559,10 +577,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * anything. Criteria match by full content, then title, then instruction-set fingerprint (so a
      * title tweak keeps the id), then a sole leftover pair (so a title-less instruction edit keeps
      * the id when only one criterion remains unmatched). Never zip multiple leftovers by position —
-     * that would hand an unrelated criterion’s id to an insert/reorder.
+     * that would hand an unrelated criterion’s id to an insert/reorder. Reject ambiguous instruction
+     * leftovers before changing persisted objects.
      * honey: two instructions with identical fingerprints that swap order can keep the wrong ids.
      */
-    private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan {
+    private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan | undefined {
         const unusedCriteria = [...previousCriteria];
         const unusedFallbackCriteria = this.identityBaseline.filter((criterion) => criterion.id != undefined && !previousCriteria.includes(criterion));
         const criterionEntries = parsedCriteria.map((parsedCriterion) => ({
@@ -598,7 +617,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             }
         }
 
-        return criterionEntries.map(({ parsedCriterion, previousCriterion }) => {
+        const plan: ReconciliationPlan = [];
+        for (const { parsedCriterion, previousCriterion } of criterionEntries) {
             const unusedInstructions = [...(previousCriterion?.structuredGradingInstructions ?? [])];
             const unusedFallbackInstructions = (previousCriterion ? (this.instructionBaseline.get(previousCriterion) ?? []) : []).filter(
                 (instruction) => !unusedInstructions.includes(instruction),
@@ -612,13 +632,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                     this.takeContentMatch(unusedInstructions, entry.parsedInstruction, (instruction) => this.instructionFingerprint(instruction)) ??
                     this.takeContentMatch(unusedFallbackInstructions, entry.parsedInstruction, (instruction) => this.instructionFingerprint(instruction));
             }
-            for (const entry of instructionEntries) {
-                if (!entry.previousInstruction && unusedInstructions.length > 0) {
-                    entry.previousInstruction = unusedInstructions.shift();
-                }
+            const unmatchedInstructions = instructionEntries.filter((entry) => !entry.previousInstruction);
+            if (unmatchedInstructions.length === 1 && unusedInstructions.length === 1) {
+                unmatchedInstructions[0].previousInstruction = unusedInstructions[0];
+            } else if (unmatchedInstructions.length > 0 && unusedInstructions.length > 0) {
+                return undefined;
             }
-            return { parsedCriterion, previousCriterion, instructions: instructionEntries };
-        });
+            plan.push({ parsedCriterion, previousCriterion, instructions: instructionEntries });
+        }
+        return plan;
     }
 
     /** Title-only claim; skips title-less rows so dummy criteria are not equated by empty string. */
@@ -838,8 +860,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             return;
         }
         // Flush Monaco before destroying it when leaving text mode — textChanged is debounced (~200ms).
-        if (next) {
-            this.prepareForSave();
+        if (next && !this.prepareForSave()) {
+            this.editModeValue.set('text');
+            return;
         }
         this.showEditMode.set(next);
         this.markdownEditorText.set(this.generateMarkdown());
