@@ -457,7 +457,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         // Name initially empty -> should be auto-filled without extension
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBeFalsy();
 
-        const bigFile = new File(['a'.repeat(10)], 'Lecture-01.mp4', { type: 'video/mp4', lastModified: Date.now() });
+        const bigFile = new File(['a'.repeat(10)], 'Lecture-01.pdf', { type: 'application/pdf', lastModified: Date.now() });
         Object.defineProperty(bigFile, 'size', { value: MAX_FILE_SIZE + 10 });
 
         const input = document.createElement('input');
@@ -465,7 +465,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponent.onFileChange({ target: input } as any);
 
-        expect(attachmentVideoUnitFormComponent.fileName()).toBe('Lecture-01.mp4');
+        expect(attachmentVideoUnitFormComponent.fileName()).toBe('Lecture-01.pdf');
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('Lecture-01');
         expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBe(true);
     });
@@ -557,6 +557,44 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(attachmentVideoUnitFormComponent.file).toBe(dropped);
             expect(query('chosen-file-name').nativeElement.textContent.trim()).toBe('Observer Pattern.pdf');
             expect(attachmentVideoUnitFormComponent.nameControl?.value).toBe('Observer Pattern');
+        });
+
+        it('should not take a file of a type the server does not accept', () => {
+            openInEditMode();
+            const drop = { preventDefault: vi.fn(), dataTransfer: { files: [new File(['content'], 'setup.exe')] } } as unknown as DragEvent;
+
+            query('file-field').triggerEventHandler('drop', drop);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('file-type-error')).not.toBeNull();
+            expect(attachmentVideoUnitFormComponent.file).toBeUndefined();
+            expect(attachmentVideoUnitFormComponent.fileName()).toBe(storedLink);
+            expect(query('replacement-file')).toBeNull();
+
+            // the dialog's "All files" option lets any file through as well, including one without an extension
+            chooseFile(new File(['content'], 'README'));
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(query('file-type-error')).not.toBeNull();
+            expect(attachmentVideoUnitFormComponent.file).toBeUndefined();
+
+            const replacement = pdf('Design Patterns v2.PDF');
+            chooseFile(replacement);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(query('file-type-error')).toBeNull();
+            expect(attachmentVideoUnitFormComponent.file).toBe(replacement);
+            expect(query('replacement-file')).not.toBeNull();
+        });
+
+        it('should clear the unsupported type error when the current file is kept', () => {
+            openInEditMode();
+            chooseFile(new File(['content'], 'setup.exe'));
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(query('file-type-error')).not.toBeNull();
+
+            attachmentVideoUnitFormComponent.keepCurrentFile();
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('file-type-error')).toBeNull();
         });
 
         it('should offer a styled file picker when a unit is created', () => {

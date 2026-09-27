@@ -165,7 +165,9 @@ export class LectureManagementPage {
         expect((await responsePromise).status()).toBe(201);
         const lectureResponse = await this.page.request.get(`${BASE_API}/lecture/lectures/${lectureId}/details`);
         const lecture = (await lectureResponse.json()) as Lecture;
-        return lecture.lectureUnits!.find((unit) => unit.name === name) as AttachmentVideoUnit;
+        const unit = lecture.lectureUnits!.find((lectureUnit) => lectureUnit.name === name) as AttachmentVideoUnit;
+        expect(unit, `unit ${name} in lecture ${lectureId}`).toBeDefined();
+        return unit;
     }
 
     /**

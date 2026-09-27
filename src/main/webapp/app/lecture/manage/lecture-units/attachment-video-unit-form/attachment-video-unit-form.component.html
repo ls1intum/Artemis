@@ -39,7 +39,8 @@
                 }
             </div>
             <div class="form-group">
-                <label id="fileLabel">{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}</label>
+                <!-- names the group of file controls below through aria-labelledby, so it is not a label of one control -->
+                <span id="fileLabel" class="inline-block">{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}</span>
                 <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
                 <fa-icon
                     [icon]="faQuestionCircle"
@@ -163,6 +164,14 @@
                             ' ' +
                             ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation' | artemisTranslate)
                         "
+                    />
+                }
+                @if (isFileTypeUnsupported()) {
+                    <tumaet-ui-message
+                        class="mt-2"
+                        severity="error"
+                        data-testid="file-type-error"
+                        [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileTypeUnsupported' | artemisTranslate: { extensions: allowedFileExtensions }"
                     />
                 }
                 @if (!fileName() && !videoSourceSignal() && fileInputTouched()) {

@@ -111,7 +111,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
 
             await lectureManagement.openAttachmentVideoUnitEditPage(course.id, lecture.id!, unit.id!);
             await expect(page.getByTestId('current-file-name')).toHaveText('pdf-test-file.pdf');
-            await expect(page.getByTestId('current-file-version')).toContainText('1');
+            await expect(page.getByTestId('current-file-version')).toHaveText('(Version 1)');
             await expect(page.getByTestId('choose-file-button')).toHaveCount(0);
 
             const response = await lectureManagement.replaceAttachmentVideoUnitFile(Fixtures.getAbsoluteFilePath('course/icon.png'));
@@ -119,7 +119,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
 
             await lectureManagement.openAttachmentVideoUnitEditPage(course.id, lecture.id!, unit.id!);
             await expect(page.getByTestId('current-file-name')).toHaveText('icon.png');
-            await expect(page.getByTestId('current-file-version')).toContainText('2');
+            await expect(page.getByTestId('current-file-version')).toHaveText('(Version 2)');
         });
     });
 

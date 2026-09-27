@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { buildEmbedUrl, parseVideoUrl } from './video-url-parser';
 import { faArrowLeft, faArrowUpRightFromSquare, faCircleInfo, faFileArrowUp, faQuestionCircle, faRotateLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/foundation/constants/file-extensions.constants';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE, UPLOAD_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -140,7 +140,7 @@ export class AttachmentVideoUnitFormComponent {
 
     // have to handle the file input as a special case at is not part of the reactive form
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
-    // the button carries the TUM UI button component, so read the element instead of the component
+    // read the element explicitly, as the button is focused through its DOM API
     private readonly replaceFileButton = viewChild('replaceFileButton', { read: ElementRef<HTMLButtonElement> });
     file?: File;
     readonly fileInputTouched = signal(false);
@@ -148,6 +148,8 @@ export class AttachmentVideoUnitFormComponent {
     /** Name of the chosen file, or in edit mode the stored link of the unit's current file until a new file is chosen. */
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
+    /** Whether the last file chosen or dropped has a type the server does not accept; that file was not taken. */
+    readonly isFileTypeUnsupported = signal(false);
 
     /** Stored link of the file the unit already has when it is edited. */
     private readonly currentFileLink = signal<string | undefined>(undefined);
@@ -235,6 +237,14 @@ export class AttachmentVideoUnitFormComponent {
     }
 
     private setChosenFile(file: File): void {
+        // `accept` only filters the file dialog, so a dropped file, or one picked through the dialog's "All files" option,
+        // can have any type; keep the previous file instead of taking one the server would reject on submit
+        const extensionStart = file.name.lastIndexOf('.');
+        const extension = extensionStart >= 0 ? file.name.substring(extensionStart + 1).toLowerCase() : '';
+        this.isFileTypeUnsupported.set(!UPLOAD_FILE_EXTENSIONS.includes(extension));
+        if (this.isFileTypeUnsupported()) {
+            return;
+        }
         this.file = file;
         this.fileName.set(file.name);
         // automatically set the name in case it is not yet specified
@@ -265,6 +275,7 @@ export class AttachmentVideoUnitFormComponent {
         this.file = undefined;
         this.fileName.set(this.currentFileLink());
         this.isFileTooBig.set(false);
+        this.isFileTypeUnsupported.set(false);
         this.fileInput().nativeElement.value = '';
         // the button that triggered this disappears, so keep the keyboard focus in the file field
         this.replaceFileButton()?.nativeElement.focus();
@@ -318,6 +329,7 @@ export class AttachmentVideoUnitFormComponent {
         this.fileName.set(fileName);
         this.currentFileLink.set(file ? undefined : fileName);
         this.isFileTooBig.set(false);
+        this.isFileTypeUnsupported.set(false);
     }
 
     private clearForm() {
@@ -326,6 +338,7 @@ export class AttachmentVideoUnitFormComponent {
         this.fileName.set(undefined);
         this.currentFileLink.set(undefined);
         this.isFileTooBig.set(false);
+        this.isFileTypeUnsupported.set(false);
         this.fileInputTouched.set(false);
         this.fileInput().nativeElement.value = '';
     }
