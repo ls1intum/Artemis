@@ -343,6 +343,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         }
         if (!this.parseAccepted) {
             this.exercise().gradingInstructions = previousGradingInstructions;
+            if (commitEmpty) {
+                this.alertService.error('artemisApp.exercise.gradingInstructionsAmbiguousEdit');
+            }
         }
         return this.parseAccepted;
     }
