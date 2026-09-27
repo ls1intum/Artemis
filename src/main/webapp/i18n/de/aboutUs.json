@@ -17,11 +17,25 @@
             },
             "highlights": {
                 "title": "Ausgewählte Funktionen",
-                "examFeatures": "Klausurmodus im Detail:"
+                "examFeatures": "Klausurmodus im Detail:",
+                "features": {
+                    "iris": {
+                        "name": "KI-Tutor Iris",
+                        "description": "Mit Iris über einen Kurs, eine Aufgabe oder eine Vorlesung chatten."
+                    },
+                    "aiFeedback": {
+                        "name": "Persönliches KI-Feedback",
+                        "description": "Vor der Abgabefrist individuelles KI-Feedback zu einem Entwurf anfordern und ihn verbessern."
+                    },
+                    "exerciseGeneration": {
+                        "name": "KI-gestützte Aufgabenerstellung",
+                        "description": "Aufgabenstellungen, Code und Quizfragen für neue Aufgaben generieren und überarbeiten."
+                    }
+                }
             },
             "modules": {
                 "title": "Aktivierte Module",
-                "description": "Optionale Teile von Artemis, die der Betreiber hier eingeschaltet hat.",
+                "description": "Neben den Grundfunktionen bietet Artemis Module, die bei Bedarf eingeschaltet werden können. Hier sind diese verfügbar:",
                 "exam": "Klausurmodus",
                 "text": "Textaufgaben",
                 "modeling": "Modellierungsaufgaben",
@@ -48,7 +62,8 @@
                     "documentation": "Dokumentation",
                     "sourceCode": "Quellcode",
                     "securityPolicy": "Sicherheitsrichtlinie",
-                    "publications": "Publikationen"
+                    "publications": "Publikationen",
+                    "comparison": "Vergleich mit anderen LMS"
                 }
             },
             "maintainers": {

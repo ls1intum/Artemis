@@ -37,13 +37,13 @@
         <section class="flex flex-col gap-4" data-testid="about-highlights">
             <h2 jhiTranslate="artemisApp.aboutUsOverview.highlights.title"></h2>
             <ul class="about__list grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                @for (highlight of highlights(); track highlight.catalogueKey) {
-                    <li class="about__card flex flex-col gap-2" [attr.data-testid]="'about-highlight-' + highlight.catalogueKey">
+                @for (highlight of highlights(); track highlight.key) {
+                    <li class="about__card flex flex-col gap-2" [attr.data-testid]="'about-highlight-' + highlight.key">
                         <h3 class="flex items-center gap-2">
                             <fa-icon class="text-primary" [icon]="highlight.icon" [fixedWidth]="true" />
-                            <span>{{ 'artemisApp.featureUsage.catalog.feature.' + highlight.catalogueKey + '.name' | artemisTranslate }}</span>
+                            <span>{{ highlight.translationBase + '.name' | artemisTranslate }}</span>
                         </h3>
-                        <span class="text-sm text-muted-color">{{ 'artemisApp.featureUsage.catalog.feature.' + highlight.catalogueKey + '.description' | artemisTranslate }}</span>
+                        <span class="text-sm text-muted-color">{{ highlight.translationBase + '.description' | artemisTranslate }}</span>
                     </li>
                 }
             </ul>

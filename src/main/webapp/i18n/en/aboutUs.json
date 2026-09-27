@@ -17,11 +17,25 @@
             },
             "highlights": {
                 "title": "Selected features",
-                "examFeatures": "Exam mode in detail:"
+                "examFeatures": "Exam mode in detail:",
+                "features": {
+                    "iris": {
+                        "name": "Iris AI tutor",
+                        "description": "Chatting with Iris about a course, an exercise or a lecture."
+                    },
+                    "aiFeedback": {
+                        "name": "Personalized AI feedback",
+                        "description": "Requesting individual AI feedback on a draft before the due date and improving it."
+                    },
+                    "exerciseGeneration": {
+                        "name": "AI-supported exercise generation",
+                        "description": "Generating and refining problem statements, code and quiz questions for new exercises."
+                    }
+                }
             },
             "modules": {
                 "title": "Enabled modules",
-                "description": "Optional parts of Artemis that the operator has turned on here.",
+                "description": "Beyond its core features, Artemis offers modules that can be switched on as needed. These are available here:",
                 "exam": "Exam mode",
                 "text": "Text exercises",
                 "modeling": "Modeling exercises",
@@ -48,7 +62,8 @@
                     "documentation": "Documentation",
                     "sourceCode": "Source code",
                     "securityPolicy": "Security policy",
-                    "publications": "Publications"
+                    "publications": "Publications",
+                    "comparison": "Comparison with other LMS"
                 }
             },
             "maintainers": {

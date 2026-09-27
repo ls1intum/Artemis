@@ -9,6 +9,7 @@ import {
     MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,
     MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_HYPERION,
     MODULE_FEATURE_IRIS,
     MODULE_FEATURE_LDAP,
     MODULE_FEATURE_LECTURE,
@@ -16,7 +17,7 @@ import {
     MODULE_FEATURE_TEXT,
 } from 'app/app.constants';
 import { AboutUsComponent } from 'app/core/about-us/about-us.component';
-import { HIGHLIGHTS, MAX_HIGHLIGHTS, MODULES } from 'app/core/about-us/about-us-data';
+import { HIGHLIGHTS, MAX_HIGHLIGHTS, MODULES, PROJECT_LINKS } from 'app/core/about-us/about-us-data';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -173,13 +174,36 @@ describe('AboutUsComponent', () => {
     it('highlights only features whose module is enabled', () => {
         render(profile({ activeModuleFeatures: [MODULE_FEATURE_IRIS] }));
 
-        expect(testIdsStartingWith('about-highlight-')).toEqual(['PROGRAMMING_ONLINE_EDITOR', 'PROGRAMMING_RESULTS', 'IRIS_CHAT', 'QUIZ_LIVE', 'MESSAGING']);
+        expect(testIdsStartingWith('about-highlight-')).toEqual(['PROGRAMMING_ONLINE_EDITOR', 'PROGRAMMING_RESULTS', 'QUIZ_LIVE', 'MESSAGING', 'IRIS_CHAT']);
+    });
+
+    it('names the AI features in the words of the people who use them', () => {
+        render(profile({ activeModuleFeatures: [MODULE_FEATURE_IRIS, MODULE_FEATURE_ATHENA, MODULE_FEATURE_HYPERION] }));
+
+        expect(byTestId('about-highlight-IRIS_CHAT')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.iris.name');
+        expect(byTestId('about-highlight-AI_FEEDBACK_REQUEST')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.aiFeedback.description');
+        expect(byTestId('about-highlight-HYPERION_PROBLEM_STATEMENT')?.textContent).toContain('artemisApp.aboutUsOverview.highlights.features.exerciseGeneration.name');
+        expect(byTestId('about-highlight-QUIZ_LIVE')?.textContent).toContain('artemisApp.featureUsage.catalog.feature.QUIZ_LIVE.name');
     });
 
     it(`highlights at most ${MAX_HIGHLIGHTS} features`, () => {
-        render(profile({ activeModuleFeatures: [MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATHENA, MODULE_FEATURE_LECTURE] }));
+        render(
+            profile({
+                activeModuleFeatures: [MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATHENA, MODULE_FEATURE_HYPERION, MODULE_FEATURE_LECTURE],
+            }),
+        );
 
-        expect(testIdsStartingWith('about-highlight-')).toEqual(['PROGRAMMING_ONLINE_EDITOR', 'PROGRAMMING_RESULTS', 'EXAM_TAKE', 'IRIS_CHAT', 'QUIZ_LIVE', 'LEARNING_PATHS']);
+        expect(testIdsStartingWith('about-highlight-')).toEqual([
+            'PROGRAMMING_ONLINE_EDITOR',
+            'PROGRAMMING_RESULTS',
+            'EXAM_TAKE',
+            'QUIZ_LIVE',
+            'LEARNING_PATHS',
+            'MESSAGING',
+            'IRIS_CHAT',
+            'AI_FEEDBACK_REQUEST',
+            'HYPERION_PROBLEM_STATEMENT',
+        ]);
     });
 
     it('shows the maintainers from about-us.json with small avatars and optional links', () => {
@@ -216,12 +240,21 @@ describe('AboutUsComponent', () => {
     describe('translations', () => {
         const catalogues = { en: enFeatureUsage.artemisApp.featureUsage.catalog.feature, de: deFeatureUsage.artemisApp.featureUsage.catalog.feature };
         const modules = { en: enAboutUs.artemisApp.aboutUsOverview.modules, de: deAboutUs.artemisApp.aboutUsOverview.modules };
+        const ownTexts = { en: enAboutUs.artemisApp.aboutUsOverview.highlights.features, de: deAboutUs.artemisApp.aboutUsOverview.highlights.features };
+        const links = { en: enAboutUs.artemisApp.aboutUsOverview.project.links, de: deAboutUs.artemisApp.aboutUsOverview.project.links };
 
-        it.each(['en', 'de'] as const)('names and describes every highlight through the feature catalogue (%s)', (language) => {
+        it.each(['en', 'de'] as const)('names and describes every highlight, through its own texts or the feature catalogue (%s)', (language) => {
             for (const highlight of HIGHLIGHTS) {
-                const entry = (catalogues[language] as Record<string, { name?: string; description?: string }>)[highlight.catalogueKey];
+                const texts = highlight.translationKey ? ownTexts[language] : catalogues[language];
+                const entry = (texts as Record<string, { name?: string; description?: string }>)[highlight.translationKey ?? highlight.catalogueKey];
                 expect(entry?.name, highlight.catalogueKey).toBeTruthy();
                 expect(entry?.description, highlight.catalogueKey).toBeTruthy();
+            }
+        });
+
+        it.each(['en', 'de'] as const)('names every project link (%s)', (language) => {
+            for (const link of PROJECT_LINKS) {
+                expect((links[language] as Record<string, string>)[link.translationKey], link.translationKey).toBeTruthy();
             }
         });
 

@@ -5,7 +5,18 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faArrowUpRightFromSquare, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_EXAM, VERSION } from 'app/app.constants';
-import { BUG_REPORT_URL, CITATION, CONTRIBUTORS_URL, FEATURE_REQUEST_URL, HIGHLIGHTS, ICONS, MAX_HIGHLIGHTS, MODULES, PROJECT_LINKS } from 'app/core/about-us/about-us-data';
+import {
+    BUG_REPORT_URL,
+    CITATION,
+    CONTRIBUTORS_URL,
+    FEATURE_REQUEST_URL,
+    HIGHLIGHTS,
+    ICONS,
+    MAX_HIGHLIGHTS,
+    MODULES,
+    PROJECT_LINKS,
+    highlightTranslationBase,
+} from 'app/core/about-us/about-us-data';
 import { AboutUsMaintainer, AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -55,7 +66,11 @@ export class AboutUsComponent implements OnInit {
 
     protected readonly enabledModules = computed(() => MODULES.filter((module) => this.activeModules().has(module.feature)));
 
-    protected readonly highlights = computed(() => HIGHLIGHTS.filter((highlight) => !highlight.module || this.activeModules().has(highlight.module)).slice(0, MAX_HIGHLIGHTS));
+    protected readonly highlights = computed(() =>
+        HIGHLIGHTS.filter((highlight) => !highlight.module || this.activeModules().has(highlight.module))
+            .slice(0, MAX_HIGHLIGHTS)
+            .map((highlight) => ({ key: highlight.catalogueKey, icon: highlight.icon, translationBase: highlightTranslationBase(highlight) })),
+    );
 
     /** The exam feature pages describe the exam mode, so they are linked only where it exists. */
     protected readonly examModeEnabled = computed(() => this.activeModules().has(MODULE_FEATURE_EXAM));

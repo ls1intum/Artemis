@@ -13,6 +13,7 @@ import {
     faRoute,
     faSquarePlus,
     faStopwatch,
+    faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
 import {
     MODULE_FEATURE_ATHENA,
@@ -45,6 +46,18 @@ export interface AboutUsHighlight {
     readonly icon: IconDefinition;
     /** The module that must be enabled for the feature to exist on this installation; absent for features every installation has. */
     readonly module?: ModuleFeature;
+    /**
+     * Key below {@code artemisApp.aboutUsOverview.highlights.features} for a feature whose catalogue entry is written for administrators, or which the
+     * catalogue splits into several entries. The page then names and describes it with these texts instead.
+     */
+    readonly translationKey?: string;
+}
+
+/** The translation key prefix that names ({@code .name}) and describes ({@code .description}) a highlight. */
+export function highlightTranslationBase(highlight: AboutUsHighlight): string {
+    return highlight.translationKey
+        ? `artemisApp.aboutUsOverview.highlights.features.${highlight.translationKey}`
+        : `artemisApp.featureUsage.catalog.feature.${highlight.catalogueKey}`;
 }
 
 /** Candidates in display order. The page shows the first {@link MAX_HIGHLIGHTS} whose module is enabled. */
@@ -52,15 +65,17 @@ export const HIGHLIGHTS: readonly AboutUsHighlight[] = [
     { catalogueKey: 'PROGRAMMING_ONLINE_EDITOR', icon: faCode },
     { catalogueKey: 'PROGRAMMING_RESULTS', icon: faListCheck },
     { catalogueKey: 'EXAM_TAKE', icon: faFileSignature, module: MODULE_FEATURE_EXAM },
-    { catalogueKey: 'IRIS_CHAT', icon: faRobot, module: MODULE_FEATURE_IRIS },
     { catalogueKey: 'QUIZ_LIVE', icon: faStopwatch },
     { catalogueKey: 'LEARNING_PATHS', icon: faRoute, module: MODULE_FEATURE_ATLAS },
-    { catalogueKey: 'AI_FEEDBACK_REQUEST', icon: faLightbulb, module: MODULE_FEATURE_ATHENA },
     { catalogueKey: 'MESSAGING', icon: faComments },
+    { catalogueKey: 'IRIS_CHAT', icon: faRobot, module: MODULE_FEATURE_IRIS, translationKey: 'iris' },
+    { catalogueKey: 'AI_FEEDBACK_REQUEST', icon: faLightbulb, module: MODULE_FEATURE_ATHENA, translationKey: 'aiFeedback' },
+    { catalogueKey: 'HYPERION_PROBLEM_STATEMENT', icon: faWandMagicSparkles, module: MODULE_FEATURE_HYPERION, translationKey: 'exerciseGeneration' },
     { catalogueKey: 'LECTURE_PAGES', icon: faChalkboardUser, module: MODULE_FEATURE_LECTURE },
 ];
 
-export const MAX_HIGHLIGHTS = 6;
+/** Three rows of three: with every module enabled, the six features all installations have and the three AI features. */
+export const MAX_HIGHLIGHTS = 9;
 
 /**
  * The optional modules the page lists when they are enabled, in display order, each with its key below
@@ -99,6 +114,7 @@ export const PROJECT_LINKS: readonly { readonly translationKey: string; readonly
     { translationKey: 'sourceCode', url: 'https://github.com/ls1intum/Artemis' },
     { translationKey: 'securityPolicy', url: 'https://github.com/ls1intum/Artemis/security/policy' },
     { translationKey: 'publications', url: 'https://docs.artemis.tum.de/publications' },
+    { translationKey: 'comparison', url: 'https://docs.artemis.tum.de/compare' },
 ];
 
 export const CONTRIBUTORS_URL = 'https://github.com/ls1intum/Artemis/graphs/contributors';
