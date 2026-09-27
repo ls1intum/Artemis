@@ -6,7 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AssignableTypeFilter;
+import org.springframework.util.ClassUtils;
 
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -21,6 +26,19 @@ import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.QueryParameter;
 
 class OpenAPIConfigurationTest {
+
+    @Test
+    void shouldGiveEverySearchTermSubclassItsOwnSchemaName() {
+        // @Schema is @Inherited: a subclass without its own name would reuse the base schema name and lose its extra fields.
+        var scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(new AssignableTypeFilter(SearchTermPageableSearchDTO.class));
+        for (BeanDefinition candidate : scanner.findCandidateComponents("de.tum.cit.aet.artemis")) {
+            Class<?> type = ClassUtils.resolveClassName(candidate.getBeanClassName(), getClass().getClassLoader());
+            if (type != SearchTermPageableSearchDTO.class) {
+                assertThat(type.getDeclaredAnnotation(io.swagger.v3.oas.annotations.media.Schema.class)).as(type.getName() + " declares its own @Schema name").isNotNull();
+            }
+        }
+    }
 
     record PrimitiveComponentsDTO(long count, boolean active, Long boxedCount, String title) {
     }
