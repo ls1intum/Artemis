@@ -66,7 +66,7 @@ public class TelemetrySendingService {
     @Value("${server.url}")
     private String serverUrl;
 
-    @Value("${info.operatorName}")
+    @Value("${info.operatorName:}")
     private String operator;
 
     @Value("${info.universityName:}")
