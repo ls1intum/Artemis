@@ -140,6 +140,11 @@ for subscriptions that passed the access rule of their topic.
 
 ## How the rules are enforced
 
+Before a connection is opened, the handshake interceptor of `WebsocketConfiguration` checks that it carries a valid JWT
+and that a browser opened it from a page of Artemis. A browser names that page in the `Origin` header; the handshake is
+accepted if it has no `Origin` (the mobile apps and the VS Code extension send none), if the page comes from the host the
+handshake was sent to, from the origin of `server.url`, or from an origin that `jhipster.cors` allows for the REST API.
+
 Every frame a client sends passes two checks on the inbound channel, both configured in `WebsocketConfiguration`:
 
 1. **Spring Security** (`WebsocketSecurityConfiguration`) authenticates every frame and restricts what a client may send:
