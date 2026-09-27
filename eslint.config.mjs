@@ -656,6 +656,12 @@ export default tseslint.config(
         },
     },
     {
+        files: ['src/main/webapp/app/exercise/team/**/*.html'],
+        rules: {
+            '@angular-eslint/template/label-has-associated-control': 'error',
+        },
+    },
+    {
         // These composite widgets manage option focus through aria-activedescendant.
         files: ['packages/tum-aet-ui/src/lib/autocomplete/tumaet-ui-autocomplete.component.html', 'packages/tum-aet-ui/src/lib/select/tumaet-ui-select.component.html'],
         rules: {
