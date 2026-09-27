@@ -364,17 +364,6 @@ public class LectureUnitProcessingState extends DomainObject {
         return lockedBy;
     }
 
-    /**
-     * Renew this run's worker lease: stamp the heartbeat time and record which worker process holds
-     * the run. Called for every worker heartbeat that lists this run's job token.
-     *
-     * @param workerBootId boot id of the Pyris worker process renewing the lease
-     */
-    public void renewLease(String workerBootId) {
-        this.lastHeartbeatAt = ZonedDateTime.now();
-        this.lockedBy = workerBootId;
-    }
-
     public int getDispatchPriority() {
         return dispatchPriority != null ? dispatchPriority : 0;
     }

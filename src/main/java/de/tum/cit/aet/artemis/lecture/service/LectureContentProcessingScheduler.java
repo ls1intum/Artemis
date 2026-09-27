@@ -271,9 +271,8 @@ public class LectureContentProcessingScheduler {
         List<LectureUnitProcessingState> inFlightStates = processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
         for (LectureUnitProcessingState state : inFlightStates) {
             // Classify only runs that have reported a stage: the stall window needs a progress clock to
-            // compare against. A run with no progress yet — the whole transcription phase, which sends no
-            // stage name — is judged instead by findStuckStates' no-callback arm on lastUpdated (bumped by
-            // every raw checkpoint), the right signal for an opaque AI stage the stall window cannot size.
+            // compare against. A run with no progress yet — before its first stage, or from an older Iris that
+            // sends no stage names — is judged instead by findStuckStates' no-callback arm on lastUpdated.
             if (state.getLastProgressAt() == null || state.getRetryEligibleAt() != null) {
                 continue;
             }
@@ -287,7 +286,8 @@ public class LectureContentProcessingScheduler {
             // A stage that never reports a counter still sets lastProgressAt once, on entry (see
             // recordStageProgress), and then never again — so without this guard a healthy counterless
             // stage would eventually read as frozen no matter how long it legitimately runs. Such a stage
-            // is judged by the no-callback arm above instead, exactly as the class doc describes.
+            // falls to the no-callback arm only without a worker lease; under one it is bounded by Iris's own
+            // timeout for that step and the absolute timeout.
             boolean progressFrozen = state.getStageProgress() != null && state.getLastProgressAt().isBefore(now.minus(stallWindow));
             if (heartbeatsAlive && progressFrozen) {
                 failStalledState(state);

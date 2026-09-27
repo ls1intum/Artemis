@@ -590,9 +590,9 @@ public class ProcessingStateCallbackService {
                 revoked.add(token);
                 continue;
             }
-            // Reflects the just-persisted renewal for the notification only; never saved itself.
-            state.renewLease(workerBootId);
-            notificationService.notifyWithTranscriptionStatus(state);
+            // Push a fresh read, not the row read above: a stage heartbeat can commit while the renewal waits on a row
+            // lock (e.g. a checkpoint's transcription insert), and the older snapshot would briefly roll the badge back.
+            processingStateRepository.findById(state.getId()).ifPresent(notificationService::notifyWithTranscriptionStatus);
         }
         if (!revoked.isEmpty()) {
             log.warn("Worker {} heartbeat listed {} run(s) Artemis no longer tracks, reporting them revoked", workerBootId, revoked.size());

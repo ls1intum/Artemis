@@ -66,6 +66,11 @@ export class IngestionStatusBadgeComponent {
      * (embedding -> Indexing, audit -> Verifying) reuse it instead of duplicating the string.
      */
     private static readonly STAGE_LABEL_KEYS: Record<string, string> = {
+        downloading: 'artemisApp.attachmentVideoUnit.processing.stage.downloadingVideo',
+        'extracting-audio': 'artemisApp.attachmentVideoUnit.processing.stage.extractingAudio',
+        transcribing: 'artemisApp.attachmentVideoUnit.processingTranscribing',
+        'aligning-slides': 'artemisApp.attachmentVideoUnit.processing.stage.aligningSlides',
+        'transcript-chunking': 'artemisApp.attachmentVideoUnit.processing.stage.splittingTranscript',
         vision: 'artemisApp.attachmentVideoUnit.processing.stage.readingSlides',
         'segment-summaries': 'artemisApp.attachmentVideoUnit.processing.stage.summarizingSlides',
         embedding: 'artemisApp.attachmentVideoUnit.processingIngesting',
@@ -220,8 +225,11 @@ export class IngestionStatusBadgeComponent {
         switch (this.state()) {
             case 'queued':
                 return 'artemisApp.attachmentVideoUnit.awaitingProcessing';
-            case 'transcribing':
-                return 'artemisApp.attachmentVideoUnit.processingTranscribing';
+            case 'transcribing': {
+                // Older Iris versions report no stage while transcribing
+                const stageName = this.status()?.stageName;
+                return (stageName && IngestionStatusBadgeComponent.STAGE_LABEL_KEYS[stageName]) || 'artemisApp.attachmentVideoUnit.processingTranscribing';
+            }
             case 'indexing':
             case 'verifying': {
                 const stageName = this.status()?.stageName;

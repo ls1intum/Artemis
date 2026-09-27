@@ -22,8 +22,10 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -63,13 +66,15 @@ class ProcessingStateWorkerDispatchTest {
 
     private LectureUnitProcessingState testState;
 
+    private WebsocketMessagingService websocketMessagingService;
+
     @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         transcriptionRepository = mock(LectureTranscriptionRepository.class);
         AttachmentRepository attachmentRepository = mock(AttachmentRepository.class);
-        WebsocketMessagingService websocketMessagingService = mock(WebsocketMessagingService.class);
+        websocketMessagingService = mock(WebsocketMessagingService.class);
         LectureUnitContentFingerprintService contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
         when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
 
@@ -207,19 +212,30 @@ class ProcessingStateWorkerDispatchTest {
 
     @Test
     void renewWorkerLeasesRenewsKnownRunsAndReportsUnknownTokensRevoked() {
-        testState.setPhase(ProcessingPhase.INGESTING);
+        testState.setPhase(ProcessingPhase.TRANSCRIBING);
         testState.setIngestionJobToken("token-known");
+        testState.recordStageProgress("transcribing", 0, null);
+        // A stage heartbeat committed while the renewal waited: the row now holds newer progress than the first read
+        LectureUnitProcessingState freshState = new LectureUnitProcessingState(testUnit);
+        freshState.setId(500L);
+        freshState.setPhase(ProcessingPhase.TRANSCRIBING);
+        freshState.setIngestionJobToken("token-known");
+        freshState.recordStageProgress("transcribing", 1, 1);
         when(processingStateRepository.findByIngestionJobToken("token-known")).thenReturn(Optional.of(testState));
         when(processingStateRepository.findByIngestionJobToken("token-unknown")).thenReturn(Optional.empty());
         when(processingStateRepository.renewLease(eq(500L), eq("token-known"), any(), eq(WORKER_BOOT_ID))).thenReturn(1);
+        when(processingStateRepository.findById(500L)).thenReturn(Optional.of(freshState));
 
         List<String> revoked = callbackService.renewWorkerLeases(WORKER_BOOT_ID, List.of("token-known", "token-unknown"));
 
         assertThat(revoked).containsExactly("token-unknown");
-        assertThat(testState.getLastHeartbeatAt()).isNotNull();
-        assertThat(testState.getLockedBy()).isEqualTo(WORKER_BOOT_ID);
         verify(processingStateRepository).renewLease(eq(500L), eq("token-known"), any(), eq(WORKER_BOOT_ID));
-        verify(processingStateRepository, never()).save(testState);
+        verify(processingStateRepository, never()).save(any());
+        ArgumentCaptor<Object> pushed = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService).sendMessage(any(WebsocketDestination.class), pushed.capture());
+        LectureUnitCombinedStatusDTO status = (LectureUnitCombinedStatusDTO) pushed.getValue();
+        assertThat(status.stageProgress()).isEqualTo(1);
+        assertThat(status.stageTotal()).isEqualTo(1);
     }
 
     @Test

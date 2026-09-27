@@ -90,10 +90,28 @@ describe('IngestionStatusBadgeComponent', () => {
         ['transcript-summaries', 'artemisApp.attachmentVideoUnit.processing.stage.summarizingTranscript'],
         ['transcript-embedding', 'artemisApp.attachmentVideoUnit.processing.stage.indexingTranscript'],
         ['audit', 'artemisApp.attachmentVideoUnit.processingVerifying'],
+        ['transcript-chunking', 'artemisApp.attachmentVideoUnit.processing.stage.splittingTranscript'],
     ])('should map the ingesting stage %s to its label key', (stageName: string, expectedKey: string) => {
         fixture.componentRef.setInput('status', status({ phase: ProcessingPhase.INGESTING, stageName }));
         fixture.detectChanges();
         expect(component.labelKey()).toBe(expectedKey);
+    });
+
+    it.each([
+        ['downloading', 'artemisApp.attachmentVideoUnit.processing.stage.downloadingVideo'],
+        ['extracting-audio', 'artemisApp.attachmentVideoUnit.processing.stage.extractingAudio'],
+        ['transcribing', 'artemisApp.attachmentVideoUnit.processingTranscribing'],
+        ['aligning-slides', 'artemisApp.attachmentVideoUnit.processing.stage.aligningSlides'],
+    ])('should map the transcribing stage %s to its label key', (stageName: string, expectedKey: string) => {
+        fixture.componentRef.setInput('status', status({ phase: ProcessingPhase.TRANSCRIBING, stageName }));
+        fixture.detectChanges();
+        expect(component.labelKey()).toBe(expectedKey);
+    });
+
+    it('should fall back to the generic transcribing label without a stage', () => {
+        fixture.componentRef.setInput('status', status({ phase: ProcessingPhase.TRANSCRIBING }));
+        fixture.detectChanges();
+        expect(component.labelKey()).toBe('artemisApp.attachmentVideoUnit.processingTranscribing');
     });
 
     it('should fall back to the generic indexing label for an unknown stage', () => {
