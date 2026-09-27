@@ -128,7 +128,7 @@
                     "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
                     "attachmentUnreadable": "Die Anhangsdatei konnte nicht vom Server gelesen werden. Lade die Datei erneut hoch, um die Verarbeitung neu zu starten.",
                     "processingFailed": "Verarbeitung fehlgeschlagen",
-                    "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
+                    "transcriptionFailed": "Das Video konnte nicht transkribiert werden.",
                     "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",
                     "noPlaylist": "Video-Playlist ist nicht mehr verfügbar",
                     "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen",
@@ -136,7 +136,8 @@
                     "youtubeLive": "Das Video ist ein Livestream und kann nicht transkribiert werden.",
                     "youtubeTooLong": "Das Video überschreitet die maximale Länge und kann nicht transkribiert werden.",
                     "youtubeUnavailable": "Das Video ist nicht verfügbar (entfernt, regional gesperrt oder altersbeschränkt).",
-                    "youtubeDownloadFailed": "Das Video konnte nicht für die Transkription heruntergeladen werden."
+                    "youtubeDownloadFailed": "Das Video konnte nicht für die Transkription heruntergeladen werden.",
+                    "noIngestibleContent": "Es konnten keine Inhalte indexiert werden: Das PDF enthält keine lesbaren Seiten und aus dem Video konnte kein Transkript erstellt werden. Prüfe die Datei und die Videoquelle und starte die Verarbeitung dann erneut."
                 }
             },
             "createAttachmentVideoUnits": {

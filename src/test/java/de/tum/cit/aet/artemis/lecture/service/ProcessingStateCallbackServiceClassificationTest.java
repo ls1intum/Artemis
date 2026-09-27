@@ -61,6 +61,20 @@ class ProcessingStateCallbackServiceClassificationTest {
     }
 
     @Test
+    void transcriptionFailedIsTransient() {
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("TRANSCRIPTION_FAILED");
+        assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.transcriptionFailed");
+        assertThat(result.retryable()).isTrue();
+    }
+
+    @Test
+    void noIngestibleContentIsPermanent() {
+        var result = LectureIngestionFailureClassifier.classifyIngestionFailure("NO_INGESTIBLE_CONTENT");
+        assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.noIngestibleContent");
+        assertThat(result.retryable()).isFalse();
+    }
+
+    @Test
     void youtubeDownloadFailedIsTransient() {
         var result = LectureIngestionFailureClassifier.classifyIngestionFailure("YOUTUBE_DOWNLOAD_FAILED");
         assertThat(result.errorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.youtubeDownloadFailed");

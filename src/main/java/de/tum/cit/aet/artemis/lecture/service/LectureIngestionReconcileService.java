@@ -109,7 +109,7 @@ public class LectureIngestionReconcileService {
     private static final Set<String> PERMANENT_ERROR_KEYS = Set.of("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate",
             "artemisApp.attachmentVideoUnit.processing.error.youtubeLive", "artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong",
             "artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable", "artemisApp.attachmentVideoUnit.processing.error.invalidUnitType",
-            "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable");
+            "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable", "artemisApp.attachmentVideoUnit.processing.error.noIngestibleContent");
 
     /**
      * How many times a FAILED unit is revived without an intervening successful completion before it is left

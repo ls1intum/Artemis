@@ -81,6 +81,10 @@ final class LectureIngestionFailureClassifier {
             case "YOUTUBE_TOO_LONG" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong", false);
             case "YOUTUBE_UNAVAILABLE" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable", false);
             case "YOUTUBE_DOWNLOAD_FAILED" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeDownloadFailed", true);
+            // Any non-YouTube transcription failure (download, audio extraction, Whisper); may be transient
+            case "TRANSCRIPTION_FAILED" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.transcriptionFailed", true);
+            // Neither readable PDF pages nor a transcript: re-running the same content yields the same empty result
+            case "NO_INGESTIBLE_CONTENT" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.noIngestibleContent", false);
             default -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.processingFailed", true);
         };
     }
