@@ -58,6 +58,12 @@ public class OpenAPIConfiguration {
 
     private static final int DTO_NUMBER_OF_CHARACTERS = 3;
 
+    /**
+     * The schema springdoc documents Spring's {@code Pageable} with ({@code page}, {@code size}, {@code sort}). It is kept next to
+     * the DTO schemas because paged endpoints take it as a query parameter.
+     */
+    private static final String PAGEABLE_SCHEMA = "Pageable";
+
     @Value("${artemis.version}")
     private String version;
 
@@ -71,7 +77,7 @@ public class OpenAPIConfiguration {
      * <ul>
      * <li>Set the API title, version, and contact information on the OpenAPI {@link Info} object.</li>
      * <li>Mark the primitive components of DTO records as required.</li>
-     * <li>Filter component schemas to only include those ending in “Dto”, strip the “Dto” suffix
+     * <li>Filter component schemas to only include those ending in “Dto” (and Spring's Pageable), strip the “Dto” suffix
      * from their schema names, and remove the “Dto” suffix from all property names within those schemas.</li>
      * <li>Iterate over all paths and operations to:
      * <ul>
@@ -196,12 +202,16 @@ public class OpenAPIConfiguration {
     }
 
     private static Map<String, Schema> filterForSchemasWithDtoSuffixAndStripSuffix(Components components) {
-        return components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO"))
-                .collect(Collectors.toMap(entry -> entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS), entry -> {
+        return components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO") || PAGEABLE_SCHEMA.equals(entry.getKey()))
+                .collect(Collectors.toMap(entry -> stripDtoSuffix(entry.getKey()), entry -> {
                     Schema<?> schema = entry.getValue();
-                    schema.setName(entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS));
+                    schema.setName(stripDtoSuffix(entry.getKey()));
                     return schema;
                 }));
+    }
+
+    private static String stripDtoSuffix(String name) {
+        return name.endsWith("DTO") ? name.substring(0, name.length() - DTO_NUMBER_OF_CHARACTERS) : name;
     }
 
     private void removeDtoSuffixFromRequestBodyIfExisting(Operation operation) {
