@@ -190,8 +190,13 @@ public class IrisCitationService {
         if (entityIds.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
             return Map.of();
         }
-        return lectureUnitRepositoryApi.get().findIngestedVersionsByIds(entityIds).stream()
-                .collect(Collectors.toMap(LectureUnitIngestedVersionsDTO::lectureUnitId, Function.identity(), (first, second) -> first));
+        try {
+            return lectureUnitRepositoryApi.get().findIngestedVersionsByIds(entityIds).stream()
+                    .collect(Collectors.toMap(LectureUnitIngestedVersionsDTO::lectureUnitId, Function.identity(), (first, second) -> first));
+        }
+        catch (RuntimeException e) {
+            return Map.of();
+        }
     }
 
     private String stampSingleCitation(MatchResult match, Map<Long, LectureUnitIngestedVersionsDTO> ingestedVersions) {

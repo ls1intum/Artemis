@@ -292,6 +292,14 @@ class IrisCitationServiceTest {
         assertThat(serviceWithoutRepository.stampCitationVersions(text)).isEqualTo(text);
     }
 
+    @Test
+    void stampCitationVersions_returnsTextUnchangedWhenLoadingIngestedVersionsFails() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenThrow(new RuntimeException("lookup failed"));
+        var text = "[cite:L:42:7:::Deadlocks:A summary.]";
+
+        assertThat(citationService.stampCitationVersions(text)).isEqualTo(text);
+    }
+
     private static LectureUnit lectureUnit(long id, long lectureId, long courseId, String lectureTitle, String unitTitle) {
         var course = new Course();
         course.setId(courseId);
