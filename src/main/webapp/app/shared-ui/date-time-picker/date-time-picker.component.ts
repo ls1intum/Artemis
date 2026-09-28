@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, booleanAttribute, computed, forwardRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -7,7 +7,7 @@ import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fo
 // variant-group lock overlay uses the tumaet-ui kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TUM_AET_UI_FORM_FIELD, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -48,6 +48,9 @@ export enum DateTimePickerType {
     ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor, Validator, AfterViewInit {
+    /** A TUM AET UI form field this picker sits in, which owns the label and the messages describing the input. */
+    private readonly formField = inject(TUM_AET_UI_FORM_FIELD, { optional: true });
+
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -55,17 +58,28 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     protected readonly faLock = faLock;
 
     /**
-     * Names the parts of the PrimeNG picker the end-to-end tests reach for. Declared once rather than as a
-     * template literal so change detection does not hand the picker a fresh object on every cycle.
+     * Names the parts of the PrimeNG picker the end-to-end tests reach for, and gives its text input the state the
+     * picker has no input of its own for: whether the date is required, whether it is invalid, and the messages of an
+     * enclosing form field. PrimeNG's `required` input would tell a screen reader as well, but it also attaches a
+     * required validator to the picker's inner model, which marks the field red as soon as it is left empty. A computed
+     * rather than a template literal, so change detection only hands the picker a new object when one of these changes.
      */
-    protected readonly passThrough = {
+    protected readonly passThrough = computed(() => ({
         root: { 'data-testid': 'date-picker' },
         panel: { 'data-testid': 'date-picker-panel' },
         title: { 'data-testid': 'date-picker-title' },
         timePicker: { 'data-testid': 'date-picker-time-picker' },
         weekDay: { 'data-testid': 'date-picker-weekday' },
         day: { 'data-testid': 'date-picker-day' },
-    };
+        pcInputText: {
+            root: {
+                // An undefined value removes the attribute again, so each one follows its state both ways.
+                'aria-required': this.requiredField() || this.inputRequired() ? 'true' : undefined,
+                'aria-invalid': this.showErrorBorder() || this.formField?.invalid() ? 'true' : undefined,
+                'aria-describedby': this.formField?.describedBy() ?? undefined,
+            },
+        },
+    }));
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
@@ -92,6 +106,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     error = input<boolean>();
     warning = input<boolean>();
     requiredField = input<boolean>(false);
+    /**
+     * Tells assistive technology that the date is required, without the missing-date message {@link requiredField}
+     * shows, for a form that reports empty fields itself. Validation stays with the bound form control.
+     */
+    inputRequired = input(false, { transform: booleanAttribute });
     startAt = input<dayjs.Dayjs | undefined>(); // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
     min = input<dayjs.Dayjs>(); // Dates before this date are not selectable.
     max = input<dayjs.Dayjs>(); // Dates after this date are not selectable.

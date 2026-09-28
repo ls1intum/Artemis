@@ -214,6 +214,15 @@ describe('Course Management Service', () => {
         req.flush(mockResponse);
     });
 
+    it('should fetch the time zones a course may use from the server', () => {
+        let timeZones: string[] | undefined;
+
+        courseManagementService.getSupportedTimeZones().subscribe((response) => (timeZones = response));
+
+        httpMock.expectOne({ method: 'GET', url: 'api/course/time-zones' }).flush(['Europe/Kyiv', 'UTC']);
+        expect(timeZones).toEqual(['Europe/Kyiv', 'UTC']);
+    });
+
     it('should find the course', () => {
         courseManagementService
             .find(course.id!)

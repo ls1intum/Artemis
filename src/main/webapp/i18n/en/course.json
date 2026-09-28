@@ -398,7 +398,10 @@
                     "one": "1 field needs your attention:",
                     "other": "{{ count }} fields need your attention:"
                 },
-                "requiredLegend": "Fields marked with * are required."
+                "requiredLegend": "Fields marked with * are required.",
+                "timeZone": {
+                    "required": "A course keeps its time zone once one is set. Select a time zone."
+                }
             },
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",

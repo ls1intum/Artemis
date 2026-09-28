@@ -1709,6 +1709,47 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('time zone of an existing course', () => {
+        beforeEach(() => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            // Stored as Europe/London, which the browser list of this test does not contain.
+            course.timeZone = 'Europe/London';
+        });
+
+        it('keeps a stored time zone valid while it is unchanged, but checks a new one', () => {
+            comp.ngOnInit();
+            const timeZone = comp.courseForm.get('timeZone')!;
+            expect(timeZone.valid).toBe(true);
+
+            timeZone.setValue('Mars/Olympus_Mons');
+            expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+
+            timeZone.setValue('Europe/London');
+            expect(timeZone.valid).toBe(true);
+        });
+
+        it('requires the time zone once the course has one, because the server keeps it', () => {
+            fixture.detectChanges();
+            const timeZone = comp.courseForm.get('timeZone')!;
+
+            timeZone.setValue('');
+
+            expect(timeZone.hasError('timeZoneRequired')).toBe(true);
+            expect(comp.issues().map((issue) => issue.targetId)).toContain('timeZone');
+            expect(fixture.nativeElement.querySelector('#timeZone').getAttribute('aria-required')).toBe('true');
+        });
+
+        it('sends no time zone rather than an empty one', () => {
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            comp.course = course;
+            comp.courseForm = new FormGroup({ id: new FormControl(course.id), timeZone: new FormControl('') });
+
+            comp.save();
+
+            expect(updateStub.mock.calls[0][1].timeZone).toBeUndefined();
+        });
+    });
+
     describe('test course retention settings', () => {
         beforeEach(() => {
             vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
@@ -1934,7 +1975,7 @@ describe('Course Management Update Component Create', () => {
 
     it('should get code of conduct template if a new course is created', () => {
         fixture.detectChanges();
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct'));
         const codeOfConduct = 'Code of Conduct';
         req.flush(codeOfConduct);
         expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
@@ -1942,16 +1983,54 @@ describe('Course Management Update Component Create', () => {
 
     it('renders its own title bar and names the required fields of an empty course', () => {
         fixture.detectChanges();
-        httpMock.expectOne({ method: 'GET' }).flush('');
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
 
         expect(fixture.nativeElement.querySelector('#course-create-title-bar #jhi-course-heading-create')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('#course-create-body #course-form-footer')).not.toBeNull();
         expect(component.issues().map((issue) => issue.targetId)).toEqual(['field_title', 'field_shortName', 'semester', 'field_startDate_input', 'field_endDate_input']);
     });
 
+    it('offers and accepts the time zones of the server, including ones the browser lacks', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+        const timeZone = component.courseForm.get('timeZone')!;
+        // The browser list of this test only knows Europe/Berlin.
+        timeZone.setValue('UTC');
+        expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+
+        httpMock.expectOne('api/course/time-zones').flush(['Europe/Berlin', 'Europe/Kiev', 'Europe/Kyiv', 'UTC']);
+
+        expect(timeZone.valid).toBe(true);
+        component.onTimeZoneSearch({ query: 'kyi' });
+        expect(component.filteredTimeZones()).toEqual(['Europe/Kyiv']);
+        timeZone.setValue('europe/berlin');
+        expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+    });
+
+    it('keeps the browser time zones when the server list cannot be loaded', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        httpMock.expectOne('api/course/time-zones').flush('Server error', { status: 500, statusText: 'Internal Server Error' });
+
+        const timeZone = component.courseForm.get('timeZone')!;
+        timeZone.setValue(validTimeZone);
+        expect(timeZone.valid).toBe(true);
+    });
+
+    it('lets a new course leave the time zone empty', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        component.courseForm.get('timeZone')!.setValue('');
+
+        expect(component.courseForm.get('timeZone')!.valid).toBe(true);
+        expect(fixture.nativeElement.querySelector('#timeZone').getAttribute('aria-required')).toBeNull();
+    });
+
     it('does not show errors before the user touched a field or tried to save', () => {
         fixture.detectChanges();
-        httpMock.expectOne({ method: 'GET' }).flush('');
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
 
         expect(component.showError('title')).toBe(false);
         expect(component.showDateMissing('startDate')).toBe(false);

@@ -174,7 +174,8 @@ export class CourseUpdateComponent implements OnInit {
 
     timeZones: string[] = [];
     readonly filteredTimeZones = signal<string[]>([]);
-    originalTimeZone?: string;
+    /** The time zone the course was loaded with; a course keeps it once set, so the field is required from then on. */
+    readonly originalTimeZone = signal<string | undefined>(undefined);
     /** The browser's time zone, in which the course dates are entered. */
     protected readonly currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -275,7 +276,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.organizationsEnabled.set(organizations.length > 0);
                     this.initialOrganizationIds = this.toOrganizationIdSet(organizations);
                 });
-                this.originalTimeZone = this.course.timeZone;
+                this.originalTimeZone.set(this.course.timeZone);
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled.set(
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
@@ -429,20 +430,49 @@ export class CourseUpdateComponent implements OnInit {
 
         this.isAdmin.set(this.accountService.isAdmin());
         this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(this.course));
+        this.loadSupportedTimeZones();
     }
+
+    /**
+     * Replaces the browser's time zones with the server's. The server interprets the course's time zone, and browsers
+     * leave out names it accepts, such as `UTC` or `Europe/Kyiv`. Until the list arrives, or if it cannot be loaded, the
+     * browser's list stays in use: every name in it is one the server accepts too.
+     */
+    private loadSupportedTimeZones(): void {
+        this.courseManagementService
+            .getSupportedTimeZones()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (timeZones) => {
+                    this.timeZones = timeZones;
+                    this.courseForm.controls['timeZone'].updateValueAndValidity();
+                },
+                error: () => {
+                    // The browser's list is a working, if shorter, fallback, and the server still checks the time zone on save.
+                },
+            });
+    }
+
     onTimeZoneSearch(event: TumAetUiAutoCompleteSearchEvent): void {
         const term = event.query;
         this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
     }
 
-    /** Rejects free-typed text that does not match one of the IANA time zones offered by the autocomplete. */
+    /**
+     * Accepts the time zones the server supports. The server keeps a course's time zone once one is set, so it cannot be
+     * cleared again, and a stored time zone the server no longer knows stays valid as long as it is kept.
+     */
     private readonly validTimeZoneValidator: ValidatorFn = (control: AbstractControl) => {
         const value = control.value;
-        return !value || this.timeZones.includes(value) ? null : { invalidTimeZone: true };
+        if (!value) {
+            return this.originalTimeZone() ? { timeZoneRequired: true } : null;
+        }
+        return value === this.originalTimeZone() || this.timeZones.includes(value) ? null : { invalidTimeZone: true };
     };
 
     get timeZoneChanged() {
-        return this.course?.id && this.originalTimeZone && this.originalTimeZone !== this.courseForm.value.timeZone;
+        const originalTimeZone = this.originalTimeZone();
+        return this.course?.id && originalTimeZone && originalTimeZone !== this.courseForm.value.timeZone;
     }
 
     /**
@@ -553,6 +583,8 @@ export class CourseUpdateComponent implements OnInit {
 
         const rawValue = this.courseForm.getRawValue();
         const course = rawValue as Course;
+        // An emptied time zone field holds an empty string, which is not a time zone; the course then has none.
+        course.timeZone = rawValue.timeZone || undefined;
         // NOTE: prevent overriding this value accidentally
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;

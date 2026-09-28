@@ -398,7 +398,10 @@
                     "one": "1 Feld benötigt deine Aufmerksamkeit:",
                     "other": "{{ count }} Felder benötigen deine Aufmerksamkeit:"
                 },
-                "requiredLegend": "Mit * markierte Felder sind Pflichtfelder."
+                "requiredLegend": "Mit * markierte Felder sind Pflichtfelder.",
+                "timeZone": {
+                    "required": "Ein Kurs behält seine Zeitzone, sobald eine festgelegt ist. Wähle eine Zeitzone aus."
+                }
             },
             "courseDashboard": "Kurs-Dashboard",
             "instructorDashboard": "Dashboard für Lehrende",

@@ -23,6 +23,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { TumAetUiOverlayService } from '../overlay/tumaet-ui-overlay.service';
 import { TumAetUiChipComponent } from '../chip/tumaet-ui-chip.component';
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
+import { TUM_AET_UI_FORM_FIELD } from '../form-field/tumaet-ui-form-field.token';
 
 export interface TumAetUiAutoCompleteSearchEvent {
     originalEvent?: Event;
@@ -53,6 +54,7 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject(DOCUMENT);
+    private readonly formField = inject(TUM_AET_UI_FORM_FIELD, { optional: true });
 
     /** Suggestions supplied in response to a search request. */
     readonly suggestions = input<readonly unknown[]>([]);
@@ -75,7 +77,17 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
     /** Requests suggestions when the empty input receives focus. */
     readonly completeOnFocus = input(false, { transform: booleanAttribute });
 
-    readonly inputId = input(`tumaet-ui-autocomplete-${nextAutoCompleteId++}`);
+    /**
+     * `id` of the text input, so an external `<label for>` associates. Defaults to the id of an enclosing
+     * `tumaet-ui-form-field`, and to a unique per-instance id outside one.
+     */
+    readonly inputId = input<string>();
+
+    /**
+     * Reports the field as required to assistive technology. A `tumaet-ui-form-field` marker is decorative, so a
+     * required field sets this as well. Validation stays with the form control.
+     */
+    readonly required = input(false, { transform: booleanAttribute });
     readonly name = input<string>();
     readonly ariaLabel = input<string>();
     readonly removeAriaLabel = input<string>();
@@ -85,6 +97,11 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
     readonly searchRequested = output<TumAetUiAutoCompleteSearchEvent>();
     readonly optionSelected = output<TumAetUiAutoCompleteOptionEvent>();
     readonly optionRemoved = output<TumAetUiAutoCompleteOptionEvent>();
+
+    private readonly fallbackInputId = `tumaet-ui-autocomplete-${nextAutoCompleteId++}`;
+    protected readonly resolvedInputId = computed(() => this.formField?.explicitControlId() ?? this.inputId() ?? this.formField?.labelTargetId() ?? this.fallbackInputId);
+    protected readonly describedBy = computed(() => this.formField?.describedBy() ?? null);
+    protected readonly isInvalid = computed(() => this.formField?.invalid() ?? false);
 
     protected readonly listboxId = `tumaet-ui-autocomplete-listbox-${nextAutoCompleteId++}`;
 
@@ -121,6 +138,13 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
     });
 
     constructor() {
+        // Tell an enclosing field which id to label whenever this control was given one of its own.
+        effect(() => {
+            const ownId = this.inputId();
+            if (ownId) {
+                this.formField?.adoptControlId(ownId);
+            }
+        });
         this.destroyRef.onDestroy(() => {
             this.overlayRef?.dispose();
             if (this.debounceTimer) {
@@ -347,6 +371,8 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
         let state: string;
         if (this.isDisabled()) {
             state = 'tumaet:bg-disabled-background tumaet:text-disabled tumaet:border-control-border';
+        } else if (this.isInvalid()) {
+            state = 'tumaet:bg-control-background tumaet:text-text tumaet:border-state-danger';
         } else if (this.isFocused()) {
             state = 'tumaet:bg-control-background tumaet:text-text tumaet:border-focus';
         } else {
