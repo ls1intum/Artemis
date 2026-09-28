@@ -8,13 +8,20 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -35,10 +42,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
@@ -47,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
 
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
@@ -77,6 +92,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
+
+    @Autowired
+    private ProxyManager<String> rateLimitProxyManager;
 
     private LocalVCTestRepository assignmentRepository;
 
@@ -943,6 +961,53 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testGetHttpStatusForException_unknownException() {
         int status = localVCServletService.getHttpStatusForException(new RuntimeException("unexpected"), "/some-repo");
         assertThat(status).isEqualTo(500);
+    }
+
+    /**
+     * The git servlet runs outside Spring MVC, so the ExceptionTranslator never turns a rate limit rejection into a 429
+     * there: the fetch and push filters have to answer it themselves, or the exception leaves the servlet uncaught.
+     * <p>
+     * Rate limiting is switched off for the shared test context, so a limiting service is swapped into the servlet
+     * service for this test only. It exempts loopback, where every other test's git request comes from, and limits
+     * the documentation address this test presents in X-Forwarded-For, so concurrently running tests are unaffected.
+     */
+    @Test
+    void testGitRequestsOverAuthenticationRateLimitAreAnsweredWith429() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setAuthenticationRequestsPerMinute(1);
+        properties.setExemptAddresses(List.of("127.0.0.0/8", "::1"));
+        var featureToggleService = mock(FeatureToggleService.class);
+        when(featureToggleService.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limitingRateLimitService = new RateLimitService(rateLimitProxyManager, new RateLimitConfigurationService(properties), featureToggleService);
+
+        Object servletServiceTarget = AopTestUtils.getUltimateTargetObject(localVCServletService);
+        Object originalRateLimitService = ReflectionTestUtils.getField(servletServiceTarget, "rateLimitService");
+        ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", limitingRateLimitService);
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            String repositoryUrl = localVCBaseUri + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+            String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+
+            // The first handshake spends the only token and goes through, so the rejections below come from the limit.
+            assertThat(sendInfoRefs(client, repositoryUrl, "git-upload-pack", authorizationHeader).statusCode()).isEqualTo(200);
+
+            for (String service : List.of("git-upload-pack", "git-receive-pack")) {
+                HttpResponse<String> response = sendInfoRefs(client, repositoryUrl, service, authorizationHeader);
+                assertThat(response.statusCode()).as("status for %s", service).isEqualTo(429);
+                assertThat(response.headers().firstValueAsLong(HttpHeaders.RETRY_AFTER).orElse(0)).as("Retry-After for %s", service).isPositive();
+            }
+        }
+        finally {
+            ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", originalRateLimitService);
+        }
+    }
+
+    private static HttpResponse<String> sendInfoRefs(HttpClient client, String repositoryUrl, String service, String authorizationHeader) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(repositoryUrl + "/info/refs?service=" + service)).header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+                .header("X-Forwarded-For", "203.0.113.42").GET().build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private void setupLdapToRejectAuth(String login) throws InvalidNameException {
