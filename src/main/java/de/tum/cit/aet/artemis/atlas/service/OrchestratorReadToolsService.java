@@ -179,9 +179,9 @@ public class OrchestratorReadToolsService {
             // orchestrator to judge fit; the batch's system prompt already carries the stripped versions.
             ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "exercise:" + exerciseId, () -> contentExtractionService.extractContent(exercise, false));
             // Neutralize prompt-injection fences and cap length before this instructor-authored content re-enters the
-            // model as a tool result — the same hardening the batch path applies via CompetencyOrchestrationService.sanitizeForPrompt.
-            String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
-            String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
+            // model as a tool result — the same hardening the batch path applies via OrchestratorPromptRenderer.sanitizeForPrompt.
+            String safeTitle = OrchestratorPromptRenderer.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
+            String safeText = OrchestratorPromptRenderer.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
             ExtractedContentDTO safeContent = new ExtractedContentDTO(safeTitle, safeText, extracted.metadata());
             markWorkerRead(toolContext);
             return toJson(objectMapper, safeContent);
@@ -224,11 +224,11 @@ public class OrchestratorReadToolsService {
             }
             ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "lectureUnit:" + lectureUnitId,
                     () -> contentExtractionService.extractContent(lectureUnit, true));
-            String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
-            String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
+            String safeTitle = OrchestratorPromptRenderer.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
+            String safeText = OrchestratorPromptRenderer.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
             Map<String, String> safeMetadata = new LinkedHashMap<>();
-            extracted.metadata().forEach((key, value) -> safeMetadata.put(CompetencyOrchestrationService.sanitizeForPrompt(key, CompetencyOrchestrationService.TYPE_LABEL_MAX),
-                    CompetencyOrchestrationService.sanitizeForPrompt(value, CompetencyOrchestrationService.LECTURE_UNIT_METADATA_VALUE_MAX)));
+            extracted.metadata().forEach((key, value) -> safeMetadata.put(OrchestratorPromptRenderer.sanitizeForPrompt(key, OrchestratorPromptRenderer.TYPE_LABEL_MAX),
+                    OrchestratorPromptRenderer.sanitizeForPrompt(value, OrchestratorPromptRenderer.LECTURE_UNIT_METADATA_VALUE_MAX)));
             String response = toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, safeMetadata));
             markWorkerRead(toolContext);
             return response;
@@ -281,9 +281,9 @@ public class OrchestratorReadToolsService {
     }
 
     private static IrisLectureSnippetDTO sanitizeLectureSearchResult(IrisLectureSnippetDTO result) {
-        return new IrisLectureSnippetDTO(CompetencyOrchestrationService.sanitizeForPrompt(result.lectureName(), MAX_EXERCISE_TITLE_LENGTH),
-                CompetencyOrchestrationService.sanitizeForPrompt(result.lectureUnitName(), MAX_EXERCISE_TITLE_LENGTH),
-                CompetencyOrchestrationService.sanitizeForPrompt(result.snippet(), MAX_LECTURE_SNIPPET_LENGTH));
+        return new IrisLectureSnippetDTO(OrchestratorPromptRenderer.sanitizeForPrompt(result.lectureName(), MAX_EXERCISE_TITLE_LENGTH),
+                OrchestratorPromptRenderer.sanitizeForPrompt(result.lectureUnitName(), MAX_EXERCISE_TITLE_LENGTH),
+                OrchestratorPromptRenderer.sanitizeForPrompt(result.snippet(), MAX_LECTURE_SNIPPET_LENGTH));
     }
 
     /**
