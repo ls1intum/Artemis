@@ -4,8 +4,18 @@
         @if (numberOfPages() > 0) {
             <p class="m-0 text-muted-color" data-testid="split-summary">{{ summaryKey() | artemisTranslate: { count: foundSections(), slides: numberOfPages() } }}</p>
         }
+        <!-- How the sections are found, so that a PDF without them does not look like a failure. -->
+        <p class="m-0 text-sm text-muted-color" data-testid="split-detection-hint" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.detectionHint"></p>
         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.hint"></p>
     </div>
+    @if (units().length < 1) {
+        <tumaet-ui-message
+            severity="warn"
+            [icon]="faExclamationTriangle"
+            data-testid="split-no-sections"
+            [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noUnitDetected' | artemisTranslate"
+        />
+    }
     <div class="overflow-x-auto">
         <table tumAetUiTable size="small" striped>
             <thead>
@@ -128,9 +138,6 @@
             </div>
             <p id="remove-source-unit-hint" class="m-0 ps-7 text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSourceHint"></p>
         </div>
-    }
-    @if (units().length < 1) {
-        <tumaet-ui-message severity="error" [icon]="faExclamationTriangle" [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noUnitDetected' | artemisTranslate" />
     }
     @if (invalidUnitTableMessage(); as invalidMessage) {
         <tumaet-ui-message severity="warn" [icon]="faExclamationTriangle" [text]="invalidMessage" />
