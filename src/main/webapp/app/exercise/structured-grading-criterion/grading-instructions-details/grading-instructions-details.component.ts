@@ -217,12 +217,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         const gradingCriteria = this.exercise().gradingCriteria;
         if (gradingCriteria) {
             for (const criterion of gradingCriteria) {
-                if (criterion.title == undefined) {
-                    // if it is a dummy criterion, leave out the action identifier
-                    markdownText += this.generateInstructionsMarkdown(criterion);
-                } else {
-                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
-                }
+                markdownText += `${GradingCriterionAction.IDENTIFIER}${criterion.title ? ` ${criterion.title}` : ''}\n\t${this.generateInstructionsMarkdown(criterion)}`;
             }
         }
         return markdownText;
@@ -411,7 +406,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         for (const { text, action } of textWithDomainActions) {
             if (action instanceof GradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
-                newCriterion.title = text;
+                if (text) {
+                    newCriterion.title = text;
+                }
                 gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
                 const arrayWithoutCriterion = textWithDomainActions.slice(1); // remove the identifier after creating its criterion object
@@ -470,10 +467,29 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (!this.editable()) {
             return;
         }
+        const previousCriteria = [...(this.exercise().gradingCriteria ?? [])];
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
+        for (const criterion of this.exercise().gradingCriteria ?? []) {
+            if (criterion.title != undefined) {
+                continue;
+            }
+            const previousIndex = previousCriteria.findIndex(
+                (previous) =>
+                    previous.title == undefined &&
+                    isEqual(
+                        previous.structuredGradingInstructions?.map(({ id, ...instruction }) => instruction),
+                        criterion.structuredGradingInstructions?.map(({ id, ...instruction }) => instruction),
+                    ),
+            );
+            if (previousIndex !== -1) {
+                const [previous] = previousCriteria.splice(previousIndex, 1);
+                criterion.id = previous.id;
+                criterion.structuredGradingInstructions.forEach((instruction, index) => (instruction.id = previous.structuredGradingInstructions[index].id));
+            }
+        }
     }
 
     onInstructionChange(textWithDomainActions: TextWithDomainAction[], instruction: GradingInstruction): void {

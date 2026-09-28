@@ -18,6 +18,7 @@ import { GradingFeedbackAction } from 'app/editor/monaco-editor/model/actions/gr
 import { GradingUsageCountAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
 import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -729,6 +730,20 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria).toBeDefined();
         const gradingCriteria = exercise.gradingCriteria![0];
         expect(gradingCriteria).toEqual(gradingCriterionWithoutId);
+    });
+
+    it('preserves a title-less criterion and both instruction IDs through text mode', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, instructionDescription: 'second description' };
+        exercise.gradingCriteria = [{ id: 3, structuredGradingInstructions: [gradingInstruction, secondInstruction] } as GradingCriterion];
+        component.ngOnInit();
+
+        const markdown = component.generateMarkdown();
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toHaveLength(1);
+        expect(exercise.gradingCriteria![0].title).toBeUndefined();
+        expect(exercise.gradingCriteria![0].id).toBe(3);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
     });
 
     it('should update properties for grading instruction', () => {
