@@ -67,7 +67,7 @@ export enum ProgrammingExerciseAssessmentType {
 }
 
 // CourseWideContext
-// Copied from src\main\webapp\app\shared\metis\metis.util.ts
+// Copied from src/main/webapp/app/communication/communication.util.ts
 export enum CourseWideContext {
     TECH_SUPPORT = 'TECH_SUPPORT',
     ORGANIZATION = 'ORGANIZATION',

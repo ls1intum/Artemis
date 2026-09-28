@@ -5,17 +5,17 @@ import { AnswerPostService } from 'app/communication/service/answer-post.service
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ForwardedMessageService } from 'app/communication/service/forwarded-message.service';
 import {
+    CommunicationCrudAction,
+    CommunicationWebsocketChannelPrefix,
     ContextInformation,
     DisplayPriority,
-    MetisPostAction,
-    MetisWebsocketChannelPrefix,
     PageType,
     PostContextFilter,
     PostSortCriterion,
     RouteComponents,
     SortDirection,
     getUnreadPostsByLastReadDate,
-} from 'app/communication/metis.util';
+} from 'app/communication/communication.util';
 import { PostService } from 'app/communication/service/post.service';
 import { ReactionService } from 'app/communication/service/reaction.service';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
@@ -26,7 +26,7 @@ import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversatio
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { Faq } from 'app/communication/shared/entities/faq.model';
 import { ForwardedMessage, ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
-import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
+import { PostBroadcastDTO } from 'app/communication/shared/entities/post-broadcast-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
@@ -37,13 +37,13 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Injectable()
-export class MetisService implements OnDestroy {
+export class CommunicationService implements OnDestroy {
     private postService = inject(PostService);
     private answerPostService = inject(AnswerPostService);
     private reactionService = inject(ReactionService);
@@ -52,7 +52,7 @@ export class MetisService implements OnDestroy {
     private conversationService = inject(ConversationService);
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
-    private metisConversationService = inject(MetisConversationService);
+    private courseConversationsService = inject(CourseConversationsService);
     private alertService = inject(AlertService);
     private http = inject(HttpClient);
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
@@ -72,7 +72,7 @@ export class MetisService implements OnDestroy {
     private subscriptionChannelSubscription?: Subscription;
 
     private course!: Course; // set in setCourse() before any read
-    // Expose FAQs as observable so consumers react once async loading finishes (setupMetis fetches from REST)
+    // Expose FAQs as observable so consumers react once async loading finishes (setupCommunicationService fetches from REST)
     private faqs$: BehaviorSubject<Faq[]> = new BehaviorSubject<Faq[]>([]);
 
     constructor() {
@@ -80,7 +80,7 @@ export class MetisService implements OnDestroy {
             this.user = user!;
 
             const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
-            this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
+            this.activeConversationSubscription = this.websocketService.subscribe<PostBroadcastDTO>(conversationTopic).subscribe((postDTO: PostBroadcastDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         });
@@ -165,8 +165,8 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * set course property before using metis service
-     * @param {Course} course in which the metis service is used
+     * set course property before using communication service
+     * @param {Course} course in which the communication service is used
      */
     setCourse(course: Course | undefined): void {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
@@ -178,7 +178,7 @@ export class MetisService implements OnDestroy {
             }
 
             const coursewideTopic = `/topic/communication/courses/${this.courseId}`;
-            this.courseWideTopicSubscription = this.websocketService.subscribe<MetisPostDTO>(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
+            this.courseWideTopicSubscription = this.websocketService.subscribe<PostBroadcastDTO>(coursewideTopic).subscribe((postDTO: PostBroadcastDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         }
@@ -186,7 +186,7 @@ export class MetisService implements OnDestroy {
 
     /**
      * to be used to set posts from outside
-     * @param {Post[]} posts that are managed by metis service
+     * @param {Post[]} posts that are managed by communication service
      */
     setPosts(posts: Post[]): void {
         this.posts$.next(posts);
@@ -481,7 +481,7 @@ export class MetisService implements OnDestroy {
      * determines if the current user is at least tutor in the current course
      * @return {boolean} tutor flag
      */
-    metisUserIsAtLeastTutorInCourse(): boolean {
+    currentUserIsAtLeastTutorInCourse(): boolean {
         return !!this.course.isAtLeastTutor;
     }
 
@@ -489,7 +489,7 @@ export class MetisService implements OnDestroy {
      * determines if the current user is at least instructor in the current course
      * @return boolean instructor flag
      */
-    metisUserIsAtLeastInstructorInCourse(): boolean {
+    currentUserIsAtLeastInstructorInCourse(): boolean {
         return !!this.course.isAtLeastInstructor;
     }
 
@@ -498,7 +498,7 @@ export class MetisService implements OnDestroy {
      * @param {Posting} posting for which the author is determined
      * @return {boolean} author flag
      */
-    metisUserIsAuthorOfPosting(posting: Posting): boolean {
+    currentUserIsAuthorOfPosting(posting: Posting): boolean {
         if (posting?.author?.id && this.getUser()?.id) {
             return posting.author.id === this.getUser().id;
         } else {
@@ -526,7 +526,7 @@ export class MetisService implements OnDestroy {
      * @return {RouteComponents} array of router link components
      */
     getLinkForPost(): RouteComponents {
-        return MetisService.getLinkForCoursePost(this.courseId);
+        return CommunicationService.getLinkForCoursePost(this.courseId);
     }
 
     /**
@@ -606,7 +606,7 @@ export class MetisService implements OnDestroy {
      */
     getQueryParamsForPost(post: Post): Params {
         if (post.conversation) {
-            return MetisService.getQueryParamsForCoursePost(post.id!);
+            return CommunicationService.getQueryParamsForCoursePost(post.id!);
         }
         return {};
     }
@@ -636,10 +636,10 @@ export class MetisService implements OnDestroy {
 
     /**
      * Creates (and updates) the websocket channel for receiving messages in dedicated channels;
-     * On message reception, subsequent actions for updating the dependent components are defined based on the MetisPostAction encapsulated in the MetisPostDTO (message payload);
+     * On message reception, subsequent actions for updating the dependent components are defined based on the CommunicationCrudAction encapsulated in the PostBroadcastDTO (message payload);
      * Updating the components is achieved by manipulating the cached (i.e., currently visible posts) accordingly,
      * and emitting those as new value for the `posts` observable via the getFilteredPosts method
-     * @param channel which the metis service should subscribe to
+     * @param channel which the communication service should subscribe to
      */
     createWebsocketSubscription(channel: string): void {
         // if channel subscription does not change, do nothing
@@ -655,7 +655,7 @@ export class MetisService implements OnDestroy {
 
         // create new subscription
         this.subscriptionChannel = channel;
-        this.subscriptionChannelSubscription = this.websocketService.subscribe<MetisPostDTO>(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+        this.subscriptionChannelSubscription = this.websocketService.subscribe<PostBroadcastDTO>(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
     }
 
     public savePost(post: Posting) {
@@ -690,7 +690,7 @@ export class MetisService implements OnDestroy {
                 next: () => {
                     const lastReadDate = post.creationDate!.subtract(1, 'millisecond');
                     const unreadMessagesCount = getUnreadPostsByLastReadDate(this.user, this.cachedPosts, lastReadDate).length;
-                    this.metisConversationService.updateConversationUnreadState(post.conversation!.id, lastReadDate, unreadMessagesCount);
+                    this.courseConversationsService.updateConversationUnreadState(post.conversation!.id, lastReadDate, unreadMessagesCount);
                     this.posts$.next(this.cachedPosts);
                 },
                 error: (errorResponse: HttpErrorResponse) => {
@@ -723,7 +723,7 @@ export class MetisService implements OnDestroy {
         }
     }
 
-    private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
+    private handleNewOrUpdatedMessage = (postDTO: PostBroadcastDTO): void => {
         const postConvId = postDTO.post.conversation?.id;
         const isValidPostContext = !!postConvId && !!this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
         const postIsFromCurrentConversation = isValidPostContext && this.currentPostContextFilter.conversationIds?.includes(postConvId);
@@ -731,8 +731,8 @@ export class MetisService implements OnDestroy {
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
 
-        if (postDTO.action === MetisPostAction.CREATE && postDTO.post.conversation?.id !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
-            this.metisConversationService.handleNewMessage(postConvId, postDTO.post.creationDate);
+        if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post.conversation?.id !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
+            this.courseConversationsService.handleNewMessage(postConvId, postDTO.post.creationDate);
         }
 
         if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
@@ -745,7 +745,7 @@ export class MetisService implements OnDestroy {
         });
 
         switch (postDTO.action) {
-            case MetisPostAction.CREATE:
+            case CommunicationCrudAction.CREATE:
                 const isAuthorFilterActive = this.currentPostContextFilter.authorIds && this.currentPostContextFilter.authorIds?.length > 0;
                 const doesNotMatchAuthorFilter = isAuthorFilterActive && postDTO.post.author?.id && !this.currentPostContextFilter.authorIds?.includes(postDTO.post.author?.id);
                 const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
@@ -775,7 +775,7 @@ export class MetisService implements OnDestroy {
                 }
 
                 break;
-            case MetisPostAction.UPDATE:
+            case CommunicationCrudAction.UPDATE:
                 const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToUpdate > -1) {
                     // WebSocket does not currently update the author and authorRole of posts correctly, so this is implemented as a workaround
@@ -812,7 +812,7 @@ export class MetisService implements OnDestroy {
                     this.removeFromPinnedPosts(postDTO.post.id!);
                 }
                 break;
-            case MetisPostAction.DELETE:
+            case CommunicationCrudAction.DELETE:
                 const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                 if (indexToDelete > -1) {
                     this.cachedPosts.splice(indexToDelete, 1);
@@ -847,11 +847,11 @@ export class MetisService implements OnDestroy {
     /**
      * Determines the channel to be used for websocket communication based on the current post context filter,
      * i.e., when being on a lecture page, the context is a certain lectureId (e.g., 1), the channel is set to '/topic/communication/lectures/1';
-     * By calling the createWebsocketSubscription method with this channel as parameter, the metis service also subscribes to that messages in this channel
+     * By calling the createWebsocketSubscription method with this channel as parameter, the communication service also subscribes to that messages in this channel
      */
     private createSubscriptionFromPostContextFilter(): void {
         if (this.currentPostContextFilter.plagiarismCaseId) {
-            const channel = MetisWebsocketChannelPrefix + 'plagiarismCase/' + this.currentPostContextFilter.plagiarismCaseId;
+            const channel = CommunicationWebsocketChannelPrefix + 'plagiarismCase/' + this.currentPostContextFilter.plagiarismCaseId;
             this.createWebsocketSubscription(channel);
         } else {
             // No need for extra subscription since messaging topics are covered by other services

@@ -4,34 +4,34 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { User } from 'app/account/user/user.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/communication/metis.util';
+import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/communication/communication.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Params } from '@angular/router';
-import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
+import { communicationCourse, communicationCoursePosts, communicationTags, communicationUser1 } from '../../sample/communication-sample-data';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Faq } from 'app/communication/shared/entities/faq.model';
 
 let pageType: PageType;
 
-export class MockMetisService {
+export class MockCommunicationService {
     currentConversation = undefined;
     private faqsSubject = new BehaviorSubject<Faq[]>([]);
 
     get tags(): Observable<string[]> {
-        return of(metisTags);
+        return of(communicationTags);
     }
 
     get posts(): Observable<Post[]> {
-        return of(metisCoursePosts);
+        return of(communicationCoursePosts);
     }
 
     getUser(): User {
-        return metisUser1;
+        return communicationUser1;
     }
 
     getCourse(): Course {
-        return metisCourse;
+        return communicationCourse;
     }
 
     getFaqs(): Observable<Faq[]> {
@@ -78,15 +78,15 @@ export class MockMetisService {
 
     resetCachedPosts(): void {}
 
-    metisUserIsAtLeastTutorInCourse(): boolean {
+    currentUserIsAtLeastTutorInCourse(): boolean {
         return true;
     }
 
-    metisUserIsAtLeastInstructorInCourse(): boolean {
+    currentUserIsAtLeastInstructorInCourse(): boolean {
         return true;
     }
 
-    metisUserIsAuthorOfPosting(posting: Posting): boolean {
+    currentUserIsAuthorOfPosting(posting: Posting): boolean {
         return true;
     }
 
@@ -97,19 +97,19 @@ export class MockMetisService {
     }
 
     getLinkForPost(post?: Post): RouteComponents {
-        return ['/courses', metisCourse.id!, 'discussion'];
+        return ['/courses', communicationCourse.id!, 'discussion'];
     }
 
     getLinkForExercise(exerciseId: string): string {
-        return `/courses/${metisCourse.id}/exercises/${exerciseId}`;
+        return `/courses/${communicationCourse.id}/exercises/${exerciseId}`;
     }
 
     getLinkForLecture(lectureId: string): string {
-        return '/courses/' + metisCourse.id + '/lectures/' + lectureId;
+        return '/courses/' + communicationCourse.id + '/lectures/' + lectureId;
     }
 
     getLinkForExam(examId: string): string {
-        return '/courses/' + metisCourse.id + '/exams/' + examId;
+        return '/courses/' + communicationCourse.id + '/exams/' + examId;
     }
 
     getLinkForFaq(): string {
@@ -148,7 +148,7 @@ export class MockMetisService {
     }
 
     getSimilarPosts(title: string): Observable<Post[]> {
-        return of(metisCoursePosts.slice(0, 5));
+        return of(communicationCoursePosts.slice(0, 5));
     }
 
     setCourse(course: Course | undefined): void {}
