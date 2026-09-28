@@ -63,6 +63,12 @@
                 "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",
                 "src/main/webapp/app/course/manage/update/**/*.scss",
                 "src/main/webapp/app/account/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-update/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-period/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.scss",
+                "src/main/webapp/app/lecture/manage/lecture-units/**/*.scss",
+                "src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.scss",
+                "src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.scss",
                 "packages/tum-aet-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
