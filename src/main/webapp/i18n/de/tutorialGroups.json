@@ -58,6 +58,10 @@
                 }
             },
             "configurationForm": {
+                "hero": {
+                    "title": "Übungsgruppen-Konfiguration",
+                    "description": "Standardeinstellungen für alle Übungsgruppen dieses Kurses."
+                },
                 "timeZoneInput": {
                     "label": "Übungsgruppen-Zeitzone",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
@@ -81,6 +85,7 @@
         "pages": {
             "tutorialGroupsManagement": {
                 "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgruppen! Sie ermöglicht es, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
+                "noTutorialGroupsTitle": "Noch keine Übungsgruppen",
                 "title": "Übungsgruppen-Verwaltung",
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
@@ -102,12 +107,13 @@
             "checklist": {
                 "title": "Checkliste für Übungsgruppen",
                 "explanation": "Bevor du mit der Nutzung der Übungsgruppenfunktion beginnen kannst, musst du einige Konfigurationsschritte durchführen",
+                "heroTitle": "Übungsgruppen einrichten",
                 "timeZone": "Der Kurs hat eine Zeitzone konfiguriert",
                 "timeZoneExplanation": "Für den Kurs muss eine Zeitzone konfiguriert werden, damit die Übungsgruppen-Termine entsprechend dieser Zeitzone korrekt geplant werden können.",
                 "configurationExplanation": "Der Kurs benötigt eine kursweite Konfiguration für die Übungsgruppen. Diese Konfiguration enthält Standardeinstellungen für alle Übungsgruppen.",
                 "configuration": "Der Kurs hat eine Konfiguration für die Übungsgruppen",
                 "createConfiguration": "Konfiguration erstellen",
-                "continueToManagement": "Weiter zur Übungsgruppen-Verwaltung"
+                "continueToManagement": "Weiter"
             },
             "tutorialGroupRegistrations": {
                 "title": "Tutorialregistrierungen",
@@ -251,7 +257,7 @@
                 "tutorChatLinkLabel": "Tutor Chat",
                 "groupChannelLinkLabel": "Gruppen Channel",
                 "registrationsLinkLabel": "Registrierungen",
-                "newSessionButtonLabel": "Neue Session",
+                "newSessionButtonLabel": "Session erstellen",
                 "confirmationDialog": {
                     "deleteGroup": {
                         "header": "Gruppe löschen?",
@@ -306,6 +312,7 @@
                         "attendance": "Anwesenheiten"
                     },
                     "validationError": {
+                        "dateInvalid": "Bitte ein gültiges Datum eingeben.",
                         "dateRequired": "Bitte wähle ein Datum.",
                         "startTimeRequired": "Bitte wähle eine Startzeit.",
                         "endTimeRequired": "Bitte wähle eine Endzeit.",
@@ -367,8 +374,7 @@
                 "title": "Sitzungsverwaltung"
             },
             "createTutorialGroupsConfiguration": {
-                "title": "Globalen Übungsgruppen Konfiguration erstellen",
-                "explanation": "Bevor Übungsgruppen erstellt werden können, müssen einige Eigenschaften angeben werden, die alle Übungsgruppen betreffen. Dies kann auch später geändert werden."
+                "title": "Globalen Übungsgruppen Konfiguration erstellen"
             },
             "editTutorialGroupsConfiguration": {
                 "title": "Globale Konfiguration bearbeiten"

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -152,6 +155,10 @@ public class CourseUpdateResource {
         }
 
         var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() != null && !existingCourse.getTimeZone().equals(courseUpdateDTO.timeZone()));
+        // Only a new or changed time zone is checked, so a course stored with one the server no longer knows stays editable.
+        if (!Objects.equals(existingCourse.getTimeZone(), courseUpdateDTO.timeZone())) {
+            CourseValidator.validateTimeZone(courseUpdateDTO.timeZone());
+        }
 
         if (!Objects.equals(existingCourse.getShortName(), courseUpdateDTO.shortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
@@ -247,5 +254,18 @@ public class CourseUpdateResource {
         // flags; otherwise the client would cache a course that claims Athena is off.
         courseAthenaConfigRepository.attachTo(result);
         return ResponseEntity.ok(CourseManagementDTO.of(result));
+    }
+
+    /**
+     * GET /time-zones : The time zones a course may use, which the course form offers and validates against. Browsers
+     * know different lists, some without names such as {@code UTC} or {@code Europe/Kyiv}, so the server, which
+     * interprets the course's time zone, provides its own.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the sorted time zone names
+     */
+    @GetMapping("time-zones")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<String>> getSupportedTimeZones() {
+        return ResponseEntity.ok(DateUtil.SUPPORTED_TIME_ZONES);
     }
 }
