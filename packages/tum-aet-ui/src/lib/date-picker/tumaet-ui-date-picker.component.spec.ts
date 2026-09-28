@@ -113,6 +113,33 @@ describe('TumAetUiDatePickerComponent', () => {
         expect(component.isValid()).toBe(false);
     });
 
+    it('leaves explaining an external error to the consumer and describes only text that is not a date', () => {
+        fixture.componentRef.setInput('invalid', true);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[role="alert"]'))).toBeNull();
+        expect(input().getAttribute('aria-describedby')).toBeNull();
+
+        input().value = 'not a date';
+        input().dispatchEvent(new Event('input'));
+        input().dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[role="alert"]'))).not.toBeNull();
+        expect(input().getAttribute('aria-describedby')).toBe(`${input().id}-error`);
+    });
+
+    it('points to the description the consumer gives for an external error', () => {
+        fixture.componentRef.setInput('invalid', true);
+        fixture.componentRef.setInput('ariaDescribedBy', 'range-error');
+        fixture.detectChanges();
+        expect(input().getAttribute('aria-describedby')).toBe('range-error');
+
+        input().value = 'not a date';
+        input().dispatchEvent(new Event('input'));
+        input().dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(input().getAttribute('aria-describedby')).toBe(`${input().id}-error range-error`);
+    });
+
     it('emits text-input validity independently of external invalid state', () => {
         const validityChanges = vi.fn();
         component.inputValidityChange.subscribe(validityChanges);
