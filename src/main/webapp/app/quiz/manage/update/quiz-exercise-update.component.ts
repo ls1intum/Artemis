@@ -14,7 +14,7 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -99,7 +99,7 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         CompetencySelectionPrimengComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,

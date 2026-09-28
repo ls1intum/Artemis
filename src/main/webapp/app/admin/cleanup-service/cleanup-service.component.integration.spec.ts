@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
-import { TumUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
@@ -53,9 +53,9 @@ describe('CleanupServiceComponent date range integration', () => {
         fixture.detectChanges();
     });
 
-    function datePickers(operationName: string): TumUiDatePickerComponent[] {
+    function datePickers(operationName: string): TumAetUiDatePickerComponent[] {
         const row = fixture.debugElement.query(By.css(`[data-testid="cleanup-row-${operationName}"]`));
-        return row.queryAll(By.directive(TumUiDatePickerComponent)).map((debugElement) => debugElement.componentInstance as TumUiDatePickerComponent);
+        return row.queryAll(By.directive(TumAetUiDatePickerComponent)).map((debugElement) => debugElement.componentInstance as TumAetUiDatePickerComponent);
     }
 
     it('should recover when the to-date corrects an invalid date range', () => {

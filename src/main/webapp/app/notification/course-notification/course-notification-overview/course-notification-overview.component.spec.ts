@@ -78,6 +78,7 @@ describe('CourseNotificationOverviewComponent', () => {
             getNotificationCountForCourse$: vi.fn().mockReturnValue(notificationCountSubject.asObservable()),
             getNotificationsForCourse$: vi.fn().mockReturnValue(notificationsSubject.asObservable()),
             setNotificationStatus: vi.fn(),
+            markDisplayedNotificationsAsSeen: vi.fn(),
             setNotificationStatusInMap: vi.fn(),
             decreaseNotificationCountBy: vi.fn(),
             removeNotificationFromMap: vi.fn(),
@@ -320,7 +321,9 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.markAllAsReadClicked();
 
+        // A click, so it goes to the status endpoint as an action and not to the automatic seen update
         expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
         expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
         expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(101, 2);
     });
@@ -390,7 +393,9 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.updateCurrentCategoryNotificationsToSeenOnServer();
 
-        expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        // Displaying notifications is not an action of the user, so it uses the automatic seen update
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).toHaveBeenCalledWith(101, [1, 2]);
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
     });
 
     it('should correctly identify visible unseen notification IDs', () => {
@@ -415,6 +420,7 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
         expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
         expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
     });
 
     it('should query for more notifications from service', () => {

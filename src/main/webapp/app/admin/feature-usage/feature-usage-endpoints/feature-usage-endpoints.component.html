@@ -1,0 +1,102 @@
+<div class="flex flex-wrap gap-2 mb-2">
+    <tumaet-ui-select
+        [options]="moduleOptions()"
+        [ngModel]="selectedModule()"
+        (ngModelChange)="selectedModule.set($event)"
+        optionLabel="label"
+        optionValue="value"
+        size="small"
+        [ariaLabel]="'artemisApp.featureUsage.moduleFilter' | artemisTranslate"
+        data-testid="module-filter"
+    />
+</div>
+
+<div class="overflow-x-auto">
+    <table
+        tumAetUiTable
+        size="small"
+        style="min-width: 100%"
+        [sortField]="sortField()"
+        [sortOrder]="sortAscending() ? 1 : -1"
+        (sortChange)="onSort($event)"
+        aria-describedby="feature-usage-page-heading"
+        data-testid="endpoints-table"
+    >
+        <thead>
+            <tr>
+                <th scope="col" [tumAetUiSortableColumn]="'identifier'"><span jhiTranslate="artemisApp.featureUsage.column.endpoint"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'interaction'"><span jhiTranslate="artemisApp.featureUsage.column.interaction"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'featureLabel'"><span jhiTranslate="artemisApp.featureUsage.column.feature"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'callCount'"><span jhiTranslate="artemisApp.featureUsage.column.calls"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'activeDays'"><span jhiTranslate="artemisApp.featureUsage.column.activeDays"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'errorRate'"><span jhiTranslate="artemisApp.featureUsage.column.errorRate"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'meanDurationMs'"><span jhiTranslate="artemisApp.featureUsage.column.meanDuration"></span></th>
+                <th scope="col" class="text-end" [tumAetUiSortableColumn]="'durationMaxMs'"><span jhiTranslate="artemisApp.featureUsage.column.maxDuration"></span></th>
+                <th scope="col" [tumAetUiSortableColumn]="'lastUsedDay'"><span jhiTranslate="artemisApp.featureUsage.column.lastUsed"></span></th>
+                <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.featureUsage.column.trend"></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (row of rows(); track row.endpoint.featureId) {
+                <tr [attr.data-testid]="'endpoint-row-' + row.endpoint.featureId" [class.text-muted-color]="row.endpoint.retired">
+                    <td>
+                        <span class="flex items-center gap-1">
+                            @if (verbOf(row.endpoint); as verb) {
+                                <tumaet-ui-tag severity="secondary">{{ verb }}</tumaet-ui-tag>
+                            }
+                            <span class="font-mono text-xs wrap-anywhere">{{ pathOf(row.endpoint) }}</span>
+                            @if (row.endpoint.retired) {
+                                <tumaet-ui-tag severity="secondary"><span jhiTranslate="artemisApp.featureUsage.retiredTag"></span></tumaet-ui-tag>
+                            }
+                        </span>
+                        <span class="block text-xs text-muted-color wrap-anywhere mt-1" data-testid="endpoint-source">
+                            {{ row.endpoint.module }} ·
+                            @if (row.endpoint.resource) {
+                                {{ row.endpoint.resource }}
+                            } @else {
+                                {{ 'artemisApp.featureUsage.kind.' + row.endpoint.featureKind | artemisTranslate }}
+                            }
+                        </span>
+                    </td>
+                    <td class="whitespace-nowrap">
+                        <tumaet-ui-tag [severity]="interactionSeverity(row.endpoint.interaction)">{{
+                            'artemisApp.featureUsage.interaction.' + row.endpoint.interaction | artemisTranslate
+                        }}</tumaet-ui-tag>
+                    </td>
+                    <td class="text-sm">
+                        @if (row.endpoint.featureLabel && knownFeatures().has(row.endpoint.featureLabel)) {
+                            {{ featureTranslationKey(row.endpoint.featureLabel, 'name') | artemisTranslate }}
+                        } @else {
+                            <span class="text-muted-color" jhiTranslate="artemisApp.featureUsage.uncatalogued"></span>
+                        }
+                    </td>
+                    <td class="text-end">{{ row.endpoint.callCount }}</td>
+                    <td class="text-end">{{ row.endpoint.activeDays }}</td>
+                    <td class="text-end" [class.text-state-danger]="row.errorRate >= 5">{{ row.endpoint.callCount ? row.errorRate.toFixed(1) + '%' : '-' }}</td>
+                    <td class="text-end">{{ row.endpoint.callCount ? row.meanDurationMs : '-' }}</td>
+                    <td class="text-end">{{ row.endpoint.callCount ? row.endpoint.durationMaxMs : '-' }}</td>
+                    <td class="whitespace-nowrap">{{ row.endpoint.lastUsedDay ?? '-' }}</td>
+                    <td>
+                        @if (row.endpoint.callCount > 0) {
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="secondary"
+                                size="small"
+                                variant="outlined"
+                                (click)="trendRequested.emit(row.endpoint)"
+                                [attr.aria-label]="'artemisApp.featureUsage.column.trend' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faChartLine" />
+                            </button>
+                        }
+                    </td>
+                </tr>
+            } @empty {
+                <tr>
+                    <td colspan="10" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,7 +1,7 @@
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
@@ -11,9 +11,7 @@ import dayjs from 'dayjs/esm';
 
 type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class AttachmentVideoUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);

@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faExclamationTriangle, faMinus, faPlus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -36,7 +36,7 @@ interface FeedbackTypeConfig {
     imports: [
         NgClass,
         FaIconComponent,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
         FormsModule,
         ConfirmIconComponent,
         GradingInstructionLinkIconComponent,

@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/foundation/util/base64.util';
@@ -24,7 +24,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
  */
 const CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class WebauthnService {
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);

@@ -39,18 +39,6 @@ import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseActionsComponent {
-    readonly exercise = input.required<Exercise>();
-    readonly courseId = input.required<number>();
-    readonly course = input<Course | undefined>(undefined);
-
-    readonly exerciseUpdated = output<Exercise>();
-    readonly exerciseDeleted = output<Exercise>();
-    /**
-     * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
-     * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
-     */
-    readonly quizActionsMinWidth = output<number>();
-
     private readonly destroyRef = inject(DestroyRef);
     private readonly textExerciseService = inject(TextExerciseService);
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
@@ -62,6 +50,18 @@ export class ExerciseActionsComponent {
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
+
+    readonly exercise = input.required<Exercise>();
+    readonly courseId = input.required<number>();
+    readonly course = input<Course | undefined>(undefined);
+
+    readonly exerciseUpdated = output<Exercise>();
+    readonly exerciseDeleted = output<Exercise>();
+    /**
+     * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
+     * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
+     */
+    readonly quizActionsMinWidth = output<number>();
 
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */

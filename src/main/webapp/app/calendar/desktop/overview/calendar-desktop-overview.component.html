@@ -34,7 +34,7 @@
                             <div class="chip" [attr.data-testid]="'chip-' + optionWithMetadata.option">
                                 <div class="legend-circle" [class]="optionWithMetadata.colorClassName"></div>
                                 <span>{{ optionWithMetadata.name }}</span>
-                                <button class="remove-button" (click)="removeFilterOption(optionWithMetadata.option); $event.stopPropagation()">
+                                <button type="button" class="remove-button" (click)="removeFilterOption(optionWithMetadata.option); $event.stopPropagation()">
                                     <fa-icon [icon]="faXmark" />
                                 </button>
                             </div>
@@ -57,20 +57,20 @@
         @let subscriptionToken = calendarSubscriptionToken();
         @if (currentCourseId && subscriptionToken) {
             <div>
-                <button data-testid="subscribe-button" pButton size="small" outlined (click)="subscriptionPopover.open($event)">
+                <button type="button" data-testid="subscribe-button" pButton size="small" outlined (click)="subscriptionPopover.open($event)">
                     <fa-icon [icon]="faArrowUpFromBracket" />
                     <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
                 </button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
             </div>
         }
-        <button id="today-button" pButton size="small" outlined (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
+        <button type="button" id="today-button" pButton size="small" outlined (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         <p-buttongroup>
-            <button id="previous-button" pButton size="small" outlined (click)="goToPrevious()">
+            <button type="button" id="previous-button" pButton size="small" outlined (click)="goToPrevious()">
                 <fa-icon [icon]="faChevronLeft" />
             </button>
 
-            <button id="next-button" pButton size="small" outlined (click)="goToNext()">
+            <button type="button" id="next-button" pButton size="small" outlined (click)="goToNext()">
                 <fa-icon [icon]="faChevronRight" />
             </button>
         </p-buttongroup>

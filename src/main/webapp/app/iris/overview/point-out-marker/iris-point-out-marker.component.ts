@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { faLocationArrow } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { IrisMessageContent, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisPointOut, formatTimestamp, getPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -26,7 +26,7 @@ interface PointOutMarker {
     selector: 'jhi-iris-point-out-marker',
     templateUrl: './iris-point-out-marker.component.html',
     styleUrl: './iris-point-out-marker.component.scss',
-    imports: [TumUiButtonDirective, FaIconComponent],
+    imports: [TumAetUiButtonDirective, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisPointOutMarkerComponent {

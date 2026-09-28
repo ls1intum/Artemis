@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { Observable } from 'rxjs';
@@ -8,9 +8,7 @@ import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resou
 
 type EntityResponseType = HttpResponse<OnlineUnit>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class OnlineUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);

@@ -739,4 +739,11 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE ex.id = :exerciseId
             """)
     Optional<Exam> findByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT exam.course.id
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<Long> findCourseIdById(@Param("examId") long examId);
 }

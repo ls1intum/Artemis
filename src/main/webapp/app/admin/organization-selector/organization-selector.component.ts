@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { CellTemplateRef, ColumnDef, TumUiButtonDirective, TumUiTableComponent, TumUiTableQueryEvent } from '@tumaet/ui-angular';
+import { CellTemplateRef, ColumnDef, TumAetUiButtonDirective, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui-integration/tum-ui-table-request-builder';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-aet-ui-integration/tumaet-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -12,7 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     selector: 'jhi-organization-selector',
     templateUrl: './organization-selector.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, TumUiTableComponent, TumUiButtonDirective],
+    imports: [TranslateDirective, TumAetUiTableComponent, TumAetUiButtonDirective],
 })
 export class OrganizationSelectorComponent {
     private readonly organizationService = inject(OrganizationManagementService);
@@ -47,7 +47,7 @@ export class OrganizationSelectorComponent {
 
     isAlreadyAssigned = computed(() => (org: Organization) => org.id !== undefined && this.assignedOrgIds().has(org.id));
 
-    loadOrganizations(event: TumUiTableQueryEvent): void {
+    loadOrganizations(event: TumAetUiTableQueryEvent): void {
         this.isLoading.set(true);
         const requestId = ++this.loadRequestId;
         const query = buildDbQueryFromTableEvent(event);

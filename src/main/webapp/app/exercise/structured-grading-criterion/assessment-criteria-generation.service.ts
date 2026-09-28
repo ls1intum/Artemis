@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { HyperionAssessmentCriteriaGenerationApi } from 'app/openapi/api/hyperion-assessment-criteria-generation-api';
 import { AssessmentCriteriaGenerationRequest } from 'app/openapi/model/assessment-criteria-generation-request';
@@ -23,7 +23,7 @@ export interface AssessmentCriteriaGenerationContext {
 }
 
 /** Builds assessment-criteria generation requests and maps generated DTOs to Artemis entities. */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AssessmentCriteriaGenerationService {
     private readonly api = inject(HyperionAssessmentCriteriaGenerationApi);
 

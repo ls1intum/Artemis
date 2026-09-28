@@ -33,7 +33,7 @@ import { PdfUploadTarget, PdfUploadTargetDialogComponent } from '../pdf-upload-t
 import { AttachmentVideoUnitService } from '../lecture-units/services/attachment-video-unit.service';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -64,7 +64,7 @@ export enum LectureDateFilter {
         CourseTitleBarActionsDirective,
         PdfDropZoneComponent,
         ArtemisTranslatePipe,
-        TumUiEmptyStateComponent,
+        TumAetUiEmptyStateComponent,
     ],
 })
 export class LectureComponent implements OnInit, OnDestroy {

@@ -183,12 +183,11 @@ public class ConversationMessagingService extends PostingService {
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
         preparePostForBroadcast(createdMessage);
-        createdMessage.getConversation().hideDetails();
+        // The details of the conversation are only hidden further below: whether students may see the channel depends on its exercise and exam
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
-            // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
-            if (conversationService.isChannelVisibleToStudents(channel)) {
-                broadcastForPost(createdMessage, MetisCrudAction.CREATE, course.getId(), null);
-            }
+            // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first.
+            // A channel students cannot see yet is only delivered to staff, see broadcastForPost.
+            broadcastForPost(createdMessage, MetisCrudAction.CREATE, course.getId(), null);
             log.debug("      broadcastForPost DONE");
 
             recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
@@ -244,14 +243,16 @@ public class ConversationMessagingService extends PostingService {
             var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
                     conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId(), author.isBot());
 
-            var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
+            // Direct messages and group chats only reach their members, who may always read them. A channel can still be hidden from students, e.g. before its
+            // exercise is released.
+            var isVisibleToStudents = !(conversation instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
 
             // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
             // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
             courseNotificationService.sendCourseNotification(newPostNotification,
                     recipientSummaries.stream()
                             .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
-                                    && (isChannelVisibleForStudents || summary.isAtLeastTutorInCourse())
+                                    && (isVisibleToStudents || summary.isAtLeastTutorInCourse())
                                     && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
                             .map((summary) -> {
                                 var user = new User(summary.userId());
@@ -266,6 +267,7 @@ public class ConversationMessagingService extends PostingService {
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
+        createdMessage.getConversation().hideDetails();
         try {
             autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
         }
@@ -442,10 +444,11 @@ public class ConversationMessagingService extends PostingService {
         message.setDisplayPriority(displayPriority);
 
         Post updatedMessage = conversationMessageRepository.save(message);
-        message.getConversation().hideDetails();
         preparePostForBroadcast(message);
         preparePostForBroadcast(updatedMessage);
+        // broadcast before hiding the details of the conversation: whether students may see the channel depends on its exercise and exam
         broadcastForPost(message, MetisCrudAction.UPDATE, course.getId(), null);
+        message.getConversation().hideDetails();
         return updatedMessage;
     }
 

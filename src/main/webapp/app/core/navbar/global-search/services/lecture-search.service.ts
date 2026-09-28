@@ -1,11 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LectureSearchService {
     private readonly http = inject(HttpClient);
 

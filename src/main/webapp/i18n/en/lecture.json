@@ -134,6 +134,7 @@
                 "studentVersionCreateError": "Student Version of the Attachment Content could not be created.",
                 "studentVersionUpdateError": "Student Version of the Attachment Content could not be updated.",
                 "thumbnailGrid": {
+                    "previewPage": "Preview page {{ param }}",
                     "showPage": "Show Page {{ param }}",
                     "hiddenUntil": "This page is hidden until:",
                     "showPageConfirmation": "Would you like to show this page?",

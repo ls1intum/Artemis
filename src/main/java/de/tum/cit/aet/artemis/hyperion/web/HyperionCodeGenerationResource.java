@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,9 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationJobStartDTO;
@@ -38,7 +42,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
-@FeatureUsage("authoring-assistance/code-generation")
+@FeatureUsage(UserFeature.HYPERION_CODE_GENERATION)
 @RestController
 @RequestMapping("api/hyperion/")
 public class HyperionCodeGenerationResource {
@@ -70,33 +74,52 @@ public class HyperionCodeGenerationResource {
      * Uses AI-powered iterative approach to generate, compile, and improve code based on build feedback.
      * Supports generation for SOLUTION, TEMPLATE, and TESTS repositories.
      * Uses websocket to stream progress and completion events.
-     * When {@code checkOnly} is true, returns the current job for the requesting user without starting a new one.
      *
      * @param exerciseId the ID of the programming exercise
      * @param request    the request containing repository type
      * @return ResponseEntity with status 200 and the created job id
      */
-
     @PostMapping("programming-exercises/{exerciseId}/generate-code")
     @EnforceAtLeastEditorInExercise
+    @SuppressWarnings("removal")
     public ResponseEntity<CodeGenerationJobStartDTO> generateCode(@PathVariable long exerciseId, @Valid @RequestBody CodeGenerationRequestDTO request) {
         log.debug("REST request to generate code for programming exercise [{}] with repository type [{}]", exerciseId, request.repositoryType());
         if (request.checkOnly()) {
-            validateExerciseId(exerciseId);
+            // A client from before the active-job endpoint, still open across a deployment. Its checks count as actions of
+            // this endpoint until it reloads, which is the price of not breaking the tab.
+            // TODO: Remove together with CodeGenerationRequestDTO.checkOnly.
+            return getActiveCodeGenerationJob(exerciseId);
         }
-        else {
-            validateGenerationRequest(exerciseId, request);
-        }
+        validateGenerationRequest(exerciseId, request);
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        if (request.checkOnly()) {
-            return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId(), job.repositoryType())))
-                    .orElseGet(() -> ResponseEntity.noContent().build());
-        }
         Long courseId = resolveCourseId(exercise);
         String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType(), request.initialAutoGeneration(), request.selectedFeedbackThreadIds());
         log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId, request.repositoryType()));
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/code-generation/active-job: Return the code generation job the requesting user
+     * is currently running for the exercise, without starting one.
+     * <p>
+     * The editor asks this every time it opens and while it waits for a free generation slot. It is an endpoint of its own
+     * rather than a flag on the generation request so that the feature usage report can tell those probes from the
+     * generations they check on: counted together, an editor that is merely opened looks like code being generated.
+     *
+     * @param exerciseId the ID of the programming exercise
+     * @return 200 with the active job, or 204 when there is none
+     */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @GetMapping("programming-exercises/{exerciseId}/code-generation/active-job")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<CodeGenerationJobStartDTO> getActiveCodeGenerationJob(@PathVariable long exerciseId) {
+        log.debug("REST request to get the active code generation job for programming exercise [{}]", exerciseId);
+        validateExerciseId(exerciseId);
+        ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
+        User user = userRepository.getUserWithAuthorities();
+        return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId(), job.repositoryType())))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     /**

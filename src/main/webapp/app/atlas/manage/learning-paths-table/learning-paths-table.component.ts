@@ -30,11 +30,11 @@ enum TableColumn {
     styleUrls: ['./learning-paths-table.component.scss', '../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsTableComponent {
-    protected readonly faSpinner = faSpinner;
-
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly dialogService = inject(DialogService);
+
+    protected readonly faSpinner = faSpinner;
 
     readonly courseId = input.required<number>();
 

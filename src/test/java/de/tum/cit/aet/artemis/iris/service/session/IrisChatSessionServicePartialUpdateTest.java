@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -70,11 +71,11 @@ class IrisChatSessionServicePartialUpdateTest {
         var session = new IrisChatSession();
         session.setId(2L);
         session.setUserId(5L);
-        when(irisSessionRepository.findByIdElseThrow(2L)).thenReturn(session);
+        when(irisSessionRepository.findById(2L)).thenReturn(Optional.of(session));
 
-        irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+        assertThat(irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate)).isTrue();
 
-        verify(irisSessionRepository).findByIdElseThrow(2L);
+        verify(irisSessionRepository).findById(2L);
         verify(irisChatWebsocketService).sendPartialUpdate(session, "partial", 4, "run-1");
         verifyNoInteractions(irisMessageService, irisMessageRepository);
     }

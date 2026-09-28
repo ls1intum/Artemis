@@ -7,7 +7,10 @@ import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAuthoritySp
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getInternalOrExternalSpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getSearchTermSpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getWithOrWithoutRegistrationNumberSpecification;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.inCourseWithRole;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.notSoftDeleted;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.orderByColumn;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.searchByLoginNameEmailOrRegistrationNumber;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
@@ -15,7 +18,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -45,6 +47,7 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecip
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
@@ -53,6 +56,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 
@@ -666,7 +670,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         if (!StringUtils.hasText(searchTerm)) {
             return Page.empty(page);
         }
-        String escaped = escapeSearchTerm(searchTerm);
+        String escaped = StringUtil.escapeForLikeLowerCase(searchTerm);
         // Guarantee a deterministic order so the LIMIT/OFFSET pages form a stable, non-overlapping partition. Without a
         // fixed order the database may return the results in a different order per page, so a matching user can shuffle
         // between pages and never appear on the page the caller is viewing (see issue #13069). Applied here so every
@@ -703,7 +707,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         if (!StringUtils.hasText(searchTerm)) {
             return Page.empty(page);
         }
-        String escaped = escapeSearchTerm(searchTerm);
+        String escaped = StringUtil.escapeForLikeLowerCase(searchTerm);
         Pageable stablePage = withStableOrder(page);
         return findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(stablePage, escaped, courseId);
     }
@@ -734,10 +738,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 )
             """)
     Page<User> findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm, @Param("courseId") long courseId);
-
-    private static String escapeSearchTerm(final String searchTerm) {
-        return searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-    }
 
     /**
      * Appends the id to whatever order the caller asked for, so that the order is total. Two rows a query cannot tell apart are free to swap places between two executions, and
@@ -1731,4 +1731,20 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             GROUP BY ucr.course.id, ucr.role
             """)
     List<CourseRoleCountDTO> countStudentsByCourseIdsAndUserIds(@Param("courseIds") Set<Long> courseIds, @Param("userIds") Set<Long> userIds);
+
+    /**
+     * Returns a page of users in the given course that have the given role, matching the search term and sort from {@code search}.
+     *
+     * @param search   pagination, search term, and sort info
+     * @param courseId the ID of the course
+     * @param role     the {@link CourseRole} to filter by
+     * @return page of matching {@link User} entities
+     */
+    default Page<User> searchUsersInCourseRole(CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
+        // orderByColumn() applies the sort as a query.orderBy() side effect, so the Pageable itself stays unsorted.
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
+        Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginNameEmailOrRegistrationNumber(search.searchTerm()))
+                .and(orderByColumn(search.sortedColumn(), search.sortingOrder()));
+        return findAll(spec, pageable);
+    }
 }

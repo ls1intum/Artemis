@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
  */
 @Conditional(PasskeyEnabled.class)
 @Lazy
-@FeatureUsage("account/passkeys")
+@FeatureUsage(UserFeature.PASSKEYS)
 @RestController
 @RequestMapping("api/account/passkeys/")
 public class PasskeyResource {

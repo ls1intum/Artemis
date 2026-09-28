@@ -12,6 +12,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private feedbackService = inject(FeedbackService);
 
     public readonly feedback = model.required<Feedback>();
     readonly resultId = input.required<number>();
@@ -20,7 +21,6 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
 
     public readonly onFeedbackChange = output<Feedback>();
     public readonly onFeedbackDelete = output<Feedback>();
-    private feedbackService = inject(FeedbackService);
 
     ngOnInit() {
         void this.loadLongFeedback();

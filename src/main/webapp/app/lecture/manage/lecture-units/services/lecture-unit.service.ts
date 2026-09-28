@@ -6,7 +6,7 @@ import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures
 import { onError } from 'app/foundation/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -16,9 +16,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LectureUnitService {
     private httpClient = inject(HttpClient);
     private attachmentService = inject(AttachmentService);

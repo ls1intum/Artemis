@@ -38,11 +38,12 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("posts/answers")
+@FeatureUsage(UserFeature.MESSAGING)
 @RestController
 @RequestMapping("api/communication/")
 public class AnswerMessageResource {

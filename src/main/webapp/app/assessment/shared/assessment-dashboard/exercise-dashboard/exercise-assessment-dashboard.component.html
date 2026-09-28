@@ -50,7 +50,7 @@
                 @if (numberOfSubmissions().total > 0) {
                     <div class="col-12 col-md-5 col-xl-4 d-flex justify-content-center justify-content-lg-end chart-col">
                         <div class="chart overflow-hidden">
-                            <tum-ui-doughnut-chart
+                            <tumaet-ui-doughnut-chart
                                 class="h-[150px] w-[330px]"
                                 [labels]="chartData().labels"
                                 [series]="chartData().series"
@@ -144,13 +144,13 @@
                             <div class="col-5">{{ ratingsDashboardInfo().total }} | {{ ratingsDashboardInfo().tutor }}</div>
                         </div>
                         <div class="mt-1 grid gap-2" [class.grid-cols-2]="complaintsEnabled()">
-                            <a tumUiButton severity="secondary" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
+                            <a tumAetUiButton severity="secondary" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
                                 <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
                             </a>
                             @if (complaintsEnabled()) {
                                 <a
-                                    tumUiButton
+                                    tumAetUiButton
                                     severity="secondary"
                                     size="small"
                                     [routerLink]="complaintsLink()"
@@ -250,7 +250,7 @@
             <div class="col-12 text-center mt-2 mb-4">
                 <p jhiTranslate="artemisApp.exerciseAssessmentDashboard.pleaseContactIfUnclear"></p>
 
-                <button data-testid="participate-in-assessment" class="btn btn-primary p-1" (click)="readInstruction()" [disabled]="isLoading()">
+                <button type="button" data-testid="participate-in-assessment" class="btn btn-primary p-1" (click)="readInstruction()" [disabled]="isLoading()">
                     @if (exercise().gradingInstructions && exercise().gradingInstructions!.length > 0) {
                         <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.readAndUnderstood"></span>
                     }
@@ -287,7 +287,11 @@
                                     </p>
 
                                     @if (stats.toReview.done < stats.toReview.total) {
-                                        <button class="btn btn-primary review-example-submission mb-4" (click)="openExampleSubmission(nextExampleSubmissionId(), true, false)">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary review-example-submission mb-4"
+                                            (click)="openExampleSubmission(nextExampleSubmissionId(), true, false)"
+                                        >
                                             @if (stats.toReview.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
@@ -302,7 +306,11 @@
                                         <ul>
                                             @for (exampleSubmission of exampleSubmissionsToReview(); track exampleSubmission; let i = $index) {
                                                 <li>
-                                                    <button class="btn btn-link review-example-submission" (click)="openExampleSubmission(exampleSubmission.id!, true, false)">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-link review-example-submission"
+                                                        (click)="openExampleSubmission(exampleSubmission.id!, true, false)"
+                                                    >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
@@ -322,7 +330,11 @@
                                         {{ stats.toAssess.total }})
                                     </p>
                                     @if (stats.toAssess.done < stats.toAssess.total) {
-                                        <button class="btn btn-primary assess-example-submission mb-4" (click)="openExampleSubmission(nextExampleSubmissionId(), false, true)">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary assess-example-submission mb-4"
+                                            (click)="openExampleSubmission(nextExampleSubmissionId(), false, true)"
+                                        >
                                             @if (stats.toAssess.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
@@ -337,7 +349,11 @@
                                         <ul>
                                             @for (exampleSubmission of exampleSubmissionsToAssess(); track exampleSubmission; let i = $index) {
                                                 <li>
-                                                    <button class="btn btn-link assess-example-submission" (click)="openExampleSubmission(exampleSubmission.id!, false, true)">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-link assess-example-submission"
+                                                        (click)="openExampleSubmission(exampleSubmission.id!, false, true)"
+                                                    >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
@@ -437,7 +453,6 @@
                                                                         [class.disabled]="openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()"
                                                                         [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
                                                                         [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
-                                                                        [ngStyle]="{}"
                                                                     >
                                                                         @if (openingAssessmentEditorForNewSubmission()) {
                                                                             <fa-icon [icon]="faSpinner" animation="spin" />
@@ -724,6 +739,7 @@
                                                         </a>
                                                     } @else {
                                                         <button
+                                                            type="button"
                                                             class="btn btn-primary btn-sm"
                                                             [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                                             [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"

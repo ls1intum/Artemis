@@ -109,13 +109,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private liveEventsService = inject(ExamParticipationLiveEventsService);
-
-    /** Set once the component is destroyed, so that a late response does not restart work for the exam that was left. */
-    private isDestroyed = false;
     private courseService = inject(CourseManagementService);
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
+
+    /** Set once the component is destroyed, so that a late response does not restart work for the exam that was left. */
+    private isDestroyed = false;
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;

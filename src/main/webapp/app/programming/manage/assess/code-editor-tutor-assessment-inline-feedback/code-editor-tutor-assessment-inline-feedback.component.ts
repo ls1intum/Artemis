@@ -21,14 +21,14 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     },
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    // Needed for the outer editor to access the DOM node of this component
+    public elementRef = inject(ElementRef);
+
     protected readonly faSave = faSave;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly Feedback = Feedback;
     protected readonly MANUAL = FeedbackType.MANUAL;
-
-    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
-    // Needed for the outer editor to access the DOM node of this component
-    public elementRef = inject(ElementRef);
 
     readonly feedback = input<Feedback>();
 

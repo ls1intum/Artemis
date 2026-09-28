@@ -30,7 +30,7 @@ import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
@@ -46,7 +46,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     imports: [
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,

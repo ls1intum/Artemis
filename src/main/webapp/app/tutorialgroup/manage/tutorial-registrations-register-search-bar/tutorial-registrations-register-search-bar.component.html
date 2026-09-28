@@ -1,8 +1,8 @@
-<tum-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
+<tumaet-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
     <input
         #searchInput
-        tumUiInput
-        tumUiInputSize="small"
+        tumAetUiInput
+        tumAetUiInputSize="small"
         class="search-input"
         type="text"
         [placeholder]="searchBarPlaceholder()"
@@ -16,7 +16,7 @@
         <!-- The field owns one icon slot, so the busy indicator sits on the trailing edge on its own. -->
         <fa-icon class="search-busy" [icon]="faSpinner" animation="spin" aria-hidden="true" />
     }
-</tum-ui-icon-field>
+</tumaet-ui-icon-field>
 
 <ng-template #panelTemplate>
     <div class="search-panel">
@@ -31,6 +31,7 @@
         } @else {
             <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="40" minBufferPx="200" maxBufferPx="400">
                 <button
+                    type="button"
                     *cdkVirtualFor="let student of suggestedStudents(); let index = index; trackBy: trackStudentById"
                     class="student-row"
                     [class.active]="suggestionHighlightIndex() === index"

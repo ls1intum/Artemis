@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService.ConversationMemberSearchFilters;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -53,6 +54,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -60,7 +63,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("conversations/conversations")
+@FeatureUsage(UserFeature.CONVERSATION_ORGANIZATION)
 @RestController
 @RequestMapping("api/communication/courses/")
 public class ConversationResource extends ConversationManagementResource {
@@ -169,6 +172,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("{courseId}/unread-messages")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
@@ -186,6 +190,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param conversationId the id of the conversation
      * @return ResponseEntity with status 200 (Ok)
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @PatchMapping("{courseId}/conversations/{conversationId}/mark-as-read")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> markAsRead(@PathVariable Long courseId, @PathVariable Long conversationId) {
@@ -366,6 +371,7 @@ public class ConversationResource extends ConversationManagementResource {
      * @param withMessaging if true, the course will allow direct messages, otherwise only communication in channels
      * @return ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.COURSE_SETTINGS)
     @PutMapping("{courseId}/enable")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableCommunication(@PathVariable long courseId, @RequestParam(required = false) boolean withMessaging) {

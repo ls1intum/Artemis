@@ -44,6 +44,7 @@
                     @if (canDeleteChannel()) {
                         <div class="col-12 settings-section text-center">
                             <button
+                                type="button"
                                 class="btn btn-danger delete"
                                 [id]="'delete-' + channel.id"
                                 jhiDeleteButton

@@ -6,7 +6,7 @@ import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unref
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiButtonDirective, TumUiMessageComponent, TumUiTagComponent, TumUiTagSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
@@ -15,14 +15,14 @@ export interface FeedbackGroup {
     translateTitle: boolean;
     feedbacks: Feedback[];
     points: number;
-    pointsSeverity: TumUiTagSeverity;
+    pointsSeverity: TumAetUiTagSeverity;
 }
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
     styleUrls: ['./unreferenced-feedback.component.scss'],
-    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumUiButtonDirective, TumUiTagComponent, TumUiMessageComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiMessageComponent, ArtemisTranslatePipe],
 })
 export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -281,7 +281,7 @@ function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number>
 
 function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {
     const points = feedbacks.reduce((sum, feedback) => sum + (contributingCredits.get(feedback) ?? 0), 0);
-    let pointsSeverity: TumUiTagSeverity = 'secondary';
+    let pointsSeverity: TumAetUiTagSeverity = 'secondary';
     if (points > 0) {
         pointsSeverity = 'success';
     } else if (points < 0) {

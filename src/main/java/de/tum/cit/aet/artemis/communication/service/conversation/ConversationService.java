@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service.conversation;
 
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.CONVERSATION_MEMBERSHIP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
@@ -58,8 +59,6 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 public class ConversationService {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationService.class);
-
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
 
     private final ConversationDTOService conversationDTOService;
 
@@ -355,16 +354,10 @@ public class ConversationService {
      */
     // TODO: this should be Async
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> recipients) {
-        String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
-        recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
+        recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, course.getId()));
     }
 
-    @NonNull
-    public static String getConversationParticipantTopicName(Long courseId) {
-        return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
-    }
-
-    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
+    private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, long courseId) {
         ConversationDTO dto;
         if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
@@ -377,7 +370,7 @@ public class ConversationService {
         }
 
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
-        websocketMessagingService.sendMessageToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
+        websocketMessagingService.sendMessageToUser(user.getLogin(), CONVERSATION_MEMBERSHIP.at(courseId, user.getId()), websocketDTO);
     }
 
     /**
@@ -488,16 +481,43 @@ public class ConversationService {
         List<Channel> courseWideChannelsWithoutParticipants = conversationRepository.findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(courseId, userId);
         List<ConversationParticipant> participants = new ArrayList<>();
         for (Channel channel : courseWideChannelsWithoutParticipants) {
-            var newParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-            newParticipant.setUnreadMessagesCount(0L);
-            newParticipant.setLastRead(now);
-            participants.add(newParticipant);
+            participants.add(createReadParticipant(requestingUser, channel, now));
         }
         // save all new conversation participants (i.e. for course-wide channels that the user has not yet accessed)
         if (!participants.isEmpty()) {
-            conversationParticipantRepository.saveAll(participants);
+            try {
+                conversationParticipantRepository.saveAll(participants);
+            }
+            catch (DataIntegrityViolationException e) {
+                // A concurrent request (e.g. opening one of these channels) created a participant in the meantime, which rolled back the whole batch.
+                // Save them one by one instead, with new instances as the batch may have assigned ids that were rolled back, and mark the participants
+                // created concurrently as read as well.
+                List<Long> concurrentlyCreatedConversationIds = new ArrayList<>();
+                for (Channel channel : courseWideChannelsWithoutParticipants) {
+                    try {
+                        conversationParticipantRepository.save(createReadParticipant(requestingUser, channel, now));
+                    }
+                    catch (DataIntegrityViolationException saveFailed) {
+                        // Only a participant that exists by now was created concurrently; any other integrity violation is a real error
+                        if (!conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), userId)) {
+                            throw saveFailed;
+                        }
+                        concurrentlyCreatedConversationIds.add(channel.getId());
+                    }
+                }
+                if (!concurrentlyCreatedConversationIds.isEmpty()) {
+                    conversationParticipantRepository.updateMultipleLastReadAsync(userId, concurrentlyCreatedConversationIds, now);
+                }
+            }
         }
         log.debug("Marking all conversations without participants (i.e. creating new ones) as read took {} ms", TimeLogUtil.formatDurationFrom(start));
+    }
+
+    private static ConversationParticipant createReadParticipant(User user, Channel channel, ZonedDateTime lastRead) {
+        var participant = ConversationParticipant.createWithDefaultValues(user, channel);
+        participant.setUnreadMessagesCount(0L);
+        participant.setLastRead(lastRead);
+        return participant;
     }
 
     /**
@@ -572,13 +592,7 @@ public class ConversationService {
      * @return true if the channel is visible to students
      */
     public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
-        if (channel.getExercise() != null) {
-            return channel.getExercise().isVisibleToStudents();
-        }
-        else if (channel.getExam() != null) {
-            return channel.getExam().isVisibleToStudents();
-        }
-        return true;
+        return channel.isVisibleToStudents();
     }
 
     private ConversationParticipant getOrCreateConversationParticipant(Long conversationId, User requestingUser) {

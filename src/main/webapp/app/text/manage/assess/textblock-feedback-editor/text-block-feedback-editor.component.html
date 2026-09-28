@@ -16,33 +16,36 @@
     (dragover)="$event.preventDefault()"
     (focusin)="onFocus.emit()"
 >
-    @if (criteria(); as criteriaList) {
-        @if (criteriaList.length > 0) {
-            <div unifiedFeedbackExtraControls class="dropdown" ngbDropdown>
-                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" [attr.aria-label]="connectToInstructionAriaLabel()"></button>
-                @if (criteriaList.length === 1) {
-                    <ul ngbDropdownMenu>
-                        <jhi-textblock-feedback-dropdown [criterion]="criteriaList[0]" [feedback]="feedback()" (didChange)="didChange()" />
-                    </ul>
-                } @else {
-                    <ul class="dropdown-menu" ngbDropdownMenu>
-                        @for (criterion of criteriaList; track criterion) {
-                            <li>
-                                @if (criterion.title) {
-                                    <button type="button" class="dropdown-item">{{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /></button>
-                                } @else {
-                                    <button type="button" class="dropdown-item">
-                                        <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.noTitle"></span>&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" />
-                                    </button>
-                                }
-                                <ul class="dropdown-menu dropdown-submenu">
-                                    <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
-                                </ul>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
+    <!-- The slot is claimed by the container: content projection cannot match an element nested in two @if blocks. -->
+    <ng-container ngProjectAs="[unifiedFeedbackExtraControls]">
+        @if (criteria(); as criteriaList) {
+            @if (criteriaList.length > 0) {
+                <div class="dropdown" ngbDropdown>
+                    <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" [attr.aria-label]="connectToInstructionAriaLabel()"></button>
+                    @if (criteriaList.length === 1) {
+                        <ul ngbDropdownMenu>
+                            <jhi-textblock-feedback-dropdown [criterion]="criteriaList[0]" [feedback]="feedback()" (didChange)="didChange()" />
+                        </ul>
+                    } @else {
+                        <ul class="dropdown-menu" ngbDropdownMenu>
+                            @for (criterion of criteriaList; track criterion) {
+                                <li>
+                                    @if (criterion.title) {
+                                        <button type="button" class="dropdown-item">{{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /></button>
+                                    } @else {
+                                        <button type="button" class="dropdown-item">
+                                            <span jhiTranslate="artemisApp.textAssessment.feedbackEditor.noTitle"></span>&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" />
+                                        </button>
+                                    }
+                                    <ul class="dropdown-menu dropdown-submenu">
+                                        <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
         }
-    }
+    </ng-container>
 </jhi-unified-feedback>

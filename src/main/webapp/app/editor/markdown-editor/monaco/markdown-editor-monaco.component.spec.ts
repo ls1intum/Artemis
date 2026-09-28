@@ -365,7 +365,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.componentRef.setInput('colorAction', new ColorAction());
         fixture.detectChanges();
         const executeInCurrentEditorStub = vi.spyOn(comp.colorAction()!, 'executeInCurrentEditor').mockImplementation(() => {});
-        const markdownColors = comp.colorSignal();
+        const markdownColors = comp.colors;
         for (let i = 0; i < markdownColors.length; i++) {
             const color = markdownColors[i];
             comp.onSelectColor(color);
