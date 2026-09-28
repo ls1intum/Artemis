@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
  * ({@code "9.2"}) and the legacy three-part hotfix scheme ({@code "10.4.1"}), and that
  * malformed inputs fall back to "no update available" instead of producing a false positive.
  * Also verifies that the latest version is the highest published release rather than the one
- * GitHub flags as latest, and that a cached lookup from another running version is not reused.
+ * GitHub flags as latest, and that cached lookups are kept per running version.
  */
 class ArtemisVersionServiceTest {
 
@@ -105,28 +105,49 @@ class ArtemisVersionServiceTest {
     }
 
     @Test
-    void doesNotReuseLookupCachedForAnotherRunningVersion() {
+    void reusesCachedLookupOfTheRunningVersion() {
         CacheManager cacheManager = new ConcurrentMapCacheManager();
-        cacheManager.getCache("artemisVersion").put("latestVersion", new ArtemisVersionDTO("9.9.3", "9.9.3", false, null, null, Instant.now().toString()));
+        ArtemisVersionDTO cached = new ArtemisVersionDTO("10.0", "10.0", false, null, null, Instant.now().toString());
+        cacheManager.getCache("artemisVersion").put("latestVersion:10.0", cached);
+        RestTemplate restTemplate = new RestTemplate();
+        // No request is expected, so any call to GitHub fails the test
+        MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
+
+        ArtemisVersionDTO versionInfo = createService(restTemplate, cacheManager, "10.0").getVersionInfo();
+
+        server.verify();
+        assertThat(versionInfo).isEqualTo(cached);
+    }
+
+    @Test
+    void keepsSeparateLookupsPerRunningVersion() {
+        CacheManager cacheManager = new ConcurrentMapCacheManager();
+        ArtemisVersionDTO cachedForOldVersion = new ArtemisVersionDTO("9.9.3", "9.9.3", false, null, null, Instant.now().toString());
+        cacheManager.getCache("artemisVersion").put("latestVersion:9.9.3", cachedForOldVersion);
 
         ArtemisVersionDTO versionInfo = fetchWith("10.0", cacheManager, release("10.0", false, false));
 
         assertThat(versionInfo.currentVersion()).isEqualTo("10.0");
         assertThat(versionInfo.latestVersion()).isEqualTo("10.0");
-        assertThat(cacheManager.getCache("artemisVersion").get("latestVersion", ArtemisVersionDTO.class)).isEqualTo(versionInfo);
+        assertThat(cacheManager.getCache("artemisVersion").get("latestVersion:10.0", ArtemisVersionDTO.class)).isEqualTo(versionInfo);
+        assertThat(cacheManager.getCache("artemisVersion").get("latestVersion:9.9.3", ArtemisVersionDTO.class)).isEqualTo(cachedForOldVersion);
     }
 
     private static ArtemisVersionDTO fetchWith(String currentVersion, CacheManager cacheManager, String... releases) {
         RestTemplate restTemplate = new RestTemplate();
         MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
         server.expect(requestTo(RELEASES_URL)).andRespond(withSuccess("[" + String.join(",", releases) + "]", MediaType.APPLICATION_JSON));
-        ArtemisVersionService versionService = new ArtemisVersionService(restTemplate, cacheManager);
-        ReflectionTestUtils.setField(versionService, "currentVersion", currentVersion);
 
-        ArtemisVersionDTO versionInfo = versionService.getVersionInfo();
+        ArtemisVersionDTO versionInfo = createService(restTemplate, cacheManager, currentVersion).getVersionInfo();
 
         server.verify();
         return versionInfo;
+    }
+
+    private static ArtemisVersionService createService(RestTemplate restTemplate, CacheManager cacheManager, String currentVersion) {
+        ArtemisVersionService versionService = new ArtemisVersionService(restTemplate, cacheManager);
+        ReflectionTestUtils.setField(versionService, "currentVersion", currentVersion);
+        return versionService;
     }
 
     private static String release(String tag, boolean draft, boolean prerelease) {

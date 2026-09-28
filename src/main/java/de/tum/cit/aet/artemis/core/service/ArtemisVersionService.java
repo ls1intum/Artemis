@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
-import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 import org.semver4j.Semver;
@@ -48,6 +47,9 @@ public class ArtemisVersionService {
      * <p>
      * This deliberately does not use {@code /releases/latest}: by default GitHub marks the most recently published release
      * as latest, so publishing a patch release of an older line (a 9.9.x fix after 10.0) would report that patch as latest.
+     * <p>
+     * Reading only the first page is enough: a new line is always created after the older ones, so its releases stay on the
+     * first page unless 30 patches for older lines follow them without any newer release.
      */
     private static final String GITHUB_RELEASES_API_URL = "https://api.github.com/repos/ls1intum/Artemis/releases?per_page=30";
 
@@ -57,9 +59,11 @@ public class ArtemisVersionService {
     private static final String VERSION_CACHE_NAME = "artemisVersion";
 
     /**
-     * Cache key for the version data.
+     * Prefix of the cache key for the version data, completed by the running version. During a rolling update, nodes on
+     * different versions then keep separate entries instead of replacing each other's, and the entries of a version that
+     * no longer runs expire with the cache.
      */
-    private static final String VERSION_CACHE_KEY = "latestVersion";
+    private static final String VERSION_CACHE_KEY_PREFIX = "latestVersion:";
 
     private final RestTemplate restTemplate;
 
@@ -90,9 +94,8 @@ public class ArtemisVersionService {
         // Try to retrieve from cache
         var cache = cacheManager.getCache(VERSION_CACHE_NAME);
         if (cache != null) {
-            ArtemisVersionDTO cachedResult = cache.get(VERSION_CACHE_KEY, ArtemisVersionDTO.class);
-            // An entry written by a node running another version (for example before a rolling update) describes that version, not this one
-            if (cachedResult != null && Objects.equals(cachedResult.currentVersion(), currentVersion)) {
+            ArtemisVersionDTO cachedResult = cache.get(versionCacheKey(), ArtemisVersionDTO.class);
+            if (cachedResult != null) {
                 log.debug("Returning cached version info, last checked: {}", cachedResult.lastChecked());
                 return cachedResult;
             }
@@ -103,7 +106,7 @@ public class ArtemisVersionService {
 
         // Store in cache
         if (cache != null) {
-            cache.put(VERSION_CACHE_KEY, result);
+            cache.put(versionCacheKey(), result);
         }
 
         return result;
@@ -119,16 +122,20 @@ public class ArtemisVersionService {
 
         var cache = cacheManager.getCache(VERSION_CACHE_NAME);
         if (cache != null) {
-            cache.evict(VERSION_CACHE_KEY);
+            cache.evict(versionCacheKey());
         }
 
         ArtemisVersionDTO result = fetchVersionFromGitHub();
 
         if (cache != null) {
-            cache.put(VERSION_CACHE_KEY, result);
+            cache.put(versionCacheKey(), result);
         }
 
         return result;
+    }
+
+    private String versionCacheKey() {
+        return VERSION_CACHE_KEY_PREFIX + currentVersion;
     }
 
     /**
