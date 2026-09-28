@@ -824,12 +824,43 @@ describe('CodeEditorMonacoComponent', () => {
         // not asserted: the rendering is driven by both an effect and a requestAnimationFrame
         // pass, which legitimately fire multiple times in the test harness without affecting
         // production correctness.
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-0-line-2`, document.createElement('div'));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-1-line-3`, document.createElement('div'));
         expect(selectFileInEditorStub).toHaveBeenCalled();
         consoleErrorSpy.mockRestore();
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
+    });
+
+    it('should render each feedback on the same line in its own widget', async () => {
+        getInlineFeedbackNodeStub.mockRestore();
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const addLineWidget = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+        const graded = { id: 1, reference: 'file:file1.java_line:1', text: 'Graded', detailText: 'Manual' } as Feedback;
+        const otherGraded = { id: 2, reference: 'file:file1.java_line:1', text: 'Other graded', detailText: 'Manual' } as Feedback;
+        const suggestion = { id: 1, reference: 'file:file1.java_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested`, detailText: 'Automatic' } as Feedback;
+        const gradedNode = document.createElement('div');
+        const otherGradedNode = document.createElement('div');
+        const suggestionNode = document.createElement('div');
+        Object.defineProperty(comp, 'inlineFeedbackComponents', {
+            value: () => [
+                { codeLine: () => 1, feedback: () => graded, elementRef: { nativeElement: gradedNode } },
+                { codeLine: () => 1, feedback: () => otherGraded, elementRef: { nativeElement: otherGradedNode } },
+            ],
+        });
+        Object.defineProperty(comp, 'inlineFeedbackSuggestionComponents', {
+            value: () => [{ codeLine: () => 1, feedback: () => suggestion, elementRef: { nativeElement: suggestionNode } }],
+        });
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbacks', [graded, otherGraded]);
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', gradedNode);
+        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-1-line-2', otherGradedNode);
+        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-2-line-2', suggestionNode);
     });
 
     it('should add a new feedback widget', async () => {

@@ -259,23 +259,49 @@ describe('Unreferenced Feedback Detail Component', () => {
         fixture.detectChanges();
 
         const input = fixture.nativeElement.querySelector('.feedback-card__points-input') as HTMLInputElement;
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(feedback.credits).toBeUndefined();
+        expect(emitSpy).toHaveBeenCalledWith(feedback);
+
         // jsdom sanitizes "-" for number inputs; emulate the partial value a browser displays while typing.
         Object.defineProperty(input, 'value', { configurable: true, writable: true, value: '-' });
         input.dispatchEvent(new Event('input'));
         fixture.detectChanges();
         expect(input.value).toBe('-');
-        expect(feedback.credits).toBe(1);
+        expect(feedback.credits).toBeUndefined();
 
         Reflect.deleteProperty(input, 'value');
         input.value = '-2';
         input.dispatchEvent(new Event('input'));
         fixture.detectChanges();
         expect(input.value).toBe('-2');
-        expect(feedback.credits).toBe(1);
+        expect(feedback.credits).toBe(-2);
 
         input.dispatchEvent(new Event('blur'));
         fixture.detectChanges();
         expect(feedback.credits).toBe(-2);
+    });
+
+    it('should normalize fractional points only after blur', () => {
+        const feedback = { credits: 0, detailText: 'note' } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.detectChanges();
+
+        const input = fixture.nativeElement.querySelector('.feedback-card__points-input') as HTMLInputElement;
+        input.value = '0.3';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(feedback.credits).toBe(0.3);
+        expect(input.value).toBe('0.3');
+
+        input.dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(feedback.credits).toBe(0.5);
     });
 
     it('should give each card unique control ids linked to Title and Feedback labels', () => {

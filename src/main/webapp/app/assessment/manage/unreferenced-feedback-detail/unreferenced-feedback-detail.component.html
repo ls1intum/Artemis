@@ -76,6 +76,7 @@
                                 [step]="CREDITS_STEP"
                                 [ngModel]="feedback().credits"
                                 [ngModelOptions]="{ updateOn: 'blur' }"
+                                (input)="onCreditsInput($event)"
                                 (ngModelChange)="updateCredits($event)"
                                 [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                             />
@@ -146,6 +147,7 @@
                             [step]="CREDITS_STEP"
                             [ngModel]="feedback().credits"
                             [ngModelOptions]="{ updateOn: 'blur' }"
+                            (input)="onCreditsInput($event)"
                             (ngModelChange)="updateCredits($event)"
                             [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                         />
@@ -209,6 +211,7 @@
             }
             <textarea
                 [id]="textareaId"
+                data-testid="unreferenced-feedback-detail-text"
                 tumAetUiTextarea
                 [tumAetUiInputId]="textareaId"
                 class="feedback-card__textarea box-border w-full max-w-full resize-none"

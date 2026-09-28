@@ -156,6 +156,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readonly pendingReferencedFeedback = signal<Feedback[]>([]);
     readonly automaticFeedback = signal<Feedback[]>([]);
+    readonly referencedFeedbackForEditor = computed(() => [...this.referencedFeedback(), ...this.automaticFeedback()]);
     // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read

@@ -177,7 +177,6 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      */
     public emitChanges(): void {
         const feedback = this.feedback();
-        feedback.credits = normalizedCredits(feedback.credits);
         if (feedback.type === FeedbackType.AUTOMATIC) {
             feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
         }
@@ -191,6 +190,12 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
 
     updateCredits(credits: number | null | undefined): void {
         this.feedback().credits = normalizedCredits(credits);
+        this.emitChanges();
+    }
+
+    onCreditsInput(event: Event): void {
+        const credits = (event.target as HTMLInputElement).valueAsNumber;
+        this.feedback().credits = Number.isNaN(credits) ? undefined : credits;
         this.emitChanges();
     }
 

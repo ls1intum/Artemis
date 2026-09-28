@@ -1075,6 +1075,15 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.hasAutomaticFeedback()).toBe(true);
     });
 
+    it('should include automatic feedback in the editor file badges input', () => {
+        const manual = { type: FeedbackType.MANUAL, reference: 'file:Manual.java_line:1' } as Feedback;
+        const automatic = { type: FeedbackType.AUTOMATIC, reference: 'file:Automatic.java_line:1' } as Feedback;
+        comp.referencedFeedback.set([manual]);
+        comp.automaticFeedback.set([automatic]);
+
+        expect(comp.referencedFeedbackForEditor()).toEqual([manual, automatic]);
+    });
+
     it('should return false for hasAutomaticFeedback when automaticFeedback is empty', () => {
         comp.automaticFeedback.set([]);
         expect(comp.hasAutomaticFeedback()).toBe(false);

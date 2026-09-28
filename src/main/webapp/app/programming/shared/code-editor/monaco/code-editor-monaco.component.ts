@@ -675,8 +675,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             () => {
                 this.renderScheduled = false;
                 this.editor().disposeWidgetsByPrefix('feedback-');
-                for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
-                    this.addLineWidgetWithFeedback(feedback);
+                const feedbacks = this.filterFeedbackForSelectedFile(this.feedbackInternal());
+                const suggestions = this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal());
+                for (const [index, feedback] of feedbacks.entries()) {
+                    this.addLineWidgetWithFeedback(feedback, false, index);
+                }
+                for (const [index, suggestion] of suggestions.entries()) {
+                    this.addLineWidgetWithFeedback(suggestion, true, feedbacks.length + index);
                 }
 
                 // New, unsaved feedback has no associated object yet.
@@ -950,8 +955,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Retrieves the feedback node currently rendered at the specified line and throws an error if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
-    getInlineFeedbackNodeOrElseThrow(line: number): HTMLElement {
-        const element = this.getInlineFeedbackNode(line);
+    getInlineFeedbackNodeOrElseThrow(line: number, feedback?: Feedback, isSuggestion = false): HTMLElement {
+        const element = this.getInlineFeedbackNode(line, feedback, isSuggestion);
         if (!element) {
             throw new Error('No feedback node found at line ' + line);
         }
@@ -962,20 +967,25 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Retrieves the feedback node currently rendered at the specified line, or undefined if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
-    getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((comp) => comp.codeLine() === line)?.elementRef?.nativeElement;
+    getInlineFeedbackNode(line: number, feedback?: Feedback, isSuggestion = false): HTMLElement | undefined {
+        const components = feedback
+            ? isSuggestion
+                ? this.inlineFeedbackSuggestionComponents()
+                : this.inlineFeedbackComponents()
+            : [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()];
+        return components.find((comp) => comp.codeLine() === line && (!feedback || (comp.feedback() && Feedback.areIdentical(comp.feedback()!, feedback))))?.elementRef
+            ?.nativeElement;
     }
 
-    private addLineWidgetWithFeedback(feedback: Feedback): void {
+    private addLineWidgetWithFeedback(feedback: Feedback, isSuggestion: boolean, index: number): void {
         const line = Feedback.getReferenceLine(feedback);
         if (line === undefined) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
-        // TODO: In the future, there may be more than one feedback node per line. The ID should be unique.
-        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line, feedback, isSuggestion);
         // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
         const oneBasedLine = line + 1;
-        this.editor().addLineWidget(oneBasedLine, 'feedback-' + feedback.id + '-line-' + oneBasedLine, feedbackNode);
+        this.editor().addLineWidget(oneBasedLine, 'feedback-' + index + '-line-' + oneBasedLine, feedbackNode);
     }
 
     /**
