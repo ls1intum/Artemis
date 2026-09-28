@@ -1,4 +1,7 @@
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { DatePicker } from 'primeng/datepicker';
 import dayjs from 'dayjs/esm';
@@ -544,5 +547,103 @@ describe('FormDateTimePickerComponent', () => {
             expect(selectSpy).not.toHaveBeenCalled();
             expect(picker.isKeydown).toBe(true);
         });
+    });
+});
+
+describe('FormDateTimePickerComponent text input for assistive technology', () => {
+    // The PrimeNG picker has no inputs for these states, so the wrapper hands them to its text input.
+    @Component({
+        imports: [FormDateTimePickerComponent, TumAetUiFormFieldComponent],
+        template: `
+            <tumaet-ui-form-field label="Start" controlId="start-input" required [invalid]="invalid()" error="Enter a start date.">
+                <jhi-date-time-picker inputId="start-input" [inputRequired]="required()" />
+            </tumaet-ui-form-field>
+            <jhi-date-time-picker inputId="alone-input" [requiredField]="true" />
+            <tumaet-ui-form-field label="End" data-testid="generated-field">
+                <jhi-date-time-picker />
+            </tumaet-ui-form-field>
+            <tumaet-ui-form-field label="Due" data-testid="own-id-field">
+                <jhi-date-time-picker inputId="due-input" />
+            </tumaet-ui-form-field>
+        `,
+    })
+    class HostComponent {
+        readonly invalid = signal(false);
+        readonly required = signal(true);
+    }
+
+    let fixture: ComponentFixture<HostComponent>;
+    const fieldInput = (): HTMLInputElement => fixture.nativeElement.querySelector('#start-input');
+    const aloneInput = (): HTMLInputElement => fixture.nativeElement.querySelector('#alone-input');
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [HostComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+        fixture = TestBed.createComponent(HostComponent);
+        fixture.detectChanges();
+    });
+
+    it('marks a required date without attaching a validator that would flag the empty field right away', () => {
+        expect(fieldInput().getAttribute('aria-required')).toBe('true');
+        expect(fieldInput().hasAttribute('required')).toBe(false);
+        expect(fieldInput().getAttribute('aria-invalid')).toBeNull();
+    });
+
+    it('marks the date of a requiredField picker as required as well', () => {
+        expect(aloneInput().getAttribute('aria-required')).toBe('true');
+    });
+
+    it('drops the required state again when the date becomes optional', () => {
+        fixture.componentInstance.required.set(false);
+        fixture.detectChanges();
+
+        expect(fieldInput().hasAttribute('aria-required')).toBe(false);
+    });
+
+    it('describes the input by the message of the enclosing form field and marks it invalid with it', () => {
+        expect(fieldInput().getAttribute('aria-describedby')).toBeNull();
+
+        fixture.componentInstance.invalid.set(true);
+        fixture.detectChanges();
+
+        const describedBy = fieldInput().getAttribute('aria-describedby');
+        expect(describedBy).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#' + describedBy).textContent).toContain('Enter a start date.');
+        expect(fieldInput().getAttribute('aria-invalid')).toBe('true');
+
+        fixture.componentInstance.invalid.set(false);
+        fixture.detectChanges();
+
+        expect(fieldInput().hasAttribute('aria-describedby')).toBe(false);
+        expect(fieldInput().hasAttribute('aria-invalid')).toBe(false);
+    });
+
+    it('gives its input the id the label of an enclosing form field points at when it has none of its own', () => {
+        const field: HTMLElement = fixture.nativeElement.querySelector('[data-testid="generated-field"]');
+        const labelFor = field.querySelector('label')!.getAttribute('for');
+
+        expect(labelFor).toBeTruthy();
+        expect(field.querySelector('input')!.id).toBe(labelFor);
+    });
+
+    it('has an enclosing form field label the id it was given', () => {
+        const field: HTMLElement = fixture.nativeElement.querySelector('[data-testid="own-id-field"]');
+
+        expect(field.querySelector('label')!.getAttribute('for')).toBe('due-input');
+        expect(field.querySelector('input')!.id).toBe('due-input');
+    });
+
+    it('describes the input by its own message while it shows one, since an enclosing field need not', () => {
+        const picker = fixture.debugElement.query(By.directive(FormDateTimePickerComponent)).componentInstance as FormDateTimePickerComponent;
+
+        picker.updateField('not-a-date');
+        fixture.detectChanges();
+
+        const describedBy = fieldInput().getAttribute('aria-describedby')!.split(' ');
+        const message: HTMLElement = fixture.nativeElement.querySelector('[data-testid="date-picker-validation-message"]');
+        expect(describedBy).toContain(message.id);
+        expect(fieldInput().getAttribute('aria-invalid')).toBe('true');
     });
 });

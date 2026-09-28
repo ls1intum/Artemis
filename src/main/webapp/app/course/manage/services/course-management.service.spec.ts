@@ -214,6 +214,43 @@ describe('Course Management Service', () => {
         req.flush(mockResponse);
     });
 
+    it('should search the users of a course by login or name within the given roles', () => {
+        courseManagementService.searchUsers(1, 'ada', ['tutors', 'students']).subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/users/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('roles')).toBe('tutors,students');
+        req.flush([]);
+    });
+
+    it('should search the members of a course for a mention by login or name', () => {
+        courseManagementService.searchMembersForUserMentions(1, 'ada').subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/members/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        req.flush([]);
+    });
+
+    it('should search the students of a course by login or name', () => {
+        courseManagementService.searchStudents(1, 'ada').subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/students/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        req.flush([]);
+    });
+
+    it('should fetch the time zones a course may use from the server', () => {
+        let timeZones: string[] | undefined;
+
+        courseManagementService.getSupportedTimeZones().subscribe((response) => (timeZones = response));
+
+        httpMock.expectOne({ method: 'GET', url: 'api/course/time-zones' }).flush(['Europe/Kyiv', 'UTC']);
+        expect(timeZones).toEqual(['Europe/Kyiv', 'UTC']);
+    });
+
     it('should find the course', () => {
         courseManagementService
             .find(course.id!)

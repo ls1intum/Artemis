@@ -165,6 +165,14 @@ export class CourseManagementService implements OnDestroy {
         return this.http.put<OnlineCourseConfiguration>(`api/lti/courses/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
+    /**
+     * Gets the time zones a course may use, sorted. The server interprets the course's time zone, and browsers list
+     * different names, some without ones such as `UTC` or `Europe/Kyiv`, so the course form uses the server's list.
+     */
+    getSupportedTimeZones(): Observable<string[]> {
+        return this.http.get<string[]>('api/course/time-zones');
+    }
+
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
         const params = new HttpParams().set('clientId', '' + clientId);
         return this.http.get<OnlineCourseDtoModel[]>('api/lti/courses/for-lti-dashboard', { params });

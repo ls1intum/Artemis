@@ -610,6 +610,57 @@ public class CourseTestService {
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
     }
 
+    // Test: a name the server cannot interpret is not stored, although a browser would accept it case-insensitively.
+    public void testCreateCourseWithUnsupportedTimeZone() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setTimeZone("europe/berlin");
+        request.performMvcRequest(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        assertThat(courseRepo.findAllByShortName(course.getShortName())).as("Course has not been stored").isEmpty();
+    }
+
+    // Test: names that some browsers leave out of their own lists, such as the renamed Europe/Kyiv, are accepted.
+    public void testCreateCourseWithTimeZoneMissingFromBrowserLists() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setTimeZone("Europe/Kyiv");
+        long createdCourseId = createCourseAndGetId(buildCreateCourse(course));
+        assertThat(courseRepo.findByIdElseThrow(createdCourseId).getTimeZone()).isEqualTo("Europe/Kyiv");
+    }
+
+    // Test
+    public void testUpdateCourseWithUnsupportedTimeZone() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setTimeZone("Mars/Olympus_Mons");
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+        assertThat(courseRepo.findByIdElseThrow(course.getId()).getTimeZone()).isNotEqualTo("Mars/Olympus_Mons");
+    }
+
+    // Test: a course stored with a time zone the server does not know stays editable as long as the time zone is kept.
+    public void testUpdateCourseKeepingAnUnsupportedTimeZone() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setTimeZone("Legacy/Zone");
+        course = courseRepo.save(course);
+        course.setTitle("Renamed with a legacy time zone");
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
+        Course updatedCourse = courseRepo.findByIdElseThrow(course.getId());
+        assertThat(updatedCourse.getTitle()).isEqualTo("Renamed with a legacy time zone");
+        assertThat(updatedCourse.getTimeZone()).isEqualTo("Legacy/Zone");
+    }
+
+    // Test
+    public void testGetSupportedTimeZones() throws Exception {
+        List<String> timeZones = request.getList("/api/course/time-zones", HttpStatus.OK, String.class);
+        assertThat(timeZones).contains("UTC", "Etc/UTC", "Europe/Kyiv", "Europe/Kiev", "Europe/Berlin").doesNotContain("SystemV/EST5", "europe/berlin").isSorted();
+    }
+
+    // Test
+    public void testGetSupportedTimeZonesAsStudentIsForbidden() throws Exception {
+        request.getList("/api/course/time-zones", HttpStatus.FORBIDDEN, String.class);
+    }
+
     // Test
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
