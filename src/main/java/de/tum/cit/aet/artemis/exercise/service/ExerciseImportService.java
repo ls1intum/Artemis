@@ -124,7 +124,9 @@ public abstract class ExerciseImportService {
         // edit form or a bulk skeleton), never from the foreign source. Rebuild them so they point at the new exercise.
         Set<CompetencyExerciseLink> copiedLinks = new HashSet<>();
         for (CompetencyExerciseLink link : newExercise.getCompetencyLinks()) {
-            copiedLinks.add(new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight()));
+            CompetencyExerciseLink copiedLink = new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight());
+            copiedLink.setGeneratedByAi(link.isGeneratedByAi());
+            copiedLinks.add(copiedLink);
         }
         newExercise.setCompetencyLinks(copiedLinks);
 

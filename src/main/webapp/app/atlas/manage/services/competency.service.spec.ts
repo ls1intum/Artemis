@@ -144,6 +144,16 @@ describe('CompetencyService', () => {
         expect(expectedResultCompetency.body).toEqual(expected);
     });
 
+    it('should create a competency from the Hyperion checklist', () => {
+        const returnedFromService = { ...defaultCompetencyDtos.first()!, id: 0, generatedByAi: true };
+        competencyService.createFromHyperionChecklist({}, 1).subscribe((resp) => (expectedResultCompetency = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST', url: 'api/atlas/courses/1/competencies/generated-from-hyperion-checklist' });
+        req.flush(returnedFromService);
+
+        expect(expectedResultCompetency.body?.generatedByAi).toBe(true);
+    });
+
     it('should update a Competency', () => {
         const returnedFromService = { ...defaultCompetencyDtos.first()!, title: 'Test' };
         const expected = toCompetency(returnedFromService);
@@ -211,6 +221,18 @@ describe('CompetencyService', () => {
 
         competencyService.createBulk(defaultCompetencies, 1).subscribe((resp) => (response = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+
+        expect(response.body).toEqual(expected);
+    });
+
+    it('should bulk create competencies generated from a course description', () => {
+        const returnedFromService = defaultCompetencyDtos;
+        const expected = defaultCompetencies;
+        let response: any;
+
+        competencyService.createBulkFromCourseDescription(defaultCompetencies, 1).subscribe((resp) => (response = resp));
+        const req = httpTestingController.expectOne({ method: 'POST', url: 'api/atlas/courses/1/competencies/bulk/generated-from-description' });
         req.flush(returnedFromService);
 
         expect(response.body).toEqual(expected);

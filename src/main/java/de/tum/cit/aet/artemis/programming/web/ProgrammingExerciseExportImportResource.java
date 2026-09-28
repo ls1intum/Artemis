@@ -321,13 +321,15 @@ public class ProgrammingExerciseExportImportResource {
      * @param programmingExerciseRequest The exercise that should be imported
      * @param zipFile                    The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
      * @param courseId                   The id of the course the exercise should be imported into
+     * @param hyperionCompetencyIds      IDs of links inferred through Hyperion's checklist
      * @return The imported exercise (200)
      *         (403) if the user is not at least an editor in the target course.
      */
     @PostMapping("courses/{courseId}/programming-exercises/import-from-file")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExerciseResponseDTO> importProgrammingExerciseFromFile(@PathVariable long courseId,
-            @RequestPart("programmingExercise") ImportProgrammingExerciseRequestDTO programmingExerciseRequest, @RequestPart("file") MultipartFile zipFile) {
+            @RequestPart("programmingExercise") ImportProgrammingExerciseRequestDTO programmingExerciseRequest, @RequestPart("file") MultipartFile zipFile,
+            @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
         final var user = userRepository.getUserWithAuthorities();
         // Legacy archives carry fields the current model no longer has; the request record ignores them while keeping
         // the template and solution repository URIs the import needs.
@@ -346,7 +348,7 @@ public class ProgrammingExerciseExportImportResource {
         // The request record does not bind the competency links itself: they need managed competencies, which only this
         // service resolves. The import runs through the creation pipeline, which reads the links off the exercise,
         // exactly as the entity request part used to leave them there.
-        competencyExerciseLinkService.updateCompetencyLinks(programmingExerciseRequest, programmingExercise);
+        competencyExerciseLinkService.updateCompetencyLinks(programmingExerciseRequest, programmingExercise, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
         try {
             ProgrammingExercise importedExercise = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, buildConfig, zipFile, course,
                     user);
