@@ -18,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -80,7 +79,7 @@ class OrchestratorPlanningToolsServiceTest {
         assertThat(index.competencies().get(1).relations()).isEqualTo(expected);
         assertThat(index.competencies().get(2).relations()).isEmpty();
         verify(competencyRelationRepository).findAllWithHeadAndTailByCourseId(COURSE_ID);
-        String prompt = ReflectionTestUtils.invokeMethod(CompetencyOrchestrationService.class, "renderCompetencyIndex", index);
+        String prompt = OrchestratorPromptRenderer.renderCompetencyIndex(index);
         assertThat(prompt).contains("5 --MATCHES--> 6", "6 --ASSUMES--> 5");
         String refreshed = service.listCompetencyIndex(new ToolContext(Map.of(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID)));
         assertThat(refreshed).contains("\"tailCompetencyId\":6", "\"headCompetencyId\":5", "\"relationType\":\"ASSUMES\"");

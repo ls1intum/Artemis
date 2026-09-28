@@ -176,8 +176,8 @@ class OrchestratorDelegationToolsServiceTest {
     void delegateToEditor_failedReadThenFailureCompletionPreservesSpecificBlocker() {
         Map<String, Object> parent = parentContext();
         ChatResponse response = response("worker response");
-        OrchestratorReadToolsService readToolsService = new OrchestratorReadToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository,
-                contentExtractionService);
+        OrchestratorReadToolsService readToolsService = new OrchestratorReadToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository, contentExtractionService,
+                Optional.empty(), Optional.empty());
         when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(9L)).thenReturn(Optional.empty());
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
                 any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
