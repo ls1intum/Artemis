@@ -107,6 +107,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     // Keep progressSubscription as it needs manual management due to dynamic re-subscription
     private progressSubscription?: Subscription;
+    private progressCourseId?: number;
     // Keep courseSub as it needs manual management due to dynamic re-subscription on course change
     private courseSub?: Subscription;
     // Keep eventSubscriber as EventManager.subscribe() returns Subscription, not Observable
@@ -158,9 +159,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 // and without it nothing ever publishes to the topic, so subscribing would open a channel that stays
                 // silent forever.
                 this.autoOrchestrationActive = isActive && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLASLLM);
-                const currentCourseId = this.courseId();
-                if (this.autoOrchestrationActive && currentCourseId !== undefined) {
-                    this.subscribeToAutoOrchestrationNotifications(currentCourseId);
+                if (this.autoOrchestrationActive) {
+                    this.updateInstructorFeeds();
                 } else if (!this.autoOrchestrationActive && this.autoOrchestrationCourseId !== undefined) {
                     this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
                     this.autoOrchestrationCourseId = undefined;
@@ -187,9 +187,32 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
+        // Drops the previous course's instructor feeds; the course response below reopens them if permitted.
+        this.updateInstructorFeeds();
         this.subscribeToCourseUpdates(courseId);
-        this.subscribeToOperationProgress(courseId);
-        this.subscribeToAutoOrchestrationNotifications(courseId);
+    }
+
+    /**
+     * Opens the instructor-only course feeds (operation progress, auto orchestration) once the loaded course confirms
+     * the instructor role, and closes them otherwise. The server rejects a SUBSCRIBE to these topics from tutors and
+     * editors, and a rejected SUBSCRIBE closes the whole WebSocket session, which the client would re-open and
+     * resubscribe on every reconnect.
+     */
+    private updateInstructorFeeds(): void {
+        const courseId = this.courseId();
+        const course = this.course();
+        if (courseId !== undefined && course?.id === courseId && course.isAtLeastInstructor) {
+            this.subscribeToOperationProgress(courseId);
+            this.subscribeToAutoOrchestrationNotifications(courseId);
+            return;
+        }
+        this.progressSubscription?.unsubscribe();
+        this.progressSubscription = undefined;
+        this.progressCourseId = undefined;
+        if (this.autoOrchestrationCourseId !== undefined) {
+            this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
+            this.autoOrchestrationCourseId = undefined;
+        }
     }
 
     private subscribeToAutoOrchestrationNotifications(courseId: number) {
@@ -207,8 +230,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private subscribeToOperationProgress(courseId: number) {
+        if (this.progressCourseId === courseId && this.progressSubscription) {
+            return;
+        }
         // Unsubscribe from previous subscription if any
         this.progressSubscription?.unsubscribe();
+        this.progressCourseId = courseId;
 
         const topic = `/topic/courses/${courseId}/operation-progress`;
         this.progressSubscription = this.websocketService.subscribe<CourseOperationProgressDTO>(topic).subscribe((progress) => {
@@ -233,6 +260,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             if (courseResponse.body) {
                 this.storeCourseIfAbsent(courseResponse.body);
                 this.course.set(courseResponse.body);
+                this.updateInstructorFeeds();
             }
             this.sidebarItems.set(this.getSidebarItems());
         });
@@ -246,6 +274,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 if (res.body) {
                     this.storeCourseIfAbsent(res.body);
                     this.course.set(res.body);
+                    this.updateInstructorFeeds();
                 }
             }),
         );
