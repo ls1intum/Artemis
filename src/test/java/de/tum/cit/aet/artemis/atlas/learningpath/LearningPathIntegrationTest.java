@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -563,13 +562,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         participationUtilService.createAndSaveParticipationForExercise(textExercise, STUDENT1_OF_COURSE);
-        StudentParticipation practiceParticipation = new StudentParticipation();
-        practiceParticipation.setInitializationDate(now());
-        practiceParticipation.setParticipant(student);
-        practiceParticipation.setExercise(textExercise);
-        practiceParticipation.setPracticeMode(true);
-        studentParticipationRepository.save(practiceParticipation);
-        assertThat(studentParticipationRepository.findByExerciseIdAndStudentId(textExercise.getId(), student.getId())).hasSize(2);
+        participationUtilService.createAndSavePracticeParticipationForExercise(textExercise, STUDENT1_OF_COURSE);
 
         competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
 
