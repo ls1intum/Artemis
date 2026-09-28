@@ -934,6 +934,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(validateFeedbackStub).toHaveBeenCalled();
     });
 
+    it('should replace an edited automatic inline finding without persisting its original', () => {
+        const original = { id: 1, reference: 'file:src/Test.java_line:1', type: FeedbackType.AUTOMATIC, credits: 1 } as Feedback;
+        const edited = { id: 1, reference: original.reference, type: FeedbackType.MANUAL, credits: 2 } as Feedback;
+        comp.exercise.set(exercise);
+        comp.manualResult.set({ ...result, feedbacks: [original] });
+        comp.automaticFeedback.set([original]);
+
+        comp.onUpdateFeedback([edited]);
+
+        expect(comp.referencedFeedback()).toEqual([edited]);
+        expect(comp.automaticFeedback()).toEqual([]);
+        expect(comp.manualResult()?.feedbacks).toEqual([edited]);
+    });
+
     it('should correctly remove feedback suggestions', () => {
         const feedbackSuggestion1 = { id: 1, credits: 1 };
         const feedbackSuggestion2 = { id: 2, credits: 2 };
@@ -941,6 +955,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.feedbackSuggestions.set([feedbackSuggestion1, feedbackSuggestion2, feedbackSuggestion3]);
         comp.removeSuggestion(feedbackSuggestion2);
         expect(comp.feedbackSuggestions()).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
+    });
+
+    it('should preserve suggestions with the same text on other lines', () => {
+        const first = { text: 'Same title', detailText: 'Same comment', reference: 'file:src/Test.java_line:1' } as Feedback;
+        const second = { text: first.text, detailText: first.detailText, reference: 'file:src/Test.java_line:2' } as Feedback;
+        comp.feedbackSuggestions.set([first, second]);
+
+        comp.removeSuggestion(first);
+
+        expect(comp.feedbackSuggestions()).toEqual([second]);
     });
 
     it('should keep feedback suggestions after confirming until submission succeeds', async () => {

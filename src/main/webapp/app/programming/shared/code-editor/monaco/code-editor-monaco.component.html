@@ -13,7 +13,7 @@
                     [highlightDifferences]="highlightDifferences()"
                     [course]="course()"
                     [gradingCriteria]="gradingCriteria()"
-                    (onUpdateFeedback)="updateFeedback($event)"
+                    (onUpdateFeedback)="updateFeedback($event, feedback)"
                     (onDeleteFeedback)="deleteFeedback($event)"
                     (onCancelFeedback)="cancelFeedback($event)"
                 />
@@ -36,7 +36,7 @@
                 />
             }
             <!-- feedback suggestions -->
-            @for (suggestion of feedbackSuggestionsForSelectedFile(); track suggestion.id + suggestion.reference) {
+            @for (suggestion of feedbackSuggestionsForSelectedFile(); track $index) {
                 <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
                     [codeLine]="suggestion.line"
                     [feedback]="suggestion"

@@ -553,9 +553,12 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Updates an existing feedback item and renders it. If necessary, an unsaved feedback item will be converted into an actual feedback item.
      * @param feedback The feedback item to save.
      */
-    updateFeedback(feedback: Feedback) {
+    updateFeedback(feedback: Feedback, original?: Feedback) {
         const line = Feedback.getReferenceLine(feedback);
-        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f.reference === feedback.reference);
+        const previous = original ?? feedback;
+        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) =>
+            previous.id !== undefined ? f.id === previous.id : original !== undefined && Feedback.areIdentical(f, original),
+        );
         if (existingFeedbackIndex !== -1) {
             // Existing feedback -> update only
             const feedbackArray = [...this.feedbackInternal()];
@@ -637,11 +640,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         if (!original) {
             return;
         }
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((suggestion) => !Feedback.areIdentical(suggestion, original)));
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((suggestion) => suggestion !== original));
         const accepted = cloneWith(original, {
             text: (original.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER),
         });
-        this.updateFeedback(accepted);
+        this.feedbackInternal.set([...this.feedbackInternal(), accepted]);
+        this.renderFeedbackWidgets();
+        this.onUpdateFeedback.emit(this.feedbackInternal());
         this.onAcceptSuggestion.emit(original);
     }
 

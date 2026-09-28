@@ -209,13 +209,12 @@ export class Feedback implements BaseEntity {
     }
 
     /**
-     * Checks for equality of two feedbacks. Only checking the ids is not enough because they are undefined for inline
-     * feedbacks before they are saved.
+     * Checks for equality of two feedbacks. IDs may be undefined before saving; the reference distinguishes code lines.
      * @param f1 The feedback that is compared to f2
      * @param f2 The feedback that is compared to f1
      */
     public static areIdentical(f1: Feedback, f2: Feedback) {
-        return f1.id === f2.id && f1.text === f2.text && f1.detailText === f2.detailText;
+        return f1.id === f2.id && f1.reference === f2.reference && f1.text === f2.text && f1.detailText === f2.detailText;
     }
 
     /**

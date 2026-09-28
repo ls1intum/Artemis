@@ -11,6 +11,12 @@ import {
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 describe('Feedback', () => {
+    it('distinguishes otherwise identical feedback on different code lines', () => {
+        const first = { text: 'Title', detailText: 'Comment', reference: 'file:Main.java_line:1' } as Feedback;
+        const second = { text: 'Title', detailText: 'Comment', reference: 'file:Main.java_line:2' } as Feedback;
+        expect(Feedback.areIdentical(first, second)).toBe(false);
+    });
+
     describe('getDisplayTitle', () => {
         it('should strip AI suggestion prefixes from feedback text', () => {
             expect(Feedback.getDisplayTitle({ text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Model` } as Feedback)).toBe('Model');

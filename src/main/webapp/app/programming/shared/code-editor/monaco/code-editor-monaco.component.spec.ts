@@ -166,6 +166,47 @@ describe('CodeEditorMonacoComponent', () => {
         expect(onUpdateFeedback).toHaveBeenCalledWith([expect.objectContaining({ text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title` })]);
     });
 
+    it('should append an accepted suggestion beside existing feedback on the same line', () => {
+        const reference = 'file:file1.java_line:2';
+        const existing = { id: 1, reference, text: 'Existing', detailText: 'Manual' } as Feedback;
+        const suggestion = { id: 2, reference, text: `${FEEDBACK_SUGGESTION_IDENTIFIER}New`, detailText: 'Suggested' } as Feedback;
+        fixture.componentRef.setInput('feedbacks', [existing]);
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+        fixture.detectChanges();
+
+        comp.acceptSuggestion(suggestion);
+
+        expect(comp.feedbackInternal()).toEqual([existing, expect.objectContaining({ id: 2, reference, text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}New` })]);
+        expect(comp.feedbackSuggestionsInternal()).toEqual([]);
+    });
+
+    it('should remove only the selected suggestion when identical text appears on another line', () => {
+        const first = { text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Title`, detailText: 'Comment', reference: 'file:file1.java_line:1' } as Feedback;
+        const second = { text: first.text, detailText: first.detailText, reference: 'file:file1.java_line:2' } as Feedback;
+        fixture.componentRef.setInput('feedbackSuggestions', [first, second]);
+        fixture.detectChanges();
+
+        comp.acceptSuggestion(first);
+        expect(comp.feedbackSuggestionsInternal()).toEqual([second]);
+
+        comp.feedbackSuggestionsInternal.set([first, second]);
+        comp.discardSuggestion(first);
+        expect(comp.feedbackSuggestionsInternal()).toEqual([second]);
+    });
+
+    it('should render two suggestions without IDs on the same line', () => {
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const reference = 'file:file1.java_line:1';
+        const first = { reference, text: `${FEEDBACK_SUGGESTION_IDENTIFIER}First` } as Feedback;
+        const second = { reference, text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Second` } as Feedback;
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbackSuggestions', [first, second]);
+        fixture.detectChanges();
+
+        const cards = fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent));
+        expect(cards.map((card) => (card.componentInstance as CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent).feedback().text)).toEqual([first.text, second.text]);
+    });
+
     it('should not try to load a file if none is selected', async () => {
         const editorChangeModelSpy = vi.spyOn(comp.editor(), 'changeModel');
         fixture.detectChanges();
@@ -1024,6 +1065,32 @@ describe('CodeEditorMonacoComponent', () => {
         const expectedFeedbacks = [feedbackToUpdate, ...remainingFeedbacks];
         expect(comp.feedbackInternal()).toEqual(expectedFeedbacks);
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(expectedFeedbacks);
+    });
+
+    it('should update the matching feedback when two items share a code line', () => {
+        const reference = 'file:file1.java_line:1';
+        const first = { id: 1, reference, text: 'First' } as Feedback;
+        const second = { id: 2, reference, text: 'Second' } as Feedback;
+        const edited = { id: 2, reference, text: 'Edited second' } as Feedback;
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        fixture.detectChanges();
+
+        comp.updateFeedback(edited, second);
+
+        expect(comp.feedbackInternal()).toEqual([first, edited]);
+    });
+
+    it('should identify an unsaved feedback by its original values when editing it', () => {
+        const reference = 'file:file1.java_line:1';
+        const first = { reference, text: 'First', detailText: 'One' } as Feedback;
+        const second = { reference, text: 'Second', detailText: 'Two' } as Feedback;
+        const edited = { reference, text: 'Second', detailText: 'Edited' } as Feedback;
+        fixture.componentRef.setInput('feedbacks', [first, second]);
+        fixture.detectChanges();
+
+        comp.updateFeedback(edited, second);
+
+        expect(comp.feedbackInternal()).toEqual([first, edited]);
     });
 
     it('should save new feedback and notify', () => {

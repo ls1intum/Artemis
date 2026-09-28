@@ -17,8 +17,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
 
-    // Needed for the outer editor to handle the DOM node of the component (the parent
-    // CodeEditorMonacoComponent matches `comp.codeLine() === line` in getInlineFeedbackNode).
+    // Needed for the outer editor to locate this card's DOM node by line and feedback identity.
     readonly codeLine = input.required<number>();
 
     readonly feedback = input.required<Feedback>();

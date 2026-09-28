@@ -698,8 +698,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param feedbacks Inline feedbacks directly in the code
      */
     onUpdateFeedback(feedbacks: Feedback[]) {
-        // Filter out other feedback than manual feedback
         this.referencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL));
+        this.automaticFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.type === FeedbackType.AUTOMATIC));
         this.validateFeedback();
         this.hasPendingChanges = true;
     }
