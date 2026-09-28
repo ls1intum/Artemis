@@ -260,6 +260,42 @@ describe('LectureUpdateComponent', () => {
         expect(titleBar.actionsTemplate()).toBeUndefined();
     });
 
+    describe('reloading or closing the tab', () => {
+        const unloadEvent = () => ({ preventDefault: vi.fn() }) as unknown as BeforeUnloadEvent;
+
+        it('should ask the browser to confirm while details are unsaved or content is being saved', async () => {
+            await configureValidLectureUpdateForm();
+            const isSaving = signal(false);
+            lectureUpdateComponent.unitSection = signal({ isUnitConfigurationValid: () => true, hasUnsavedContent: () => false, isSaving } as any);
+
+            const quiet = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(quiet);
+            expect(quiet.preventDefault).not.toHaveBeenCalled();
+
+            isSaving.set(true);
+            const whileSaving = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(whileSaving);
+            expect(whileSaving.preventDefault).toHaveBeenCalledOnce();
+
+            isSaving.set(false);
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+            const withDetails = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(withDetails);
+            expect(withDetails.preventDefault).toHaveBeenCalledOnce();
+        });
+
+        it('should not ask after the page decided to leave on purpose', async () => {
+            await configureValidLectureUpdateForm();
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+            lectureUpdateComponent.shouldDisplayDismissWarning = false;
+
+            const event = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(event);
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+        });
+    });
+
     it('should not ask about the single lecture form while a series is created', async () => {
         await configureActiveRouteMockAndCompileComponents();
         lectureUpdateComponent.isEditMode.set(false);

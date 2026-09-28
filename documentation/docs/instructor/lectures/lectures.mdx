@@ -98,15 +98,16 @@ or adding a new one, saves and closes the open one first.
 Changes to an item are saved automatically, so there is no Submit button. Typed text is saved about 1.5 seconds after
 you stop typing or when you leave the field; a release date or a competency is saved as soon as you choose it. The item
 shows whether it is saving, when all changes were saved, and when a change could not be saved: the change is kept, and
-**Retry** sends it again. **Save** saves at once and closes the item. Leaving the editor while a change of an item
-could not be saved asks first.
+**Retry** sends it again. A change that cannot be saved as it is, such as an empty name, waits until you correct it;
+**Discard change and close** drops it instead. **Save** saves at once and closes the item. Leaving the editor, reloading
+the page or closing the tab asks first while a change is still being saved, could not be saved or was not confirmed.
 
 <Image src={editUnitInPlace} alt="Content item edited in place" size={ImageSize.large} caption={"A content item edited in place"}></Image>
 
 A new file or a new video URL is saved only when you confirm it, because Artemis then processes the content again.
-After choosing a new file, select **Upload version N**, optionally with **Notify students about the new version** and a
-notification text; **Keep current file** goes back. After changing the video URL, select **Save video URL** or **Keep
-current URL**.
+After choosing a new file, select **Upload version N**, optionally with **Notify students about the new version**;
+**Keep current file** goes back, also after a failed upload. After changing the video URL, select **Save video URL** or
+**Keep current URL**.
 
 <Image src={replaceFileInPlace} alt="New file waiting for confirmation" size={ImageSize.large} caption={"A new file that is uploaded once you confirm it"}></Image>
 

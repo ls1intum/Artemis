@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { faBan, faExclamationTriangle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -72,6 +73,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     private readonly lectureUnitService = inject(LectureUnitService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
 
     lectureId!: number; // set in constructor from route params
     courseId!: number; // set in constructor from route params
@@ -138,12 +140,12 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             return;
         }
 
-        //regularly re-upload the file when it gets deleted in the server
-        setTimeout(
+        // Regularly re-upload the file when it gets deleted on the server, as long as the page is open.
+        const reUpload = setTimeout(
             () => {
                 this.attachmentVideoUnitService
                     .uploadSlidesForProcessing(this.lectureId, this.file)
-                    .pipe(repeat({ delay: 1000 * 60 * this.MINUTES_UNTIL_DELETION }))
+                    .pipe(repeat({ delay: 1000 * 60 * this.MINUTES_UNTIL_DELETION }), takeUntilDestroyed(this.destroyRef))
                     .subscribe({
                         next: (res) => {
                             this.filename = res.body!;
@@ -156,6 +158,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             },
             1000 * 60 * this.MINUTES_UNTIL_DELETION,
         );
+        this.destroyRef.onDestroy(() => clearTimeout(reUpload));
 
         this.attachmentVideoUnitService
             .uploadSlidesForProcessing(this.lectureId, this.file)
@@ -247,10 +250,11 @@ export class AttachmentVideoUnitsComponent implements OnInit {
 
     private leaveAfterCreation(): void {
         this.isLoading.set(false);
+        // The page replaces itself in the history, so Back does not open the finished split again.
         if (this.returnToEditor) {
-            void this.router.navigate(this.editorRoute());
+            void this.router.navigate(this.editorRoute(), { replaceUrl: true });
         } else {
-            void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+            void this.router.navigate(['../../'], { relativeTo: this.activatedRoute, replaceUrl: true });
         }
     }
 

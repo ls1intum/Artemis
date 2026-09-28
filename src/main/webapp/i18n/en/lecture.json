@@ -156,7 +156,9 @@
                 "saved": "All changes saved · {{ time }}",
                 "invalid": "Not saved yet: correct the marked fields.",
                 "failed": "Not saved. Your changes are kept.",
-                "retry": "Retry"
+                "retry": "Retry",
+                "discard": "Discard change and close",
+                "failedAfterLeaving": "A change of lecture content could not be saved. Open the lecture again to check its content."
             }
         },
         "attachment": {

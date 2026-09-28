@@ -239,6 +239,17 @@ describe('TextUnitFormComponent', () => {
             expect(changes.at(-1)?.valid).toBe(false);
         });
 
+        it('should report text the markdown editor has not reported yet, and nothing when it has', () => {
+            const editorText = { value: 'Lorem Ipsum and more' };
+            (textUnitFormComponent as unknown as { markdownEditor: () => unknown }).markdownEditor = () => ({ monacoEditor: () => ({ getText: () => editorText.value }) });
+
+            textUnitFormComponent.flushPendingEdits();
+            expect(changes).toEqual([{ data: expect.objectContaining({ content: 'Lorem Ipsum and more' }), immediate: true, valid: true }]);
+
+            textUnitFormComponent.flushPendingEdits();
+            expect(changes).toHaveLength(1);
+        });
+
         it('should save at once on Enter instead of submitting, and offer no Submit button', () => {
             const submitSpy = vi.fn();
             textUnitFormComponent.formSubmitted.subscribe(submitSpy);

@@ -750,28 +750,55 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#updateNotificationText')).toBeNull();
         });
 
-        it('should upload a new file only when confirmed, and notify students only when asked', () => {
+        it('should upload a new file only when confirmed, once, and notify students only when asked', () => {
             const uploadSpy = vi.fn();
             attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
             const replacement = new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' });
 
             chooseFile(replacement);
-            attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue('Typed before choosing to notify');
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
             expect(changes).toEqual([]);
             expect(attachmentVideoUnitFormComponent.nextFileVersion()).toBe(2);
-            query('upload-new-version-button').nativeElement.click();
-            expect(uploadSpy).toHaveBeenCalledOnce();
-            expect(uploadSpy.mock.lastCall![0].fileProperties).toEqual({ file: replacement, fileName: 'Slides v2.pdf' });
-            expect(uploadSpy.mock.lastCall![0].formProperties.updateNotificationText).toBeUndefined();
-
+            // The server does not use a notification text, so the confirmation offers none.
+            expect(attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#updateNotificationText')).toBeNull();
             attachmentVideoUnitFormComponent.notifyStudents.set(true);
-            attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue('New slides');
-            attachmentVideoUnitFormComponentFixture.detectChanges();
-            expect(attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#updateNotificationText')).not.toBeNull();
             query('upload-new-version-button').nativeElement.click();
-            expect(uploadSpy.mock.lastCall![0].formProperties.updateNotificationText).toBe('New slides');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            query('upload-new-version-button').nativeElement.click();
+
+            expect(uploadSpy).toHaveBeenCalledOnce();
+            expect(uploadSpy.mock.lastCall![0].fileProperties).toEqual({ file: replacement, fileName: 'Slides v2.pdf', notifyStudents: true });
+            expect(query('upload-new-version-button').nativeElement.disabled).toBe(true);
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(false);
+        });
+
+        it('should take back a confirmed file when the current one is kept or another one is chosen', () => {
+            const withdrawnSpy = vi.fn();
+            attachmentVideoUnitFormComponent.confirmedContentWithdrawn.subscribe(withdrawnSpy);
+            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(true);
+
+            attachmentVideoUnitFormComponent.uploadNewFile();
+            chooseFile(new File(['content'], 'Slides v3.pdf', { type: 'application/pdf' }));
+            expect(withdrawnSpy).toHaveBeenCalledExactlyOnceWith('file');
+            expect(attachmentVideoUnitFormComponent.isFileUploadRequested()).toBe(false);
+
+            attachmentVideoUnitFormComponent.uploadNewFile();
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            query('keep-current-file-button').nativeElement.click();
+            expect(withdrawnSpy).toHaveBeenCalledTimes(2);
+            expect(attachmentVideoUnitFormComponent.hasUnconfirmedContent()).toBe(false);
+        });
+
+        it('should save the details although the video link helper holds a link it cannot turn into a video URL', () => {
+            attachmentVideoUnitFormComponent.urlHelperControl!.setValue('not a video page');
+            attachmentVideoUnitFormComponent.descriptionControl!.setValue('Week 1');
+            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(changes.at(-1)).toEqual(expect.objectContaining({ valid: true }));
+            expect(query('upload-new-version-button').nativeElement.disabled).toBe(false);
         });
 
         it('should not confirm a file or video URL while the details cannot be saved', () => {
@@ -794,22 +821,37 @@ describe('AttachmentVideoUnitFormComponent', () => {
         });
 
         it('should take the saved file over and keep what else was typed', () => {
-            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
+            const uploaded = new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' });
+            chooseFile(uploaded);
             attachmentVideoUnitFormComponent.notifyStudents.set(true);
-            attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue('New slides');
+            attachmentVideoUnitFormComponent.uploadNewFile();
             attachmentVideoUnitFormComponent.nameControl!.setValue('Slides week 1');
 
-            attachmentVideoUnitFormComponent.takeOverSavedFile('attachments/attachment-video-units/7/Slides_v2.pdf', 2);
+            attachmentVideoUnitFormComponent.takeOverSavedFile('attachments/attachment-video-units/7/Slides_v2.pdf', 2, uploaded);
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
             expect(attachmentVideoUnitFormComponent.isReplacingFile()).toBe(false);
             expect(attachmentVideoUnitFormComponent.currentFileVersion()).toBe(2);
             expect(attachmentVideoUnitFormComponent.nextFileVersion()).toBe(3);
             expect(attachmentVideoUnitFormComponent.notifyStudents()).toBe(false);
-            expect(attachmentVideoUnitFormComponent.updateNotificationTextControl?.value).toBeFalsy();
             expect(attachmentVideoUnitFormComponent.nameControl?.value).toBe('Slides week 1');
             expect(query('replacement-confirm')).toBeNull();
             expect(changes.map((change) => change.data.formProperties.name)).toEqual(['Slides week 1']);
+        });
+
+        it('should keep a file chosen while another one was being uploaded', () => {
+            const uploaded = new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' });
+            const chosenMeanwhile = new File(['content'], 'Slides v3.pdf', { type: 'application/pdf' });
+            chooseFile(uploaded);
+            attachmentVideoUnitFormComponent.uploadNewFile();
+            chooseFile(chosenMeanwhile);
+
+            attachmentVideoUnitFormComponent.takeOverSavedFile('attachments/attachment-video-units/7/Slides_v2.pdf', 2, uploaded);
+
+            expect(attachmentVideoUnitFormComponent.file).toBe(chosenMeanwhile);
+            expect(attachmentVideoUnitFormComponent.currentFileVersion()).toBe(2);
+            expect(attachmentVideoUnitFormComponent.nextFileVersion()).toBe(3);
+            expect(attachmentVideoUnitFormComponent.isReplacingFile()).toBe(true);
         });
 
         it('should save a new video URL only when confirmed and let it be discarded', () => {
@@ -820,6 +862,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
             attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/new');
             attachmentVideoUnitFormComponentFixture.detectChanges();
             expect(changes).toEqual([]);
+            query('save-video-source-button').nativeElement.click();
+            attachmentVideoUnitFormComponentFixture.detectChanges();
             query('save-video-source-button').nativeElement.click();
             expect(saveSpy).toHaveBeenCalledExactlyOnceWith(
                 expect.objectContaining({ formProperties: expect.objectContaining({ videoSource: 'https://www.youtube.com/embed/new' }) }),

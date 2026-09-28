@@ -388,7 +388,7 @@ describe('AttachmentVideoUnitsComponent', () => {
 
             expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(9, 1);
             expect(createSpy.mock.invocationCallOrder[0]).toBeLessThan(deleteSpy.mock.invocationCallOrder[0]);
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute, { replaceUrl: true });
         });
 
         it('should keep the PDF item when the user chooses so', () => {
@@ -398,7 +398,7 @@ describe('AttachmentVideoUnitsComponent', () => {
             attachmentVideoUnitsComponent.createAttachmentVideoUnits();
 
             expect(deleteSpy).not.toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute, { replaceUrl: true });
         });
 
         it('should go back to the editor and report it when the PDF item cannot be removed', () => {
@@ -409,7 +409,7 @@ describe('AttachmentVideoUnitsComponent', () => {
             attachmentVideoUnitsComponent.createAttachmentVideoUnits();
 
             expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.403');
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute, { replaceUrl: true });
             expect(attachmentVideoUnitsComponent.isLoading()).toBe(false);
         });
 
@@ -420,7 +420,18 @@ describe('AttachmentVideoUnitsComponent', () => {
             attachmentVideoUnitsComponent.createAttachmentVideoUnits();
 
             expect(deleteSpy).not.toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(editorRoute, { replaceUrl: true });
+        });
+
+        it('should keep the PDF item and stay when the items cannot be created', () => {
+            open({ sourceUnit: { id: 9, name: 'Slides' } });
+            createSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+
+            attachmentVideoUnitsComponent.createAttachmentVideoUnits();
+
+            expect(deleteSpy).not.toHaveBeenCalled();
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(attachmentVideoUnitsComponent.isLoading()).toBe(false);
         });
 
         it('should go back to the editor on Cancel', () => {

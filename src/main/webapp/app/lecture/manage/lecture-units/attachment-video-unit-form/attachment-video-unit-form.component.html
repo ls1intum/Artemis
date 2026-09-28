@@ -141,25 +141,15 @@
                                     <tumaet-ui-checkbox inputId="notify-students" [checked]="notifyStudents()" (checkedChange)="notifyStudents.set($event)" />
                                     <label class="m-0" for="notify-students" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.notifyStudents"></label>
                                 </div>
-                                @if (notifyStudents()) {
-                                    <tumaet-ui-form-field
-                                        controlId="updateNotificationText"
-                                        [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationText' | artemisTranslate"
-                                        [invalid]="!!updateNotificationTextControl?.invalid"
-                                        [error]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextMaxLengthValidationError' | artemisTranslate"
-                                    >
-                                        <textarea
-                                            tumAetUiTextarea
-                                            id="updateNotificationText"
-                                            rows="2"
-                                            maxlength="255"
-                                            formControlName="updateNotificationText"
-                                            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextPlaceholder' | artemisTranslate"
-                                        ></textarea>
-                                    </tumaet-ui-form-field>
-                                }
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <button tumAetUiButton type="button" size="small" data-testid="upload-new-version-button" [disabled]="!isFormValid()" (click)="uploadNewFile()">
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        size="small"
+                                        data-testid="upload-new-version-button"
+                                        [disabled]="!canUploadFile()"
+                                        (click)="uploadNewFile()"
+                                    >
                                         <fa-icon [icon]="faFileArrowUp" />
                                         <span>{{
                                             'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadVersion' | artemisTranslate: { version: nextFileVersion() }
@@ -289,7 +279,7 @@
     @if (isVideoSourceChanged()) {
         <!-- A new video link is transcribed and processed again, so an item edited in place saves it only when the user confirms it. -->
         <div class="flex flex-wrap items-center gap-2" data-testid="video-source-confirm">
-            <button tumAetUiButton type="button" size="small" data-testid="save-video-source-button" [disabled]="!isFormValid()" (click)="saveVideoSource()">
+            <button tumAetUiButton type="button" size="small" data-testid="save-video-source-button" [disabled]="!canSaveVideoSource()" (click)="saveVideoSource()">
                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.saveVideoSource"></span>
             </button>
             <button tumAetUiButton type="button" size="small" severity="secondary" variant="text" data-testid="discard-video-source-button" (click)="discardVideoSource()">

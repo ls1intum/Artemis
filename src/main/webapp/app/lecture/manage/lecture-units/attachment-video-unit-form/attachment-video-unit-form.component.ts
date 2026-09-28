@@ -49,7 +49,15 @@ export interface FormProperties {
 export interface FileProperties {
     file?: File;
     fileName?: string;
+    /** Whether students hear about a new file that the user confirmed for an item edited in place. */
+    notifyStudents?: boolean;
 }
+
+/** A file or video link the user confirmed, which is saved only on confirmation. */
+export type ConfirmedContent = 'file' | 'videoSource';
+
+/** The controls whose changes an item edited in place saves automatically; the video link and its helper are saved on confirmation only. */
+const DETAIL_CONTROLS = ['name', 'description', 'releaseDate', 'competencyLinks'];
 
 /** Stored file names are URL encoded in links; keep the raw name if it is not valid percent encoding. */
 function decodeFileName(fileName: string): string {
@@ -153,12 +161,17 @@ export class AttachmentVideoUnitFormComponent {
      */
     readonly autosave = input<boolean>(false);
     readonly formChanged = output<UnitFormChange<AttachmentVideoUnitFormData>>();
-    /** Emits when the user confirms the new file, with whether and how to notify students. */
+    /** Emits when the user confirms the new file, with whether to notify students. */
     readonly fileUploadRequested = output<AttachmentVideoUnitFormData>();
     /** Emits when the user confirms a new video link. */
     readonly videoSourceSaveRequested = output<AttachmentVideoUnitFormData>();
-    /** Whether students hear about the new version of the file; the notification text is optional. */
+    /** Emits when the user takes back a confirmed file or video link, so it is not sent if it still waits or failed. */
+    readonly confirmedContentWithdrawn = output<ConfirmedContent>();
+    /** Whether students hear about the new version of the file. */
     readonly notifyStudents = signal(false);
+    /** Set once the new file or video link was confirmed, until it is saved or taken back, so it is not confirmed twice. */
+    readonly isFileUploadRequested = signal(false);
+    readonly isVideoSourceSaveRequested = signal(false);
     /** Set while the form takes over the data of the item, which is not a change of the user. */
     private applyingFormData = false;
     /** The video link the item has, to tell a new link, which needs confirming, apart from the saved one. */
@@ -250,21 +263,39 @@ export class AttachmentVideoUnitFormComponent {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.isReleaseDateTextValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });
 
+    /** Whether the details that an item edited in place saves automatically can be saved; a new video link or its helper do not count. */
+    readonly areDetailsValid = computed(() => {
+        this.statusChanges();
+        return this.detailsValid();
+    });
+    readonly canUploadFile = computed(() => this.areDetailsValid() && !this.isFileTooBig() && !this.isFileUploadRequested());
+    readonly canSaveVideoSource = computed(() => {
+        this.videoSourceSignal();
+        return this.areDetailsValid() && !this.videoSourceControl?.invalid && !this.isVideoSourceSaveRequested();
+    });
+    /** A new file or video link that the user chose for an item edited in place but did not confirm yet. */
+    readonly hasUnconfirmedContent = computed(
+        () => this.autosave() && ((this.isReplacingFile() && !this.isFileUploadRequested()) || (this.isVideoSourceChanged() && !this.isVideoSourceSaveRequested())),
+    );
+
+    private detailsValid(): boolean {
+        // A control reports its change before the form takes it over, so the form's own validity lags one change behind in its valueChanges.
+        return DETAIL_CONTROLS.every((name) => !this.form.get(name)?.invalid) && this.isReleaseDateTextValid();
+    }
+
     private reportChange(immediate: boolean): void {
         if (!this.autosave() || this.applyingFormData) {
             return;
         }
-        // A control reports its change before the form takes it over, so the form's own value and validity lag one change behind here.
-        const valid = Object.values(this.form.controls).every((control) => !control.invalid) && this.isReleaseDateTextValid();
-        this.formChanged.emit({ data: this.currentFormData(), immediate, valid });
+        this.formChanged.emit({ data: this.currentFormData(), immediate, valid: this.detailsValid() });
     }
 
     private currentFormData(): AttachmentVideoUnitFormData {
         const formProperties: FormProperties = deepClone(this.form.getRawValue());
-        if (this.autosave() && !this.notifyStudents()) {
-            formProperties.updateNotificationText = undefined;
-        }
-        return { formProperties, fileProperties: { file: this.file, fileName: this.fileName() } };
+        const fileProperties: FileProperties = this.autosave()
+            ? { file: this.file, fileName: this.fileName(), notifyStudents: this.notifyStudents() }
+            : { file: this.file, fileName: this.fileName() };
+        return { formProperties, fileProperties };
     }
 
     onReleaseDateTextValidityChange(valid: boolean): void {
@@ -276,34 +307,39 @@ export class AttachmentVideoUnitFormComponent {
         this.reportChange(false);
     }
 
-    /** Confirms the new file; saving it splits the slides again and processes the content for Iris again. It is sent with the details, so the form has to be valid. */
+    /** Confirms the new file once; saving it splits the slides again and processes the content for Iris again. It is sent with the details, so they have to be valid. */
     uploadNewFile(): void {
-        if (this.file && this.isFormValid()) {
+        if (this.file && this.canUploadFile()) {
+            this.isFileUploadRequested.set(true);
             this.fileUploadRequested.emit(this.currentFormData());
         }
     }
 
-    /** Confirms the new video link; saving it has the video transcribed and processed for Iris. It is sent with the details, so the form has to be valid. */
+    /** Confirms the new video link once; saving it has the video transcribed and processed for Iris. It is sent with the details, so they have to be valid. */
     saveVideoSource(): void {
-        if (this.isFormValid()) {
+        if (this.canSaveVideoSource()) {
+            this.isVideoSourceSaveRequested.set(true);
             this.videoSourceSaveRequested.emit(this.currentFormData());
         }
     }
 
     /**
-     * Takes the file as the item's own after the user confirmed it and it was saved. Everything else stays as typed.
+     * Takes the file as the item's own after the user confirmed it and it was saved. Everything else stays as typed, including a
+     * file the user chose meanwhile.
      * @param fileLink the stored link of the saved file
      * @param version the version of the saved file
+     * @param uploadedFile the file that was uploaded
      */
-    takeOverSavedFile(fileLink: string | undefined, version: number | undefined): void {
-        this.applyingFormData = true;
-        this.updateNotificationTextControl?.setValue(undefined);
-        this.applyingFormData = false;
+    takeOverSavedFile(fileLink: string | undefined, version: number | undefined, uploadedFile?: File): void {
+        this.currentFileLink.set(fileLink);
+        this.currentFileVersion.set(version);
+        if (uploadedFile && this.file !== uploadedFile) {
+            return;
+        }
+        this.isFileUploadRequested.set(false);
         this.notifyStudents.set(false);
         this.file = undefined;
         this.fileName.set(fileLink);
-        this.currentFileLink.set(fileLink);
-        this.currentFileVersion.set(version);
         this.fileInput().nativeElement.value = '';
     }
 
@@ -313,15 +349,25 @@ export class AttachmentVideoUnitFormComponent {
      */
     takeOverSavedVideoSource(videoSource: string | undefined): void {
         this.savedVideoSource.set(videoSource);
+        this.isVideoSourceSaveRequested.set(false);
         this.applyingFormData = true;
         this.urlHelperControl?.setValue(undefined);
         this.applyingFormData = false;
     }
 
-    /** Goes back to the video link the item has. */
+    /** Goes back to the video link the item has, and takes back a confirmation of the new one that was not saved yet. */
     discardVideoSource(): void {
         this.videoSourceControl?.setValue(this.savedVideoSource());
         this.urlHelperControl?.setValue(undefined);
+        this.withdraw('videoSource');
+    }
+
+    private withdraw(content: ConfirmedContent): void {
+        const requested = content === 'file' ? this.isFileUploadRequested : this.isVideoSourceSaveRequested;
+        if (this.autosave() && requested()) {
+            requested.set(false);
+            this.confirmedContentWithdrawn.emit(content);
+        }
     }
 
     onFileChange(event: Event): void {
@@ -358,6 +404,8 @@ export class AttachmentVideoUnitFormComponent {
         if (this.isFileTypeUnsupported()) {
             return;
         }
+        // A new choice replaces a confirmed file that was not saved yet.
+        this.withdraw('file');
         this.file = file;
         this.fileName.set(file.name);
         // automatically set the name in case it is not yet specified
@@ -385,6 +433,7 @@ export class AttachmentVideoUnitFormComponent {
      * Discards the file chosen to replace the unit's current file, so saving keeps the current file.
      */
     keepCurrentFile(): void {
+        this.withdraw('file');
         this.file = undefined;
         this.fileName.set(this.currentFileLink());
         this.isFileTooBig.set(false);
@@ -440,6 +489,8 @@ export class AttachmentVideoUnitFormComponent {
         }
         this.savedVideoSource.set(formData?.formProperties?.videoSource);
         this.notifyStudents.set(false);
+        this.isFileUploadRequested.set(false);
+        this.isVideoSourceSaveRequested.set(false);
         this.applyingFormData = false;
         // take over the file state completely, so switching to a unit without a file does not keep the previous unit's file
         const { file, fileName } = formData?.fileProperties ?? {};

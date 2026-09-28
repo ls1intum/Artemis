@@ -116,6 +116,19 @@
                     <button tumAetUiButton type="button" size="small" severity="danger" variant="outlined" data-testid="lecture-unit-save-retry" (click)="retryAutosave()">
                         <span jhiTranslate="artemisApp.lecture.unitEditor.retry"></span>
                     </button>
+                } @else if (state.kind === 'invalid') {
+                    <!-- A way out that keeps what was saved, when the change cannot be corrected. -->
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        size="small"
+                        severity="secondary"
+                        variant="text"
+                        data-testid="lecture-unit-discard-invalid"
+                        (click)="discardInvalidChange()"
+                    >
+                        <span jhiTranslate="artemisApp.lecture.unitEditor.discard"></span>
+                    </button>
                 }
             </div>
         </div>
@@ -156,6 +169,7 @@
             (formChanged)="onAttachmentVideoUnitChanged($event)"
             (fileUploadRequested)="onAttachmentFileUploadRequested($event)"
             (videoSourceSaveRequested)="onVideoSourceSaveRequested($event)"
+            (confirmedContentWithdrawn)="onConfirmedContentWithdrawn($event)"
             [formData]="attachmentVideoUnitFormData()"
         />
     }

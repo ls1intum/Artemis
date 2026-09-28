@@ -69,6 +69,7 @@ interface PdfUploadConfirmationText {
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
+    host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
     imports: [
         FormsModule,
         TranslateDirective,
@@ -280,6 +281,17 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         }
         this.changedSections.set(changedSections);
         this.isChangeMadeToTitleOrPeriodSection.set(changedSections.length > 0);
+    }
+
+    /**
+     * Asks the browser to confirm a reload or closing the tab while something would be lost: unsaved lecture details, content that could
+     * not be saved, or a content save that still waits or runs. The unsaved changes guard covers navigation within Artemis.
+     * @param event the beforeunload event
+     */
+    onBeforeUnload(event: BeforeUnloadEvent): void {
+        if (this.shouldDisplayDismissWarning && (this.hasUnsavedChanges() || !!this.unitSection()?.isSaving())) {
+            event.preventDefault();
+        }
     }
 
     /**

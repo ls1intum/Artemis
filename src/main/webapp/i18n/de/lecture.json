@@ -156,7 +156,9 @@
                 "saved": "Alle Änderungen gespeichert · {{ time }}",
                 "invalid": "Noch nicht gespeichert: Korrigiere die markierten Felder.",
                 "failed": "Nicht gespeichert. Deine Änderungen bleiben erhalten.",
-                "retry": "Erneut versuchen"
+                "retry": "Erneut versuchen",
+                "discard": "Änderung verwerfen und schließen",
+                "failedAfterLeaving": "Eine Änderung an einem Vorlesungsinhalt konnte nicht gespeichert werden. Öffne die Vorlesung erneut, um ihre Inhalte zu prüfen."
             }
         },
         "attachment": {

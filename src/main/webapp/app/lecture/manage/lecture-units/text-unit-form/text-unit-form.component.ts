@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -71,6 +71,8 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
 
     /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
     readonly isReleaseDateTextValid = signal(true);
+
+    readonly markdownEditor = viewChild(MarkdownEditorMonacoComponent);
 
     // not included in reactive form; backed by a signal so the [(markdown)] two-way binding re-renders under zoneless
     private readonly _content = signal<string | undefined>(undefined);
@@ -199,6 +201,19 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
         }
         this.localStorageService.remove(this.router.url);
         this.formSubmitted.emit(this.currentFormData());
+    }
+
+    /**
+     * Reports text that the markdown editor did not report yet: it waits a moment after typing, which a save that closes the form, or
+     * leaving the form, would cut off.
+     */
+    flushPendingEdits(): void {
+        const text = this.markdownEditor()?.monacoEditor()?.getText();
+        if (!this.autosave() || text === undefined || text === (this.content ?? '')) {
+            return;
+        }
+        this.content = text;
+        this.reportChange(true);
     }
 
     onMarkdownChange(markdown: string) {
