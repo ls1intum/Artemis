@@ -9,7 +9,8 @@ import { VariantJob } from 'app/openapi/model/variant-job';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
+import { Authority } from 'app/foundation/constants/authority.constants';
 
 /**
  * Vitest specs for ExerciseVariantGenerationService.
@@ -28,8 +29,9 @@ describe('ExerciseVariantGenerationService', () => {
     };
     let eventSubjects: Map<string, Subject<VariantGenerationEvent>>;
     let userIdentity: ReturnType<typeof signal<User | undefined>>;
-    let isEditor: boolean;
-    let hyperionEnabled: boolean;
+    let authorities: Authority[];
+    let loggedInWithApprovedPasskey: boolean;
+    let activeFeatures: Set<string>;
 
     beforeEach(() => {
         eventSubjects = new Map();
@@ -51,15 +53,23 @@ describe('ExerciseVariantGenerationService', () => {
             unsubscribeFromJob: vi.fn(),
         };
         userIdentity = signal<User | undefined>(undefined);
-        isEditor = true;
-        hyperionEnabled = true;
+        authorities = [Authority.EDITOR];
+        loggedInWithApprovedPasskey = false;
+        activeFeatures = new Set([MODULE_FEATURE_HYPERION]);
         TestBed.configureTestingModule({
             providers: [
                 ExerciseVariantGenerationService,
                 { provide: HyperionExerciseVariantApi, useValue: apiMock },
                 { provide: ExerciseVariantWebsocketService, useValue: websocketMock },
-                { provide: AccountService, useValue: { userIdentity, hasAnyAuthorityDirect: () => isEditor } },
-                { provide: ProfileService, useValue: { isModuleFeatureActive: (feature: string) => feature === MODULE_FEATURE_HYPERION && hyperionEnabled } },
+                {
+                    provide: AccountService,
+                    useValue: {
+                        userIdentity,
+                        hasAnyAuthorityDirect: (required: readonly Authority[]) => required.some((authority) => authorities.includes(authority)),
+                        isUserLoggedInWithApprovedPasskey: () => loggedInWithApprovedPasskey,
+                    },
+                },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: (feature: string) => activeFeatures.has(feature) } },
             ],
         });
         service = TestBed.inject(ExerciseVariantGenerationService);
@@ -87,7 +97,7 @@ describe('ExerciseVariantGenerationService', () => {
     });
 
     it('does not load persisted jobs for a user below editor authority', () => {
-        isEditor = false;
+        authorities = [];
         userIdentity.set({ login: 'student1' } as User);
         TestBed.tick();
 
@@ -96,13 +106,57 @@ describe('ExerciseVariantGenerationService', () => {
     });
 
     it('does not load persisted jobs when Hyperion is disabled', () => {
-        hyperionEnabled = false;
+        activeFeatures.delete(MODULE_FEATURE_HYPERION);
         userIdentity.set({ login: 'editor1' } as User);
         TestBed.tick();
 
         expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
         expect(service.jobs()).toEqual([]);
         expect(service.hasJobs()).toBe(false);
+    });
+
+    it('does not load persisted jobs for an administrator without the passkey that administrator features require', () => {
+        authorities = [Authority.ADMIN, Authority.SUPER_ADMIN];
+        activeFeatures = new Set([MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]);
+        userIdentity.set({ login: 'admin' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
+        expect(service.jobs()).toEqual([]);
+    });
+
+    it('loads persisted jobs once an administrator signs in with an approved passkey in the same session', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
+        authorities = [Authority.ADMIN];
+        activeFeatures = new Set([MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]);
+        userIdentity.set({ login: 'admin' } as User);
+        TestBed.tick();
+        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
+
+        loggedInWithApprovedPasskey = true;
+        userIdentity.set({ login: 'admin', loggedInWithPasskey: true } as User);
+        TestBed.tick();
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+    });
+
+    it('loads persisted jobs for an administrator when administrator features require no passkey', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
+        authorities = [Authority.ADMIN];
+        activeFeatures = new Set([MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY]);
+        userIdentity.set({ login: 'admin' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+    });
+
+    it('loads persisted jobs for an instructor without any administrator authority', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
+        authorities = [Authority.INSTRUCTOR];
+        activeFeatures = new Set([MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]);
+        userIdentity.set({ login: 'instructor1' } as User);
+        TestBed.tick();
+
+        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
     });
 
     it('startGeneration posts the request, adds a running entry, and subscribes to the per-job topic', () => {
