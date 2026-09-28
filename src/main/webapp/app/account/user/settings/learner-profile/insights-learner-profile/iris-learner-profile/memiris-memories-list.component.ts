@@ -79,7 +79,11 @@ export class MemirisMemoriesListComponent implements OnInit {
     /**
      * Loads aggregated memory data when the component initializes.
      */
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
+        void this.initializeMemirisMemoriesListComponent();
+    }
+
+    private async initializeMemirisMemoriesListComponent(): Promise<void> {
         await this.loadMemories();
     }
 

@@ -3,10 +3,13 @@ package de.tum.cit.aet.artemis.core.config.websocket;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,6 +27,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -49,6 +53,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.util.Assert;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -60,9 +65,11 @@ import org.springframework.web.socket.messaging.StompSubProtocolErrorHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
+import org.springframework.web.util.WebUtils;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
@@ -100,6 +107,16 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      */
     private final ObjectProvider<WebsocketTopicRegistry> websocketTopicRegistry;
 
+    /**
+     * The origin of the pages of Artemis, e.g. {@code https://artemis.tum.de}, derived from {@code server.url}
+     */
+    private final String serverOrigin;
+
+    /**
+     * The additional origins that may call the REST API ({@code jhipster.cors}), e.g. the development server of the client, which may open websockets as well
+     */
+    private final CorsConfiguration corsConfiguration;
+
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
     private List<String> brokerAddresses;
@@ -111,11 +128,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(JsonMapper jsonMapper, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
-            ObjectProvider<WebsocketTopicRegistry> websocketTopicRegistry) {
+            ObjectProvider<WebsocketTopicRegistry> websocketTopicRegistry, @Value("${server.url}") String serverUrl, ArtemisProperties artemisProperties) {
         this.jsonMapper = jsonMapper;
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.websocketTopicRegistry = websocketTopicRegistry;
+        this.serverOrigin = normalizeOrigin(serverUrl);
+        this.corsConfiguration = artemisProperties.getCors();
     }
 
     @Override
@@ -290,6 +309,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         registry
             // NOTE: clients can connect using sockjs via 'ws://{artemis-url}/websocket' or without sockjs using 'ws://{artemis-url}/websocket/websocket'
             .addEndpoint("/websocket")
+            // Only the websocket transport of SockJS is enabled. The origin of its handshakes is checked by httpSessionHandshakeInterceptor, because setInterceptors below
+            // replaces the origin check that Spring would add.
             .setAllowedOriginPatterns("*")
             // TODO: in the future, we should deactivate the option to connect with sockjs, because this is not needed any more
             .withSockJS()
@@ -368,7 +389,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     /**
-     * @return initialize the handshake interceptor stores the remote IP address before handshake
+     * Checks every websocket handshake before the connection is opened: it has to come from a page of Artemis (see {@link #isAllowedOrigin}) and carry a valid JWT. The
+     * interceptor also stores the remote IP address of the client.
+     *
+     * @return the handshake interceptor
      */
     @Bean
     public HandshakeInterceptor httpSessionHandshakeInterceptor() {
@@ -378,6 +402,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler,
                     @NonNull Map<String, Object> attributes) {
                 log.debug("beforeHandshake: {}, {}, {}", request, response, wsHandler);
+                String origin = request.getHeaders().getOrigin();
+                if (!isAllowedOrigin(origin, isSameOrigin(request), serverOrigin, corsConfiguration)) {
+                    log.warn("Refused a websocket handshake from the origin {} to {}", origin, request.getURI().getHost());
+                    response.setStatusCode(HttpStatus.FORBIDDEN);
+                    return false;
+                }
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
@@ -401,6 +431,67 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
             }
         };
+    }
+
+    /**
+     * Returns whether a page with the given origin may open a websocket connection. A browser attaches the session cookie of Artemis to a websocket that any page opens and
+     * names the page in the {@code Origin} header, so only pages of Artemis itself are accepted:
+     * <ul>
+     * <li>no origin: clients that are not browsers, like the mobile apps and the VS Code extension, send none</li>
+     * <li>the same origin as the handshake request, i.e. the same scheme, host and port. Behind a reverse proxy, this relies on the {@code Host} and
+     * {@code X-Forwarded-Proto} headers it forwards, as the nginx configuration of Artemis does.</li>
+     * <li>the origin of {@code server.url}, for a proxy whose forwarded headers are not used</li>
+     * <li>an origin that may call the REST API ({@code jhipster.cors}), e.g. the development server of the client</li>
+     * </ul>
+     *
+     * @param origin            the {@code Origin} header of the handshake, if any
+     * @param sameOrigin        whether the origin is the origin of the handshake request itself
+     * @param serverOrigin      the origin of {@code server.url}
+     * @param corsConfiguration the origins that may call the REST API
+     * @return whether the handshake may continue
+     */
+    static boolean isAllowedOrigin(@Nullable String origin, boolean sameOrigin, String serverOrigin, CorsConfiguration corsConfiguration) {
+        if (origin == null || sameOrigin) {
+            return true;
+        }
+        if (!serverOrigin.isEmpty() && serverOrigin.equals(normalizeOrigin(origin))) {
+            return true;
+        }
+        return corsConfiguration.checkOrigin(origin) != null;
+    }
+
+    /**
+     * Returns whether the {@code Origin} header names the origin of the request itself. An origin that cannot be parsed, e.g. {@code https://[}, is another origin.
+     */
+    private static boolean isSameOrigin(ServerHttpRequest request) {
+        try {
+            return WebUtils.isSameOrigin(request);
+        }
+        catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Normalizes a URL to the origin a browser would send for it: lower-case scheme and host, and no default port.
+     *
+     * @param url the URL, e.g. {@code https://Artemis.tum.de:443/}
+     * @return the origin, e.g. {@code https://artemis.tum.de}, or an empty string if the URL has no scheme and host
+     */
+    static String normalizeOrigin(@Nullable String url) {
+        try {
+            URI uri = new URI(url == null ? "" : url.trim());
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return "";
+            }
+            String scheme = uri.getScheme().toLowerCase(Locale.ROOT);
+            int port = uri.getPort();
+            boolean defaultPort = port == -1 || (port == 443 && "https".equals(scheme)) || (port == 80 && "http".equals(scheme));
+            return scheme + "://" + uri.getHost().toLowerCase(Locale.ROOT) + (defaultPort ? "" : ":" + port);
+        }
+        catch (URISyntaxException e) {
+            return "";
+        }
     }
 
     private DefaultHandshakeHandler defaultHandshakeHandler() {

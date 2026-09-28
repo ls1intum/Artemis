@@ -23,7 +23,16 @@
         <thead>
             <tr>
                 <th class="col-1 clickable">
-                    <div class="d-flex align-items-center" (click)="setSortedColumn('ID')">
+                    <div
+                        class="d-flex align-items-center"
+                        (click)="setSortedColumn('ID')"
+                        #keyboardAction26
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction26.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction26.click() : undefined"
+                    >
                         <span>#</span>
                         <ng-container *ngTemplateOutlet="sortIcon; context: { sortedColumn: 'ID', currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }" />
                     </div>
@@ -51,7 +60,7 @@
                         </td>
                     }
                     <td class="col-1">
-                        <button class="btn btn-sm btn-outline-secondary" (click)="selectRow(entity)">Select</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectRow(entity)">Select</button>
                     </td>
                 </tr>
             } @empty {

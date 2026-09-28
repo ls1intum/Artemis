@@ -41,7 +41,7 @@
                     [placeholder]="promptPlaceholder()"
                     maxlength="2000"
                     [ngModel]="refinePrompt()"
-                    (ngModelChange)="refinePrompt.set($any($event))"
+                    (ngModelChange)="refinePrompt.set($event)"
                     [disabled]="isRefining()"
                     (keydown.enter)="onEnterKey($event)"
                 ></textarea>

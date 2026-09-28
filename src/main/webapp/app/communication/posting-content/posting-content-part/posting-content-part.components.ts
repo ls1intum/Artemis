@@ -189,13 +189,17 @@ export class PostingContentPartComponent implements OnInit {
         }
     }
 
+    protected canActivateUserReference(referenceUserLogin: string | undefined): boolean {
+        return !this.hasClickedUserReference && !!referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity()?.login;
+    }
+
     /**
      * Emit an event if the clicked user reference is different from the current user
      *
      * @param referenceUserLogin login of the referenced user
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
-        if (!this.hasClickedUserReference && referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity()?.login) {
+        if (referenceUserLogin && this.canActivateUserReference(referenceUserLogin)) {
             this.hasClickedUserReference = true;
             this.userReferenceClicked.emit(referenceUserLogin);
         }

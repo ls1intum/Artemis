@@ -2,6 +2,8 @@
     "artemisApp": {
         "notification": {
             "notifications": "Notifications",
+            "expandPopup": "Expand notifications",
+            "collapsePopup": "Collapse notifications",
             "noNotifications": "No notifications available",
             "title": "Title",
             "text": "Text",

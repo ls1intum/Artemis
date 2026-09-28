@@ -37,6 +37,7 @@
             }
             @if (exercise()!.isAtLeastInstructor) {
                 <button
+                    type="button"
                     jhi-exercise-action-button
                     [buttonIcon]="faDownload"
                     class="btn btn-info btn-sm"
@@ -53,7 +54,7 @@
             <ng-template #popContent>
                 <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
                 @if (exercise()!.isAtLeastInstructor) {
-                    <button class="btn btn-info btn-sm me-1" (click)="exportNames()">
+                    <button type="button" class="btn btn-info btn-sm me-1" (click)="exportNames()">
                         <fa-icon [icon]="faDownload" />
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.names"></span>
                     </button>
@@ -71,7 +72,7 @@
                     <jhi-exercise-submission-export [exerciseId]="exercise()!.id!" [exerciseType]="exercise()!.type!" class="me-1" />
                 }
             </ng-template>
-            <button class="btn btn-primary btn-sm" (click)="refresh()">
+            <button type="button" class="btn btn-primary btn-sm" (click)="refresh()">
                 <fa-icon [icon]="faSync" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
             </button>

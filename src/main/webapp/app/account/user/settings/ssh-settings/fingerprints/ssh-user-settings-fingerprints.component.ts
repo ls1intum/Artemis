@@ -24,7 +24,11 @@ export class SshUserSettingsFingerprintsComponent implements OnInit {
 
     protected readonly ButtonSize = ButtonSize;
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeSshUserSettingsFingerprintsComponent();
+    }
+
+    private async initializeSshUserSettingsFingerprintsComponent(): Promise<void> {
         this.sshFingerprints.set(await this.sshUserSettingsService.getSshFingerprints());
     }
 }
