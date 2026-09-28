@@ -13,6 +13,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -32,7 +34,7 @@ import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 
-// Two tests assert log output through an appender on the service logger. A Spring context starting in parallel resets
+// Several tests assert log output through an appender on the service logger. A Spring context starting in parallel resets
 // Logback and detaches that appender mid-test, so the class runs alone.
 @Isolated
 class LLMTokenUsageServiceTest {
@@ -169,6 +171,39 @@ class LLMTokenUsageServiceTest {
         });
     }
 
+    @ParameterizedTest
+    @CsvSource(value = { "null, 7", "11, null", "null, null" }, nullValues = "null")
+    void trackChatResponseTokenUsage_withMissingTokenCount_logsFailureWithoutPersistence(Integer promptTokens, Integer completionTokens) {
+        Logger logger = (Logger) LoggerFactory.getLogger(LLMTokenUsageService.class);
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        logger.addAppender(logAppender);
+        try {
+            llmTokenUsageService.trackChatResponseTokenUsage(responseWithTokens(promptTokens, completionTokens), LLMServiceType.ATLAS, "INCOMPLETE_USAGE",
+                    builder -> builder.withCourse(42L));
+
+            assertThat(logAppender.list).filteredOn(event -> event.getLevel() == Level.WARN).extracting(ILoggingEvent::getFormattedMessage)
+                    .anySatisfy(message -> assertThat(message).contains("INCOMPLETE_USAGE", "usage metadata is incomplete"));
+            verifyNoInteractions(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository);
+        }
+        finally {
+            logger.detachAppender(logAppender);
+            logAppender.stop();
+        }
+    }
+
+    @Test
+    void trackChatResponseTokenUsage_withReportedZeroTokenCounts_persistsAccounting() {
+        llmTokenUsageService.trackChatResponseTokenUsage(responseWithTokens(0, 0), LLMServiceType.ATLAS, "ZERO_USAGE", builder -> builder.withCourse(42L));
+        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(saved.capture());
+        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getNumInputTokens()).isZero();
+            assertThat(request.getNumOutputTokens()).isZero();
+            assertThat(request.getServicePipelineId()).isEqualTo("ZERO_USAGE");
+        });
+    }
+
     @Test
     void trackChatResponseTokenUsage_whenPersistenceFails_logsAndReturns() {
         when(llmTokenUsageTraceRepository.save(any())).thenThrow(new IllegalStateException("database unavailable"));
@@ -188,14 +223,18 @@ class LLMTokenUsageServiceTest {
     }
 
     private static ChatResponse validResponse() {
+        return responseWithTokens(11, 7);
+    }
+
+    private static ChatResponse responseWithTokens(Integer promptTokens, Integer completionTokens) {
         ChatResponse response = mock(ChatResponse.class);
         ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
         Usage usage = mock(Usage.class);
         when(response.getMetadata()).thenReturn(metadata);
         when(metadata.getUsage()).thenReturn(usage);
         when(metadata.getModel()).thenReturn("gpt-5-mini");
-        when(usage.getPromptTokens()).thenReturn(11);
-        when(usage.getCompletionTokens()).thenReturn(7);
+        when(usage.getPromptTokens()).thenReturn(promptTokens);
+        when(usage.getCompletionTokens()).thenReturn(completionTokens);
         return response;
     }
 

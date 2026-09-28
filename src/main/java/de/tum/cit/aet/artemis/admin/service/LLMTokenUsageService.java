@@ -42,8 +42,6 @@ public class LLMTokenUsageService {
     /**
      * Default value used when token-count metadata is missing ({@code null}).
      */
-    private static final int DEFAULT_TOKEN_COUNT = 0;
-
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
     private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
@@ -192,9 +190,16 @@ public class LLMTokenUsageService {
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return;
             }
+            Integer promptTokens = usage.getPromptTokens();
+            Integer completionTokens = usage.getCompletionTokens();
+            // Defaulting a missing count to zero would persist a record that understates usage and cost; reported zeros are kept.
+            if (promptTokens == null || completionTokens == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is incomplete (prompt tokens: {}, completion tokens: {}).", pipelineId, promptTokens,
+                        completionTokens);
+                return;
+            }
             String model = metadata.getModel() != null ? metadata.getModel() : "";
-            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
-                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
+            LLMRequest llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {
