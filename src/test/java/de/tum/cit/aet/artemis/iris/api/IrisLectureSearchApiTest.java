@@ -26,7 +26,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.iris.dto.IrisLectureSnippetDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisAccessContextService;
@@ -41,7 +41,7 @@ class IrisLectureSearchApiTest {
     private PyrisConnectorService connector;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private IrisAccessContextService accessContextService;
