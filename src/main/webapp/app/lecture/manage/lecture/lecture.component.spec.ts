@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -114,7 +113,6 @@ describe('Lecture', () => {
                 LectureComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(MarkdownDirective),
                 MockComponent(DocumentationButtonComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
@@ -193,6 +191,25 @@ describe('Lecture', () => {
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
         expect(lectureComponent.lectures()).toHaveLength(8);
+    });
+
+    it('should show the actions of a lecture in one row and leave out the description', async () => {
+        pastLecture.description = 'Long **markdown** description';
+        pastLecture.isAtLeastEditor = true;
+        pastLecture.isAtLeastInstructor = true;
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+        lectureComponentFixture.detectChanges();
+
+        const row: HTMLElement = lectureComponentFixture.nativeElement.querySelector(`#lecture-${pastLecture.id}`);
+        const actions = row.querySelector('[data-testid="lecture-actions"]')!;
+        expect([...actions.children].map((action) => action.getAttribute('id') ?? action.getAttribute('data-testid') ?? action.tagName.toLowerCase())).toEqual([
+            'units',
+            'a',
+            'delete-lecture',
+        ]);
+        expect(row.querySelectorAll('td')).toHaveLength(5);
+        expect(row.textContent).not.toContain('description');
     });
 
     it('should delete lecture', async () => {

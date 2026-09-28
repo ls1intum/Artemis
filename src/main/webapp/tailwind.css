@@ -79,6 +79,9 @@
 @source './app/core/about-us';
 /* Lecture editor: the page, its sections, its content and the dialogs and pages it opens lay out with Tailwind. */
 @source './app/lecture/manage/lecture-update';
+
+/* The lecture list still has Bootstrap markup, but the actions of a lecture lay out with Tailwind. */
+@source './app/lecture/manage/lecture';
 @source './app/lecture/manage/lecture-period';
 @source './app/lecture/manage/lecture-title-channel-name';
 @source './app/lecture/manage/lecture-units';
