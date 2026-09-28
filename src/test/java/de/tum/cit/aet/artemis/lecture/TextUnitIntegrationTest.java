@@ -153,6 +153,13 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void updateTextUnit_textUnitDoesNotExist_shouldReturnNotFound() throws Exception {
+        persistTextUnitWithLecture();
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitDtoWithId(21312321L), TextUnitDTO.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
         persistTextUnitWithLecture();
         TextUnitDTO textUnitFromRequest = request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnitDTO.class);
