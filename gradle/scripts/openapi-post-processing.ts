@@ -10,11 +10,15 @@ import { parse } from "yaml";
 // Removing unused imports and cleaning method names were the original jobs. Most other steps compensate for gaps in
 // that generator's templates, which the quiz module was the first to hit:
 // - oneOf schemas render as one merged interface that requires the fields of every branch, instead of a union.
+//   https://github.com/ls1intum/openapi-generator-angular22/issues/9
 // - HttpResponse is always imported, but only used for file downloads, which trips noUnusedLocals.
+//   https://github.com/ls1intum/openapi-generator-angular22/issues/10
 // - Multipart parts are appended as they are: a DTO is sent as "[object Object]" and a file without its name.
+//   https://github.com/ls1intum/openapi-generator-angular22/issues/11 and .../issues/12
 // - Methods can only return the body, so a response header the contract declares cannot be read.
-// Each step says which gap it covers. Once the generator handles a gap itself, its step can be deleted; the count
-// checks at the end of main() fail the build if a step no longer finds what the specification says it should.
+//   https://github.com/ls1intum/openapi-generator-angular22/issues/13
+// Each step names the generator issue it covers. Once the generator fixes an issue, its step can be deleted; the
+// count checks at the end of main() fail the build if a step no longer finds what the specification says it should.
 
 const getAllOpenApiFiles = (dir: string): string[] => {
     let results: string[] = [];
@@ -49,7 +53,7 @@ const stripLeadingUnderscoresAndTrailingDigitsFromAllMethods = (sourceFile: Sour
 // The generator appends every non-array multipart part as it is. FormData turns an object into the text
 // "[object Object]" with content type text/plain, which Spring cannot bind to a @RequestPart DTO. Wrap exactly the
 // parts the specification types as objects in a JSON Blob, like the hand-written objectToJsonBlob. The upstream
-// typescript-angular template does this with an isModel branch; the custom template has none.
+// typescript-angular template does this with an isModel branch; the custom template has none (generator issue #11).
 const serializeGeneratedModelFormDataParts = (sourceFile: SourceFile, serializedPartsInFile: number, multipartObjectPartNames: Set<string>) => {
     const generatedModelTypes = new Set(
         sourceFile
@@ -176,7 +180,7 @@ const getOperationIdsWithResponseHeaders = (openApiSpecification: OpenApiSpecifi
 // An operation that declares a response header is useless as a bare Observable<T>: HttpClient only exposes headers
 // when asked to observe the whole response. Opt exactly those operations into observe: 'response' and widen their
 // return type, so a caller can read the header the contract promises. The custom template returns only the body;
-// the upstream template lets the caller choose through observe overloads.
+// the upstream template lets the caller choose through observe overloads (generator issue #13).
 const observeFullResponseForHeaderOperations = (sourceFile: SourceFile, observedOperationsInFile: number, operationIdsWithResponseHeaders: Set<string>) => {
     for (const method of sourceFile.getClasses().flatMap(classDeclaration => classDeclaration.getMethods())) {
         if (!operationIdsWithResponseHeaders.has(method.getName())) {
@@ -218,7 +222,7 @@ const observeFullResponseForHeaderOperations = (sourceFile: SourceFile, observed
 // name, and the server resolves uploads by their original filename — so two Blobs collide on one key. Retype the
 // parameter to File and pass the name explicitly. The Blob type comes from the upstream TypeScriptAngularClientCodegen
 // that the generator extends: it returns Blob for every file schema in Java, so typeMappings cannot change it, and
-// the upstream template does not pass a name either.
+// the upstream template does not pass a name either (generator issue #12).
 const nameGeneratedBinaryFormDataParts = (sourceFile: SourceFile, namedPartsInFile: number, multipartBinaryPartNames: Set<string>) => {
     for (const callExpression of sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression)) {
         if (callExpression.getExpression().getText() !== "formData.append") {
@@ -267,10 +271,10 @@ const referencedUnionSchemas = (openApiSpecification: OpenApiSpecification): Arr
     });
 };
 
-// The generator has no oneOf support: it imports every branch and then renders one interface with the fields of all
-// branches, which no real value satisfies and which TypeScript cannot narrow. Replace each such model with a union
-// of its branches, so a switch on the discriminator narrows to the right branch. Runs once over the whole project,
-// before the per-file steps, because a union file imports its branch files.
+// The generator has no oneOf support (generator issue #9): it imports every branch and then renders one interface
+// with the fields of all branches, which no real value satisfies and which TypeScript cannot narrow. Replace each such
+// model with a union of its branches, so a switch on the discriminator narrows to the right branch. Runs once over the
+// whole project, before the per-file steps, because a union file imports its branch files.
 const replaceOneOfModelsWithUnionTypes = (project: Project, openApiSpecification: OpenApiSpecification) => {
     const modelSourceFilesByName = new Map<string, SourceFile>();
     for (const sourceFile of project.getSourceFiles()) {
@@ -390,8 +394,8 @@ const main = async () => {
         let namedBinaryPartsInFile = 0;
         let observedOperationsInFile = 0;
 
-        // Needed because tsconfig sets noUnusedLocals: the template always imports HttpResponse, and the union rewrite
-        // leaves the property imports of the merged interface behind.
+        // Needed because tsconfig sets noUnusedLocals: the template always imports HttpResponse (generator issue #10),
+        // and the union rewrite leaves the property imports of the merged interface behind.
         for (const importDeclaration of sourceFile.getImportDeclarations()) {
             for (const namedImport of importDeclaration.getNamedImports()) {
                 const id = namedImport.getNameNode();
