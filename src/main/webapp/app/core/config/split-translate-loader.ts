@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, Injector, Provider, inject } from '@angular/core';
+import { Injector, Provider, Service, inject } from '@angular/core';
 import { TranslateLoader, TranslateService, TranslationObject } from '@ngx-translate/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, filter, tap } from 'rxjs';
@@ -17,7 +17,7 @@ const LANDING_FALLBACK_DELAY_MS = 1500;
  * or the router navigates away from `/` — the full bundle is fetched and merged, so
  * subsequent routes see the complete catalog.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SplitTranslateLoader implements TranslateLoader {
     private http = inject(HttpClient);
     private injector = inject(Injector);

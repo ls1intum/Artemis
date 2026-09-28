@@ -1,4 +1,4 @@
-import { Injectable, Signal, computed, signal } from '@angular/core';
+import { Service, Signal, computed, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 /**
@@ -31,7 +31,7 @@ const NO_APPLIED_COUNTS: ReadonlyMap<number, number> = new Map<number, number>()
  * Mediates between the structured grading instruction list and the editable feedback list of the currently open
  * assessment. Exactly one host is registered at a time.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class GradingInstructionSelectionService {
     private readonly host = signal<GradingInstructionSelectionHost | undefined>(undefined);
 

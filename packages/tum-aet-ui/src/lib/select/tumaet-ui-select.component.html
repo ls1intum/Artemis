@@ -1,0 +1,86 @@
+<div class="tumaet:relative tumaet:inline-flex tumaet:w-full">
+    <button
+        #trigger
+        type="button"
+        [id]="resolvedInputId()"
+        [class]="triggerClasses()"
+        [disabled]="isDisabled()"
+        [attr.name]="name()"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-autocomplete="none"
+        [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
+        [attr.aria-controls]="isOpen() ? listboxId : null"
+        [attr.aria-activedescendant]="isOpen() ? activeOptionId() : null"
+        [attr.aria-label]="ariaLabel()"
+        [attr.aria-describedby]="describedBy()"
+        [attr.aria-invalid]="isInvalid() ? 'true' : null"
+        (click)="toggle()"
+        (keydown)="onTriggerKeydown($event)"
+    >
+        <span class="tumaet:flex-1 tumaet:truncate" [class]="!hasSelection() ? 'tumaet:text-muted' : ''">{{ displayLabel() }}</span>
+    </button>
+    <span class="tumaet:pointer-events-none tumaet:absolute tumaet:inset-y-0 tumaet:end-0 tumaet:flex tumaet:w-10 tumaet:items-center tumaet:justify-center tumaet:text-muted">
+        <fa-icon [icon]="faChevronDown" />
+    </span>
+
+    @if (showClearButton()) {
+        <button
+            type="button"
+            class="tumaet:absolute tumaet:inset-y-0 tumaet:end-10 tumaet:flex tumaet:w-6 tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted tumaet:hover:text-text-hover"
+            (click)="clear($event)"
+            [attr.aria-label]="clearAriaLabel() ?? ('tumAetUi.select.clear' | tumAetUiTranslate)"
+        >
+            <fa-icon [icon]="faXmark" />
+        </button>
+    }
+</div>
+
+<ng-template #panel>
+    <div
+        class="tumaet-ui-select-panel tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:text-text tumaet:shadow-md"
+    >
+        @if (filter()) {
+            <div class="tumaet:border-b tumaet:border-border tumaet:p-1">
+                <input
+                    #filterInput
+                    type="text"
+                    class="tumaet-ui-select-filter tumaet:box-border tumaet:w-full tumaet:appearance-none tumaet:rounded-sm tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:px-2 tumaet:py-1.5 tumaet:text-sm tumaet:text-text tumaet:placeholder:text-muted tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus"
+                    [value]="filterText()"
+                    [attr.placeholder]="filterPlaceholder() ?? ('tumAetUi.select.filter' | tumAetUiTranslate)"
+                    [attr.aria-label]="filterAriaLabel() ?? ('tumAetUi.select.filter' | tumAetUiTranslate)"
+                    [attr.aria-controls]="listboxId"
+                    [attr.aria-activedescendant]="activeOptionId()"
+                    (input)="onFilterInput($event)"
+                    (keydown)="onFilterKeydown($event)"
+                />
+            </div>
+        }
+        <ul
+            [id]="listboxId"
+            role="listbox"
+            [attr.aria-label]="ariaLabel()"
+            class="tumaet:m-0 tumaet:flex tumaet:max-h-60 tumaet:list-none tumaet:flex-col tumaet:gap-0.5 tumaet:overflow-y-auto tumaet:p-1 tumaet:outline-none"
+        >
+            @for (option of visibleOptions(); track $index; let i = $index) {
+                <li
+                    [id]="optionId(i)"
+                    role="option"
+                    [attr.aria-selected]="isSelected(option) ? 'true' : 'false'"
+                    [class]="optionClasses(option, i)"
+                    (click)="selectOption(option)"
+                    (mouseenter)="setActive(i)"
+                >
+                    <span class="tumaet:flex-1 tumaet:truncate">{{ label(option) }}</span>
+                    @if (isSelected(option)) {
+                        <fa-icon [icon]="faCheck" class="tumaet:ms-2 tumaet:shrink-0" />
+                    }
+                </li>
+            } @empty {
+                <li role="option" aria-selected="false" aria-disabled="true" class="tumaet:px-3 tumaet:py-2 tumaet:text-muted">
+                    {{ isFiltering() ? ('tumAetUi.select.noResults' | tumAetUiTranslate) : (emptyMessage() ?? ('tumAetUi.select.empty' | tumAetUiTranslate)) }}
+                </li>
+            }
+        </ul>
+    </div>
+</ng-template>

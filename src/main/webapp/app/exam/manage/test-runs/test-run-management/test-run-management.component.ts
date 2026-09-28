@@ -27,7 +27,7 @@ import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-test-run-management',
@@ -45,7 +45,7 @@ import { TumUiButtonDirective } from '@tumaet/ui-angular';
         ArtemisDurationFromSecondsPipe,
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
     ],
 })
 export class TestRunManagementComponent implements OnInit {

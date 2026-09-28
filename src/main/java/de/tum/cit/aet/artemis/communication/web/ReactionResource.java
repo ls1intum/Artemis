@@ -25,13 +25,14 @@ import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
 import de.tum.cit.aet.artemis.communication.service.ReactionService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for Reaction on Postings.
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("posts/reactions")
+@FeatureUsage(UserFeature.MESSAGE_INTERACTIONS)
 @RestController
 @RequestMapping("api/communication/")
 public class ReactionResource {

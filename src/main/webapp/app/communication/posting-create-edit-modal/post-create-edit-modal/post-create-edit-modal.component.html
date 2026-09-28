@@ -1,4 +1,5 @@
 @if (isDialogVisible()) {
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- The backdrop closes on pointer click; the dialog handles Escape. -->
     <div class="modal-backdrop post-create-edit-modal-backdrop" (click)="close()"></div>
     <div class="modal d-block post-create-edit-modal" tabindex="-1" (keydown.escape)="close()">
         <div class="modal-dialog post-create-edit-modal-dialog modal-lg">

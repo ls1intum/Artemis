@@ -230,7 +230,7 @@ describe('CourseLearnerProfileComponent', () => {
             const alertSpy = vi.spyOn(alertService, 'addAlert');
 
             // Act - Call ngOnInit which internally calls loadProfiles
-            await component.ngOnInit();
+            await component['initializeCourseLearnerProfileComponent']();
             await fixture.whenStable();
 
             // Assert
@@ -412,7 +412,7 @@ describe('CourseLearnerProfileComponent', () => {
             fixture.detectChanges();
 
             // Drive the real control so the template's (selectionChange) binding is covered, not just the handler.
-            const trigger = fixture.nativeElement.querySelector('tum-ui-select button[role="combobox"]') as HTMLButtonElement;
+            const trigger = fixture.nativeElement.querySelector('tumaet-ui-select button[role="combobox"]') as HTMLButtonElement;
             expect(trigger).not.toBeNull();
             trigger.click();
             fixture.detectChanges();

@@ -13,7 +13,7 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 
 describe('AccountInformationComponent', () => {
@@ -72,7 +72,7 @@ describe('AccountInformationComponent', () => {
     it('should configure a small cropper dialog with the profile picture title', () => {
         fixture.detectChanges();
 
-        const dialog = fixture.debugElement.query(By.directive(TumUiDialogComponent)).componentInstance as TumUiDialogComponent;
+        const dialog = fixture.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance as TumAetUiDialogComponent;
         expect(dialog.header()).toBe('artemisApp.userSettings.accountInformationPage.profilePicture');
         expect(dialog.size()).toBe('small');
     });

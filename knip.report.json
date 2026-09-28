@@ -18,7 +18,7 @@
                 "src/main/webapp/app/openapi/**"
             ]
         },
-        "packages/tum-ui": {
+        "packages/tum-aet-ui": {
             "entry": [
                 "src/public-api.ts",
                 "test-providers.ts",

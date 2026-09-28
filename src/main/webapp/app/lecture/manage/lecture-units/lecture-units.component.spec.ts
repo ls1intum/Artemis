@@ -29,7 +29,7 @@ import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfDropZoneComponent } from 'app/lecture/manage/pdf-drop-zone/pdf-drop-zone.component';
-import { Component, ElementRef, NO_ERRORS_SCHEMA, Signal, computed, input, output } from '@angular/core';
+import { Component, ElementRef, NO_ERRORS_SCHEMA, Signal, computed, input, output, signal } from '@angular/core';
 import { ngMocks } from 'ng-mocks';
 
 // Tell ng-mocks to skip auto-mocking PdfDropZoneComponent
@@ -84,7 +84,7 @@ describe('LectureUpdateUnitsComponent', () => {
             loadData: vi.fn(),
         } as Pick<LectureUnitManagementComponent, 'loadData'>;
 
-        wizardUnitComponent.unitManagementComponent = computed(() => unitManagementComponentMock as LectureUnitManagementComponent) as Signal<
+        wizardUnitComponent.unitManagementComponent = signal(unitManagementComponentMock as LectureUnitManagementComponent).asReadonly() as Signal<
             LectureUnitManagementComponent | undefined
         >;
     };

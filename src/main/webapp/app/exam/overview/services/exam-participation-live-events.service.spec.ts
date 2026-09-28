@@ -103,6 +103,20 @@ describe('ExamParticipationLiveEventsService', () => {
     //   Phase 1 (immediate): WebSocket subscription is set up so no real-time events are missed
     //   Phase 2 (after 2s): REST fetch backfills any events created before the subscription
     // Previously both phases were delayed by 5 seconds, creating a window for event loss.
+    it('should not fetch events on a websocket reconnect after the service was reset', () => {
+        // @ts-ignore
+        const fetchPreviousExamEventsSpy = vi.spyOn(service, 'fetchPreviousExamEvents');
+        const emittedEvents: ExamLiveEvent[][] = [];
+        service.observeAllEvents([]).subscribe((events) => emittedEvents.push(events));
+
+        service.reset();
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+
+        expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
+        httpMock.expectNone({ method: 'GET' });
+        expect(emittedEvents.at(-1)).toEqual([]);
+    });
+
     it('should subscribe to websocket immediately and fetch events after delay on student exam change', async () => {
         // @ts-ignore
         const unsubscribeFromExamLiveEventsSpy = vi.spyOn(service, 'unsubscribeFromExamLiveEvents');

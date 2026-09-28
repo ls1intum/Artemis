@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
+import { OnDestroy, Service, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -48,7 +48,7 @@ export interface IrisRunInfo {
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisChatService implements OnDestroy {
     private readonly irisChatHttpService = inject(IrisChatHttpService);
     private readonly irisWebsocketService = inject(IrisWebsocketService);

@@ -494,6 +494,7 @@ mkdir -p \
     "$ARTEMIS_DATA_DIR/exports" \
     "$ARTEMIS_DATA_DIR/legal" \
     "$ARTEMIS_DATA_DIR/build-logs" \
+    "$ARTEMIS_DATA_DIR/failed-build-logs" \
     "$ARTEMIS_DATA_DIR/local-vcs-repos"
 
 # =============================================================================
@@ -556,6 +557,7 @@ launch_node() {
         export ARTEMIS_SUBMISSIONEXPORTPATH="$ARTEMIS_DATA_DIR/exports"
         export ARTEMIS_LEGALPATH="$ARTEMIS_DATA_DIR/legal"
         export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
+        export ARTEMIS_FAILEDBUILDLOGSPATH="$ARTEMIS_DATA_DIR/failed-build-logs"
         # Feature usage flushes every five minutes in production, and FeatureUsage.spec.ts and
         # FeatureUsageGit.spec.ts assert that a counter reaches the database within the test window.
         # Matches run-e2e-tests-local-fast.sh and docker/artemis/config/playwright.env, which the

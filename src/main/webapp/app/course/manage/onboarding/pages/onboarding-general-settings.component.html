@@ -31,7 +31,8 @@
                 <button
                     type="button"
                     class="color-preview"
-                    [ngStyle]="{ backgroundColor: course().color || ARTEMIS_DEFAULT_COLOR, width: '36px', height: '36px', borderRadius: '4px', cursor: 'pointer' }"
+                    style="width: 36px; height: 36px; border-radius: 4px; cursor: pointer"
+                    [style.background-color]="course().color || ARTEMIS_DEFAULT_COLOR"
                     (click)="openColorSelector($event)"
                 ></button>
                 <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
@@ -107,7 +108,17 @@
                 <h5 class="d-flex align-items-center gap-2">
                     <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
                     <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
-                    <a class="iris-learn-more" (click)="openAboutIrisModal()" jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"></a>
+                    <a
+                        class="iris-learn-more"
+                        (click)="openAboutIrisModal()"
+                        jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"
+                        #keyboardAction111
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
+                    ></a>
                 </h5>
                 @if (isIrisEnabled()) {
                     <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisEnabledHint"></p>

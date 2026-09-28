@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.communication;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -35,9 +36,9 @@ import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -134,19 +135,19 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
 
     void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String userLoginsWithoutPrefix) {
         var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
-        var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
-        verify(websocketMessagingService, timeout(10000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
+        var topic = "/topic/communication/courses/" + exampleCourseId + "/conversations/user/" + receivingUser.getId();
+        verify(websocketMessagingService, timeout(10000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), userTopic(topic),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).action().equals(crudAction)
                         && ((ConversationWebsocketDTO) argument).conversation().getId().equals(conversationId)));
 
     }
 
     void verifyNoParticipantTopicWebsocketSent() {
-        verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
+        verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(ConversationWebsocketDTO.class));
     }
 
     void verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction... actions) {
-        verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(),
+        verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class),
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && !Arrays.asList(actions).contains(((ConversationWebsocketDTO) argument).action())));
     }
 

@@ -377,11 +377,7 @@
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
             "courseGroup": {
-                "outOf": "out of",
-                "usersPerPage": "{{number}} users per page",
-                "showAllUsers": "Show all users",
-                "searchForUsers": "Add a user to this group by searching for login or name",
-                "searchNoResults": "No users found",
+                "searchForUsers": "Search for users by login, name, email, or registration number",
                 "login": "Login",
                 "registrationNumber": "Registration Number",
                 "name": "Name",
@@ -389,7 +385,9 @@
                 "removeFromGroup": {
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
                 },
-                "profilePicture": "Profile Picture"
+                "addUsers": "Add Users",
+                "profilePicture": "Profile Picture",
+                "notFoundUsers": "The following users could not be registered because they were not found: {{ logins }}"
             },
             "averageScore": "Average Score",
             "assessmentProgress": "Assessments",

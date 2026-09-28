@@ -38,6 +38,12 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     imports: [FaIconComponent, ChannelIconComponent, ProfilePictureComponent, TranslateDirective, RouterLink, EmojiComponent, ArtemisTranslatePipe],
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
+    private dialogService = inject(DialogService);
+    metisConversationService = inject(MetisConversationService);
+    conversationService = inject(ConversationService);
+    private metisService = inject(MetisService);
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+
     constructor() {
         effect(() => {
             // Track pinnedMessageCount signal input (replaces ngOnChanges)
@@ -50,10 +56,6 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         });
     }
 
-    private dialogService = inject(DialogService);
-    metisConversationService = inject(MetisConversationService);
-    conversationService = inject(ConversationService);
-    private metisService = inject(MetisService);
     pinnedMessageCount = input<number>(0);
     togglePinnedMessage = output<void>();
 
@@ -79,8 +81,6 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     faChevronLeft = faChevronLeft;
     readonly faPeopleGroup = faPeopleGroup;
     readonly showPinnedMessages = signal(false);
-
-    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     getAsGroupChat = getAsGroupChatDTO;
     getAsOneToOneChat = getAsOneToOneChatDTO;

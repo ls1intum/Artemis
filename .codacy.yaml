@@ -59,7 +59,7 @@ exclude_paths:
   # Storybook stories and the Angular wrapper decorators: static examples that trip the
   # html-in-template-string rule through Storybook's rendering API.
   - "**/*.stories.ts"
-  - "packages/tum-ui/.storybook/story-decorators.ts"
+  - "packages/tum-aet-ui/.storybook/story-decorators.ts"
   # Internal developer/CI tooling (coverage reporting, course setup, transcription, benchmarks).
   # Not part of the deployed application and not exposed to untrusted end-user input.
   - "supporting_scripts/**"
@@ -76,7 +76,7 @@ engines:
       - "**/*.spec.ts"
       - "**/*.spec.mjs"
       - "**/*.stories.ts"
-      - "packages/tum-ui/.storybook/story-decorators.ts"
+      - "packages/tum-aet-ui/.storybook/story-decorators.ts"
       - "src/main/resources/templates/**"
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
