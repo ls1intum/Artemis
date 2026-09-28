@@ -734,6 +734,27 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(exercise.gradingCriteria![1].structuredGradingInstructions[0]).toBe(cutInstruction);
         });
 
+        it('rejects an edited criterion repaste after a partial parse when feedback is used', () => {
+            const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            const cutCriterion = { id: 2, title: 'Other criterion', structuredGradingInstructions: [cutInstruction] } as GradingCriterion;
+            exercise.gradingCriteria = [gradingCriterion, cutCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const editedMarkdown = component.generateMarkdown().replace('[feedback] other', '[feedback] edited other');
+
+            component.onDomainActionsFound(getDomainActionArray());
+            const partialCriteria = exercise.gradingCriteria;
+            component.onDomainActionsFound(parseMarkdownForDomainActions(editedMarkdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(false);
+            expect(exercise.gradingCriteria).toBe(partialCriteria);
+            expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+            expect(cutCriterion.id).toBe(2);
+            expect(cutInstruction.id).toBe(2);
+            expect(cutInstruction.feedback).toBe('other');
+        });
+
         it('should reclaim a cut instruction after a debounced partial parse', () => {
             const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
             gradingCriterion.structuredGradingInstructions.push(cutInstruction);
@@ -747,6 +768,26 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.onDomainActionsFound(parseMarkdownForDomainActions(fullMarkdown, component.domainActionsForMainEditor));
 
             expect(exercise.gradingCriteria![0].structuredGradingInstructions[1]).toBe(cutInstruction);
+        });
+
+        it('rejects an edited instruction repaste after a partial parse when feedback is used', () => {
+            const cutInstruction = { id: 2, credits: 2, gradingScale: 'other', instructionDescription: 'other', feedback: 'other', usageCount: 0 } as GradingInstruction;
+            gradingCriterion.structuredGradingInstructions.push(cutInstruction);
+            exercise.gradingCriteria = [gradingCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+            component.ngOnInit();
+            component.showEditMode.set(false);
+            const editedMarkdown = component.generateMarkdown().replace('[feedback] other', '[feedback] edited other');
+
+            component.onDomainActionsFound(getDomainActionArray());
+            const partialCriteria = exercise.gradingCriteria;
+            component.onDomainActionsFound(parseMarkdownForDomainActions(editedMarkdown, component.domainActionsForMainEditor));
+
+            expect(component.prepareForSave()).toBe(false);
+            expect(exercise.gradingCriteria).toBe(partialCriteria);
+            expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction]);
+            expect(cutInstruction.id).toBe(2);
+            expect(cutInstruction.feedback).toBe('other');
         });
 
         it('should flush the live monaco buffer before switching to structured mode', () => {
@@ -1106,6 +1147,20 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
     });
 
+    it('sends an explicitly cleared criterion title in the save payload', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const markdown = component.generateMarkdown().replace('[criterion] testCriteria', '[criterion]');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(component.prepareForSave()).toBe(true);
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(gradingInstruction);
+        const savedCriteria = JSON.parse(JSON.stringify(exercise.gradingCriteria)) as GradingCriterion[];
+        expect(savedCriteria[0].title).toBe('');
+        expect(savedCriteria[0].id).toBe(1);
+    });
+
     it('should keep title-less criterion identity when an instruction field is edited', () => {
         const instruction = {
             id: 11,
@@ -1182,7 +1237,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         expect(exercise.gradingCriteria![0]).toBe(dummyCriterion);
         expect(exercise.gradingCriteria![0].id).toBe(7);
-        expect(exercise.gradingCriteria![0].title).toBeUndefined();
+        expect(exercise.gradingCriteria![0].title).toBe('');
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(instruction);
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(11);
     });
@@ -1201,15 +1256,16 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
     });
 
-    it('keeps a persisted title-less group when parsing legacy top-level instructions', () => {
+    it.each([undefined, ''])('keeps a persisted title-less group with title %s when parsing legacy top-level instructions', (title) => {
         const secondInstruction = { ...gradingInstruction, id: 2, instructionDescription: 'second' };
-        const criterion = { id: 3, structuredGradingInstructions: [gradingInstruction, secondInstruction] } as GradingCriterion;
+        const criterion = { id: 3, title, structuredGradingInstructions: [gradingInstruction, secondInstruction] } as GradingCriterion;
         exercise.gradingCriteria = [criterion];
         const legacyMarkdown = component.generateInstructionsMarkdown(criterion);
 
         component.onDomainActionsFound(parseMarkdownForDomainActions(legacyMarkdown, component.domainActionsForMainEditor));
 
         expect(exercise.gradingCriteria).toEqual([criterion]);
+        expect(criterion.title).toBe(title);
         expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
     });
 

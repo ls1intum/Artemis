@@ -445,10 +445,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         for (const { text, action } of textWithDomainActions) {
             if (action instanceof GradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
-                const title = this.stripLegacyIdentityMarker(text);
-                if (title !== '') {
-                    newCriterion.title = title;
-                }
+                newCriterion.title = this.stripLegacyIdentityMarker(text);
                 gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
                 const arrayWithoutCriterion = textWithDomainActions.slice(1); // remove the identifier after creating its criterion object
@@ -519,13 +516,14 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
         if (
             previousGroup &&
-            previousGroup.title == undefined &&
+            !previousGroup.title &&
             (previousGroup.structuredGradingInstructions?.length ?? 0) > 1 &&
             parsedCriteria.length === previousGroup.structuredGradingInstructions.length &&
             parsedCriteria.every((criterion) => !criterion.title && criterion.structuredGradingInstructions.length === 1)
         ) {
             // Older text omitted the criterion marker; use the existing group for its boundaries.
             const group = new GradingCriterion();
+            group.title = previousGroup.title;
             group.structuredGradingInstructions = parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions);
             this.exercise().gradingCriteria = [group];
             this.criteria.set([group]);
@@ -636,6 +634,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 return undefined;
             }
         }
+        if (this.exercise().gradingInstructionFeedbackUsed && unmatched.some((entry) => !entry.previousCriterion) && unusedFallbackCriteria.length > 0) {
+            return undefined;
+        }
         // Multiple unmatched rows cannot safely replace used or multiple persisted leftovers.
         const unusedPersistedCount = [...unusedCriteria, ...unusedFallbackCriteria].filter((criterion) => criterion.id != undefined).length;
         if (unmatched.length > 1 && (unusedPersistedCount > 1 || (unusedPersistedCount > 0 && this.exercise().gradingInstructionFeedbackUsed))) {
@@ -671,6 +672,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             if (unmatchedInstructions.length === 1 && unusedInstructions.length === 1) {
                 unmatchedInstructions[0].previousInstruction = unusedInstructions[0];
             } else if (unmatchedInstructions.length > 0 && unusedInstructions.length > 0) {
+                return undefined;
+            }
+            if (this.exercise().gradingInstructionFeedbackUsed && unmatchedInstructions.some((entry) => !entry.previousInstruction) && unusedFallbackInstructions.length > 0) {
                 return undefined;
             }
             plan.push({ parsedCriterion, previousCriterion, instructions: instructionEntries });
