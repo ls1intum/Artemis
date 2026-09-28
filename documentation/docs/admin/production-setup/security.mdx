@@ -256,6 +256,30 @@ A connection from a listed address must begin with a valid PROXY protocol header
     Compose setups in this repository already ship both.
 </Callout>
 
+When nginx runs as a container of the Docker Compose setup, Docker assigns its address when it creates the network, so
+the address can change. The environment files in this repository therefore list the Docker bridge ranges, which is
+acceptable for a test stack but not for a production deployment. Instead, give the network a fixed subnet and nginx a
+fixed address in an override file:
+
+```yaml
+services:
+    nginx:
+        networks:
+            artemis:
+                ipv4_address: 172.30.0.10
+networks:
+    artemis:
+        driver: bridge
+        name: artemis
+        ipam:
+            config:
+                - subnet: 172.30.0.0/24
+```
+
+Pass the file to `docker compose` with an additional `-f` and list only that address in
+`ARTEMIS_VERSIONCONTROL_SSHPROXYPROTOCOL_TRUSTEDSOURCES="172.30.0.10"`. Choose a subnet that no other network on the host
+uses. Docker applies a subnet only when it creates a network, so run `docker compose down` once before starting again.
+
 #### Moving build agents to SSH
 
 `artemis.version-control.build-agent-use-ssh` does different things on the two node roles. On a build agent it selects the mechanism the agent uses. On a core node it decides whether the node offers SSH host keys for build agents at all. A core node always accepts a registered build agent's public key, whatever the property says there, because a key is per-agent and only reaches a core node through an agent that has joined the cluster — so agents can be moved one at a time while the core nodes still say `false`.
