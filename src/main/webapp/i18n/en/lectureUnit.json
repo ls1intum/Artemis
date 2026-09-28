@@ -8,19 +8,15 @@
                 "title": "Lecture Content"
             },
             "unitCreationCard": {
-                "title": "Add new content",
+                "title": "Add one item:",
                 "text": "Text",
                 "exercise": "Exercise",
-                "video": "Video",
-                "online": "Online",
-                "attachmentVideo": "File/Video"
+                "online": "Online resource",
+                "attachmentVideo": "File or video"
             },
             "releaseDate": "Release Date",
             "details": {
-                "title": "Properties",
-                "releaseDateNotSet": "No release date set!",
-                "releaseDateSet": "Release date: ",
-                "attachmentVersion": "Attachment version: "
+                "title": "Properties"
             },
             "completedTooltip": "Click to mark this content as uncompleted",
             "uncompletedTooltip": "Click to mark this content as completed",
@@ -28,7 +24,25 @@
             "closeFullscreen": "Close fullscreen",
             "fullscreenView": "Fullscreen view of {{ title }}",
             "irisSidebarLabel": "Iris AI Assistant Chat",
-            "lectureUnit": "Lecture Content"
+            "lectureUnit": "Lecture Content",
+            "management": {
+                "list": "Content of the lecture",
+                "actions": "Actions for {{ name }}",
+                "empty": "The lecture has no content yet. Add the first item below.",
+                "visible": "Visible to students",
+                "visibleSince": "Visible since {{ date }}",
+                "visibleFrom": "Hidden until {{ date }}",
+                "version": "Version {{ version }}",
+                "type": {
+                    "pdf": "PDF",
+                    "file": "File",
+                    "video": "Video",
+                    "fileAndVideo": "File and video",
+                    "text": "Text",
+                    "exercise": "Exercise",
+                    "online": "Online resource"
+                }
+            }
         },
         "textUnit": {
             "created": "New text content created",
@@ -124,18 +138,10 @@
                 }
             },
             "createAttachmentVideoUnits": {
-                "informativeText": {
-                    "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with content headings) to split the PDF into content.",
-                    "secondLine": "Artemis expects a repetition of the Outline slide at the start of every content section.",
-                    "note": "Note: You will have the option to edit the information before finally submitting the content."
-                },
                 "noFile": "There is no file for automatic processing. Please go back and try again.",
                 "noUnitDetected": "No content was detected and could not split automatically. Please add information for each content section!",
                 "pageTitle": "Process content",
                 "addUnit": "Add content",
-                "lectureFileToolTip": "Please select to enable automatic separation of lecture content.",
-                "processUnits": "Process content",
-                "processAutomatically": "Automatic content processing",
                 "removeSlides": "Remove slides",
                 "removeSlidesInfo": {
                     "firstLine": "All slides that contain any of the following key phrases will be removed from all content.",
@@ -198,11 +204,12 @@
                 "sourceRequiredValidationError": "Video URL is required",
                 "sourceURLValidationError": "Not a valid URL",
                 "urlVideoHelper": "Transform into embeddable format ",
-                "urlHelperPlaceholder": "You can enter a Video URL here and use the arrow to create the correct embeddable URL from it",
+                "urlHelperPlaceholder": "Paste the link of a video page here and choose “Use as video URL” to turn it into an embeddable one.",
                 "urlHelperValidationError": "Automatic embed link generation is not possible for this URL",
                 "videoTranscription": "Video Transcription",
                 "videoTranscriptionPlaceholder": "Insert the transcription of the video here.",
-                "transcriptionHint": "Videos from supported sources are automatically transcribed after saving. You can track the transcription progress on the lecture management page."
+                "transcriptionHint": "Videos from supported sources are automatically transcribed after saving. You can track the transcription progress on the lecture management page.",
+                "useAsVideoSource": "Use as video URL"
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit File/Video Content"
@@ -268,7 +275,10 @@
             "createExerciseUnit": {
                 "title": "Exercise Content",
                 "headline": "Connect an Exercise with the Lecture",
-                "description": "Select all the Exercises to connect with the Lecture."
+                "description": "Select all the Exercises to connect with the Lecture.",
+                "select": "Select",
+                "noExercises": "Every exercise of the course is already content of this lecture.",
+                "noCourseExercises": "The course has no exercises yet."
             },
             "delete": {
                 "question": "Do you really want to unlink the exercise <strong>{{ title }}</strong>? The exercise will be kept! You can not undo this action!",

@@ -1,0 +1,49 @@
+<div class="mx-auto flex w-full max-w-4xl items-center gap-3.5 px-3.5 py-3.5 sm:px-6">
+    <div class="flex min-w-0 grow flex-col gap-0.5" aria-live="polite">
+        @if (isSaving()) {
+            <span class="font-semibold" jhiTranslate="artemisApp.lecture.editFooter.saving" data-testid="lecture-edit-footer-status"></span>
+        } @else if (hasChanges()) {
+            <span class="lecture-edit-footer-unsaved inline-flex flex-wrap items-center gap-x-1 font-semibold" data-testid="lecture-edit-footer-status">
+                <span aria-hidden="true" class="lecture-edit-footer-unsaved-dot me-1 size-2 shrink-0 rounded-full"></span>
+                <span jhiTranslate="artemisApp.lecture.editFooter.unsavedChanges"></span>
+                @for (section of changedSections(); track section; let last = $last) {
+                    <span>{{ section | artemisTranslate }}{{ last ? '' : ',' }}</span>
+                }
+            </span>
+        } @else if (savedAt(); as saved) {
+            <span class="lecture-edit-footer-saved inline-flex items-center gap-2 font-semibold" data-testid="lecture-edit-footer-status">
+                <fa-icon [icon]="faCheck" />
+                <span>{{ 'artemisApp.lecture.editFooter.saved' | artemisTranslate: { time: (saved | artemisDate: 'time') } }}</span>
+            </span>
+        } @else {
+            <span class="font-semibold" jhiTranslate="artemisApp.lecture.editFooter.noChanges" data-testid="lecture-edit-footer-status"></span>
+        }
+        <span
+            class="lecture-edit-footer-hint hidden text-sm sm:block"
+            [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.editFooter.contentHint' : 'artemisApp.lecture.editFooter.createHint'"
+        ></span>
+    </div>
+    <button tumAetUiButton type="button" id="cancel-save" data-testid="lecture-edit-leave" severity="secondary" [disabled]="isSaving()" (click)="leave.emit()">
+        <span [jhiTranslate]="leaveLabel()"></span>
+    </button>
+    @let blockedReason = saveBlockedReason();
+    <!-- aria-disabled rather than disabled, so the button stays focusable and its tooltip can say why it cannot be used yet. -->
+    <button
+        tumAetUiButton
+        type="button"
+        id="save-entity"
+        data-testid="lecture-edit-save"
+        class="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+        [attr.aria-disabled]="isSaveBlocked()"
+        [tumAetUiTooltip]="blockedReason ? (blockedReason | artemisTranslate) : ''"
+        (click)="onSave()"
+    >
+        @if (isSaving()) {
+            <fa-icon [icon]="faSpinner" animation="spin" />
+            <span jhiTranslate="entity.action.saving"></span>
+        } @else {
+            <fa-icon [icon]="faSave" />
+            <span jhiTranslate="entity.action.save"></span>
+        }
+    </button>
+</div>

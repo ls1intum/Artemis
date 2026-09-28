@@ -1,6 +1,6 @@
 import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -19,8 +19,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -39,7 +37,7 @@ describe('CreateExerciseUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent, CreateExerciseUnitComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockDirective(SortByDirective)],
+            imports: [FaIconComponent, CreateExerciseUnitComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
@@ -158,5 +156,79 @@ describe('CreateExerciseUnitComponent', () => {
 
         await createExerciseUnitComponentFixture.whenStable();
         expect(createStub).toHaveBeenCalledTimes(3);
+    });
+    describe('choosing exercises', () => {
+        let textExercise: TextExercise;
+        let modelingExercise: ModelingExercise;
+
+        function loadCourse(exercises: TextExercise[] | ModelingExercise[] | (TextExercise | ModelingExercise)[], linkedExerciseIds: number[] = []) {
+            const course = new Course();
+            course.exercises = exercises;
+            findWithExercisesStub.mockReturnValue(of(new HttpResponse({ body: course, status: 200 })));
+            const linkedUnits = linkedExerciseIds.map((id) => {
+                const unit = new ExerciseUnit();
+                unit.exercise = exercises.find((exercise) => exercise.id === id);
+                return unit;
+            });
+            findAllByLectureIdStub.mockReturnValue(of(new HttpResponse({ body: linkedUnits, status: 200 })));
+            createExerciseUnitComponentFixture.detectChanges();
+        }
+
+        function emptyRowKey(): string | null {
+            const cell = createExerciseUnitComponentFixture.debugElement.query(By.css('tbody td[colspan]'));
+            return cell ? (cell.nativeElement.getAttribute('ng-reflect-jhi-translate') ?? cell.nativeElement.textContent.trim()) : null;
+        }
+
+        beforeEach(() => {
+            const course = new Course();
+            textExercise = new TextExercise(course, undefined);
+            textExercise.id = 1;
+            textExercise.title = 'Requirements';
+            modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            modelingExercise.id = 2;
+            modelingExercise.title = 'Class diagram';
+        });
+
+        it('should offer only the exercises that are not content of the lecture yet', () => {
+            loadCourse([textExercise, modelingExercise], [2]);
+
+            expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation()).toEqual([textExercise]);
+            expect(createExerciseUnitComponentFixture.debugElement.queryAll(By.css('tbody tr[id^="exercise-"]'))).toHaveLength(1);
+        });
+
+        it('should toggle an exercise through its row and its checkbox alike', () => {
+            loadCourse([textExercise, modelingExercise]);
+            const row = createExerciseUnitComponentFixture.debugElement.query(By.css('#exercise-1'));
+
+            row.nativeElement.click();
+            expect(createExerciseUnitComponent.exercisesToCreateUnitFor()).toEqual([textExercise]);
+
+            createExerciseUnitComponentFixture.detectChanges();
+            const checkbox = row.query(By.css('input[type="checkbox"]'));
+            checkbox.nativeElement.click();
+            expect(createExerciseUnitComponent.exercisesToCreateUnitFor()).toEqual([]);
+        });
+
+        it('should sort by the column the user chose', () => {
+            const sortService = TestBed.inject(SortService);
+            const sortSpy = vi.spyOn(sortService, 'sortByProperty');
+            loadCourse([textExercise, modelingExercise]);
+
+            createExerciseUnitComponent.onSortChange({ field: 'title', order: -1 });
+
+            expect(createExerciseUnitComponent.predicate()).toBe('title');
+            expect(createExerciseUnitComponent.reverse()).toBe(true);
+            expect(sortSpy).toHaveBeenCalledWith(expect.any(Array), 'title', true);
+        });
+
+        it.each([
+            ['the course has no exercises', [], [], false],
+            ['every exercise is content already', ['text'], [1], true],
+        ])('should say so when %s', (_, exerciseKinds, linkedIds, hasCourseExercises) => {
+            loadCourse(exerciseKinds.length ? [textExercise] : [], linkedIds as number[]);
+
+            expect(createExerciseUnitComponent.hasCourseExercises()).toBe(hasCourseExercises);
+            expect(emptyRowKey()).not.toBeNull();
+        });
     });
 });

@@ -116,6 +116,15 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
+        it('should publish the saved title for the breadcrumb and the page title', () => {
+            const titleSpy = vi.spyOn(TestBed.inject(EntityTitleService), 'setTitle');
+
+            service.update(elemDefault).pipe(take(1)).subscribe();
+            httpMock.expectOne({ url: resourceUrl, method: 'PUT' }).flush({ ...elemDefault, title: 'Renamed Lecture' });
+
+            expect(titleSpy).toHaveBeenCalledWith(EntityType.LECTURE, [elemDefault.id], 'Renamed Lecture');
+        });
+
         it('should find a lecture with details in the database', async () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService, posts: [] };

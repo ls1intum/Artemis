@@ -1,4 +1,11 @@
-import { Component, ElementRef, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, computed, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faScissors, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
@@ -17,7 +24,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import dayjs from 'dayjs/esm';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
@@ -28,6 +35,7 @@ import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 @Component({
     selector: 'jhi-lecture-update-units',
     templateUrl: './lecture-units.component.html',
+    styleUrl: './lecture-units.component.scss',
     imports: [
         TranslateDirective,
         LectureUnitManagementComponent,
@@ -37,6 +45,13 @@ import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
         AttachmentVideoUnitFormComponent,
         CreateExerciseUnitComponent,
         PdfDropZoneComponent,
+        NgTemplateOutlet,
+        FormsModule,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiSelectComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class LectureUpdateUnitsComponent implements OnInit {
@@ -45,6 +60,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected textUnitService = inject(TextUnitService);
     protected onlineUnitService = inject(OnlineUnitService);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly router = inject(Router);
+    private readonly destroyRef = inject(DestroyRef);
+
+    protected readonly faScissors = faScissors;
+    protected readonly faSpinner = faSpinner;
 
     lecture = input.required<Lecture>();
 
@@ -68,6 +88,28 @@ export class LectureUpdateUnitsComponent implements OnInit {
     isOnlineUnitFormOpen = signal<boolean>(false);
     isAttachmentVideoUnitFormOpen = signal<boolean>(false);
     isUploadingPdfs = signal<boolean>(false);
+
+    /** The content of the lecture as the list shows it. */
+    readonly lectureUnits = signal<LectureUnit[]>([]);
+    /** The content items that hold a PDF, which Artemis can split into one item per section. */
+    readonly pdfUnits = computed(() =>
+        this.lectureUnits().filter(
+            (unit): unit is AttachmentVideoUnit =>
+                unit.type === LectureUnitType.ATTACHMENT_VIDEO && !!(unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+        ),
+    );
+    /** The PDF to split: the only one when there is one, the chosen one while it still exists. */
+    readonly selectedSplitUnitId = linkedSignal<AttachmentVideoUnit[], number | undefined>({
+        source: this.pdfUnits,
+        computation: (units, previous) => {
+            if (previous?.value !== undefined && units.some((unit) => unit.id === previous.value)) {
+                return previous.value;
+            }
+            return units.length === 1 ? units[0].id : undefined;
+        },
+    });
+    readonly selectedSplitUnit = computed(() => this.pdfUnits().find((unit) => unit.id === this.selectedSplitUnitId()));
+    readonly isPreparingSplit = signal(false);
 
     currentlyProcessedTextUnit = signal<TextUnit | undefined>(undefined);
     currentlyProcessedOnlineUnit = signal<OnlineUnit | undefined>(undefined);
@@ -316,6 +358,37 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 });
                 break;
         }
+    }
+
+    /**
+     * Opens the page that splits the selected PDF into one content item per section. The page works on a copy of the file, so the
+     * PDF item stays as it is; unsaved changes to the lecture details are left to the unsaved changes guard of this page.
+     */
+    splitSelectedPdf(): void {
+        const unit = this.selectedSplitUnit();
+        const courseId = this.lecture().course?.id;
+        const lectureId = this.lecture().id;
+        if (!unit?.id || !courseId || !lectureId) {
+            return;
+        }
+        this.isPreparingSplit.set(true);
+        this.attachmentVideoUnitService
+            .getAttachmentFile(courseId, unit.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (blob) => {
+                    this.isPreparingSplit.set(false);
+                    // The split only accepts file names that end in a lowercase .pdf.
+                    const file = new File([blob], `${unit.name || 'lecture'}.pdf`, { type: 'application/pdf' });
+                    void this.router.navigate(['course-management', courseId, 'lectures', lectureId, 'unit-management', 'attachment-video-units', 'process'], {
+                        state: { file, fileName: file.name },
+                    });
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isPreparingSplit.set(false);
+                    onError(this.alertService, error);
+                },
+            });
     }
 
     /**

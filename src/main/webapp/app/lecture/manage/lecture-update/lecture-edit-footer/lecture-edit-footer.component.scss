@@ -1,0 +1,22 @@
+// Layout is Tailwind in the template and host; this file only holds the theme roles, which have no Tailwind utility.
+:host {
+    background: var(--update-footer-background);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 8px color-mix(in srgb, var(--body-color) 8%, transparent);
+}
+
+.lecture-edit-footer-unsaved {
+    color: var(--artemis-alert-warning-color);
+}
+
+.lecture-edit-footer-unsaved-dot {
+    background: var(--warning);
+}
+
+.lecture-edit-footer-saved {
+    color: var(--artemis-alert-success-color);
+}
+
+.lecture-edit-footer-hint {
+    color: var(--text-body-secondary);
+}

@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
@@ -874,6 +874,95 @@ describe('LectureUpdateUnitsComponent', () => {
             // After completion
             await wizardUnitComponentFixture.whenStable();
             expect(wizardUnitComponent.isUploadingPdfs()).toBe(false);
+        });
+    });
+    describe('splitting a lecture PDF', () => {
+        function pdfUnit(id: number, name: string, link = `attachments/${name}.pdf`): AttachmentVideoUnit {
+            const unit = new AttachmentVideoUnit();
+            unit.id = id;
+            unit.name = name;
+            unit.type = LectureUnitType.ATTACHMENT_VIDEO;
+            unit.attachment = { link } as Attachment;
+            return unit;
+        }
+
+        function textUnitNamed(name: string): TextUnit {
+            const unit = new TextUnit();
+            unit.id = 50;
+            unit.name = name;
+            unit.type = LectureUnitType.TEXT;
+            return unit;
+        }
+
+        beforeEach(() => {
+            const lecture = new Lecture();
+            lecture.id = 1;
+            lecture.course = { id: 7 } as Lecture['course'];
+            wizardUnitComponentFixture.componentRef.setInput('lecture', lecture);
+        });
+
+        it('should offer the PDF items of the lecture and preselect the only one', () => {
+            const slides = pdfUnit(3, 'Slides', 'attachments/Slides.PDF');
+            wizardUnitComponent.lectureUnits.set([textUnitNamed('Reading'), pdfUnit(4, 'Sheet', 'attachments/sheet.zip'), slides]);
+
+            expect(wizardUnitComponent.pdfUnits()).toEqual([slides]);
+            expect(wizardUnitComponent.selectedSplitUnit()).toBe(slides);
+        });
+
+        it('should keep the chosen PDF while it exists and let the user choose among several', () => {
+            const first = pdfUnit(3, 'Part 1');
+            const second = pdfUnit(4, 'Part 2');
+            wizardUnitComponent.lectureUnits.set([first, second]);
+            expect(wizardUnitComponent.selectedSplitUnitId()).toBeUndefined();
+
+            wizardUnitComponent.selectedSplitUnitId.set(4);
+            wizardUnitComponent.lectureUnits.set([first, second, pdfUnit(5, 'Part 3')]);
+            expect(wizardUnitComponent.selectedSplitUnit()).toBe(second);
+
+            wizardUnitComponent.lectureUnits.set([first]);
+            expect(wizardUnitComponent.selectedSplitUnit()).toBe(first);
+        });
+
+        it('should say how to add a PDF when the lecture has none', () => {
+            wizardUnitComponent.lectureUnits.set([textUnitNamed('Reading')]);
+            wizardUnitComponentFixture.detectChanges();
+
+            expect(wizardUnitComponentFixture.nativeElement.querySelector('[data-testid="lecture-split-pdf-none"]')).not.toBeNull();
+            expect(wizardUnitComponentFixture.nativeElement.querySelector('[data-testid="lecture-split-pdf-start"]')).toBeNull();
+        });
+
+        it('should open the split page with a copy of the selected PDF', async () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const getFileSpy = vi.spyOn(attachmentVideoUnitService, 'getAttachmentFile').mockReturnValue(of(new Blob(['%PDF'], { type: 'application/pdf' })));
+            wizardUnitComponent.lectureUnits.set([pdfUnit(3, 'Introduction')]);
+
+            wizardUnitComponent.splitSelectedPdf();
+            await wizardUnitComponentFixture.whenStable();
+
+            expect(getFileSpy).toHaveBeenCalledExactlyOnceWith(7, 3);
+            const [commands, extras] = navigateSpy.mock.calls[0];
+            expect(commands).toEqual(['course-management', 7, 'lectures', 1, 'unit-management', 'attachment-video-units', 'process']);
+            const file = (extras?.state as { file: File; fileName: string }).file;
+            expect(file.name).toBe('Introduction.pdf');
+            expect(file.type).toBe('application/pdf');
+            expect(wizardUnitComponent.isPreparingSplit()).toBe(false);
+        });
+
+        it('should stay on the page and report it when the PDF cannot be loaded', async () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            vi.spyOn(attachmentVideoUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+            wizardUnitComponent.lectureUnits.set([pdfUnit(3, 'Introduction')]);
+
+            wizardUnitComponent.splitSelectedPdf();
+            await wizardUnitComponentFixture.whenStable();
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalled();
+            expect(wizardUnitComponent.isPreparingSplit()).toBe(false);
         });
     });
 });

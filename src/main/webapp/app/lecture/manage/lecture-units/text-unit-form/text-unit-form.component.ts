@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,7 +36,10 @@ export type MarkdownCache = {
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        FormDateTimePickerComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
         CompetencySelectionComponent,
         MarkdownEditorMonacoComponent,
         FaIconComponent,
@@ -59,7 +62,8 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
-    datePickerComponent = viewChild(FormDateTimePickerComponent);
+    /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
+    readonly isReleaseDateTextValid = signal(true);
 
     // not included in reactive form; backed by a signal so the [(markdown)] two-way binding re-renders under zoneless
     private readonly _content = signal<string | undefined>(undefined);
@@ -79,7 +83,7 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isReleaseDateTextValid());
 
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription!: Subscription; // set in ngOnInit(), always before ngOnDestroy() unsubscribes
@@ -110,6 +114,11 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
 
     get releaseDateControl() {
         return this.form.get('releaseDate');
+    }
+
+    onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
+        this.releaseDateControl?.setValue(releaseDate);
+        this.releaseDateControl?.markAsDirty();
     }
 
     ngOnDestroy() {

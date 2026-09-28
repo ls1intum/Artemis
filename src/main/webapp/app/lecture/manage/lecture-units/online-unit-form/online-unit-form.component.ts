@@ -1,14 +1,14 @@
 import dayjs from 'dayjs/esm';
-import { Component, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -38,13 +38,23 @@ function urlValidator(control: AbstractControl) {
 @Component({
     selector: 'jhi-online-unit-form',
     templateUrl: './online-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, CompetencySelectionComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        TumAetUiButtonDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        CompetencySelectionComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class OnlineUnitFormComponent {
     private readonly formBuilder = inject(FormBuilder);
     private readonly onlineUnitService = inject(OnlineUnitService);
 
-    protected readonly faArrowLeft = faArrowLeft;
     protected readonly faTimes = faTimes;
 
     formData = input<OnlineUnitFormData>();
@@ -55,7 +65,8 @@ export class OnlineUnitFormComponent {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
-    datePickerComponent = viewChild(FormDateTimePickerComponent);
+    /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
+    readonly isReleaseDateTextValid = signal(true);
 
     urlValidator = urlValidator;
 
@@ -68,7 +79,7 @@ export class OnlineUnitFormComponent {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isReleaseDateTextValid());
 
     // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
     private appliedFormData?: OnlineUnitFormData;
@@ -99,6 +110,11 @@ export class OnlineUnitFormComponent {
 
     get releaseDateControl() {
         return this.form.get('releaseDate');
+    }
+
+    onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
+        this.releaseDateControl?.setValue(releaseDate);
+        this.releaseDateControl?.markAsDirty();
     }
 
     get sourceControl() {

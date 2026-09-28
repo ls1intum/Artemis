@@ -1,88 +1,88 @@
-<form class="container">
-    @if (form) {
-        <form [formGroup]="form" (ngSubmit)="submitForm()">
-            <div class="form-group">
-                <label class="required" for="source">{{ 'artemisApp.onlineUnit.createOnlineUnit.source' | artemisTranslate }}*</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="source"
-                    formControlName="source"
-                    [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.sourcePlaceHolder' | artemisTranslate"
-                    (change)="onLinkChanged()"
-                />
-                <small id="urlHelperExplanation" class="form-text text-body-secondary" jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder"></small>
-                @if (sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)) {
-                    <div class="alert alert-danger">
-                        @if (sourceControl?.errors?.required) {
-                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.sourceRequiredValidationError"></div>
-                        }
-                        @if (sourceControl?.errors?.invalidUrl) {
-                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.sourceURLValidationError"></div>
-                        }
-                    </div>
+@if (form) {
+    <form class="flex flex-col gap-6" [formGroup]="form" (ngSubmit)="submitForm()">
+        @let sourceInvalid = !!sourceControl?.invalid && (!!sourceControl?.dirty || !!sourceControl?.touched);
+        <tumaet-ui-form-field
+            controlId="source"
+            [label]="'artemisApp.onlineUnit.createOnlineUnit.source' | artemisTranslate"
+            required
+            [hint]="'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate"
+            [invalid]="sourceInvalid"
+        >
+            <input
+                tumAetUiInput
+                id="source"
+                type="text"
+                formControlName="source"
+                required
+                [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.sourcePlaceHolder' | artemisTranslate"
+                (change)="onLinkChanged()"
+            />
+            <ng-container tumAetUiFormFieldError>
+                @if (sourceControl?.errors?.required) {
+                    <span jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.sourceRequiredValidationError"></span>
                 }
-            </div>
-            <div class="form-group">
-                <label class="required" for="name">{{ 'artemisApp.onlineUnit.createOnlineUnit.name' | artemisTranslate }} *</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="name"
-                    formControlName="name"
-                    [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.namePlaceHolder' | artemisTranslate"
-                />
-                @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
-                    <div class="alert alert-danger">
-                        @if (nameControl?.errors?.required) {
-                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.nameRequiredValidationError"></div>
-                        }
-                        @if (nameControl?.errors?.maxlength) {
-                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.nameMaxLengthValidationError"></div>
-                        }
-                    </div>
+                @if (sourceControl?.errors?.invalidUrl) {
+                    <span jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.sourceURLValidationError"></span>
                 }
-            </div>
-            <div class="form-group">
-                <label for="description" jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.description"></label>
-                <textarea
-                    class="form-control"
-                    id="description"
-                    rows="3"
-                    formControlName="description"
-                    [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.descriptionPlaceHolder' | artemisTranslate"
-                ></textarea>
-                @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
-                    <div class="alert alert-danger">
-                        @if (descriptionControl?.errors?.maxlength) {
-                            <div jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.descriptionMaxLengthValidationError"></div>
-                        }
-                    </div>
+            </ng-container>
+        </tumaet-ui-form-field>
+        @let nameInvalid = !!nameControl?.invalid && (!!nameControl?.dirty || !!nameControl?.touched);
+        <tumaet-ui-form-field controlId="name" [label]="'artemisApp.onlineUnit.createOnlineUnit.name' | artemisTranslate" required [invalid]="nameInvalid">
+            <input
+                tumAetUiInput
+                id="name"
+                type="text"
+                formControlName="name"
+                required
+                [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.namePlaceHolder' | artemisTranslate"
+            />
+            <ng-container tumAetUiFormFieldError>
+                @if (nameControl?.errors?.required) {
+                    <span jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.nameRequiredValidationError"></span>
                 }
-            </div>
-            <div class="form-group">
-                <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate" />
-            </div>
-            <div class="form-group">
-                <jhi-competency-selection
-                    id="competencies"
-                    [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
-                    [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
-                    formControlName="competencyLinks"
-                />
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
-                        <span jhiTranslate="entity.action.submit"></span>
-                    </button>
-                    @if (hasCancelButton()) {
-                        <button type="button" (click)="cancelForm()" class="btn btn-secondary">
-                            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                        </button>
-                    }
-                </div>
-            </div>
-        </form>
-    }
-</form>
+                @if (nameControl?.errors?.maxlength) {
+                    <span jhiTranslate="artemisApp.onlineUnit.createOnlineUnit.nameMaxLengthValidationError"></span>
+                }
+            </ng-container>
+        </tumaet-ui-form-field>
+        @let descriptionInvalid = !!descriptionControl?.invalid && (!!descriptionControl?.dirty || !!descriptionControl?.touched);
+        <tumaet-ui-form-field
+            controlId="description"
+            [label]="'artemisApp.onlineUnit.createOnlineUnit.description' | artemisTranslate"
+            [invalid]="descriptionInvalid"
+            [error]="'artemisApp.onlineUnit.createOnlineUnit.descriptionMaxLengthValidationError' | artemisTranslate"
+        >
+            <textarea
+                tumAetUiTextarea
+                id="description"
+                rows="3"
+                formControlName="description"
+                [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.descriptionPlaceHolder' | artemisTranslate"
+            ></textarea>
+        </tumaet-ui-form-field>
+        <tumaet-ui-date-picker
+            inputId="pick-releaseDate"
+            labelName="artemisApp.lectureUnit.releaseDate"
+            [value]="releaseDateControl?.value ?? undefined"
+            (valueChange)="onReleaseDateChange($event)"
+            (inputValidityChange)="isReleaseDateTextValid.set($event)"
+        />
+        <jhi-competency-selection
+            id="competencies"
+            [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+            [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
+            formControlName="competencyLinks"
+        />
+        <div class="flex flex-wrap gap-2">
+            <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
+                <span jhiTranslate="entity.action.submit"></span>
+            </button>
+            @if (hasCancelButton()) {
+                <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
+                    <fa-icon [icon]="faTimes" />
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </button>
+            }
+        </div>
+    </form>
+}

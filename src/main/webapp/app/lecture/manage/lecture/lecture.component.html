@@ -93,7 +93,13 @@
     </div>
 
     @if (lectures()) {
-        <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+        <jhi-pdf-drop-zone class="d-block mb-3" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+        <jhi-pdf-upload-target-dialog
+            [(visible)]="isPdfUploadTargetDialogVisible"
+            [lectures]="lectures()"
+            [uploadedFiles]="droppedPdfFiles()"
+            (targetSelected)="onPdfUploadTargetSelected($event)"
+        />
     }
 
     @if (loaded() && filteredLectures().length > 0) {

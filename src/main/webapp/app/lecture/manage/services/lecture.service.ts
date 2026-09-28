@@ -34,7 +34,11 @@ export class LectureService {
 
     update(lecture: Lecture): Observable<EntityResponseType> {
         const dto = this.convertLectureToSimpleDTO(lecture);
-        return this.http.put<Lecture>(this.resourceUrl, dto, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        return this.http.put<Lecture>(this.resourceUrl, dto, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)),
+            // The editor stays open after saving, so the breadcrumb and the page title have to show a new title right away.
+            tap((res: EntityResponseType) => this.sendTitlesToEntityTitleService(res?.body)),
+        );
     }
 
     find(lectureId: number): Observable<EntityResponseType> {

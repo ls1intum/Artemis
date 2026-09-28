@@ -1,64 +1,112 @@
-<div>
-    <h3><span jhiTranslate="artemisApp.lecture.sections.units"></span></h3>
-    <p><span jhiTranslate="artemisApp.lecture.sections.unitsDescription"></span></p>
+<div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-1">
+        <h3 id="artemisApp.lecture.sections.units" class="m-0 scroll-mt-4 text-lg font-semibold" jhiTranslate="artemisApp.lecture.sections.units"></h3>
+        <p class="lecture-units-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.sections.unitsDescription"></p>
+    </div>
 
     <jhi-lecture-unit-management
         [lectureId]="lecture().id"
         [emitEditEvents]="true"
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
+        (lectureUnitsChange)="lectureUnits.set($event)"
         [showCreationCard]="false"
         [showCompetencies]="true"
         [showDropZone]="false"
     />
-    <div class="form-group w-100 d-flex justify-content-start">
-        <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
-    </div>
-    <div class="form-group" #editFormContainer>
-        @if (isEditingLectureUnit() && isAnyUnitFormOpen()) {
-            <h4><span jhiTranslate="artemisApp.lecture.editLectureUnit"></span></h4>
-        } @else if (isAnyUnitFormOpen()) {
-            <h4><span jhiTranslate="artemisApp.lecture.newLectureUnit"></span></h4>
-        }
-        @if (isTextUnitFormOpen()) {
-            <jhi-text-unit-form
-                [isEditMode]="isEditingLectureUnit()"
-                [hasCancelButton]="true"
-                (onCancel)="onCloseLectureUnitForms()"
-                (formSubmitted)="createEditTextUnit($event)"
-                [formData]="textUnitFormData()"
-            />
-        }
-        @if (isOnlineUnitFormOpen()) {
-            <jhi-online-unit-form
-                [isEditMode]="isEditingLectureUnit()"
-                [hasCancelButton]="true"
-                (onCancel)="onCloseLectureUnitForms()"
-                (formSubmitted)="createEditOnlineUnit($event)"
-                [formData]="onlineUnitFormData()"
-            />
-        }
-        @if (isAttachmentVideoUnitFormOpen()) {
-            <jhi-attachment-video-unit-form
-                [isEditMode]="isEditingLectureUnit()"
-                [hasCancelButton]="true"
-                (onCancel)="onCloseLectureUnitForms()"
-                (formSubmitted)="createEditAttachmentVideoUnit($event)"
-                [formData]="attachmentVideoUnitFormData()"
-            />
-        }
-        @if (isExerciseUnitFormOpen()) {
-            <jhi-create-exercise-unit
-                [shouldNavigateOnSubmit]="false"
-                (onExerciseUnitCreated)="onExerciseUnitCreated()"
-                [lectureId]="lecture().id"
-                [courseId]="lecture().course?.id"
-                [hasCancelButton]="true"
-                (onCancel)="onCloseLectureUnitForms()"
-            />
-        }
-    </div>
 
-    <div class="mt-4">
-        <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
-    </div>
+    @if (isEditingLectureUnit() && isAnyUnitFormOpen()) {
+        <div #editFormContainer class="lecture-unit-form flex scroll-mt-4 flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" data-testid="lecture-unit-edit-form">
+            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.editLectureUnit"></h4>
+            <ng-container [ngTemplateOutlet]="unitForms" />
+        </div>
+    }
+
+    <section class="lecture-units-panel flex flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" aria-labelledby="lecture-add-content-title" data-testid="lecture-add-content">
+        <h4 id="lecture-add-content-title" class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.addContent.title"></h4>
+        <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
+        @if (!isEditingLectureUnit() && isAnyUnitFormOpen()) {
+            <div #editFormContainer class="lecture-unit-form flex scroll-mt-4 flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" data-testid="lecture-unit-create-form">
+                <h5 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.newLectureUnit"></h5>
+                <ng-container [ngTemplateOutlet]="unitForms" />
+            </div>
+        }
+        <jhi-pdf-drop-zone title="artemisApp.lecture.pdfUpload.dropZoneContentTitle" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+    </section>
+
+    <section class="lecture-units-panel flex flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" aria-labelledby="lecture-split-pdf-title" data-testid="lecture-split-pdf">
+        <div class="flex flex-col gap-1">
+            <h4 id="lecture-split-pdf-title" class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.splitPdf.title"></h4>
+            <p class="lecture-units-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.splitPdf.description"></p>
+        </div>
+        @if (pdfUnits().length) {
+            <div class="flex flex-wrap items-end gap-3.5">
+                <tumaet-ui-form-field class="min-w-64 grow" controlId="split-pdf-unit" [label]="'artemisApp.lecture.splitPdf.unit' | artemisTranslate">
+                    <tumaet-ui-select
+                        inputId="split-pdf-unit"
+                        data-testid="lecture-split-pdf-unit"
+                        [options]="pdfUnits()"
+                        optionLabel="name"
+                        optionValue="id"
+                        [placeholder]="'artemisApp.lecture.splitPdf.unitPlaceholder' | artemisTranslate"
+                        [ngModel]="selectedSplitUnitId()"
+                        (ngModelChange)="selectedSplitUnitId.set($event)"
+                    />
+                </tumaet-ui-form-field>
+                <button
+                    tumAetUiButton
+                    type="button"
+                    severity="secondary"
+                    variant="outlined"
+                    data-testid="lecture-split-pdf-start"
+                    [disabled]="!selectedSplitUnit() || isPreparingSplit()"
+                    (click)="splitSelectedPdf()"
+                >
+                    <fa-icon [icon]="isPreparingSplit() ? faSpinner : faScissors" [animation]="isPreparingSplit() ? 'spin' : undefined" />
+                    <span jhiTranslate="artemisApp.lecture.splitPdf.start"></span>
+                </button>
+            </div>
+        } @else {
+            <p class="lecture-units-hint m-0 text-sm" data-testid="lecture-split-pdf-none" jhiTranslate="artemisApp.lecture.splitPdf.noPdf"></p>
+        }
+    </section>
 </div>
+
+<ng-template #unitForms>
+    @if (isTextUnitFormOpen()) {
+        <jhi-text-unit-form
+            [isEditMode]="isEditingLectureUnit()"
+            [hasCancelButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+            (formSubmitted)="createEditTextUnit($event)"
+            [formData]="textUnitFormData()"
+        />
+    }
+    @if (isOnlineUnitFormOpen()) {
+        <jhi-online-unit-form
+            [isEditMode]="isEditingLectureUnit()"
+            [hasCancelButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+            (formSubmitted)="createEditOnlineUnit($event)"
+            [formData]="onlineUnitFormData()"
+        />
+    }
+    @if (isAttachmentVideoUnitFormOpen()) {
+        <jhi-attachment-video-unit-form
+            [isEditMode]="isEditingLectureUnit()"
+            [hasCancelButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+            (formSubmitted)="createEditAttachmentVideoUnit($event)"
+            [formData]="attachmentVideoUnitFormData()"
+        />
+    }
+    @if (isExerciseUnitFormOpen()) {
+        <jhi-create-exercise-unit
+            [shouldNavigateOnSubmit]="false"
+            (onExerciseUnitCreated)="onExerciseUnitCreated()"
+            [lectureId]="lecture().id"
+            [courseId]="lecture().course?.id"
+            [hasCancelButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+        />
+    }
+</ng-template>

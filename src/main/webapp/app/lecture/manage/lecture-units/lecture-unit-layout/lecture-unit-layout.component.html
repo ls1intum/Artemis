@@ -1,11 +1,9 @@
 @if (isLoading()) {
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden" jhiTranslate="loading"></span>
-        </div>
+    <div class="flex justify-center py-6">
+        <fa-icon [icon]="faSpinner" animation="spin" size="2x" [attr.aria-label]="'loading' | artemisTranslate" />
     </div>
 } @else {
-    <div class="container">
+    <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
         <ng-content />
     </div>
 }

@@ -33,7 +33,7 @@
             [attr.aria-controls]="isOpen() ? panelId() : null"
             [attr.aria-invalid]="showErrorBorder()"
             [attr.aria-label]="ariaLabel()"
-            [attr.aria-describedby]="!hideValidationMessage() && showErrorBorder() ? inputId() + '-error' : null"
+            [attr.aria-describedby]="describedBy()"
             (input)="onInput(dateInput.value)"
             (blur)="onBlur(dateInput.value)"
             (keydown.arrowdown)="openFromInput($event)"
@@ -65,7 +65,7 @@
         </button>
     </div>
 
-    @if (!hideValidationMessage() && showErrorBorder()) {
+    @if (showValidationMessage()) {
         <span [id]="inputId() + '-error'" role="alert" class="tumaet:text-sm tumaet:text-state-danger">
             {{ invalidMessageKey() | tumAetUiTranslate }}
         </span>

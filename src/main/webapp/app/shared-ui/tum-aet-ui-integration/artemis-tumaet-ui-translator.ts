@@ -29,6 +29,7 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumAetUi.datePicker.timePlaceholder': 'global.datePicker.timePlaceholder',
     'tumAetUi.datePicker.timeZoneWarning': 'entity.timeZoneWarning',
     'tumAetUi.dialog.close': 'entity.action.close',
+    'tumAetUi.message.dismiss': 'entity.action.dismiss',
     'tumAetUi.panel.collapse': 'global.generic.collapse',
     'tumAetUi.panel.expand': 'global.generic.expand',
     'tumAetUi.paginator.ariaLabel': 'global.paginator.ariaLabel',

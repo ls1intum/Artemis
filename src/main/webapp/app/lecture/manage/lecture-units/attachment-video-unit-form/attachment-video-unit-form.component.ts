@@ -2,15 +2,21 @@ import { Component, ElementRef, computed, effect, inject, input, output, signal,
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { buildEmbedUrl, parseVideoUrl } from './video-url-parser';
-import { faArrowLeft, faArrowUpRightFromSquare, faCircleInfo, faFileArrowUp, faQuestionCircle, faRotateLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faArrowUpRightFromSquare, faCircleInfo, faFileArrowUp, faQuestionCircle, faRotateLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE, UPLOAD_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDatePickerComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
@@ -104,9 +110,11 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
         TranslateDirective,
         FaIconComponent,
         TumAetUiButtonDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
         TumAetUiMessageComponent,
         TumAetUiTooltipDirective,
-        FormDateTimePickerComponent,
         CompetencySelectionComponent,
         ArtemisTranslatePipe,
         FeatureToggleHideDirective,
@@ -118,7 +126,7 @@ export class AttachmentVideoUnitFormComponent {
 
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
-    protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faArrowUp = faArrowUp;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly faFileArrowUp = faFileArrowUp;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
@@ -136,7 +144,8 @@ export class AttachmentVideoUnitFormComponent {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
-    datePickerComponent = viewChild(FormDateTimePickerComponent);
+    /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
+    readonly isReleaseDateTextValid = signal(true);
 
     // have to handle the file input as a special case at is not part of the reactive form
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
@@ -208,7 +217,7 @@ export class AttachmentVideoUnitFormComponent {
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
 
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.isReleaseDateTextValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });
 
     onFileChange(event: Event): void {
@@ -291,6 +300,11 @@ export class AttachmentVideoUnitFormComponent {
 
     get releaseDateControl() {
         return this.form.get('releaseDate');
+    }
+
+    onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
+        this.releaseDateControl?.setValue(releaseDate);
+        this.releaseDateControl?.markAsDirty();
     }
 
     get updateNotificationTextControl() {

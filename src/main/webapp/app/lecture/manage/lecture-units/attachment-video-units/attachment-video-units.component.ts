@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { faBan, faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
@@ -13,9 +13,16 @@ import { debounceTime, repeat, switchMap } from 'rxjs/operators';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDatePickerComponent,
+    TumAetUiFormFieldComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type LectureUnitDTOS = {
@@ -34,7 +41,20 @@ export type LectureUnitInformationDTO = {
 @Component({
     selector: 'jhi-attachment-video-units',
     templateUrl: './attachment-video-units.component.html',
-    imports: [LectureUnitLayoutComponent, TranslateDirective, FormsModule, FormDateTimePickerComponent, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [
+        LectureUnitLayoutComponent,
+        TranslateDirective,
+        FormsModule,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiTooltipDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class AttachmentVideoUnitsComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
@@ -49,12 +69,10 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     isProcessingMode = false;
     readonly units = signal<LectureUnitDTOS[]>([]);
     readonly numberOfPages = signal<number>(undefined!);
-    faSave = faSave;
     faBan = faBan;
     faTimes = faTimes;
     faPlus = faPlus;
     faExclamationTriangle = faExclamationTriangle;
-    faQuestionCircle = faQuestionCircle;
 
     readonly invalidUnitTableMessage = signal<string | undefined>(undefined);
     //Comma-seperated keyphrases used to detect slides to be removed

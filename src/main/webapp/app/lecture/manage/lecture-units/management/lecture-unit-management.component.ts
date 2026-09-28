@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -13,18 +14,32 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { faClock, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    IconDefinition,
+    faCheck,
+    faClock,
+    faExclamationTriangle,
+    faEye,
+    faEyeSlash,
+    faFile,
+    faFileLines,
+    faFilePdf,
+    faFileVideo,
+    faFlag,
+    faGripVertical,
+    faLink,
+    faPencilAlt,
+    faRepeat,
+    faScroll,
+    faSpinner,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
-import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
-import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
-import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
-import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -41,12 +56,9 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         UnitCreationCardComponent,
         CdkDropList,
         CdkDrag,
-        AttachmentVideoUnitComponent,
-        ExerciseUnitComponent,
-        TextUnitComponent,
-        OnlineUnitComponent,
-        CompetenciesPopoverComponent,
-        NgbTooltip,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         FaIconComponent,
         RouterLink,
         DeleteButtonDirective,
@@ -72,10 +84,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faRepeat = faRepeat;
     protected readonly faClock = faClock;
+    protected readonly faEyeSlash = faEyeSlash;
+    protected readonly faFlag = faFlag;
+    protected readonly faGripVertical = faGripVertical;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
-    protected readonly ProcessingPhase = ProcessingPhase;
 
     showCreationCard = input<boolean>(true);
     showCompetencies = input<boolean>(true);
@@ -86,6 +100,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     onEditLectureUnitClicked = output<LectureUnit>();
 
     lectureUnits = signal<LectureUnit[]>([]);
+    /** The units whenever they are loaded, reordered or deleted, for a page that works with them too. */
+    readonly lectureUnitsChange = outputFromObservable(toObservable(this.lectureUnits));
     lecture = signal<Lecture | undefined>(undefined);
     isLoading = signal(false);
     isStatusLoading = signal(true);
@@ -270,6 +286,60 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Whether students do not see the unit yet, because its release date lies ahead.
+     * @param lectureUnit the unit to check
+     */
+    isReleasedLater(lectureUnit: LectureUnit): boolean {
+        const releaseDate = this.getLectureUnitReleaseDate(lectureUnit);
+        return !!releaseDate && dayjs(releaseDate).isAfter(dayjs());
+    }
+
+    /**
+     * The icon of a unit's kind; a file unit shows whether it holds a PDF, another file, a video or both.
+     * @param lectureUnit the unit to show
+     */
+    getTypeIcon(lectureUnit: LectureUnit): IconDefinition {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return { pdf: faFilePdf, file: faFile, video: faFileVideo, fileAndVideo: faFileVideo }[this.getAttachmentVideoKind(lectureUnit)];
+            case LectureUnitType.EXERCISE:
+                return faCheck;
+            case LectureUnitType.ONLINE:
+                return faLink;
+            default:
+                return faScroll;
+        }
+    }
+
+    /**
+     * The translation key of a unit's kind, as the list names it above the unit's name.
+     * @param lectureUnit the unit to show
+     */
+    getTypeLabelKey(lectureUnit: LectureUnit): string {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return `artemisApp.lectureUnit.management.type.${this.getAttachmentVideoKind(lectureUnit)}`;
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.lectureUnit.management.type.exercise';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.lectureUnit.management.type.online';
+            default:
+                return 'artemisApp.lectureUnit.management.type.text';
+        }
+    }
+
+    private getAttachmentVideoKind(unit: AttachmentVideoUnit): 'pdf' | 'file' | 'video' | 'fileAndVideo' {
+        const hasFile = !!unit.attachment?.link;
+        if (hasFile && unit.videoSource) {
+            return 'fileAndVideo';
+        }
+        if (hasFile) {
+            return unit.attachment!.link!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'file';
+        }
+        return unit.videoSource ? 'video' : 'file';
+    }
+
     getAttachmentVersion(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO:
@@ -278,12 +348,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return undefined;
         }
     }
-
-    hasAttachment(lectureUnit: AttachmentVideoUnit): boolean {
-        return !!lectureUnit.attachment;
-    }
-
-    protected readonly AttachmentVideoUnit = AttachmentVideoUnit;
 
     /**
      * Load all processing and transcription statuses for attachment video units in a single bulk request.
@@ -367,19 +431,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.FAILED;
     }
 
-    hasTranscriptionBadge(lectureUnit: AttachmentVideoUnit): boolean {
-        // Hidden when transcribing to avoid redundancy with "Transcribing" processing badge
-        if (this.isProcessingTranscribing(lectureUnit)) {
-            return false;
-        }
-        return this.isTranscriptionPending(lectureUnit) || this.isTranscriptionFailed(lectureUnit) || this.hasTranscription(lectureUnit);
-    }
-
-    // Processing status helper methods (for ProcessingPhase)
-    isProcessingIdle(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.IDLE;
-    }
-
     isProcessingTranscribing(lectureUnit: AttachmentVideoUnit): boolean {
         return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.TRANSCRIBING;
     }
@@ -396,17 +447,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.FAILED;
     }
 
-    isProcessingInProgress(lectureUnit: AttachmentVideoUnit): boolean {
-        const phase = this.processingStatus()[lectureUnit.id!]?.phase;
-        return phase === ProcessingPhase.TRANSCRIBING || phase === ProcessingPhase.INGESTING;
-    }
-
     getProcessingErrorKey(lectureUnit: AttachmentVideoUnit): string | undefined {
         return this.processingStatus()[lectureUnit.id!]?.errorKey;
-    }
-
-    hasProcessingBadge(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.isProcessingInProgress(lectureUnit) || this.isProcessingFailed(lectureUnit) || this.isProcessingDone(lectureUnit) || this.isAwaitingProcessing(lectureUnit);
     }
 
     /**
@@ -439,27 +481,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
         // IDLE or no status yet - show "awaiting" only if the course is active (backfill scheduler only processes active courses)
         return this.isCourseActive();
-    }
-
-    getBadgeTopOffset(lectureUnit: LectureUnit) {
-        // Row 1: Release date badge (always)
-        // Row 2: Transcription + Processing badges side by side (for attachment video units)
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            const hasSecondRow = this.hasTranscriptionBadge(lectureUnit) || this.hasProcessingBadge(lectureUnit);
-            return hasSecondRow ? '-40px' : '-18px';
-        }
-        return '-18px';
-    }
-
-    /**
-     * Calculate the margin-top needed for a lecture unit container to accommodate its badges.
-     */
-    getContainerMarginTop(lectureUnit: LectureUnit): string | null {
-        if (lectureUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
-            return null;
-        }
-        const hasSecondRow = this.hasTranscriptionBadge(lectureUnit) || this.hasProcessingBadge(lectureUnit);
-        return hasSecondRow ? '67px' : '45px';
     }
 
     /**

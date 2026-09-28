@@ -1,212 +1,217 @@
 @if (isLoading()) {
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden" jhiTranslate="loading"></span>
-        </div>
+    <div class="flex justify-center py-6">
+        <fa-icon [icon]="faSpinner" animation="spin" size="2x" [attr.aria-label]="'loading' | artemisTranslate" />
     </div>
 }
-@if (!isLoading() && lecture()) {
-    <div>
-        <!-- Lecture Unit Rows-->
+@if (!isLoading() && lecture(); as currentLecture) {
+    <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
         @if (showCreationCard()) {
-            <div class="w-100 d-flex justify-content-end mb-5" [class.justify-content-center]="!lectureUnits()?.length">
-                <jhi-unit-creation-card />
-            </div>
+            <jhi-unit-creation-card />
         }
-        <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
-            @for (lectureUnit of lectureUnits(); track identify(i, lectureUnit); let i = $index) {
-                <div
-                    class="lecture-unit-container"
-                    [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO"
-                    [style.margin-top]="getContainerMarginTop(lectureUnit)"
-                    cdkDrag
-                >
-                    <div class="custom-handle d-none d-sm-flex">
-                        <svg viewBox="3 1 5 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="4.5" cy="2.5" r=".6" fill="currentColor" />
-                            <circle cx="4.5" cy="4.5" r=".6" fill="currentColor" />
-                            <circle cx="4.5" cy="6.499" r=".6" fill="currentColor" />
-                            <circle cx="4.5" cy="8.499" r=".6" fill="currentColor" />
-                            <circle cx="4.5" cy="10.498" r=".6" fill="currentColor" />
-                            <circle cx="4.5" cy="12.498" r=".6" fill="currentColor" />
-                            <circle cx="6.5" cy="2.5" r=".6" fill="currentColor" />
-                            <circle cx="6.5" cy="4.5" r=".6" fill="currentColor" />
-                            <circle cx="6.5" cy="6.499" r=".6" fill="currentColor" />
-                            <circle cx="6.5" cy="8.499" r=".6" fill="currentColor" />
-                            <circle cx="6.5" cy="10.498" r=".6" fill="currentColor" />
-                            <circle cx="6.5" cy="12.498" r=".6" fill="currentColor" />
-                        </svg>
-                    </div>
-                    <div class="lecture-unit-type-container">
-                        <div class="unit-badges d-flex flex-column gap-1" [style.top]="getBadgeTopOffset(lectureUnit)">
-                            <div class="badge bg-info">
-                                {{
-                                    getLectureUnitReleaseDate(lectureUnit)
-                                        ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
-                                        : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
-                                }}
+        @if (lectureUnits().length) {
+            <ol
+                class="m-0 flex list-none flex-col gap-2 p-0"
+                cdkDropList
+                (cdkDropListDropped)="drop($event)"
+                data-testid="lecture-unit-list"
+                [attr.aria-label]="'artemisApp.lectureUnit.management.list' | artemisTranslate"
+            >
+                @for (lectureUnit of lectureUnits(); track identify($index, lectureUnit)) {
+                    @let unitName = lectureUnitService.getLectureUnitName(lectureUnit) || '';
+                    <li class="lecture-unit-row flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-lg py-2.5 ps-2 pe-3.5" cdkDrag data-testid="lecture-unit">
+                        <fa-icon [icon]="faGripVertical" class="lecture-unit-grip hidden cursor-grab sm:inline" aria-hidden="true" />
+                        <fa-icon [icon]="getTypeIcon(lectureUnit)" [fixedWidth]="true" class="lecture-unit-type-icon text-lg" aria-hidden="true" />
+                        <div class="flex min-w-0 grow basis-48 flex-col gap-1.5">
+                            <div class="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                                <span class="lecture-unit-type text-xs font-medium uppercase" [jhiTranslate]="getTypeLabelKey(lectureUnit)"></span>
+                                <h4 class="m-0 min-w-0 text-base font-semibold break-words sm:truncate" data-testid="lecture-unit-name" [title]="unitName">{{ unitName }}</h4>
                             </div>
-
-                            <!-- Transcription + Processing badges in a row -->
-                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                                <div class="d-flex flex-row gap-1">
-                                    <!-- Transcription Status Badge (hidden when transcribing to avoid redundancy) -->
+                            <div class="flex flex-wrap gap-1.5" data-testid="lecture-unit-tags">
+                                @let releaseDate = getLectureUnitReleaseDate(lectureUnit);
+                                @if (releaseDate && isReleasedLater(lectureUnit)) {
+                                    <tumaet-ui-tag severity="warn">
+                                        <fa-icon [icon]="faEyeSlash" class="me-1" />{{
+                                            'artemisApp.lectureUnit.management.visibleFrom' | artemisTranslate: { date: (releaseDate | artemisDate) }
+                                        }}
+                                    </tumaet-ui-tag>
+                                } @else if (releaseDate) {
+                                    <tumaet-ui-tag severity="secondary">
+                                        <fa-icon [icon]="faEye" class="me-1" />{{
+                                            'artemisApp.lectureUnit.management.visibleSince' | artemisTranslate: { date: (releaseDate | artemisDate) }
+                                        }}
+                                    </tumaet-ui-tag>
+                                } @else {
+                                    <tumaet-ui-tag severity="secondary"
+                                        ><fa-icon [icon]="faEye" class="me-1" /><span jhiTranslate="artemisApp.lectureUnit.management.visible"></span
+                                    ></tumaet-ui-tag>
+                                }
+                                @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                                    @if (getAttachmentVersion(lectureUnit); as version) {
+                                        <tumaet-ui-tag severity="secondary">{{ 'artemisApp.lectureUnit.management.version' | artemisTranslate: { version } }}</tumaet-ui-tag>
+                                    }
+                                    <!-- The transcription tag is left out while transcribing, which the processing tag already says. -->
                                     @if (!isProcessingTranscribing(lectureUnit)) {
                                         @if (isTranscriptionPending(lectureUnit)) {
-                                            <div class="badge bg-info">
-                                                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
-                                            </div>
+                                            <tumaet-ui-tag severity="info">
+                                                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" /><span
+                                                    jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"
+                                                ></span>
+                                            </tumaet-ui-tag>
                                         } @else if (isTranscriptionFailed(lectureUnit)) {
-                                            <div class="badge bg-danger">
-                                                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
-                                            </div>
+                                            <tumaet-ui-tag severity="danger">
+                                                <fa-icon [icon]="faExclamationTriangle" class="me-1" /><span
+                                                    jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"
+                                                ></span>
+                                            </tumaet-ui-tag>
                                         } @else if (hasTranscription(lectureUnit)) {
-                                            <div class="badge bg-success">
-                                                <fa-icon [icon]="faFileLines" class="me-1" />
-                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
-                                            </div>
+                                            <tumaet-ui-tag severity="success">
+                                                <fa-icon [icon]="faFileLines" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
+                                            </tumaet-ui-tag>
                                         }
                                     }
-
-                                    <!-- Processing Pipeline Status Badge -->
                                     @if (isAwaitingProcessing(lectureUnit)) {
-                                        <div class="badge bg-secondary">
-                                            <fa-icon [icon]="faClock" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.awaitingProcessing"></span>
-                                        </div>
+                                        <tumaet-ui-tag severity="secondary">
+                                            <fa-icon [icon]="faClock" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.awaitingProcessing"></span>
+                                        </tumaet-ui-tag>
                                     } @else if (isProcessingTranscribing(lectureUnit)) {
-                                        <div class="badge bg-info">
-                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingTranscribing"></span>
-                                        </div>
+                                        <tumaet-ui-tag severity="info">
+                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" /><span
+                                                jhiTranslate="artemisApp.attachmentVideoUnit.processingTranscribing"
+                                            ></span>
+                                        </tumaet-ui-tag>
                                     } @else if (isProcessingIngesting(lectureUnit)) {
-                                        <div class="badge bg-info">
-                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingIngesting"></span>
-                                        </div>
+                                        <tumaet-ui-tag severity="info">
+                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" /><span
+                                                jhiTranslate="artemisApp.attachmentVideoUnit.processingIngesting"
+                                            ></span>
+                                        </tumaet-ui-tag>
                                     } @else if (isProcessingFailed(lectureUnit)) {
-                                        <div class="badge bg-danger" [ngbTooltip]="getProcessingErrorKey(lectureUnit) | artemisTranslate">
-                                            <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingFailed"></span>
-                                        </div>
+                                        <tumaet-ui-tag severity="danger" data-testid="lecture-unit-processing-failed">
+                                            <fa-icon [icon]="faExclamationTriangle" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.processingFailed"></span>
+                                            @if (getProcessingErrorKey(lectureUnit); as errorKey) {
+                                                <span>: {{ errorKey | artemisTranslate }}</span>
+                                            }
+                                        </tumaet-ui-tag>
                                     } @else if (isProcessingDone(lectureUnit)) {
-                                        <div class="badge bg-success">
-                                            <fa-icon [icon]="faFileLines" class="me-1" />
-                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingComplete"></span>
-                                        </div>
+                                        <tumaet-ui-tag severity="success">
+                                            <fa-icon [icon]="faFileLines" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.processingComplete"></span>
+                                        </tumaet-ui-tag>
                                     }
-                                </div>
-                            }
-                        </div>
-                        <div class="mt-2">
-                            @switch (lectureUnit.type) {
-                                @case (LectureUnitType.ATTACHMENT_VIDEO) {
-                                    <jhi-attachment-video-unit [courseId]="lecture()!.course!.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                                 }
-                                @case (LectureUnitType.EXERCISE) {
-                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture()!.course!" />
-                                }
-                                @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit [courseId]="lecture()!.course?.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
-                                }
-                                @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit [courseId]="lecture()!.course?.id!" [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
-                                }
-                                @default {}
-                            }
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-1 flex-column justify-content-center action-buttons" role="group">
-                        <!-- Row 1: Retry Processing (only for failed attachment/video units, editors+) -->
-                        @if (lecture()!.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
-                            <div class="d-flex gap-1 w-100">
-                                <button
-                                    type="button"
-                                    class="btn btn-warning btn-sm flex-fill"
-                                    [disabled]="isRetryingProcessing()[lectureUnit.id!]"
-                                    (click)="retryProcessing(lectureUnit)"
-                                    [ngbTooltip]="'artemisApp.lectureUnit.retryProcessing' | artemisTranslate"
-                                >
-                                    @if (isRetryingProcessing()[lectureUnit.id!]) {
-                                        <fa-icon [icon]="faSpinner" animation="spin" />
-                                    } @else {
-                                        <fa-icon [icon]="faRepeat" />
+                                @if (showCompetencies()) {
+                                    @for (competencyLink of lectureUnit.competencyLinks ?? []; track competencyLink.competency?.id) {
+                                        @if (competencyLink.competency?.title; as competencyTitle) {
+                                            <tumaet-ui-tag severity="info" data-testid="lecture-unit-competency">
+                                                <fa-icon [icon]="faFlag" class="me-1" />{{ competencyTitle }}
+                                            </tumaet-ui-tag>
+                                        }
                                     }
-                                </button>
+                                }
                             </div>
-                        }
-                        <!-- Row 2: View + Linked Competencies -->
-                        <div class="d-flex gap-1 w-100">
-                            @if (viewButtonAvailable()[lectureUnit.id!]) {
-                                <div class="flex-fill">
-                                    <a
-                                        type="button"
-                                        class="btn btn-primary btn-sm w-100"
-                                        [routerLink]="[
-                                            '/course-management',
-                                            lecture()!.course?.id,
-                                            'lectures',
-                                            lecture()!.id,
-                                            'unit-management',
-                                            'attachment-video-units',
-                                            lectureUnit.id,
-                                            'view',
-                                        ]"
-                                        [ngbTooltip]="'entity.action.view' | artemisTranslate"
-                                    >
-                                        <fa-icon [icon]="faEye" />
-                                    </a>
-                                </div>
-                            }
-                            @if (lecture()!.course?.id && showCompetencies()) {
-                                <div class="flex-fill">
-                                    <jhi-competencies-popover
-                                        [courseId]="lecture()!.course!.id!"
-                                        [competencyLinks]="lectureUnit.competencyLinks || []"
-                                        [navigateTo]="'competencyManagement'"
-                                        [ngbTooltip]="'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate"
-                                    />
-                                </div>
-                            }
                         </div>
-                        <!-- Row 3: Edit + Delete -->
-                        <div class="d-flex gap-1 w-100">
-                            @if (emitEditEvents()) {
-                                @if (editButtonAvailable(lectureUnit)) {
+                        <div
+                            class="ms-auto flex shrink-0 items-center gap-0.5"
+                            role="group"
+                            [attr.aria-label]="'artemisApp.lectureUnit.management.actions' | artemisTranslate: { name: unitName }"
+                        >
+                            @if (currentLecture.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
+                                @let retryLabel = 'artemisApp.lectureUnit.retryProcessing' | artemisTranslate;
+                                <button
+                                    tumAetUiButton
+                                    type="button"
+                                    severity="warn"
+                                    variant="text"
+                                    size="small"
+                                    data-testid="lecture-unit-retry"
+                                    [disabled]="isRetryingProcessing()[lectureUnit.id!]"
+                                    [attr.aria-label]="retryLabel"
+                                    [tumAetUiTooltip]="retryLabel"
+                                    tumAetUiTooltipDescribesHost="false"
+                                    (click)="retryProcessing(lectureUnit)"
+                                >
+                                    <fa-icon
+                                        [icon]="isRetryingProcessing()[lectureUnit.id!] ? faSpinner : faRepeat"
+                                        [animation]="isRetryingProcessing()[lectureUnit.id!] ? 'spin' : undefined"
+                                    />
+                                </button>
+                            }
+                            @if (viewButtonAvailable()[lectureUnit.id!]) {
+                                @let viewLabel = 'entity.action.view' | artemisTranslate;
+                                <a
+                                    tumAetUiButton
+                                    severity="secondary"
+                                    variant="text"
+                                    size="small"
+                                    data-testid="lecture-unit-view"
+                                    [routerLink]="[
+                                        '/course-management',
+                                        currentLecture.course?.id,
+                                        'lectures',
+                                        currentLecture.id,
+                                        'unit-management',
+                                        'attachment-video-units',
+                                        lectureUnit.id,
+                                        'view',
+                                    ]"
+                                    [attr.aria-label]="viewLabel"
+                                    [tumAetUiTooltip]="viewLabel"
+                                    tumAetUiTooltipDescribesHost="false"
+                                >
+                                    <fa-icon [icon]="faEye" />
+                                </a>
+                            }
+                            @if (editButtonAvailable(lectureUnit)) {
+                                @let editLabel = 'entity.action.edit' | artemisTranslate;
+                                @if (emitEditEvents()) {
                                     <button
+                                        tumAetUiButton
                                         type="button"
-                                        class="btn btn-primary btn-sm edit flex-fill"
+                                        severity="secondary"
+                                        variant="text"
+                                        size="small"
+                                        class="edit"
+                                        data-testid="lecture-unit-edit"
+                                        [attr.aria-label]="editLabel"
+                                        [tumAetUiTooltip]="editLabel"
+                                        tumAetUiTooltipDescribesHost="false"
                                         (click)="onEditButtonClicked(lectureUnit)"
-                                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
                                         <fa-icon [icon]="faPencilAlt" />
                                     </button>
-                                }
-                            } @else {
-                                @if (editButtonAvailable(lectureUnit)) {
+                                } @else {
                                     <a
-                                        type="button"
-                                        class="btn btn-primary btn-sm edit flex-fill"
+                                        tumAetUiButton
+                                        severity="secondary"
+                                        variant="text"
+                                        size="small"
+                                        class="edit"
+                                        data-testid="lecture-unit-edit"
                                         [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
-                                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                                        [attr.aria-label]="editLabel"
+                                        [tumAetUiTooltip]="editLabel"
+                                        tumAetUiTooltipDescribesHost="false"
                                     >
                                         <fa-icon [icon]="faPencilAlt" />
                                     </a>
                                 }
                             }
-                            @if (lecture()!.isAtLeastInstructor) {
+                            @if (currentLecture.isAtLeastInstructor) {
+                                @let deleteLabel = 'entity.action.' + getActionType(lectureUnit) | artemisTranslate;
                                 <button
+                                    tumAetUiButton
                                     type="button"
-                                    class="btn btn-danger btn-sm flex-fill"
+                                    severity="danger"
+                                    variant="text"
+                                    size="small"
+                                    data-testid="lecture-unit-delete"
                                     jhiDeleteButton
                                     [renderButtonStyle]="false"
                                     [renderButtonText]="false"
-                                    [ngbTooltip]="'entity.action.' + getActionType(lectureUnit) | artemisTranslate"
+                                    [attr.aria-label]="deleteLabel"
+                                    [tumAetUiTooltip]="deleteLabel"
+                                    tumAetUiTooltipDescribesHost="false"
                                     [actionType]="getActionType(lectureUnit)"
-                                    [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
+                                    [entityTitle]="unitName"
                                     [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
                                     [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
                                     (delete)="deleteLectureUnit(lectureUnit.id!)"
@@ -216,15 +221,14 @@
                                 </button>
                             }
                         </div>
-                    </div>
-                </div>
-            }
-        </div>
-
+                    </li>
+                }
+            </ol>
+        } @else {
+            <p class="lecture-unit-empty m-0" data-testid="lecture-unit-empty" jhiTranslate="artemisApp.lectureUnit.management.empty"></p>
+        }
         @if (showDropZone()) {
-            <div class="mt-4">
-                <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
-            </div>
+            <jhi-pdf-drop-zone title="artemisApp.lecture.pdfUpload.dropZoneContentTitle" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
         }
     </div>
 }

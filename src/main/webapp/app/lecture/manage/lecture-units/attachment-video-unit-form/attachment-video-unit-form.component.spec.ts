@@ -336,7 +336,10 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
-        attachmentVideoUnitFormComponent.urlHelperControl!.setValue(validYouTubeUrl);
+        // Type the link like a user, so the field's input event refreshes the page as it does in the browser.
+        const urlHelperInput: HTMLInputElement = attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#urlHelper');
+        urlHelperInput.value = validYouTubeUrl;
+        urlHelperInput.dispatchEvent(new Event('input'));
         // The transform button is gated by [disabled]="!isTransformable". Under zoneless change
         // detection the form-control status only propagates to that binding after the reactive flush
         // settles, so wait for stability (and re-render) before clicking, otherwise the click is a no-op.
@@ -354,7 +357,10 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const expectedUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1';
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
-        attachmentVideoUnitFormComponent.urlHelperControl!.setValue(tumLiveUrl);
+        // Type the link like a user, so the field's input event refreshes the page as it does in the browser.
+        const urlHelperInput: HTMLInputElement = attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#urlHelper');
+        urlHelperInput.value = tumLiveUrl;
+        urlHelperInput.dispatchEvent(new Event('input'));
         // The transform button is gated by [disabled]="!isTransformable". Under zoneless change
         // detection the form-control status only propagates to that binding after the reactive flush
         // settles, so wait for stability (and re-render) before clicking, otherwise the click is a no-op.

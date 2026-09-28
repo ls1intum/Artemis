@@ -6,9 +6,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Component, input } from '@angular/core';
-import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
-import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -24,12 +21,13 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
+import { faCheck, faFile, faFilePdf, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -42,16 +40,10 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
-@Component({ selector: 'jhi-competencies-popover', template: '' })
-class CompetenciesPopoverStubComponent {
-    courseId = input.required<number>();
-    competencyLinks = input<CompetencyLectureUnitLink[]>([]);
-    navigateTo = input<'competencyManagement' | 'courseStatistics'>('courseStatistics');
-}
-
 @Component({ selector: 'jhi-pdf-drop-zone', template: '' })
 class PdfDropZoneStubComponent {
     disabled = input<boolean>(false);
+    title = input<string>();
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -77,17 +69,12 @@ describe('LectureUnitManagementComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
                 FaIconComponent,
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
-                CompetenciesPopoverStubComponent,
                 PdfDropZoneStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(ExerciseUnitComponent),
-                MockComponent(AttachmentVideoUnitComponent),
-                MockComponent(TextUnitComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockRouterLinkDirective,
@@ -288,21 +275,6 @@ describe('LectureUnitManagementComponent', () => {
             lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.FAILED });
             expect(lectureUnitManagementComponent.isTranscriptionFailed(attachmentVideoUnit)).toBe(true);
         });
-
-        it('should return true for hasTranscriptionBadge when transcription is pending', () => {
-            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.PENDING });
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasTranscriptionBadge when transcription is completed', () => {
-            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.COMPLETED });
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasTranscriptionBadge when transcription failed', () => {
-            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.FAILED });
-            expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBe(true);
-        });
     });
 
     describe('Processing Status', () => {
@@ -331,7 +303,8 @@ describe('LectureUnitManagementComponent', () => {
                     retryCount: 0,
                 },
             });
-            expect(lectureUnitManagementComponent.isProcessingIdle(attachmentVideoUnit)).toBe(true);
+            expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(false);
+            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBe(false);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -341,7 +314,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBe(true);
-            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBe(true);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -351,7 +323,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingIngesting(attachmentVideoUnit)).toBe(true);
-            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBe(true);
 
             lectureUnitManagementComponent.processingStatus.set({
                 [attachmentVideoUnit.id!]: {
@@ -370,39 +341,6 @@ describe('LectureUnitManagementComponent', () => {
                 },
             });
             expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing is in progress', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.TRANSCRIBING,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing is done', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.DONE,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
-        });
-
-        it('should return true for hasProcessingBadge when processing failed', () => {
-            lectureUnitManagementComponent.processingStatus.set({
-                [attachmentVideoUnit.id!]: {
-                    lectureUnitId: attachmentVideoUnit.id!,
-                    phase: ProcessingPhase.FAILED,
-                    retryCount: 0,
-                },
-            });
-            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBe(true);
         });
 
         it('should return error key from processing status', () => {
@@ -753,6 +691,88 @@ describe('LectureUnitManagementComponent', () => {
 
             // Should navigate to the last created unit (id: 30)
             expect(navigateSpy).toHaveBeenCalledWith(['/course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 30, 'edit']);
+        });
+    });
+    describe('content item cards', () => {
+        function withAttachment(link: string | undefined, videoSource?: string): AttachmentVideoUnit {
+            const unit = new AttachmentVideoUnit();
+            unit.type = LectureUnitType.ATTACHMENT_VIDEO;
+            unit.attachment = link ? { link } : undefined;
+            unit.videoSource = videoSource;
+            return unit;
+        }
+
+        it.each([
+            ['a PDF', withAttachment('attachments/slides.PDF'), 'pdf', faFilePdf],
+            ['another file', withAttachment('attachments/sheet.zip'), 'file', faFile],
+            ['a video', withAttachment(undefined, 'https://live.rbg.tum.de/w/1'), 'video', faFileVideo],
+            ['a file and a video', withAttachment('attachments/slides.pdf', 'https://live.rbg.tum.de/w/1'), 'fileAndVideo', faFileVideo],
+        ])('should name a file unit with %s by what it holds', (_, unit, kind, icon) => {
+            expect(lectureUnitManagementComponent.getTypeLabelKey(unit)).toBe(`artemisApp.lectureUnit.management.type.${kind}`);
+            expect(lectureUnitManagementComponent.getTypeIcon(unit)).toBe(icon);
+        });
+
+        it.each([
+            [LectureUnitType.TEXT, 'text', faScroll],
+            [LectureUnitType.EXERCISE, 'exercise', faCheck],
+            [LectureUnitType.ONLINE, 'online', faLink],
+        ])('should name a %s unit by its kind', (type, kind, icon) => {
+            const unit = { type } as LectureUnit;
+
+            expect(lectureUnitManagementComponent.getTypeLabelKey(unit)).toBe(`artemisApp.lectureUnit.management.type.${kind}`);
+            expect(lectureUnitManagementComponent.getTypeIcon(unit)).toBe(icon);
+        });
+
+        it('should tell a unit released later from a visible one, using the release date of an exercise for its unit', () => {
+            const later = { type: LectureUnitType.TEXT, releaseDate: dayjs().add(1, 'day') } as LectureUnit;
+            const earlier = { type: LectureUnitType.TEXT, releaseDate: dayjs().subtract(1, 'day') } as LectureUnit;
+            const exerciseLater = { type: LectureUnitType.EXERCISE, exercise: { releaseDate: dayjs().add(2, 'days') } } as ExerciseUnit;
+
+            expect(lectureUnitManagementComponent.isReleasedLater(later)).toBe(true);
+            expect(lectureUnitManagementComponent.isReleasedLater(earlier)).toBe(false);
+            expect(lectureUnitManagementComponent.isReleasedLater({ type: LectureUnitType.TEXT } as LectureUnit)).toBe(false);
+            expect(lectureUnitManagementComponent.isReleasedLater(exerciseLater)).toBe(true);
+        });
+
+        it('should show one card per unit with its name and linked competencies', async () => {
+            textUnit.type = LectureUnitType.TEXT;
+            textUnit.name = 'Reading';
+            textUnit.competencyLinks = [
+                new CompetencyLectureUnitLink({ id: 7, title: 'Modeling' }, undefined, 1),
+                new CompetencyLectureUnitLink({ id: 8, title: 'Testing' }, undefined, 1),
+            ];
+            vi.spyOn(lectureUnitService, 'getLectureUnitName').mockImplementation((unit: LectureUnit) => unit.name ?? '');
+            // The first render of the setup already loaded the units, so load the changed ones again.
+            lectureUnitManagementComponent.loadData();
+            await lectureUnitManagementComponentFixture.whenStable();
+
+            const cards = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css('[data-testid="lecture-unit"]'));
+            expect(cards).toHaveLength(3);
+            expect(cards[0].query(By.css('[data-testid="lecture-unit-name"]')).nativeElement.textContent.trim()).toBe('Reading');
+            expect(cards[0].queryAll(By.css('[data-testid="lecture-unit-competency"]')).map((tag) => tag.nativeElement.textContent.trim())).toEqual(['Modeling', 'Testing']);
+
+            lectureUnitManagementComponentFixture.componentRef.setInput('showCompetencies', false);
+            await lectureUnitManagementComponentFixture.whenStable();
+            expect(lectureUnitManagementComponentFixture.debugElement.queryAll(By.css('[data-testid="lecture-unit-competency"]'))).toHaveLength(0);
+        });
+
+        it('should say that the lecture has no content yet', async () => {
+            lecture.lectureUnits = [];
+            lectureUnitManagementComponent.loadData();
+            await lectureUnitManagementComponentFixture.whenStable();
+
+            expect(lectureUnitManagementComponentFixture.debugElement.query(By.css('[data-testid="lecture-unit-empty"]'))).not.toBeNull();
+            expect(lectureUnitManagementComponentFixture.debugElement.query(By.css('[data-testid="lecture-unit-list"]'))).toBeNull();
+        });
+
+        it('should announce the units to a page that works with them', () => {
+            const announced: LectureUnit[][] = [];
+            lectureUnitManagementComponent.lectureUnitsChange.subscribe((units) => announced.push(units));
+
+            lectureUnitManagementComponent.loadData();
+            TestBed.tick();
+
+            expect(announced.at(-1)).toEqual([textUnit, exerciseUnit, attachmentVideoUnit]);
         });
     });
 });
