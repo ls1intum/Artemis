@@ -270,15 +270,19 @@ With the environment variable `SPRING_DATASOURCE_URL`, append the same parameter
 Illegal mix of collations (utf8mb4_unicode_ci,IMPLICIT), (utf8mb4_0900_ai_ci,IMPLICIT), (utf8mb4_0900_ai_ci,COERCIBLE) for operation 'like'
 ```
 
-To check an installation, make sure the datasource URL of every node contains `connectionCollation=utf8mb4_unicode_ci`. Then check the default of the `Artemis` database and the collation of its tables and text columns:
+To check an installation, make sure the datasource URL of every node contains `connectionCollation=utf8mb4_unicode_ci`. Then check the defaults of the server and of the `Artemis` database, and the collation of its tables and text columns:
 
 ```sql
+SHOW VARIABLES WHERE Variable_name IN ('character_set_server', 'collation_server');
 SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = 'Artemis';
 SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'Artemis' AND TABLE_COLLATION <> 'utf8mb4_unicode_ci';
 SELECT TABLE_NAME, COLUMN_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'Artemis' AND COLLATION_NAME IS NOT NULL AND COLLATION_NAME <> 'utf8mb4_unicode_ci';
 ```
 
-The first query should return `utf8mb4` and `utf8mb4_unicode_ci`, and the other two no rows. A column can declare its own collation, so it can deviate even when its table does not. The Artemis schema declares no column collation, so a deviating column was changed outside of Artemis. The server configuration only applies when a database is created, so changing it later leaves the default of an existing `Artemis` database as it was. If that default differs, change it with the following statement. It applies to the tables that later migrations create and does not convert existing tables:
+- The first two queries should return `utf8mb4` and `utf8mb4_unicode_ci`. The server defaults matter even when the database is correct: with `createDatabaseIfNotExist=true`, a recreated `Artemis` database takes them over.
+- The other two should return no rows. A column can declare its own collation, so it can deviate even when its table does not. The Artemis schema declares no column collation, so a deviating column was changed outside of Artemis.
+
+The server configuration only applies when a database is created, so changing it later leaves the default of an existing `Artemis` database as it was. If that default differs, change it with the following statement. It applies to the tables that later migrations create and does not convert existing tables:
 
 ```sql
 ALTER DATABASE Artemis CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
