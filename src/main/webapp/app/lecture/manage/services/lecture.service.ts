@@ -144,21 +144,6 @@ export class LectureService {
         return this.http.delete<void>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
     }
 
-    protected convertLectureDatesFromClient(lecture: Lecture): Lecture {
-        const copy: Lecture = cloneWith(lecture, {
-            startDate: convertDateFromClient(lecture.startDate),
-            endDate: convertDateFromClient(lecture.endDate),
-        });
-        if (copy.lectureUnits) {
-            copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
-        }
-        if (copy.course) {
-            copy.course.exercises = undefined;
-            copy.course.lectures = undefined;
-        }
-        return copy;
-    }
-
     protected convertLectureResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.startDate = convertDateFromServer(res.body.startDate);
