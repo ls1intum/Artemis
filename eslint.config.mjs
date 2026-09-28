@@ -211,6 +211,9 @@ export default tseslint.config(
             '@angular-eslint/computed-must-return': 'error',
             // takeUntilDestroyed() without a DestroyRef throws NG0203 outside an injection context (ngOnInit, methods).
             '@angular-eslint/no-implicit-take-until-destroyed': 'error',
+            '@angular-eslint/no-uncalled-signals': 'error',
+            '@angular-eslint/no-async-lifecycle-method': 'error',
+            '@angular-eslint/no-duplicates-in-metadata-arrays': 'error',
             // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
             // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
             // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
@@ -620,10 +623,12 @@ export default tseslint.config(
         },
         rules: {
             'prettier/prettier': ['error', { parser: 'angular' }],
-            '@angular-eslint/template/click-events-have-key-events': 'off',
-            '@angular-eslint/template/interactive-supports-focus': 'off',
+            '@angular-eslint/template/click-events-have-key-events': 'error',
+            '@angular-eslint/template/interactive-supports-focus': 'error',
+            '@angular-eslint/template/button-has-type': 'error',
             '@angular-eslint/template/label-has-associated-control': 'off',
-            '@angular-eslint/template/alt-text': 'off',
+            '@angular-eslint/template/alt-text': 'error',
+            '@angular-eslint/template/no-positive-tabindex': 'error',
             '@angular-eslint/template/elements-content': 'off',
             '@angular-eslint/template/prefer-control-flow': 'error',
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
@@ -637,6 +642,7 @@ export default tseslint.config(
             // as the Angular style guide recommends. A bound object is compared by reference, so replace it rather
             // than mutating it, and write a unit suffix such as `top.px` as its own [style.top.px] binding.
             '@angular-eslint/template/prefer-style-binding': 'error',
+            '@angular-eslint/template/no-any': 'error',
         },
     },
     {
@@ -647,6 +653,12 @@ export default tseslint.config(
             '@angular-eslint/template/label-has-associated-control': 'error',
             '@angular-eslint/template/alt-text': 'error',
             '@angular-eslint/template/elements-content': 'error',
+        },
+    },
+    {
+        files: ['src/main/webapp/app/exercise/team/**/*.html'],
+        rules: {
+            '@angular-eslint/template/label-has-associated-control': 'error',
         },
     },
     {
@@ -697,6 +709,8 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
             'src/main/webapp/app/core/alert/**/*.html',
+            'src/main/webapp/app/core/about-us/**/*.html',
+            'src/main/webapp/app/core/feature-overview/**/*.html',
             'src/main/webapp/app/core/layouts/footer/**/*.html',
             // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
@@ -711,7 +725,15 @@ export default tseslint.config(
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
+            'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/account/**/*.html',
+            // The lecture editor with its content, the pages that create, edit and split content, and the PDF drop zone and dialog.
+            'src/main/webapp/app/lecture/manage/lecture-update/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-period/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.html',
+            'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
+            'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
+            'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {

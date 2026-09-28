@@ -19,7 +19,7 @@
                     <span style="color: grey"><fa-icon [icon]="faExclamationCircle" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.failed"></span></span>
                 </h2>
                 <p>
-                    <button class="btn btn-default" (click)="secureImageComponent().retryLoadImage()" jhiTranslate="artemisApp.quizQuestion.retry"></button>
+                    <button type="button" class="btn btn-default" (click)="secureImageComponent().retryLoadImage()" jhiTranslate="artemisApp.quizQuestion.retry"></button>
                 </p>
             </div>
         }
@@ -89,10 +89,10 @@
                 @if (!forceSampleSolution()) {
                     <div>
                         @if (!showingSampleSolution()) {
-                            <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>
+                            <button type="button" class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></button>
                         }
                         @if (showingSampleSolution()) {
-                            <div class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></div>
+                            <button type="button" class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></button>
                         }
                     </div>
                 }

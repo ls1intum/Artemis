@@ -16,9 +16,18 @@
                 />
                 <span class="fs-small d-inline-flex flex-column align-items-start">
                     <span class="d-inline-flex align-items-center gap-2">
-                        <span class="fw-semibold" [ngClass]="{ clickable: !isAuthorOfPosting() && posting()?.authorRole }" (click)="userNameClicked()">{{
-                            authorOfPosting.name
-                        }}</span>
+                        <span
+                            class="fw-semibold"
+                            [ngClass]="{ clickable: !isAuthorOfPosting() && posting()?.authorRole }"
+                            (click)="userNameClicked()"
+                            #keyboardAction19
+                            [attr.role]="!isAuthorOfPosting() && posting()?.authorRole ? 'button' : null"
+                            [attr.tabindex]="!isAuthorOfPosting() && posting()?.authorRole ? 0 : null"
+                            (keydown.enter)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                            (keydown.space)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="!isAuthorOfPosting() && posting()?.authorRole && $event.target === $event.currentTarget ? keyboardAction19.click() : undefined"
+                            >{{ authorOfPosting.name }}</span
+                        >
                         @if (isUnverifiedIris()) {
                             <p-tag severity="warn">
                                 <fa-icon [icon]="faTriangleExclamation" class="me-1" />

@@ -7,6 +7,7 @@
         <div class="assessment-criteria-generation__header flex w-full flex-wrap items-start justify-between gap-2">
             <div class="col-12 col-sm-auto d-flex me-1 mb-1">
                 <button
+                    type="button"
                     id="edit-mode"
                     class="btn btn-block"
                     (click)="switchMode()"
@@ -16,6 +17,7 @@
                     <span jhiTranslate="entity.action.edit"></span>
                 </button>
                 <button
+                    type="button"
                     id="edit-text-mode"
                     class="btn btn-block"
                     (click)="switchMode()"
@@ -80,7 +82,16 @@
                                 </div>
                                 <div class="col-md-3 text-end">
                                     <div class="col-md-auto input-group-btn d-flex-end">
-                                        <span class="btn btn-md btn-danger" (click)="deleteGradingCriterion(criterion)">
+                                        <span
+                                            class="btn btn-md btn-danger"
+                                            (click)="deleteGradingCriterion(criterion)"
+                                            #keyboardAction83
+                                            [attr.role]="editable() ? 'button' : null"
+                                            [attr.tabindex]="editable() ? 0 : null"
+                                            (keydown.enter)="editable() && $event.target === $event.currentTarget ? keyboardAction83.click() : undefined"
+                                            (keydown.space)="editable() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                            (keyup.space)="editable() && $event.target === $event.currentTarget ? keyboardAction83.click() : undefined"
+                                        >
                                             <fa-icon [icon]="faTrash" />
                                             <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
                                         </span>
@@ -170,7 +181,18 @@
                                                     />
                                                 </td>
                                                 <td>
-                                                    <span class="instruction-delete-button col-2" id="delete-instruction-row" (click)="deleteInstruction(instruction, criterion)">
+                                                    <span
+                                                        class="instruction-delete-button col-2"
+                                                        id="delete-instruction-row"
+                                                        [attr.aria-label]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
+                                                        (click)="deleteInstruction(instruction, criterion)"
+                                                        #keyboardAction173
+                                                        [attr.role]="editable() ? 'button' : null"
+                                                        [attr.tabindex]="editable() ? 0 : null"
+                                                        (keydown.enter)="editable() && $event.target === $event.currentTarget ? keyboardAction173.click() : undefined"
+                                                        (keydown.space)="editable() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                        (keyup.space)="editable() && $event.target === $event.currentTarget ? keyboardAction173.click() : undefined"
+                                                    >
                                                         <fa-icon
                                                             [icon]="faTrash"
                                                             size="2x"
@@ -201,7 +223,7 @@
                     }
                     <div class="row mt-4">
                         <div class="col-12 col-sm-6 col-xl-3 mb-1">
-                            <button id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()" [disabled]="!editable()">
+                            <button type="button" id="add-criterion-button" class="btn btn-block btn-success" (click)="addNewGradingCriterion()" [disabled]="!editable()">
                                 <fa-icon [icon]="faPlus" />
                                 <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
                             </button>
@@ -302,7 +324,17 @@
                                         <fa-icon [icon]="faUndo" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentCriterionTitle' | artemisTranslate }}" />
                                     </button>
                                     <div class="col-md-auto input-group-btn d-flex align-items-center">
-                                        <span class="btn btn-block btn-danger" id="delete-criteria-button" (click)="deleteGradingCriterion(criteria)">
+                                        <span
+                                            class="btn btn-block btn-danger"
+                                            id="delete-criteria-button"
+                                            (click)="deleteGradingCriterion(criteria)"
+                                            #keyboardAction305
+                                            [attr.role]="editable() ? 'button' : null"
+                                            [attr.tabindex]="editable() ? 0 : null"
+                                            (keydown.enter)="editable() && $event.target === $event.currentTarget ? keyboardAction305.click() : undefined"
+                                            (keydown.space)="editable() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                            (keyup.space)="editable() && $event.target === $event.currentTarget ? keyboardAction305.click() : undefined"
+                                        >
                                             <fa-icon [icon]="faTrash" />
                                             <span jhiTranslate="artemisApp.exercise.deleteAssessmentCriterion"></span>
                                         </span>
@@ -334,10 +366,32 @@
                                                 [linkEditorHeightToContentHeight]="true"
                                             />
                                             <div class="form-group text-center col-md-4" style="display: block">
-                                                <span class="re-evaluate-button" id="reset-button" (click)="resetInstruction(instruction, criteria)">
+                                                <span
+                                                    class="re-evaluate-button"
+                                                    id="reset-button"
+                                                    [attr.aria-label]="'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate"
+                                                    (click)="resetInstruction(instruction, criteria)"
+                                                    #keyboardAction337
+                                                    [attr.role]="editable() ? 'button' : null"
+                                                    [attr.tabindex]="editable() ? 0 : null"
+                                                    (keydown.enter)="editable() && $event.target === $event.currentTarget ? keyboardAction337.click() : undefined"
+                                                    (keydown.space)="editable() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                    (keyup.space)="editable() && $event.target === $event.currentTarget ? keyboardAction337.click() : undefined"
+                                                >
                                                     <fa-icon [icon]="faUndo" size="2x" ngbTooltip="{{ 'artemisApp.exercise.resetAssessmentInstruction' | artemisTranslate }}" />
                                                 </span>
-                                                <span class="re-evaluate-button" id="delete-button" (click)="deleteInstruction(instruction, criteria)">
+                                                <span
+                                                    class="re-evaluate-button"
+                                                    id="delete-button"
+                                                    [attr.aria-label]="'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate"
+                                                    (click)="deleteInstruction(instruction, criteria)"
+                                                    #keyboardAction340
+                                                    [attr.role]="editable() ? 'button' : null"
+                                                    [attr.tabindex]="editable() ? 0 : null"
+                                                    (keydown.enter)="editable() && $event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
+                                                    (keydown.space)="editable() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                                    (keyup.space)="editable() && $event.target === $event.currentTarget ? keyboardAction340.click() : undefined"
+                                                >
                                                     <fa-icon [icon]="faTrash" size="2x" ngbTooltip="{{ 'artemisApp.exercise.deleteAssessmentInstruction' | artemisTranslate }}" />
                                                 </span>
                                                 <tumaet-ui-button
@@ -364,7 +418,7 @@
             }
             <div class="row mt-2">
                 <div class="col-12 col-sm-6 col-xl-3 mb-1">
-                    <button id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriterion()" [disabled]="!editable()">
+                    <button type="button" id="add-criteria-button" class="btn btn-block btn-success" (click)="addGradingCriterion()" [disabled]="!editable()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.exercise.addAssessmentCriterion"></span>
                     </button>

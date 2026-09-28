@@ -474,7 +474,7 @@ public class LectureResource {
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<SimpleLectureDTO> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
-        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         String lectureChannelName = channelRepository.findChannelNameByLectureId(lectureId);
         SimpleLectureDTO lectureDTO = SimpleLectureDTO.from(lecture, lectureChannelName);
         return ResponseEntity.ok(lectureDTO);
