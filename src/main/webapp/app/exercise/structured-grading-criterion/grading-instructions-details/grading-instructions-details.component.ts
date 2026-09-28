@@ -586,18 +586,19 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * anything. Criteria match by full content, then title, then instruction-set fingerprint (so a
      * title tweak keeps the id), then a sole leftover pair (so a title-less instruction edit keeps
      * the id when only one criterion remains unmatched). Never zip multiple leftovers by position —
-     * that would hand an unrelated criterion’s id to an insert/reorder. Reject ambiguous instruction
-     * leftovers before changing persisted objects.
+     * that would hand an unrelated criterion’s id to an insert/reorder. Reject ambiguous criterion
+     * and instruction leftovers before changing persisted objects.
      */
     private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan | undefined {
         const unusedCriteria = [...previousCriteria];
         const unusedFallbackCriteria = this.identityBaseline.filter((criterion) => criterion.id != undefined && !previousCriteria.includes(criterion));
         const candidates = [...unusedCriteria, ...unusedFallbackCriteria];
         const signatures = candidates.map((criterion) => this.criterionSignature(criterion));
-        // A changed duplicate count cannot identify which persisted criterion was edited or removed.
+        // A changed duplicate count cannot identify which persisted criterion was edited or copied.
         for (const signature of new Set(candidates.filter((criterion) => criterion.id != undefined).map((criterion) => this.criterionSignature(criterion)))) {
             const previousCount = signatures.filter((candidate) => candidate === signature).length;
-            if (previousCount > 1 && parsedCriteria.filter((criterion) => this.criterionSignature(criterion) === signature).length !== previousCount) {
+            const parsedCount = parsedCriteria.filter((criterion) => this.criterionSignature(criterion) === signature).length;
+            if ((previousCount > 1 || parsedCount > 1) && parsedCount !== previousCount) {
                 return undefined;
             }
         }
@@ -633,6 +634,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 unmatched[0].previousCriterion = unusedCriteria.shift();
             }
         }
+        // Multiple rewritten rows cannot be paired safely with multiple persisted leftovers.
+        if (unmatched.length > 1 && [...unusedCriteria, ...unusedFallbackCriteria].filter((criterion) => criterion.id != undefined).length > 1) {
+            return undefined;
+        }
 
         const plan: ReconciliationPlan = [];
         for (const { parsedCriterion, previousCriterion } of criterionEntries) {
@@ -646,13 +651,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             }));
             const candidates = [...unusedInstructions, ...unusedFallbackInstructions];
             const fingerprints = candidates.map((instruction) => this.instructionFingerprint(instruction));
-            // A changed duplicate count cannot identify which persisted copy was edited or removed.
+            // A changed duplicate count cannot identify which persisted copy was edited or copied.
             for (const fingerprint of new Set(candidates.filter((instruction) => instruction.id != undefined).map((instruction) => this.instructionFingerprint(instruction)))) {
                 const previousCount = fingerprints.filter((candidate) => candidate === fingerprint).length;
-                if (
-                    previousCount > 1 &&
-                    instructionEntries.filter(({ parsedInstruction }) => this.instructionFingerprint(parsedInstruction) === fingerprint).length !== previousCount
-                ) {
+                const parsedCount = instructionEntries.filter(({ parsedInstruction }) => this.instructionFingerprint(parsedInstruction) === fingerprint).length;
+                if ((previousCount > 1 || parsedCount > 1) && parsedCount !== previousCount) {
                     return undefined;
                 }
             }
