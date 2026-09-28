@@ -493,6 +493,12 @@ whose information is already stated next to it; do not omit the attribute. The `
 Keep keyboard focus in the same order as the page content. Use native controls and arrange the markup in the intended focus order instead of assigning positive `tabindex`
 values. The `@angular-eslint/template/no-positive-tabindex` rule enforces this.
 
+Associate a form label with its native control: match the label's `for` to the input's `id`, or place the input inside the label. When a custom component renders the
+input, connect the label to that inner input rather than to the component host. Use a heading or `span` for text that only names a section or explains a legend. Name a
+group of related controls with a `fieldset` and `legend` or with `aria-labelledby` on a group. The
+`@angular-eslint/template/label-has-associated-control` rule checks the label association, not the element choice or group names, in TUM AET UI and selected client
+template areas as they are migrated.
+
 ### Comments & Documentation
 
 - Use JSDoc style comments for functions, interfaces, enums, and classes.
