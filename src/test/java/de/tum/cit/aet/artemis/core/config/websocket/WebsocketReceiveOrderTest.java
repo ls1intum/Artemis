@@ -38,6 +38,7 @@ import org.springframework.web.socket.messaging.StompSubProtocolHandler;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketSubscriptionInterceptor;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketTopicRegistry;
@@ -126,7 +127,7 @@ class WebsocketReceiveOrderTest {
             var beans = new StaticListableBeanFactory();
             beans.addBean("websocketTopicRegistry", topicRegistry);
             var config = new WebsocketConfiguration(JsonMapper.builder().build(), mock(TaskScheduler.class), mock(TokenProvider.class),
-                    beans.getBeanProvider(WebsocketTopicRegistry.class));
+                    beans.getBeanProvider(WebsocketTopicRegistry.class), "http://localhost", new ArtemisProperties());
             userRegistry = ReflectionTestUtils.invokeMethod(config, "createLocalUserRegistry", Ordered.HIGHEST_PRECEDENCE);
             assertThat(userRegistry).isNotNull();
             var controller = new ExerciseEditorSyncWebsocketController(messagingService, userRegistry);
