@@ -3,6 +3,7 @@
          move while Iris works. `is-dismissed` folds it away again after a "nothing relevant" ending. -->
     <div
         class="iris-inline-answer my-2"
+        tabindex="-1"
         [class.is-open]="isOpen()"
         [class.is-dismissed]="isDismissed()"
         [class.is-quiet]="phase() === 'noAnswer' || phase() === 'failed'"
@@ -51,6 +52,7 @@
                              on the inline citation chips rendered inside the markdown innerHTML. -->
                         <div
                             class="iris-answer-region"
+                            tabindex="-1"
                             (mouseover)="onAnswerOver($event)"
                             (mouseout)="onAnswerOut($event)"
                             (focus)="onAnswerOver($event)"
