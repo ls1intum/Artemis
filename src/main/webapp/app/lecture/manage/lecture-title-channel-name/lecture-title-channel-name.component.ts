@@ -40,11 +40,14 @@ export class LectureTitleChannelNameComponent {
     readonly title = linkedSignal(() => this.lecture()?.title);
     /**
      * A new lecture shows the channel name derived from its title right away. It reaches the lecture with the first edit
-     * of either field, so an untouched creation form counts as unchanged.
+     * of either field, so an untouched creation form counts as unchanged. A lecture that gets no channel, because the course
+     * has no communication or the existing lecture has no channel, keeps none.
      */
     readonly channelName = linkedSignal(() => {
         const lecture = this.lecture();
-        return lecture?.id === undefined && lecture?.channelName === undefined ? this.channelNameFromTitle(lecture?.title) : lecture?.channelName;
+        return lecture?.id === undefined && lecture?.channelName === undefined && this.requiresChannelName(lecture)
+            ? this.channelNameFromTitle(lecture?.title)
+            : lecture?.channelName;
     });
 
     /** Errors show only once the instructor has been in a field, so an empty form does not open with red fields. */
@@ -58,7 +61,9 @@ export class LectureTitleChannelNameComponent {
 
     onTitleInput(newTitle: string): void {
         this.title.set(newTitle);
-        this.channelName.set(this.channelNameFromTitle(newTitle));
+        if (!this.hideChannelNameInput()) {
+            this.channelName.set(this.channelNameFromTitle(newTitle));
+        }
         this.emitChange();
     }
 

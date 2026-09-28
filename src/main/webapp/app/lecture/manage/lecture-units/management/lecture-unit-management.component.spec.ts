@@ -256,6 +256,11 @@ describe('LectureUnitManagementComponent', () => {
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBe(true);
         });
 
+        it('should return true for a PDF link with an uppercase extension', () => {
+            const lectureUnit = { type: LectureUnitType.ATTACHMENT_VIDEO, attachment: { link: 'Slides.PDF' } } as LectureUnit;
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBe(true);
+        });
+
         it('should return false for file extension different than .pdf', () => {
             const lectureUnit = {
                 type: LectureUnitType.ATTACHMENT_VIDEO,

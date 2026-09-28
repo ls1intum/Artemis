@@ -273,7 +273,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO: {
                 const attachmentVideoUnit = lectureUnit as AttachmentVideoUnit;
-                return attachmentVideoUnit.attachment?.link?.endsWith('.pdf') ?? false;
+                return attachmentVideoUnit.attachment?.link?.toLowerCase().endsWith('.pdf') ?? false;
             }
             default:
                 return false;

@@ -774,6 +774,25 @@ describe('AttachmentVideoUnitFormComponent', () => {
             expect(uploadSpy.mock.lastCall![0].formProperties.updateNotificationText).toBe('New slides');
         });
 
+        it('should not confirm a file or video URL while the details cannot be saved', () => {
+            const uploadSpy = vi.fn();
+            const videoSpy = vi.fn();
+            attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
+            attachmentVideoUnitFormComponent.videoSourceSaveRequested.subscribe(videoSpy);
+            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
+            attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/new');
+
+            attachmentVideoUnitFormComponent.nameControl!.setValue('');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(query('upload-new-version-button').nativeElement.disabled).toBe(true);
+            expect(query('save-video-source-button').nativeElement.disabled).toBe(true);
+            attachmentVideoUnitFormComponent.uploadNewFile();
+            attachmentVideoUnitFormComponent.saveVideoSource();
+            expect(uploadSpy).not.toHaveBeenCalled();
+            expect(videoSpy).not.toHaveBeenCalled();
+        });
+
         it('should take the saved file over and keep what else was typed', () => {
             chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
             attachmentVideoUnitFormComponent.notifyStudents.set(true);

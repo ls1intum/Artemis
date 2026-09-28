@@ -117,6 +117,30 @@ describe('LectureTitleChannelNameComponent', () => {
         expect(input('field_channel_name')?.value).toBe('lecture-software-engineering-i');
     });
 
+    it('should not give a lecture without a channel a channel name when its title changes', () => {
+        fixture.componentRef.setInput('lecture', lectureInCourse(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, 123));
+        fixture.detectChanges();
+        const lectureChangeSpy = vi.fn();
+        component.lectureChange.subscribe(lectureChangeSpy);
+
+        type(input('field_title')!, 'Renamed lecture');
+
+        expect(lectureChangeSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'Renamed lecture', channelName: undefined }));
+        expect(component.hideChannelNameInput()).toBe(true);
+    });
+
+    it('should not derive a channel name for a new lecture in a course without communication', () => {
+        fixture.componentRef.setInput('lecture', lectureInCourse(CourseInformationSharingConfiguration.DISABLED));
+        fixture.detectChanges();
+        const lectureChangeSpy = vi.fn();
+        component.lectureChange.subscribe(lectureChangeSpy);
+
+        expect(component.channelName()).toBeUndefined();
+        type(input('field_title')!, 'Software Engineering');
+
+        expect(lectureChangeSpy).toHaveBeenCalledWith(expect.objectContaining({ title: 'Software Engineering', channelName: undefined }));
+    });
+
     it('should format a typed channel name and write it back into the field', () => {
         const lecture = lectureInCourse(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, 123, 'lecture-intro');
         lecture.title = 'Intro';

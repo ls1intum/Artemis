@@ -276,16 +276,16 @@ export class AttachmentVideoUnitFormComponent {
         this.reportChange(false);
     }
 
-    /** Confirms the new file; saving it splits the slides again and processes the content for Iris again. */
+    /** Confirms the new file; saving it splits the slides again and processes the content for Iris again. It is sent with the details, so the form has to be valid. */
     uploadNewFile(): void {
-        if (this.file && !this.isFileTooBig()) {
+        if (this.file && this.isFormValid()) {
             this.fileUploadRequested.emit(this.currentFormData());
         }
     }
 
-    /** Confirms the new video link; saving it has the video transcribed and processed for Iris. */
+    /** Confirms the new video link; saving it has the video transcribed and processed for Iris. It is sent with the details, so the form has to be valid. */
     saveVideoSource(): void {
-        if (!this.videoSourceControl?.invalid) {
+        if (this.isFormValid()) {
             this.videoSourceSaveRequested.emit(this.currentFormData());
         }
     }
