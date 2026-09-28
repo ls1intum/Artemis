@@ -267,6 +267,21 @@ class IrisCommandServiceTest {
     }
 
     @Test
+    void executeCommand_keepsPointOutUnversionedWhenLoadingTheIngestedVersionFails() {
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(List.of(LECTURE_UNIT_ID))).thenThrow(new RuntimeException("lookup failed"));
+        when(coordinationService.register(anyString(), eq("student1"), eq(false))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", false)));
+        var dispatched = ArgumentCaptor.forClass(Object.class);
+
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3), null);
+
+        verify(irisWebsocketService).send(eq("student1"), any(WebsocketUserDestination.class), dispatched.capture());
+        var parameters = ((IrisCommandRequestWebsocketDTO) dispatched.getValue()).parameters();
+        assertThat(parameters).doesNotContainKeys("materialType", "materialVersion");
+    }
+
+    @Test
     void commandDtos_serializeTheWayPyrisAndTheClientExpect() throws Exception {
         var mapper = JsonMapper.builder().build();
         var parameters = Map.<String, JsonNode>of("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));

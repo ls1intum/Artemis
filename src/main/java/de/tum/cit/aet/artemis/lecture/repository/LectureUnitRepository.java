@@ -119,6 +119,7 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             FROM LectureUnit lu
                 LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = lu.id
                 LEFT JOIN LectureTranscription t ON t.lectureUnit.id = lu.id
+                    AND t.transcriptionStatus = TranscriptionStatus.COMPLETED
             WHERE lu.id IN :ids
             """)
     List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByIds(@Param("ids") Collection<Long> ids);

@@ -181,8 +181,14 @@ public class IrisCommandService {
         parameters.remove(MATERIAL_TYPE_PARAMETER);
         parameters.remove(MATERIAL_VERSION_PARAMETER);
 
-        LectureUnitIngestedVersionsDTO ingestedVersions = lectureUnitRepositoryApi.orElseThrow().findIngestedVersionsByIds(List.of(lectureUnitId)).stream().findFirst()
-                .orElse(null);
+        LectureUnitIngestedVersionsDTO ingestedVersions;
+        try {
+            ingestedVersions = lectureUnitRepositoryApi.orElseThrow().findIngestedVersionsByIds(List.of(lectureUnitId)).stream().findFirst().orElse(null);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not load the ingested version for point-out lecture unit {}", lectureUnitId, e);
+            return new PyrisCommandDTO(command.type(), parameters);
+        }
         if (ingestedVersions == null) {
             return new PyrisCommandDTO(command.type(), parameters);
         }

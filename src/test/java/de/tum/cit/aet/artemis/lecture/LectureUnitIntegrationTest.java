@@ -715,6 +715,22 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findIngestedVersions_reportsNoVideoVersionForAPendingTranscription() {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        var transcription = lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId()).orElseThrow();
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        lectureTranscriptionRepository.save(transcription);
+
+        var ingested = lectureUnitRepository.findIngestedVersionsByIds(List.of(unit.getId()));
+
+        assertThat(ingested).singleElement().satisfies(versions -> {
+            assertThat(versions.videoVersion()).isNull();
+            assertThat(versions.attachmentVersion()).isEqualTo(3);
+        });
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMaterialVersions_returnsCurrentVersionsOfBothMaterials() throws Exception {
         var unit = citedUnitFixture(ProcessingPhase.DONE);
@@ -776,7 +792,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void getMaterialVersions_asStudentNotInCourse_shouldBeForbidden() throws Exception {
         var unit = citedUnitFixture(ProcessingPhase.DONE);
 
