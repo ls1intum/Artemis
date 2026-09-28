@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseNotification, payloadOf } from 'app/notification/shared/entities/course-notification/course-notification';
-import { Subscription, filter } from 'rxjs';
+import { Subscription, distinctUntilChanged, filter, map } from 'rxjs';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
@@ -14,11 +14,14 @@ import { ConversationSelectionState } from 'app/communication/shared/course-conv
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { ButtonModule } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Component that displays real-time notification popups.
  * Shows current-course notifications inside a course and all-course notifications elsewhere.
  * Handles automatic timeout and manual dismissal of notifications.
+ * The overlay lives in the app shell and survives logout, so queued popups are dropped (without being marked seen)
+ * whenever the authenticated user changes; otherwise one user's notifications could remain visible to the next.
  */
 @Component({
     selector: 'jhi-course-notification-popup-overlay',
@@ -33,6 +36,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
     private readonly communicationState = inject(ConversationSelectionState);
+    private readonly accountService = inject(AccountService);
 
     protected readonly popupTimeInMilliseconds = 40000;
 
@@ -40,6 +44,8 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     protected readonly isExpanded = signal(false);
 
     private courseNotificationWebsocketSubscription?: Subscription;
+    /** Pending auto-dismiss timers by notification id, so they can be cancelled when the popups are discarded. */
+    private readonly dismissTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -65,10 +71,21 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
             this.notifications.update((notifications) => [...notifications, notification]);
 
-            setTimeout(() => {
-                this.removeNotification(notification.notificationId!);
-            }, this.popupTimeInMilliseconds);
+            const notificationId = notification.notificationId!;
+            this.dismissTimers.set(
+                notificationId,
+                setTimeout(() => this.removeNotification(notificationId), this.popupTimeInMilliseconds),
+            );
         });
+        this.accountService
+            .getAuthenticationState()
+            .pipe(
+                map((user) => user?.id ?? user?.login),
+                distinctUntilChanged(),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            // Includes logout (identity becomes undefined): the previous user's popups must not outlive their session.
+            .subscribe(() => this.discardAllNotifications());
         this.router.events
             .pipe(
                 filter((event) => event instanceof NavigationEnd),
@@ -87,6 +104,19 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
     ngOnDestroy(): void {
         this.courseNotificationWebsocketSubscription?.unsubscribe();
+        this.clearDismissTimers();
+    }
+
+    /** Drops every queued popup and its timer without marking anything as seen, keeping the unread history intact. */
+    private discardAllNotifications(): void {
+        this.clearDismissTimers();
+        this.notifications.set([]);
+        this.isExpanded.set(false);
+    }
+
+    private clearDismissTimers(): void {
+        this.dismissTimers.forEach((timer) => clearTimeout(timer));
+        this.dismissTimers.clear();
     }
 
     /**
@@ -96,6 +126,8 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * @param notificationId - The ID of the notification to remove
      */
     removeNotification(notificationId: number): void {
+        clearTimeout(this.dismissTimers.get(notificationId));
+        this.dismissTimers.delete(notificationId);
         const indexToRemove = this.notifications().findIndex((notification) => notification.notificationId === notificationId);
 
         if (indexToRemove !== -1) {

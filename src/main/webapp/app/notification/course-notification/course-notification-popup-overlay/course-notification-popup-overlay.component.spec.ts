@@ -6,7 +6,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
@@ -19,6 +19,8 @@ import { of } from 'rxjs';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 
 describe('CourseNotificationPopupOverlayComponent', () => {
     let component: CourseNotificationPopupOverlayComponent;
@@ -30,6 +32,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     let mockRoute: any;
     let componentAsAny: any;
     let routerEvents: Subject<NavigationEnd>;
+    let authenticationState: BehaviorSubject<User | undefined>;
     type RouteNode = { outlet?: string; paramMap: ParamMap; children: RouteNode[] };
     let mockRouter: { events: Subject<NavigationEnd>; routerState: { snapshot: { root: RouteNode } } };
 
@@ -116,6 +119,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
                 }),
             },
         };
+        authenticationState = new BehaviorSubject<User | undefined>({ id: 1, login: 'user-a' } as User);
         routerEvents = new Subject<NavigationEnd>();
         mockRouter = {
             events: routerEvents,
@@ -138,6 +142,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
                 { provide: ActivatedRoute, useValue: mockRoute },
                 { provide: Router, useValue: mockRouter },
                 { provide: ConversationSelectionState, useValue: conversationSelectionState },
+                { provide: AccountService, useValue: { getAuthenticationState: () => authenticationState.asObservable() } },
             ],
         }).overrideComponent(CourseNotificationPopupOverlayComponent, {
             remove: { imports: [CourseNotificationComponent] },
@@ -175,6 +180,36 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
         expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
         expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['logs out', undefined],
+        ['is replaced by another user', { id: 2, login: 'user-b' } as User],
+    ])('drops queued popups and their timers without marking them seen when the user %s', (_, nextUser) => {
+        websocketNotificationSubject.next(createMockNotification(1, 101, 0));
+        websocketNotificationSubject.next(createMockNotification(2, 101, 0));
+        componentAsAny.isExpanded.set(true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.debugElement.queryAll(By.directive(CourseNotificationComponent))).toHaveLength(2);
+        const removeSpy = vi.spyOn(component, 'removeNotification');
+
+        authenticationState.next(nextUser);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.directive(CourseNotificationComponent))).toHaveLength(0);
+        expect(componentAsAny.isExpanded()).toBe(false);
+        vi.advanceTimersByTime(componentAsAny.popupTimeInMilliseconds);
+        expect(removeSpy).not.toHaveBeenCalled();
+        expect(courseNotificationService.setNotificationStatus).not.toHaveBeenCalled();
+        expect(courseNotificationService.setNotificationStatusInMap).not.toHaveBeenCalled();
+        expect(courseNotificationService.decreaseNotificationCountBy).not.toHaveBeenCalled();
+    });
+
+    it('keeps queued popups when the same user identity is re-emitted', () => {
+        websocketNotificationSubject.next(createMockNotification(1, 101, 0));
+        authenticationState.next({ id: 1, login: 'user-a' } as User);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.debugElement.queryAll(By.directive(CourseNotificationComponent))).toHaveLength(1);
     });
 
     it('retains global popup delivery on non-course pages', () => {
