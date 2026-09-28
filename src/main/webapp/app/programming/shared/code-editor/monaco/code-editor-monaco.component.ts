@@ -227,6 +227,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         });
 
         effect(() => {
+            this.feedbackSuggestions();
             this.renderFeedbackWidgets();
         });
 

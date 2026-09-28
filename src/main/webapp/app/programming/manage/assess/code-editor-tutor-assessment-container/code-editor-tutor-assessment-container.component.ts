@@ -24,7 +24,7 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -194,7 +194,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     readonly unreferencedFeedbackSuggestions = computed(() => this.feedbackSuggestions().filter((feedback) => !feedback.reference));
 
-    readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.feedbackSuggestions().length > 0);
+    readonly hasAutomaticFeedback = computed(
+        () =>
+            this.automaticFeedback().length > 0 ||
+            this.feedbackSuggestions().length > 0 ||
+            [...this.referencedFeedback(), ...this.unreferencedFeedback()].some((feedback) => {
+                const type = Feedback.getFeedbackSuggestionType(feedback);
+                return type === FeedbackSuggestionType.ACCEPTED || type === FeedbackSuggestionType.ADAPTED;
+            }),
+    );
 
     readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled));
 

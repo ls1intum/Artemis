@@ -103,6 +103,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     /** Emitted after generated criteria have replaced the current structured criteria. */
     readonly criteriaGenerated = output<void>();
     private instructions: GradingInstruction[] = [];
+    private gradingInstructionsBeforeParse?: string;
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
 
     backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
@@ -309,8 +310,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (!this.editable()) {
             return;
         }
+        this.gradingInstructionsBeforeParse = this.exercise().gradingInstructions;
         this.cleanupExerciseGradingInstructions();
-        this.markdownEditor().parseMarkdown();
+        try {
+            this.markdownEditor().parseMarkdown();
+        } finally {
+            this.gradingInstructionsBeforeParse = undefined;
+        }
         if (this.exercise().gradingInstructionFeedbackUsed) {
             this.markdownEditors().forEach((component) => {
                 component.parseMarkdown(this.domainActionsForGradingInstructionParsing);
@@ -468,27 +474,66 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             return;
         }
         const previousCriteria = [...(this.exercise().gradingCriteria ?? [])];
+        const previousInstructions = this.gradingInstructionsBeforeParse ?? this.exercise().gradingInstructions;
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
-        for (const criterion of this.exercise().gradingCriteria ?? []) {
-            if (criterion.title != undefined) {
-                continue;
-            }
-            const previousIndex = previousCriteria.findIndex(
-                (previous) =>
-                    previous.title == undefined &&
-                    isEqual(
-                        previous.structuredGradingInstructions?.map(({ id, ...instruction }) => instruction),
-                        criterion.structuredGradingInstructions?.map(({ id, ...instruction }) => instruction),
-                    ),
+        const unmatchedPrevious = [...previousCriteria];
+        const unmatchedParsed = [...(this.exercise().gradingCriteria ?? [])];
+        const matched: Array<[GradingCriterion, GradingCriterion]> = [];
+        const sameInstruction = (previous: GradingInstruction, parsed: GradingInstruction) =>
+            previous.credits === parsed.credits &&
+            previous.gradingScale === parsed.gradingScale &&
+            previous.instructionDescription === parsed.instructionDescription &&
+            previous.feedback === parsed.feedback &&
+            previous.usageCount === parsed.usageCount;
+        const sameInstructions = (previous: GradingCriterion, parsed: GradingCriterion) =>
+            isEqual(
+                previous.structuredGradingInstructions?.map(({ id, ...instruction }) => instruction),
+                parsed.structuredGradingInstructions?.map(({ id, ...instruction }) => instruction),
             );
-            if (previousIndex !== -1) {
-                const [previous] = previousCriteria.splice(previousIndex, 1);
-                criterion.id = previous.id;
-                criterion.structuredGradingInstructions.forEach((instruction, index) => (instruction.id = previous.structuredGradingInstructions[index].id));
+        const matchUnique = (same: (previous: GradingCriterion, parsed: GradingCriterion) => boolean) => {
+            for (const parsed of [...unmatchedParsed]) {
+                const candidates = unmatchedPrevious.filter((previous) => same(previous, parsed));
+                if (candidates.length !== 1 || unmatchedParsed.filter((other) => same(candidates[0], other)).length !== 1) {
+                    continue;
+                }
+                const previous = candidates[0];
+                matched.push([previous, parsed]);
+                unmatchedPrevious.splice(unmatchedPrevious.indexOf(previous), 1);
+                unmatchedParsed.splice(unmatchedParsed.indexOf(parsed), 1);
             }
+        };
+        matchUnique((previous, parsed) => previous.title === parsed.title && sameInstructions(previous, parsed));
+        matchUnique((previous, parsed) => !!previous.structuredGradingInstructions?.length && sameInstructions(previous, parsed));
+        matchUnique((previous, parsed) => previous.title !== undefined && previous.title === parsed.title);
+
+        let ambiguous = unmatchedPrevious.some((previous) => previous.id !== undefined) && unmatchedParsed.length > 0;
+        for (const [previous, parsed] of matched) {
+            parsed.id = previous.id;
+            const oldInstructions = [...(previous.structuredGradingInstructions ?? [])];
+            const newInstructions = [...(parsed.structuredGradingInstructions ?? [])];
+            for (const instruction of [...newInstructions]) {
+                const candidates = oldInstructions.filter((old) => sameInstruction(old, instruction));
+                if (candidates.length !== 1 || newInstructions.filter((other) => sameInstruction(candidates[0], other)).length !== 1) {
+                    continue;
+                }
+                const old = candidates[0];
+                instruction.id = old.id;
+                oldInstructions.splice(oldInstructions.indexOf(old), 1);
+                newInstructions.splice(newInstructions.indexOf(instruction), 1);
+            }
+            if (oldInstructions.length === 1 && newInstructions.length === 1) {
+                newInstructions[0].id = oldInstructions[0].id;
+            } else if (oldInstructions.some((instruction) => instruction.id !== undefined) && newInstructions.length > 0) {
+                ambiguous = true;
+            }
+        }
+        if (ambiguous) {
+            this.exercise().gradingCriteria = previousCriteria;
+            this.exercise().gradingInstructions = previousInstructions;
+            this.criteria.set(previousCriteria);
         }
     }
 

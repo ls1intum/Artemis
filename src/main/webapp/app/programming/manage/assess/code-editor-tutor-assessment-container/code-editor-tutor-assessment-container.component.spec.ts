@@ -17,7 +17,7 @@ import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
@@ -1098,6 +1098,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.automaticFeedback.set([{ type: FeedbackType.AUTOMATIC, credits: 1 }]);
         expect(comp.hasAutomaticFeedback()).toBe(true);
     });
+
+    it.each([FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER])(
+        'keeps the AI notice for %s manual feedback after all suggestions are accepted',
+        (prefix) => {
+            comp.feedbackSuggestions.set([]);
+            comp.automaticFeedback.set([]);
+            comp.referencedFeedback.set([{ type: FeedbackType.MANUAL, text: `${prefix}inline` } as Feedback]);
+            expect(comp.hasAutomaticFeedback()).toBe(true);
+
+            comp.referencedFeedback.set([]);
+            comp.unreferencedFeedback.set([{ type: FeedbackType.MANUAL_UNREFERENCED, text: `${prefix}other` } as Feedback]);
+            expect(comp.hasAutomaticFeedback()).toBe(true);
+        },
+    );
 
     it('should include automatic feedback in the editor file badges input', () => {
         const manual = { type: FeedbackType.MANUAL, reference: 'file:Manual.java_line:1' } as Feedback;

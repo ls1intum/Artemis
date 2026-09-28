@@ -746,6 +746,53 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
     });
 
+    it('keeps the previous criterion when both its title and instruction feedback change', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructions = 'Previous general instructions';
+        exercise.gradingInstructionFeedbackUsed = true;
+        const actions = getDomainActionArray();
+        actions[0].text = 'renamed';
+        actions[5].text = 'changed feedback';
+        Object.defineProperty(component, 'markdownEditor', { value: () => ({ parseMarkdown: () => component.onDomainActionsFound(actions) }) });
+        Object.defineProperty(component, 'markdownEditors', { value: () => [] });
+
+        component.prepareForSave();
+
+        expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingInstructions).toBe('Previous general instructions');
+    });
+
+    it('keeps criterion and instruction IDs with distinct instructions when titles are exchanged', () => {
+        const first = { id: 11, title: 'first', structuredGradingInstructions: [{ ...gradingInstruction, id: 101, feedback: 'first feedback' }] } as GradingCriterion;
+        const second = { id: 22, title: 'second', structuredGradingInstructions: [{ ...gradingInstruction, id: 202, feedback: 'second feedback' }] } as GradingCriterion;
+        exercise.gradingCriteria = [first, second];
+        const firstActions = getDomainActionArray();
+        firstActions[0].text = 'second';
+        firstActions[5].text = 'first feedback';
+        const secondActions = getDomainActionArray();
+        secondActions[0].text = 'first';
+        secondActions[5].text = 'second feedback';
+
+        component.onDomainActionsFound([...firstActions, ...secondActions]);
+
+        expect(exercise.gradingCriteria?.map((criterion) => [criterion.id, criterion.title, criterion.structuredGradingInstructions[0].id])).toEqual([
+            [11, 'second', 101],
+            [22, 'first', 202],
+        ]);
+    });
+
+    it('keeps a persisted instruction ID when only its feedback changes', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        const actions = getDomainActionArray();
+        actions[5].text = 'changed feedback';
+
+        component.onDomainActionsFound(actions);
+
+        expect(exercise.gradingCriteria?.[0].id).toBe(1);
+        expect(exercise.gradingCriteria?.[0].structuredGradingInstructions[0]).toMatchObject({ id: 1, feedback: 'changed feedback' });
+    });
+
     it('should update properties for grading instruction', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const instruction = gradingInstruction;

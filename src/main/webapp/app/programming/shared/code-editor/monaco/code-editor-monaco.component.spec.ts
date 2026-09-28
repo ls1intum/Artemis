@@ -927,6 +927,24 @@ describe('CodeEditorMonacoComponent', () => {
         expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-2-line-2', suggestionNode);
     });
 
+    it('renders suggestions that arrive after the selected file has rendered', async () => {
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const addLineWidget = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        addLineWidget.mockClear();
+
+        const suggestion = { id: 42, reference: 'file:file1.java_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Late` } as Feedback;
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(addLineWidget).toHaveBeenCalledWith(2, 'feedback-0-line-2', expect.any(HTMLElement));
+    });
+
     it('should add a new feedback widget', async () => {
         vi.useFakeTimers();
         // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
