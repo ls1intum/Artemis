@@ -2467,6 +2467,11 @@ public class CourseTestService {
         List<UserDTO> students = request.getList("/api/course/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
         assertThat(students).size().isEqualTo(8);
 
+        params1.add("page", "1");
+        params1.add("size", "3");
+        List<UserDTO> secondPage = request.getList("/api/course/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
+        assertThat(secondPage).hasSize(3);
+
         MultiValueMap<String, String> params2 = new LinkedMultiValueMap<>();
         params2.add("loginOrName", userPrefix + "tutor");
         // should be empty as we only search for students

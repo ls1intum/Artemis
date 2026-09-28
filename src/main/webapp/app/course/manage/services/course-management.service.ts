@@ -608,10 +608,12 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId The id of the course to search in.
      * @return Observable<HttpResponse<User[]>> with the list of found users as body.
      */
-    searchStudents(courseId: number, loginOrName: string): Observable<HttpResponse<User[]>> {
+    searchStudents(courseId: number, loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> {
         // create loginOrName HTTP Param
         let httpParams = new HttpParams();
         httpParams = httpParams.append('loginOrName', loginOrName);
+        httpParams = httpParams.append('page', page);
+        httpParams = httpParams.append('size', size);
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/students/search`, { observe: 'response', params: httpParams });
     }
     /**

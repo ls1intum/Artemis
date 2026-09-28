@@ -82,7 +82,7 @@ export class CourseGroupComponent {
     readonly allowRemovingUsers = input(true);
     readonly isDisabled = input(false);
     readonly exportFileName = input<string>();
-    readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>();
+    readonly userSearch = input<(loginOrName: string, page: number, size: number) => Observable<HttpResponse<User[]>>>();
     readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly removeUserFromGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly handleUsersSizeChange = input<(usersSize: number) => void>(() => {});
@@ -104,12 +104,12 @@ export class CourseGroupComponent {
     readonly searchUsersFn = computed(() => {
         const customSearch = this.userSearch();
         if (customSearch) {
-            return (term: string, _page: number, _size: number): Observable<UserSearchResult> =>
-                customSearch(term).pipe(
+            return (term: string, page: number, size: number): Observable<UserSearchResult> =>
+                customSearch(term, page, size).pipe(
                     map((response) => {
                         const assignedIds = new Set(this.allGroupUsers().map((user) => user.id));
                         const content = (response.body ?? []).map((user) => this.toUserForRegistration(user, assignedIds.has(user.id)));
-                        return { content, totalElements: content.length };
+                        return { content, totalElements: Number(response.headers.get('X-Total-Count') ?? content.length) };
                     }),
                 );
         }

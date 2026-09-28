@@ -6,9 +6,10 @@ import { PresentationAssessmentInstanceFormDialogComponent } from 'app/presentat
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LangChangeEvent, TranslateService, TranslationChangeEvent } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessmentInstance, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { HttpResponse } from '@angular/common/http';
 
 describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
@@ -17,6 +18,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let languageChanges: Subject<LangChangeEvent>;
     let translationChanges: Subject<TranslationChangeEvent>;
     let translate: Mock<(key: string) => string>;
+    let searchStudents: Mock<CourseManagementService['searchStudents']>;
 
     const presentationDate = dayjs('2026-07-31T13:26:00');
 
@@ -25,12 +27,13 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         languageChanges = new Subject<LangChangeEvent>();
         translationChanges = new Subject<TranslationChangeEvent>();
         translate = vi.fn((key: string) => key);
+        searchStudents = vi.fn().mockReturnValue(of(new HttpResponse<User[]>({ body: [] })));
         const course = Object.assign(new Course(), { id: 1, title: 'Test Course' });
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstanceFormDialogComponent],
             providers: [
-                { provide: CourseManagementService, useValue: {} },
+                { provide: CourseManagementService, useValue: { searchStudents } },
                 { provide: TranslateService, useValue: { instant: translate, onLangChange: languageChanges, onTranslationChange: translationChanges } },
             ],
         })
@@ -178,5 +181,18 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         component.editForm.controls.mode.setValue(PresentationAssessmentMode.ONLINE);
 
         expect(component.editForm.controls.location.value).toBe('');
+    });
+
+    it('should not request student search results for terms shorter than three characters', async () => {
+        const response = await firstValueFrom(component.studentSearch('ab', 0, 10));
+
+        expect(response.body).toEqual([]);
+        expect(searchStudents).not.toHaveBeenCalled();
+    });
+
+    it('should forward student search pagination for valid terms', async () => {
+        await firstValueFrom(component.studentSearch('alice', 2, 10));
+
+        expect(searchStudents).toHaveBeenCalledWith(1, 'alice', 2, 10);
     });
 });

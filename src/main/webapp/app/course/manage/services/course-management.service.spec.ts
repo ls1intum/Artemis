@@ -555,6 +555,25 @@ describe('Course Management Service', () => {
         expect(result).toEqual({ content: mockUsers, totalElements: 2 });
     });
 
+    it('should search students using the requested page and size', () => {
+        const users = [new User(1, 'student1')];
+
+        courseManagementService
+            .searchStudents(course.id!, 'student', 2, 10)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+
+        const req = httpMock.expectOne(
+            (request) =>
+                request.method === 'GET' &&
+                request.url === `${resourceUrl}/${course.id}/students/search` &&
+                request.params.get('loginOrName') === 'student' &&
+                request.params.get('page') === '2' &&
+                request.params.get('size') === '10',
+        );
+        req.flush(users);
+    });
+
     it('getNumberOfAllowedComplaintsInCourse', () => {
         const courseId = 42;
         const teamMode = true;

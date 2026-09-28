@@ -176,7 +176,12 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         this.cancelled.emit();
     }
 
-    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> => this.courseManagementService.searchStudents(this.courseId(), loginOrName);
+    studentSearch = (loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> => {
+        if (loginOrName.length < 3) {
+            return of(new HttpResponse<User[]>({ body: [] }));
+        }
+        return this.courseManagementService.searchStudents(this.courseId(), loginOrName, page, size);
+    };
     addStudent = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
     removeStudent = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
     handleAssignedStudentsSizeChange = (size: number): void => this.filteredAssignedStudentsSize.set(size);
