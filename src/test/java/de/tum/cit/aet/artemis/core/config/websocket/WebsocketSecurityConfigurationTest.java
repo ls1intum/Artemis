@@ -128,6 +128,29 @@ class WebsocketSecurityConfigurationTest {
         assertThat(allowed(message(SimpMessageType.MESSAGE, destination, "admin"))).isFalse();
     }
 
+    /**
+     * Every destination a client publishes to via {@code WebsocketService.send}, matching the server's {@code @MessageMapping} handlers
+     * or client-to-client synchronization topics. Denying any of these silently breaks the corresponding feature.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "/topic/iris/command-ack", "/topic/exercises/42/synchronization", "/topic/participations/1/team/trigger", "/topic/participations/1/team/typing",
+            "/topic/participations/1/team/modeling-submissions/update", "/topic/participations/1/team/modeling-submissions/patch",
+            "/topic/participations/1/team/text-submissions/update", "/topic/participations/1/team/text-submissions/patch" })
+    void legitimateClientMessagesAreAllowed(String destination) {
+        assertThat(allowed(message(SimpMessageType.MESSAGE, destination, "student"))).isTrue();
+    }
+
+    @Test
+    void irisCommandAckAcceptsOnlyAuthenticatedMessages() {
+        var anonymous = new AnonymousAuthenticationToken("key", "anonymous", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
+        assertThat(manager.authorize(() -> anonymous, message(SimpMessageType.MESSAGE, "/topic/iris/command-ack", "anonymous")).isGranted()).isFalse();
+        // Nobody may read other users' acknowledgements, and neighbouring Iris destinations stay server-owned.
+        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/topic/iris/command-ack", "admin"))).isFalse();
+        assertThat(allowed(message(SimpMessageType.MESSAGE, "/topic/iris/command-ack/extra", "student"))).isFalse();
+        assertThat(allowed(message(SimpMessageType.MESSAGE, "/topic/iris/command", "student"))).isFalse();
+        assertThat(allowed(message(SimpMessageType.MESSAGE, "/user/topic/iris/command-ack", "student"))).isFalse();
+    }
+
     @Test
     void controlFramesAndUnrelatedApplicationMessagesKeepTheirAuthorization() {
         assertThat(allowed(message(SimpMessageType.CONNECT, null, "student"))).isTrue();

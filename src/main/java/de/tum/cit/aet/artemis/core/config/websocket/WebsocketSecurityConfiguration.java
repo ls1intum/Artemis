@@ -26,6 +26,12 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 @Lazy
 public class WebsocketSecurityConfiguration {
 
+    /**
+     * Destination of the client's Iris command acknowledgement, handled by {@code IrisCommandWebsocketController}.
+     * It lies inside the otherwise server-owned {@code /topic/iris} namespace and therefore needs an explicit MESSAGE exception.
+     */
+    static final String IRIS_COMMAND_ACK_DESTINATION = "/topic/iris/command-ack";
+
     @Bean
     AuthorizationManager<Message<?>> authorizationManager(MessageMatcherDelegatingAuthorizationManager.Builder messages, UserRepository userRepository,
             CourseRepository courseRepository, ObjectProvider<ElevatedAccessService> elevatedAccessService) {
@@ -38,6 +44,9 @@ public class WebsocketSecurityConfiguration {
             .nullDestMatcher().authenticated()
             // These destinations belong to the relay, never to a connected client.
             .simpDestMatchers("/topic/unresolved-user", "/topic/unresolved-user/**", "/topic/user-registry", "/topic/user-registry/**").denyAll()
+            // The only client-to-server Iris destination: IrisCommandWebsocketController attributes the ack to the sending principal.
+            // Subscriptions to it stay denied below, so no client can read other users' acknowledgements.
+            .simpMessageDestMatchers(IRIS_COMMAND_ACK_DESTINATION).authenticated()
             // Clients must not impersonate publishers of server-owned course or personal feeds.
             .simpMessageDestMatchers("/topic/atlas/orchestrator", "/topic/atlas/orchestrator/**",
                 "/topic/notification", "/topic/notification/**", "/topic/communication/notification", "/topic/communication/notification/**",
