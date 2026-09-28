@@ -178,6 +178,7 @@ public class CompetencyResource {
      * @return the persisted AI-generated competency
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.HYPERION_CHECKLIST)
     @PostMapping("courses/{courseId}/competencies/generated-from-hyperion-checklist")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetencyGeneratedFromHyperionChecklist(@PathVariable long courseId,
@@ -226,6 +227,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 201 (Created) and body the created competencies
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
     @PostMapping("courses/{courseId}/competencies/bulk/generated-from-description")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetenciesGeneratedFromDescription(@PathVariable Long courseId,
