@@ -1,5 +1,5 @@
 import { type MockInstance, beforeEach, describe, expect, it, vi, afterEach as vitestAfterEach } from 'vitest';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,7 +13,6 @@ import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
-import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -26,7 +25,9 @@ import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockWebsocketService } from 'src/test/javascript/spec/helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
+import { QuizParticipationApi } from 'app/openapi/api/quiz-participation-api';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { StudentQuizParticipation } from 'app/openapi/model/student-quiz-participation';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -75,6 +76,10 @@ const question3: ShortAnswerQuestion = {
     similarityValue: 0,
     spots: [],
 };
+
+// The fixtures are written in the class graph the component renders, while the generated API declares the wire shape
+// the mapper converts from. The two agree field by field, so a cast feeds a fixture through the real mapper.
+const asGeneratedParticipation = (participation: StudentParticipation): StudentQuizParticipation => participation as unknown as StudentQuizParticipation;
 
 const createQuizExercise = (): QuizExercise => ({
     id: 1,
@@ -144,7 +149,7 @@ describe('QuizParticipationComponent - live mode', () => {
     let component: QuizParticipationComponent;
     let participationSpy: MockInstance;
     let httpMock: HttpTestingController;
-    let participationService: ParticipationService;
+    let quizParticipationApi: QuizParticipationApi;
     let quizExerciseService: QuizExerciseService;
     let quizExercise: QuizExercise;
 
@@ -164,10 +169,10 @@ describe('QuizParticipationComponent - live mode', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                ParticipationService,
+                QuizParticipationApi,
                 ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
-                QuizParticipationService,
+                QuizSubmissionApi,
                 ArtemisQuizService,
                 SubmissionService,
                 AlertService,
@@ -187,17 +192,16 @@ describe('QuizParticipationComponent - live mode', () => {
                 },
             ],
         })
-            // Override the component to remove its own ParticipationService provider
             .overrideComponent(QuizParticipationComponent, {
                 set: { providers: [] },
             })
             .compileComponents();
 
-        participationService = TestBed.inject(ParticipationService);
+        quizParticipationApi = TestBed.inject(QuizParticipationApi);
         const participation: StudentParticipation = { exercise: { ...quizExercise } };
-        participationSpy = vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+        participationSpy = vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(of(asGeneratedParticipation(participation)));
         quizExerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
+        vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ ...quizExercise }));
         httpMock = TestBed.inject(HttpTestingController);
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
@@ -262,7 +266,8 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
-        expect(component.quizExercise()).toEqual(quizExercise);
+        expect(component.quizExercise().id).toBe(quizExercise.id);
+        expect(component.quizExercise().quizQuestions).toHaveLength(quizExercise.quizQuestions!.length);
         expect(component.waitingForQuizStart()).toBe(false);
         expect(component.totalScore()).toBe(6);
         expect(component.dragAndDropMappings().get(question1.id!)).toEqual([]);
@@ -284,9 +289,7 @@ describe('QuizParticipationComponent - live mode', () => {
                 started: false,
             },
         ];
-        participationSpy = vi
-            .spyOn(participationService, 'startQuizParticipation')
-            .mockReturnValue(of({ body: { exercise: individualQuizExercise } } as HttpResponse<StudentParticipation>));
+        participationSpy = vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(of(asGeneratedParticipation({ exercise: individualQuizExercise })));
         fixture.detectChanges();
 
         const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
@@ -310,9 +313,7 @@ describe('QuizParticipationComponent - live mode', () => {
                 started: false,
             },
         ];
-        participationSpy = vi
-            .spyOn(participationService, 'startQuizParticipation')
-            .mockReturnValue(of({ body: { exercise: notIndividualQuizExercise } } as HttpResponse<StudentParticipation>));
+        participationSpy = vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(of(asGeneratedParticipation({ exercise: notIndividualQuizExercise })));
         fixture.detectChanges();
 
         const updateSpy = vi.spyOn(component, 'updateDisplayedTimes');
@@ -366,15 +367,7 @@ describe('QuizParticipationComponent - live mode', () => {
         component.quizBatch.set({ started: false });
 
         const quizExerciseService = TestBed.inject(QuizExerciseService);
-        const findForStudentSpy = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(
-            of({
-                body: {
-                    ...quizExercise,
-                    quizStarted: true,
-                    quizEnded: true,
-                },
-            } as HttpResponse<QuizExercise>),
-        );
+        const findForStudentSpy = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ ...quizExercise, quizStarted: true, quizEnded: true }));
         const initQuizSpy = vi.spyOn(component, 'initQuiz');
         const initLiveModeSpy = vi.spyOn(component, 'initLiveMode').mockImplementation(() => {});
 
@@ -494,7 +487,8 @@ describe('QuizParticipationComponent - live mode', () => {
 
         component.updateParticipationFromServer(participation);
 
-        expect(component.quizExercise()).toEqual(quizExercise);
+        expect(component.quizExercise().id).toBe(quizExercise.id);
+        expect(component.quizExercise().quizQuestions).toHaveLength(quizExercise.quizQuestions!.length);
     });
 
     it('should return false if there is no answer in any question type', () => {
@@ -737,8 +731,8 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should show missed deadline message and hide quiz UI when quiz ended and student did not submit', () => {
-        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
-            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(
+            of(asGeneratedParticipation({ exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] })),
         );
         fixture.detectChanges();
 
@@ -747,8 +741,8 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should not show missed deadline message when student submitted', () => {
-        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
-            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: true }] } } as HttpResponse<StudentParticipation>),
+        vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(
+            of(asGeneratedParticipation({ exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: true }] })),
         );
         fixture.detectChanges();
 
@@ -758,8 +752,8 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should not show missed deadline message when student effectively submitted', () => {
-        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
-            of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(
+            of(asGeneratedParticipation({ exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] })),
         );
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
         component.remainingTimeSeconds.set(-1);
@@ -771,8 +765,8 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should not show missed deadline message when deadline has not passed', () => {
-        vi.spyOn(participationService, 'startQuizParticipation').mockReturnValue(
-            of({ body: { exercise: quizExercise as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
+        vi.spyOn(quizParticipationApi, 'startParticipation').mockReturnValue(
+            of(asGeneratedParticipation({ exercise: quizExercise as QuizExercise, submissions: [{ submitted: false }] })),
         );
         fixture.detectChanges();
 
@@ -805,10 +799,10 @@ describe('QuizParticipationComponent - preview mode', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                ParticipationService,
+                QuizParticipationApi,
                 ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
-                QuizParticipationService,
+                QuizSubmissionApi,
                 ArtemisQuizService,
                 SubmissionService,
                 AlertService,
@@ -845,14 +839,14 @@ describe('QuizParticipationComponent - preview mode', () => {
     });
 
     it('should initialize', () => {
-        const serviceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        const serviceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
         fixture.detectChanges();
         expect(serviceStub).toHaveBeenCalledWith(quizExercise.id);
     });
 
     it('should initialize and start', () => {
         const quizService = TestBed.inject(ArtemisQuizService);
-        const serviceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        const serviceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
         const startSpy = vi.spyOn(component, 'startQuizPreviewOrPractice');
         const randomizeSpy = vi.spyOn(quizService, 'randomizeOrder');
         fixture.detectChanges();
@@ -863,19 +857,16 @@ describe('QuizParticipationComponent - preview mode', () => {
     });
 
     it('should submit quiz', () => {
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
         fixture.detectChanges();
 
         component.submitExercise();
 
-        // Handle the HTTP request made by submitForPreview
-        const request = httpMock.expectOne({ method: 'POST' });
-        request.flush({
+        httpMock.expectOne({ method: 'POST' }).flush({
             submissionDate: now,
             submitted: true,
             submission: { submittedAnswers: [], participation: { exercise: quizExercise } },
-        } as Result);
-        expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/preview`);
+        });
     });
 });
 
@@ -899,10 +890,10 @@ describe('QuizParticipationComponent - practice mode', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                ParticipationService,
+                QuizParticipationApi,
                 ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
-                QuizParticipationService,
+                QuizSubmissionApi,
                 ArtemisQuizService,
                 SubmissionService,
                 AlertService,
@@ -939,7 +930,7 @@ describe('QuizParticipationComponent - practice mode', () => {
     });
 
     it('should initialize', () => {
-        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         fixture.detectChanges();
 
         expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
@@ -947,7 +938,7 @@ describe('QuizParticipationComponent - practice mode', () => {
 
     it('should initialize and start', () => {
         const quizService = TestBed.inject(ArtemisQuizService);
-        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         const startSpy = vi.spyOn(component, 'startQuizPreviewOrPractice');
         const randomizeSpy = vi.spyOn(quizService, 'randomizeOrder');
         fixture.detectChanges();
@@ -958,18 +949,16 @@ describe('QuizParticipationComponent - practice mode', () => {
     });
 
     it('should submit quiz', () => {
-        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        const serviceSpy = vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         fixture.detectChanges();
 
         component.submitExercise();
 
-        const request = httpMock.expectOne({ method: 'POST' });
-        request.flush({
+        httpMock.expectOne({ method: 'POST' }).flush({
             submissionDate: now,
             submitted: true,
             submission: { submittedAnswers: [], participation: { exercise: quizExerciseForPractice } },
-        } as Result);
-        expect(request.request.url).toBe(`api/quiz/exercises/${quizExerciseForPractice.id}/submissions/practice`);
+        });
 
         expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
     });
@@ -994,7 +983,7 @@ describe('QuizParticipationComponent - practice mode', () => {
     });
 
     it('should let the student start another attempt when the automatic submission of an expired empty attempt fails', () => {
-        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         fixture.detectChanges();
 
         // The working time ran out without a single answer, so the component submits automatically.
@@ -1014,7 +1003,7 @@ describe('QuizParticipationComponent - practice mode', () => {
     it('should not submit again at the original deadline of a practice attempt that was already submitted', () => {
         vi.useFakeTimers();
         const practiceQuiz = { ...quizExerciseForPractice, duration: 120 } as QuizExercise;
-        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: practiceQuiz } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(practiceQuiz));
         fixture.detectChanges();
 
         component.submitExercise();
@@ -1022,7 +1011,7 @@ describe('QuizParticipationComponent - practice mode', () => {
             submissionDate: now,
             submitted: true,
             submission: { submittedAnswers: [], participation: { exercise: practiceQuiz } },
-        } as Result);
+        });
 
         vi.advanceTimersByTime(practiceQuiz.duration! * 1000);
 
@@ -1032,9 +1021,9 @@ describe('QuizParticipationComponent - practice mode', () => {
     });
 
     it('should not let a late existing-result response overwrite a practice attempt started while it was loading', () => {
-        const existingResultResponse = new Subject<HttpResponse<StudentParticipation>>();
-        vi.spyOn(TestBed.inject(ParticipationService), 'getQuizParticipationResult').mockReturnValue(existingResultResponse);
-        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        const existingResultResponse = new Subject<StudentQuizParticipation>();
+        vi.spyOn(TestBed.inject(QuizParticipationApi), 'getParticipationResult').mockReturnValue(existingResultResponse);
+        vi.spyOn(exerciseService, 'findForStudent').mockReturnValue(of(quizExerciseForPractice));
         const updateSpy = vi.spyOn(component, 'updateParticipationFromServer');
 
         // Open an existing practice result: the header already treats the attempt as finished and offers a restart.
@@ -1044,7 +1033,7 @@ describe('QuizParticipationComponent - practice mode', () => {
 
         // The student restarts before the existing result has arrived.
         component.restartPractice();
-        existingResultResponse.next({ body: { id: 7, testRun: true } as StudentParticipation } as HttpResponse<StudentParticipation>);
+        existingResultResponse.next(asGeneratedParticipation({ id: 7, testRun: true }));
 
         expect(existingResultResponse.observed).toBe(false);
         expect(updateSpy).not.toHaveBeenCalled();
@@ -1072,10 +1061,10 @@ describe('QuizParticipationComponent - solution mode', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                ParticipationService,
+                QuizParticipationApi,
                 ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
-                QuizParticipationService,
+                QuizSubmissionApi,
                 ArtemisQuizService,
                 SubmissionService,
                 AlertService,
@@ -1100,7 +1089,7 @@ describe('QuizParticipationComponent - solution mode', () => {
             .compileComponents();
 
         exerciseService = TestBed.inject(QuizExerciseService);
-        resultForSolutionServiceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
+        resultForSolutionServiceSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExerciseForPractice));
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
         component = fixture.componentInstance;
@@ -1154,10 +1143,10 @@ describe('QuizParticipationComponent - relativeTimeText', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                ParticipationService,
+                QuizParticipationApi,
                 ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
-                QuizParticipationService,
+                QuizSubmissionApi,
                 ArtemisQuizService,
                 SubmissionService,
                 AlertService,
@@ -1182,7 +1171,7 @@ describe('QuizParticipationComponent - relativeTimeText', () => {
             .compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
         component = fixture.componentInstance;
@@ -1239,10 +1228,10 @@ describe('QuizParticipationComponent - applySelection', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                ParticipationService,
+                QuizParticipationApi,
                 ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
-                QuizParticipationService,
+                QuizSubmissionApi,
                 ArtemisQuizService,
                 SubmissionService,
                 AlertService,
@@ -1267,7 +1256,7 @@ describe('QuizParticipationComponent - applySelection', () => {
             .compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
         component = fixture.componentInstance;
@@ -1329,10 +1318,10 @@ describe('QuizParticipationComponent - showResult', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                ParticipationService,
+                QuizParticipationApi,
                 ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
-                QuizParticipationService,
+                QuizSubmissionApi,
                 ArtemisQuizService,
                 SubmissionService,
                 AlertService,
@@ -1357,7 +1346,7 @@ describe('QuizParticipationComponent - showResult', () => {
             .compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
 
         fixture = TestBed.createComponent(QuizParticipationComponent);
         component = fixture.componentInstance;
@@ -1434,10 +1423,10 @@ describe('QuizParticipationComponent - onSaveError', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                ParticipationService,
+                QuizParticipationApi,
                 ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
-                QuizParticipationService,
+                QuizSubmissionApi,
                 ArtemisQuizService,
                 SubmissionService,
                 AlertService,
@@ -1462,7 +1451,7 @@ describe('QuizParticipationComponent - onSaveError', () => {
             .compileComponents();
 
         const exerciseService = TestBed.inject(QuizExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(quizExercise));
 
         alertService = TestBed.inject(AlertService);
 

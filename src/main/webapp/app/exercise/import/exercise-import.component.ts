@@ -6,7 +6,7 @@ import { ModelingExercisePagingService } from 'app/modeling/manage/services/mode
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
-import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
+import { PagingService } from 'app/exercise/services/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
 import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -78,7 +78,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         this.search.next();
     }
 
-    private getPagingService(exerciseType: ExerciseType, programmingLanguage?: ProgrammingLanguage): ExercisePagingService<Exercise> {
+    private getPagingService(exerciseType: ExerciseType, programmingLanguage?: ProgrammingLanguage): PagingService<Exercise> {
         switch (exerciseType) {
             case ExerciseType.MODELING:
                 return this.injector.get(ModelingExercisePagingService);
