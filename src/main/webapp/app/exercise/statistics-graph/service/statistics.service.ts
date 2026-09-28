@@ -48,6 +48,8 @@ export class StatisticsService {
         const params = new HttpParams().set('courseId', '' + courseId);
         return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params }).pipe(
             map((res: CourseManagementStatisticsDTO) => {
+                // The server leaves the list out while no exercise of the course has an average score yet.
+                res.averageScoresOfExercises ??= [];
                 StatisticsService.convertExerciseCategoriesOfCourseManagementStatisticsFromServer(res);
                 return StatisticsService.convertCourseManagementStatisticDatesFromServer(res);
             }),
