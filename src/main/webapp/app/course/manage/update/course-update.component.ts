@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,11 +26,13 @@ import {
     TumAetUiCheckboxComponent,
     TumAetUiChipComponent,
     TumAetUiDialogComponent,
+    TumAetUiFormFieldComponent,
     TumAetUiInputDirective,
     TumAetUiMessageComponent,
+    TumAetUiSelectComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { faBan, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleExclamation, faPen, faPlus, faQuestionCircle, faSave, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -45,15 +47,59 @@ import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
+
+/**
+ * Something that keeps the course from being saved, shown in the footer so the reason is visible instead of a
+ * silently disabled button.
+ */
+export interface CourseFormIssue {
+    /** Translation key of the label of the field that needs attention. */
+    labelKey: string;
+    /** Id of the element that receives focus when the issue is selected. */
+    targetId: string;
+}
+
+/**
+ * The form controls whose own validators can block saving, in the order they appear on the page, so the footer lists
+ * them top to bottom. The rules spanning several dates are added in {@link CourseUpdateComponent}.
+ */
+const CONTROL_ISSUES: readonly (CourseFormIssue & { control: string })[] = [
+    { control: 'title', labelKey: 'artemisApp.course.title', targetId: 'field_title' },
+    { control: 'shortName', labelKey: 'artemisApp.course.shortName', targetId: 'field_shortName' },
+    { control: 'semester', labelKey: 'artemisApp.course.semester', targetId: 'semester' },
+    { control: 'startDate', labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' },
+    { control: 'endDate', labelKey: 'artemisApp.course.endDate', targetId: 'field_endDate_input' },
+    { control: 'timeZone', labelKey: 'artemisApp.forms.configurationForm.timeZoneInput.label', targetId: 'timeZone' },
+    { control: 'maxPoints', labelKey: 'artemisApp.course.maxPoints.title', targetId: 'field_maxPoints' },
+    { control: 'accuracyOfScores', labelKey: 'artemisApp.course.accuracyOfScores.title', targetId: 'field_accuracyOfScores' },
+    { control: 'maxComplaints', labelKey: 'artemisApp.course.maxComplaints.title', targetId: 'field_maxComplaints' },
+    { control: 'maxTeamComplaints', labelKey: 'artemisApp.course.maxTeamComplaints.title', targetId: 'field_maxTeamComplaints' },
+    { control: 'maxComplaintTimeDays', labelKey: 'artemisApp.course.maxComplaintTimeDays.title', targetId: 'field_maxComplaintTimeDays' },
+    { control: 'maxComplaintTextLimit', labelKey: 'artemisApp.course.maxComplaintTextLimit.title', targetId: 'field_maxComplaintTextLimit' },
+    { control: 'maxComplaintResponseTextLimit', labelKey: 'artemisApp.course.maxComplaintResponseTextLimit.title', targetId: 'field_maxComplaintResponseTextLimit' },
+    { control: 'maxRequestMoreFeedbackTimeDays', labelKey: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title', targetId: 'field_maxRequestMoreFeedbackTimeDays' },
+    {
+        control: 'debounceWindowSecondsOverride',
+        labelKey: 'artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.label',
+        targetId: 'field_debounceWindowSecondsOverride',
+    },
+    {
+        control: 'maxDailyOrchestrationOverride',
+        labelKey: 'artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.label',
+        targetId: 'field_maxDailyOrchestrationOverride',
+    },
+    { control: 'enrollmentStartDate', labelKey: 'artemisApp.course.enrollmentStartDate', targetId: 'field_enrollmentStartDate_input' },
+    { control: 'enrollmentEndDate', labelKey: 'artemisApp.course.enrollmentEndDate', targetId: 'field_enrollmentEndDate_input' },
+    { control: 'enrollmentConfirmationMessage', labelKey: 'artemisApp.course.enrollmentConfirmationMessage', targetId: 'field_enrollmentConfirmationMessage' },
+    { control: 'unenrollmentEndDate', labelKey: 'artemisApp.course.unenrollmentEndDate', targetId: 'field_unenrollmentEndDate_input' },
+];
 
 @Component({
     selector: 'jhi-course-update',
@@ -67,13 +113,10 @@ import { FileService } from 'app/foundation/service/file.service';
         TranslateDirective,
         ColorSelectorComponent,
         FormDateTimePickerComponent,
-        HelpIconComponent,
         MarkdownEditorMonacoComponent,
         FeatureToggleHideDirective,
         NgTemplateOutlet,
-        KeyValuePipe,
         ArtemisTranslatePipe,
-        RemoveKeysPipe,
         FeatureOverlayComponent,
         RouterLink,
         TumAetUiDialogComponent,
@@ -84,6 +127,8 @@ import { FileService } from 'app/foundation/service/file.service';
         TumAetUiChipComponent,
         TumAetUiAutoCompleteComponent,
         TumAetUiInputDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiSelectComponent,
         ImageCropperModalComponent,
         OrganizationSelectorComponent,
     ],
@@ -115,6 +160,12 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly faTrash = faTrash;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faPen = faPen;
+    protected readonly faPlus = faPlus;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faCircleExclamation = faCircleExclamation;
+
+    /** Options of the default programming language select, sorted like the previous native select; clearing it leaves the course without a default. */
+    protected readonly programmingLanguageOptions = Object.values(ProgrammingLanguage).sort();
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
@@ -122,6 +173,8 @@ export class CourseUpdateComponent implements OnInit {
     timeZones: string[] = [];
     readonly filteredTimeZones = signal<string[]>([]);
     originalTimeZone?: string;
+    /** The browser's time zone, in which the course dates are entered. */
+    protected readonly currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     courseForm!: FormGroup; // built in ngOnInit()
     // `course` is a deep object two-way bound via [(ngModel)]/[(markdown)]="course.X" in the template.
@@ -148,6 +201,11 @@ export class CourseUpdateComponent implements OnInit {
     readonly complaintsEnabled = signal(true);
     readonly requestMoreFeedbackEnabled = signal(true);
     readonly courseOrganizations = signal<Organization[]>(undefined!);
+    /**
+     * Whether the course is assigned to organizations at all. Switching it off keeps the selection, so switching it
+     * back on restores it, but the course is saved without organizations while it is off.
+     */
+    readonly organizationsEnabled = signal(false);
     /** Controls visibility of the declarative organization-selector dialog. */
     readonly orgSelectorVisible = signal(false);
     /** Snapshot of the organization ids loaded from the server, used to diff add/remove on save. */
@@ -178,6 +236,22 @@ export class CourseUpdateComponent implements OnInit {
 
     private previousSemester?: string;
 
+    /**
+     * Bumped on every value, status and touched change of {@link courseForm}. The reactive form is not signal-based,
+     * so this is what lets {@link issues} follow it.
+     */
+    private readonly formRevision = signal(0);
+
+    /** Set by the first attempt to save, from then on every problem is shown, not just the ones in touched fields. */
+    readonly submitAttempted = signal(false);
+
+    /** Everything that currently keeps the course from being saved, in page order. */
+    readonly issues = computed<CourseFormIssue[]>(() => {
+        this.formRevision();
+        this._course();
+        return this.collectIssues();
+    });
+
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
     // Currently set to 65535 as this is the limit of TEXT
@@ -196,6 +270,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.croppedImage.set(course.courseIconPath);
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations.set(organizations);
+                    this.organizationsEnabled.set(organizations.length > 0);
                     this.initialOrganizationIds = this.toOrganizationIdSet(organizations);
                 });
                 this.originalTimeZone = this.course.timeZone;
@@ -322,6 +397,10 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
+        this.courseForm.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.formRevision.update((revision) => revision + 1));
+        // The form was replaced, so anything derived from the previous one is stale.
+        this.formRevision.update((revision) => revision + 1);
+        this.submitAttempted.set(false);
 
         this.semesters.set(getSemesters(this.course.semester));
         this.previousSemester = this.course.semester;
@@ -375,6 +454,81 @@ export class CourseUpdateComponent implements OnInit {
         } else {
             this.navigationUtilService.navigateBackWithOptional(['courses'], undefined);
         }
+    }
+
+    /**
+     * Handles the form submission. While something still keeps the course from being saved, it reveals every problem
+     * and moves the focus to the first one instead, so pressing Save always answers with what is missing.
+     */
+    onSubmit() {
+        if (this.isSaving()) {
+            return;
+        }
+        // Title and short name only commit their value on blur, and pressing Enter submits while one of them still has
+        // the focus. Leaving the field first commits what was typed, so it is neither reported missing nor saved stale.
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+        const issues = this.issues();
+        if (issues.length > 0) {
+            this.submitAttempted.set(true);
+            this.courseForm.markAllAsTouched();
+            this.focusIssue(issues[0]);
+            return;
+        }
+        this.save();
+    }
+
+    /**
+     * Scrolls the field of the given issue into view and focuses it.
+     * @param issue the issue whose field to focus
+     */
+    focusIssue(issue: CourseFormIssue) {
+        const target = document.getElementById(issue.targetId);
+        if (!target) {
+            return;
+        }
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target.focus({ preventScroll: true });
+    }
+
+    /**
+     * Whether the given control should show its error: once it was edited or left, or after an attempt to save.
+     * @param controlName the name of the control in {@link courseForm}
+     */
+    showError(controlName: string): boolean {
+        const control = this.courseForm.get(controlName);
+        return !!control?.invalid && (control.touched || control.dirty || this.submitAttempted());
+    }
+
+    /**
+     * Whether a required date is missing. Text the picker cannot parse also leaves the control empty, but the picker
+     * explains that case itself, so it does not count as missing here.
+     * @param controlName the name of the date control in {@link courseForm}
+     */
+    showDateMissing(controlName: 'startDate' | 'endDate'): boolean {
+        const control = this.courseForm.get(controlName);
+        return this.showError(controlName) && !!control?.hasError('required') && !control.hasError('invalidDate');
+    }
+
+    private collectIssues(): CourseFormIssue[] {
+        if (!this.courseForm) {
+            return [];
+        }
+        // The date rules span several fields, so each is reported on the field its inline message is shown at.
+        const crossFieldIssues: Record<string, boolean> = {
+            startDate: this.isDateOrderInvalid,
+            enrollmentStartDate: !this.isValidEnrollmentPeriod,
+            unenrollmentEndDate: !this.isValidUnenrollmentEndDate,
+        };
+        const issues: CourseFormIssue[] = CONTROL_ISSUES.filter(({ control }) => this.courseForm.get(control)?.invalid || crossFieldIssues[control]).map(
+            ({ labelKey, targetId }) => ({ labelKey, targetId }),
+        );
+        // Keep the footer truthful when a rule without a field of its own fails, such as the group-level validator.
+        if (issues.length === 0 && (this.courseForm.invalid || !this.isValidConfiguration)) {
+            issues.push({ labelKey: 'artemisApp.course.form.invalidForm', targetId: 'course-form-footer' });
+        }
+        return issues;
     }
 
     /**
@@ -467,7 +621,7 @@ export class CourseUpdateComponent implements OnInit {
      * @param courseId the id of the saved course
      */
     private syncCourseOrganizations(courseId: number): Observable<HttpResponse<void>[]> {
-        const currentOrganizationIds = this.toOrganizationIdSet(this.courseOrganizations() ?? []);
+        const currentOrganizationIds = this.toOrganizationIdSet(this.organizationsEnabled() ? (this.courseOrganizations() ?? []) : []);
 
         const requests: Observable<HttpResponse<void>>[] = [];
         currentOrganizationIds.forEach((organizationId) => {
@@ -674,10 +828,19 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Switches the organization assignment on or off. The selection is kept either way, see {@link organizationsEnabled}.
+     * @param enabled whether the course is assigned to organizations
+     */
+    setOrganizationsEnabled(enabled: boolean) {
+        this.organizationsEnabled.set(enabled);
+    }
+
+    /**
      * Adds the organization chosen in the selector dialog to the course.
      * @param organization the organization selected in the dialog
      */
     onOrgSelected(organization: Organization) {
+        this.organizationsEnabled.set(true);
         this.courseOrganizations.set([...(this.courseOrganizations() ?? []), organization]);
     }
 

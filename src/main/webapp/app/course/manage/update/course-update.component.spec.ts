@@ -1523,6 +1523,253 @@ describe('Course Management Update Component', () => {
             expect(comp.isValidDate).toBe(false);
         });
     });
+
+    describe('form issues and submission', () => {
+        const scrollIntoView = Element.prototype.scrollIntoView;
+
+        beforeEach(() => {
+            // A course that can be saved as it is; each test breaks the part it is about.
+            course.startDate = dayjs('2026-10-01T00:00:00');
+            course.endDate = dayjs('2027-03-31T23:59:00');
+            course.semester = 'WS26/27';
+            course.timeZone = validTimeZone;
+            course.onlineCourse = false;
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            // jsdom does not lay out the page, so it has no scrollIntoView.
+            Element.prototype.scrollIntoView = vi.fn();
+        });
+
+        afterEach(() => {
+            Element.prototype.scrollIntoView = scrollIntoView;
+        });
+
+        it('reports nothing for a course that can be saved', () => {
+            comp.ngOnInit();
+
+            expect(comp.issues()).toEqual([]);
+        });
+
+        it('lists the fields that keep the course from being saved in page order', () => {
+            course.title = undefined;
+            course.semester = undefined;
+            course.endDate = undefined;
+            comp.ngOnInit();
+
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_title', 'semester', 'field_endDate_input']);
+        });
+
+        it('reports a start date after the end date at the start date', () => {
+            course.startDate = dayjs('2027-04-01T00:00:00');
+            comp.ngOnInit();
+
+            expect(comp.issues()).toEqual([{ labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' }]);
+        });
+
+        it('follows the form as it changes', () => {
+            comp.ngOnInit();
+            expect(comp.issues()).toEqual([]);
+
+            comp.courseForm.get('title')!.setValue('');
+
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_title']);
+        });
+
+        it('reveals every problem and focuses the first one instead of saving', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+            const saveSpy = vi.spyOn(comp, 'save');
+
+            comp.onSubmit();
+            fixture.detectChanges();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(comp.submitAttempted()).toBe(true);
+            expect(comp.courseForm.get('title')!.touched).toBe(true);
+            expect(document.activeElement?.id).toBe('field_title');
+            expect(fixture.nativeElement.querySelector('#field_title').closest('tumaet-ui-form-field').textContent).toContain('artemisApp.course.form.title.required');
+        });
+
+        it('commits a title that is still being typed before checking what is missing', () => {
+            // Pressing Enter submits while the field still has the focus; the title only commits its value on blur.
+            course.title = undefined;
+            fixture.detectChanges();
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+            const titleInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_title');
+            titleInput.focus();
+            titleInput.value = 'Software Engineering';
+            titleInput.dispatchEvent(new Event('input'));
+            expect(comp.courseForm.get('title')!.value).toBeFalsy();
+
+            comp.onSubmit();
+
+            expect(comp.courseForm.get('title')!.value).toBe('Software Engineering');
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('leaves text the date picker cannot parse to the picker instead of calling the date missing', () => {
+            comp.ngOnInit();
+            const startDate = comp.courseForm.get('startDate')!;
+            startDate.markAsTouched();
+            startDate.setErrors({ required: true, invalidDate: true });
+
+            expect(comp.showError('startDate')).toBe(true);
+            expect(comp.showDateMissing('startDate')).toBe(false);
+
+            startDate.setErrors({ required: true });
+
+            expect(comp.showDateMissing('startDate')).toBe(true);
+        });
+
+        it('saves when nothing keeps the course from being saved', () => {
+            comp.ngOnInit();
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('does not save twice while a save is running', () => {
+            comp.ngOnInit();
+            comp.isSaving.set(true);
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('keeps the save button focusable but marked as blocked, and names the fields in the footer', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+
+            const saveButton: HTMLButtonElement = fixture.nativeElement.querySelector('#save-entity');
+            expect(saveButton.disabled).toBe(false);
+            expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+            expect(saveButton.getAttribute('aria-describedby')).toBe('course-form-status');
+            expect(fixture.nativeElement.querySelector('[data-testid="course-form-issues"]').textContent).toContain('artemisApp.course.title');
+        });
+
+        it('shows the required legend instead of issues when the course can be saved', () => {
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="course-form-issues"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#save-entity').getAttribute('aria-disabled')).toBe('false');
+            expect(fixture.nativeElement.querySelector('#course-form-status').textContent).toContain('artemisApp.course.form.requiredLegend');
+        });
+
+        it('focuses the field of an issue selected in the footer', () => {
+            fixture.detectChanges();
+
+            comp.focusIssue({ labelKey: 'artemisApp.course.shortName', targetId: 'field_description' });
+
+            expect(document.activeElement?.id).toBe('field_description');
+        });
+    });
+
+    describe('test course retention settings', () => {
+        beforeEach(() => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+        });
+
+        it('hides grade relevance and data-retention hold for a test course, whose data is never deleted automatically', () => {
+            course.testCourse = true;
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#field_gradeRelevant')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#field_dataRetentionHold')).toBeNull();
+        });
+
+        it('shows them again, with their values, once the course is no longer a test course', () => {
+            course.testCourse = true;
+            course.courseConfiguration = { gradeRelevant: false, dataRetentionHold: true };
+            fixture.detectChanges();
+
+            comp.courseForm.get('testCourse')!.setValue(false);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#field_gradeRelevant')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#field_dataRetentionHold')).not.toBeNull();
+            expect(comp.courseForm.get('gradeRelevant')!.value).toBe(false);
+            expect(comp.courseForm.get('dataRetentionHold')!.value).toBe(true);
+        });
+    });
+
+    describe('organization assignment', () => {
+        const orgWithId = (id: number): Organization => {
+            const organization = new Organization();
+            organization.id = id;
+            return organization;
+        };
+
+        beforeEach(() => {
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+        });
+
+        it('starts switched off and without the organization controls when the course has no organizations', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            fixture.detectChanges();
+
+            expect(comp.organizationsEnabled()).toBe(false);
+            expect(fixture.nativeElement.querySelector('#field_organizationsEnabled')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#addOrganizationButton')).toBeNull();
+
+            comp.setOrganizationsEnabled(true);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#addOrganizationButton')).not.toBeNull();
+        });
+
+        it('starts switched on when the course already has organizations', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            fixture.detectChanges();
+
+            expect(comp.organizationsEnabled()).toBe(true);
+        });
+
+        it('saves the course without organizations while the assignment is switched off', async () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            comp.setOrganizationsEnabled(false);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            comp.save();
+            await Promise.resolve();
+
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).toHaveBeenCalledTimes(2);
+            expect(removeStub).toHaveBeenCalledWith(1, course.id);
+            expect(removeStub).toHaveBeenCalledWith(2, course.id);
+        });
+
+        it('keeps the selection when the assignment is switched off and on again', async () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            comp.ngOnInit();
+            comp.setOrganizationsEnabled(false);
+            comp.setOrganizationsEnabled(true);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization');
+
+            comp.save();
+            await Promise.resolve();
+
+            expect(comp.courseOrganizations()).toEqual([orgWithId(1)]);
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).not.toHaveBeenCalled();
+        });
+
+        it('switches the assignment on when an organization is selected', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            comp.ngOnInit();
+
+            comp.onOrgSelected(orgWithId(3));
+
+            expect(comp.organizationsEnabled()).toBe(true);
+        });
+    });
 });
 
 describe('Course Management Learning Paths Feature Toggle Update', () => {
@@ -1649,6 +1896,24 @@ describe('Course Management Update Component Create', () => {
         const codeOfConduct = 'Code of Conduct';
         req.flush(codeOfConduct);
         expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
+    });
+
+    it('renders its own title bar and names the required fields of an empty course', () => {
+        fixture.detectChanges();
+        httpMock.expectOne({ method: 'GET' }).flush('');
+
+        expect(fixture.nativeElement.querySelector('#course-create-title-bar #jhi-course-heading-create')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#course-create-body #course-form-footer')).not.toBeNull();
+        expect(component.issues().map((issue) => issue.targetId)).toEqual(['field_title', 'field_shortName', 'semester', 'field_startDate_input', 'field_endDate_input']);
+    });
+
+    it('does not show errors before the user touched a field or tried to save', () => {
+        fixture.detectChanges();
+        httpMock.expectOne({ method: 'GET' }).flush('');
+
+        expect(component.showError('title')).toBe(false);
+        expect(component.showDateMissing('startDate')).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="date-picker-validation-message"]')).toBeNull();
     });
 });
 

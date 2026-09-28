@@ -335,7 +335,12 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
         return `${base} tumaet:text-text tumaet:hover:bg-hover-background tumaet:hover:text-text-hover${activeState}`;
     }
     protected containerClasses(): string {
-        const padding = this.multiple() && this.selectedValues().length > 0 ? 'tumaet:p-1' : 'tumaet:py-1 tumaet:px-3';
+        // A single-value field pads like a `tumAetUiInput`, so it is as tall as the inputs and selects beside it. The
+        // multi-value field keeps the tighter padding that leaves room for its chips.
+        let padding = 'tumaet:py-2 tumaet:px-3';
+        if (this.multiple()) {
+            padding = this.selectedValues().length > 0 ? 'tumaet:p-1' : 'tumaet:py-1 tumaet:px-3';
+        }
         const base =
             `tumaet-ui-autocomplete-container tumaet:box-border tumaet:flex tumaet:w-full tumaet:cursor-text tumaet:flex-wrap tumaet:items-center tumaet:gap-1 tumaet:rounded-md tumaet:border tumaet:text-base tumaet:transition-colors ` +
             `tumaet:focus-within:outline tumaet:focus-within:outline-2 tumaet:focus-within:outline-focus tumaet:focus-within:outline-offset-2 ${padding}`;

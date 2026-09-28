@@ -352,16 +352,23 @@
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
                     "maxlength": "Der Kurzname darf höchstens 24 Zeichen lang sein.",
-                    "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
+                    "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten.",
+                    "required": "Gib einen Kurznamen ein.",
+                    "hint": "Zwischen 3 und 24 Buchstaben oder Ziffern, beginnend mit einem Buchstaben. Er erscheint in URLs und Gruppennamen und kann später nicht mehr geändert werden.",
+                    "hintReadOnly": "Der Kurzname kann nach dem Erstellen des Kurses nicht mehr geändert werden."
                 },
                 "startDate": {
-                    "invalid": "Muss vor dem Enddatum des Kurses liegen"
+                    "invalid": "Muss vor dem Enddatum des Kurses liegen",
+                    "required": "Gib ein Startdatum ein."
                 },
                 "endDate": {
-                    "invalid": "Muss nach dem Startdatum des Kurses liegen"
+                    "invalid": "Muss nach dem Startdatum des Kurses liegen",
+                    "required": "Gib ein Enddatum ein."
                 },
                 "semester": {
-                    "required": "Bitte ein Semester auswählen."
+                    "required": "Bitte ein Semester auswählen.",
+                    "hint": "Die Auswahl eines Semesters übernimmt dessen Start- und Enddatum. Du kannst beide danach noch anpassen.",
+                    "placeholder": "Semester auswählen"
                 },
                 "enrollmentStartDate": {
                     "invalid": "Kann nicht nach dem Startdatum des Kurses liegen und muss vor dem Einschreibungsende liegen"
@@ -372,7 +379,25 @@
                 "unenrollmentEndDate": {
                     "invalid": "Muss nach dem Enddatum zur Einschreibung liegen und kann nicht nach dem Enddatum des Kurses liegen"
                 },
-                "invalidForm": "Bitte alle verpflichtenden Felder ausfüllen."
+                "invalidForm": "Bitte alle verpflichtenden Felder ausfüllen.",
+                "title": {
+                    "required": "Gib einen Titel ein.",
+                    "maxlength": "Der Titel darf höchstens {{ max }} Zeichen lang sein."
+                },
+                "invalidNumber": "Gib eine gültige Zahl ein.",
+                "noDefaultProgrammingLanguage": "Keine Vorgabe",
+                "changeIcon": "Kursicon ändern",
+                "organizations": {
+                    "toggle": "Den Kurs Organisationen zuordnen",
+                    "description": "Nur Mitglieder der ausgewählten Organisationen können sich selbst in diesen Kurs einschreiben. Ohne Organisationen können sich alle Nutzer:innen einschreiben.",
+                    "empty": "Noch keine Organisation ausgewählt. Solange keine ausgewählt ist, können sich alle Nutzer:innen einschreiben.",
+                    "add": "Organisation hinzufügen"
+                },
+                "issues": {
+                    "one": "1 Feld benötigt deine Aufmerksamkeit:",
+                    "other": "{{ count }} Felder benötigen deine Aufmerksamkeit:"
+                },
+                "requiredLegend": "Mit * markierte Felder sind Pflichtfelder."
             },
             "courseDashboard": "Kurs-Dashboard",
             "instructorDashboard": "Dashboard für Lehrende",

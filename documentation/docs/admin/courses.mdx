@@ -20,27 +20,46 @@ You can find a detailed listing of the different roles and their corresponding p
 Administrators can create new courses by clicking **Course Management** in the header
 and then **Create new course**.
 
-Administrators can then specify options in the creation form, Instructors can later change these values:
+Administrators can then specify options in the creation form, Instructors can later change these values. Fields
+marked with a red asterisk are required. The bar at the bottom of the page keeps **Cancel** and **Save** in view and
+lists every field that still needs attention; select a field name there to jump to it. Pressing **Save** before
+everything is filled in highlights each missing or invalid field.
 
-- **Title** – Name of the course (shown in **Course Overview**)
-- **Short Name** – Unique identifier (cannot be changed later)
-- **Color** – Used throughout UI including overview
-- **Course Description** – Shown during registration & course header
-- **Course Organizations** – Restricts course visibility based on user organization
-- **Start/End** (required) – The period the course runs for. The end date drives archival and the automatic data cleanup, so it cannot be left empty.
-- **Test Course** – Exercises/exams hidden from regular users
-- **Semester** (required) – Groups courses in the dashboard and in the archive. Selecting a semester fills the start and end dates with that semester's period, as long as you have not set them yourself.
-- **Maximum number of points** – Used for grading key calculations
-- **Decimal precision for scoring**
+**General Information**
+
+- **Course Icon** and **Color** – Shown in the course list and the course header
+- **Title** (required) – Name of the course, shown in **Course Overview**
+- **Short Name** (required) – Unique identifier of 3 to 24 letters or digits, starting with a letter. It appears in
+  URLs and group names and cannot be changed later.
+- **Course Description** – Shown during enrollment and in the course header
+- **Semester** (required) – Groups courses in the dashboard and in the archive. Selecting a semester fills the start and
+  end dates with that semester's period, as long as you have not set them yourself, so choose it first.
+- **Start/End** (required) – The period the course runs for. The end date drives archival and the automatic data
+  cleanup, so it cannot be left empty.
+- **Tutorial Group Time Zone** – Used to interpret the times of tutorial group sessions
+- **Test Course** – Exercises and exams are hidden from regular users. Test courses are never part of the automatic
+  deletion of student data, so **Grade-relevant course** and **Data-retention hold** are only shown for other courses.
+
+**Exercises & Grading**
+
+- **Max. Points for Course** – Used for grading key calculations
+- **Decimal Places for Score Calculations** (required)
 - **Default Programming Language**
-- **Customize group names** (Admin-only)
-- **Enable complaints**
-- **Enable more feedback requests**
-- **Enable postings by students**
-- **Online Course** (LTI integration, exclusive with registration)
-- **Student Course Registration Enabled**
+- **Enable Complaints** and **Enable More Feedback Requests**, each with the limits that apply while it is checked
 
-<Image src={courseSettingsImg} alt={"Course Settings"} size={ImageSize.large} />
+**Additional Course Features**
+
+- **Learning Paths Enabled**
+- **Communication Enabled**, with direct messages and the course's code of conduct
+
+**Student Course Enrollment**
+
+- **Online Course** – LTI integration, cannot be combined with self-enrollment
+- **Student Course Enrollment Enabled** – Lets students enroll themselves within an enrollment period
+- **Assign the course to organizations** (Admin-only) – Once checked, add organizations to the course. Only members of
+  those organizations can then enroll themselves; without organizations, every user can enroll.
+
+<Image src={courseSettingsImg} alt={"Create new course page"} size={ImageSize.large} caption="The General Information section of the course creation page" />
 
 ## Managing courses
 
