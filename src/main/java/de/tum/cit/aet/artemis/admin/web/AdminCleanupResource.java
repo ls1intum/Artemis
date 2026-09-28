@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.admin.dto.CleanupConfigurationDTO;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.service.DataCleanupService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for managing old data cleanup operations in Artemis.
@@ -37,7 +39,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("data-privacy/data-cleanup")
+@FeatureUsage(UserFeature.DATA_CLEANUP)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/admin/cleanup/")
@@ -372,6 +374,19 @@ public class AdminCleanupResource {
     public ResponseEntity<PlagiarismCasesCleanupCountDTO> countPlagiarismCases() {
         log.info("REST request to count plagiarism cases of old courses");
         return ResponseEntity.ok().body(dataCleanupService.countPlagiarismCasesOfOldCourses());
+    }
+
+    /**
+     * GET admin/cleanup/configuration
+     * Retrieves the configured retention periods together with the cutoffs the age-based operations would apply now, so
+     * the admin UI can state which data an operation without an admin-picked date range affects.
+     *
+     * @return a {@link ResponseEntity} containing the effective cleanup configuration
+     */
+    @GetMapping("configuration")
+    public ResponseEntity<CleanupConfigurationDTO> getCleanupConfiguration() {
+        log.debug("REST request to get the effective data cleanup configuration");
+        return ResponseEntity.ok().body(dataCleanupService.getCleanupConfiguration());
     }
 
     /**

@@ -1,16 +1,16 @@
 <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h2>
 @if (!isLoading()) {
-    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.sshSettingsPage.keysTablePageTitle' | artemisTranslate">
-        <li tumUiListItem>
+    <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.sshSettingsPage.keysTablePageTitle' | artemisTranslate">
+        <li tumAetUiListItem>
             <dt>
                 <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"></span>
                 <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'" />
             </dt>
         </li>
 
-        <li tumUiListItem>
+        <li tumAetUiListItem>
             @if (keyCount() > 0) {
-                <table tumUiTable [striped]="true" class="w-full">
+                <table tumAetUiTable [striped]="true" class="w-full">
                     <thead>
                         <tr>
                             <th jhiTranslate="artemisApp.userSettings.sshSettingsPage.keys"></th>
@@ -33,28 +33,28 @@
                                 <td>
                                     <button
                                         type="button"
-                                        tumUiButton
+                                        tumAetUiButton
                                         severity="secondary"
                                         variant="outlined"
                                         size="small"
-                                        [tumUiMenuTrigger]="keyMenu"
+                                        [tumAetUiMenuTrigger]="keyMenu"
                                         [attr.aria-label]="'artemisApp.userSettings.sshSettingsPage.actions' | artemisTranslate"
                                     >
                                         <fa-icon [icon]="faEllipsis" />
                                     </button>
                                     <ng-template #keyMenu>
-                                        <tum-ui-menu>
-                                            <a tumUiMenuItem [routerLink]="['view', key.id]">
+                                        <tumaet-ui-menu>
+                                            <a tumAetUiMenuItem [routerLink]="['view', key.id]">
                                                 <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
                                             </a>
                                             <!-- The confirmation is opened from the component, not from a
                                                  jhiDeleteButton here: activating an item closes the menu and
                                                  destroys its content, so the directive would be gone before
                                                  the user confirms and the deletion would never run. -->
-                                            <button tumUiMenuItem (triggered)="confirmDeleteSshKey(key)">
+                                            <button type="button" tumAetUiMenuItem (triggered)="confirmDeleteSshKey(key)">
                                                 <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"></span>
                                             </button>
-                                        </tum-ui-menu>
+                                        </tumaet-ui-menu>
                                     </ng-template>
                                 </td>
                             </tr>
@@ -63,7 +63,7 @@
                 </table>
                 <div class="flex items-center justify-between">
                     <a [routerLink]="['fingerprints']" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprints"></a>
-                    <a tumUiButton size="small" data-testid="addNewSshKeyButton" [routerLink]="['add']">
+                    <a tumAetUiButton size="small" data-testid="addNewSshKeyButton" [routerLink]="['add']">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
                     </a>
@@ -74,12 +74,12 @@
         </li>
 
         @if (keyCount() === 0) {
-            <li tumUiListItem>
-                <a tumUiButton class="self-start" size="small" data-testid="addNewSshKeyButton" [routerLink]="['add']">
+            <li tumAetUiListItem>
+                <a tumAetUiButton class="self-start" size="small" data-testid="addNewSshKeyButton" [routerLink]="['add']">
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
                 </a>
             </li>
         }
-    </tum-ui-list>
+    </tumaet-ui-list>
 }

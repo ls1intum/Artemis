@@ -11,7 +11,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
  * accumulator, so purely administrative edits (dates, points, grading config, …) never burn the
  * per-course daily cap on an orchestration that could not change competency mapping.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @Component
 public class AutonomousCompetencyExerciseEventListener {

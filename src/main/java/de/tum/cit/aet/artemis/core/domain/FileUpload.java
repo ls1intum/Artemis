@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.core.service.file.FileUploadScheduleService;
 
 @Entity
 @Table(name = "file_upload")
+@AggregateRoot("Tracks an uploaded file by path.")
 public class FileUpload extends DomainObject {
 
     @Column(name = "path", nullable = false)

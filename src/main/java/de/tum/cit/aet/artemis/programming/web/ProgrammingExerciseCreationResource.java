@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
@@ -40,9 +41,12 @@ import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
@@ -53,7 +57,7 @@ import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseCreationResource {
@@ -77,6 +81,8 @@ public class ProgrammingExerciseCreationResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private final UserRepository userRepository;
 
     private final ExerciseVersionService exerciseVersionService;
@@ -86,8 +92,10 @@ public class ProgrammingExerciseCreationResource {
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
-            ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -114,12 +122,14 @@ public class ProgrammingExerciseCreationResource {
 
         // The id is mapped onto the entity so that the existing "a new exercise must not have an id" validation still fires
         final ProgrammingExercise programmingExercise = createDTO.toEntity();
+        // The build configuration is a row of its own that names the exercise, so it is bound next to it.
+        final ProgrammingExerciseBuildConfig buildConfig = ProgrammingExerciseRequestDTO.buildConfigOf(createDTO);
 
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, course);
+        programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, buildConfig, course);
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
@@ -130,7 +140,7 @@ public class ProgrammingExerciseCreationResource {
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, emptyRepositories);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise, buildConfig, emptyRepositories);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
@@ -140,7 +150,7 @@ public class ProgrammingExerciseCreationResource {
             exerciseVersionService.createExerciseVersion(newProgrammingExercise);
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId()))
-                    .body(ProgrammingExerciseResponseDTO.of(newProgrammingExercise));
+                    .body(ProgrammingExerciseResponseDTO.of(newProgrammingExercise, buildConfig));
         }
         catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);
@@ -160,7 +170,7 @@ public class ProgrammingExerciseCreationResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
@@ -175,7 +185,9 @@ public class ProgrammingExerciseCreationResource {
         try {
             String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
             // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.getBuildConfig().hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
+            testsPath = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId).hasSequentialTestRuns()
+                    ? Path.of("structural", testsPath).toString()
+                    : testsPath;
             boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
 
             if (didGenerateOracle) {

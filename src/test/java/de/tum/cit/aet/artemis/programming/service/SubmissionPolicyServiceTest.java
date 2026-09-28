@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -199,6 +200,52 @@ class SubmissionPolicyServiceTest {
         assertThat(policy.isActive()).as("the policy is disabled on the way out").isFalse();
         assertThat(exercise.getSubmissionPolicy()).as("the exercise no longer has a policy").isNull();
         verify(programmingExerciseRepository).save(exercise);
+    }
+
+    @Test
+    void updateSubmissionPolicy_forATypeChange_insertsTheReplacementWithoutThePreviousPolicyId() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        LockRepositoryPolicy originalPolicy = lockRepositoryPolicy(10, true);
+        originalPolicy.setId(1L);
+        exercise.setSubmissionPolicy(originalPolicy);
+        SubmissionPenaltyPolicy newPolicy = penaltyPolicy(4, 2.0, true);
+        newPolicy.setId(1L);
+        List<Long> idsOnSave = new ArrayList<>();
+        when(submissionPolicyRepository.save(any(SubmissionPolicy.class))).thenAnswer(invocation -> {
+            SubmissionPolicy savedPolicy = invocation.getArgument(0);
+            idsOnSave.add(savedPolicy.getId());
+            if (savedPolicy.getId() == null) {
+                savedPolicy.setId(2L);
+            }
+            return savedPolicy;
+        });
+
+        SubmissionPolicy replacementPolicy = submissionPolicyService.updateSubmissionPolicy(exercise, newPolicy);
+
+        assertThat(idsOnSave).as("the replacement is inserted without an id and enabled afterwards").containsExactly(null, 2L);
+        assertThat(replacementPolicy).isSameAs(newPolicy);
+        assertThat(replacementPolicy.isActive()).isTrue();
+        assertThat(exercise.getSubmissionPolicy()).as("the exercise points at the replacement").isSameAs(newPolicy);
+        assertThat(originalPolicy.isActive()).as("the policy that is replaced is not written to").isTrue();
+        verify(submissionPolicyRepository, never()).save(originalPolicy);
+        verify(programmingExerciseRepository).save(exercise);
+    }
+
+    @Test
+    void updateSubmissionPolicy_forATypeChange_whenTheInsertFails_leavesTheExercisePolicyUntouched() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        LockRepositoryPolicy originalPolicy = lockRepositoryPolicy(10, true);
+        originalPolicy.setId(1L);
+        exercise.setSubmissionPolicy(originalPolicy);
+        SubmissionPenaltyPolicy newPolicy = penaltyPolicy(4, 2.0, true);
+        newPolicy.setId(1L);
+        when(submissionPolicyRepository.save(any(SubmissionPolicy.class))).thenThrow(new IllegalStateException("insert failed"));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> submissionPolicyService.updateSubmissionPolicy(exercise, newPolicy));
+
+        assertThat(exercise.getSubmissionPolicy()).as("the exercise keeps its policy when the replacement cannot be inserted").isSameAs(originalPolicy);
+        assertThat(originalPolicy.isActive()).isTrue();
+        verifyNoInteractions(programmingExerciseRepository);
     }
 
     @Test

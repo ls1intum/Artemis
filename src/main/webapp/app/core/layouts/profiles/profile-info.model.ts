@@ -155,6 +155,7 @@ export class ProfileInfo {
     public needsToAcceptTerms?: boolean;
     public operatorAdminName!: string;
     public operatorName!: string;
+    public universityName!: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[] = [];
     public registrationEnabled?: boolean;
     public repositoryAuthenticationMechanisms!: string[];

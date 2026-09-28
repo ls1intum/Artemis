@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course.dto;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,7 @@ public record CourseAssessmentDashboardDTO(@JsonUnwrapped CourseManagementDTO co
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AssessmentExerciseDTO(long id, String type, String title, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
             IncludedInOverallScore includedInOverallScore, boolean allowComplaintsForAutomaticAssessments, boolean secondCorrectionEnabled, boolean teamMode,
-            @Nullable DueDateStat numberOfSubmissions, @Nullable DueDateStat totalNumberOfAssessments, DueDateStat[] numberOfAssessmentsOfCorrectionRounds,
+            @Nullable DueDateStat numberOfSubmissions, @Nullable DueDateStat totalNumberOfAssessments, List<DueDateStat> numberOfAssessmentsOfCorrectionRounds,
             @Nullable Long numberOfComplaints, @Nullable Long numberOfOpenComplaints, @Nullable Long numberOfMoreFeedbackRequests, @Nullable Long numberOfOpenMoreFeedbackRequests,
             @Nullable Double averageRating, @Nullable Long numberOfRatings, Set<TutorParticipationDTO> tutorParticipations) {
 
@@ -38,10 +39,10 @@ public record CourseAssessmentDashboardDTO(@JsonUnwrapped CourseManagementDTO co
             DueDateStat[] correctionRounds = exercise.getNumberOfAssessmentsOfCorrectionRounds();
             return new AssessmentExerciseDTO(exercise.getId(), exercise.getType(), exercise.getTitle(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
                     exercise.getIncludedInOverallScore(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getSecondCorrectionEnabled(), exercise.isTeamMode(),
-                    exercise.getNumberOfSubmissions(), exercise.getTotalNumberOfAssessments(),
-                    correctionRounds == null ? new DueDateStat[0] : Arrays.copyOf(correctionRounds, correctionRounds.length), exercise.getNumberOfComplaints(),
-                    exercise.getNumberOfOpenComplaints(), exercise.getNumberOfMoreFeedbackRequests(), exercise.getNumberOfOpenMoreFeedbackRequests(), exercise.getAverageRating(),
-                    exercise.getNumberOfRatings(), exercise.getTutorParticipations().stream().map(TutorParticipationDTO::of).collect(Collectors.toSet()));
+                    exercise.getNumberOfSubmissions(), exercise.getTotalNumberOfAssessments(), correctionRounds == null ? List.of() : Arrays.stream(correctionRounds).toList(),
+                    exercise.getNumberOfComplaints(), exercise.getNumberOfOpenComplaints(), exercise.getNumberOfMoreFeedbackRequests(),
+                    exercise.getNumberOfOpenMoreFeedbackRequests(), exercise.getAverageRating(), exercise.getNumberOfRatings(),
+                    exercise.getTutorParticipations().stream().map(TutorParticipationDTO::of).collect(Collectors.toSet()));
         }
     }
 

@@ -1,5 +1,5 @@
 import { type MockInstance, beforeEach, describe, expect, it, vi, afterEach as vitestAfterEach } from 'vitest';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -436,14 +436,28 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(component.unsavedChanges()).toBe(true);
     });
 
-    it('should react to errors', () => {
+    it.each([undefined, ''])('should fall back to the HTTP error message when the alert header is %s', (header) => {
         fixture.detectChanges();
 
         const alertService = TestBed.inject(AlertService);
         const errorSpy = vi.spyOn(alertService, 'addAlert');
 
-        component.onSubmitError({ message: 'error' } as any);
-        expect(errorSpy).toHaveBeenCalled();
+        const error = new HttpErrorResponse({
+            status: 400,
+            statusText: 'Bad Request',
+            headers: header === undefined ? new HttpHeaders() : new HttpHeaders({ 'X-artemisApp-message': header }),
+        });
+        component.isSubmitting.set(true);
+        component.onSubmitError(error);
+        expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({ message: `Submitting the quiz was not possible. ${error.message}` }));
+        expect(component.isSubmitting()).toBe(false);
+    });
+
+    it('should prefer the server alert header when reporting submission errors', () => {
+        fixture.detectChanges();
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+        component.onSubmitError(new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-message': 'Quiz is closed' }) }));
+        expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'Submitting the quiz was not possible. Quiz is closed' }));
     });
 
     it('should express timespan in humanized text', () => {

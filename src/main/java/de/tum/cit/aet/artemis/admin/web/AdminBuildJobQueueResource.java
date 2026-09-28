@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
@@ -50,7 +51,7 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 @Profile(PROFILE_LOCALCI)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("build-system/build-queue-administration")
+@FeatureUsage(UserFeature.BUILD_AGENTS)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/admin/")

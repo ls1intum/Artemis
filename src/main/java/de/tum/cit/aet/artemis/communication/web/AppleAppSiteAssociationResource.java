@@ -12,15 +12,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for the apple-app-site-association json
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("mobile-apps/app-site-association")
+@FeatureUsage(UserFeature.MOBILE_APPS)
 @RestController
 @RequestMapping(".well-known/") // Intentionally not prefixed with "communication"
 public class AppleAppSiteAssociationResource {
@@ -36,6 +39,7 @@ public class AppleAppSiteAssociationResource {
      *
      * @return apple-app-site-association as json
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping("apple-app-site-association")
     @ManualConfig
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {

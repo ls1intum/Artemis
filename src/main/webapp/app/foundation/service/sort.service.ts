@@ -1,9 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import dayjs from 'dayjs/esm';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class SortService {
     /**
      * Collator used for comparing strings. `numeric: true` enables natural ordering so that, for

@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("grading/grading-scale")
+@FeatureUsage(UserFeature.GRADING_KEYS)
 @RestController
 @RequestMapping("api/assessment/")
 public class GradeStepResource {
@@ -88,6 +89,7 @@ public class GradeStepResource {
      * @param courseId the course to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
+    @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
     @GetMapping("courses/{courseId}/grading-scale/grade-steps")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForCourse(@PathVariable Long courseId) {
@@ -109,6 +111,7 @@ public class GradeStepResource {
      * @param examId   the exam to which the grading scale belongs
      * @return ResponseEntity with status 200 (Ok) with body a list of grade steps if the grading scale exists and 404 (Not found) otherwise
      */
+    @FeatureUsage(UserFeature.EXAM_RESULTS)
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -186,6 +189,7 @@ public class GradeStepResource {
      * @param gradePercentage the grade percentage the has to be mapped to a grade step
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */
+    @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
     @GetMapping("courses/{courseId}/grading-scale/match-grade-step")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
@@ -223,6 +227,7 @@ public class GradeStepResource {
      * @param gradePercentage the grade percentage the has to be mapped to a grade step
      * @return ResponseEntity with status 200 (Ok) with body the grade if the grading scale and grade step exist and 404 (Not found) otherwise
      */
+    @FeatureUsage(UserFeature.EXAM_RESULTS)
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/match-grade-step")
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -81,6 +82,7 @@ import de.tum.cit.aet.artemis.programming.exception.GitException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -102,6 +104,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     private Path repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
@@ -144,10 +148,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
             RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, JsonMapper objectMapper,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         // Programming exercises do not have a submission export service
         super(objectMapper, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;
@@ -215,7 +221,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // Used for a save typecast, this should always be true since this class only works with programming exercises.
             programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
-            programmingExercise.setAuxiliaryRepositories(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()));
+            programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId())));
         }
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
     }
@@ -232,7 +238,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      */
     @Override
     protected Record exerciseDetailsForExport(Exercise exercise) {
-        return ProgrammingExerciseResponseDTO.forExport((ProgrammingExercise) exercise);
+        // The build configuration is a row of its own that names the exercise, so the export reads it here.
+        return ProgrammingExerciseResponseDTO.forExport((ProgrammingExercise) exercise,
+                programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()));
     }
 
     /**
@@ -727,7 +735,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 filterLateSubmissions(repositoryExportOptions, relevantCommitHash, participation, repository);
             }
 
-            if (repositoryExportOptions.addParticipantName()) {
+            if (repositoryExportOptions.addParticipantName() && !repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Adding student or team name to participation {}", participation);
                 addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
             }

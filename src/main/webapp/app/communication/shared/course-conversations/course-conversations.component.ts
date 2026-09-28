@@ -151,15 +151,9 @@ const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
     ],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarView {
-    readonly isCommunicationEnabled = computed(() => {
-        const currentCourse = this.course();
-        return currentCourse ? isCommunicationEnabled(currentCourse) : false;
-    });
-    protected readonly faComments = faComments;
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private courseTabRefreshService = inject(CourseTabRefreshService);
-    private tabReselectionSubscription?: Subscription;
     private readonly selectionState = inject(ConversationSelectionState);
     private metisConversationService = inject(MetisConversationService);
     private metisService = inject(MetisService);
@@ -169,6 +163,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     private alertService = inject(AlertService);
     private eventManager = inject(EventManager);
     private breakpointObserver = inject(BreakpointObserver);
+    private courseSidebarService = inject(CourseSidebarService);
+
+    readonly isCommunicationEnabled = computed(() => {
+        const currentCourse = this.course();
+        return currentCourse ? isCommunicationEnabled(currentCourse) : false;
+    });
+    protected readonly faComments = faComments;
+    private tabReselectionSubscription?: Subscription;
 
     readonly isMobile = toSignal(this.breakpointObserver.observe(MOBILE_SIDEBAR_BREAKPOINT).pipe(map((result) => result.matches)), {
         initialValue: this.breakpointObserver.isMatched(MOBILE_SIDEBAR_BREAKPOINT),
@@ -242,8 +244,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
 
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
     readonly channelActions$ = output<ChannelAction>();
-
-    private courseSidebarService = inject(CourseSidebarService);
 
     getAsChannel = getAsChannelDTO;
 

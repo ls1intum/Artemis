@@ -18,7 +18,6 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisJacksonDefaults;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -41,16 +40,6 @@ public class LegacyBuildPlanConverterService {
         // being pushed into a copy afterwards
         return ArtemisJacksonDefaults.apply(JsonMapper.builder(JsonFactory.builder().streamReadConstraints(BuildPlanPhasesDTO.BUILD_PLAN_CONFIGURATION_CONSTRAINTS).build()))
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
-    }
-
-    /**
-     * If successful it returns a present {@link BuildPlanPhasesDTO} containing the legacy build script wrapped into one build phase.
-     *
-     * @param programmingExercise the exercise that is assumed to be legacy
-     * @return the converted build plan phases
-     */
-    public Optional<BuildPlanPhasesDTO> convertLegacyBuildPlanConfiguration(ProgrammingExercise programmingExercise) {
-        return convertLegacyBuildPlanConfiguration(programmingExercise.getBuildConfig());
     }
 
     /**

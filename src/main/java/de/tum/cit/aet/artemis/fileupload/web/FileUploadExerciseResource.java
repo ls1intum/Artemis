@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -90,7 +91,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.FILE_UPLOAD_AUTHORING)
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadExerciseResource {
@@ -652,16 +653,11 @@ public class FileUploadExerciseResource {
      * @return ResponseEntity with status
      */
     @PostMapping("file-upload-exercises/{exerciseId}/export-submissions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        // TAs are not allowed to download all participations
-        if (submissionExportOptions.exportAllParticipants()) {
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exercise.getCourseViaExerciseGroupOrCourseMember(), null);
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         Path zipFilePath = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);

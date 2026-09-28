@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.AssessmentDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CommunicationDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CourseContextDataCleanupRepository;
@@ -51,8 +50,6 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 @Service
 public class UserOwnedContentDeletionService {
 
-    private final UserRepository userRepository;
-
     private final ParticipationDeletionService participationDeletionService;
 
     private final CommunicationDataCleanupRepository communicationDataCleanupRepository;
@@ -69,12 +66,10 @@ public class UserOwnedContentDeletionService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
-    public UserOwnedContentDeletionService(UserRepository userRepository, ParticipationDeletionService participationDeletionService,
-            CommunicationDataCleanupRepository communicationDataCleanupRepository, AssessmentDataCleanupRepository assessmentDataCleanupRepository,
-            ExerciseDataCleanupRepository exerciseDataCleanupRepository, CourseContextDataCleanupRepository courseContextDataCleanupRepository,
-            PlatformDataCleanupRepository platformDataCleanupRepository, LearningDataCleanupRepository learningDataCleanupRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
-        this.userRepository = userRepository;
+    public UserOwnedContentDeletionService(ParticipationDeletionService participationDeletionService, CommunicationDataCleanupRepository communicationDataCleanupRepository,
+            AssessmentDataCleanupRepository assessmentDataCleanupRepository, ExerciseDataCleanupRepository exerciseDataCleanupRepository,
+            CourseContextDataCleanupRepository courseContextDataCleanupRepository, PlatformDataCleanupRepository platformDataCleanupRepository,
+            LearningDataCleanupRepository learningDataCleanupRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.participationDeletionService = participationDeletionService;
         this.communicationDataCleanupRepository = communicationDataCleanupRepository;
         this.assessmentDataCleanupRepository = assessmentDataCleanupRepository;
@@ -95,18 +90,6 @@ public class UserOwnedContentDeletionService {
         List<Path> archivePaths = platformDataCleanupRepository.findDataExportFilePaths(userId).stream().map(Path::of).toList();
         platformDataCleanupRepository.deleteDataExports(userId);
         return archivePaths;
-    }
-
-    /**
-     * Removes the account's learner profile, per-course parts first, after the account has let go of it.
-     *
-     * @param userId           the account being deleted
-     * @param learnerProfileId its learner profile
-     */
-    public void deleteLearnerProfile(long userId, long learnerProfileId) {
-        userRepository.clearLearnerProfileForDeletion(userId);
-        learningDataCleanupRepository.deleteCourseLearnerProfiles(learnerProfileId);
-        learningDataCleanupRepository.deleteLearnerProfile(learnerProfileId);
     }
 
     /**

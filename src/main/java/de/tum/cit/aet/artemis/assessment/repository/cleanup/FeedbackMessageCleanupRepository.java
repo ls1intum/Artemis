@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * <p>
  * Both databases plan the anti-join as a single linear pass — PostgreSQL as a hash right anti join over two
  * sequential scans, MySQL by materializing each subquery with deduplication once — so the cost is one
- * sequential scan of each referencing table, not one per message. Measured at production scale (615k
- * messages, 31.7M test-case and 2.5M SCA rows, 130k collected): 2.8 s on PostgreSQL 18, 15 s on MySQL 9.
+ * sequential scan of each referencing table, not one per message, which is what makes the missing index
+ * affordable.
  * <p>
  * Operational note: on MySQL's default REPEATABLE READ the {@code NOT EXISTS} subqueries of the delete are
  * locking reads, so InnoDB holds shared locks over the scanned referencing rows for the duration of the

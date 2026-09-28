@@ -101,7 +101,7 @@ describe('UserManagementComponent', () => {
         httpMock.verify();
     });
 
-    describe('onPageChange (tum-ui paginator)', () => {
+    describe('onPageChange (tumaet-ui paginator)', () => {
         it('converts the 0-indexed paginator page to the 1-indexed page', () => {
             component.onPageChange(2);
             expect(component.page()).toBe(3);

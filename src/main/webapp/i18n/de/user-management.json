@@ -1,5 +1,8 @@
 {
     "artemisApp": {
+        "managedUserVM": {
+            "password": "Passwort"
+        },
         "userManagement": {
             "batch": {
                 "all": "Alle",

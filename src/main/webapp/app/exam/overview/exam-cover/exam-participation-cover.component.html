@@ -202,7 +202,7 @@
         }
         <div class="d-flex justify-content-end gap-3">
             @if (handInEarly()) {
-                <button [disabled]="submitInProgress()" id="continue" class="btn btn-secondary" (click)="continueAfterHandInEarly()">
+                <button type="button" [disabled]="submitInProgress()" id="continue" class="btn btn-secondary" (click)="continueAfterHandInEarly()">
                     <fa-icon [icon]="faArrowLeft" />
                     <span jhiTranslate="artemisApp.examParticipation.continueAfterHandInEarly"></span>
                 </button>

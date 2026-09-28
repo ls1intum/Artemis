@@ -251,7 +251,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
         }
         if (Files.exists(oldPath)) {
             Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragItemFilePath(), FilePathType.DRAG_ITEM);
-            target.setPictureFilePath(newPath.getFileName().toString());
+            // copyExistingFileToTarget logs the failure and returns null when the copy itself fails, and one unreadable picture must not abort the whole quiz import.
+            // Fall back to the source reference, which is exactly what the branch below already does for a picture that is no longer on disk.
+            target.setPictureFilePath(newPath == null ? source.getPictureFilePath() : newPath.getFileName().toString());
         }
         else {
             target.setPictureFilePath(source.getPictureFilePath());

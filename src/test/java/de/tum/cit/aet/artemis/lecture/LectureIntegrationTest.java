@@ -437,7 +437,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         attachmentRepository.save(unit.getAttachment());
 
         // Hide slide 2 (display page 5) → it is removed from the student PDF and must disappear from the mapping.
-        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(unit.getId(), 2);
+        Slide hiddenSlide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumberAndSupersededIsFalse(unit.getId(), 2);
         hiddenSlide.setHidden(ZonedDateTime.now().plusDays(1));
         slideRepository.save(hiddenSlide);
 
@@ -606,6 +606,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     private void testGetLectureTitle() throws Exception {
         Lecture lecture = new Lecture();
         lecture.setTitle("Test Lecture");
+        // A lecture belongs to a course, which the database now requires.
+        lecture.setCourse(course1);
         lectureRepository.save(lecture);
 
         final var title = request.get("/api/lecture/lectures/" + lecture.getId() + "/title", HttpStatus.OK, String.class);

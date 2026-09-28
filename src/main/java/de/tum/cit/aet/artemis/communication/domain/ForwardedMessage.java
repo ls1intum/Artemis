@@ -13,6 +13,7 @@ import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A message forwarded to exactly one destination: a post or an answer post, never both and never neither.
@@ -38,11 +39,13 @@ public class ForwardedMessage extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "destination_post_id")
     @JsonIncludeProperties({ "id" })
+    @Parent(enforcedBy = "CHECK_DESTINATION_POST_OR_ANSWER")
     private Post destinationPost;
 
     @ManyToOne
     @JoinColumn(name = "destination_answer_id")
     @JsonIncludeProperties({ "id" })
+    @Parent(enforcedBy = "CHECK_DESTINATION_POST_OR_ANSWER")
     private AnswerPost destinationAnswerPost;
 
     public ForwardedMessage() {

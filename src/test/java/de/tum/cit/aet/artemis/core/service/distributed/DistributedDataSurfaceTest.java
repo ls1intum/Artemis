@@ -121,7 +121,8 @@ class DistributedDataSurfaceTest {
      * Stored types this package cannot name directly, because they are package-private where they are declared.
      * Loaded by name so that they are still covered rather than quietly left out.
      */
-    private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo");
+    private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo",
+            "de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandCoordinationService$AckMessage");
 
     /**
      * Cache annotations that can write a method's return value. {@link Caching} is included because it may wrap either
@@ -267,6 +268,27 @@ class DistributedDataSurfaceTest {
                 """.formatted(ACTUAL_SURFACE, RECORDED_SURFACE)).isEqualTo(recorded);
 
         Files.deleteIfExists(ACTUAL_SURFACE);
+    }
+
+    /**
+     * Serializability is a property of the same surface, so it is checked here rather than by a rule of its own.
+     * The recorded surface has always reported it per type; this makes it a requirement instead of a note, because
+     * a type that fails it does not fail at build time but on the first call that stores it in production.
+     */
+    @Test
+    void testEveryStoredTypeIsSerializable() {
+        Set<Class<?>> visited = new LinkedHashSet<>();
+        roots().forEach(root -> collect(root, visited));
+
+        var notSerializable = visited.stream().filter(type -> !Serializable.class.isAssignableFrom(type)).map(Class::getName).sorted().toList();
+
+        assertThat(notSerializable).as("""
+                A type stored in the distributed store does not implement Serializable.
+
+                Map values are encoded with Java serialization, so storing such a value throws NotSerializableException \
+                and the request that wrote it answers 500. Let the type implement Serializable and give it an explicit \
+                serialVersionUID, or keep it out of the distributed store.
+                """).isEmpty();
     }
 
     /**

@@ -14,6 +14,11 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
+    protected oneToOneChatService = inject(OneToOneChatService);
+    protected metisConversationService = inject(MetisConversationService);
+    protected metisService = inject(MetisService);
+    protected router = inject(Router);
+
     readonly posting = model<T>();
     readonly isCommunicationPage = input<boolean | undefined>();
     readonly showChannelReference = input<boolean>();
@@ -34,11 +39,6 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     deleteInterval: NodeJS.Timeout | undefined;
 
     content?: string;
-
-    protected oneToOneChatService = inject(OneToOneChatService);
-    protected metisConversationService = inject(MetisConversationService);
-    protected metisService = inject(MetisService);
-    protected router = inject(Router);
 
     // Icons
     farBookmark = farBookmark;

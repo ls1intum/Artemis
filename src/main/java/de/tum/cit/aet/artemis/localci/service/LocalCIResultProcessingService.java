@@ -230,7 +230,7 @@ public class LocalCIResultProcessingService {
         Result result = null;
 
         SecurityUtils.setSystemAuthorizationObject();
-        Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
+        Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseById(buildJob.participationId());
 
         try {
             if (participationOptional.isPresent()) {
@@ -238,7 +238,7 @@ public class LocalCIResultProcessingService {
 
                 // In case the participation does not contain the exercise, we have to load it from the database
                 if (participation.getProgrammingExercise() == null) {
-                    participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
+                    participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
                 }
 
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
@@ -253,7 +253,7 @@ public class LocalCIResultProcessingService {
             processedResults.incrementAndGet();
             ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participationOptional.orElse(null);
             if (programmingExerciseParticipation != null && programmingExerciseParticipation.getExercise() == null) {
-                ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(programmingExerciseParticipation);
+                ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
                 programmingExerciseParticipation.setExercise(exercise);
                 programmingExerciseParticipation.setProgrammingExercise(exercise);
             }

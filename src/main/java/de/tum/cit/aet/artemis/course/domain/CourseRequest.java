@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "course_request")
@@ -63,8 +64,9 @@ public class CourseRequest extends DomainObject {
     private String admin;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requester_id")
+    @JoinColumn(name = "requester_id", nullable = false)
     @JsonIgnoreProperties(value = "courseRequests", allowSetters = true)
+    @Parent
     private User requester;
 
     @Column(name = "created_course_id")

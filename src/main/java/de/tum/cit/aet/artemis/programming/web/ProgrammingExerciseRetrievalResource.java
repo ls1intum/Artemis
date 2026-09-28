@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -65,7 +66,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authoring/exercise-management")
+@FeatureUsage(UserFeature.PROGRAMMING_AUTHORING)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseRetrievalResource {
@@ -154,11 +155,11 @@ public class ProgrammingExerciseRetrievalResource {
     private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
         if (includePlagiarismDetectionConfig) {
             var programmingExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(exerciseId);
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(exerciseId);
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
             return programmingExercise;
         }
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
+        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndVariantGroupElseThrow(exerciseId);
     }
 
     /**
@@ -197,7 +198,8 @@ public class ProgrammingExerciseRetrievalResource {
 
         // gradingInstructionFeedbackUsed is a transient flag computed above; the grading-instruction editor branches on
         // it, so it is passed into the mapper explicitly.
-        return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExercise.isGradingInstructionFeedbackUsed()));
+        var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
+        return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(programmingExercise, buildConfig, programmingExercise.isGradingInstructionFeedbackUsed()));
     }
 
     /**
@@ -206,6 +208,7 @@ public class ProgrammingExerciseRetrievalResource {
      * @param exerciseId the id of the programmingExercise to retrieve the configuration for
      * @return the ResponseEntity with status 200 (OK) and with body the TheiaConfigDTO, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_ONLINE_IDE)
     @GetMapping("programming-exercises/{exerciseId}/theia-config")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<ProgrammingExerciseTheiaConfigDTO> getBuildConfig(@PathVariable long exerciseId) {
@@ -234,7 +237,8 @@ public class ProgrammingExerciseRetrievalResource {
         programmingExercise.setStudentParticipations(participations);
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
-        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(programmingExercise));
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**
@@ -251,7 +255,8 @@ public class ProgrammingExerciseRetrievalResource {
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
-        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(programmingExercise));
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**
@@ -266,7 +271,8 @@ public class ProgrammingExerciseRetrievalResource {
 
         log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
-        return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(programmingExercise));
+        return ResponseEntity
+                .ok(ProgrammingExerciseResponseDTO.of(programmingExercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId)));
     }
 
     /**

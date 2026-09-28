@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -55,7 +56,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/course-management")
+@FeatureUsage(UserFeature.COURSE_SETTINGS)
 @RestController
 @RequestMapping("api/course/")
 public class CourseUpdateResource {
@@ -233,7 +234,7 @@ public class CourseUpdateResource {
         // if learning paths got enabled, generate learning paths for students
         if (!oldLearningPathsEnabled && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
-            Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
+            Set<User> students = userRepository.getStudentsWithAuthorities(courseWithCompetencies);
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfiles(courseWithCompetencies, students));
             learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
         }

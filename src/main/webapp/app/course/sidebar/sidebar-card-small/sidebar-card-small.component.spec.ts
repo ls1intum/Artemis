@@ -65,10 +65,10 @@ describe('SidebarCardSmallComponent', () => {
     it('should store route on click', () => {
         vi.spyOn(component, 'emitStoreAndRefresh');
         vi.spyOn(component, 'refreshChildComponent');
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
+        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-small a');
         element.click();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem().id);
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem().id, expect.any(MouseEvent));
     });
 
     /*
@@ -80,10 +80,10 @@ describe('SidebarCardSmallComponent', () => {
         vi.spyOn(component, 'emitStoreAndRefresh');
         fixture.componentRef.setInput('itemSelected', true);
         fixture.changeDetectorRef.detectChanges();
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small a');
         itemElement.click();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId', expect.any(MouseEvent));
         expect(router.navigate).toHaveBeenCalled();
         const navigationArray = router.navigate.mock.calls[1][0];
         expect(navigationArray).toStrictEqual(['./testId']);
@@ -93,10 +93,10 @@ describe('SidebarCardSmallComponent', () => {
         vi.spyOn(component, 'emitStoreAndRefresh');
         fixture.componentRef.setInput('itemSelected', false);
         fixture.changeDetectorRef.detectChanges();
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small a');
         itemElement.click();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId', expect.any(MouseEvent));
         expect(router.navigate).toHaveBeenCalled();
         const navigationArray = router.navigate.mock.calls[1][0];
         expect(navigationArray).toStrictEqual(['', 'testId']);

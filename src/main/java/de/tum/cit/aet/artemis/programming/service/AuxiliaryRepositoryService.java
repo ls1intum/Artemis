@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,14 +44,14 @@ public class AuxiliaryRepositoryService {
      * @param programmingExercise      The programming exercise where the auxiliary repositories are added
      * @param newAuxiliaryRepositories The newly added auxiliary repositories
      */
-    public void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> newAuxiliaryRepositories) {
+    public void validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(ProgrammingExercise programmingExercise, Collection<AuxiliaryRepository> newAuxiliaryRepositories) {
         List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>(Objects
                 .requireNonNullElse(programmingExercise.getAuxiliaryRepositories(), new ArrayList<AuxiliaryRepository>()).stream().filter(repo -> repo.getId() != null).toList());
         for (AuxiliaryRepository repo : newAuxiliaryRepositories) {
             validateAuxiliaryRepository(programmingExercise.getProgrammingLanguage(), repo, auxiliaryRepositories, true);
             auxiliaryRepositories.add(repo);
         }
-        programmingExercise.setAuxiliaryRepositories(new ArrayList<>());
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         auxiliaryRepositories.forEach(programmingExercise::addAuxiliaryRepository);
     }
 
@@ -91,7 +93,7 @@ public class AuxiliaryRepositoryService {
                     programmingExercise.getAuxiliaryRepositories().stream().noneMatch(existingRepo -> existingRepo.getId().equals(repo.getId())));
             auxiliaryRepositories.add(repo);
         }
-        updatedExercise.setAuxiliaryRepositories(new ArrayList<>());
+        updatedExercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         auxiliaryRepositories.forEach(updatedExercise::addAuxiliaryRepository);
     }
 

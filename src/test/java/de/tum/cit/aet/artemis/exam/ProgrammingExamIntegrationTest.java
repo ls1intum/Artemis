@@ -236,7 +236,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         doNothing().when(continuousIntegrationService).createProjectForExercise(any());
 
         // Fail the repository copy, which happens after the (transactional) basis import has already persisted the new exercise.
-        doThrow(new RuntimeException("Simulated repository copy failure")).when(gitServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
+        doThrow(new RuntimeException("Simulated repository copy failure")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
 
         String sourceTitle = sourceExercise.getTitle();
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
@@ -260,7 +260,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         exam.setId(null);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
-        programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
         exerciseRepository.save(programming);
 
         versionControlService.createProjectForExercise(programming);

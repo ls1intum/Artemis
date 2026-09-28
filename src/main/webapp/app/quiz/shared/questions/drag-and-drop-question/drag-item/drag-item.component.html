@@ -1,4 +1,4 @@
-<div class="drag-item" ngClass="{'no-click': clickDisabled}" [ngStyle]="{ 'min-width': minWidth() }">
+<div class="drag-item" ngClass="{'no-click': clickDisabled}" [style.min-width]="minWidth()">
     @if (dragItem() && dragItem().pictureFilePath) {
         <div class="drag-item-picture" [cdkDragDisabled]="clickDisabled()" [cdkDragData]="dragItem()" cdkDrag>
             @if (dragItem().pictureFilePath) {

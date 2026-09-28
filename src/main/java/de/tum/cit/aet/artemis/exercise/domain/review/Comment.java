@@ -13,6 +13,7 @@ import org.hibernate.type.SqlTypes;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
 
@@ -22,6 +23,7 @@ public class Comment extends AbstractAuditingEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "thread_id", nullable = false)
+    @Parent
     private CommentThread thread;
 
     @ManyToOne

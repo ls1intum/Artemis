@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { NgStyle } from '@angular/common';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -133,7 +132,7 @@ describe('PostingsMarkdownEditor', () => {
         mockOverlayRef.attach.mockReturnValue(mockComponentRef);
 
         TestBed.configureTestingModule({
-            imports: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent), NgStyle],
+            imports: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: FileService, useClass: MockFileService },

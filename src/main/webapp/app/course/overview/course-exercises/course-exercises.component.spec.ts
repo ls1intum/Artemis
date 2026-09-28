@@ -196,6 +196,28 @@ describe('CourseExercisesComponent', () => {
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
+    it('should not re-select an exercise once the URL has moved to another course', () => {
+        // Leaving an open exercise deactivates the child outlet while the router URL already points at the
+        // destination. Re-selecting here resolves against this course's route and would replace it.
+        TestBed.inject(SessionStorageService).store('sidebar.lastSelectedItem.exercise.byCourse.123', '456');
+        router.setUrl('/courses/8/exercises');
+        router.navigate.mockClear();
+
+        component.navigateToExercise();
+
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should still re-select the last exercise while staying on this course', () => {
+        TestBed.inject(SessionStorageService).store('sidebar.lastSelectedItem.exercise.byCourse.123', '456');
+        router.setUrl('/courses/123/exercises');
+        router.navigate.mockClear();
+
+        component.navigateToExercise();
+
+        expect(router.navigate).toHaveBeenCalledWith(['456'], expect.objectContaining({ replaceUrl: true }));
+    });
+
     it('should display sidebar when course is provided', () => {
         // Ensure course is set
         (component as any)._course.set(course);

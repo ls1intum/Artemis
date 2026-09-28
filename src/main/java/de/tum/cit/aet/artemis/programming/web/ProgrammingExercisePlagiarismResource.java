@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.jplag.exceptions.ExitException;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -29,6 +30,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
@@ -45,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @Lazy
-@FeatureUsage("integrity/plagiarism")
+@FeatureUsage(UserFeature.PLAGIARISM_CHECKS)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExercisePlagiarismResource {
@@ -100,6 +103,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("programming-exercises/{exerciseId}/check-plagiarism")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.PlagiarismChecks)
@@ -135,6 +139,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      * @throws IOException is thrown for file handling errors
      */
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping(value = "programming-exercises/{exerciseId}/check-plagiarism-jplag-report")
     @EnforceAtLeastEditor
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,

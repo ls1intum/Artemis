@@ -591,8 +591,10 @@ public class SubmissionService {
                 feedback.setDetailText(feedbackText);
                 feedback.setPositive(false);
                 feedback.setType(FeedbackType.AUTOMATIC);
-                feedback = feedbackRepository.save(feedback);
+                // The feedback names its result before it is written: result_id is not nullable, so saving it detached and
+                // attaching it afterwards fails the insert instead of updating the row.
                 feedback.setResult(result);
+                feedback = feedbackRepository.save(feedback);
                 result.setFeedbacks(List.of(feedback));
                 resultRepository.save(result);
             }
@@ -790,6 +792,25 @@ public class SubmissionService {
             throw new BadRequestAlertException("The correction round " + correctionRound + " does not exist for exercise " + exercise.getId(), ENTITY_NAME,
                     "invalidCorrectionRound");
         }
+    }
+
+    /**
+     * Like {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}, but for an endpoint that opens one specific submission. Such a
+     * submission may already hold a result for a round beyond the exercise's number of correction rounds: the response to a complaint
+     * is stored as an additional manual result with the next round. Opening that existing result is valid and creates nothing.
+     *
+     * @param exercise        the exercise the submission belongs to
+     * @param submissionId    the id of the submission that is opened
+     * @param correctionRound the requested correction round
+     * @throws BadRequestAlertException if the round is negative, or neither below the exercise's number of correction rounds nor the round of an
+     *                                      existing result of the submission
+     */
+    public void checkCorrectionRoundIsValidElseThrow(Exercise exercise, long submissionId, int correctionRound) {
+        boolean isRoundOfTheExercise = correctionRound >= 0 && correctionRound < exercise.getNumberOfCorrectionRounds();
+        if (isRoundOfTheExercise || (correctionRound >= 0 && resultRepository.existsManualResultBySubmissionIdAndCorrectionRound(submissionId, correctionRound))) {
+            return;
+        }
+        checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
     }
 
     /**

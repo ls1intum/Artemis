@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.FeedbackRequestService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
@@ -73,7 +72,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATION)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {
@@ -102,8 +101,6 @@ public class ParticipationResource {
 
     private final UserRepository userRepository;
 
-    private final TeamRepository teamRepository;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -115,7 +112,7 @@ public class ParticipationResource {
     private final FeedbackRequestService feedbackRequestService;
 
     public ParticipationResource(ParticipationService participationService, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
+            AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
             Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
@@ -126,7 +123,6 @@ public class ParticipationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.teamRepository = teamRepository;
         this.featureToggleService = featureToggleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -160,11 +156,10 @@ public class ParticipationResource {
         }
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
 
-        // if this is a team-based exercise, set the participant to the team that the user belongs to
-        Participant participant = user;
-        if (exercise.isTeamMode()) {
-            participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
-                    .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
+        // for a team-based exercise this is the team the user belongs to, otherwise the user
+        Participant participant = participationService.findSubmitParticipant(exercise, user);
+        if (participant == null) {
+            throw new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart");
         }
         StudentParticipation participation;
         try {
@@ -185,21 +180,7 @@ public class ParticipationResource {
             }
         }
 
-        // startExercise can return a merge copy; preserve a participant whose associations were loaded for this request.
-        if (exercise.isTeamMode()) {
-            Long startedParticipationId = participation.getId();
-            var participationWithTeamStudents = studentParticipationRepository.findByIdWithEagerTeamStudents(startedParticipationId)
-                    .orElseThrow(() -> new EntityNotFoundException("Could not find the started participation " + startedParticipationId + "."));
-            Participant loadedParticipant = participationWithTeamStudents.getParticipant();
-            if (loadedParticipant != null) {
-                participation.setParticipant(loadedParticipant);
-            }
-        }
-        else {
-            participation.setParticipant(participant);
-        }
-
-        return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation));
+        return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation, participant));
     }
 
     /**
@@ -248,7 +229,7 @@ public class ParticipationResource {
 
         StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
 
-        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation));
+        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation, user));
     }
 
     /**
@@ -292,11 +273,7 @@ public class ParticipationResource {
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
-        // saveAndFlush merges this detached participation and returns another instance; preserve the eagerly loaded team students for the response DTO.
-        if (participant != null) {
-            participation.setParticipant(participant);
-        }
-        return ResponseEntity.ok().body(StudentParticipationDTO.ofForCurrentUser(participation));
+        return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterResume(participation, participant));
     }
 
     /**
@@ -306,6 +283,7 @@ public class ParticipationResource {
      * @param participationId of the participation for which feedback is requested
      * @return ResponseEntity with status 200 (OK) and the updated participation as body
      */
+    @FeatureUsage(UserFeature.AI_FEEDBACK_REQUEST)
     @PutMapping("exercises/{exerciseId}/participations/{participationId}/request-feedback")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipationDTO> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {

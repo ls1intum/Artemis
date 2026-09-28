@@ -195,7 +195,7 @@ describe('Course Management Service', () => {
     it('should start exercise', () => {
         const participationId = 12345;
         const participationDTO = createProgrammingParticipationDTO(participationId, false);
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
@@ -216,12 +216,6 @@ describe('Course Management Service', () => {
             id: 12345,
             testRun: false,
             type: ParticipationType.STUDENT,
-            exercise: {
-                id: exerciseId,
-                title: 'Text exercise',
-                exerciseType: ExerciseType.TEXT,
-                teamMode: false,
-            },
             submissions: [
                 {
                     id: 23456,
@@ -231,7 +225,7 @@ describe('Course Management Service', () => {
                 },
             ],
         };
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
 
         service
             .startExercise(exerciseId, textExercise)
@@ -250,12 +244,6 @@ describe('Course Management Service', () => {
             id: 12345,
             testRun: false,
             type: ParticipationType.STUDENT,
-            exercise: {
-                id: exerciseId,
-                title: 'File upload exercise',
-                exerciseType: ExerciseType.FILE_UPLOAD,
-                teamMode: false,
-            },
             submissions: [
                 {
                     id: 23456,
@@ -264,7 +252,7 @@ describe('Course Management Service', () => {
                 },
             ],
         };
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
 
         service
             .startExercise(exerciseId, fileUploadExercise)
@@ -283,7 +271,7 @@ describe('Course Management Service', () => {
         const gradedParticipation = new StudentParticipation();
         programmingExercise.studentParticipations = [gradedParticipation];
         const originalReleaseDate = programmingExercise.releaseDate;
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
@@ -307,7 +295,7 @@ describe('Course Management Service', () => {
     it('should resume programming exercise', () => {
         const participationId = 12345;
         const participationDTO = createProgrammingParticipationDTO(participationId, false);
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
         vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
@@ -328,7 +316,7 @@ describe('Course Management Service', () => {
 
     it('should adapt a request-feedback response', () => {
         const participationId = 12345;
-        let participation: StudentParticipation | null | undefined;
+        let participation: StudentParticipation | undefined;
 
         service
             .requestFeedback(exerciseId, participationId)
@@ -351,15 +339,6 @@ describe('Course Management Service', () => {
         repositoryUri: 'repository-uri',
         buildPlanId: 'build-plan-id',
         branch: 'main',
-        exercise: {
-            id: exerciseId,
-            title: 'Programming exercise',
-            exerciseType: ExerciseType.PROGRAMMING,
-            teamMode: false,
-            releaseDate: releaseDateString,
-            dueDate: dueDateString,
-            assessmentDueDate: assessmentDueDateString,
-        },
     });
 
     afterEach(() => {

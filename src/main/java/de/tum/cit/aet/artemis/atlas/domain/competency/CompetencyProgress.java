@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.domain.CompetencyProgressConfidenceReason;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * This class models the 'progress' association between a user and a competency.
@@ -44,11 +45,13 @@ public class CompetencyProgress implements Serializable {
     @ManyToOne
     @MapsId("userId")
     @JsonIgnore
+    @Parent
     private User user;
 
     @ManyToOne
     @MapsId("competencyId")
     @JsonIgnore
+    @Parent
     private CourseCompetency competency;
 
     @Column(name = "progress")

@@ -1,7 +1,7 @@
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -10,7 +10,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { catchError } from 'rxjs/operators';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseResolve implements Resolve<Course | null> {
     private courseManagementService = inject(CourseManagementService);
 
@@ -28,7 +28,7 @@ export class CourseResolve implements Resolve<Course | null> {
     }
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamResolve implements Resolve<Exam> {
     private examManagementService = inject(ExamManagementService);
 
@@ -59,7 +59,7 @@ export class ExamResolve implements Resolve<Exam> {
     }
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StudentExamResolve implements Resolve<StudentExamWithGradeDTO> {
     private studentExamService = inject(StudentExamService);
 

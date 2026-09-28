@@ -177,7 +177,7 @@
                                 }
                             ]
                         },
-                        "tum-ui-source": {
+                        "tum-aet-ui-source": {
                             "tsConfig": "tsconfig.serve.json"
                         }
                     },
@@ -186,7 +186,7 @@
                 "serve": {
                     "builder": "@angular/build:dev-server",
                     "options": {
-                        "buildTarget": "artemis:build:development,tum-ui-source",
+                        "buildTarget": "artemis:build:development,tum-aet-ui-source",
                         "prebundle": {
                             "exclude": ["@tumaet/ui-angular"]
                         },
@@ -198,7 +198,7 @@
                             "buildTarget": "artemis:build:production"
                         },
                         "development": {
-                            "buildTarget": "artemis:build:development,tum-ui-source"
+                            "buildTarget": "artemis:build:development,tum-aet-ui-source"
                         }
                     },
                     "defaultConfiguration": "development"
@@ -211,25 +211,25 @@
                 }
             }
         },
-        "tum-ui": {
+        "tum-aet-ui": {
             "projectType": "library",
-            "root": "packages/tum-ui",
-            "sourceRoot": "packages/tum-ui/src",
-            "prefix": "tum-ui",
+            "root": "packages/tum-aet-ui",
+            "sourceRoot": "packages/tum-aet-ui/src",
+            "prefix": "tumaet-ui",
             "architect": {
                 "build": {
                     "builder": "@angular/build:ng-packagr",
                     "configurations": {
                         "production": {
-                            "tsConfig": "packages/tum-ui/tsconfig.lib.prod.json"
+                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.prod.json"
                         },
                         "development": {
-                            "project": "packages/tum-ui/ng-package.dev.json",
-                            "tsConfig": "packages/tum-ui/tsconfig.lib.json"
+                            "project": "packages/tum-aet-ui/ng-package.dev.json",
+                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.json"
                         },
                         "pack": {
-                            "project": "packages/tum-ui/ng-package.pack.json",
-                            "tsConfig": "packages/tum-ui/tsconfig.lib.prod.json"
+                            "project": "packages/tum-aet-ui/ng-package.pack.json",
+                            "tsConfig": "packages/tum-aet-ui/tsconfig.lib.prod.json"
                         }
                     },
                     "defaultConfiguration": "production"
@@ -237,16 +237,16 @@
                 "lint": {
                     "builder": "@angular-eslint/builder:lint",
                     "options": {
-                        "lintFilePatterns": ["packages/tum-ui/**/*.ts", "packages/tum-ui/**/*.html"]
+                        "lintFilePatterns": ["packages/tum-aet-ui/**/*.ts", "packages/tum-aet-ui/**/*.html"]
                     }
                 },
                 "test": {
                     "builder": "@angular/build:unit-test",
                     "options": {
-                        "tsConfig": "packages/tum-ui/tsconfig.spec.json",
-                        "providersFile": "packages/tum-ui/test-providers.ts",
-                        "coverageInclude": ["packages/tum-ui/src/lib/**/*.ts"],
-                        "coverageExclude": ["packages/tum-ui/src/**/*.spec.ts", "packages/tum-ui/src/**/*.stories.ts"],
+                        "tsConfig": "packages/tum-aet-ui/tsconfig.spec.json",
+                        "providersFile": "packages/tum-aet-ui/test-providers.ts",
+                        "coverageInclude": ["packages/tum-aet-ui/src/lib/**/*.ts"],
+                        "coverageExclude": ["packages/tum-aet-ui/src/**/*.spec.ts", "packages/tum-aet-ui/src/**/*.stories.ts"],
                         "coverageReporters": ["text", "json-summary"],
                         "coverageThresholds": {
                             "lines": 90,

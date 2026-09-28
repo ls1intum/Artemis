@@ -31,14 +31,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
@@ -54,7 +58,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
  * Active only when {@link SharingEnabled} matches; otherwise the controller is not loaded.
  * </p>
  */
-@FeatureUsage("authoring/sharing")
+@FeatureUsage(UserFeature.SHARING_PLATFORM)
 @RestController
 @RequestMapping("api/programming/sharing/")
 @Conditional(SharingEnabled.class)
@@ -104,11 +108,15 @@ public class ExerciseSharingResource {
 
     private final ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, SharingConnectorService sharingConnectorService,
-            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService) {
+            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.exerciseSharingService = exerciseSharingService;
         this.programmingExerciseImportFromSharingService = programmingExerciseImportFromSharingService;
         this.sharingConnectorService = sharingConnectorService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -163,7 +171,9 @@ public class ExerciseSharingResource {
         }
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
-            return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(exercise));
+            // The configuration is a row of its own that names the exercise, so the response reads it here.
+            return ResponseEntity.ok()
+                    .body(ProgrammingExerciseResponseDTO.of(exercise, programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())));
         }
         catch (GitAPIException | SharingException | IOException | URISyntaxException e) {
             log.error("Error importing exercise from sharing platform", e);
@@ -183,6 +193,7 @@ public class ExerciseSharingResource {
      *         on checksum failure; {@code 404 Not Found} if the exercise cannot be resolved
      */
     // TODO: we should NOT use a POST request for a GET Operation
+    @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("import/basket/exercise-details")
     @EnforceAtLeastEditor
     public ResponseEntity<ImportProgrammingExerciseRequestDTO> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
@@ -241,6 +252,7 @@ public class ExerciseSharingResource {
      * @return {@code 200 OK} with the ZIP stream; {@code 404 Not Found} if the token is unknown;
      *         {@code 401 Unauthorized} on failed validation; {@code 500 Internal Server Error} on IO errors
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping(SHARING_EXPORT_RESOURCE_PATH + "/{token}")
     // Custom Key validation is applied
     public ResponseEntity<Resource> exportExerciseToSharing(@PathVariable("token") String token, @RequestParam("sec") String sec) {

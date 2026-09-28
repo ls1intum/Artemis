@@ -22,6 +22,8 @@ import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
+
 /**
  * A persisted audit event recording a change to an account's credentials or identity (password reset, e-mail change,
  * registration, ...). Structurally identical to {@link PersistentAuditEvent}, but stored in its own table so security
@@ -30,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @Table(name = "security_audit_event")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Audit trail, deliberately independent.")
 public class SecurityAuditEvent implements Serializable, PersistedAuditEvent {
 
     @Serial

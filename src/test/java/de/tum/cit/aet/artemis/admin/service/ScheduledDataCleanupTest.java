@@ -262,10 +262,10 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Result nonLatest = participationUtilService.generateResult(submission, instructor); // rated
-        Feedback nonLatestFeedback = feedbackRepository.save(new Feedback());
+        Feedback nonLatestFeedback = new Feedback();
         participationUtilService.addFeedbackToResult(nonLatestFeedback, nonLatest);
         Result latest = participationUtilService.generateResult(submission, instructor); // rated, newer id -> latest
-        Feedback latestFeedback = feedbackRepository.save(new Feedback());
+        Feedback latestFeedback = new Feedback();
         participationUtilService.addFeedbackToResult(latestFeedback, latest);
 
         scheduleService(false, false, true, false, false, false, false).deleteOldFeedback();
@@ -352,7 +352,7 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         Submission submission = oldCourseSubmission();
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         Result nonLatest = participationUtilService.generateResult(submission, instructor);
-        Feedback feedback = feedbackRepository.save(new Feedback());
+        Feedback feedback = new Feedback();
         participationUtilService.addFeedbackToResult(feedback, nonLatest);
         // A newer rated result makes the first one non-latest (so its feedback is a deletion candidate).
         participationUtilService.generateResult(submission, instructor);

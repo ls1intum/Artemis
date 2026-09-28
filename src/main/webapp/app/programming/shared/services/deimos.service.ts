@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Observable } from 'rxjs';
 
@@ -13,7 +13,7 @@ export interface DeimosBatchTriggerResponse {
     status: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DeimosService {
     private http = inject(HttpClient);
 

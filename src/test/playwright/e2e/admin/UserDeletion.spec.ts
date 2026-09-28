@@ -131,7 +131,7 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         await searchFor(page, userLogin);
 
         const dialog = await openDeletionDialog(page, userLogin);
-        await expect(dialog).toContainText('2');
+        await expect(dialog).toContainText('Deleting the 1 selected account(s) removes at least 1 record(s).');
 
         const confirmationInput = dialog.getByRole('textbox');
         const deleteButton = dialog.getByTestId('confirm-delete-users').getByRole('button');
@@ -215,7 +215,7 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
 
         const dialog = page.getByRole('dialog', { name: 'Permanently delete user data' });
         await expect(dialog).toBeVisible();
-        await expect(dialog).toContainText('4');
+        await expect(dialog).toContainText('Deleting the 2 selected account(s) removes at least 2 record(s).');
         const deleteButton = dialog.getByTestId('confirm-delete-users').getByRole('button');
         await expect(deleteButton).toBeDisabled();
         await dialog.getByRole('textbox').fill('2');

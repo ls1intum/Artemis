@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -65,7 +66,7 @@ import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotif
  */
 @Conditional(FileUploadEnabled.class)
 @Lazy
-@FeatureUsage("participation/submissions")
+@FeatureUsage(UserFeature.FILE_UPLOAD_EXERCISES)
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
@@ -216,6 +217,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param resultId        for which we want to get the submission
      * @return the ResponseEntity with status 200 (OK) and with body the {@link FileUploadSubmissionDTO}, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("file-upload-submissions/{submissionId}")
     @EnforceAtLeastTutor
     public ResponseEntity<FileUploadSubmissionDTO> getFileUploadSubmission(@PathVariable Long submissionId,
@@ -228,7 +230,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(fileUploadExercise, user, resultId);
         fileUploadSubmissionService.checkThatAssessmentIsPossibleElseThrow(fileUploadExercise, studentParticipation);
-        fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, correctionRound);
+        fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, submissionId, correctionRound);
 
         // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
@@ -272,6 +274,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor
      * @return the ResponseEntity with status 200 (OK) and the list of {@link FileUploadSubmissionDTO} in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/file-upload-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<FileUploadSubmissionDTO>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
@@ -291,6 +294,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param lockSubmission  specifies if the submission should be locked for assessor
      * @return the ResponseEntity with status 200 (OK) and the {@link FileUploadSubmissionDTO} in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/file-upload-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<FileUploadSubmissionDTO> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,

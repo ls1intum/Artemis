@@ -1,6 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,19 +17,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 
 class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "learnerprofileresource";
-
-    @Autowired
-    private UserTestRepository userTestRepository;
 
     @Autowired
     private LearnerProfileRepository learnerProfileRepository;
@@ -38,20 +43,14 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
         // Create and save the user
         testUser = userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
 
-        // Create the profile, set the user, and set the profile on the user
-        testProfile = new LearnerProfile();
+        // The profile holds the key to the account, so it is saved on its own. The account survives between test
+        // methods and may only ever have one profile, so an existing one is reset rather than replaced.
+        testProfile = learnerProfileRepository.findByUser(testUser).orElseGet(LearnerProfile::new);
         testProfile.setUser(testUser);
         testProfile.setFeedbackDetail(1);
         testProfile.setFeedbackFormality(1);
         testProfile.setHasSetupFeedbackPreferences(true);
-        testUser.setLearnerProfile(testProfile);
-
-        // Save the user (should cascade to profile if mapping is correct)
-        userTestRepository.save(testUser);
-
-        // Reload to ensure IDs are set
-        testUser = userTestRepository.findById(testUser.getId()).orElseThrow();
-        testProfile = learnerProfileRepository.findByUserElseThrow(testUser);
+        testProfile = learnerProfileRepository.save(testProfile);
     }
 
     @Test
@@ -71,8 +70,6 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
     void testGetLearnerProfile_ProfileNotFound_CreatesNewProfile() throws Exception {
         // Delete the profile to simulate a user without a profile
         learnerProfileRepository.delete(testProfile);
-        testUser.setLearnerProfile(null);
-        userTestRepository.save(testUser);
 
         LearnerProfileDTO response = request.get("/api/atlas/learner-profile", HttpStatus.OK, LearnerProfileDTO.class);
         assertThat(response).isNotNull();
@@ -82,6 +79,21 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
         // Optionally, assert that the profile now exists in the database
         LearnerProfile createdProfile = learnerProfileRepository.findByUserElseThrow(testUser);
         assertThat(createdProfile).isNotNull();
+    }
+
+    @Test
+    void testGetOrCreateLearnerProfile_CreatedConcurrently_ReturnsExistingProfile() {
+        // A concurrent request created the profile after this one looked for it: the first lookup misses it, later ones read the database
+        LearnerProfileRepository racingRepository = mock(LearnerProfileRepository.class, delegatesTo(learnerProfileRepository));
+        doAnswer(invocation -> Optional.empty()).doAnswer(delegatesTo(learnerProfileRepository)).when(racingRepository).findByUser(testUser);
+
+        LearnerProfile profile = new LearnerProfileService(racingRepository).getOrCreateLearnerProfile(testUser);
+
+        // The attempt to create a second profile failed on the unique constraint, and the existing profile is returned instead
+        verify(racingRepository).save(any(LearnerProfile.class));
+        assertThat(profile.getId()).isEqualTo(testProfile.getId());
+        assertThat(profile.getFeedbackDetail()).isEqualTo(1);
+        assertThat(learnerProfileRepository.findAllByUserIn(Set.of(testUser))).extracting(LearnerProfile::getId).containsExactly(testProfile.getId());
     }
 
     @Test
@@ -135,8 +147,6 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
     void testUpdateLearnerProfile_ProfileNotFound() throws Exception {
         // Delete the profile to simulate a user without a profile
         learnerProfileRepository.delete(testProfile);
-        testUser.setLearnerProfile(null);
-        userTestRepository.save(testUser);
 
         LearnerProfileDTO updateDTO = new LearnerProfileDTO(999L, // Non-existent ID
                 1, // feedbackDetail

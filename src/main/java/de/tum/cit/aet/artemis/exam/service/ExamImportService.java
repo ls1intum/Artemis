@@ -443,7 +443,7 @@ public class ExamImportService {
 
                     case PROGRAMMING -> {
                         final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(sourceExerciseId);
+                                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndCategories(sourceExerciseId);
                         if (optionalOriginalProgrammingExercise.isEmpty()) {
                             yield Optional.empty();
                         }

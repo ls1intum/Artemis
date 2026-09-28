@@ -56,6 +56,14 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly lectureService = inject(LectureService);
+    private readonly alertService = inject(AlertService);
+    protected readonly lectureUnitService = inject(LectureUnitService);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly websocketService = inject(WebsocketService);
+
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faEye = faEye;
@@ -68,14 +76,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
     protected readonly ProcessingPhase = ProcessingPhase;
-
-    private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly router = inject(Router);
-    private readonly lectureService = inject(LectureService);
-    private readonly alertService = inject(AlertService);
-    protected readonly lectureUnitService = inject(LectureUnitService);
-    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly websocketService = inject(WebsocketService);
 
     showCreationCard = input<boolean>(true);
     showCompetencies = input<boolean>(true);

@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -50,13 +50,13 @@ public class ExerciseReviewRepositoryService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final GitService gitService;
+    private final BareGitRepositoryService bareGitRepositoryService;
 
     public ExerciseReviewRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            GitService gitService) {
+            BareGitRepositoryService bareGitRepositoryService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.gitService = gitService;
+        this.bareGitRepositoryService = bareGitRepositoryService;
     }
 
     /**
@@ -83,7 +83,7 @@ public class ExerciseReviewRepositoryService {
             return null;
         }
 
-        return gitService.getLastCommitHash(repositoryUri);
+        return bareGitRepositoryService.getLastCommitHash(repositoryUri);
     }
 
     /**
@@ -142,7 +142,7 @@ public class ExerciseReviewRepositoryService {
                 continue;
             }
             try {
-                commitShasByTarget.put(targetType, gitService.getLastCommitHash(repositoryUri));
+                commitShasByTarget.put(targetType, bareGitRepositoryService.getLastCommitHash(repositoryUri));
             }
             catch (Exception ex) {
                 log.warn("Could not resolve latest commit SHA for target {} and repository URI {}: {}", targetType, repositoryUri, ex.getMessage());
@@ -167,7 +167,7 @@ public class ExerciseReviewRepositoryService {
             return Optional.of("repository URI for " + targetType + " is missing");
         }
 
-        try (var repository = gitService.getBareRepository(repositoryUri, false); RevWalk revWalk = new RevWalk(repository)) {
+        try (var repository = bareGitRepositoryService.getBareRepository(repositoryUri, false); RevWalk revWalk = new RevWalk(repository)) {
             ObjectId defaultBranchCommitId = repository.resolve(Constants.R_HEADS + defaultBranch);
             if (defaultBranchCommitId == null) {
                 return Optional.of("default branch '" + defaultBranch + "' is missing in " + targetType);

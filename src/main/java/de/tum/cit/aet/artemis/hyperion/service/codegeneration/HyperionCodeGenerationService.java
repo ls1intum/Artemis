@@ -61,7 +61,7 @@ public abstract class HyperionCodeGenerationService {
     private static final Pattern NON_CONSTANT_NAME_CHARACTER_RUN = Pattern.compile("[^A-Z0-9]+");
 
     /** Leading or trailing underscores of a generated constant name. */
-    private static final Pattern LEADING_OR_TRAILING_UNDERSCORES = Pattern.compile("^_+|_+$");
+    private static final Pattern LEADING_OR_TRAILING_UNDERSCORES = Pattern.compile("(?:^_+)|(?:_+$)");
 
     private static final JsonMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
