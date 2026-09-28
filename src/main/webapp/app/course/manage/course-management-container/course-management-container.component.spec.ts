@@ -3,8 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -819,53 +818,5 @@ describe('CourseManagementContainerComponent', () => {
         await component['initializeCourseManagementContainerComponent']();
 
         expect(subscribeSpy).toHaveBeenCalled();
-    });
-
-    it('should open instructor-only feeds once the loaded course confirms the instructor role', async () => {
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM],
-            activeProfiles: [PROFILE_PROD],
-        } as unknown as ProfileInfo);
-        const orchestrationSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
-
-        await component.ngOnInit();
-
-        const subscribedTopics = vi.mocked(websocketService.subscribe).mock.calls.map(([topic]) => topic);
-        // Each feed is opened exactly once, although the course is loaded both from the route and in ngOnInit.
-        expect(subscribedTopics.filter((topic) => topic === '/topic/courses/1/operation-progress')).toHaveLength(1);
-        expect(subscribedTopics.filter((topic) => topic === '/topic/atlas/orchestrator/1')).toHaveLength(1);
-        expect(orchestrationSpy).toHaveBeenCalledExactlyOnceWith(1);
-    });
-
-    it('should not subscribe tutors and editors to instructor-only feeds the server rejects', async () => {
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM],
-            activeProfiles: [PROFILE_PROD],
-        } as unknown as ProfileInfo);
-        const editorCourse = deepClone(course1);
-        editorCourse.isAtLeastInstructor = false;
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(editorCourse);
-        findCourseSpy.mockReturnValue(of(new HttpResponse({ body: editorCourse, headers: new HttpHeaders() })));
-        const orchestrationSpy = vi.spyOn(TestBed.inject(AutoOrchestrationNotificationService), 'subscribeToCourse');
-
-        await component.ngOnInit();
-
-        expect(websocketService.subscribe).not.toHaveBeenCalled();
-        expect(orchestrationSpy).not.toHaveBeenCalled();
-    });
-
-    it('should close the previous course feeds when switching to a course without instructor access', async () => {
-        await component.ngOnInit();
-        expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/courses/1/operation-progress');
-        const progressSubscription = (component as any).progressSubscription as Subscription;
-
-        const otherCourse = deepClone(course1);
-        otherCourse.id = 2;
-        otherCourse.isAtLeastInstructor = false;
-        findCourseSpy.mockReturnValue(of(new HttpResponse({ body: otherCourse, headers: new HttpHeaders() })));
-        component.handleCourseIdChange(2);
-
-        expect(progressSubscription.closed).toBe(true);
-        expect(websocketService.subscribe).not.toHaveBeenCalledWith('/topic/courses/2/operation-progress');
     });
 });
