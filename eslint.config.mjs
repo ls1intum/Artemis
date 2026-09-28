@@ -725,6 +725,7 @@ export default tseslint.config(
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
+            'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/account/**/*.html',
             // The lecture editor with its content, the pages that create, edit and split content, and the PDF drop zone and dialog.
             'src/main/webapp/app/lecture/manage/lecture-update/**/*.html',

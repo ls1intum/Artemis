@@ -101,7 +101,7 @@
 @source './app/core/navbar/variant-generation-tray';
 @source './app/course/manage/exercises/create-variant-modal';
 @source './app/account';
-@source './app/course/manage/update/course-update.component.html';
+@source './app/course/manage/update';
 @source './app/exam/manage/exercise-groups';
 @source './app/assessment/shared/assessment-dashboard';
 @source './app/exercise/dashboards/tutor-leaderboard';
