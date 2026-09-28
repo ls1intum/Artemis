@@ -8,6 +8,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureCreationMode, LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
+import { hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -307,6 +308,24 @@ describe('LectureUpdateComponent', () => {
             const withDetails = unloadEvent();
             lectureUpdateComponent.onBeforeUnload(withDetails);
             expect(withDetails.preventDefault).toHaveBeenCalledOnce();
+        });
+
+        it('should keep asking while the details of an existing lecture are saved, since the save does not cover content that could not be saved', async () => {
+            await configureValidLectureUpdateForm();
+            lectureUpdateComponent.unitSection = signal({ isUnitConfigurationValid: () => true, hasUnsavedContent: () => true, isSaving: () => false } as any);
+            vi.spyOn(lectureService, 'update').mockReturnValue(new Subject<HttpResponse<Lecture>>());
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+
+            lectureUpdateComponent.save();
+
+            expect(lectureUpdateComponent.isSaving()).toBe(true);
+            expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(true);
+            const event = unloadEvent();
+            lectureUpdateComponent.onBeforeUnload(event);
+            expect(event.preventDefault).toHaveBeenCalledOnce();
+            const confirmSpy = vi.spyOn(lectureUpdateComponent, 'confirmDiscardChanges').mockReturnValue(of(false));
+            hasLectureUnsavedChangesGuard(lectureUpdateComponent, undefined as any, undefined as any, undefined as any);
+            expect(confirmSpy).toHaveBeenCalledOnce();
         });
 
         it('should not ask after the page decided to leave on purpose', async () => {

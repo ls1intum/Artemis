@@ -381,7 +381,11 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      * This function is called by pressing save after creating or editing a lecture
      */
     save() {
-        this.shouldDisplayDismissWarning = false;
+        // A new lecture leaves this page for its editor once it is saved, which must not ask. An existing lecture stays on this page, so leaving it while
+        // its details are saved still asks about what the save does not cover, such as content that could not be saved.
+        if (!this.isEditMode()) {
+            this.shouldDisplayDismissWarning = false;
+        }
         this.isSaving.set(true);
         this.sentLecture = deepClone(this.lecture());
         if (this.lecture().id !== undefined) {
@@ -421,7 +425,6 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             this.lectureOnInit = this.sentLecture ?? deepClone(this.lecture());
             this.lastSavedAt.set(dayjs());
             this.updateIsChangesMadeToTitleOrPeriodSection();
-            this.shouldDisplayDismissWarning = true;
         } else {
             // A saved lecture can hold content, which is added in its editor. The router creates that editor anew for the edit route, so the
             // creation page is left without asking. Replacing it in the history lets the browser's back button skip the now empty form.
