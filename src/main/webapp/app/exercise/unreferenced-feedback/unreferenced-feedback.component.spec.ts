@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { By } from '@angular/platform-browser';
 import { UnreferencedFeedbackDetailStubComponent } from 'test/helpers/stubs/exercise/unreferenced-feedback-detail-stub.component';
@@ -90,6 +90,18 @@ describe('UnreferencedFeedbackComponent', () => {
 
         expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].text).toBe(feedback.text);
+    });
+
+    it.each([FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER])('should mark an accepted suggestion exactly once from %s', (prefix) => {
+        const suggestion = { text: `${prefix}Title`, credits: 1 } as Feedback;
+        comp.feedbackSuggestions.set([suggestion]);
+
+        comp.acceptSuggestion(suggestion);
+
+        expect(comp.feedbackSuggestions()).toEqual([]);
+        expect(comp.unreferencedFeedback).toContain(suggestion);
+        expect(suggestion.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title`);
+        expect(Feedback.getDisplayTitle(suggestion)).toBe('Title');
     });
 
     it('should update unreferenced feedback by id even when the emitted object is a different reference (e.g. long feedback hydration)', () => {

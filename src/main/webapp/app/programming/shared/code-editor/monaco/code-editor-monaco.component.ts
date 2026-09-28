@@ -22,7 +22,7 @@ import { RepositoryFileService } from 'app/programming/shared/services/repositor
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, take, timeout } from 'rxjs';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { fromPairs, pickBy } from 'lodash-es';
@@ -148,8 +148,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly feedbackSuggestionsInternal = linkedSignal<Feedback[]>(() => this.feedbackSuggestions());
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
-    readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
-        this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
+    readonly feedbackForSelectedFile = computed(() =>
+        this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((source) => ({ source, feedback: this.attachLineAndReferenceToFeedback(source) })),
     );
     readonly feedbackSuggestionsForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
         this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
@@ -642,7 +642,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
         this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((suggestion) => suggestion !== original));
         const accepted = cloneWith(original, {
-            text: (original.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER),
+            text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + Feedback.stripSuggestionPrefix(original.text ?? ''),
         });
         this.feedbackInternal.set([...this.feedbackInternal(), accepted]);
         this.renderFeedbackWidgets();

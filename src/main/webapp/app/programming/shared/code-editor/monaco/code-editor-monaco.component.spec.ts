@@ -166,18 +166,41 @@ describe('CodeEditorMonacoComponent', () => {
         expect(onUpdateFeedback).toHaveBeenCalledWith([expect.objectContaining({ text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title` })]);
     });
 
-    it('should append an accepted suggestion beside existing feedback on the same line', () => {
-        const reference = 'file:file1.java_line:2';
-        const existing = { id: 1, reference, text: 'Existing', detailText: 'Manual' } as Feedback;
-        const suggestion = { id: 2, reference, text: `${FEEDBACK_SUGGESTION_IDENTIFIER}New`, detailText: 'Suggested' } as Feedback;
-        fixture.componentRef.setInput('feedbacks', [existing]);
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+    it.each([FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER])(
+        'should append an accepted suggestion exactly once beside existing feedback from %s',
+        (prefix) => {
+            const reference = 'file:file1.java_line:2';
+            const existing = { id: 1, reference, text: 'Existing', detailText: 'Manual' } as Feedback;
+            const suggestion = { id: 2, reference, text: `${prefix}New`, detailText: 'Suggested' } as Feedback;
+            fixture.componentRef.setInput('feedbacks', [existing]);
+            fixture.componentRef.setInput('feedbackSuggestions', [suggestion]);
+            fixture.detectChanges();
+
+            comp.acceptSuggestion(suggestion);
+
+            expect(comp.feedbackInternal()).toEqual([existing, expect.objectContaining({ id: 2, reference, text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}New` })]);
+            expect(comp.feedbackSuggestionsInternal()).toEqual([]);
+        },
+    );
+
+    it('keeps the unsaved feedback card for the same line when another card is removed', () => {
+        vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        const reference = 'file:file1.java_line:1';
+        const first = { reference, text: 'Manual' } as Feedback;
+        const second = { reference, text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggested` } as Feedback;
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbacks', [first, second]);
         fixture.detectChanges();
 
-        comp.acceptSuggestion(suggestion);
+        const cards = fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent));
+        expect(cards).toHaveLength(2);
 
-        expect(comp.feedbackInternal()).toEqual([existing, expect.objectContaining({ id: 2, reference, text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}New` })]);
-        expect(comp.feedbackSuggestionsInternal()).toEqual([]);
+        comp.feedbackInternal.set([second]);
+        fixture.detectChanges();
+
+        const remaining = fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent));
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0].componentInstance).toBe(cards[1].componentInstance);
     });
 
     it('should remove only the selected suggestion when identical text appears on another line', () => {

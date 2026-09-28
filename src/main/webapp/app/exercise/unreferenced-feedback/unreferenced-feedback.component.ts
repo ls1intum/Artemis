@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
@@ -282,7 +282,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         // and will be filtered out in all kinds of places
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
         // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
-        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
+        feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + Feedback.stripSuggestionPrefix(feedback.text ?? '');
         this.updateFeedback(feedback); // Make it "real" feedback
         this.onAcceptSuggestion.emit(feedback);
     }
