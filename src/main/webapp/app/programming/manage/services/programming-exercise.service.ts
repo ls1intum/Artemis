@@ -568,8 +568,9 @@ export class ProgrammingExerciseService {
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
         formData.append('programmingExercise', exerciseBlob);
         const url = `api/programming/courses/${courseId}/programming-exercises/import-from-file`;
+        const params = this.addHyperionChecklistProvenanceParams(new HttpParams(), exercise);
         return this.http
-            .post<ProgrammingExercise>(url, formData, { observe: 'response' })
+            .post<ProgrammingExercise>(url, formData, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 

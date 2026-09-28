@@ -337,6 +337,19 @@ describe('ProgrammingExercise Service', () => {
         req.flush(request);
     });
 
+    it('should persist Hyperion checklist link provenance when importing from file', () => {
+        const course = Object.assign(new Course(), { id: 1 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.zipFileForImport = new File([''], 'dummyFile');
+        const competency = Object.assign(new Competency(), { id: 5 });
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+        service.importFromFile(exercise, course.id!).subscribe();
+
+        const request = httpMock.expectOne({ method: 'POST', url: `api/programming/courses/1/programming-exercises/import-from-file?hyperionCompetencyId=5` });
+        request.flush(exercise);
+    });
+
     it('should generate Structure Oracle', () => {
         const exerciseId = 1;
         const expectedResult = 'oracle-structure';
