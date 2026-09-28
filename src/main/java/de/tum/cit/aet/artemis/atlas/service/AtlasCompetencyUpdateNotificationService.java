@@ -120,8 +120,12 @@ public class AtlasCompetencyUpdateNotificationService {
     }
 
     /**
-     * The course's instructors and all active administrators, each once. Administrators are not course members, so
-     * they are looked up separately and only receive the e-mail if they opted in for this course.
+     * The course's activated instructors and all active administrators, each once. Administrators are not course
+     * members, so they are looked up separately and only receive the e-mail if they opted in for this course.
+     * <p>
+     * Deactivating an account keeps its course roles and notification settings, and the course notification delivery
+     * does not check the account state, so deactivated users are dropped here; otherwise an instructor who opted in
+     * before being deactivated would keep receiving the course's competency changes by e-mail.
      */
     private List<User> findEligibleRecipients(Course course) {
         Map<Long, User> recipientsById = new LinkedHashMap<>();
@@ -130,7 +134,7 @@ public class AtlasCompetencyUpdateNotificationService {
         if (!adminLogins.isEmpty()) {
             userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(adminLogins).forEach(user -> recipientsById.putIfAbsent(user.getId(), user));
         }
-        return new ArrayList<>(recipientsById.values());
+        return recipientsById.values().stream().filter(User::getActivated).toList();
     }
 
     static AtlasCompetencyUpdatePayloadDTO buildPayload(Outcome outcome, int exerciseCount, List<AppliedActionDTO> appliedActions) {

@@ -70,6 +70,7 @@ class AtlasCompetencyUpdateNotificationServiceTest {
         User user = new User();
         user.setId(id);
         user.setLogin(login);
+        user.setActivated(true);
         return user;
     }
 
@@ -185,6 +186,31 @@ class AtlasCompetencyUpdateNotificationServiceTest {
         assertThat(payload.editedCount()).isEqualTo(total);
         assertThat(payload.omittedCount()).isEqualTo(5);
         assertThat(payload.changesMarkdown().split("\n\n")).hasSize(AtlasCompetencyUpdateNotificationService.MAX_LISTED_CHANGES);
+    }
+
+    @Test
+    void deactivatedRecipients_areExcluded() {
+        User activeInstructor = user(1L, "instructor");
+        User deactivatedInstructor = user(2L, "deactivated-instructor");
+        deactivatedInstructor.setActivated(false);
+        User deactivatedAdmin = user(3L, "deactivated-admin");
+        deactivatedAdmin.setActivated(false);
+        stubRecipients(Set.of(activeInstructor, deactivatedInstructor), Set.of("deactivated-admin"), Set.of(deactivatedAdmin));
+
+        service.notifyAfterAutomaticRun(COURSE_ID, 1, CompetencyOrchestrationResultDTO.failed("boom", FailureReason.LLM_ERROR));
+
+        captureNotification(List.of(activeInstructor));
+    }
+
+    @Test
+    void onlyDeactivatedInstructors_sendsNothing() {
+        User deactivatedInstructor = user(1L, "instructor");
+        deactivatedInstructor.setActivated(false);
+        stubRecipients(Set.of(deactivatedInstructor), Set.of(), Set.of());
+
+        service.notifyAfterAutomaticRun(COURSE_ID, 1, CompetencyOrchestrationResultDTO.failed("boom", FailureReason.LLM_ERROR));
+
+        verify(courseNotificationService, never()).sendCourseNotification(any(), anyList());
     }
 
     @Test
