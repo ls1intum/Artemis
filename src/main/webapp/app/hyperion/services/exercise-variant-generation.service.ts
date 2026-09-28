@@ -27,6 +27,9 @@ export class ExerciseVariantGenerationService {
 
     private readonly jobSubscriptions = new Map<string, Subscription>();
 
+    /** The load triggered by a change of login or access; cancelled on the next change so that a late response cannot restore stale jobs. */
+    private accessLoad?: Subscription;
+
     /** Login of the user whose jobs are currently loaded (undefined while none are), used to avoid redundant re-syncs. */
     private loadedForLogin?: string;
 
@@ -54,8 +57,9 @@ export class ExerciseVariantGenerationService {
                     return;
                 }
                 this.loadedForLogin = loadFor;
+                this.accessLoad?.unsubscribe();
                 if (mayLoadJobs) {
-                    this.loadJobs().subscribe({ error: () => {} });
+                    this.accessLoad = this.loadJobs().subscribe({ error: () => {} });
                 } else {
                     this.clearJobs();
                 }

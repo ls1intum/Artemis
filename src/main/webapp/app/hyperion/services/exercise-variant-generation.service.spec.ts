@@ -139,6 +139,20 @@ describe('ExerciseVariantGenerationService', () => {
         expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
     });
 
+    it('ignores a pending load once the user logs out', () => {
+        const pendingJobs = new Subject<VariantJob[]>();
+        apiMock.getJobsOfCurrentUser.mockReturnValue(pendingJobs.asObservable());
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+
+        userIdentity.set(undefined);
+        TestBed.tick();
+        pendingJobs.next([{ jobId: 'late-1', phase: 'VERIFYING' }]);
+
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.subscribeToJob).not.toHaveBeenCalled();
+    });
+
     it('loads persisted jobs for an administrator when administrator features require no passkey', () => {
         apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
         authorities = [Authority.ADMIN];
