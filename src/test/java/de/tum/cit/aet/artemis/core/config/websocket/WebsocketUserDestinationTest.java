@@ -24,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketTopicRegistry;
 
@@ -33,7 +34,7 @@ class WebsocketUserDestinationTest {
     @ValueSource(booleans = { false, true })
     void sendsPersonalUpdatesToEverySessionWithReceiveOrderingEnabled(boolean forwardedFromAnotherNode) {
         var config = new WebsocketConfiguration(JsonMapper.builder().build(), mock(TaskScheduler.class), mock(TokenProvider.class),
-                new StaticListableBeanFactory().getBeanProvider(WebsocketTopicRegistry.class));
+                new StaticListableBeanFactory().getBeanProvider(WebsocketTopicRegistry.class), "http://localhost", new ArtemisProperties());
         ReflectionTestUtils.setField(config, "brokerAddresses", List.of());
         var inbound = new ExecutorSubscribableChannel();
         OrderedMessageChannelDecorator.configureInterceptor(inbound, true);
