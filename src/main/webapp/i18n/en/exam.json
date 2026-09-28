@@ -13,6 +13,10 @@
                 "introText": "This dialog can be used to upload PDF file and extract images for registered students.",
                 "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.\nValues for last and first name are optional.",
                 "pdfExampleText": "Example of a valid PDF file format:",
+                "pdfExampleAlt": "Example PDF page with a header and two columns of student photos and identifying text",
+                "studentPhotoAlt": "Photo of student {{ login }}",
+                "studentPhotoMissingAlt": "No photo available for student {{ login }}",
+                "studentSignatureAlt": "Signature of student {{ login }}",
                 "pdfFile": {
                     "label": "Select PDF file",
                     "tooltip": "Please select a PDF file containing registered students image and matriculation number."

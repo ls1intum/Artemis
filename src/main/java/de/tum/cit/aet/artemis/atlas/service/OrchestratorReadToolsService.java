@@ -2,11 +2,11 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerRead;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerToolActivity;
-import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextReadError;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.readErrorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
 
 import java.util.Comparator;
@@ -99,22 +99,29 @@ public class OrchestratorReadToolsService {
         markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextReadError(objectMapper, toolContext);
         }
         if (competencyId == null) {
-            return errorJson(objectMapper, "competencyId is required.");
+            return readErrorJson(objectMapper, "competencyId is required.", toolContext);
         }
-        Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(competencyId);
-        if (competencyOpt.isEmpty()) {
-            return errorJson(objectMapper, "Competency not found: " + competencyId);
+        try {
+            Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(competencyId);
+            if (competencyOpt.isEmpty()) {
+                return readErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
+            }
+            CourseCompetency competency = competencyOpt.get();
+            if (!belongsToCourse(competency, courseId)) {
+                return readErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
+            }
+            CompetencyDetailDTO detail = toDetail(competency);
+            markWorkerRead(toolContext);
+            return toJson(objectMapper, detail);
         }
-        CourseCompetency competency = competencyOpt.get();
-        if (!belongsToCourse(competency, courseId)) {
-            return errorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.");
+        catch (RuntimeException ex) {
+            // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.
+            log.warn("getCompetencyDetails failed for competency {}: {}", competencyId, ex.getMessage(), ex);
+            return readErrorJson(objectMapper, "Failed to load details for competency " + competencyId + ".", toolContext);
         }
-        CompetencyDetailDTO detail = toDetail(competency);
-        markWorkerRead(toolContext);
-        return toJson(objectMapper, detail);
     }
 
     /**
@@ -132,22 +139,22 @@ public class OrchestratorReadToolsService {
         markWorkerToolActivity(toolContext);
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
-            return missingCourseContextError(objectMapper);
+            return missingCourseContextReadError(objectMapper, toolContext);
         }
         if (exerciseId == null) {
-            return errorJson(objectMapper, "exerciseId is required.");
-        }
-        Exercise exercise;
-        try {
-            exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        }
-        catch (EntityNotFoundException ex) {
-            return errorJson(objectMapper, "Exercise not found: " + exerciseId);
-        }
-        if (!exerciseBelongsToCourse(exercise, courseId)) {
-            return errorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.");
+            return readErrorJson(objectMapper, "exerciseId is required.", toolContext);
         }
         try {
+            Exercise exercise;
+            try {
+                exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            }
+            catch (EntityNotFoundException ex) {
+                return readErrorJson(objectMapper, "Exercise not found: " + exerciseId, toolContext);
+            }
+            if (!exerciseBelongsToCourse(exercise, courseId)) {
+                return readErrorJson(objectMapper, "Exercise " + exerciseId + " does not belong to the current course.", toolContext);
+            }
             // Prepare content on the first detail read, including flavor reduction for narrative fields.
             // The invocation cache shares this representation with subsequent orchestrator and worker reads.
             ExtractedContentDTO extracted = AtlasToolCallBudget.content(toolContext, "exercise:" + exerciseId, () -> contentExtractionService.extractContent(exercise, true));
@@ -162,7 +169,7 @@ public class OrchestratorReadToolsService {
         catch (RuntimeException ex) {
             // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.
             log.warn("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
-            return errorJson(objectMapper, "Failed to extract content for exercise " + exerciseId + ".");
+            return readErrorJson(objectMapper, "Failed to extract content for exercise " + exerciseId + ".", toolContext);
         }
     }
 

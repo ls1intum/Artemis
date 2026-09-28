@@ -6,8 +6,8 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
-import { TumUiConfirmationService } from '@tumaet/ui-angular';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -47,7 +47,7 @@ describe('TutorialGroupHolidaysComponent', () => {
     let component: TutorialGroupHolidaysComponent;
     let freePeriodService: TutorialGroupFreePeriodService;
     let configurationService: TutorialGroupsConfigurationService;
-    let confirmationService: TumUiConfirmationService;
+    let confirmationService: TumAetUiConfirmationService;
 
     beforeEach(async () => {
         vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -58,7 +58,7 @@ describe('TutorialGroupHolidaysComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                provideArtemisTumUiTranslator(),
+                provideArtemisTumAetUiTranslator(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: { data: of({ course }) } },
                 CourseTitleBarService,
@@ -75,7 +75,7 @@ describe('TutorialGroupHolidaysComponent', () => {
 
         fixture = TestBed.createComponent(TutorialGroupHolidaysComponent);
         component = fixture.componentInstance;
-        confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+        confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         fixture.detectChanges();
     });
 

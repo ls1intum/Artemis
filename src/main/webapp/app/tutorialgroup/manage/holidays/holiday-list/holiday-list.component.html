@@ -6,7 +6,7 @@
     <div class="flex items-center gap-1" role="group" data-testid="holiday-list-filter">
         @for (option of filters; track option.value) {
             <button
-                tumUiButton
+                tumAetUiButton
                 size="small"
                 type="button"
                 [severity]="filter() === option.value ? 'primary' : 'secondary'"
@@ -46,7 +46,7 @@
                 </div>
 
                 @if (entry.sessionCount > 0) {
-                    <tum-ui-tag
+                    <tumaet-ui-tag
                         severity="danger"
                         rounded="true"
                         data-testid="holiday-list-sessions"
@@ -56,7 +56,7 @@
 
                 <div class="flex flex-none items-center gap-2">
                     <button
-                        tumUiButton
+                        tumAetUiButton
                         size="small"
                         severity="secondary"
                         variant="outlined"
@@ -70,13 +70,13 @@
                         <span class="sr-only 2xl:not-sr-only" jhiTranslate="entity.action.edit"></span>
                     </button>
                     <button
-                        tumUiButton
+                        tumAetUiButton
                         size="small"
                         severity="danger"
                         variant="outlined"
                         type="button"
                         data-testid="holiday-delete"
-                        [tumUiTooltip]="'entity.action.delete' | artemisTranslate"
+                        [tumAetUiTooltip]="'entity.action.delete' | artemisTranslate"
                         [attr.aria-label]="'artemisApp.pages.tutorialFreePeriodsManagement.deleteHolidayNamed' | artemisTranslate: { reason: entry.holiday.reason }"
                         (click)="deleteRequested.emit(entry.holiday)"
                     >

@@ -254,6 +254,24 @@ describe('GradingComponent', () => {
             expect(comp.viewMode()).toBe(GradingViewMode.INTERVAL);
         });
 
+        it('announces the selected grading view after keyboard activation', () => {
+            fixture.detectChanges();
+            const interval = fixture.nativeElement.querySelector('.tab-item.interval') as HTMLElement;
+            const detailed = fixture.nativeElement.querySelector('.tab-item.detailed') as HTMLElement;
+            expect(interval.getAttribute('aria-pressed')).toBe('true');
+            expect(detailed.getAttribute('aria-pressed')).toBe('false');
+            detailed.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            fixture.detectChanges();
+            expect(comp.viewMode()).toBe(GradingViewMode.DETAILED);
+            expect(interval.getAttribute('aria-pressed')).toBe('false');
+            expect(detailed.getAttribute('aria-pressed')).toBe('true');
+            interval.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+            expect(comp.viewMode()).toBe(GradingViewMode.INTERVAL);
+            expect(interval.getAttribute('aria-pressed')).toBe('true');
+            expect(detailed.getAttribute('aria-pressed')).toBe('false');
+        });
+
         it('should switch view mode', () => {
             expect(comp.viewMode()).toBe(GradingViewMode.INTERVAL);
             comp.setViewMode(GradingViewMode.DETAILED);

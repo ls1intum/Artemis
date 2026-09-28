@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.COURSE_WIDE_POSTS;
+import static de.tum.cit.aet.artemis.communication.web.CommunicationWebsocketTopics.USER_CONVERSATION_POSTS;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -64,8 +67,6 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 public class AutonomousTutorService {
 
     private static final Logger log = LoggerFactory.getLogger(AutonomousTutorService.class);
-
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
 
     /** Iris replies at or above this confidence are auto-verified and visible to students. */
     public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.85;
@@ -274,15 +275,16 @@ public class AutonomousTutorService {
         // entity over STOMP previously walked the cyclic reactions → user → User chain that fires Jackson's
         // DeserializerCache race on the receive side.
         PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, MetisCrudAction.UPDATE);
-        String coursePathSuffix = "courses/" + courseId;
 
-        if (broadcastToStudents && conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
+        // Students must not see posts of a channel whose exercise or exam is not visible to them yet.
+        boolean reachesStudents = broadcastToStudents && (!(conversation instanceof Channel visibleChannel) || visibleChannel.isVisibleToStudents());
+        if (reachesStudents && conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            websocketMessagingService.sendMessage(COURSE_WIDE_POSTS.at(courseId), broadcastPayload);
             return;
         }
 
-        // For private channels OR unverified Iris replies: send per-user, optionally skipping students
-        recipientSummaries.stream().filter(recipient -> broadcastToStudents || recipient.isAtLeastTutorInCourse())
-                .forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", broadcastPayload));
+        // For private channels, hidden channels OR unverified Iris replies: send per-user, optionally skipping students
+        recipientSummaries.stream().filter(recipient -> reachesStudents || recipient.isAtLeastTutorInCourse())
+                .forEach(recipient -> websocketMessagingService.sendMessage(USER_CONVERSATION_POSTS.at(recipient.userId()), broadcastPayload));
     }
 }

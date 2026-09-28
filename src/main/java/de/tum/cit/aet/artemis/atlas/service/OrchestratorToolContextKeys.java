@@ -62,6 +62,12 @@ public final class OrchestratorToolContextKeys {
     /** Count of successful course-scoped read calls made by the current worker. */
     public static final String WORKER_READ_COUNT_KEY = "workerReadCount";
 
+    /**
+     * Count of completed course-scoped read calls made by the current worker, including reads that returned an error.
+     * Always at least {@link #WORKER_READ_COUNT_KEY}; the difference is the number of failed reads.
+     */
+    public static final String WORKER_READ_OUTCOME_COUNT_KEY = "workerReadOutcomeCount";
+
     /** Applied-action list offset captured immediately before the current worker starts. */
     public static final String WORKER_ACTION_START_KEY = "workerActionStart";
 

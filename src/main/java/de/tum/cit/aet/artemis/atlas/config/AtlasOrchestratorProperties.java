@@ -17,7 +17,7 @@ import org.springframework.validation.annotation.Validated;
  * @param temperature            Sampling temperature; ignored when {@link #reasoningEffort()} is non-blank.
  * @param reasoningEffort        Reasoning effort for GPT-5 family models; blank disables reasoning options.
  * @param workerModel            Model/deployment identifier for stateless workers.
- * @param workerReasoningEffort  Reasoning effort for stateless workers.
+ * @param workerReasoningEffort  Reasoning effort for stateless workers; blank disables reasoning options and applies {@link #temperature()} instead.
  * @param responsesApiEnabled    Whether autonomous Atlas rounds use the Responses API adapter.
  * @param debounceWindowSeconds  Seconds without a new content change before a course's accumulator is eligible to fire.
  * @param maxDailyOrchestrations Per-course daily cap on auto-orchestration runs.

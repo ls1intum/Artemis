@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
 @Lazy
@@ -17,8 +18,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 public class HyperionWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionWebsocketService.class);
-
-    private static final String TOPIC_PREFIX = "/topic/hyperion/";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -30,14 +29,13 @@ public class HyperionWebsocketService {
      * Sends a websocket message to a specific user under the Hyperion namespace.
      *
      * @param userLogin   the receiver's login
-     * @param topicSuffix suffix appended to "/topic/hyperion/"
+     * @param destination a destination of one of the {@link de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics}
      * @param payload     the payload to send
      */
-    public void send(String userLogin, String topicSuffix, Object payload) {
-        String topic = TOPIC_PREFIX + topicSuffix;
+    public void send(String userLogin, WebsocketUserDestination destination, Object payload) {
         try {
-            websocketMessagingService.sendMessageToUser(userLogin, topic, payload).get();
-            log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
+            websocketMessagingService.sendMessageToUser(userLogin, destination, payload).get();
+            log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, destination, payload);
         }
         catch (InterruptedException | ExecutionException e) {
             // The interrupt status is deliberately not restored, which is what java:S2142 would ask for. A code
@@ -45,7 +43,7 @@ public class HyperionWebsocketService {
             // or error event. CompletableFuture.get() throws as soon as the flag is set, so restoring it would fail
             // every later send of that job, including the terminal one, and the client's job view would stay "in
             // progress" until the page is reloaded.
-            log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
+            log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, destination, payload, e);
         }
     }
 }

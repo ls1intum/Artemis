@@ -29,7 +29,9 @@ import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
         "artemis.apollon.enabled=true", "artemis.continuous-integration.build-job.retention-period=30",
         // Use separate paths for parallel bucket execution.
         "artemis.course-archives-path=./local/server-integration-test-independent-batch/exports/courses",
-        "artemis.legal-path=./local/server-integration-test-independent-batch/legal", "artemis.repo-clone-path=./local/server-integration-test-independent-batch/repos",
+        "artemis.legal-path=./local/server-integration-test-independent-batch/legal",
+        "artemis.failed-build-logs-path=./local/server-integration-test-independent-batch/failed-build-logs",
+        "artemis.repo-clone-path=./local/server-integration-test-independent-batch/repos",
         "artemis.repo-download-clone-path=./local/server-integration-test-independent-batch/repos-download",
         "artemis.data-export-path=./local/server-integration-test-independent-batch/data-exports",
         "artemis.build-logs-path=./local/server-integration-test-independent-batch/build-logs",

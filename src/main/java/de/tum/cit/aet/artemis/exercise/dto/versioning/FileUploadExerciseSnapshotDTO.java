@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.exercise.dto.versioning;
 
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record FileUploadExerciseSnapshotDTO(String exampleSolution, String filePattern) implements Serializable {
 
     public static FileUploadExerciseSnapshotDTO of(FileUploadExercise exercise) {

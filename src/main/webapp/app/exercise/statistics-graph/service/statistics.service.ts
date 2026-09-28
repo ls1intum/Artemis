@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
@@ -9,7 +9,7 @@ import { round } from 'app/foundation/util/utils';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StatisticsService {
     private http = inject(HttpClient);
 

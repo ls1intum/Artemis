@@ -1,184 +1,129 @@
 package de.tum.cit.aet.artemis.core.config.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import java.util.Collection;
+import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessageType;
-import org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry;
+import org.springframework.messaging.MessageDeliveryException;
+import org.springframework.messaging.simp.annotation.support.SimpAnnotationMethodMessageHandler;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.AbstractSubscribableChannel;
+import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationManager;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.messaging.access.intercept.AuthorizationChannelInterceptor;
+import org.springframework.web.socket.messaging.StompSubProtocolHandler;
+import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketSubscriptionInterceptor;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class WebsocketSecurityConfigurationTest {
+/**
+ * Checks that every client frame passes both Spring Security's frame-level rules and the topic subscription check, and what those frame-level rules allow.
+ */
+class WebsocketSecurityConfigurationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private AuthorizationManager<Message<?>> manager;
+    @Autowired
+    @Qualifier("clientInboundChannel")
+    private AbstractSubscribableChannel clientInboundChannel;
 
-    @BeforeEach
-    void setUp() {
-        UserRepository users = mock(UserRepository.class);
-        CourseRepository courses = mock(CourseRepository.class);
-        @SuppressWarnings("unchecked")
-        ObjectProvider<ElevatedAccessService> provider = mock(ObjectProvider.class);
-        ElevatedAccessService elevation = mock(ElevatedAccessService.class);
-        when(provider.getObject()).thenReturn(elevation);
-        when(elevation.isAdminElevationActive(any()))
-                .thenAnswer(invocation -> invocation.<org.springframework.security.core.Authentication>getArgument(0).getName().equals("admin"));
-        when(courses.existsById(anyLong())).thenAnswer(invocation -> invocation.<Long>getArgument(0) == 42L || invocation.<Long>getArgument(0) == 43L);
-        when(users.existsByLoginInCourseWithMinRole(anyString(), anyLong(), any())).thenAnswer(invocation -> {
-            String login = invocation.getArgument(0);
-            long courseId = invocation.getArgument(1);
-            Collection<CourseRole> roles = invocation.getArgument(2);
-            return switch (login) {
-                case "course-a" -> courseId == 42L && roles.contains(CourseRole.INSTRUCTOR);
-                case "course-b" -> courseId == 43L && roles.contains(CourseRole.INSTRUCTOR);
-                case "student" -> courseId == 42L && roles.contains(CourseRole.STUDENT);
-                case "editor" -> courseId == 42L && roles.contains(CourseRole.EDITOR);
-                default -> false;
-            };
-        });
-        manager = new WebsocketSecurityConfiguration().authorizationManager(new MessageMatcherDelegatingAuthorizationManager.Builder(), users, courses, provider);
+    @Autowired
+    private SimpAnnotationMethodMessageHandler annotationMethodMessageHandler;
+
+    @Autowired
+    private AuthorizationManager<Message<?>> authorizationManager;
+
+    @Autowired
+    private SubProtocolWebSocketHandler subProtocolWebSocketHandler;
+
+    @Test
+    void testInboundChannelAppliesSpringSecurityAndTheSubscriptionCheck() {
+        List<Class<?>> interceptorTypes = clientInboundChannel.getInterceptors().stream().<Class<?>>map(ChannelInterceptor::getClass).toList();
+        assertThat(interceptorTypes).contains(AuthorizationChannelInterceptor.class, WebsocketSubscriptionInterceptor.class);
+        // Spring Security authorizes the frame before the subscription check looks at its destination
+        assertThat(interceptorTypes.indexOf(AuthorizationChannelInterceptor.class)).isLessThan(interceptorTypes.indexOf(WebsocketSubscriptionInterceptor.class));
     }
 
     @Test
-    void wildcardSubscriptionCannotReceiveTwoCourses() {
-        var registry = new DefaultSubscriptionRegistry();
-        register(registry, "course-a", "/topic/atlas/orchestrator/42");
-        register(registry, "course-b", "/topic/atlas/orchestrator/43");
-        register(registry, "outsider", "/topic/**");
-
-        assertThat(registry.findSubscriptions(message(SimpMessageType.MESSAGE, "/topic/atlas/orchestrator/42", "server")).keySet()).containsExactly("course-a");
-        assertThat(registry.findSubscriptions(message(SimpMessageType.MESSAGE, "/topic/atlas/orchestrator/43", "server")).keySet()).containsExactly("course-b");
+    void testClientMessagesOnlyReachMessageHandlers() {
+        assertThat(annotationMethodMessageHandler.getDestinationPrefixes()).containsExactly("/app/");
     }
 
     @Test
-    void clientCannotSpoofNotification() {
-        assertThat(allowed(message(SimpMessageType.MESSAGE, "/topic/notification/system-notification", "outsider"))).isFalse();
+    void testRejectedFramesAreDroppedWithoutClosingTheConnection() {
+        var stompHandler = subProtocolWebSocketHandler.getProtocolHandlers().stream().filter(StompSubProtocolHandler.class::isInstance).map(StompSubProtocolHandler.class::cast)
+                .findFirst().orElseThrow();
+        var errorHandler = stompHandler.getErrorHandler();
+        assertThat(errorHandler).isNotNull();
+        var denied = new MessageDeliveryException(frame(StompCommand.SEND, "/topic/x"), "denied", new AccessDeniedException("denied"));
+
+        // no ERROR frame, so the connection stays open
+        assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.SEND, "/topic/participations/1/team/trigger"), denied)).isNull();
+        assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.SUBSCRIBE, "/queue/anything"), denied)).isNull();
+        // everything else keeps the default ERROR frame
+        assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.CONNECT, null), denied)).isNotNull();
+        assertThat(errorHandler.handleClientMessageProcessingError(frame(StompCommand.SEND, "/app/iris/command-ack"), new IllegalStateException("broken"))).isNotNull();
     }
 
     @Test
-    void clientCannotReadRawPersonalNotification() {
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/topic/notification/42-uservictim", "outsider"))).isFalse();
+    void testClientFramesPreserveReceiveOrderWithinEachSession() {
+        var stompHandler = subProtocolWebSocketHandler.getProtocolHandlers().stream().filter(StompSubProtocolHandler.class::isInstance).map(StompSubProtocolHandler.class::cast)
+                .findFirst().orElseThrow();
+        assertThat(stompHandler.isPreserveReceiveOrder()).isTrue();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = { "/topic/atlas/orchestrator/", "/topic/atlas/orchestrator", "/topic/atlas/orchestrator/42/", "/topic/atlas/orchestrator/42/extra",
-            "/topic/atlas/orchestrator/0", "/topic/atlas/orchestrator/-1", "/topic/atlas/orchestrator/9223372036854775808", "/topic/atlas/orchestrator/missing", "/topic/courses",
-            "/topic/courses/missing/quizExercises/1", "/user/topic/notification/missing", "/user/topic/iris/competencies", "/user/topic/iris/competencies/42/extra" })
-    void malformedCourseDestinationsCannotFallThrough(String destination) {
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, destination, "admin"))).isFalse();
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = { " ", "/topic/**", "/topic/*", "/topic/#", "/topic/>", "/topic/{courseId}", "/topic/a,/topic/b", "/topic/a?option=true",
-            "/topic/notification/42-uservictim", "/topic/iris/competencies/42-uservictim", "/topic/communication/notification/42", "/topic/unresolved-user",
-            "/topic/unresolved-user/child", "/topic/user-registry", "/topic/user-registry/child" })
-    void unsafeSubscriptionsDeniedEvenForAdministrator(String destination) {
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, destination, "admin"))).isFalse();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "/topic/atlas/orchestrator/42", "/topic/courses/42/operation-progress", "/topic/courses/42/export-course", "/topic/courses/42/queued-jobs",
-            "/topic/courses/42/running-jobs", "/topic/courses/42/finished-jobs", "/topic/courses/42/build-job/1" })
-    void instructorFeedsRequireMembershipInThatCourse(String destination) {
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, destination, "course-a"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, destination.replace("/42", "/43"), "course-a"))).isFalse();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, destination, "student"))).isFalse();
-    }
-
-    @Test
-    void courseAndPersonalFeedsRemainAvailableAtTheirRequiredRoles() {
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/topic/courses/42/quizExercises/7", "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/topic/courses/43/quizExercises/7", "student"))).isFalse();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/user/topic/notification/42", "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/user/topic/notification/43", "student"))).isFalse();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/user/topic/notification/all", "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/user/topic/iris/competencies/42", "editor"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/user/topic/iris/competencies/42", "student"))).isFalse();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/user/topic/iris/session/7", "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/topic/notification/system-notification", "student"))).isTrue();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "/topic/atlas/orchestrator/42", "/topic/courses/42/quizExercises/7", "/topic/notification/system-notification", "/topic/communication/notification/42",
-            "/topic/iris/session/7", "/user/topic/notification/all", "/user/topic/iris/competencies/42" })
-    void serverOwnedFeedsRejectClientMessages(String destination) {
-        assertThat(allowed(message(SimpMessageType.MESSAGE, destination, "admin"))).isFalse();
-    }
-
-    /**
-     * Every destination a client publishes to via {@code WebsocketService.send}, matching the server's {@code @MessageMapping} handlers
-     * or client-to-client synchronization topics. Denying any of these silently breaks the corresponding feature.
-     */
-    @ParameterizedTest
-    @ValueSource(strings = { "/topic/iris/command-ack", "/topic/exercises/42/synchronization", "/topic/participations/1/team/trigger", "/topic/participations/1/team/typing",
-            "/topic/participations/1/team/modeling-submissions/update", "/topic/participations/1/team/modeling-submissions/patch",
-            "/topic/participations/1/team/text-submissions/update", "/topic/participations/1/team/text-submissions/patch" })
-    void legitimateClientMessagesAreAllowed(String destination) {
-        assertThat(allowed(message(SimpMessageType.MESSAGE, destination, "student"))).isTrue();
-    }
-
-    @Test
-    void irisCommandAckAcceptsOnlyAuthenticatedMessages() {
-        var anonymous = new AnonymousAuthenticationToken("key", "anonymous", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
-        assertThat(manager.authorize(() -> anonymous, message(SimpMessageType.MESSAGE, "/topic/iris/command-ack", "anonymous")).isGranted()).isFalse();
-        // Nobody may read other users' acknowledgements, and neighbouring Iris destinations stay server-owned.
-        assertThat(allowed(message(SimpMessageType.SUBSCRIBE, "/topic/iris/command-ack", "admin"))).isFalse();
-        assertThat(allowed(message(SimpMessageType.MESSAGE, "/topic/iris/command-ack/extra", "student"))).isFalse();
-        assertThat(allowed(message(SimpMessageType.MESSAGE, "/topic/iris/command", "student"))).isFalse();
-        assertThat(allowed(message(SimpMessageType.MESSAGE, "/user/topic/iris/command-ack", "student"))).isFalse();
-    }
-
-    @Test
-    void controlFramesAndUnrelatedApplicationMessagesKeepTheirAuthorization() {
-        assertThat(allowed(message(SimpMessageType.CONNECT, null, "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.DISCONNECT, null, "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.UNSUBSCRIBE, null, "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.MESSAGE, "/topic/participations/1/team", "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.MESSAGE, "/topic/participations/1/files/sync", "student"))).isTrue();
-        assertThat(allowed(message(SimpMessageType.MESSAGE, null, "student"))).isFalse();
-        var anonymous = new AnonymousAuthenticationToken("key", "anonymous", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
-        assertThat(manager.authorize(() -> anonymous, message(SimpMessageType.SUBSCRIBE, "/user/topic/notification/all", "anonymous")).isGranted()).isFalse();
-    }
-
-    private void register(DefaultSubscriptionRegistry registry, String session, String destination) {
-        Message<?> subscription = message(SimpMessageType.SUBSCRIBE, destination, session);
-        if (allowed(subscription)) {
-            registry.registerSubscription(subscription);
-        }
-    }
-
-    private boolean allowed(Message<?> message) {
-        return manager.authorize(() -> new TestingAuthenticationToken((String) message.getHeaders().get("simpSessionId"), "password", "ROLE_USER"), message).isGranted();
-    }
-
-    private static Message<?> message(SimpMessageType type, String destination, String session) {
-        var headers = SimpMessageHeaderAccessor.create(type);
+    private static Message<byte[]> frame(StompCommand command, String destination) {
+        var headers = StompHeaderAccessor.create(command);
         headers.setDestination(destination);
-        headers.setSessionId(session);
-        headers.setSubscriptionId("subscription");
         return MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+    }
+
+    @Test
+    void testFrameLevelRules() {
+        var user = new UsernamePasswordAuthenticationToken("student", "irrelevant", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        var anonymous = new AnonymousAuthenticationToken("test", "anonymous", List.of(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority())));
+
+        assertThat(isGranted(user, StompCommand.CONNECT, null)).isTrue();
+        assertThat(isGranted(anonymous, StompCommand.CONNECT, null)).isFalse();
+        assertThat(isGranted(user, StompCommand.UNSUBSCRIBE, null)).isTrue();
+
+        assertThat(isGranted(user, StompCommand.SUBSCRIBE, "/topic/management/feature-toggles")).isTrue();
+        assertThat(isGranted(user, StompCommand.SUBSCRIBE, "/user/topic/newResults")).isTrue();
+        assertThat(isGranted(anonymous, StompCommand.SUBSCRIBE, "/topic/management/feature-toggles")).isFalse();
+        assertThat(isGranted(user, StompCommand.SUBSCRIBE, "/queue/anything")).isFalse();
+        assertThat(isGranted(user, StompCommand.SUBSCRIBE, "/app/iris/command-ack")).isFalse();
+
+        assertThat(isGranted(user, StompCommand.SEND, "/app/iris/command-ack")).isTrue();
+        assertThat(isGranted(anonymous, StompCommand.SEND, "/app/iris/command-ack")).isFalse();
+        for (String brokerDestination : List.of("/topic/notification/system-notification", "/topic/exercises/1/synchronization", "/user/student/topic/newResults",
+                "/topic/unresolved-user", "/topic/quizExercise/42/other")) {
+            assertThat(isGranted(user, StompCommand.SEND, brokerDestination)).as("client message to %s", brokerDestination).isFalse();
+            // a MESSAGE frame of a client is a message as well, which the broker would forward like one of the server
+            assertThat(isGranted(user, StompCommand.MESSAGE, brokerDestination)).as("client MESSAGE frame to %s", brokerDestination).isFalse();
+        }
+
+        // the quiz answers of the Android app, which the broker acknowledges but delivers to no one
+        assertThat(isGranted(user, StompCommand.SEND, "/topic/quizExercise/42/submission")).isTrue();
+        assertThat(isGranted(anonymous, StompCommand.SEND, "/topic/quizExercise/42/submission")).isFalse();
+    }
+
+    private boolean isGranted(Authentication authentication, StompCommand command, String destination) {
+        var headers = StompHeaderAccessor.create(command);
+        headers.setDestination(destination);
+        headers.setUser(authentication);
+        Message<byte[]> message = MessageBuilder.createMessage(new byte[0], headers.getMessageHeaders());
+        var result = authorizationManager.authorize(() -> authentication, message);
+        return result != null && result.isGranted();
     }
 }

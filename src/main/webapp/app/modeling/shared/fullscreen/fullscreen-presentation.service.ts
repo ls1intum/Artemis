@@ -1,9 +1,9 @@
 import { DOCUMENT } from '@angular/common';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 
 export const APOLLON_FULLSCREEN_FRAME_CLASS = 'apollon-fullscreen-frame';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FullscreenPresentationService {
     private readonly document = inject(DOCUMENT);
     private frame?: HTMLElement;

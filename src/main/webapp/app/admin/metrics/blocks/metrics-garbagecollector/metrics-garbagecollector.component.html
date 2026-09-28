@@ -7,13 +7,13 @@
                     GC Live Data Size/GC Max Data Size ({{ garbageCollectorMetrics()['jvm.gc.live.data.size'] / 1048576 | number: '1.0-0' }}M /
                     {{ garbageCollectorMetrics()['jvm.gc.max.data.size'] / 1048576 | number: '1.0-0' }}M)
                 </span>
-                <tum-ui-progress-bar
+                <tumaet-ui-progress-bar
                     [value]="toPercentage(garbageCollectorMetrics()['jvm.gc.live.data.size'], garbageCollectorMetrics()['jvm.gc.max.data.size'])"
                     [showValue]="false"
                     severity="success"
                 >
                     {{ toPercentage(garbageCollectorMetrics()['jvm.gc.live.data.size'], garbageCollectorMetrics()['jvm.gc.max.data.size']) | number: '1.0-2' }}%
-                </tum-ui-progress-bar>
+                </tumaet-ui-progress-bar>
             </div>
         }
     </div>
@@ -24,13 +24,13 @@
                     GC Memory Promoted/GC Memory Allocated ({{ garbageCollectorMetrics()['jvm.gc.memory.promoted'] / 1048576 | number: '1.0-0' }}M /
                     {{ garbageCollectorMetrics()['jvm.gc.memory.allocated'] / 1048576 | number: '1.0-0' }}M)
                 </span>
-                <tum-ui-progress-bar
+                <tumaet-ui-progress-bar
                     [value]="toPercentage(garbageCollectorMetrics()['jvm.gc.memory.promoted'], garbageCollectorMetrics()['jvm.gc.memory.allocated'])"
                     [showValue]="false"
                     severity="success"
                 >
                     {{ toPercentage(garbageCollectorMetrics()['jvm.gc.memory.promoted'], garbageCollectorMetrics()['jvm.gc.memory.allocated']) | number: '1.0-2' }}%
-                </tum-ui-progress-bar>
+                </tumaet-ui-progress-bar>
             </div>
         }
     </div>
@@ -48,7 +48,7 @@
     </div>
 </div>
 @if (!updating() && garbageCollectorMetrics()) {
-    <table tumUiTable aria-describedby="garbageCollectorMetrics" data-testid="gc-table">
+    <table tumAetUiTable aria-describedby="garbageCollectorMetrics" data-testid="gc-table">
         <thead>
             <tr>
                 <th scope="col"></th>

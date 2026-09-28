@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.assessment.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
+import static de.tum.cit.aet.artemis.assessment.web.AssessmentWebsocketTopics.EXERCISE_RESULTS;
+import static de.tum.cit.aet.artemis.assessment.web.AssessmentWebsocketTopics.NEW_RESULTS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Lazy;
@@ -35,9 +33,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizer
 @Service
 @Profile(PROFILE_CORE)
 public class ResultWebsocketService {
-
-    /** The non-personal result destination of an exercise, with its id as the one group. Derived from the destination itself, so the two cannot drift apart. */
-    private static final Pattern NON_PERSONAL_EXERCISE_RESULT_DESTINATION = Pattern.compile("^" + getNonPersonalExerciseResultDestination("(\\d*)"));
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -82,7 +77,7 @@ public class ResultWebsocketService {
         }
 
         // Send to tutors, instructors and admins
-        websocketMessagingService.sendMessage(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), ResultDTO.of(result));
+        websocketMessagingService.sendMessage(EXERCISE_RESULTS.at(participation.getExercise().getId()), ResultDTO.of(result));
     }
 
     private void broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
@@ -106,43 +101,13 @@ public class ResultWebsocketService {
 
             var resultDTO = ResultDTO.of(result);
             students.stream().filter(student -> authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, resultDTO));
+                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), resultDTO));
 
             var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver, exercise);
             var filteredFeedbackResultDTO = ResultDTO.of(result, filteredFeedback);
 
             students.stream().filter(student -> !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
-                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULT_TOPIC, filteredFeedbackResultDTO));
+                    .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), filteredFeedbackResultDTO));
         }
-    }
-
-    /**
-     * Returns true if the given destination is a 'non-personal' exercise result subscription.
-     * Only teaching assistants, instructors and admins should be allowed to subscribe to this topic.
-     *
-     * @param destination Websocket destination topic which to check
-     * @return flag whether the destination is a 'non-personal' exercise result subscription
-     */
-    public static boolean isNonPersonalExerciseResultDestination(String destination) {
-        return getExerciseIdFromNonPersonalExerciseResultDestination(destination).isPresent();
-    }
-
-    /**
-     * Returns the exercise id from the destination route
-     *
-     * @param destination Websocket destination topic from which to extract the exercise id
-     * @return optional containing the exercise id was found, empty otherwise
-     */
-    public static Optional<Long> getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
-        Matcher matcher = NON_PERSONAL_EXERCISE_RESULT_DESTINATION.matcher(destination);
-        return matcher.find() ? Optional.of(Long.parseLong(matcher.group(1))) : Optional.empty();
-    }
-
-    private static String getNonPersonalExerciseResultDestination(long exerciseId) {
-        return getNonPersonalExerciseResultDestination(String.valueOf(exerciseId));
-    }
-
-    private static String getNonPersonalExerciseResultDestination(String exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + "/newResults";
     }
 }

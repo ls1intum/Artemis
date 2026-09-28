@@ -67,6 +67,7 @@
                                     @case (LectureUnitType.ONLINE) {
                                         <jhi-online-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
+                                    @default {}
                                 }
                             </div>
                         }

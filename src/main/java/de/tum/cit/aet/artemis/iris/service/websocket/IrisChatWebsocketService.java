@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service.websocket;
 
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.SESSION;
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.STRUGGLE_INTERVENTION;
+
 import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
@@ -96,7 +99,7 @@ public class IrisChatWebsocketService {
         var messageDTO = irisMessage != null ? IrisMessageResponseDTO.of(irisMessage) : null;
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
-        var topic = "" + session.getId(); // Todo: add more specific topic
+        var topic = SESSION.at(session.getId());
         var payload = new IrisChatWebsocketDTO(messageDTO, rateLimitInfo, runState, error, sessionTitle, null, null, citationInfo, runId, null, null, activities, activitySeq,
                 finalResult);
         websocketService.send(user.getLogin(), topic, payload);
@@ -112,7 +115,7 @@ public class IrisChatWebsocketService {
      * @param event the struggle event payload
      */
     public void sendStruggleEvent(User user, StruggleInterventionEventDTO event) {
-        websocketService.send(user.getLogin(), "struggle-intervention", event);
+        websocketService.send(user.getLogin(), STRUGGLE_INTERVENTION.at(), event);
     }
 
     /**
@@ -144,7 +147,7 @@ public class IrisChatWebsocketService {
             List<LLMRequest> tokens, List<PyrisActivityDTO> activities, Integer activitySeq) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
-        var topic = "" + session.getId(); // Todo: add more specific topic
+        var topic = SESSION.at(session.getId());
         var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, runState, error, sessionTitle, suggestions, tokens, null, runId, null, null, activities, activitySeq);
         websocketService.send(user.getLogin(), topic, payload);
     }
@@ -163,7 +166,7 @@ public class IrisChatWebsocketService {
      */
     public void sendPartialUpdate(IrisSession session, String partialResult, Integer partialSeq, String runId) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
-        var topic = "" + session.getId(); // Todo: add more specific topic
+        var topic = SESSION.at(session.getId());
         var payload = new IrisChatWebsocketDTO(null, null, PyrisRunState.RUNNING, null, null, null, null, null, runId, partialResult, partialSeq, null, null);
         websocketService.send(user.getLogin(), topic, payload);
     }

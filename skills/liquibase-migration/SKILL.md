@@ -1,12 +1,11 @@
 ---
 name: liquibase-migration
-description: Write an Artemis Liquibase changelog that applies cleanly on both PostgreSQL and MySQL. Use when adding, changing, or dropping a database column, table, index, or constraint, or when a changeset fails on startup. Covers the file and id conventions, the guarded pattern for adding NOT NULL, expand and contract for a column that code still reads or writes, the rollback invariant, and the local validation steps.
+description: Add, change, or debug an Artemis Liquibase schema migration.
 ---
 
 # Write a Liquibase migration
 
-A bad changeset does not fail a test, it stops the application from starting, on every node, in
-production. Everything here exists because of that.
+Migrations must work on PostgreSQL and MySQL and preserve the required schema invariants.
 
 ## The mechanics
 
@@ -37,7 +36,7 @@ enforces the first rule and `--check converge` the second, and
 explains the layout.
 
 Changeset ids are `<timestamp>-<sequence>-<slug>`, for example
-`20260827090000-02-result-submission-not-null`. The author is your username. Never edit the *changes* of a changeset
+`20260827090000-02-result-submission-not-null`. The author is your username. Never edit the _changes_ of a changeset
 that has already been merged: Liquibase records a checksum over the forward change elements and any
 `modifySql`, and the application refuses to start when it no longer matches. Write a new changeset
 instead. Comments are not part of that checksum, so an XML comment, a `<comment>` element and a
@@ -53,10 +52,11 @@ decision procedure.
 **Adding a nullable column, a table, or an index.** Straightforward. Write the changeset, add a
 `<rollback>` if Liquibase cannot infer one.
 
-**Adding a NOT NULL constraint to an existing column.** Use the guarded pattern. Adding the
-constraint while a null is still present fails the changeset, and a failing changeset stops the
-application from starting. This is the single most dangerous migration in this codebase and the
-pattern is non-obvious, so read the section in `reference/migration-patterns.md` before writing it.
+**Adding a NOT NULL constraint to an existing column.** Review the data and the application
+invariant first. If the constraint is required, backfill or remove invalid rows, verify that no
+`NULL` values remain, and fail the migration if verification fails. Use the guarded `CONTINUE`
+pattern only when the application remains correct with a nullable column and the changeset
+explains that decision. Read `reference/migration-patterns.md` before writing it.
 
 **Dropping or renaming a column that code still references.** Use expand and contract across two
 releases, so that rolling the application back to the previous version still finds a schema it can

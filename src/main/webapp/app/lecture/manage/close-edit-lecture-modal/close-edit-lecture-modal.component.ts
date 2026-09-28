@@ -10,10 +10,10 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     templateUrl: './close-edit-lecture-modal.component.html',
 })
 export class CloseEditLectureModalComponent implements OnInit {
-    protected readonly faTimes = faTimes;
-
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
+
+    protected readonly faTimes = faTimes;
 
     hasUnsavedChangesInTitleSection = signal(false);
     hasUnsavedChangesInPeriodSection = signal(false);

@@ -4,7 +4,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 /**
  * Modal component for confirming the action to clear all distributed data.
  * Requires the user to type a specific confirmation text ("CLEAR DATA") to enable the confirm button.
@@ -18,7 +18,7 @@ import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective } from 
  */
 @Component({
     selector: 'jhi-build-agent-clear-distributed-data',
-    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, TumUiDialogComponent, TumUiButtonComponent, TumUiInputDirective],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, TumAetUiDialogComponent, TumAetUiButtonComponent, TumAetUiInputDirective],
     templateUrl: './build-agent-clear-distributed-data.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -9,10 +9,10 @@ import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/founda
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 
 /** Per-bar metadata used for tooltips and click navigation, keyed by the bar's chart name. */
 interface ExamScoreLookupEntry {
@@ -32,7 +32,7 @@ const AXIS_AND_PADDING_HEIGHT_PX = 48;
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
-    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -63,7 +63,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      */
     readonly chartHeight = computed(() => AXIS_AND_PADDING_HEIGHT_PX + Math.max(this.chartEntries().length, 1) * BAR_HEIGHT_PX);
 
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         horizontal: true,
         percentScale: true,
         xAxis: { max: this.xScaleMax() },
@@ -135,7 +135,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
      * @param event the event identifying the clicked bar
      */
-    onSelect(event: TumUiChartSelectEvent) {
+    onSelect(event: TumAetUiChartSelectEvent) {
         if (!event.label) {
             return;
         }
