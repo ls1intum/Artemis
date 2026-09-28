@@ -9,8 +9,7 @@ import { VariantJob } from 'app/openapi/model/variant-job';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
-import { Authority } from 'app/foundation/constants/authority.constants';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
 /**
  * Vitest specs for ExerciseVariantGenerationService.
@@ -29,8 +28,7 @@ describe('ExerciseVariantGenerationService', () => {
     };
     let eventSubjects: Map<string, Subject<VariantGenerationEvent>>;
     let userIdentity: ReturnType<typeof signal<User | undefined>>;
-    let authorities: Authority[];
-    let loggedInWithApprovedPasskey: boolean;
+    let editorAccess: boolean;
     let activeFeatures: Set<string>;
 
     beforeEach(() => {
@@ -53,8 +51,7 @@ describe('ExerciseVariantGenerationService', () => {
             unsubscribeFromJob: vi.fn(),
         };
         userIdentity = signal<User | undefined>(undefined);
-        authorities = [Authority.EDITOR];
-        loggedInWithApprovedPasskey = false;
+        editorAccess = true;
         activeFeatures = new Set([MODULE_FEATURE_HYPERION]);
         TestBed.configureTestingModule({
             providers: [
@@ -63,11 +60,7 @@ describe('ExerciseVariantGenerationService', () => {
                 { provide: ExerciseVariantWebsocketService, useValue: websocketMock },
                 {
                     provide: AccountService,
-                    useValue: {
-                        userIdentity,
-                        hasAnyAuthorityDirect: (required: readonly Authority[]) => required.some((authority) => authorities.includes(authority)),
-                        isUserLoggedInWithApprovedPasskey: () => loggedInWithApprovedPasskey,
-                    },
+                    useValue: { userIdentity, hasEditorAccess: () => editorAccess },
                 },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: (feature: string) => activeFeatures.has(feature) } },
             ],
@@ -96,8 +89,8 @@ describe('ExerciseVariantGenerationService', () => {
         expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('persisted-1');
     });
 
-    it('does not load persisted jobs for a user below editor authority', () => {
-        authorities = [];
+    it('does not load persisted jobs for a user without editor access', () => {
+        editorAccess = false;
         userIdentity.set({ login: 'student1' } as User);
         TestBed.tick();
 
@@ -115,28 +108,30 @@ describe('ExerciseVariantGenerationService', () => {
         expect(service.hasJobs()).toBe(false);
     });
 
-    it('does not load persisted jobs for an administrator without the passkey that administrator features require', () => {
-        authorities = [Authority.ADMIN, Authority.SUPER_ADMIN];
-        activeFeatures = new Set([MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]);
-        userIdentity.set({ login: 'admin' } as User);
-        TestBed.tick();
-
-        expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
-        expect(service.jobs()).toEqual([]);
-    });
-
-    it('loads persisted jobs once an administrator signs in with an approved passkey in the same session', () => {
+    it('loads persisted jobs once the user gains editor access in the same session', () => {
         apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
-        authorities = [Authority.ADMIN];
-        activeFeatures = new Set([MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]);
+        editorAccess = false;
         userIdentity.set({ login: 'admin' } as User);
         TestBed.tick();
         expect(apiMock.getJobsOfCurrentUser).not.toHaveBeenCalled();
 
-        loggedInWithApprovedPasskey = true;
-        userIdentity.set({ login: 'admin', loggedInWithPasskey: true } as User);
+        editorAccess = true;
+        userIdentity.set({ login: 'admin' } as User);
         TestBed.tick();
         expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
+    });
+
+    it('clears the jobs once the user loses editor access in the same session', () => {
+        apiMock.getJobsOfCurrentUser.mockReturnValue(of([{ jobId: 'persisted-1', phase: 'VERIFYING' }]));
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+        expect(service.hasJobs()).toBe(true);
+
+        editorAccess = false;
+        userIdentity.set({ login: 'editor1' } as User);
+        TestBed.tick();
+        expect(service.jobs()).toEqual([]);
+        expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('persisted-1');
     });
 
     it('ignores a pending load once the user logs out', () => {
@@ -151,26 +146,6 @@ describe('ExerciseVariantGenerationService', () => {
 
         expect(service.jobs()).toEqual([]);
         expect(websocketMock.subscribeToJob).not.toHaveBeenCalled();
-    });
-
-    it('loads persisted jobs for an administrator when administrator features require no passkey', () => {
-        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
-        authorities = [Authority.ADMIN];
-        activeFeatures = new Set([MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY]);
-        userIdentity.set({ login: 'admin' } as User);
-        TestBed.tick();
-
-        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
-    });
-
-    it('loads persisted jobs for an instructor without any administrator authority', () => {
-        apiMock.getJobsOfCurrentUser.mockReturnValue(of([]));
-        authorities = [Authority.INSTRUCTOR];
-        activeFeatures = new Set([MODULE_FEATURE_HYPERION, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]);
-        userIdentity.set({ login: 'instructor1' } as User);
-        TestBed.tick();
-
-        expect(apiMock.getJobsOfCurrentUser).toHaveBeenCalledOnce();
     });
 
     it('startGeneration posts the request, adds a running entry, and subscribes to the per-job topic', () => {
