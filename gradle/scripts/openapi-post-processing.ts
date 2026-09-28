@@ -103,6 +103,7 @@ interface OpenApiSchema {
     anyOf?: OpenApiSchema[];
     allOf?: OpenApiSchema[];
     properties?: Record<string, OpenApiSchema>;
+    required?: string[];
 }
 
 interface OpenApiOperation {
@@ -256,8 +257,15 @@ const nameGeneratedBinaryFormDataParts = (sourceFile: SourceFile, namedPartsInFi
     return namedPartsInFile;
 };
 
+// Properties a schema requires, including those required by the parts of an allOf composition.
+const requiredPropertiesOf = (schema: OpenApiSchema, schemas: Record<string, OpenApiSchema>): Set<string> => {
+    const resolved = schema.$ref ? (schemas[schema.$ref.split("/").at(-1) ?? ""] ?? {}) : schema;
+    return new Set([...(resolved.required ?? []), ...(resolved.allOf ?? []).flatMap(part => [...requiredPropertiesOf(part, schemas)])]);
+};
+
 const referencedUnionSchemas = (openApiSpecification: OpenApiSpecification): Array<[string, string[]]> => {
-    return Object.entries(openApiSpecification.components?.schemas ?? {}).flatMap(([schemaName, schema]) => {
+    const schemas = openApiSpecification.components?.schemas ?? {};
+    return Object.entries(schemas).flatMap(([schemaName, schema]) => {
         if (!schema.oneOf || schema.oneOf.length < 2) {
             return [];
         }
@@ -265,6 +273,16 @@ const referencedUnionSchemas = (openApiSpecification: OpenApiSpecification): Arr
         const referencedSchemaNames = schema.oneOf.map(branch => branch.$ref?.split("/").at(-1));
         if (referencedSchemaNames.some(referencedSchemaName => referencedSchemaName === undefined)) {
             return [];
+        }
+
+        // The union replaces the root, so a property only the root requires would silently become optional. Require it
+        // on every branch in the specification instead; that also keeps the discriminator narrowable.
+        for (const branch of schema.oneOf) {
+            const branchRequired = requiredPropertiesOf(branch, schemas);
+            const dropped = (schema.required ?? []).filter(property => !branchRequired.has(property));
+            if (dropped.length > 0) {
+                throw new Error(`oneOf root ${schemaName} requires ${dropped.join(", ")}, but its branch ${branch.$ref} does not; declare it required on every branch`);
+            }
         }
 
         return [[schemaName, referencedSchemaNames.filter(referencedSchemaName => referencedSchemaName !== undefined)]];

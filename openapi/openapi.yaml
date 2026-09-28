@@ -3306,7 +3306,7 @@ components:
         averageAttendance: {type: integer, format: int32}
     QuizQuestionRefinementFailure:
       description: Failed refinement result containing an error message
-      required: [error]
+      required: [error, type]
       type: object
       properties:
         error: {type: string, description: Error message describing why the refinement
@@ -3369,7 +3369,7 @@ components:
     QuizQuestionRefinementSuccess:
       description: Successful refinement result containing the refined question and
         an explanation of the changes
-      required: [question, reasoning]
+      required: [question, reasoning, type]
       type: object
       properties:
         reasoning: {type: string, description: Brief explanation of what was changed

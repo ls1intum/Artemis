@@ -15,7 +15,7 @@
 export interface QuizQuestionRefinementSuccess {
     /** Brief explanation of what was changed during refinement */
     reasoning: string;
-    type?: QuizQuestionRefinementSuccessTypeEnum;
+    type: QuizQuestionRefinementSuccessTypeEnum;
 }
 
 export type QuizQuestionRefinementSuccessTypeEnum = 'success';

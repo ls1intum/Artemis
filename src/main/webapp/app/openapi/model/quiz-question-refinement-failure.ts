@@ -15,7 +15,7 @@
 export interface QuizQuestionRefinementFailure {
     /** Error message describing why the refinement failed */
     error: string;
-    type?: QuizQuestionRefinementFailureTypeEnum;
+    type: QuizQuestionRefinementFailureTypeEnum;
 }
 
 export type QuizQuestionRefinementFailureTypeEnum = 'failure';
