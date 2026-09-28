@@ -221,6 +221,15 @@ describe('TumAetUiSelectComponent', () => {
         expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[0].id);
     });
 
+    it('reports a required select to assistive technology only when asked to', () => {
+        expect(triggerButton().hasAttribute('aria-required')).toBe(false);
+
+        fixture.componentRef.setInput('required', true);
+        fixture.detectChanges();
+
+        expect(triggerButton().getAttribute('aria-required')).toBe('true');
+    });
+
     it('does not open when disabled and reflects the disabled attribute on the trigger', () => {
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
