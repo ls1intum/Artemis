@@ -126,9 +126,6 @@ jobs:
           JAR=${JARS[0]}
           nohup java -jar "$JAR" \
             --spring.profiles.active="$PROFILES" \
-            --info.operatorName="Artemis CI Operations" \
-            --info.operatorAdminName="Artemis CI Administrator" \
-            --info.universityName="Artemis CI University" \
             --artemis.lti.enabled=true \
             --artemis.user-management.passkey.enabled=true \
             --artemis.user-management.use-external=false \
