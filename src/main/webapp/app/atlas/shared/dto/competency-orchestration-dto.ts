@@ -3,6 +3,7 @@ export enum CompetencyOrchestrationStatus {
     Partial = 'PARTIAL',
     Failed = 'FAILED',
     InProgress = 'IN_PROGRESS',
+    NoOp = 'NO_OP',
 }
 
 export enum CompetencyOrchestrationFailureReason {

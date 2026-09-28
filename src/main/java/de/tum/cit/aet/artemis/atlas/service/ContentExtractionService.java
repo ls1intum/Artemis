@@ -222,7 +222,11 @@ public class ContentExtractionService {
             String edited = applyEdits(rawText, parsedEdits.edits());
             // If no edit span actually matched, the text is unchanged: return it byte-identical rather than
             // running whitespace normalization over content the model never targeted.
-            return edited.equals(rawText) ? rawText : normalizeWhitespace(edited);
+            if (edited.equals(rawText)) {
+                return rawText;
+            }
+            String normalized = normalizeWhitespace(edited);
+            return normalized.isBlank() ? rawText : normalized;
         }
         catch (Exception e) {
             log.warn("Flavor-text stripping failed; falling back to raw text", e);
@@ -258,10 +262,10 @@ public class ContentExtractionService {
     }
 
     /**
-     * Apply the given SEARCH/REPLACE edits to {@code rawText} in order. For each edit, the first
+     * Apply the given SEARCH/REPLACE edits to {@code rawText} in order. For each edit, the unique
      * occurrence of {@code edit.search()} is replaced with {@code edit.replace()} via
-     * {@link #findSpan(String, String)} (exact match, then a whitespace-tolerant fallback). Edits
-     * whose {@code search} cannot be located are skipped (logged at DEBUG) so a single off-target
+     * {@link #findSpan(String, String)} (unique whitespace-equivalent match). Edits
+     * whose {@code search} cannot be uniquely located are skipped (logged at DEBUG) so a single off-target
      * span does not poison the whole strip.
      * <p>
      * The prompt contract only permits {@code replace} to be empty (pure deletion) or a single
@@ -291,28 +295,16 @@ public class ContentExtractionService {
     }
 
     /**
-     * Locate the {@code search} span in {@code working}. First tries an exact literal match; if that
-     * fails, falls back to a whitespace-tolerant match that ignores leading/trailing whitespace and
-     * treats any internal whitespace run as equivalent, while still requiring every non-whitespace
-     * character to match exactly. This lets weaker models — whose search spans often differ from the
-     * source only in whitespace (extra indentation, single vs. double spaces) — still land their
-     * deletions, without ever matching a span whose visible content differs (e.g. a paraphrased word),
-     * so kept content stays byte-identical.
+     * Locate a unique whitespace-equivalent span, rejecting repeated or overlapping matches even
+     * when an exact match exists. Exact offsets preserve surrounding whitespace.
      *
-     * @return the {@code [start, end)} offsets of the matched span, or {@code null} if not found
+     * @return the {@code [start, end)} offsets, or {@code null} if absent or ambiguous
      */
     private static int[] findSpan(String working, String search) {
-        int exact = working.indexOf(search);
-        if (exact >= 0) {
-            return new int[] { exact, exact + search.length() };
-        }
         String trimmed = search.strip();
         if (trimmed.isEmpty()) {
             return null;
         }
-        // Build a pattern matching each whitespace-delimited token literally, joined by \s+ for any
-        // internal whitespace run. Leading/trailing whitespace is dropped by strip(), so only the
-        // non-whitespace skeleton must match; the actual source whitespace inside the span is consumed.
         String[] tokens = trimmed.split("\\s+");
         StringBuilder regex = new StringBuilder();
         for (int i = 0; i < tokens.length; i++) {
@@ -322,7 +314,17 @@ public class ContentExtractionService {
             regex.append(Pattern.quote(tokens[i]));
         }
         Matcher matcher = Pattern.compile(regex.toString()).matcher(working);
-        return matcher.find() ? new int[] { matcher.start(), matcher.end() } : null;
+        if (!matcher.find()) {
+            return null;
+        }
+        int start = matcher.start();
+        int end = matcher.end();
+        // Search from the next character so overlapping occurrences are ambiguous too.
+        if (matcher.find(start + 1)) {
+            return null;
+        }
+        int exact = working.indexOf(search);
+        return exact >= 0 ? new int[] { exact, exact + search.length() } : new int[] { start, end };
     }
 
     /**

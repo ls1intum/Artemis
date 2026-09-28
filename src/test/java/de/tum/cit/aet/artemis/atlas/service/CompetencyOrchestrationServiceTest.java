@@ -376,7 +376,7 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
-    void run_success_tracksTokenUsage() {
+    void run_verifiedWithoutChanges_returnsSuccessWithoutActionsAndTracksTokenUsage() {
         ProgrammingExercise exercise = courseExercise(16L);
         when(exerciseRepository.findByIdElseThrow(16L)).thenReturn(exercise);
         stubRunMap();
@@ -391,7 +391,9 @@ class CompetencyOrchestrationServiceTest {
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(16L);
 
+        // A verified completion without edits is SUCCESS with no applied actions, distinct from NO_OP (nothing applicable).
         assertThat(result.status()).isEqualTo(SUCCESS);
+        assertThat(result.appliedActions()).isEmpty();
         assertThat(result.summary()).isEqualTo("Run summary");
         verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
         verify(runMap).remove(COURSE_ID);
@@ -521,7 +523,7 @@ class CompetencyOrchestrationServiceTest {
 
     @Test
     void runBatch_mixedBatchOneExtractionThrows_requeuesSkippedIdOnSuccess() {
-        // A quiz deleted mid-run fails extraction, but the programming exercise succeeds so the batch reaches SUCCESS.
+        // A quiz deleted mid-run fails extraction, but the programming exercise succeeds so the batch reaches a verified SUCCESS without edits.
         // Because claimDueBatch already drained the bucket, the skipped id would be lost unless it is requeued here.
         ProgrammingExercise healthy = courseExercise(10L);
         QuizExercise doomedQuiz = quizExercise(12L);
@@ -540,7 +542,9 @@ class CompetencyOrchestrationServiceTest {
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mockChatClient).runBatch(COURSE_ID, Set.of(10L, 12L));
 
+        // The run completed over the healthy exercise without edits: SUCCESS, so the scheduler reports a no-change completion.
         assertThat(result.status()).isEqualTo(SUCCESS);
+        assertThat(result.appliedActions()).isEmpty();
         // Only the extraction-failed quiz (12) is requeued — the healthy exercise was orchestrated, not requeued.
         verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
         verify(runMap).remove(COURSE_ID);
@@ -602,14 +606,19 @@ class CompetencyOrchestrationServiceTest {
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
         ChatClient mockChatClient = mock(ChatClient.class);
         when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
-                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
-                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> context = invocation.getArgument(3);
+                    var buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) context.get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
+                    buffer.actions().add(AppliedActionDTO.create(1L, "Loops", "Created competency", "Exercise teaches loops"));
+                    return completeRound(context, chatResponse);
+                });
 
         CompetencyOrchestrationService service = createServiceWithRunMap(mockChatClient);
         // The requeue exception must not escape runBatch after committed actions; capture the result to assert on it.
         AtomicReference<CompetencyOrchestrationResultDTO> result = new AtomicReference<>();
         assertThatCode(() -> result.set(service.runBatch(COURSE_ID, Set.of(10L, 12L)))).doesNotThrowAnyException();
 
+        assertThat(result.get().appliedActions()).hasSize(1);
         // The committed-mutation result is preserved as SUCCESS despite the requeue failure.
         assertThat(result.get().status()).isEqualTo(SUCCESS);
         verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));

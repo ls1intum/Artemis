@@ -42,8 +42,6 @@ public class LLMTokenUsageService {
     /**
      * Default value used when token-count metadata is missing ({@code null}).
      */
-    private static final int DEFAULT_TOKEN_COUNT = 0;
-
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
     private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
@@ -175,17 +173,33 @@ public class LLMTokenUsageService {
     public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
         try {
-            if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            if (chatResponse == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: chat response is missing.", pipelineId);
                 return;
             }
             ChatResponseMetadata metadata = chatResponse.getMetadata();
+            if (metadata == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: response metadata is missing.", pipelineId);
+                return;
+            }
             Usage usage = metadata.getUsage();
+            if (usage == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is missing.", pipelineId);
+                return;
+            }
             if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
                 return;
             }
+            Integer promptTokens = usage.getPromptTokens();
+            Integer completionTokens = usage.getCompletionTokens();
+            // Defaulting a missing count to zero would persist a record that understates usage and cost; reported zeros are kept.
+            if (promptTokens == null || completionTokens == null) {
+                log.warn("Failed to store token usage for pipeline [{}]: usage metadata is incomplete (prompt tokens: {}, completion tokens: {}).", pipelineId, promptTokens,
+                        completionTokens);
+                return;
+            }
             String model = metadata.getModel() != null ? metadata.getModel() : "";
-            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
-                    usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);
+            LLMRequest llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
         }
         catch (Exception e) {

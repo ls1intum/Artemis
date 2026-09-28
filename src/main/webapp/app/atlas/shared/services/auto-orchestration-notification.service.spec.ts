@@ -12,6 +12,7 @@ describe('AutoOrchestrationNotificationService', () => {
     let alertSuccessSpy: ReturnType<typeof vi.fn>;
     let alertWarningSpy: ReturnType<typeof vi.fn>;
     let alertErrorSpy: ReturnType<typeof vi.fn>;
+    let alertInfoSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         websocketSubject = new Subject<AutoOrchestrationSummary>();
@@ -19,12 +20,13 @@ describe('AutoOrchestrationNotificationService', () => {
         alertSuccessSpy = vi.fn();
         alertWarningSpy = vi.fn();
         alertErrorSpy = vi.fn();
+        alertInfoSpy = vi.fn();
 
         TestBed.configureTestingModule({
             providers: [
                 AutoOrchestrationNotificationService,
                 { provide: WebsocketService, useValue: { subscribe: websocketSubscribeSpy } },
-                { provide: AlertService, useValue: { success: alertSuccessSpy, warning: alertWarningSpy, error: alertErrorSpy } },
+                { provide: AlertService, useValue: { success: alertSuccessSpy, warning: alertWarningSpy, error: alertErrorSpy, info: alertInfoSpy } },
             ],
         });
 
@@ -45,6 +47,17 @@ describe('AutoOrchestrationNotificationService', () => {
         websocketSubject.next(summary({ exerciseCount: 3, successCount: 3, failureCount: 0 }));
 
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.atlasOrchestrator.autoToast.success', { count: 3, success: 3, failure: 0 });
+        expect(alertWarningSpy).not.toHaveBeenCalled();
+        expect(alertErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('emits an info alert when a completed run needed no changes', () => {
+        service.subscribeToCourse(42);
+
+        websocketSubject.next(summary({ exerciseCount: 2, successCount: 2, failureCount: 0, outcome: 'NO_CHANGES' }));
+
+        expect(alertInfoSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.atlasOrchestrator.autoToast.noChanges', { count: 2, success: 2, failure: 0 });
+        expect(alertSuccessSpy).not.toHaveBeenCalled();
         expect(alertWarningSpy).not.toHaveBeenCalled();
         expect(alertErrorSpy).not.toHaveBeenCalled();
     });
@@ -76,6 +89,23 @@ describe('AutoOrchestrationNotificationService', () => {
         // Re-subscribing creates a fresh stomp subscription.
         service.subscribeToCourse(42);
         expect(websocketSubscribeSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('isolates course switches and rejects mismatched summaries on the active topic', () => {
+        const a = new Subject<AutoOrchestrationSummary>();
+        const b = new Subject<AutoOrchestrationSummary>();
+        const streams: Record<string, Subject<AutoOrchestrationSummary>> = { '/topic/atlas/orchestrator/42': a, '/topic/atlas/orchestrator/43': b };
+        websocketSubscribeSpy.mockImplementation((destination: string) => streams[destination]);
+        service.subscribeToCourse(42);
+        service.unsubscribeFromCourse(42);
+        service.subscribeToCourse(43);
+        a.next(summary({ courseId: 42, exerciseCount: 1, successCount: 1 }));
+        b.next(summary({ courseId: 42, exerciseCount: 1, successCount: 1 }));
+        expect(alertSuccessSpy).not.toHaveBeenCalled();
+        expect(alertWarningSpy).not.toHaveBeenCalled();
+        expect(alertErrorSpy).not.toHaveBeenCalled();
+        b.next(summary({ courseId: 43, exerciseCount: 2, successCount: 2 }));
+        expect(alertSuccessSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.atlasOrchestrator.autoToast.success', { count: 2, success: 2, failure: 0 });
     });
 
     function summary(overrides: Partial<AutoOrchestrationSummary>): AutoOrchestrationSummary {

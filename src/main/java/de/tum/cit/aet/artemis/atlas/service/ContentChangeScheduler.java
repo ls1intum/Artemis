@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO.Outcome;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
@@ -177,7 +178,8 @@ public class ContentChangeScheduler {
                 accumulator.requeueAfterFailedRun(courseId, exerciseIds);
                 broadcastSummary(courseId, runId, exerciseCount, false);
             }
-            case SUCCESS -> broadcastSummary(courseId, runId, exerciseCount, true);
+            // A verified run that applied nothing still processed the batch: report it as completed without changes.
+            case SUCCESS -> broadcastSummary(courseId, runId, exerciseCount, result.appliedActions().isEmpty() ? Outcome.NO_CHANGES : Outcome.SUCCESS);
             // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply). null:
             // unknown state, do not requeue. Both surface as a failure toast.
             case null, default -> broadcastSummary(courseId, runId, exerciseCount, false);
@@ -185,7 +187,12 @@ public class ContentChangeScheduler {
     }
 
     private void broadcastSummary(long courseId, String runId, int exerciseCount, boolean success) {
-        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, exerciseCount, success ? exerciseCount : 0, success ? 0 : exerciseCount,
+        broadcastSummary(courseId, runId, exerciseCount, success ? Outcome.SUCCESS : Outcome.FAILED);
+    }
+
+    private void broadcastSummary(long courseId, String runId, int exerciseCount, Outcome outcome) {
+        boolean success = outcome != Outcome.FAILED;
+        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, exerciseCount, success ? exerciseCount : 0, success ? 0 : exerciseCount, outcome,
                 Instant.now(clock));
         websocketMessagingService.sendMessage(ORCHESTRATION_SUMMARY.at(courseId), summary);
     }

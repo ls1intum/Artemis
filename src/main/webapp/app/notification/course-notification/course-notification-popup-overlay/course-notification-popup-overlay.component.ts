@@ -1,23 +1,27 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseNotification, payloadOf } from 'app/notification/shared/entities/course-notification/course-notification';
-import { Subscription } from 'rxjs';
+import { Subscription, distinctUntilChanged, filter, map } from 'rxjs';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationWebsocketService } from 'app/notification/course-notification/course-notification-websocket.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, PRIMARY_OUTLET, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronUp, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { ButtonModule } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Component that displays real-time notification popups.
- * Shows notifications received via websocket in a collapsible overlay.
+ * Shows current-course notifications inside a course and all-course notifications elsewhere.
  * Handles automatic timeout and manual dismissal of notifications.
+ * The overlay lives in the app shell and survives logout, so queued popups are dropped (without being marked seen)
+ * whenever the authenticated user changes; otherwise one user's notifications could remain visible to the next.
  */
 @Component({
     selector: 'jhi-course-notification-popup-overlay',
@@ -29,7 +33,10 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);
     private readonly courseNotificationService = inject(CourseNotificationService);
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly destroyRef = inject(DestroyRef);
     private readonly communicationState = inject(ConversationSelectionState);
+    private readonly accountService = inject(AccountService);
 
     protected readonly popupTimeInMilliseconds = 40000;
 
@@ -37,6 +44,8 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     protected readonly isExpanded = signal(false);
 
     private courseNotificationWebsocketSubscription?: Subscription;
+    /** Pending auto-dismiss timers by notification id, so they can be cancelled when the popups are discarded. */
+    private readonly dismissTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -45,6 +54,11 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
     ngOnInit(): void {
         this.courseNotificationWebsocketSubscription = this.courseNotificationWebsocketService.websocketNotification$.subscribe((notification) => {
+            const courseId = this.getActiveCourseId();
+            // Hidden other-course notifications remain unread in the all-course history.
+            if (courseId !== undefined && notification.courseId !== courseId) {
+                return;
+            }
             if (this.notifications().findIndex((existingNotification) => existingNotification.notificationId === notification.notificationId) !== -1) {
                 return;
             }
@@ -57,14 +71,52 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
             this.notifications.update((notifications) => [...notifications, notification]);
 
-            setTimeout(() => {
-                this.removeNotification(notification.notificationId!);
-            }, this.popupTimeInMilliseconds);
+            const notificationId = notification.notificationId!;
+            this.dismissTimers.set(
+                notificationId,
+                setTimeout(() => this.removeNotification(notificationId), this.popupTimeInMilliseconds),
+            );
         });
+        this.accountService
+            .getAuthenticationState()
+            .pipe(
+                map((user) => user?.id ?? user?.login),
+                distinctUntilChanged(),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            // Includes logout (identity becomes undefined): the previous user's popups must not outlive their session.
+            .subscribe(() => this.discardAllNotifications());
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => {
+                const courseId = this.getActiveCourseId();
+                if (courseId !== undefined) {
+                    this.notifications.update((notifications) => notifications.filter((notification) => notification.courseId === courseId));
+                    if (this.notifications().length === 0) {
+                        this.isExpanded.set(false);
+                    }
+                }
+            });
     }
 
     ngOnDestroy(): void {
         this.courseNotificationWebsocketSubscription?.unsubscribe();
+        this.clearDismissTimers();
+    }
+
+    /** Drops every queued popup and its timer without marking anything as seen, keeping the unread history intact. */
+    private discardAllNotifications(): void {
+        this.clearDismissTimers();
+        this.notifications.set([]);
+        this.isExpanded.set(false);
+    }
+
+    private clearDismissTimers(): void {
+        this.dismissTimers.forEach((timer) => clearTimeout(timer));
+        this.dismissTimers.clear();
     }
 
     /**
@@ -74,6 +126,8 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * @param notificationId - The ID of the notification to remove
      */
     removeNotification(notificationId: number): void {
+        clearTimeout(this.dismissTimers.get(notificationId));
+        this.dismissTimers.delete(notificationId);
         const indexToRemove = this.notifications().findIndex((notification) => notification.notificationId === notificationId);
 
         if (indexToRemove !== -1) {
@@ -106,11 +160,13 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * @returns shouldShow - Whether the notification should be shown
      */
     shouldShowNotification(notification: CourseNotification): boolean {
-        const courseId = this.route.firstChild?.firstChild?.snapshot.paramMap.get('courseId');
+        const courseId = this.getActiveCourseId();
 
-        // Course is not open
-        if (!courseId || Number(courseId) !== notification.courseId) {
+        if (courseId === undefined) {
             return true;
+        }
+        if (courseId !== notification.courseId) {
+            return false;
         }
 
         const routeParams = this.route.snapshot.queryParamMap;
@@ -140,6 +196,20 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         }
 
         return true;
+    }
+
+    /** Resolve the deepest course parameter on the primary route, including management routes. */
+    private getActiveCourseId(): number | undefined {
+        let route: ActivatedRouteSnapshot | undefined = this.router.routerState.snapshot.root;
+        let courseId: number | undefined;
+        while (route) {
+            const value = route.paramMap.get('courseId');
+            if (value !== null) {
+                courseId = Number(value);
+            }
+            route = route.children.find((child) => child.outlet === PRIMARY_OUTLET);
+        }
+        return courseId !== undefined && Number.isSafeInteger(courseId) && courseId > 0 ? courseId : undefined;
     }
 
     /**
