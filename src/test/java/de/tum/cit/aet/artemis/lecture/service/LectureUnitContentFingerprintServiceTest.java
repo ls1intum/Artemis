@@ -15,6 +15,7 @@ import org.mockito.MockedStatic;
 
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 
 class LectureUnitContentFingerprintServiceTest {
@@ -39,7 +40,9 @@ class LectureUnitContentFingerprintServiceTest {
         AttachmentVideoUnit unit = new AttachmentVideoUnit();
         unit.setId(42L);
         Attachment attachment = new Attachment();
-        attachment.setLink("/api/core/files/attachments/attachment-unit/42/" + filename);
+        attachment.setAttachmentType(AttachmentType.FILE);
+        attachment.setLink(filename);
+        attachment.setAttachmentVideoUnit(unit);
         unit.setAttachment(attachment);
         return unit;
     }
@@ -88,6 +91,38 @@ class LectureUnitContentFingerprintServiceTest {
             filePathConverter.when(FilePathConverter::getAttachmentVideoUnitFileSystemPath).thenReturn(tempDir);
 
             assertThatThrownBy(() -> fingerprintService.computeFingerprint(unit)).isInstanceOf(IllegalStateException.class);
+        }
+    }
+
+    @Test
+    void externalPdfLinkIsFingerprintedLikeAVideoOnlyUnit() {
+        AttachmentVideoUnit unit = unitWithVideo("https://video.example/stream");
+        unit.setId(42L);
+        Attachment attachment = new Attachment();
+        attachment.setAttachmentType(AttachmentType.URL);
+        attachment.setLink("https://example.org/lecture-notes.pdf");
+        attachment.setAttachmentVideoUnit(unit);
+        unit.setAttachment(attachment);
+
+        // No stored file to read, so this must neither throw nor look for a local file sharing the link's name.
+        String fingerprint = fingerprintService.computeFingerprint(unit);
+
+        assertThat(fingerprint).isEqualTo(fingerprintService.computeFingerprint(unitWithVideo("https://video.example/stream")));
+    }
+
+    @Test
+    void storedPdfWithAnUppercaseExtensionIsHashed() throws Exception {
+        AttachmentVideoUnit unit = unitWithPdf("slides.PDF");
+        Path pdfPath = tempDir.resolve("42").resolve("slides.PDF");
+        FileUtils.writeStringToFile(pdfPath.toFile(), "original content", StandardCharsets.UTF_8);
+
+        try (MockedStatic<FilePathConverter> filePathConverter = mockStatic(FilePathConverter.class)) {
+            filePathConverter.when(FilePathConverter::getAttachmentVideoUnitFileSystemPath).thenReturn(tempDir);
+
+            String original = fingerprintService.computeFingerprint(unit);
+            FileUtils.writeStringToFile(pdfPath.toFile(), "changed content", StandardCharsets.UTF_8);
+
+            assertThat(fingerprintService.computeFingerprint(unit)).isNotEqualTo(original);
         }
     }
 }

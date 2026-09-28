@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +44,8 @@ public class LectureUnitContentFingerprintService {
      */
     public String computeFingerprint(AttachmentVideoUnit unit) {
         String pdfHash = "";
-        if (unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf")) {
+        // Same rule as the ingestion payload, so the fingerprint certifies exactly the bytes Iris is sent: an external link has no stored file and counts as no PDF.
+        if (unit.getAttachment() != null && unit.getAttachment().isStoredPdf()) {
             pdfHash = sha256Hex(readAttachmentBytes(unit));
         }
         String videoSource = unit.getVideoSource() != null ? unit.getVideoSource() : "";
@@ -54,8 +54,9 @@ public class LectureUnitContentFingerprintService {
     }
 
     private byte[] readAttachmentBytes(AttachmentVideoUnit unit) {
-        String filename = Path.of(URI.create(unit.getAttachment().getLink()).getPath()).getFileName().toString();
-        Path path = new FileSystemLocation.AttachmentVideoUnitFile(unit.getId(), filename).path();
+        // Resolved like every other reader of the file, which also finds one still left in its lecture's directory.
+        Path path = unit.getAttachment().fileLocation().map(FileSystemLocation::path)
+                .orElseThrow(() -> new IllegalStateException("Attachment of lecture unit " + unit.getId() + " names no stored file"));
         try {
             return Files.readAllBytes(path);
         }

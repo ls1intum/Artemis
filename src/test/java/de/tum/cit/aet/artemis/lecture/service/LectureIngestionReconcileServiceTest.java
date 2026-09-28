@@ -27,6 +27,7 @@ import org.mockito.ArgumentCaptor;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
@@ -150,7 +151,9 @@ class LectureIngestionReconcileServiceTest {
     private void givenPdfUnit() {
         unit.setVideoSource(null);
         Attachment attachment = new Attachment();
-        attachment.setLink("/attachments/lecture/1/file.pdf");
+        attachment.setAttachmentType(AttachmentType.FILE);
+        attachment.setLink("file.pdf");
+        attachment.setAttachmentVideoUnit(unit);
         unit.setAttachment(attachment);
     }
 
@@ -386,6 +389,25 @@ class LectureIngestionReconcileServiceTest {
             assertThat(spent).isEqualTo(1);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(state.isForceReingest()).isTrue();
+        }
+
+        @Test
+        void shouldNotExpectPageChunksFromAnExternalPdfLink() {
+            // A video unit whose attachment links to a PDF hosted elsewhere is ingested as video-only, so the
+            // index legitimately holds no page chunks or slide segments for it; that is not a divergence.
+            Attachment attachment = new Attachment();
+            attachment.setAttachmentType(AttachmentType.URL);
+            attachment.setLink("https://example.org/lecture-notes.pdf");
+            attachment.setAttachmentVideoUnit(unit);
+            unit.setAttachment(attachment);
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(FINGERPRINT);
+            givenCensus(structuralEntry(1, 0, 0, 0, 0));
+
+            int spent = reconcileService.reconcileCourse(COURSE_ID, 10);
+
+            assertThat(spent).isZero();
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.DONE);
         }
 
         @Test
@@ -701,6 +723,40 @@ class LectureIngestionReconcileServiceTest {
         }
 
         @Test
+        void shouldResumeAPausedCourseAfterItsLastVisitedUnitInsteadOfSkippingOrRestartingIt() {
+            LectureIngestionReconcileService oneRequeuePerPass = new LectureIngestionReconcileService(processingStateRepository, reconcileStateRepository,
+                    attachmentVideoUnitRepository, Optional.of(irisLectureApi), contentFingerprintService, processingService, 5, 1, 0.8, Duration.ofHours(1), 10);
+            AttachmentVideoUnit secondUnit = new AttachmentVideoUnit();
+            secondUnit.setId(101L);
+            secondUnit.setLecture(lecture);
+            secondUnit.setVideoSource("https://live.rbg.tum.de/w/course/67890");
+            LectureUnitProcessingState secondState = new LectureUnitProcessingState(secondUnit);
+            secondState.setId(2L);
+            secondState.setPhase(ProcessingPhase.DONE);
+            state.setPhase(ProcessingPhase.DONE);
+            when(contentFingerprintService.computeFingerprint(secondUnit)).thenReturn(FINGERPRINT);
+            when(attachmentVideoUnitRepository.findAllWithAttachmentByCourseId(COURSE_ID)).thenReturn(List.of(unit, secondUnit));
+            when(processingStateRepository.findWithLectureUnitByCourseId(COURSE_ID)).thenReturn(List.of(state, secondState));
+            when(attachmentVideoUnitRepository.findCourseIdsWithAttachmentVideoUnitsAfter(anyLong(), any()))
+                    .thenAnswer(invocation -> (long) invocation.getArgument(0) < COURSE_ID ? List.of(COURSE_ID) : List.<Long>of());
+            givenCensus();
+
+            assertThat(oneRequeuePerPass.walkNextCourses()).isEqualTo(1);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(secondState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+
+            // The first unit re-diverges before the next pass, as one that never converges would. Restarting the
+            // course would spend the budget on it again and never reach the second unit.
+            state.setPhase(ProcessingPhase.DONE);
+            state.setConfirmedFingerprint(null);
+
+            assertThat(oneRequeuePerPass.walkNextCourses()).isEqualTo(1);
+            assertThat(secondState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(state.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            verify(attachmentVideoUnitRepository).findCourseIdsWithAttachmentVideoUnitsAfter(eq(COURSE_ID - 1), any());
+        }
+
+        @Test
         void shouldWrapTheCursorAfterAFullPass() {
             // One answer per cursor position; a second when() stub would consume the first
             // sequential answer during its own stubbing invocation
@@ -860,10 +916,7 @@ class LectureIngestionReconcileServiceTest {
      */
     @Test
     void shouldReconcileAttachmentOnlyUnits() {
-        unit.setVideoSource(null);
-        Attachment attachment = new Attachment();
-        attachment.setLink("/attachments/lecture/1/file.pdf");
-        unit.setAttachment(attachment);
+        givenPdfUnit();
         state.setPhase(ProcessingPhase.DONE);
         state.setConfirmedFingerprint(null);
         givenCensus();

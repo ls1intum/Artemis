@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -122,6 +123,25 @@ public class LectureIngestionReconcileService {
 
     private final AtomicLong courseCursor = new AtomicLong(0);
 
+    /**
+     * Where a course the budget ran out in resumes, or {@code null} when the next pass starts at a course boundary. Resuming after the last visited unit, rather than
+     * revisiting the course from its start, is what keeps the walk moving: a course with more units that diverge again after every re-ingest than one pass can spend on
+     * would otherwise hold the walk on its first units for good and starve every course after it.
+     */
+    private final AtomicReference<CourseResume> courseResume = new AtomicReference<>();
+
+    private record CourseResume(long courseId, long afterUnitId) {
+    }
+
+    /**
+     * The outcome of one visit to a course.
+     *
+     * @param spent             how many requeues/triggers the visit spent
+     * @param pausedAfterUnitId the last unit visited when the budget ran out with units still ahead, or {@code null} when the visit reached the end of the course
+     */
+    record CourseVisit(int spent, @Nullable Long pausedAfterUnitId) {
+    }
+
     public LectureIngestionReconcileService(LectureUnitProcessingStateRepository processingStateRepository, LectureUnitProcessingStateReconcileRepository reconcileStateRepository,
             AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<IrisLectureApi> irisLectureApi, LectureUnitContentFingerprintService contentFingerprintService,
             LectureContentProcessingService processingService, @Value("${artemis.iris.ingestion.reconcile.courses-per-run:10}") int coursesPerRun,
@@ -159,27 +179,36 @@ public class LectureIngestionReconcileService {
             courseCursor.set(0);
             return 0;
         }
+        CourseResume resume = courseResume.getAndSet(null);
         int spent = 0;
         for (Long courseId : courseIds) {
-            int courseSpent = 0;
+            CourseVisit visit = new CourseVisit(0, null);
+            long afterUnitId = resume != null && resume.courseId() == courseId ? resume.afterUnitId() : 0;
             // Isolate each course so one failing course (e.g. its Iris census call throwing) does not
             // abort the pass before the cursor advances, which would re-hit the same course every run
             // and permanently block reconciliation of every course after it.
             try {
-                courseSpent = reconcileCourse(courseId, requeueLimitPerRun - spent);
+                visit = reconcileCourse(courseId, requeueLimitPerRun - spent, afterUnitId);
             }
             catch (RuntimeException e) {
                 log.error("Reconcile: course {} failed this pass and was skipped: {}", courseId, e.getMessage());
             }
-            spent += courseSpent;
-            if (courseSpent > 0) {
-                log.info("reconcile-course course={} requeued_or_triggered={}", courseId, courseSpent);
+            spent += visit.spent();
+            if (visit.spent() > 0) {
+                log.info("reconcile-course course={} requeued_or_triggered={}", courseId, visit.spent());
             }
-            courseCursor.set(courseId);
+            if (visit.pausedAfterUnitId() != null) {
+                // The budget ran out inside this course: the next pass comes back to it (the cursor sits just
+                // before it) and continues after the last unit visited here instead of skipping the rest.
+                courseCursor.set(courseId - 1);
+                courseResume.set(new CourseResume(courseId, visit.pausedAfterUnitId()));
+            }
+            else {
+                courseCursor.set(courseId);
+            }
             if (spent >= requeueLimitPerRun) {
-                // Budget exhausted mid-slice; the cursor stays on this course's predecessor-inclusive
-                // position, and anything unvisited is caught on the next full pass. A saturated budget
-                // is also the mass-divergence signal: a backup restore or collection recreate makes
+                // Budget exhausted mid-slice; a course left unfinished resumes next pass, see above. A saturated
+                // budget is also the mass-divergence signal: a backup restore or collection recreate makes
                 // every walked course diverge at once, and healing at this budget takes many passes.
                 log.error(
                         "mass-divergence: reconcile budget of {} exhausted after {} of {} courses — "
@@ -200,6 +229,18 @@ public class LectureIngestionReconcileService {
      * @return how many requeues/triggers were spent
      */
     int reconcileCourse(long courseId, int requeueBudget) {
+        return reconcileCourse(courseId, requeueBudget, 0).spent();
+    }
+
+    /**
+     * Reconcile a single course starting after the given unit, as {@link #reconcileCourse(long, int)} does from its start.
+     *
+     * @param courseId      the course to reconcile
+     * @param requeueBudget how many requeues/triggers this call may spend
+     * @param afterUnitId   only units with a larger id are visited; 0 visits the whole course
+     * @return what the visit spent, and where it paused if the budget ran out with units still ahead
+     */
+    CourseVisit reconcileCourse(long courseId, int requeueBudget, long afterUnitId) {
         IngestionCensusDTO census = irisLectureApi.get().getIngestionCensus(courseId);
         boolean censusAvailable = census != null;
         Map<Long, IngestionCensusUnitDTO> censusByUnitId = censusAvailable
@@ -211,16 +252,24 @@ public class LectureIngestionReconcileService {
                 .collect(Collectors.toMap(state -> state.getLectureUnit().getId(), Function.identity(), (first, second) -> first));
 
         int spent = 0;
+        Long lastVisitedUnitId = null;
+        Long pausedAfterUnitId = null;
+        // Units come ordered by id, which is what makes resuming after an id skip exactly the units already visited.
         for (AttachmentVideoUnit unit : units) {
+            if (unit.getId() <= afterUnitId) {
+                continue;
+            }
             if (spent >= requeueBudget) {
+                pausedAfterUnitId = lastVisitedUnitId;
                 break;
             }
+            lastVisitedUnitId = unit.getId();
             // Isolate each unit: an unexpected failure on one (a malformed link, a bad census entry)
             // must not abort the course, which would otherwise leave the cursor stuck and starve every
             // later course of reconciliation.
             try {
                 boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
-                boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
+                boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
                 if (!hasVideo && !hasPdf) {
                     continue;
                 }
@@ -252,7 +301,7 @@ public class LectureIngestionReconcileService {
         if (censusAvailable) {
             deleteOrphanedIndexRows(census, units);
         }
-        return spent;
+        return new CourseVisit(spent, pausedAfterUnitId);
     }
 
     /**
@@ -292,7 +341,8 @@ public class LectureIngestionReconcileService {
             // certified count, a page-coverage hole against the PDF, a PDF unit left with no chunks, duplicate
             // unit rows, missing slide segments, and legacy null display numbers. A benign single-generation
             // count difference is deliberately not a signal, so a stale expectation alone does not cause churn.
-            boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().getLink() != null && unit.getAttachment().getLink().endsWith(".pdf");
+            // The same stored-PDF rule the payload uses: an external .pdf link is ingested as video-only and must not be expected to have page chunks.
+            boolean hasPdf = unit.getAttachment() != null && unit.getAttachment().isStoredPdf();
             String divergence = divergenceReason(censusEntry, hasPdf);
             if (divergence != null) {
                 return requeueForReconcile(state, observedFingerprint, divergence, ReconcileIntent.forcingRebuild()) ? 1 : 0;

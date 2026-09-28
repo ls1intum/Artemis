@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IngestionStatusBadgeComponent } from 'app/lecture/manage/lecture-units/ingestion-status-badge/ingestion-status-badge.component';
@@ -22,8 +22,8 @@ describe('IngestionStatusBadgeComponent', () => {
             imports: [IngestionStatusBadgeComponent],
         })
             .overrideComponent(IngestionStatusBadgeComponent, {
-                remove: { imports: [NgbTooltip, TranslateDirective, ArtemisTranslatePipe] },
-                add: { imports: [MockDirective(NgbTooltip), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
+                remove: { imports: [TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe] },
+                add: { imports: [MockDirective(TumAetUiTooltipDirective), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
             })
             .compileComponents();
         fixture = TestBed.createComponent(IngestionStatusBadgeComponent);

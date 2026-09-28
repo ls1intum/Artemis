@@ -543,7 +543,14 @@ public class ProcessingStateCallbackService {
         }
         log.info("Worker {} activated unit {} as {} with token {}", workerBootId, lectureUnitId, targetPhase, maskToken(jobToken));
 
-        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(notificationService::notifyWithTranscriptionStatus);
+        // The activation above is committed, so the run is live: a notification failure must not turn into a failed
+        // activation, which would abort the worker's whole claim response and strand this batch until its leases lapse.
+        try {
+            processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(notificationService::notifyWithTranscriptionStatus);
+        }
+        catch (Exception e) {
+            log.warn("Activated unit {} but could not push the state change to clients: {}", lectureUnitId, e.getMessage());
+        }
         return true;
     }
 

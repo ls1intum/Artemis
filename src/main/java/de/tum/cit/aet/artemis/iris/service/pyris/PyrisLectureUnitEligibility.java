@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import java.util.Locale;
-
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 
 final class PyrisLectureUnitEligibility {
@@ -16,7 +13,6 @@ final class PyrisLectureUnitEligibility {
     }
 
     static boolean hasPdf(AttachmentVideoUnit attachmentVideoUnit) {
-        return java.util.Optional.ofNullable(attachmentVideoUnit.getAttachment()).filter(attachment -> attachment.getAttachmentType() == AttachmentType.FILE)
-                .map(attachment -> attachment.getLink()).filter(link -> link.toLowerCase(Locale.ROOT).endsWith(".pdf")).isPresent();
+        return attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().isStoredPdf();
     }
 }

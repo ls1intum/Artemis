@@ -6,7 +6,7 @@
         [severity]="severity()"
         data-testid="ingestion-status-badge"
         [attr.data-state]="badgeState"
-        [ngbTooltip]="tooltipKey() ? (tooltipKey()! | artemisTranslate) : undefined"
+        [tumAetUiTooltip]="tooltipKey() ? (tooltipKey()! | artemisTranslate) : ''"
     >
         @if (icon(); as runningIcon) {
             <fa-icon [icon]="runningIcon" animation="spin" />
@@ -27,7 +27,7 @@
             <span
                 class="stage-retry"
                 data-testid="ingestion-retry"
-                [ngbTooltip]="'artemisApp.attachmentVideoUnit.processing.retriedTooltip' | artemisTranslate: { count: retryCount() }"
+                [tumAetUiTooltip]="'artemisApp.attachmentVideoUnit.processing.retriedTooltip' | artemisTranslate: { count: retryCount() }"
             >
                 {{ retryCount() }}
                 <span [jhiTranslate]="retryLabelKey()"></span>

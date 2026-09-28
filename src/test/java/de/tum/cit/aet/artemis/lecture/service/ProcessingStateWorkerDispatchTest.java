@@ -185,6 +185,19 @@ class ProcessingStateWorkerDispatchTest {
     }
 
     @Test
+    void activateClaimedJobStillReportsTheCommittedActivationWhenTheNotificationFails() {
+        when(processingStateRepository.activateClaimedJob(eq(100L), eq(ProcessingPhase.INGESTING), eq("token-abc"), anyString(), anyString(), eq("claim-current"), any()))
+                .thenReturn(1);
+        when(processingStateRepository.findByLectureUnit_Id(100L)).thenThrow(new IllegalStateException("connection pool exhausted"));
+
+        // The activation is committed before the notification runs; reporting false (or throwing) would drop a live
+        // run from the worker's claim response and strand it until its lease lapses.
+        assertThat(callbackService.activateClaimedJob(100L, "token-abc", ProcessingPhase.INGESTING, "v1:test-fingerprint", WORKER_BOOT_ID, "claim-current")).isTrue();
+
+        verify(websocketMessagingService, never()).sendMessage(any(WebsocketDestination.class), any(Object.class));
+    }
+
+    @Test
     void activateClaimedJobIgnoresAnActivationWhoseClaimLapsed() {
         when(processingStateRepository.activateClaimedJob(anyLong(), any(), anyString(), anyString(), anyString(), anyString(), any())).thenReturn(0);
 
