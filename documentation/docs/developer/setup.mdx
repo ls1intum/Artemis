@@ -138,7 +138,7 @@ collation-server = utf8mb4_unicode_ci
 Ensure that MySQL loads this configuration file when starting the server.
 For more details, refer to the official MySQL documentation: [MySQL Option Files](https://dev.mysql.com/doc/refman/9.2/en/option-files.html).
 
-The server configuration does not cover the connection. MySQL Connector/J connects with `utf8mb4_0900_ai_ci` unless the JDBC URL sets `connectionCollation=utf8mb4_unicode_ci`, and searches then fail with `Illegal mix of collations`. The datasource URLs of the `dev` and `docker` profiles set it; keep it when you override `spring.datasource.url`. See [MySQL Character Set and Collation](/admin/upgrade-guide#mysql-character-set-and-collation).
+The server configuration does not cover the connection. MySQL Connector/J connects with `utf8mb4_0900_ai_ci` unless the JDBC URL sets `connectionCollation=utf8mb4_unicode_ci`, and some searches, such as those for course or conversation members, then fail with `Illegal mix of collations`. The datasource URLs of the `dev` and `docker` profiles set it; keep it when you override `spring.datasource.url`. See [MySQL Character Set and Collation](/admin/upgrade-guide#mysql-character-set-and-collation).
 
 #### Users for MySQL
 

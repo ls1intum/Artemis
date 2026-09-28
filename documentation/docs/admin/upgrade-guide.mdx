@@ -256,7 +256,7 @@ Every Artemis pull request applies the baseline and the changelogs it summarises
   On MySQL, Artemis requires the character set `utf8mb4` with the collation `utf8mb4_unicode_ci`, and it requires them everywhere: for the server, for the `Artemis` database and its tables, and for every connection Artemis opens. Setting this up is the responsibility of the administrator. Artemis does not adapt its queries to a different collation.
 </Callout>
 
-The server and the database get the collation from the MySQL configuration, for example `--character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci`. The connection does not: MySQL Connector/J connects with `utf8mb4_0900_ai_ci`, the MySQL default for `utf8mb4`, even when the server is configured with `utf8mb4_unicode_ci`. Set the connection collation in the JDBC URL with `connectionCollation=utf8mb4_unicode_ci`:
+The server gets the collation from the MySQL configuration, for example `--character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci`, and a database created afterwards inherits it. The connection does not: MySQL Connector/J connects with `utf8mb4_0900_ai_ci`, the MySQL default for `utf8mb4`, even when the server is configured with `utf8mb4_unicode_ci`. Set the connection collation in the JDBC URL with `connectionCollation=utf8mb4_unicode_ci`:
 
 ```yaml
 spring:
@@ -270,13 +270,20 @@ With the environment variable `SPRING_DATASOURCE_URL`, append the same parameter
 Illegal mix of collations (utf8mb4_unicode_ci,IMPLICIT), (utf8mb4_0900_ai_ci,IMPLICIT), (utf8mb4_0900_ai_ci,COERCIBLE) for operation 'like'
 ```
 
-To check an installation, make sure the datasource URL of every node contains `connectionCollation=utf8mb4_unicode_ci`, and that no table deviates from the collation:
+To check an installation, make sure the datasource URL of every node contains `connectionCollation=utf8mb4_unicode_ci`. Then check the default of the `Artemis` database and the collation of its tables:
 
 ```sql
+SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = 'Artemis';
 SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'Artemis' AND TABLE_COLLATION <> 'utf8mb4_unicode_ci';
 ```
 
-The query should return no rows. PostgreSQL installations are not affected.
+The first query should return `utf8mb4` and `utf8mb4_unicode_ci`, and the second no rows. The server configuration only applies when a database is created, so changing it later leaves the default of an existing `Artemis` database as it was. If that default differs, change it with the following statement. It applies to the tables that later migrations create and does not convert existing tables:
+
+```sql
+ALTER DATABASE Artemis CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+PostgreSQL installations are not affected.
 
 ## Technical Details
 
