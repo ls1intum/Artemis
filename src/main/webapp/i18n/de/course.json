@@ -366,7 +366,7 @@
                     "required": "Gib ein Enddatum ein."
                 },
                 "semester": {
-                    "required": "Bitte ein Semester auswählen.",
+                    "required": "Wähle ein Semester aus.",
                     "hint": "Die Auswahl eines Semesters übernimmt dessen Start- und Enddatum, sofern du sie nicht selbst festgelegt hast.",
                     "placeholder": "Semester auswählen"
                 },

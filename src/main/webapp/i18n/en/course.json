@@ -366,7 +366,7 @@
                     "required": "Enter an end date."
                 },
                 "semester": {
-                    "required": "Please select a semester.",
+                    "required": "Select a semester.",
                     "hint": "Selecting a semester fills in its start and end date, unless you have set them yourself.",
                     "placeholder": "Select a semester"
                 },
