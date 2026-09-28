@@ -583,8 +583,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
 
     /**
      * Decides which persisted criterion / instruction each parsed row reclaims, without mutating
-     * anything. Criteria match by full content, then title, then instruction-set fingerprint (so a
-     * title tweak keeps the id), then a sole leftover pair (so a title-less instruction edit keeps
+     * anything. Criteria match by full content, then instruction-set fingerprint (so a title tweak
+     * keeps the id), then title, then a sole leftover pair (so a title-less instruction edit keeps
      * the id when only one criterion remains unmatched). Never zip multiple leftovers by position —
      * that would hand an unrelated criterion’s id to an insert/reorder. Reject ambiguous criterion
      * and instruction leftovers before changing persisted objects.
@@ -611,11 +611,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeContentMatch(unused, parsed, (criterion) => this.criterionSignature(criterion)),
                 fallback: true,
             },
-            { match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeByTitle(unused, parsed), fallback: false },
             {
                 match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeContentMatch(unused, parsed, (criterion) => this.instructionsSignature(criterion)),
                 fallback: true,
             },
+            { match: (unused: GradingCriterion[], parsed: GradingCriterion) => this.takeByTitle(unused, parsed), fallback: false },
         ]) {
             for (const entry of criterionEntries) {
                 if (!entry.previousCriterion) {
@@ -632,6 +632,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
             const parsed = unmatched[0].parsedCriterion;
             if (this.criteriaShareIdentityAffinity(previous, parsed)) {
                 unmatched[0].previousCriterion = unusedCriteria.shift();
+            } else if (previous.id != undefined && this.exercise().gradingInstructionFeedbackUsed) {
+                return undefined;
             }
         }
         // Multiple rewritten rows cannot be paired safely with multiple persisted leftovers.

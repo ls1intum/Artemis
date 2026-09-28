@@ -1516,6 +1516,42 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(1);
     });
 
+    it('rejects changing both title and instruction content when persisted feedback is used', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        const originalCriteria = exercise.gradingCriteria;
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: 'renamed criterion', action: domainActions[0].action };
+        domainActions[5] = { text: 'edited feedback', action: domainActions[5].action };
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.title).toBe('testCriteria');
+        expect(gradingInstruction.feedback).toBe('feedback');
+    });
+
+    it('keeps criterion and instruction IDs when two titles are exchanged', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, feedback: 'second feedback' };
+        const secondCriterion = { id: 2, title: 'Second criterion', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [gradingCriterion, secondCriterion];
+        const markdown = component
+            .generateMarkdown()
+            .replace('[criterion] testCriteria', '[criterion] temporary title')
+            .replace('[criterion] Second criterion', '[criterion] testCriteria')
+            .replace('[criterion] temporary title', '[criterion] Second criterion');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria![0]).toBe(gradingCriterion);
+        expect(exercise.gradingCriteria![1]).toBe(secondCriterion);
+        expect(exercise.gradingCriteria!.map(({ id }) => id)).toEqual([1, 2]);
+        expect(gradingCriterion.structuredGradingInstructions[0]).toBe(gradingInstruction);
+        expect(secondCriterion.structuredGradingInstructions[0]).toBe(secondInstruction);
+        expect(gradingCriterion.title).toBe('Second criterion');
+        expect(secondCriterion.title).toBe('testCriteria');
+    });
+
     it('should keep a literal {id:N} criterion title prefix for an unsaved criterion', () => {
         const domainActions = getDomainActionArray();
         domainActions[0] = { text: '{id:3} Intro', action: domainActions[0].action };
