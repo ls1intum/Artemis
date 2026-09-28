@@ -14,6 +14,7 @@ import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { MockPdfEngineService } from 'test/helpers/mocks/service/mock-pdf-engine.service';
 import { OrderedPage, PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { AttachmentUpdateIntent } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
@@ -23,6 +24,7 @@ describe('PdfPreviewComponent', () => {
     let lectureUnitService: { delete: ReturnType<typeof vi.fn> };
     let alertService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let router: { navigate: ReturnType<typeof vi.fn> };
+    let navigationUtilService: { navigateBack: ReturnType<typeof vi.fn> };
     // Mutable route data so ngOnInit-driven tests can inject an attachmentVideoUnit resolver payload.
     let routeData: any;
 
@@ -37,6 +39,7 @@ describe('PdfPreviewComponent', () => {
         lectureUnitService = { delete: vi.fn(() => of({})) };
         alertService = { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() };
         router = { navigate: vi.fn() };
+        navigationUtilService = { navigateBack: vi.fn() };
         routeData = {};
         // `data` is read lazily inside ngOnInit, so wrapping the current `routeData` in a getter lets each
         // test set the resolver payload before it manually calls ngOnInit().
@@ -54,6 +57,7 @@ describe('PdfPreviewComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
+                { provide: ArtemisNavigationUtilService, useValue: navigationUtilService },
                 { provide: AlertService, useValue: alertService },
                 { provide: AttachmentVideoUnitService, useValue: attachmentVideoUnitService },
                 { provide: LectureUnitService, useValue: lectureUnitService },
@@ -585,6 +589,34 @@ describe('PdfPreviewComponent', () => {
         });
     });
 
+    describe('leaving the page', () => {
+        const footerButton = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+
+        beforeEach(() => {
+            component.courseId.set(5);
+            component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 } } as any);
+        });
+
+        it('should offer Back without asking while nothing changed', () => {
+            fixture.detectChanges();
+
+            expect(footerButton('pdf-preview-cancel')).toBeNull();
+            footerButton('pdf-preview-back').querySelector('button').click();
+
+            expect(navigationUtilService.navigateBack).toHaveBeenCalledExactlyOnceWith(['course-management', 5, 'lectures', 4, 'unit-management']);
+        });
+
+        it('should offer Cancel, which asks first, once something changed', () => {
+            fixture.detectChanges();
+            component.isFileChanged.set(true);
+            fixture.detectChanges();
+
+            expect(footerButton('pdf-preview-back')).toBeNull();
+            expect(footerButton('pdf-preview-cancel')).not.toBeNull();
+            expect(navigationUtilService.navigateBack).not.toHaveBeenCalled();
+        });
+    });
+
     describe('deleteAttachmentFile', () => {
         it('should delete an attachment video unit and navigate back', async () => {
             component.courseId.set(5);
@@ -593,7 +625,8 @@ describe('PdfPreviewComponent', () => {
             await component.deleteAttachmentFile();
 
             expect(lectureUnitService.delete).toHaveBeenCalledWith(9, 4);
-            expect(router.navigate).toHaveBeenCalledWith(['course-management', 5, 'lectures', 4, 'unit-management']);
+            // Back to where the user came from, such as the lecture editor, else to the content page of the lecture.
+            expect(navigationUtilService.navigateBack).toHaveBeenCalledWith(['course-management', 5, 'lectures', 4, 'unit-management']);
         });
 
         it('should surface an error when deleting an attachment video unit fails', async () => {
