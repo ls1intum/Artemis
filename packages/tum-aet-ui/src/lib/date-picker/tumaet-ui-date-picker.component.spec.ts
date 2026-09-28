@@ -290,14 +290,17 @@ describe('TumAetUiDatePickerComponent', () => {
         const hour = () => document.querySelector('input[aria-label="Hour"]') as HTMLInputElement;
         const minute = () => document.querySelector('input[aria-label="Minute"]') as HTMLInputElement;
 
-        it('names the inline group and marks it required for assistive technology', () => {
+        it('names the inline group and marks the time inputs required for assistive technology', () => {
             fixture.componentRef.setInput('ariaLabelledBy', 'external-label');
             fixture.componentRef.setInput('ariaRequired', true);
             fixture.detectChanges();
 
             const group = document.querySelector('[role="group"][aria-labelledby="external-label"]');
             expect(group).not.toBeNull();
-            expect(group?.getAttribute('aria-required')).toBe('true');
+            // aria-required is not honored on role="group"; it belongs on the actual textboxes.
+            expect(group?.hasAttribute('aria-required')).toBe(false);
+            expect(hour().getAttribute('aria-required')).toBe('true');
+            expect(minute().getAttribute('aria-required')).toBe('true');
         });
 
         it('shows the steppers with no text field, trigger icon, or overlay', () => {

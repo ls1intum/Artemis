@@ -6,7 +6,6 @@
         role="group"
         [attr.aria-labelledby]="ariaLabelledBy() || null"
         [attr.aria-label]="ariaLabelledBy() ? null : ariaLabel()"
-        [attr.aria-required]="ariaRequired() ? 'true' : null"
     >
         @if (!hideLabelName() && labelName()) {
             <label [attr.for]="inputId()" class="tumaet:font-semibold tumaet:text-text">{{ labelName()! | tumAetUiTranslate }}</label>
@@ -160,6 +159,7 @@
                 (keydown)="onTimeKeydown($event, hourInput, 'hour')"
                 class="tumaet:box-border tumaet:w-9 tumaet:appearance-none tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1 tumaet:text-center tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
                 [attr.aria-label]="'tumAetUi.datePicker.hour' | tumAetUiTranslate"
+                [attr.aria-required]="ariaRequired() ? 'true' : null"
             />
             <button
                 type="button"
@@ -194,6 +194,7 @@
                 (keydown)="onTimeKeydown($event, minuteInput, 'minute')"
                 class="tumaet:box-border tumaet:w-9 tumaet:appearance-none tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1 tumaet:text-center tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
                 [attr.aria-label]="'tumAetUi.datePicker.minute' | tumAetUiTranslate"
+                [attr.aria-required]="ariaRequired() ? 'true' : null"
             />
             <button
                 type="button"
