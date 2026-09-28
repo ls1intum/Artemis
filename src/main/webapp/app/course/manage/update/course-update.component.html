@@ -298,7 +298,7 @@
                         required
                         controlId="field_accuracyOfScores"
                         [invalid]="showError('accuracyOfScores')"
-                        [error]="'artemisApp.course.form.invalidNumber' | artemisTranslate"
+                        [error]="'artemisApp.course.form.accuracyOfScoresRange' | artemisTranslate"
                     >
                         <span tumAetUiFormFieldLabel class="flex items-center gap-1">
                             <span jhiTranslate="artemisApp.course.accuracyOfScores.title"></span>
@@ -311,7 +311,7 @@
                             class="w-full"
                             name="accuracyOfScores"
                             id="field_accuracyOfScores"
-                            min="0"
+                            min="1"
                             max="5"
                             formControlName="accuracyOfScores"
                         />

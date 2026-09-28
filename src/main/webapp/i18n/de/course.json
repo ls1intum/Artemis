@@ -367,7 +367,7 @@
                 },
                 "semester": {
                     "required": "Bitte ein Semester auswählen.",
-                    "hint": "Die Auswahl eines Semesters übernimmt dessen Start- und Enddatum. Du kannst beide danach noch anpassen.",
+                    "hint": "Die Auswahl eines Semesters übernimmt dessen Start- und Enddatum, sofern du sie nicht selbst festgelegt hast.",
                     "placeholder": "Semester auswählen"
                 },
                 "enrollmentStartDate": {
@@ -385,6 +385,7 @@
                     "maxlength": "Der Titel darf höchstens {{ max }} Zeichen lang sein."
                 },
                 "invalidNumber": "Gib eine gültige Zahl ein.",
+                "accuracyOfScoresRange": "Gib eine Zahl von 1 bis 5 ein.",
                 "noDefaultProgrammingLanguage": "Keine Vorgabe",
                 "changeIcon": "Kursicon ändern",
                 "organizations": {

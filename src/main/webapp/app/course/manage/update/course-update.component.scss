@@ -59,6 +59,15 @@ $course-form-inset: 1rem;
     padding-bottom: 1.5rem;
 }
 
+/*
+ * Tabbing to a field near the bottom of the scroll area would leave it under the sticky footer, since the browser
+ * counts it as visible already. The margin makes it scroll clear of the footer, in both page frames. The controls
+ * render inside TUM AET UI and PrimeNG components, hence the piercing selector.
+ */
+:host ::ng-deep .course-form-sections :is(input, textarea, button, [tabindex]) {
+    scroll-margin-bottom: 7rem;
+}
+
 .course-form-section {
     display: flex;
     flex-direction: column;

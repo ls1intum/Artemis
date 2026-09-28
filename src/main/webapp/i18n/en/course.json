@@ -367,7 +367,7 @@
                 },
                 "semester": {
                     "required": "Please select a semester.",
-                    "hint": "Selecting a semester fills in its start and end date. You can still adjust both.",
+                    "hint": "Selecting a semester fills in its start and end date, unless you have set them yourself.",
                     "placeholder": "Select a semester"
                 },
                 "enrollmentStartDate": {
@@ -385,6 +385,7 @@
                     "maxlength": "The title must not exceed {{ max }} characters."
                 },
                 "invalidNumber": "Enter a valid number.",
+                "accuracyOfScoresRange": "Enter a number from 1 to 5.",
                 "noDefaultProgrammingLanguage": "No default",
                 "changeIcon": "Change Icon",
                 "organizations": {

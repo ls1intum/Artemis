@@ -64,13 +64,15 @@ export interface CourseFormIssue {
     labelKey: string;
     /** Id of the element that receives focus when the issue is selected. */
     targetId: string;
+    /** Name of the form control at fault, whose error is revealed when the issue is selected. */
+    control?: string;
 }
 
 /**
  * The form controls whose own validators can block saving, in the order they appear on the page, so the footer lists
  * them top to bottom. The rules spanning several dates are added in {@link CourseUpdateComponent}.
  */
-const CONTROL_ISSUES: readonly (CourseFormIssue & { control: string })[] = [
+const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
     { control: 'title', labelKey: 'artemisApp.course.title', targetId: 'field_title' },
     { control: 'shortName', labelKey: 'artemisApp.course.shortName', targetId: 'field_shortName' },
     { control: 'semester', labelKey: 'artemisApp.course.semester', targetId: 'semester' },
@@ -466,8 +468,10 @@ export class CourseUpdateComponent implements OnInit {
         }
         // Title and short name only commit their value on blur, and pressing Enter submits while one of them still has
         // the focus. Leaving the field first commits what was typed, so it is neither reported missing nor saved stale.
-        if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
+        // Only text fields need this; the Save button keeps the focus, so it is still there after a failed save.
+        const active = document.activeElement;
+        if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+            active.blur();
         }
         const issues = this.issues();
         if (issues.length > 0) {
@@ -484,7 +488,12 @@ export class CourseUpdateComponent implements OnInit {
      * @param issue the issue whose field to focus
      */
     focusIssue(issue: CourseFormIssue) {
-        const target = document.getElementById(issue.targetId);
+        // Show the field's own message right away, also for a stored value that was never edited.
+        if (issue.control) {
+            this.courseForm.get(issue.control)?.markAsTouched();
+        }
+        // Fall back to the footer, which lists the issue, rather than leave a link that does nothing.
+        const target = document.getElementById(issue.targetId) ?? document.getElementById('course-form-footer');
         if (!target) {
             return;
         }
@@ -521,9 +530,7 @@ export class CourseUpdateComponent implements OnInit {
             enrollmentStartDate: !this.isValidEnrollmentPeriod,
             unenrollmentEndDate: !this.isValidUnenrollmentEndDate,
         };
-        const issues: CourseFormIssue[] = CONTROL_ISSUES.filter(({ control }) => this.courseForm.get(control)?.invalid || crossFieldIssues[control]).map(
-            ({ labelKey, targetId }) => ({ labelKey, targetId }),
-        );
+        const issues: CourseFormIssue[] = CONTROL_ISSUES.filter(({ control }) => this.courseForm.get(control)?.invalid || crossFieldIssues[control]);
         // Keep the footer truthful when a rule without a field of its own fails, such as the group-level validator.
         if (issues.length === 0 && (this.courseForm.invalid || !this.isValidConfiguration)) {
             issues.push({ labelKey: 'artemisApp.course.form.invalidForm', targetId: 'course-form-footer' });
@@ -731,16 +738,15 @@ export class CourseUpdateComponent implements OnInit {
                 this.courseForm.controls['enrollmentEndDate'].setValue(defaultEnrollmentEndDate);
             }
         } else {
-            if (this.course.enrollmentStartDate) {
-                this.course.enrollmentStartDate = undefined;
-                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
-                this.courseForm.controls['enrollmentStartDate'].setValue(undefined);
-            }
-            if (this.course.enrollmentEndDate) {
-                this.course.enrollmentEndDate = undefined;
-                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
-                this.courseForm.controls['enrollmentEndDate'].setValue(undefined);
-            }
+            // Reset both controls even when the course holds no date: text the picker could not parse leaves the
+            // course date empty but the control invalid, and once the picker is hidden nothing would clear that
+            // error again, so the hidden field would keep blocking the save. Resetting runs while the picker still
+            // exists, which also resets its own parse state.
+            this.course.enrollmentStartDate = undefined;
+            this.course.enrollmentEndDate = undefined;
+            // Note: the valueChanges subscription in ngOnInit also syncs these back to this.course
+            this.courseForm.controls['enrollmentStartDate'].setValue(undefined);
+            this.courseForm.controls['enrollmentEndDate'].setValue(undefined);
             if (this.course.unenrollmentEnabled) {
                 this.changeUnenrollmentEnabled();
             }
@@ -758,7 +764,8 @@ export class CourseUpdateComponent implements OnInit {
             this.course.unenrollmentEndDate = this.course.endDate;
             // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
             this.courseForm.controls['unenrollmentEndDate'].setValue(this.course.unenrollmentEndDate);
-        } else if (!this.course.unenrollmentEnabled && this.course.unenrollmentEndDate) {
+        } else if (!this.course.unenrollmentEnabled) {
+            // Reset even without a date, for the same reason as the enrollment dates in changeEnrollmentEnabled.
             this.course.unenrollmentEndDate = undefined;
             // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
             this.courseForm.controls['unenrollmentEndDate'].setValue(undefined);

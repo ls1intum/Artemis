@@ -1562,7 +1562,7 @@ describe('Course Management Update Component', () => {
             course.startDate = dayjs('2027-04-01T00:00:00');
             comp.ngOnInit();
 
-            expect(comp.issues()).toEqual([{ labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' }]);
+            expect(comp.issues()).toEqual([{ control: 'startDate', labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' }]);
         });
 
         it('follows the form as it changes', () => {
@@ -1658,12 +1658,54 @@ describe('Course Management Update Component', () => {
             expect(fixture.nativeElement.querySelector('#course-form-status').textContent).toContain('artemisApp.course.form.requiredLegend');
         });
 
-        it('focuses the field of an issue selected in the footer', () => {
+        it('focuses the field of an issue selected in the footer and reveals its message', () => {
             fixture.detectChanges();
+            const description = comp.courseForm.get('description')!;
+            expect(description.touched).toBe(false);
 
-            comp.focusIssue({ labelKey: 'artemisApp.course.shortName', targetId: 'field_description' });
+            comp.focusIssue({ control: 'description', labelKey: 'artemisApp.course.description', targetId: 'field_description' });
 
             expect(document.activeElement?.id).toBe('field_description');
+            expect(description.touched).toBe(true);
+        });
+
+        it('focuses the footer instead of doing nothing when the field of an issue is not shown', () => {
+            fixture.detectChanges();
+
+            comp.focusIssue({ labelKey: 'artemisApp.course.form.invalidForm', targetId: 'field_that_is_not_rendered' });
+
+            expect(document.activeElement?.id).toBe('course-form-footer');
+        });
+
+        it('keeps the focus on the save button when pressing it does not save', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+            comp.courseForm.get('title')!.setValue('');
+            const saveButton: HTMLButtonElement = fixture.nativeElement.querySelector('#save-entity');
+            saveButton.focus();
+            vi.spyOn(comp, 'focusIssue').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(document.activeElement).toBe(saveButton);
+        });
+
+        it('does not keep an enrollment date that could not be parsed once enrollment is switched off', () => {
+            // An unparseable entry leaves the course date empty but the control invalid; hiding the picker must not
+            // leave that error behind, or the hidden field would keep blocking the save.
+            course.enrollmentEnabled = true;
+            course.enrollmentStartDate = undefined;
+            course.enrollmentEndDate = undefined;
+            course.unenrollmentEnabled = false;
+            comp.ngOnInit();
+            comp.courseForm.get('enrollmentStartDate')!.setErrors({ invalidDate: true });
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_enrollmentStartDate_input']);
+
+            comp.changeEnrollmentEnabled();
+
+            expect(comp.course.enrollmentEnabled).toBe(false);
+            expect(comp.courseForm.get('enrollmentStartDate')!.valid).toBe(true);
+            expect(comp.issues()).toEqual([]);
         });
     });
 
