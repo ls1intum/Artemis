@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -954,8 +954,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     buildTabTitles() {
         // Include the most specific title into the tab title, but only if the title is meant to be displayed to the user, i.e. should be translated.
+        const mostSpecificCrumb = this.breadcrumbs().at(-1);
+        if (!mostSpecificCrumb) {
+            return;
+        }
         const breadcrumbs = this.breadcrumbs();
-        const generalTitle = breadcrumbs[breadcrumbs.length - 1].translate ? this.translateService.instant(breadcrumbs[breadcrumbs.length - 1].label) : undefined;
+        const generalTitle = mostSpecificCrumb.translate ? this.translateService.instant(mostSpecificCrumb.label) : undefined;
         const titles = [generalTitle, this.exerciseTitle(), this.examTitle(), this.lectureTitle(), this.courseTitle()].filter((title) => title !== undefined).join(' | ');
         // No need have a dynamic title on the start page -> use the title defined in the Router modules.
         if (titles && breadcrumbs.length > 1) {
@@ -979,23 +983,27 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param title the title of the entity
      */
     setTabTitles(type: EntityType, title: string) {
+        const tabTitle = this.tabTitleOf(type);
+        if (!tabTitle || tabTitle() === title) {
+            return;
+        }
+        tabTitle.set(title);
+        // A title that arrives or changes after the breadcrumbs were built, for example when an editor renames the entity, updates the tab too.
+        this.buildTabTitles();
+    }
+
+    private tabTitleOf(type: EntityType): WritableSignal<string | undefined> | undefined {
         switch (type) {
             case EntityType.COURSE:
-                if (this.courseTitle() !== title) {
-                    this.courseTitle.set(title);
-                    // If the courseTitle changes, we need to rebuild the tab titles
-                    this.buildTabTitles();
-                }
-                break;
+                return this.courseTitle;
             case EntityType.EXERCISE:
-                this.exerciseTitle.set(title);
-                break;
+                return this.exerciseTitle;
             case EntityType.EXAM:
-                this.examTitle.set(title);
-                break;
+                return this.examTitle;
             case EntityType.LECTURE:
-                this.lectureTitle.set(title);
-                break;
+                return this.lectureTitle;
+            default:
+                return undefined;
         }
     }
 

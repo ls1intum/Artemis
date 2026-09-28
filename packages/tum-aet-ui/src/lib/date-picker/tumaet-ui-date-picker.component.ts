@@ -67,7 +67,10 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
      */
     readonly value = model<dayjs.Dayjs | undefined>(undefined);
 
-    /** Adds an external validation error without discarding the last committed value. */
+    /**
+     * Adds an external validation error without discarding the last committed value. It marks the field only: the built-in
+     * message is about text that is not a date, so the consumer explains an external error, such as an end before the start.
+     */
     readonly invalid = input(false, { transform: booleanAttribute });
     readonly disabled = input(false, { transform: booleanAttribute });
     /** Hides the visible label while retaining the input's accessible name. */
@@ -102,6 +105,8 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     readonly labelName = input<string>();
     /** Accessible name used when no visible label is rendered. */
     readonly ariaLabel = input<string>();
+    /** Ids of elements that describe the field as well, such as the consumer's message for an external error. */
+    readonly ariaDescribedBy = input<string>();
     /** IDs of elements that name the field, when a visible label lives outside the component (e.g. a form row label). */
     readonly ariaLabelledBy = input<string>();
     /** Marks the control required for assistive technology, independent of any visible asterisk. */
@@ -146,6 +151,11 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     private pendingHourFocus = false;
 
     protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
+    protected readonly showValidationMessage = computed(() => !this.hideValidationMessage() && !this.isInputValid());
+    protected readonly describedBy = computed(() => {
+        const ids = [this.showValidationMessage() ? `${this.inputId()}-error` : undefined, this.ariaDescribedBy()].filter(Boolean);
+        return ids.length ? ids.join(' ') : null;
+    });
     protected readonly placeholderKey = computed(() =>
         this.dateOnly() ? 'tumAetUi.datePicker.datePlaceholder' : this.timeOnly() ? 'tumAetUi.datePicker.timePlaceholder' : 'tumAetUi.datePicker.placeholder',
     );
