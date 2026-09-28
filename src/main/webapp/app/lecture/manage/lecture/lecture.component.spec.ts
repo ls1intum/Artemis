@@ -111,7 +111,7 @@ describe('Lecture', () => {
             imports: [
                 FaIconComponent,
                 LectureComponent,
-                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisTranslatePipe, (key: string) => key),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(DocumentationButtonComponent),
                 MockDirective(TranslateDirective),
@@ -209,6 +209,9 @@ describe('Lecture', () => {
             'delete-lecture',
         ]);
         expect(row.querySelectorAll('td')).toHaveLength(5);
+        // The labels are hidden on narrow screens, so the links carry their names for screen readers.
+        expect(row.querySelector('#units')!.getAttribute('aria-label')).toBe('entity.action.units');
+        expect(row.querySelectorAll('[data-testid="lecture-actions"] a')[1].getAttribute('aria-label')).toBe('entity.action.edit');
         expect(row.textContent).not.toContain('description');
     });
 

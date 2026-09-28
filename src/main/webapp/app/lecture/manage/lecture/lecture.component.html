@@ -141,11 +141,17 @@
                                 <!-- The actions stay in one row; their labels give way on narrow screens. -->
                                 <div class="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="lecture-actions">
                                     @if (lecture.isAtLeastEditor) {
-                                        <a [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
+                                        <!-- The labels are hidden on narrow screens, so the links carry their names for screen readers. -->
+                                        <a
+                                            [routerLink]="[lecture.id, 'unit-management']"
+                                            class="btn btn-primary btn-sm"
+                                            id="units"
+                                            [attr.aria-label]="'entity.action.units' | artemisTranslate"
+                                        >
                                             <fa-icon [icon]="faPuzzlePiece" />
                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.units"></span>
                                         </a>
-                                        <a [routerLink]="[lecture.id, 'edit']" class="btn btn-primary btn-sm">
+                                        <a [routerLink]="[lecture.id, 'edit']" class="btn btn-primary btn-sm" [attr.aria-label]="'entity.action.edit' | artemisTranslate">
                                             <fa-icon [icon]="faPencilAlt" />
                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                         </a>
