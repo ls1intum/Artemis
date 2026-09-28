@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,8 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.WorkerResultDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class OrchestratorDelegationToolsServiceTest {
@@ -71,6 +74,15 @@ class OrchestratorDelegationToolsServiceTest {
 
     @Mock
     private UserTestRepository userRepository;
+
+    @Mock
+    private CourseCompetencyRepository courseCompetencyRepository;
+
+    @Mock
+    private ExerciseTestRepository exerciseRepository;
+
+    @Mock
+    private ContentExtractionService contentExtractionService;
 
     private OrchestratorDelegationToolsService service;
 
@@ -137,6 +149,28 @@ class OrchestratorDelegationToolsServiceTest {
 
         assertThat(result.success()).isFalse();
         assertThat(result.message()).isEqualTo("Assigner worker reported success after a mutation tool error.");
+        assertThat(result.appliedActions()).isEmpty();
+    }
+
+    @Test
+    void delegateToEditor_failedReadThenFailureCompletionPreservesSpecificBlocker() {
+        Map<String, Object> parent = parentContext();
+        ChatResponse response = response("worker response");
+        OrchestratorReadToolsService readToolsService = new OrchestratorReadToolsService(new JsonMapper(), courseCompetencyRepository, exerciseRepository,
+                contentExtractionService);
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(9L)).thenReturn(Optional.empty());
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    ToolContext workerToolContext = new ToolContext(invocation.getArgument(3));
+                    assertThat(readToolsService.getCompetencyDetails(9L, workerToolContext)).contains("Competency not found: 9");
+                    assertThat(workerTerminal.completeWorkerTask(false, "Competency 9 no longer exists; nothing was edited.", workerToolContext)).contains("\"completed\":true");
+                    return response;
+                });
+
+        WorkerResultDTO result = service.delegateToEditor("Rename competency 9", new ToolContext(parent));
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.message()).isEqualTo("Competency 9 no longer exists; nothing was edited.");
         assertThat(result.appliedActions()).isEmpty();
     }
 

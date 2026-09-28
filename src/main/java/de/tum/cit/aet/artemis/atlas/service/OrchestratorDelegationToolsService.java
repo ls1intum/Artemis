@@ -140,6 +140,7 @@ public class OrchestratorDelegationToolsService {
         workerContext.put(OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY, new AtomicInteger());
         workerContext.put(OrchestratorToolContextKeys.WORKER_MUTATION_ERROR_KEY, OrchestratorToolContextKeys.newWorkerMutationErrorMarker());
         workerContext.put(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY, new AtomicInteger());
+        workerContext.put(OrchestratorToolContextKeys.WORKER_READ_OUTCOME_COUNT_KEY, new AtomicInteger());
         workerContext.put(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY, actionStart);
         copyContextValue(parentContext, workerContext, OrchestratorToolContextKeys.LEARNING_OBJECT_ID_KEY);
 

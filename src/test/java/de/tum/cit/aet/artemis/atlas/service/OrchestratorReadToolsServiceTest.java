@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -57,6 +58,8 @@ class OrchestratorReadToolsServiceTest {
 
     private AtomicInteger workerReadCount;
 
+    private AtomicInteger workerReadOutcomeCount;
+
     private AtomicLong workerToolSequence;
 
     @BeforeEach
@@ -66,6 +69,8 @@ class OrchestratorReadToolsServiceTest {
         ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
         workerReadCount = new AtomicInteger();
         ctx.put(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY, workerReadCount);
+        workerReadOutcomeCount = new AtomicInteger();
+        ctx.put(OrchestratorToolContextKeys.WORKER_READ_OUTCOME_COUNT_KEY, workerReadOutcomeCount);
         workerToolSequence = new AtomicLong();
         ctx.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, workerToolSequence);
         ctx.put(OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY, new AtomicLong());
@@ -86,7 +91,52 @@ class OrchestratorReadToolsServiceTest {
 
         assertThat(result).contains("\"title\":\"Hash Maps in Practice\"").contains("\"weight\":0.5");
         assertThat(workerReadCount).hasValue(1);
+        assertThat(workerReadOutcomeCount).hasValue(1);
         assertThat(workerToolSequence).hasValue(1L);
+    }
+
+    @Test
+    void getCompetencyDetails_unknownCompetency_recordsFailedReadOutcomeOnly() {
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(5L)).thenReturn(Optional.empty());
+
+        String result = service.getCompetencyDetails(5L, toolContext);
+
+        assertThat(result).contains("Competency not found: 5");
+        assertThat(workerReadCount).hasValue(0);
+        assertThat(workerReadOutcomeCount).hasValue(1);
+    }
+
+    @Test
+    void getCompetencyDetails_repositoryFailure_returnsGenericErrorAndRecordsFailedReadOutcome() {
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(5L)).thenThrow(new IllegalStateException("SQL detail"));
+
+        String result = service.getCompetencyDetails(5L, toolContext);
+
+        assertThat(result).contains("Failed to load details for competency 5.").doesNotContain("SQL detail");
+        assertThat(workerReadCount).hasValue(0);
+        assertThat(workerReadOutcomeCount).hasValue(1);
+    }
+
+    @Test
+    void readToolErrorPaths_recordFailedReadOutcomes() {
+        Course otherCourse = courseWithId(COURSE_ID + 1);
+        when(courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLectures(6L))
+                .thenReturn(Optional.of(newCompetency(6L, "Foreign", "Desc", CompetencyTaxonomy.APPLY, otherCourse)));
+        when(exerciseRepository.findByIdElseThrow(30L)).thenThrow(new EntityNotFoundException("Exercise", 30L));
+        when(exerciseRepository.findByIdElseThrow(31L)).thenReturn(exerciseInCourse(31L, "Foreign", otherCourse));
+        ProgrammingExercise exercise = exerciseInCourse(32L, "Broken", courseWithId(COURSE_ID));
+        when(exerciseRepository.findByIdElseThrow(32L)).thenReturn(exercise);
+        when(contentExtractionService.extractContent(exercise, false)).thenThrow(new IllegalStateException("extraction failed"));
+
+        assertThat(service.getCompetencyDetails(null, toolContext)).contains("competencyId is required.");
+        assertThat(service.getCompetencyDetails(6L, toolContext)).contains("does not belong to the current course");
+        assertThat(service.getExerciseContent(null, toolContext)).contains("exerciseId is required.");
+        assertThat(service.getExerciseContent(30L, toolContext)).contains("Exercise not found: 30");
+        assertThat(service.getExerciseContent(31L, toolContext)).contains("does not belong to the current course");
+        assertThat(service.getExerciseContent(32L, toolContext)).contains("Failed to extract content for exercise 32.");
+
+        assertThat(workerReadCount).hasValue(0);
+        assertThat(workerReadOutcomeCount).hasValue(6);
     }
 
     @Test

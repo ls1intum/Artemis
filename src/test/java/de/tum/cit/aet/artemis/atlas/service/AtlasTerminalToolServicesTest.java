@@ -46,6 +46,29 @@ class AtlasTerminalToolServicesTest {
     }
 
     @Test
+    void completeWorkerTask_failedReadBacksOnlyFailureCompletion() {
+        Map<String, Object> context = workerContext();
+        ToolContext toolContext = new ToolContext(context);
+        OrchestratorToolHelpers.markWorkerToolActivity(toolContext);
+        OrchestratorToolHelpers.readErrorJson(new JsonMapper(), "Exercise not found: 7", toolContext);
+
+        assertThat(workerTerminal.completeWorkerTask(true, "Assigned exercise 7", toolContext)).contains("success=true requires a successful course-state read");
+        assertThat(workerHolder(context)).hasValue(null);
+
+        assertThat(workerTerminal.completeWorkerTask(false, "Exercise 7 does not exist; nothing was assigned.", toolContext)).contains("\"success\":false");
+        assertThat(workerHolder(context)).hasValue(new WorkerCompletionDTO(false, "Exercise 7 does not exist; nothing was assigned."));
+        assertThat(OrchestratorToolHelpers.isWorkerCompletionTerminal(toolContext)).isTrue();
+    }
+
+    @Test
+    void completeWorkerTask_failureStillRequiresSomeEvidence() {
+        Map<String, Object> context = workerContext();
+
+        assertThat(workerTerminal.completeWorkerTask(false, "Could not do it", new ToolContext(context))).contains("Inspect course state or receive a mutation outcome");
+        assertThat(workerHolder(context)).hasValue(null);
+    }
+
+    @Test
     void completeWorkerTask_acceptsAppliedActionAsEvidence() {
         Map<String, Object> context = workerContext();
         OrchestratorToolContextKeys.AppliedActionsBuffer buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) context.get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
@@ -72,6 +95,7 @@ class AtlasTerminalToolServicesTest {
         context.put(OrchestratorToolContextKeys.TOOL_SEQUENCE_KEY, new AtomicLong());
         context.put(OrchestratorToolContextKeys.WORKER_COMPLETION_SEQUENCE_KEY, new AtomicLong());
         context.put(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY, new AtomicInteger());
+        context.put(OrchestratorToolContextKeys.WORKER_READ_OUTCOME_COUNT_KEY, new AtomicInteger());
         context.put(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY, 0);
         context.put(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY, new OrchestratorToolContextKeys.AppliedActionsBuffer(Collections.synchronizedList(new ArrayList<>())));
         return context;
