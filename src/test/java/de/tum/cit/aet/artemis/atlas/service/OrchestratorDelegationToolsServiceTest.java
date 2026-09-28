@@ -132,6 +132,26 @@ class OrchestratorDelegationToolsServiceTest {
     }
 
     @Test
+    void blankWorkerReasoningEffortFallsBackToTemperature() {
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-5.6-luna", 0.4, "xhigh", "gpt-4.1", " ", true, 300, 10, 30000L, 10);
+        OrchestratorDelegationToolsService nonReasoningService = new OrchestratorDelegationToolsService(templateService, delegationService, new AtlasToolSurface(readTools),
+                new AtlasToolSurface(creatorTools), new AtlasToolSurface(assignerTools), new AtlasToolSurface(editorTools), new AtlasToolSurface(terminalTools), properties,
+                llmTokenUsageService, userRepository);
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenReturn(response("worker response"));
+
+        nonReasoningService.delegateToCreator("Create loops", new ToolContext(parentContext()));
+
+        ArgumentCaptor<OpenAiChatOptions.Builder> optionsCaptor = ArgumentCaptor.forClass(OpenAiChatOptions.Builder.class);
+        verify(delegationService).delegateOrchestratorRound(anyString(), anyString(), optionsCaptor.capture(), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class));
+        OpenAiChatOptions options = optionsCaptor.getValue().build();
+        assertThat(options.getDeploymentName()).isEqualTo("gpt-4.1");
+        assertThat(options.getReasoningEffort()).isNull();
+        assertThat(options.getTemperature()).isEqualTo(0.4);
+    }
+
+    @Test
     void delegateToAssigner_mutationErrorCannotBecomeWorkerSuccess() {
         Map<String, Object> parent = parentContext();
         ChatResponse response = response("worker response");

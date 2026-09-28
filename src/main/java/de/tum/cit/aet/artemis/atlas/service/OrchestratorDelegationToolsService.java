@@ -69,6 +69,8 @@ public class OrchestratorDelegationToolsService {
 
     private final String workerReasoningEffort;
 
+    private final double workerTemperature;
+
     private final LLMTokenUsageService llmTokenUsageService;
 
     private final UserRepository userRepository;
@@ -87,6 +89,7 @@ public class OrchestratorDelegationToolsService {
         this.terminalTools = terminalTools.provider();
         this.workerDeploymentName = properties.workerModel();
         this.workerReasoningEffort = properties.workerReasoningEffort();
+        this.workerTemperature = properties.temperature();
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
     }
@@ -146,7 +149,8 @@ public class OrchestratorDelegationToolsService {
 
         try {
             String systemPrompt = templateService.render(role.promptPath, Map.of());
-            OpenAiChatOptions.Builder options = OpenAiChatOptions.builder().deploymentName(workerDeploymentName).reasoningEffort(workerReasoningEffort);
+            // Same reasoning/temperature exclusivity as the main orchestrator: a blank reasoning effort disables reasoning options.
+            OpenAiChatOptions.Builder options = ContentExtractionService.buildChatOptions(workerDeploymentName, workerReasoningEffort, workerTemperature);
             ChatResponse response = delegationService.delegateOrchestratorRound(systemPrompt,
                     task + "\n\nExecute this batch, then call completeWorkerTask exactly once with the outcome.", options, workerContext, readTools, roleTools, terminalTools);
             trackUsage(response, courseId, workerContext);
