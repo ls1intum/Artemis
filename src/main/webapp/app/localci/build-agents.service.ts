@@ -1,14 +1,14 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { BuildAgentAddressInfo, BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { catchError } from 'rxjs/operators';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BuildAgentsService {
-    public adminResourceUrl = 'api/admin';
-
     private readonly http = inject(HttpClient);
+
+    public adminResourceUrl = 'api/admin';
 
     /**
      * Get all build agents

@@ -19,14 +19,14 @@ import Papa from 'papaparse';
     imports: [FormsModule, TranslateDirective, FaIconComponent, DialogModule, ButtonModule],
 })
 export class StudentsExportDialogComponent {
+    private readonly translateService: TranslateService = inject(TranslateService);
+    private readonly examManagementService: ExamManagementService = inject(ExamManagementService);
+
     protected readonly faBan = faBan;
     protected readonly faFileExport = faFileExport;
 
     protected dialogVisible: ModelSignal<boolean> = model(false);
     protected lastExportAttemptFailed: WritableSignal<boolean> = signal(false);
-
-    private readonly translateService: TranslateService = inject(TranslateService);
-    private readonly examManagementService: ExamManagementService = inject(ExamManagementService);
 
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();

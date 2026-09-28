@@ -45,7 +45,7 @@ describe('GradingInfoModalComponent', () => {
         });
 
         it('should have an accessible aria-label on the open button', () => {
-            const button = fixture.debugElement.nativeElement.querySelector('button[tumUiButton]');
+            const button = fixture.debugElement.nativeElement.querySelector('button[tumAetUiButton]');
             expect(button).not.toBeNull();
             expect(button.getAttribute('aria-label')).toBe('artemisApp.gradingSystem.info.title');
         });

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
@@ -33,7 +33,7 @@ interface CourseRequestsAdminOverviewDTO {
     totalDecidedCount: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseRequestService {
     private http = inject(HttpClient);
 

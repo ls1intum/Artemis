@@ -38,7 +38,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-top-left.directive';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
-import { TumUiButtonDirective, TumUiInputDirective, TumUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -65,12 +65,12 @@ interface AssessmentSave {
         UnreferencedFeedbackComponent,
         AssessmentInstructionsComponent,
         ArtemisTranslatePipe,
-        TumUiButtonDirective,
-        TumUiSelectButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiSelectButtonComponent,
         ModelingEditorTopLeftDirective,
         ScoreDisplayComponent,
         AssessmentWorkspaceComponent,
-        TumUiInputDirective,
+        TumAetUiInputDirective,
         CdkTextareaAutosize,
         ModelingAssessmentTopLeftDirective,
         ModelingAssessmentTopRightDirective,

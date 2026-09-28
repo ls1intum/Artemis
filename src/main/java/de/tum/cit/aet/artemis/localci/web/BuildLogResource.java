@@ -19,11 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
-@FeatureUsage("build-system/build-logs")
+@FeatureUsage(UserFeature.BUILD_OVERVIEW)
 @RestController
 @RequestMapping("api/localci/")
 public class BuildLogResource {

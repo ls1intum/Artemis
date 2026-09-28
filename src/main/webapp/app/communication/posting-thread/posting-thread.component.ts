@@ -14,6 +14,8 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
     imports: [PostComponent],
 })
 export class PostingThreadComponent {
+    elementRef = inject(ElementRef);
+
     readonly lastReadDate = input<dayjs.Dayjs>();
     readonly readOnlyMode = input(false);
     readonly post = input.required<Post>();
@@ -28,8 +30,6 @@ export class PostingThreadComponent {
     forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
 
     readonly onNavigateToPost = output<Posting>();
-
-    elementRef = inject(ElementRef);
 
     onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);

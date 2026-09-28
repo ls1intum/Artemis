@@ -7,7 +7,7 @@ import { EMPTY, Subject, timer } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -49,15 +49,15 @@ const MINIMUM_ROLLOVER_DELAY_MS = 1_000;
     templateUrl: './tutorial-group-holidays.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     // Scoped to this page, so a confirmation raised here can only be answered by the dialog this page renders.
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     imports: [
-        TumUiMessageComponent,
+        TumAetUiMessageComponent,
         ArtemisTranslatePipe,
-        TumUiConfirmDialogComponent,
+        TumAetUiConfirmDialogComponent,
         FaIconComponent,
         TranslateDirective,
         CourseTitleBarActionsDirective,
-        TumUiButtonDirective,
+        TumAetUiButtonDirective,
         HolidayMonthGridComponent,
         HolidayListComponent,
         HolidayDialogComponent,
@@ -67,7 +67,7 @@ export class TutorialGroupHolidaysComponent {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly configurationService = inject(TutorialGroupsConfigurationService);
     private readonly freePeriodService = inject(TutorialGroupFreePeriodService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);

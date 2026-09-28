@@ -221,15 +221,25 @@ export class ExamAPIRequests {
     }
 
     /**
-     * Determines the time left until the exam ends and finishes the exam by subtracting it from the working time.
+     * Ends the exam by shrinking its working time to the time already elapsed, then waits until the exam counts as over
+     * (start date plus working time plus grace period lies in the past). The server rejects a working time or duration
+     * that is not positive, so an exam that has barely started keeps one second and the wait covers the rest.
      */
     async finishExam(exam: Exam) {
-        const examEndDate = dayjs(exam.endDate! as dayjs.Dayjs);
-        // Determine the time left until the exam ends and add extra minute
-        // to make sure the exam is finished after subtracting it from the working time
-        const examTimeLeftInSeconds = examEndDate.diff(dayjs(), 'seconds') + 60;
-        if (examTimeLeftInSeconds > 0) {
-            await this.page.request.patch(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/working-time`, { data: -examTimeLeftInSeconds });
+        const startDate = dayjs(exam.startDate! as dayjs.Dayjs);
+        const endDate = dayjs(exam.endDate! as dayjs.Dayjs);
+        const gracePeriodInSeconds = exam.gracePeriod ?? 0;
+        const newDurationInSeconds = Math.max(dayjs().diff(startDate, 'seconds') - gracePeriodInSeconds - 1, 1);
+        const workingTimeChangeInSeconds = newDurationInSeconds - endDate.diff(startDate, 'seconds');
+        if (workingTimeChangeInSeconds < 0) {
+            const response = await this.page.request.patch(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/working-time`, { data: workingTimeChangeInSeconds });
+            if (!response.ok()) {
+                throw new Error(`Failed to finish exam ${exam.id}: ${response.status()} ${await response.text()}`);
+            }
+        }
+        const millisecondsUntilOver = startDate.add(newDurationInSeconds + gracePeriodInSeconds + 1, 'seconds').diff(dayjs());
+        if (millisecondsUntilOver > 0) {
+            await this.page.waitForTimeout(millisecondsUntilOver);
         }
     }
 }

@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -78,7 +79,7 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("courses/course-administration")
+@FeatureUsage(UserFeature.COURSE_RESET_DELETE)
 @RestController
 @RequestMapping("api/admin/")
 public class AdminCourseResource {
@@ -149,6 +150,7 @@ public class AdminCourseResource {
      *         or status 400 (Bad Request) if validation fails
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.COURSE_CREATION)
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DomainObjectDTO> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
             throws URISyntaxException {

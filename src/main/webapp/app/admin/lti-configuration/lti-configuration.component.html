@@ -1,6 +1,6 @@
 <form name="editForm" role="form" novalidate>
     <h5 *adminTitleBarTitle id="lti-configuration-heading" class="mb-0" jhiTranslate="artemisApp.lti.version13Configuration"></h5>
-    <tum-ui-message severity="info" class="mt-3 w-full" data-testid="lti-documentation-message">
+    <tumaet-ui-message severity="info" class="mt-3 w-full" data-testid="lti-documentation-message">
         <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
         <a
             href="https://docs.artemis.tum.de/instructor/integrations/lti-configuration"
@@ -9,14 +9,14 @@
             jhiTranslate="artemisApp.lti.edit.documentationLinkText"
         ></a
         >.
-    </tum-ui-message>
-    <tum-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)" class="mt-4">
-        <tum-ui-tab-list>
-            <tum-ui-tab [value]="1"><span jhiTranslate="artemisApp.lti.platformRegistration"></span></tum-ui-tab>
-            <tum-ui-tab [value]="2"><span jhiTranslate="artemisApp.lti.serviceUrls"></span></tum-ui-tab>
-        </tum-ui-tab-list>
-        <tum-ui-tab-panels>
-            <tum-ui-tab-panel [value]="1">
+    </tumaet-ui-message>
+    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)" class="mt-4">
+        <tumaet-ui-tab-list>
+            <tumaet-ui-tab [value]="1"><span jhiTranslate="artemisApp.lti.platformRegistration"></span></tumaet-ui-tab>
+            <tumaet-ui-tab [value]="2"><span jhiTranslate="artemisApp.lti.serviceUrls"></span></tumaet-ui-tab>
+        </tumaet-ui-tab-list>
+        <tumaet-ui-tab-panels>
+            <tumaet-ui-tab-panel [value]="1">
                 <dt class="flex items-center">
                     <h4 jhiTranslate="artemisApp.lti.dynamicRegistrationUrl"></h4>
                     <jhi-help-icon text="artemisApp.lti.dynamicRegistrationTooltip" />
@@ -30,14 +30,14 @@
                         <h4 class="mb-0" jhiTranslate="artemisApp.lti.configuredPlatforms"></h4>
                         <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip" />
                     </div>
-                    <a [routerLink]="['/admin', 'lti-configuration', 'new']" tumUiButton size="small" data-testid="add-platform-button">
+                    <a [routerLink]="['/admin', 'lti-configuration', 'new']" tumAetUiButton size="small" data-testid="add-platform-button">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
                     </a>
                 </dt>
                 <div class="mt-3 overflow-x-auto">
                     <table
-                        tumUiTable
+                        tumAetUiTable
                         [sortField]="predicate()"
                         [sortOrder]="ascending() ? 1 : -1"
                         (sortChange)="onTableSort($event)"
@@ -47,28 +47,28 @@
                     >
                         <thead>
                             <tr class="whitespace-nowrap">
-                                <th [tumUiSortableColumn]="'id'">
+                                <th [tumAetUiSortableColumn]="'id'">
                                     <span jhiTranslate="global.field.id"></span>
                                 </th>
-                                <th [tumUiSortableColumn]="'customName'">
+                                <th [tumAetUiSortableColumn]="'customName'">
                                     <span jhiTranslate="artemisApp.lti.customName"></span>
                                 </th>
-                                <th [tumUiSortableColumn]="'registrationId'">
+                                <th [tumAetUiSortableColumn]="'registrationId'">
                                     <span jhiTranslate="artemisApp.lti.registrationId"></span>
                                 </th>
-                                <th [tumUiSortableColumn]="'clientId'">
+                                <th [tumAetUiSortableColumn]="'clientId'">
                                     <span jhiTranslate="artemisApp.lti.clientId"></span>
                                 </th>
-                                <th [tumUiSortableColumn]="'originalURL'">
+                                <th [tumAetUiSortableColumn]="'originalURL'">
                                     <span jhiTranslate="artemisApp.lti.toolUrl"></span>
                                 </th>
-                                <th [tumUiSortableColumn]="'authorizationUri'">
+                                <th [tumAetUiSortableColumn]="'authorizationUri'">
                                     <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
                                 </th>
-                                <th [tumUiSortableColumn]="'jwkSetUri'">
+                                <th [tumAetUiSortableColumn]="'jwkSetUri'">
                                     <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
                                 </th>
-                                <th [tumUiSortableColumn]="'tokenUri'">
+                                <th [tumAetUiSortableColumn]="'tokenUri'">
                                     <span jhiTranslate="artemisApp.lti.tokenUri"></span>
                                 </th>
                                 <th></th>
@@ -89,10 +89,10 @@
                                         <div class="flex items-center justify-end gap-2">
                                             <a
                                                 [routerLink]="['/admin', 'lti-configuration', platform.id, 'edit']"
-                                                tumUiButton
+                                                tumAetUiButton
                                                 size="small"
                                                 severity="warn"
-                                                [tumUiTooltip]="'entity.action.edit' | artemisTranslate"
+                                                [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
                                                 [attr.aria-label]="'entity.action.edit' | artemisTranslate"
                                                 data-testid="edit-platform-button"
                                             >
@@ -100,7 +100,8 @@
                                                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                                             </a>
                                             <button
-                                                tumUiButton
+                                                type="button"
+                                                tumAetUiButton
                                                 severity="danger"
                                                 size="small"
                                                 [renderButtonStyle]="false"
@@ -123,7 +124,7 @@
                         <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
                     </div>
                     <div class="flex justify-center">
-                        <tum-ui-paginator
+                        <tumaet-ui-paginator
                             [page]="page() - 1"
                             [pageSize]="itemsPerPage"
                             [totalRecords]="totalItems()"
@@ -133,8 +134,8 @@
                         />
                     </div>
                 </div>
-            </tum-ui-tab-panel>
-            <tum-ui-tab-panel [value]="2">
+            </tumaet-ui-tab-panel>
+            <tumaet-ui-tab-panel [value]="2">
                 <dt>
                     <span jhiTranslate="artemisApp.lti.deepLinkingUrl"></span>
                 </dt>
@@ -170,7 +171,7 @@
                     <span>{{ getRedirectUri() }}</span>
                     <jhi-copy-to-clipboard-button [copyText]="getRedirectUri()" />
                 </dd>
-            </tum-ui-tab-panel>
-        </tum-ui-tab-panels>
-    </tum-ui-tabs>
+            </tumaet-ui-tab-panel>
+        </tumaet-ui-tab-panels>
+    </tumaet-ui-tabs>
 </form>

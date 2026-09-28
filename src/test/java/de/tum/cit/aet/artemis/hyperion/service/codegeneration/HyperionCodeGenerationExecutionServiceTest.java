@@ -65,6 +65,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -90,6 +91,9 @@ class HyperionCodeGenerationExecutionServiceTest {
 
     @Mock
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    @Mock
+    private BuildLogEntryService buildLogEntryService;
 
     @Mock
     private ResultTestRepository resultRepository;
@@ -140,7 +144,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
-                templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService,
+                templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, buildLogEntryService, resultRepository, continuousIntegrationTriggerService,
                 programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
                 consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService, programmingFeedbackSynthesizerService);
 
@@ -819,10 +823,8 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(mockResult.getSubmission()).thenReturn(mockSubmission);
         when(mockSubmission.getId()).thenReturn(42L);
-        // extractBuildLogs re-loads the submission with an eager build-log graph (the result itself is fetched without build logs).
-        ProgrammingSubmission eagerSubmission = mock(ProgrammingSubmission.class);
-        when(eagerSubmission.getBuildLogEntries()).thenReturn(new java.util.LinkedHashSet<>(logEntries));
-        when(programmingSubmissionRepository.findWithEagerBuildLogEntriesById(42L)).thenReturn(Optional.of(eagerSubmission));
+        // extractBuildLogs reads the logs of the failed build through the service, which serves them from disk and falls back to the table.
+        when(buildLogEntryService.getLatestBuildLogs(mockSubmission)).thenReturn(logEntries);
         when(logEntry1.getLog()).thenReturn("Error in line 1");
         when(logEntry2.getLog()).thenReturn("Error in line 2");
 
@@ -854,10 +856,9 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         result.setSubmission(submission);
         result.setFeedbacks(List.of(passedFeedback, failedFeedback));
-        // Production re-fetches build logs via the eager query, not the lazy getter; stub that path so the real logs (not the fallback) are asserted.
+        // Production reads build logs through the service, not the lazy getter; stub that path so the real logs (not the fallback) are asserted.
         when(submission.getId()).thenReturn(7L);
-        when(programmingSubmissionRepository.findWithEagerBuildLogEntriesById(7L)).thenReturn(Optional.of(submission));
-        when(submission.getBuildLogEntries()).thenReturn(java.util.Set.of(logEntry));
+        when(buildLogEntryService.getLatestBuildLogs(submission)).thenReturn(List.of(logEntry));
         when(logEntry.getLog()).thenReturn("javac: cannot find symbol Sort");
 
         String summary = ReflectionTestUtils.invokeMethod(service, "extractBuildFeedback", result);

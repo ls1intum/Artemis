@@ -16,13 +16,13 @@ import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-length-validator/custom-max-length-validator.directive';
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import {
-    TumUiButtonComponent,
-    TumUiButtonDirective,
-    TumUiInputDirective,
-    TumUiListComponent,
-    TumUiListItemDirective,
-    TumUiTableDirective,
-    TumUiTagComponent,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiListComponent,
+    TumAetUiListItemDirective,
+    TumAetUiTableDirective,
+    TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Authority, IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
@@ -44,18 +44,23 @@ export interface DisplayedPasskey extends PasskeyDTO {
         FormsModule,
         CustomMaxLengthDirective,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiInputDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiTableDirective,
-        TumUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiTableDirective,
+        TumAetUiTagComponent,
     ],
     templateUrl: './passkey-settings.component.html',
     styleUrls: ['../user-settings.scss'],
 })
 export class PasskeySettingsComponent implements OnDestroy {
+    protected readonly alertService = inject(AlertService);
+    protected readonly webauthnService = inject(WebauthnService);
+    private readonly accountService = inject(AccountService);
+    private readonly passkeySettingsApiService = inject(PasskeySettingsApiService);
+
     protected readonly ActionType = ActionType;
     protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
@@ -65,11 +70,6 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faKey = faKey;
     protected readonly MAX_PASSKEY_LABEL_LENGTH = 64;
-
-    protected readonly alertService = inject(AlertService);
-    protected readonly webauthnService = inject(WebauthnService);
-    private readonly accountService = inject(AccountService);
-    private readonly passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
 
@@ -131,7 +131,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     private async loadPasskeysWhenUserDetailsChange() {
-        if (this.currentUser != undefined) {
+        if (this.currentUser() != undefined) {
             await this.updateRegisteredPasskeys();
         }
     }

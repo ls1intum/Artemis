@@ -25,10 +25,13 @@
                 [class.filter-menu-item--literal]="option.action.kind === 'literal'"
                 [class.filter-menu-item--single]="!option.description"
                 role="option"
+                tabindex="-1"
                 [id]="optionDomId(option.id)"
                 [attr.aria-selected]="i === activeIndex()"
                 [class.is-active]="i === activeIndex()"
                 (click)="optionSelected.emit(i)"
+                (keydown.enter)="optionSelected.emit(i)"
+                (keydown.space)="$event.preventDefault(); optionSelected.emit(i)"
                 (mouseenter)="optionHovered.emit(i)"
             >
                 <div class="filter-menu-icon shrink-0">

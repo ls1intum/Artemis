@@ -12,7 +12,7 @@
                     (ngModelChange)="onSearchQueryChange($event)"
                 />
                 @if (searchQuery()) {
-                    <button class="clear-button" (click)="clearSearch()" [title]="'artemisApp.attachmentVideoUnit.videoPlayer.clearSearch' | artemisTranslate">
+                    <button type="button" class="clear-button" (click)="clearSearch()" [title]="'artemisApp.attachmentVideoUnit.videoPlayer.clearSearch' | artemisTranslate">
                         <fa-icon [icon]="faTimes" />
                     </button>
                 }
@@ -29,6 +29,7 @@
                         }
                     </span>
                     <button
+                        type="button"
                         class="nav-button"
                         (click)="previousSearchResult()"
                         [disabled]="searchResultsCount() === 0"
@@ -37,6 +38,7 @@
                         <fa-icon [icon]="faChevronUp" />
                     </button>
                     <button
+                        type="button"
                         class="nav-button"
                         (click)="nextSearchResult()"
                         [disabled]="searchResultsCount() === 0"
@@ -58,6 +60,13 @@
                 [class.active]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime"
                 [class.search-result]="isCurrentSearchResult(segment)"
                 [innerHTML]="highlightText(segment.text)"
+                [attr.aria-current]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime ? true : null"
+                #keyboardAction54
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction54.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction54.click() : undefined"
             ></div>
         }
         @if (filteredSegments().length === 0 && transcriptSegments().length > 0) {

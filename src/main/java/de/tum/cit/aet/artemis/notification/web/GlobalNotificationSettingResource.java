@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.GlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.notification.dto.UpdateGlobalNotificationSettingDTO;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingR
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 
 @Profile(PROFILE_CORE)
-@FeatureUsage("settings/global-settings")
+@FeatureUsage(UserFeature.NOTIFICATION_SETTINGS)
 @RestController
 @RequestMapping("api/notification/")
 @Lazy

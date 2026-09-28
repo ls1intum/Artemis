@@ -13,11 +13,12 @@ import { parseJson } from 'app/foundation/util/json.util';
 
 @Directive({ selector: 'ng-template[jhiPanel]' })
 export class PanelDirective {
+    readonly templateRef = inject(TemplateRef);
+
     readonly label = input.required<string>();
     readonly icon = input<IconProp>();
     readonly iconTemplate = input<TemplateRef<unknown>>();
     readonly startsCollapsed = input(false);
-    readonly templateRef = inject(TemplateRef);
 }
 
 @Component({
@@ -238,7 +239,11 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      * must be copied before being stored. The splitter also persists that raw size to localStorage (stateStorage)
      * before this handler runs, so on a snap-collapse the stored size must be overwritten too.
      */
-    onResizeEnd(sizes: number[]): void {
+    onResizeEnd(rawSizes: (number | string)[]): void {
+        const sizes = rawSizes.map(Number);
+        if (sizes.some((size) => !Number.isFinite(size))) {
+            return;
+        }
         const rightSize = sizes[1] ?? 0;
         if (this.collapseSnapPercent() > 0 && rightSize <= this.collapseSnapPercent()) {
             // Only reuse the remembered split if it is itself usable. Guards against a degenerate value (and, as a

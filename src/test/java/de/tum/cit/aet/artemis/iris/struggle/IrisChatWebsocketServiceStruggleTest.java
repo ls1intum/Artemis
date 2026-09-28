@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -35,7 +36,7 @@ class IrisChatWebsocketServiceStruggleTest extends AbstractIrisIntegrationTest {
                 new StruggleInterventionEventDTO(42, "decide", "ambient", "Re-check the logic.", 99L, 556L, null, null, null, 0.7, null, null, null, null, null));
 
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq("/topic/iris/struggle-intervention"), payload.capture());
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), userTopic("/topic/iris/struggle-intervention"), payload.capture());
         var event = (StruggleInterventionEventDTO) payload.getValue();
         assertThat(event.action()).isEqualTo("ambient");
         assertThat(event.message()).contains("logic");

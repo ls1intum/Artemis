@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.notification.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
@@ -52,7 +55,8 @@ class CourseNotificationWebappServiceTest {
         List<CourseNotificationRecipientDTO> recipients = List.of(createTestUser(1L, "user1"));
         var brokerFailure = new CompletableFuture<Void>();
         // Two sends per recipient: the course-specific topic and the broadcast topic.
-        when(websocketMessagingService.sendMessageToUser(anyString(), anyString(), any())).thenReturn(CompletableFuture.completedFuture(null), brokerFailure);
+        when(websocketMessagingService.sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any())).thenReturn(CompletableFuture.completedFuture(null),
+                brokerFailure);
 
         CompletableFuture<Void> delivery = ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", notification, recipients);
 
@@ -79,12 +83,12 @@ class CourseNotificationWebappServiceTest {
 
         ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", notification, recipients);
 
-        verify(websocketMessagingService, times(1)).sendMessageToUser("user1", WEBSOCKET_TOPIC_PREFIX + "123", notification);
-        verify(websocketMessagingService, times(1)).sendMessageToUser("user2", WEBSOCKET_TOPIC_PREFIX + "123", notification);
-        verify(websocketMessagingService, times(1)).sendMessageToUser("user3", WEBSOCKET_TOPIC_PREFIX + "123", notification);
-        verify(websocketMessagingService, times(1)).sendMessageToUser("user1", WEBSOCKET_BROADCAST_TOPIC_PREFIX, notification);
-        verify(websocketMessagingService, times(1)).sendMessageToUser("user2", WEBSOCKET_BROADCAST_TOPIC_PREFIX, notification);
-        verify(websocketMessagingService, times(1)).sendMessageToUser("user3", WEBSOCKET_BROADCAST_TOPIC_PREFIX, notification);
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq("user1"), userTopic(WEBSOCKET_TOPIC_PREFIX + "123"), eq(notification));
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq("user2"), userTopic(WEBSOCKET_TOPIC_PREFIX + "123"), eq(notification));
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq("user3"), userTopic(WEBSOCKET_TOPIC_PREFIX + "123"), eq(notification));
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq("user1"), userTopic(WEBSOCKET_BROADCAST_TOPIC_PREFIX), eq(notification));
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq("user2"), userTopic(WEBSOCKET_BROADCAST_TOPIC_PREFIX), eq(notification));
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq("user3"), userTopic(WEBSOCKET_BROADCAST_TOPIC_PREFIX), eq(notification));
         // Exactly two sends per recipient: the retired /topic/communication/notification/ mirrors must not come back.
         verify(websocketMessagingService, times(6)).sendMessageToUser(any(), any(), any());
     }
@@ -107,8 +111,8 @@ class CourseNotificationWebappServiceTest {
 
         ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", notification, List.of(user));
 
-        verify(websocketMessagingService, times(1)).sendMessageToUser("testuser", WEBSOCKET_TOPIC_PREFIX + "456", notification);
-        verify(websocketMessagingService, times(1)).sendMessageToUser("testuser", WEBSOCKET_BROADCAST_TOPIC_PREFIX, notification);
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq("testuser"), userTopic(WEBSOCKET_TOPIC_PREFIX + "456"), eq(notification));
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq("testuser"), userTopic(WEBSOCKET_BROADCAST_TOPIC_PREFIX), eq(notification));
         verify(websocketMessagingService, times(2)).sendMessageToUser(any(), any(), any());
     }
 

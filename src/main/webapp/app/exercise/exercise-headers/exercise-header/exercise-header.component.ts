@@ -59,6 +59,9 @@ export function pillsFitInTitleBar(barWidth: number, fixedContentWidth: number, 
     styleUrl: './exercise-header.component.scss',
 })
 export class ExerciseHeaderComponent {
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly destroyRef = inject(DestroyRef);
+
     protected readonly ExerciseType = ExerciseType;
 
     readonly exercise = input.required<Exercise>();
@@ -87,9 +90,6 @@ export class ExerciseHeaderComponent {
      * instead of repeating them. Reported rather than derived twice: only the bar knows how much room it has.
      */
     readonly showsPillsChange = output<boolean>();
-
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
-    private readonly destroyRef = inject(DestroyRef);
 
     /** The bar and the content in it whose widths decide whether the pills still fit beside the title. */
     private readonly bar = viewChild<ElementRef<HTMLElement>>('bar');
