@@ -514,7 +514,34 @@ describe('NavbarComponent', () => {
         expect(component.gitUsername()).toBe('Max Musterman');
     });
 
+    it('should leave the tab title to the route while there are no breadcrumbs', () => {
+        router.setUrl('/courses/1/exercises');
+        fixture.detectChanges();
+        const setTitleSpy = vi.spyOn(TestBed.inject(Title), 'setTitle');
+
+        component.buildTabTitles();
+
+        expect(setTitleSpy).not.toHaveBeenCalled();
+    });
+
     describe('Special Cases for Breadcrumbs', () => {
+        it('submissions link to the scores, since there is no list of submissions only', () => {
+            router.setUrl('/course-management/1/text-exercises/2/submissions');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().some((crumb) => crumb.uri === '/course-management/1/text-exercises/2/scores/')).toBe(true);
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('/submissions/'))).toBe(false);
+        });
+
+        it('tutorial lectures link to the course, which lists them', () => {
+            router.setUrl('/course-management/1/tutorial-lectures/5');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().some((crumb) => crumb.uri.includes('tutorial-lectures'))).toBe(false);
+        });
+
         it('tutorial group holidays skip the configuration routing layer', () => {
             router.setUrl('/course-management/1/tutorial-groups/configuration/5/tutorial-free-days');
 
