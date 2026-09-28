@@ -42,6 +42,16 @@ that is also injected as a service, and its autofix then breaks `ng build` with 
 compiles JIT and does not notice), so keep `@Injectable` on such a pipe with a justified line-level
 disable and do not autofix it. Other provider metadata also keeps `@Injectable`.
 
+## Checking access before a request
+
+Ask `AccountService` before sending a request that needs more than a signed-in user, above all one
+the client sends on its own (on sign-in, on page init, from the navbar): a refused request shows a
+403 alert on the current page. Use its high-level methods such as `hasEditorAccess()` rather than
+`hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)`, which counts an administrator whose session the server
+does not grant the administrator rights. When no method fits, add one to `AccountService` and
+`MockAccountService` instead of combining authorities, module features and passkey state in the
+caller.
+
 ## `ngOnChanges` is banned
 
 Use `computed()` or `effect()`. Enforced at error level by
