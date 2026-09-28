@@ -42,6 +42,16 @@ that is also injected as a service, and its autofix then breaks `ng build` with 
 compiles JIT and does not notice), so keep `@Injectable` on such a pipe with a justified line-level
 disable and do not autofix it. Other provider metadata also keeps `@Injectable`.
 
+## Checking access before a request
+
+Ask `AccountService` before sending a request that needs more than a signed-in user, above all one
+the client sends on its own (on sign-in, on page init, from the navbar): a refused request shows a
+403 alert on the current page. Use its high-level methods such as `hasEditorAccess()` rather than
+`hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)`, which counts an administrator whose session the server
+does not grant the administrator rights. When no method fits, add one to `AccountService` and
+`MockAccountService` instead of combining authorities, module features and passkey state in the
+caller.
+
 ## `ngOnChanges` is banned
 
 Use `computed()` or `effect()`. Enforced at error level by
@@ -120,6 +130,16 @@ In specs, use the real router (`TestBed.inject(Router)`, no `MockRouter`) and as
 receives a `RedirectCommand` for a thrown one. Do not assert a `navigate` spy. For guard
 combinations and browser history, route with `provideRouter(...)` and `provideLocationMocks()`
 as in `src/main/webapp/app/localci/shared/localci-guard.spec.ts`.
+
+## Form labels
+
+Associate each visible form label with its native input using a matching `for` and `id`, or wrap
+the input in the label. For a custom control, connect the label to the input inside the component,
+not its host element. Use a heading or `span` for informational text that does not label a control;
+give groups of controls an accessible group name. The
+`@angular-eslint/template/label-has-associated-control` rule checks the label association, not
+the element choice or group names, in TUM AET UI and the client template areas listed in
+`eslint.config.mjs`.
 
 ## Copying objects
 
