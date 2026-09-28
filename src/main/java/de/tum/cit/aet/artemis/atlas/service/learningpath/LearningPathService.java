@@ -436,8 +436,9 @@ public class LearningPathService {
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), cp -> cp));
         Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExerciseLinks().stream())
                 .map(exerciseLink -> exerciseLink.getExercise().getId()).collect(Collectors.toSet());
-        Map<Long, StudentParticipation> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
-                .collect(Collectors.toMap(participation -> participation.getExercise().getId(), sp -> sp));
+        // A student can have more than one participation per exercise, e.g. a graded one and a practice one after the due date
+        Map<Long, Set<StudentParticipation>> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
+                .collect(Collectors.groupingBy(participation -> participation.getExercise().getId(), Collectors.toSet()));
         learningPath.getCompetencies().forEach(competency -> {
             if (competencyProgresses.containsKey(competency.getId())) {
                 competency.setUserProgress(Set.of(competencyProgresses.get(competency.getId())));
@@ -454,12 +455,7 @@ public class LearningPathService {
                 }
             });
             competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).forEach(exercise -> {
-                if (studentParticipations.containsKey(exercise.getId())) {
-                    exercise.setStudentParticipations(Set.of(studentParticipations.get(exercise.getId())));
-                }
-                else {
-                    exercise.setStudentParticipations(Set.of());
-                }
+                exercise.setStudentParticipations(studentParticipations.getOrDefault(exercise.getId(), Set.of()));
             });
         });
 
