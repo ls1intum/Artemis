@@ -230,7 +230,7 @@ artemis:
                 - "10.0.0.1"
 ```
 
-A connection from a listed address must begin with a valid PROXY protocol header and is refused otherwise. A connection from any other address is handled as ordinary SSH and keeps its socket peer, so direct connections are unaffected. The list is keyed on the source address rather than on whether a header is present, because believing a header from any sender would let anyone who can reach the port claim an arbitrary client address.
+A connection from a listed address must begin with a valid PROXY protocol header and is refused otherwise. A connection from any other address is handled as ordinary SSH and keeps its socket peer, so direct connections are unaffected. If such a connection starts with a PROXY protocol header anyway, Artemis removes the header without reading the address in it. The list is keyed on the source address rather than on whether a header is present, because believing a header from any sender would let anyone who can reach the port claim an arbitrary client address.
 
 <Callout variant={CalloutVariant.warning}>
     **Name the proxy exactly, and keep the list as narrow as you can.** A PROXY protocol header carries no signature and
@@ -248,9 +248,11 @@ A connection from a listed address must begin with a valid PROXY protocol header
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-    These two settings must change together. `proxy_protocol on` without the matching `trusted-sources` breaks every
-    SSH connection through that proxy, and `trusted-sources` without `proxy_protocol on` refuses them. The Docker
-    Compose setups in this repository already ship both.
+    These two settings must change together. With `proxy_protocol on` but without the matching `trusted-sources`,
+    SSH keeps working, but every connection through that proxy is attributed to the proxy, and the server logs
+    `Discarded a PROXY protocol header from <address>` at most every ten minutes. With `trusted-sources` but without
+    `proxy_protocol on`, every SSH connection through that proxy is refused. The Docker Compose setups in this
+    repository already ship both.
 </Callout>
 
 #### Moving build agents to SSH

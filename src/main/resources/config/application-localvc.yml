@@ -41,7 +41,8 @@ artemis:
         ssh-proxy-protocol:
             # CIDR blocks of the reverse proxies that forward the git ssh port at the TCP level, e.g. an nginx stream block.
             # A connection from one of these must begin with a HAProxy PROXY protocol header naming the real client, and is refused otherwise; enable "proxy_protocol on"
-            # on those proxies at the same time. A connection from any other address is handled as ordinary ssh and keeps its socket peer, so direct connections are unaffected.
+            # on those proxies at the same time. A connection from any other address is handled as ordinary ssh and keeps its socket peer, so direct connections are unaffected;
+            # a header it sends anyway is removed and ignored, and logged as a warning.
             # Deliberately keyed on the source address rather than on whether a header is present: believing a header from any sender would let anyone reaching this port claim
             # an arbitrary client address. Leave empty when ssh is not fronted by a proxy; every ssh connection is then attributed to the address it actually comes from.
             trusted-sources: []
