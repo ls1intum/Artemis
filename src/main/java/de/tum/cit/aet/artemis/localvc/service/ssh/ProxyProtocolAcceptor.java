@@ -113,8 +113,8 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
     @PostConstruct
     public void logConfiguredSources() {
         if (trustedSources.isEmpty()) {
-            log.info("PROXY protocol is disabled for the git ssh server ({} is empty). If ssh reaches this node through a load balancer, every connection will be attributed to "
-                    + "the balancer rather than to the client.", TRUSTED_SOURCES_PROPERTY);
+            log.info("The git ssh server believes no PROXY protocol header ({} is empty) and removes one a proxy sends anyway. If ssh reaches this node through a load balancer, "
+                    + "every connection will be attributed to the balancer rather than to the client.", TRUSTED_SOURCES_PROPERTY);
         }
         else {
             log.info("The git ssh server expects a PROXY protocol header from {}. Those sources must have proxy_protocol enabled.", trustedSources);
@@ -320,6 +320,7 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
         }
     }
 
+    @Nullable
     private static String hostOf(SocketAddress address) {
         if (address instanceof InetSocketAddress inetSocketAddress && inetSocketAddress.getAddress() != null) {
             return inetSocketAddress.getAddress().getHostAddress();

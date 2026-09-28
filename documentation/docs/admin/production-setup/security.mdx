@@ -249,10 +249,11 @@ A connection from a listed address must begin with a valid PROXY protocol header
 
 <Callout variant={CalloutVariant.warning}>
     These two settings must change together. With `proxy_protocol on` but without the matching `trusted-sources`,
-    SSH keeps working, but every connection through that proxy is attributed to the proxy, and the server logs
-    `Discarded a PROXY protocol header from <address>` at most every ten minutes. With `trusted-sources` but without
-    `proxy_protocol on`, every SSH connection through that proxy is refused. The Docker Compose setups in this
-    repository already ship both.
+    SSH connections still succeed, but every connection through that proxy is attributed to the proxy: all users
+    behind it share one rate limit bucket, and a build agent that clones through it fails the address check above.
+    The server logs `Discarded a PROXY protocol header from <address>` at most every ten minutes. With
+    `trusted-sources` but without `proxy_protocol on`, every SSH connection through that proxy is refused. The Docker
+    Compose setups in this repository already ship both.
 </Callout>
 
 #### Moving build agents to SSH

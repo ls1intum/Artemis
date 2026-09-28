@@ -27,13 +27,16 @@ import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.io.IoSession;
+import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
 import org.apache.sshd.common.util.buffer.Buffer;
 import org.apache.sshd.common.util.buffer.ByteArrayBuffer;
 import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.auth.pubkey.RejectAllPublickeyAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.AbstractServerSession;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -55,7 +58,12 @@ import de.tum.cit.aet.artemis.core.config.SshProxyProtocolConfiguration;
  * The other subtle requirement is re-entrancy. MINA SSHD rewinds the buffer and calls the acceptor again whenever the
  * ssh identification line that follows the header arrives incomplete, so parsing has to work repeatedly on the same
  * bytes rather than assume it runs once.
+ * <p>
+ * Isolated because one test reads the log through an appender on the shared logback context. A Spring context starting
+ * in a parallel test class resets that context and suppresses logging while it does, so the warning under test would
+ * go missing depending on which classes happen to run alongside.
  */
+@Isolated
 class ProxyProtocolAcceptorTest {
 
     private static final byte[] V2_SIGNATURE = { 0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A };
@@ -94,13 +102,13 @@ class ProxyProtocolAcceptorTest {
     }
 
     private static InetSocketAddress capturedClientAddress(AbstractServerSession session) {
-        ArgumentCaptor<java.net.SocketAddress> captor = ArgumentCaptor.forClass(java.net.SocketAddress.class);
+        ArgumentCaptor<SocketAddress> captor = ArgumentCaptor.forClass(SocketAddress.class);
         verify(session).setClientAddress(captor.capture());
         return (InetSocketAddress) captor.getValue();
     }
 
     @Test
-    void shouldDoNothingWhenNoTrustedSourceIsConfigured() {
+    void shouldPassOrdinarySshThroughWhenNoTrustedSourceIsConfigured() {
         ProxyProtocolAcceptor acceptor = acceptorTrusting();
         AbstractServerSession session = sessionFrom("10.0.0.1");
         Buffer buffer = bufferOf(SSH_IDENTIFICATION.getBytes(StandardCharsets.US_ASCII));
@@ -230,9 +238,14 @@ class ProxyProtocolAcceptorTest {
             clientAddressSeenByServer.set(session.getClientAddress());
             return true;
         });
+        // Password only: the defaults would otherwise read keys and authorized_keys from the home directory of the
+        // machine running the test, so the outcome could depend on its ~/.ssh
+        server.setPublickeyAuthenticator(RejectAllPublickeyAuthenticator.INSTANCE);
+        server.setKeyboardInteractiveAuthenticator(null);
         server.setServerProxyAcceptor(acceptor);
         SshClient client = SshClient.setUpDefaultClient();
         client.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
+        client.setKeyIdentityProvider(KeyIdentityProvider.EMPTY_KEYS_PROVIDER);
         client.setServerKeyVerifier(AcceptAllServerKeyVerifier.INSTANCE);
 
         try (ServerSocket relay = new ServerSocket(0, 1, loopback)) {
@@ -251,6 +264,7 @@ class ProxyProtocolAcceptorTest {
             server.stop(true);
         }
 
+        assertThat(clientAddressSeenByServer.get()).as("the server never reached password authentication").isNotNull();
         InetSocketAddress clientAddress = (InetSocketAddress) clientAddressSeenByServer.get();
         assertThat(clientAddress.getAddress().getHostAddress()).as("a trusted proxy names the client, an untrusted one is the client")
                 .isEqualTo(proxyIsTrusted ? "198.51.100.7" : "127.0.0.1");
