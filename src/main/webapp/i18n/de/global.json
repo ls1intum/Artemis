@@ -419,7 +419,10 @@
             "invalidTime": "Bitte eine gültige Uhrzeit eingeben.",
             "openTime": "Uhr öffnen",
             "timeDialog": "Uhrzeit wählen",
-            "timePlaceholder": "HH:mm"
+            "timePlaceholder": "HH:mm",
+            "dateDialog": "Datum auswählen",
+            "invalidDate": "Bitte ein gültiges Datum eingeben.",
+            "datePlaceholder": "DD.MM.YYYY"
         },
         "imageCropper": {
             "sourceImage": "Bild zum Zuschneiden"
@@ -431,6 +434,7 @@
         "controlCenter": "Kontrollzentrum",
         "action": {
             "add": "Hinzufügen",
+            "create": "Erstellen",
             "addblob": "Blob hinzufügen",
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
