@@ -376,7 +376,7 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
-    void run_verifiedWithoutChanges_returnsNoOpAndTracksTokenUsage() {
+    void run_verifiedWithoutChanges_returnsSuccessWithoutActionsAndTracksTokenUsage() {
         ProgrammingExercise exercise = courseExercise(16L);
         when(exerciseRepository.findByIdElseThrow(16L)).thenReturn(exercise);
         stubRunMap();
@@ -391,7 +391,9 @@ class CompetencyOrchestrationServiceTest {
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(16L);
 
-        assertThat(result.status()).isEqualTo(NO_OP);
+        // A verified completion without edits is SUCCESS with no applied actions, distinct from NO_OP (nothing applicable).
+        assertThat(result.status()).isEqualTo(SUCCESS);
+        assertThat(result.appliedActions()).isEmpty();
         assertThat(result.summary()).isEqualTo("Run summary");
         verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
         verify(runMap).remove(COURSE_ID);
@@ -423,7 +425,7 @@ class CompetencyOrchestrationServiceTest {
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(17L);
 
-        assertThat(result.status()).isEqualTo(NO_OP);
+        assertThat(result.status()).isEqualTo(SUCCESS);
         verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.ATLAS), eq("ATLAS_ORCHESTRATION"), any());
         verify(runMap).remove(COURSE_ID);
     }
@@ -520,8 +522,8 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
-    void runBatch_mixedBatchOneExtractionThrows_requeuesSkippedIdOnNoOp() {
-        // A quiz deleted mid-run fails extraction, but the programming exercise succeeds so the batch reaches verified NO_OP.
+    void runBatch_mixedBatchOneExtractionThrows_requeuesSkippedIdOnSuccess() {
+        // A quiz deleted mid-run fails extraction, but the programming exercise succeeds so the batch reaches a verified SUCCESS without edits.
         // Because claimDueBatch already drained the bucket, the skipped id would be lost unless it is requeued here.
         ProgrammingExercise healthy = courseExercise(10L);
         QuizExercise doomedQuiz = quizExercise(12L);
@@ -540,7 +542,9 @@ class CompetencyOrchestrationServiceTest {
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mockChatClient).runBatch(COURSE_ID, Set.of(10L, 12L));
 
-        assertThat(result.status()).isEqualTo(NO_OP);
+        // The run completed over the healthy exercise without edits: SUCCESS, so the scheduler reports a no-change completion.
+        assertThat(result.status()).isEqualTo(SUCCESS);
+        assertThat(result.appliedActions()).isEmpty();
         // Only the extraction-failed quiz (12) is requeued — the healthy exercise was orchestrated, not requeued.
         verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
         verify(runMap).remove(COURSE_ID);

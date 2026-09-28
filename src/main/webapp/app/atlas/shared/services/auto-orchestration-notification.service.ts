@@ -13,6 +13,8 @@ export interface AutoOrchestrationSummary {
     exerciseCount: number;
     successCount: number;
     failureCount: number;
+    /** Batch-level outcome; `NO_CHANGES` means the run completed and verified that nothing needed to change. */
+    outcome?: 'SUCCESS' | 'NO_CHANGES' | 'FAILED';
     completedAt: string;
 }
 
@@ -56,7 +58,9 @@ export class AutoOrchestrationNotificationService implements OnDestroy {
 
     private handleSummary(summary: AutoOrchestrationSummary): void {
         const params = { count: summary.exerciseCount, success: summary.successCount, failure: summary.failureCount };
-        if (summary.failureCount === 0) {
+        if (summary.outcome === 'NO_CHANGES') {
+            this.alertService.info('artemisApp.atlasOrchestrator.autoToast.noChanges', params);
+        } else if (summary.failureCount === 0) {
             this.alertService.success('artemisApp.atlasOrchestrator.autoToast.success', params);
         } else if (summary.successCount === 0) {
             this.alertService.error('artemisApp.atlasOrchestrator.autoToast.failure', params);

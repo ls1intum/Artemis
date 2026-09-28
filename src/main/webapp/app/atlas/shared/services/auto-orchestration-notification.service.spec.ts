@@ -12,6 +12,7 @@ describe('AutoOrchestrationNotificationService', () => {
     let alertSuccessSpy: ReturnType<typeof vi.fn>;
     let alertWarningSpy: ReturnType<typeof vi.fn>;
     let alertErrorSpy: ReturnType<typeof vi.fn>;
+    let alertInfoSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         websocketSubject = new Subject<AutoOrchestrationSummary>();
@@ -19,12 +20,13 @@ describe('AutoOrchestrationNotificationService', () => {
         alertSuccessSpy = vi.fn();
         alertWarningSpy = vi.fn();
         alertErrorSpy = vi.fn();
+        alertInfoSpy = vi.fn();
 
         TestBed.configureTestingModule({
             providers: [
                 AutoOrchestrationNotificationService,
                 { provide: WebsocketService, useValue: { subscribe: websocketSubscribeSpy } },
-                { provide: AlertService, useValue: { success: alertSuccessSpy, warning: alertWarningSpy, error: alertErrorSpy } },
+                { provide: AlertService, useValue: { success: alertSuccessSpy, warning: alertWarningSpy, error: alertErrorSpy, info: alertInfoSpy } },
             ],
         });
 
@@ -45,6 +47,17 @@ describe('AutoOrchestrationNotificationService', () => {
         websocketSubject.next(summary({ exerciseCount: 3, successCount: 3, failureCount: 0 }));
 
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.atlasOrchestrator.autoToast.success', { count: 3, success: 3, failure: 0 });
+        expect(alertWarningSpy).not.toHaveBeenCalled();
+        expect(alertErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it('emits an info alert when a completed run needed no changes', () => {
+        service.subscribeToCourse(42);
+
+        websocketSubject.next(summary({ exerciseCount: 2, successCount: 2, failureCount: 0, outcome: 'NO_CHANGES' }));
+
+        expect(alertInfoSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.atlasOrchestrator.autoToast.noChanges', { count: 2, success: 2, failure: 0 });
+        expect(alertSuccessSpy).not.toHaveBeenCalled();
         expect(alertWarningSpy).not.toHaveBeenCalled();
         expect(alertErrorSpy).not.toHaveBeenCalled();
     });
