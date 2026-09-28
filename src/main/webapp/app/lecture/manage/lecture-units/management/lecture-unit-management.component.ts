@@ -1,4 +1,6 @@
-import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, TemplateRef, inject, input, output, signal, viewChildren } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -15,24 +17,37 @@ import {
     ProcessingPhase,
     toProcessingStatus,
 } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { IngestionStatusBadgeComponent } from 'app/lecture/manage/lecture-units/ingestion-status-badge/ingestion-status-badge.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    IconDefinition,
+    faCheck,
+    faExclamationTriangle,
+    faEye,
+    faEyeSlash,
+    faFile,
+    faFileLines,
+    faFilePdf,
+    faFileVideo,
+    faFlag,
+    faGripVertical,
+    faLink,
+    faPencilAlt,
+    faRepeat,
+    faSave,
+    faScroll,
+    faSpinner,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
-import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
-import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
-import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
-import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -50,19 +65,16 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         UnitCreationCardComponent,
         CdkDropList,
         CdkDrag,
-        AttachmentVideoUnitComponent,
-        ExerciseUnitComponent,
-        TextUnitComponent,
-        OnlineUnitComponent,
-        CompetenciesPopoverComponent,
-        NgbTooltip,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        NgTemplateOutlet,
         FaIconComponent,
         RouterLink,
         DeleteButtonDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         PdfDropZoneComponent,
-        TumAetUiTagComponent,
     ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
@@ -81,10 +93,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faFileLines = faFileLines;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faRepeat = faRepeat;
+    protected readonly faEyeSlash = faEyeSlash;
+    protected readonly faFlag = faFlag;
+    protected readonly faGripVertical = faGripVertical;
+    protected readonly faSave = faSave;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
-    protected readonly ProcessingPhase = ProcessingPhase;
 
     showCreationCard = input<boolean>(true);
     showCompetencies = input<boolean>(true);
@@ -93,8 +108,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lectureId = input<number | undefined>(undefined);
 
     onEditLectureUnitClicked = output<LectureUnit>();
+    /** The unit that is edited in place, if any. Only one is; the others are dimmed and the order is fixed meanwhile. */
+    readonly editingUnitId = input<number | undefined>(undefined);
+    /** The form of the unit that is edited in place, shown right below it. */
+    readonly editorTemplate = input<TemplateRef<{ $implicit: LectureUnit }>>();
+    /** Emits when Save of the unit that is edited in place is pressed. */
+    readonly onSaveEditingClicked = output<LectureUnit>();
+    private readonly editButtons = viewChildren('editButton', { read: ElementRef<HTMLButtonElement> });
 
     lectureUnits = signal<LectureUnit[]>([]);
+    /** The units whenever they are loaded, reordered or deleted, for a page that works with them too. */
+    readonly lectureUnitsChange = outputFromObservable(toObservable(this.lectureUnits));
     lecture = signal<Lecture | undefined>(undefined);
     isLoading = signal(false);
     isStatusLoading = signal(true);
@@ -146,7 +170,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         const sequence = ++this.loadSequence;
-        this.isLoading.set(true);
+        // A reload keeps the list in place, so the form of a unit that is edited in place stays open with what was typed.
+        this.isLoading.set(!this.lecture());
         this.isStatusLoading.set(true);
         // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
@@ -210,8 +235,25 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.updateOrder();
     }
 
-    identify(index: number, lectureUnit: LectureUnit) {
-        return `${index}-${lectureUnit.id}`;
+    /**
+     * Moves the keyboard focus to the Edit button of a unit, for a page that closed the form of the unit that is edited in place.
+     * @param unitId the id of the unit
+     */
+    focusEditButton(unitId: number): void {
+        this.editButtons()
+            .find((button) => button.nativeElement.dataset.unitId === String(unitId))
+            ?.nativeElement.focus();
+    }
+
+    /**
+     * Shows a unit as it was just saved, without loading the whole lecture again, which would replace the form of a unit that is edited in place.
+     * @param lectureUnit the saved unit
+     */
+    replaceLectureUnit(lectureUnit: LectureUnit): void {
+        this.lectureUnits.update((units) => units.map((unit) => (unit.id === lectureUnit.id ? lectureUnit : unit)));
+        if (lectureUnit.id !== undefined) {
+            this.viewButtonAvailable.set(cloneWith(this.viewButtonAvailable(), { [lectureUnit.id]: this.isViewButtonAvailable(lectureUnit) }));
+        }
     }
 
     getDeleteQuestionKey(lectureUnit: LectureUnit) {
@@ -266,7 +308,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO: {
                 const attachmentVideoUnit = lectureUnit as AttachmentVideoUnit;
-                return attachmentVideoUnit.attachment?.link?.endsWith('.pdf') ?? false;
+                return attachmentVideoUnit.attachment?.link?.toLowerCase().endsWith('.pdf') ?? false;
             }
             default:
                 return false;
@@ -297,6 +339,60 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Whether students do not see the unit yet, because its release date lies ahead.
+     * @param lectureUnit the unit to check
+     */
+    isReleasedLater(lectureUnit: LectureUnit): boolean {
+        const releaseDate = this.getLectureUnitReleaseDate(lectureUnit);
+        return !!releaseDate && dayjs(releaseDate).isAfter(dayjs());
+    }
+
+    /**
+     * The icon of a unit's kind; a file unit shows whether it holds a PDF, another file, a video or both.
+     * @param lectureUnit the unit to show
+     */
+    getTypeIcon(lectureUnit: LectureUnit): IconDefinition {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return { pdf: faFilePdf, file: faFile, video: faFileVideo, fileAndVideo: faFileVideo }[this.getAttachmentVideoKind(lectureUnit)];
+            case LectureUnitType.EXERCISE:
+                return faCheck;
+            case LectureUnitType.ONLINE:
+                return faLink;
+            default:
+                return faScroll;
+        }
+    }
+
+    /**
+     * The translation key of a unit's kind, as the list names it above the unit's name.
+     * @param lectureUnit the unit to show
+     */
+    getTypeLabelKey(lectureUnit: LectureUnit): string {
+        switch (lectureUnit.type) {
+            case LectureUnitType.ATTACHMENT_VIDEO:
+                return `artemisApp.lectureUnit.management.type.${this.getAttachmentVideoKind(lectureUnit)}`;
+            case LectureUnitType.EXERCISE:
+                return 'artemisApp.lectureUnit.management.type.exercise';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.lectureUnit.management.type.online';
+            default:
+                return 'artemisApp.lectureUnit.management.type.text';
+        }
+    }
+
+    private getAttachmentVideoKind(unit: AttachmentVideoUnit): 'pdf' | 'file' | 'video' | 'fileAndVideo' {
+        const hasFile = !!unit.attachment?.link;
+        if (hasFile && unit.videoSource) {
+            return 'fileAndVideo';
+        }
+        if (hasFile) {
+            return unit.attachment!.link!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'file';
+        }
+        return unit.videoSource ? 'video' : 'file';
+    }
+
     getAttachmentVersion(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO:
@@ -305,12 +401,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return undefined;
         }
     }
-
-    hasAttachment(lectureUnit: AttachmentVideoUnit): boolean {
-        return !!lectureUnit.attachment;
-    }
-
-    protected readonly AttachmentVideoUnit = AttachmentVideoUnit;
 
     /**
      * Load all processing and transcription statuses for attachment video units in a single bulk request.
@@ -418,19 +508,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     isTranscriptionFailed(lectureUnit: AttachmentVideoUnit): boolean {
         return this.transcriptionStatus()[lectureUnit.id!] === TranscriptionStatus.FAILED;
-    }
-
-    hasTranscriptionBadge(lectureUnit: AttachmentVideoUnit): boolean {
-        // Hidden when transcribing to avoid redundancy with "Transcribing" processing badge
-        if (this.isProcessingTranscribing(lectureUnit)) {
-            return false;
-        }
-        return this.isTranscriptionPending(lectureUnit) || this.isTranscriptionFailed(lectureUnit) || this.hasTranscription(lectureUnit);
-    }
-
-    // Processing status helper methods (for ProcessingPhase)
-    isProcessingIdle(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus()[lectureUnit.id!]?.phase === ProcessingPhase.IDLE;
     }
 
     isProcessingTranscribing(lectureUnit: AttachmentVideoUnit): boolean {

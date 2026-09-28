@@ -76,15 +76,6 @@ export class LectureUnitService {
         });
     }
 
-    convertLectureUnitArrayDatesFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
-        if (lectureUnits?.length) {
-            for (let _i = 0; _i < lectureUnits.length; _i++) {
-                lectureUnits[_i] = this.convertLectureUnitDatesFromClient(lectureUnits[_i]);
-            }
-        }
-        return lectureUnits;
-    }
-
     convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
             // Convert the unit's own release date for every type so the raw ISO string from the server never reaches the date picker (e.g. when editing an attachment/video unit).
