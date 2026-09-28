@@ -122,8 +122,9 @@ artemis:
     # LocalVC repository URLs are based on this value.
     serverUrl: ""
 
-    # Installation metadata. REQUIRED: every core pod refuses to start without meaningful values,
-    # independently of telemetry. All three are shown on the About page.
+    # Installation metadata. REQUIRED: the chart does not render without it, and a core pod refuses to
+    # start without meaningful values unless INFO_TESTSERVER is true, independently of telemetry. All
+    # three are shown on the About page.
     operator:
       # The organization operating Artemis, e.g. "Research group of Applied Education Technologies".
       name: ""

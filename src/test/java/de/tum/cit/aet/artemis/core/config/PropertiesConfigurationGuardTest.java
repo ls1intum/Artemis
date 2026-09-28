@@ -19,16 +19,31 @@ import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.mock.env.MockEnvironment;
 
 class PropertiesConfigurationGuardTest {
 
     private PropertiesConfigurationGuard guard(String operator, String admin, String university) {
-        var guard = new PropertiesConfigurationGuard();
-        ReflectionTestUtils.setField(guard, "operatorName", operator);
-        ReflectionTestUtils.setField(guard, "operatorAdminName", admin);
-        ReflectionTestUtils.setField(guard, "universityName", university);
-        return guard;
+        return guard(environment("prod", "core"), operator, admin, university);
+    }
+
+    private PropertiesConfigurationGuard guard(MockEnvironment environment, String operator, String admin, String university) {
+        setIfPresent(environment, "info.operatorName", operator);
+        setIfPresent(environment, "info.operatorAdminName", admin);
+        setIfPresent(environment, "info.universityName", university);
+        return new PropertiesConfigurationGuard(environment);
+    }
+
+    private static MockEnvironment environment(String... profiles) {
+        var environment = new MockEnvironment();
+        environment.setActiveProfiles(profiles);
+        return environment;
+    }
+
+    private static void setIfPresent(MockEnvironment environment, String key, String value) {
+        if (value != null) {
+            environment.setProperty(key, value);
+        }
     }
 
     @ParameterizedTest
@@ -47,6 +62,19 @@ class PropertiesConfigurationGuardTest {
     @Test
     void allowsValidMetadata() {
         assertThatNoException().isThrownBy(guard("AET", "Erika Muster", "Technical University of Munich")::afterPropertiesSet);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "dev,core", "core", "test,core" })
+    void doesNotRequireMetadataOutsideProduction(String profiles) {
+        assertThatNoException().isThrownBy(guard(environment(profiles.split(",")), null, null, null)::afterPropertiesSet);
+    }
+
+    @Test
+    void doesNotRequireMetadataOnTestServers() {
+        var environment = environment("prod", "core");
+        environment.setProperty("info.testServer", "true");
+        assertThatNoException().isThrownBy(guard(environment, null, "Admin", null)::afterPropertiesSet);
     }
 
     @ParameterizedTest
@@ -83,11 +111,19 @@ class PropertiesConfigurationGuardTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "core,scheduling", "core", "dev,core", "prod,core,buildagent" })
-    void rejectsInvalidMetadataOnEveryCoreNode(String profiles) {
+    @ValueSource(strings = { "prod,core,scheduling", "prod,core", "prod,core,buildagent" })
+    void rejectsInvalidMetadataOnProductionCoreNodes(String profiles) {
         try (var context = contextWithOperatorNameOnly(profiles)) {
             assertThatThrownBy(context::refresh).hasRootCauseInstanceOf(IllegalArgumentException.class).hasStackTraceContaining("info.operatorAdminName")
                     .hasStackTraceContaining("info.universityName");
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "dev,core,scheduling", "core", "test,core" })
+    void startsCoreNodesOutsideProductionWithoutMetadata(String profiles) {
+        try (var context = contextWithOperatorNameOnly(profiles)) {
+            assertThatNoException().isThrownBy(context::refresh);
         }
     }
 

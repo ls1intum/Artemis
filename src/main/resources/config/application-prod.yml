@@ -139,9 +139,10 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false in production
     textAssessmentAnalyticsEnabled: false
-    operatorName: # Required on every core node; the organization operating Artemis, displayed on the About page
-    operatorAdminName: # Required on every core node; displayed on the About page, sent only when sendAdminDetails is true
-    universityName: # Required on every core node; the university or institution, displayed on the About page
+    # The next three are required on every core node unless testServer is true
+    operatorName: # The organization operating Artemis, displayed on the About page
+    operatorAdminName: # Displayed on the About page, sent only when sendAdminDetails is true
+    universityName: # The university or institution, displayed on the About page
     contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service only when sendAdminDetails is true
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
