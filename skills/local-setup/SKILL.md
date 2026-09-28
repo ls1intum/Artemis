@@ -99,13 +99,12 @@ alongside the server and point the mail configuration at it. See
 
 ## When it will not start
 
-**"Configure meaningful values for info.operatorName ...".** Every core node, development
-included, refuses to start without `info.operatorName`, `info.operatorAdminName` and
-`info.universityName`, even with telemetry off. Set all three in `application-local.yml`; empty and
-template values (`Admin`, `Your University`, `<name>`) are rejected. The repository's E2E runners,
-Docker dev env files and test profiles already set their own. It hits every start you configure
-yourself with the `core` profile: the IntelliJ run configurations, `bootRun --args` with `core`, and
-the `docker run` examples. A plain `./gradlew bootRun` activates only `dev` and skips the check.
+**"Configure meaningful values for info.operatorName ...".** A core node under the `prod`
+profile refuses to start without `info.operatorName`, `info.operatorAdminName` and
+`info.universityName`, even with telemetry off, unless `info.testServer` is `true`. Development
+profiles never hit it; locally it comes from the **Artemis (Server, Prod, LocalCI)** run
+configuration or a prod Docker setup. Set all three in `application-local.yml` (empty and template
+values such as `Admin`, `Your University` or `<name>` are rejected), or set `info.testServer: true`.
 
 **"Unable to determine Dialect".** The Spring profile set does not include a database profile, or
 an `autoconfigure.exclude` is replacing rather than merging the expected exclusions.
