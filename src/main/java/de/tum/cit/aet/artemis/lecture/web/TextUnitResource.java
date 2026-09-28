@@ -96,7 +96,7 @@ public class TextUnitResource {
      *
      * @param lectureId   the id of the lecture to which the text unit belongs to update
      * @param textUnitDto the text unit to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
+     * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit, or with status 404 (Not Found) if the text unit does not exist
      */
     @PutMapping("lectures/{lectureId}/text-units")
     @EnforceAtLeastEditorInLecture
@@ -106,7 +106,7 @@ public class TextUnitResource {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idNull");
         }
 
-        var existingTextUnit = textUnitRepository.findByIdWithCompetencies(textUnitDto.id()).orElseThrow();
+        var existingTextUnit = textUnitRepository.getValueElseThrow(textUnitRepository.findByIdWithCompetencies(textUnitDto.id()), textUnitDto.id());
 
         if (existingTextUnit.getLecture() == null || existingTextUnit.getLecture().getCourse() == null || !existingTextUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");

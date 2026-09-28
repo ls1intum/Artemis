@@ -34,6 +34,7 @@ export const lectureRoutes: Routes = [
                     pageTitle: 'global.generic.create',
                 },
                 canActivate: [UserRouteAccessService],
+                canDeactivate: [hasLectureUnsavedChangesGuard],
             },
             {
                 path: ':lectureId',
