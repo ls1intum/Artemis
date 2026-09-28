@@ -592,6 +592,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan | undefined {
         const unusedCriteria = [...previousCriteria];
         const unusedFallbackCriteria = this.identityBaseline.filter((criterion) => criterion.id != undefined && !previousCriteria.includes(criterion));
+        const candidates = [...unusedCriteria, ...unusedFallbackCriteria];
+        const signatures = candidates.map((criterion) => this.criterionSignature(criterion));
+        // A changed duplicate count cannot identify which persisted criterion was edited or removed.
+        for (const signature of new Set(candidates.filter((criterion) => criterion.id != undefined).map((criterion) => this.criterionSignature(criterion)))) {
+            const previousCount = signatures.filter((candidate) => candidate === signature).length;
+            if (previousCount > 1 && parsedCriteria.filter((criterion) => this.criterionSignature(criterion) === signature).length !== previousCount) {
+                return undefined;
+            }
+        }
         const criterionEntries = parsedCriteria.map((parsedCriterion) => ({
             parsedCriterion,
             previousCriterion: undefined as GradingCriterion | undefined,

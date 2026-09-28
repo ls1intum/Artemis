@@ -1239,6 +1239,23 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
     });
 
+    it('rejects an edit to one of two identical persisted criteria without swapping IDs', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2 };
+        const secondCriterion = { id: 2, title: gradingCriterion.title, structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [gradingCriterion, secondCriterion];
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component.generateMarkdown().replace('[feedback] feedback', '[feedback] edited feedback');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(exercise.gradingCriteria).toEqual([gradingCriterion, secondCriterion]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondInstruction.feedback).toBe('feedback');
+        expect(exercise.gradingCriteria!.map(({ id }) => id)).toEqual([1, 2]);
+        expect(exercise.gradingCriteria!.map(({ structuredGradingInstructions }) => structuredGradingInstructions[0].id)).toEqual([1, 2]);
+    });
+
     it('should not adopt unknown legacy criterion markers as ids', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const domainActions = getDomainActionArray();
