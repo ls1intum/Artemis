@@ -1531,6 +1531,33 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(gradingInstruction.feedback).toBe('feedback');
     });
 
+    it('rejects editing a used criterion and adding another when neither parsed criterion matches', () => {
+        exercise.gradingCriteria = [gradingCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        const originalCriteria = exercise.gradingCriteria;
+        const domainActions = getDomainActionArray();
+        domainActions[0] = { text: 'renamed criterion', action: domainActions[0].action };
+        domainActions[5] = { text: 'edited feedback', action: domainActions[5].action };
+        domainActions.push(
+            { text: 'added criterion', action: domainActions[0].action },
+            { text: '', action: domainActions[1].action },
+            { text: '2', action: domainActions[2].action },
+            { text: 'new scale', action: domainActions[3].action },
+            { text: 'new description', action: domainActions[4].action },
+            { text: 'new feedback', action: domainActions[5].action },
+            { text: '0', action: domainActions[6].action },
+        );
+
+        component.onDomainActionsFound(domainActions);
+
+        expect(component.prepareForSave()).toBe(false);
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.id).toBe(1);
+        expect(gradingCriterion.title).toBe('testCriteria');
+        expect(gradingInstruction.id).toBe(1);
+        expect(gradingInstruction.feedback).toBe('feedback');
+    });
+
     it('keeps criterion and instruction IDs when two titles are exchanged', () => {
         const secondInstruction = { ...gradingInstruction, id: 2, feedback: 'second feedback' };
         const secondCriterion = { id: 2, title: 'Second criterion', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;

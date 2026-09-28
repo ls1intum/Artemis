@@ -636,8 +636,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 return undefined;
             }
         }
-        // Multiple rewritten rows cannot be paired safely with multiple persisted leftovers.
-        if (unmatched.length > 1 && [...unusedCriteria, ...unusedFallbackCriteria].filter((criterion) => criterion.id != undefined).length > 1) {
+        // Multiple unmatched rows cannot safely replace used or multiple persisted leftovers.
+        const unusedPersistedCount = [...unusedCriteria, ...unusedFallbackCriteria].filter((criterion) => criterion.id != undefined).length;
+        if (unmatched.length > 1 && (unusedPersistedCount > 1 || (unusedPersistedCount > 0 && this.exercise().gradingInstructionFeedbackUsed))) {
             return undefined;
         }
 
