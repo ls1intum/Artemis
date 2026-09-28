@@ -41,7 +41,7 @@
             <div class="form-group">
                 <div class="d-flex align-items-end">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label"></label>
+                        <label class="label-narrow" for="exercise-search-input" jhiTranslate="artemisApp.team.sourceExercise.label"></label>
                         <jhi-help-icon text="artemisApp.team.sourceExercise.tooltip" class="me-1" />
                     </div>
                     @if (searchingExercises()) {
@@ -77,7 +77,7 @@
             <div class="form-group mt-2">
                 <div class="d-flex align-items-end">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label"></label>
+                        <span class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label"></span>
                         <jhi-help-icon text="artemisApp.team.sourceTeams.tooltip" class="me-1" />
                     </div>
                     @if (loadingSourceTeams()) {
@@ -129,7 +129,7 @@
                             <div class="source-teams-legend-container mt-4">
                                 <hr class="mt-3 mb-2" />
                                 <div>
-                                    <label jhiTranslate="artemisApp.team.sourceTeams.legend.label"></label>
+                                    <span jhiTranslate="artemisApp.team.sourceTeams.legend.label"></span>
                                     <jhi-help-icon text="artemisApp.team.sourceTeams.legend.tooltip" class="me-1" />
                                 </div>
                                 <div class="source-teams-legend-box">
@@ -140,7 +140,7 @@
                                                 <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []" />
                                             </div>
                                             <div class="label-with-tooltip">
-                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.label"></label>
+                                                <span jhiTranslate="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.label"></span>
                                                 <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.conflictFreeTeam.tooltip" class="me-1" />
                                             </div>
                                         </div>
@@ -150,7 +150,7 @@
                                                 <jhi-team-students-list class="team-students" [students]="sampleTeamForLegend.students || []" />
                                             </div>
                                             <div class="label-with-tooltip">
-                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.label"></label>
+                                                <span jhiTranslate="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.label"></span>
                                                 <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.teamShortNameConflict.tooltip" class="me-1" />
                                             </div>
                                         </div>
@@ -164,7 +164,7 @@
                                                 />
                                             </div>
                                             <div class="label-with-tooltip">
-                                                <label jhiTranslate="artemisApp.team.sourceTeams.legend.items.studentConflict.label"></label>
+                                                <span jhiTranslate="artemisApp.team.sourceTeams.legend.items.studentConflict.label"></span>
                                                 <jhi-help-icon text="artemisApp.team.sourceTeams.legend.items.studentConflict.tooltip" class="me-1" />
                                             </div>
                                         </div>
@@ -178,9 +178,9 @@
         }
         @if (showImportStrategyChoices) {
             <hr class="my-4" />
-            <div class="form-group mb-0">
+            <div class="form-group mb-0" role="group" aria-labelledby="import-strategy-label">
                 <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.team.importStrategy.label"></label>
+                    <span id="import-strategy-label" class="label-narrow" jhiTranslate="artemisApp.team.importStrategy.label"></span>
                     <jhi-help-icon text="artemisApp.team.importStrategy.tooltip" class="me-1" />
                 </div>
                 <div class="d-flex flex-column mt-2 ps-2">
