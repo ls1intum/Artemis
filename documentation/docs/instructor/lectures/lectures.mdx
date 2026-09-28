@@ -54,9 +54,10 @@ end date. The channel name follows the title, so students find the lecture's dis
 **Jump to** in the title bar scrolls to a section of the page: the details, the period and, in the editor, the content.
 It marks a section that needs attention. **Save** and **Close** stay at the bottom of the page wherever you scroll. The
 footer names the sections with unsaved changes, and **Close** turns into **Cancel** as soon as there are any; leaving
-the page with unsaved changes asks first. Saving a new lecture opens its editor, where you add the content. Saving an
-existing lecture keeps the editor open and confirms the time of the save. **Save** saves the lecture details; changes
-to the content are saved automatically.
+the page with unsaved changes asks first. **Save**, or Enter in a field of the details, saves the lecture details;
+changes to the content are saved automatically. Content that could not be saved counts as unsaved as well, so the
+footer names it and leaving asks first. Saving a new lecture opens its editor, where you add the content. Saving an
+existing lecture keeps the editor open and confirms the time of the save.
 
 ### Option 2: Create from PDFs
 
@@ -66,7 +67,7 @@ whether the files become a new lecture, titled after the first file, or go into 
 <Image src={pdfUploadTarget} alt="Dialog that asks where dropped PDFs go" size={ImageSize.medium} caption={"Target of dropped PDFs"}></Image>
 
 Each PDF becomes one content item, which students see 15 minutes after the upload. The editor of the lecture then
-opens with a confirmation that names the lecture, the files and the time students can see them. It stays until you
+opens with a confirmation that names the lecture, the file or the number of files, and the time students can see them. It stays until you
 dismiss it, so you can move the release date or adjust the details first.
 
 ### Option 3: Import Lecture
@@ -84,7 +85,7 @@ video; dropping PDFs adds one item per file.
 
 <Image src={unitsManagementEmpty} alt="Empty Units Management" size={ImageSize.large} caption={"Content of a lecture without items"}></Image>
 
-Each item shows its kind, its name and whether students see it yet, and, for files, the version and the state of the
+Each item shows its name, its kind and whether students see it yet, and, for files, the version and the state of the
 automatic processing. The buttons on the right view, edit and delete it. Drag an item to change the order.
 
 <Image src={unitsManagement} alt="Units Management" size={ImageSize.large} caption={"Content of a lecture"}></Image>
@@ -98,16 +99,18 @@ or adding a new one, saves and closes the open one first.
 Changes to an item are saved automatically, so there is no Submit button. Typed text is saved about 1.5 seconds after
 you stop typing or when you leave the field; a release date or a competency is saved as soon as you choose it. The item
 shows whether it is saving, when all changes were saved, and when a change could not be saved: the change is kept, and
-**Retry** sends it again. A change that cannot be saved as it is, such as an empty name, waits until you correct it;
-**Discard change and close** drops it instead. **Save** saves at once and closes the item. Leaving the editor, reloading
+**Retry** sends it again. A change that cannot be saved as it is, such as an empty name, waits until you correct it.
+**Discard change and close** drops a change that cannot be saved or failed to save and keeps what was saved before.
+**Save**, or Enter in a single-line field, saves at once; **Save** also closes the item. Leaving the editor, reloading
 the page or closing the tab asks first while a change is still being saved, could not be saved or was not confirmed.
 
 <Image src={editUnitInPlace} alt="Content item edited in place" size={ImageSize.large} caption={"A content item edited in place"}></Image>
 
 A new file or a new video URL is saved only when you confirm it, because Artemis then processes the content again.
 After choosing a new file, select **Upload version N**, optionally with **Notify students about the new version**;
-**Keep current file** goes back, also after a failed upload. After changing the video URL, select **Save video URL** or
-**Keep current URL**.
+**Keep current file** goes back, also after a failed upload. A video item without a file gets its first one the same
+way, with **Upload file** or **Discard file**. After changing the video URL, select **Save video URL** or **Keep current
+URL**. Until you do, **Save**, opening another item and adding one keep the item open and ask you to decide first.
 
 <Image src={replaceFileInPlace} alt="New file waiting for confirmation" size={ImageSize.large} caption={"A new file that is uploaded once you confirm it"}></Image>
 
