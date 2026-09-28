@@ -6,12 +6,14 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -24,14 +26,21 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 
 /**
  * Behaviour of {@link ContentChangeScheduler} — the per-tick adapter that drives the batched
@@ -175,6 +184,41 @@ class ContentChangeSchedulerTest {
         assertThat(summary.exerciseCount()).isEqualTo(3);
         assertThat(summary.successCount()).isEqualTo(3);
         assertThat(summary.failureCount()).isEqualTo(0);
+    }
+
+    @Test
+    void tick_textUnitBlankedWithinDebounceWindow_runsAndCountsOnlyTheExercise() {
+        // End-to-end over the real accumulator and listener: a text unit that is edited to blank content
+        // inside the debounce window must leave the queue, so the mixed batch neither passes it to the
+        // orchestrator nor counts it as a processed change.
+        MutableClock clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP, 30000L, 10);
+        ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties,
+                courseConfigurationRepository);
+        LectureUnitRepositoryApi lectureUnitRepositoryApi = mock(LectureUnitRepositoryApi.class);
+        AutonomousCompetencyLectureUnitEventListener listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService,
+                courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
+        scheduler = new ContentChangeScheduler(realAccumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository, clock);
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
+        TextUnit nonblank = courseTextUnit(30L, "Recursion calls itself until a base case is reached.");
+        TextUnit blank = courseTextUnit(30L, "  ");
+        when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(nonblank), Optional.of(blank));
+        when(orchestrationService.runBatch(COURSE_ID, Set.of(10L), Set.of())).thenReturn(CompetencyOrchestrationResultDTO.success("done", List.of()));
+
+        realAccumulator.record(COURSE_ID, 10L);
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(nonblank));
+        clock.advanceSeconds(5);
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(blank));
+        clock.advanceSeconds(RESOLVED_WINDOW_SECONDS + 1);
+        scheduler.tick();
+
+        verify(orchestrationService).runBatch(COURSE_ID, Set.of(10L), Set.of());
+        ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        assertThat(payload.getValue().exerciseCount()).isEqualTo(1);
+        assertThat(payload.getValue().successCount()).isEqualTo(1);
+        assertThat(payload.getValue().failureCount()).isEqualTo(0);
     }
 
     @Test
@@ -345,5 +389,46 @@ class ContentChangeSchedulerTest {
         verify(accumulator, never()).claimDueBatch(anyLong(), anyInt(), anyInt());
         verify(orchestrationService, never()).runBatch(anyLong(), any(), any());
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
+    }
+
+    private static TextUnit courseTextUnit(long id, String content) {
+        Course course = new Course();
+        course.setId(COURSE_ID);
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        TextUnit unit = new TextUnit();
+        unit.setId(id);
+        unit.setContent(content);
+        unit.setLecture(lecture);
+        return unit;
+    }
+
+    /** Mutable UTC clock so the real accumulator's debounce window can elapse deterministically. */
+    private static final class MutableClock extends Clock {
+
+        private Instant now;
+
+        MutableClock(Instant start) {
+            this.now = start;
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
+        }
+
+        void advanceSeconds(long seconds) {
+            now = now.plusSeconds(seconds);
+        }
     }
 }

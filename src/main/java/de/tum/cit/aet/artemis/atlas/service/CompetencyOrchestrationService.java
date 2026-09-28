@@ -481,7 +481,8 @@ public class CompetencyOrchestrationService {
 
     /**
      * Resolves lecture-unit ids into orchestratable, course-owned units. Unknown units, unsupported
-     * subtypes, blank-description attachment/video units, and wrong-course units are skipped.
+     * subtypes, blank-content text units, blank-description attachment/video units, and wrong-course
+     * units are skipped.
      * The lecture and course are fetch-joined for the ownership check. Input order is preserved.
      * Returns an empty list when no ids are requested or the lecture module is unavailable.
      */

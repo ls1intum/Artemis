@@ -198,19 +198,28 @@ public class ContentExtractionService {
 
     /**
      * Whether Atlas can inspect and mutate competency links for the given lecture unit.
-     * Attachment/video units require instructor-authored descriptive text because Atlas does not
-     * inspect attachments, videos, or transcripts.
+     * Text units require nonblank prose content, and attachment/video units require
+     * instructor-authored descriptive text because Atlas does not inspect attachments, videos, or
+     * transcripts. Both would otherwise extract to an empty learning text that batch orchestration
+     * drops, so accepting them here would let a blank unit stay queued, consume an automatic run, and
+     * be offered for a manual run that can only end as a no-op.
+     * <p>
+     * The lecture-unit management client mirrors this rule in {@code isOrchestrationAvailable}.
      *
      * @param lectureUnit the lecture unit to validate
      * @return whether the unit has a supported, learning-relevant representation
      */
     public static boolean isLectureUnitEligibleForOrchestration(LectureUnit lectureUnit) {
         return switch (lectureUnit) {
-            case TextUnit ignored -> true;
+            case TextUnit textUnit -> hasText(textUnit.getContent());
             case OnlineUnit ignored -> true;
-            case AttachmentVideoUnit attachmentVideoUnit -> attachmentVideoUnit.getDescription() != null && !attachmentVideoUnit.getDescription().isBlank();
+            case AttachmentVideoUnit attachmentVideoUnit -> hasText(attachmentVideoUnit.getDescription());
             default -> false;
         };
+    }
+
+    private static boolean hasText(@Nullable String value) {
+        return value != null && !value.isBlank();
     }
 
     /**

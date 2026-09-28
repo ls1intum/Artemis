@@ -747,6 +747,59 @@ class CompetencyOrchestrationServiceTest {
         verify(contentChangeAccumulatorService, never()).claimBatchNow(anyLong());
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = { " ", "\t\n" })
+    void runBatch_blankTextUnit_returnsNoOpWithoutExtractionOrLock(String content) {
+        TextUnit lectureUnit = courseTextUnit(30L);
+        lectureUnit.setContent(content);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.of());
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.of(lectureUnit));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(), Set.of(30L));
+
+        assertThat(result.status()).isEqualTo(NO_OP);
+        verify(contentExtractionService, never()).extractContent(lectureUnit);
+        verify(orchestratorPlanningToolsService, never()).listCompetencyIndex(anyLong());
+        verify(runMap, never()).put(anyLong(), any());
+    }
+
+    @Test
+    void runBatch_mixedBatchWithBlankTextUnit_orchestratesOnlyTheExercise() {
+        ProgrammingExercise exercise = courseExercise(10L);
+        TextUnit blankUnit = courseTextUnit(30L);
+        blankUnit.setContent("   ");
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(exercise));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(blankUnit));
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Exercise Title", "Exercise body", Map.of()));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
+
+        createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L), Set.of(30L));
+
+        verify(contentExtractionService, never()).extractContent(blankUnit);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, String>> modelCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(templateService).render(anyString(), modelCaptor.capture());
+        assertThat(modelCaptor.getValue().get("exerciseChanges")).contains("[UPDATE exercise id=10]").doesNotContain("lecture-unit id=30");
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runLectureUnitWithQueuedFlush_blankTextUnit_returnsUnsupportedBeforeClaiming() {
+        TextUnit lectureUnit = courseTextUnit(30L);
+        lectureUnit.setContent(" ");
+        when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(lectureUnit));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(30L);
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_LEARNING_OBJECT);
+        verify(runMap, never()).put(anyLong(), any());
+        verify(contentChangeAccumulatorService, never()).claimBatchNow(anyLong());
+    }
+
     @Test
     void runBatch_onlineUnitWithSourceOnly_isRenderedWithoutFetchingSource() {
         OnlineUnit lectureUnit = courseOnlineUnit(31L);
@@ -964,6 +1017,7 @@ class CompetencyOrchestrationServiceTest {
         TextUnit unit = new TextUnit();
         unit.setId(id);
         unit.setName("Unit " + id);
+        unit.setContent("Unit " + id + " content");
         unit.setLecture(lecture);
         return unit;
     }

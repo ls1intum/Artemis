@@ -12,6 +12,7 @@ import { LectureUnitCombinedStatus, LectureUnitProcessingStatus, LectureUnitServ
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { faClock, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -259,9 +260,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Client mirror of the server's ContentExtractionService.isLectureUnitEligibleForOrchestration: only offer a manual
+     * Atlas run for units whose learning text the orchestrator can actually read, so a blank unit never gets a trigger
+     * that could only end as a no-op.
+     */
     isOrchestrationAvailable(lectureUnit: LectureUnit): boolean {
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:
+                return !!(lectureUnit as TextUnit).content?.trim();
             case LectureUnitType.ONLINE:
                 return true;
             case LectureUnitType.ATTACHMENT_VIDEO:

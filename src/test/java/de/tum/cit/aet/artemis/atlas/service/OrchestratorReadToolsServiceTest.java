@@ -417,6 +417,7 @@ class OrchestratorReadToolsServiceTest {
         TextUnit unit = new TextUnit();
         unit.setId(id);
         unit.setName(name);
+        unit.setContent(name + " content");
         unit.setLecture(lecture);
         return unit;
     }
