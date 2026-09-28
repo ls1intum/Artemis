@@ -22,7 +22,8 @@ export class PdfDropZoneComponent {
     filesDropped = output<File[]>();
     disabled = input<boolean>(false);
     /** Translation key that says what dropping PDFs here does. */
-    title = input<string>('artemisApp.lecture.pdfUpload.dropZoneTitle');
+    /** Translation key of the heading; not named title, which would also become the tooltip of the element. */
+    readonly heading = input<string>('artemisApp.lecture.pdfUpload.dropZoneTitle');
 
     protected readonly hintId = `pdf-drop-zone-hint-${nextDropZoneId++}`;
 

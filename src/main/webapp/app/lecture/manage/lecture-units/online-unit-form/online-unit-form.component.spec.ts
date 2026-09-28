@@ -202,14 +202,7 @@ describe('OnlineUnitFormComponent', () => {
             expect(changes[2].valid).toBe(true);
         });
 
-        it('should save at once on Enter instead of submitting', () => {
-            const submitSpy = vi.fn();
-            onlineUnitFormComponent.formSubmitted.subscribe(submitSpy);
-
-            onlineUnitFormComponent.submitForm();
-
-            expect(submitSpy).not.toHaveBeenCalled();
-            expect(changes.at(-1)?.immediate).toBe(true);
+        it('should offer no Submit button, since Enter in an item that saves itself saves through the page', () => {
             expect(onlineUnitFormComponentFixture.nativeElement.querySelector('#submitButton')).toBeNull();
         });
 

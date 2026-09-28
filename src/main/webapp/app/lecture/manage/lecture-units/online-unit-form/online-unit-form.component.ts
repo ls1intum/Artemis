@@ -195,11 +195,6 @@ export class OnlineUnitFormComponent {
     }
 
     submitForm() {
-        if (this.autosave()) {
-            // Enter in a field of an item that saves itself saves at once instead of creating an item.
-            this.reportChange(true);
-            return;
-        }
         const onlineUnitFormData: OnlineUnitFormData = deepClone(this.form.value);
         this.formSubmitted.emit(onlineUnitFormData);
     }

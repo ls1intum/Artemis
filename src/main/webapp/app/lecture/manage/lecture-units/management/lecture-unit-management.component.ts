@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, TemplateRef, inject, input, output, signal, viewChildren } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -108,6 +108,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     readonly editorTemplate = input<TemplateRef<{ $implicit: LectureUnit }>>();
     /** Emits when Save of the unit that is edited in place is pressed. */
     readonly onSaveEditingClicked = output<LectureUnit>();
+    private readonly editButtons = viewChildren('editButton', { read: ElementRef<HTMLButtonElement> });
 
     lectureUnits = signal<LectureUnit[]>([]);
     /** The units whenever they are loaded, reordered or deleted, for a page that works with them too. */
@@ -208,6 +209,16 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         moveItemInArray(units, event.previousIndex, event.currentIndex);
         this.lectureUnits.set(units);
         this.updateOrder();
+    }
+
+    /**
+     * Moves the keyboard focus to the Edit button of a unit, for a page that closed the form of the unit that is edited in place.
+     * @param unitId the id of the unit
+     */
+    focusEditButton(unitId: number): void {
+        this.editButtons()
+            .find((button) => button.nativeElement.dataset.unitId === String(unitId))
+            ?.nativeElement.focus();
     }
 
     /**

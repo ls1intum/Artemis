@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
@@ -42,6 +42,7 @@ import {
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { LectureEditFooterComponent } from 'app/lecture/manage/lecture-update/lecture-edit-footer/lecture-edit-footer.component';
 import { PDF_UPLOAD_CONFIRMATION_STATE_KEY, PdfUploadConfirmation } from 'app/lecture/manage/lecture-update/pdf-upload-confirmation.model';
+import { isSingleLineField } from 'app/lecture/manage/single-line-field.util';
 
 /** Navigation state that carries the time a new lecture was saved to its editor, which the router creates anew for the edit route. */
 const DETAILS_SAVED_AT_STATE_KEY = 'lectureDetailsSavedAt';
@@ -69,7 +70,8 @@ interface PdfUploadConfirmationText {
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
-    host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
+    // Enter is handled on the host: the sections it saves are no controls themselves, so they take no key handlers.
+    host: { '(window:beforeunload)': 'onBeforeUnload($event)', '(keydown.enter)': 'onEnterInDetails($event)' },
     imports: [
         FormsModule,
         TranslateDirective,
@@ -122,6 +124,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     titleSection = viewChild(LectureTitleChannelNameComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
+    private readonly detailsSection = viewChild<ElementRef<HTMLElement>>('detailsSection');
+    private readonly periodSection = viewChild<ElementRef<HTMLElement>>('periodSection');
     courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit!: Lecture; // set in ngOnInit() (and re-cloned on save success)
@@ -134,7 +138,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     /** Translation keys of the sections whose unsaved changes the footer names. */
     readonly changedSections = signal<string[]>([]);
     /** Translation keys of the sections whose changes leaving the page would discard: the details, and content that could not be saved. */
-    private readonly unsavedSections = computed(() =>
+    protected readonly unsavedSections = computed(() =>
         this.unitSection()?.hasUnsavedContent() ? [...this.changedSections(), 'artemisApp.lecture.sections.units'] : this.changedSections(),
     );
     /** What leaving the page would discard: the single-lecture form is not shown while a series is created. */
@@ -214,6 +218,8 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         this.pdfUploadConfirmation.set(undefined);
         const { [PDF_UPLOAD_CONFIRMATION_STATE_KEY]: _dismissed, ...remainingState } = this.historyState();
         this.location.replaceState(this.location.path(), '', remainingState);
+        // The focused dismiss button is gone, so the keyboard focus continues at the details.
+        document.getElementById('artemisApp.lecture.sections.title')?.focus({ preventScroll: true });
     }
 
     private historyState(): Record<string, unknown> {
@@ -225,7 +231,10 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
      * @param sectionId the id of the section's heading, which is the translation key of its title
      */
     scrollToSection(sectionId: string): void {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const heading = document.getElementById(sectionId);
+        heading?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Keyboard and screen reader users continue in the section they jumped to.
+        heading?.focus({ preventScroll: true });
     }
 
     updateFormStatusBar() {
@@ -325,9 +334,23 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
 
     /**
      * Leaves the editor, equivalent to pressing the back button of the browser: back to where the user came from, else to the lecture's detail page
-     * when it exists, else to the lecture list. Unsaved changes of the lecture details are not dropped silently; the unsaved changes guard asks first.
+     * when it exists, else to the lecture list. Unsaved changes of the details or the content are not dropped silently; the user is asked first.
      */
     previousState() {
+        if (!this.hasUnsavedChanges()) {
+            this.leave();
+            return;
+        }
+        // Ask before navigating: a back navigation that the unsaved changes guard cancels would leave the editor in the history entry it left.
+        this.confirmDiscardChanges().subscribe((discard) => {
+            if (discard) {
+                this.shouldDisplayDismissWarning = false;
+                this.leave();
+            }
+        });
+    }
+
+    private leave(): void {
         const lectureListUrl = ['course-management', this.lecture().course!.id!.toString(), 'lectures'];
         if (this.openedAfterCreation) {
             // Going back could leave Artemis: the creation page this editor replaced may have opened the browser tab.
@@ -335,6 +358,22 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             return;
         }
         this.navigationUtilService.navigateBackWithOptional(lectureListUrl, this.lecture().id?.toString());
+    }
+
+    /**
+     * Enter in a single-line field of the details or the period saves the details, as the form of the page did.
+     * @param event the keydown event
+     */
+    onEnterInDetails(event: Event): void {
+        const inDetails = [this.detailsSection(), this.periodSection()].some((section) => section?.nativeElement.contains(event.target as Node));
+        if (!inDetails || !isSingleLineField(event.target) || event.defaultPrevented) {
+            return;
+        }
+        if (!this.isChangeMadeToTitleOrPeriodSection() || this.saveBlockedReason() || this.isSaving()) {
+            return;
+        }
+        event.preventDefault();
+        this.save();
     }
 
     /**
@@ -386,13 +425,35 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
         } else {
             // A saved lecture can hold content, which is added in its editor. The router creates that editor anew for the edit route, so the
             // creation page is left without asking. Replacing it in the history lets the browser's back button skip the now empty form.
-            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit'], {
-                replaceUrl: true,
-                state: { [DETAILS_SAVED_AT_STATE_KEY]: dayjs().toISOString() },
-            });
+            void this.router
+                .navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit'], {
+                    replaceUrl: true,
+                    state: { [DETAILS_SAVED_AT_STATE_KEY]: dayjs().toISOString() },
+                })
+                .then(
+                    (navigated) => {
+                        if (!navigated) {
+                            this.keepCreatedLecture(lecture.id!);
+                        }
+                    },
+                    () => this.keepCreatedLecture(lecture.id!),
+                );
         }
 
         this.calendarService.reloadEvents();
+    }
+
+    /**
+     * Stays on the creation page when its editor could not be opened. The lecture exists now, so a second Save updates it instead of creating another one.
+     * @param lectureId the id of the created lecture
+     */
+    private keepCreatedLecture(lectureId: number): void {
+        const createdLecture = deepClone(this.lecture());
+        createdLecture.id = lectureId;
+        this.lecture.set(createdLecture);
+        this.lectureOnInit = deepClone(createdLecture);
+        this.updateIsChangesMadeToTitleOrPeriodSection();
+        this.shouldDisplayDismissWarning = true;
     }
 
     /**

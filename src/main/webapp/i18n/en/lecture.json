@@ -158,7 +158,8 @@
                 "failed": "Not saved. Your changes are kept.",
                 "retry": "Retry",
                 "discard": "Discard change and close",
-                "failedAfterLeaving": "A change of lecture content could not be saved. Open the lecture again to check its content."
+                "failedAfterLeaving": "A change of lecture content could not be saved. Open the lecture again to check its content.",
+                "unconfirmedContent": "Save or discard the new file or video URL first."
             }
         },
         "attachment": {

@@ -82,7 +82,7 @@ describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
     let wizardUnitComponent: LectureUpdateUnitsComponent;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
-    let unitManagementComponentMock: Pick<LectureUnitManagementComponent, 'loadData' | 'replaceLectureUnit'>;
+    let unitManagementComponentMock: Pick<LectureUnitManagementComponent, 'loadData' | 'replaceLectureUnit' | 'focusEditButton'>;
 
     const getAttachmentVideoUnitPayload = async (formData: FormData) => {
         const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
@@ -93,6 +93,7 @@ describe('LectureUpdateUnitsComponent', () => {
         unitManagementComponentMock = {
             loadData: vi.fn(),
             replaceLectureUnit: vi.fn(),
+            focusEditButton: vi.fn(),
         };
 
         wizardUnitComponent.unitManagementComponent = signal(unitManagementComponentMock as LectureUnitManagementComponent).asReadonly() as Signal<
@@ -161,7 +162,9 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.componentRef.setInput('lecture', lecture);
 
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        wizardUnitComponent.editFormContainer = computed(() => ({ nativeElement: { scrollIntoView: vi.fn() } }) as unknown as ElementRef) as Signal<ElementRef | undefined>;
+        wizardUnitComponent.editFormContainer = computed(() => ({ nativeElement: { scrollIntoView: vi.fn(), querySelector: vi.fn() } }) as unknown as ElementRef) as Signal<
+            ElementRef | undefined
+        >;
         mockUnitManagementComponent();
     });
 
@@ -1150,11 +1153,60 @@ describe('LectureUpdateUnitsComponent', () => {
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
 
-            wizardUnitComponent.discardInvalidChange();
+            wizardUnitComponent.discardUnsavedChange();
 
             expect(wizardUnitComponent.editingUnitId()).toBeUndefined();
             expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
             expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should let the user discard a change that failed to save, and continue at the Edit button of the item', () => {
+            vi.spyOn(textUnitService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+            expect(wizardUnitComponent.autosaveState().kind).toBe('failed');
+
+            wizardUnitComponent.discardUnsavedChange();
+            TestBed.tick();
+
+            expect(wizardUnitComponent.editingUnitId()).toBeUndefined();
+            expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
+            expect(unitManagementComponentMock.focusEditButton).toHaveBeenCalledExactlyOnceWith(3);
+        });
+
+        it('should continue in the first field of an item that opens', () => {
+            const firstField = { focus: vi.fn() };
+            wizardUnitComponent.editFormContainer = computed(
+                () => ({ nativeElement: { scrollIntoView: vi.fn(), querySelector: vi.fn(() => firstField) } }) as unknown as ElementRef,
+            ) as Signal<ElementRef | undefined>;
+
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            vi.advanceTimersByTime(100);
+
+            expect(firstField.focus).toHaveBeenCalledExactlyOnceWith({ preventScroll: true });
+        });
+
+        it('should save a waiting change at once on Enter in a single-line field of the item, but not on Enter in its markdown editor', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const editor = document.createElement('div');
+            const nameField = document.createElement('input');
+            nameField.type = 'text';
+            const markdownField = document.createElement('textarea');
+            editor.append(nameField, markdownField);
+            (wizardUnitComponent as unknown as { inPlaceEditor: Signal<ElementRef<HTMLElement>> }).inPlaceEditor = signal(new ElementRef(editor)).asReadonly();
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+            const enterIn = (target: HTMLElement) => wizardUnitComponent.onEditorEnter({ target, defaultPrevented: false } as unknown as Event);
+
+            enterIn(markdownField);
+            const outsideField = document.createElement('input');
+            outsideField.type = 'text';
+            enterIn(outsideField);
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            enterIn(nameField);
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(wizardUnitComponent.editingUnitId()).toBe(3);
         });
 
         it('should report text the markdown editor has not reported yet before saving and closing', () => {
@@ -1214,10 +1266,13 @@ describe('LectureUpdateUnitsComponent', () => {
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
             wizardUnitComponent.saveAndCloseEditor();
+            TestBed.tick();
 
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(wizardUnitComponent.editingUnitId()).toBeUndefined();
             expect(wizardUnitComponent.isTextUnitFormOpen()).toBe(false);
+            // The Save button is gone with the form, so the keyboard focus continues at the Edit button of the item.
+            expect(unitManagementComponentMock.focusEditButton).toHaveBeenCalledExactlyOnceWith(3);
             vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
             expect(updateSpy).toHaveBeenCalledOnce();
         });
@@ -1452,7 +1507,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 expect(wizardUnitComponent.editingUnitId()).toBeUndefined();
             });
 
-            it('should send the details again when the user returns to what runs while a confirmed upload waits', async () => {
+            it('should send a confirmed upload that waits with the newest details, also when they return to what runs', async () => {
                 const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
                 updateSpy.mockReturnValueOnce(running);
                 const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
@@ -1463,8 +1518,81 @@ describe('LectureUpdateUnitsComponent', () => {
                 running.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
                 running.complete();
 
+                // The upload carries the details, so they need no request of their own.
+                expect(updateSpy).toHaveBeenCalledTimes(2);
+                expect(updateSpy.mock.calls[1][2].get('file')).toBeInstanceOf(File);
+                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[1][2])).resolves.toMatchObject({ description: 'B' });
+                expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
+            });
+
+            it('should send a retried upload with the details saved meanwhile, not with those of the confirmation', async () => {
+                const responseUnit = new AttachmentVideoUnit();
+                responseUnit.attachment = { id: 8, link: 'attachments/slides-v2.pdf', version: 2 } as Attachment;
+                updateSpy.mockReset();
+                updateSpy.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 }))).mockReturnValue(of(new HttpResponse({ body: responseUnit, status: 200 })));
+                const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
+
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'Week 1' }, newFile));
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1 and 2' }, newFile), immediate: true, valid: true });
+                expect(updateSpy).toHaveBeenCalledTimes(2);
+
+                wizardUnitComponent.retryAutosave();
+
                 expect(updateSpy).toHaveBeenCalledTimes(3);
-                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[2][2])).resolves.toMatchObject({ description: 'B' });
+                expect(updateSpy.mock.calls[2][2].get('file')).toBeInstanceOf(File);
+                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[2][2])).resolves.toMatchObject({
+                    description: 'Week 1 and 2',
+                    attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD,
+                });
+            });
+
+            it('should still save a change of the details that waited behind an upload that failed', async () => {
+                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                updateSpy.mockReset();
+                updateSpy
+                    .mockReturnValueOnce(running)
+                    .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The file is too big' } })))
+                    .mockReturnValue(of(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 })));
+                const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
+
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ description: 'Week 1' }, newFile));
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1 and 2' }, newFile), immediate: true, valid: true });
+                running.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                running.complete();
+
+                expect(updateSpy).toHaveBeenCalledTimes(3);
+                expect(updateSpy.mock.calls[2][2].has('file')).toBe(false);
+                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[2][2])).resolves.toMatchObject({ description: 'Week 1 and 2' });
+                // Only the file waits for Retry.
+                expect(wizardUnitComponent.autosaveState()).toEqual({ kind: 'failed', reason: 'The file is too big' });
+                expect(wizardUnitComponent.isSaving()).toBe(false);
+            });
+
+            it('should tell the form which confirmed file is being sent, which cannot be taken back anymore', () => {
+                const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
+                updateSpy.mockReturnValueOnce(running);
+
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({}, new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' })));
+                expect(wizardUnitComponent.savingConfirmed()).toBe('file');
+
+                running.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                running.complete();
+                expect(wizardUnitComponent.savingConfirmed()).toBeUndefined();
+            });
+
+            it('should keep the item open with a hint while a new file or video URL was neither confirmed nor discarded', () => {
+                formMock.hasUnconfirmedContent.mockReturnValue(true);
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: false, valid: true });
+
+                wizardUnitComponent.saveAndCloseEditor();
+                wizardUnitComponent.onCreateLectureUnit(LectureUnitType.TEXT);
+
+                expect(wizardUnitComponent.editingUnitId()).toBe(5);
+                expect(wizardUnitComponent.isTextUnitFormOpen()).toBe(false);
+                expect(wizardUnitComponent.showsUnconfirmedContentHint()).toBe(true);
+                // What can be saved is saved anyway.
+                expect(updateSpy).toHaveBeenCalledOnce();
             });
 
             it('should ask before a new file or video link that was not confirmed is left', () => {

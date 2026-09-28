@@ -56,7 +56,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         expect(lectureResponseFromEdit.status()).toBe(200);
         // Saving keeps the editor open and confirms the save in its footer; nothing is left to cancel, so the footer offers Close.
         await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lectureFromEdit.id}/edit`);
-        await expect(lectureCreation.getSaveStatus()).toContainText('saved');
+        await expect(lectureCreation.getSaveStatus()).toContainText('Lecture details saved at');
         await expect(lectureCreation.getLeaveButton()).toHaveText('Close');
 
         await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/lectures/${lectureFromEdit.id}`);

@@ -4,7 +4,7 @@
     }
     <p class="create-exercise-unit-hint m-0 text-sm" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
     <div class="overflow-x-auto">
-        <table tumAetUiTable size="small" rowHover [sortField]="predicate()" [sortOrder]="reverse() ? -1 : 1" (sortChange)="onSortChange($event)">
+        <table tumAetUiTable size="small" rowHover [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
                 <tr>
                     <th class="w-10"><span class="sr-only" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.select"></span></th>

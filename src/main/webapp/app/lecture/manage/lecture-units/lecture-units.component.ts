@@ -1,10 +1,10 @@
-import { Component, DestroyRef, ElementRef, OnInit, computed, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faFileArrowUp, faScissors, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -40,6 +40,7 @@ import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+import { isSingleLineField } from 'app/lecture/manage/single-line-field.util';
 
 /** How long typing has to pause before an item that is edited in place is saved. */
 export const AUTOSAVE_DELAY_MS = 1500;
@@ -55,19 +56,23 @@ export type UnitAutosaveState =
     /** The server did not take the change; it is kept for a retry. */
     | { kind: 'failed'; reason?: string };
 
+/** A file or video link the user confirmed, which a later change of the details never replaces and the form takes over once it is saved. */
+interface ConfirmedUnitSave {
+    confirmed: ConfirmedContent;
+    /** The form when the user confirmed; its file or video link is sent, with the details that are newest when the request starts. */
+    data: AttachmentVideoUnitFormData;
+}
+
 interface PendingUnitSave {
     /** The details of the item the request sends, compared with what was sent last, so an unchanged state sends nothing. */
     key: string;
     request: () => Observable<LectureUnit>;
-    /** A file or video link the user confirmed, which a later change of the details never replaces and the form takes over once it is saved. */
-    confirmed?: ConfirmedContent;
-    /** The file a confirmed upload sends. */
-    file?: File;
+    confirmed?: ConfirmedUnitSave;
 }
 
 /** A confirmed save that failed; it is sent again only on Retry or Save, not with every later change. */
 interface HeldUnitSave {
-    save: PendingUnitSave;
+    save: ConfirmedUnitSave;
     reason?: string;
 }
 
@@ -78,6 +83,8 @@ const AUTOSAVE_REQUEST_CONTEXT = () => new HttpContext().set(SKIP_HTTP_ERROR_ALE
     selector: 'jhi-lecture-update-units',
     templateUrl: './lecture-units.component.html',
     styleUrl: './lecture-units.component.scss',
+    // Enter is handled on the host: the form of the item that is edited in place is no control itself, so it takes no key handlers.
+    host: { '(keydown.enter)': 'onEditorEnter($event)' },
     imports: [
         TranslateDirective,
         LectureUnitManagementComponent,
@@ -92,6 +99,7 @@ const AUTOSAVE_REQUEST_CONTEXT = () => new HttpContext().set(SKIP_HTTP_ERROR_ALE
         FaIconComponent,
         TumAetUiButtonDirective,
         TumAetUiFormFieldComponent,
+        TumAetUiMessageComponent,
         TumAetUiSelectComponent,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
@@ -105,6 +113,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly injector = inject(Injector);
 
     protected readonly faScissors = faScissors;
     protected readonly faSpinner = faSpinner;
@@ -116,6 +125,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     unitManagementComponent = viewChild(LectureUnitManagementComponent);
     editFormContainer = viewChild<ElementRef<HTMLElement>>('editFormContainer');
+    private readonly inPlaceEditor = viewChild<ElementRef<HTMLElement>>('inPlaceEditor');
     private readonly otherPdfInput = viewChild<ElementRef<HTMLInputElement>>('otherPdfInput');
 
     textUnitForm = viewChild(TextUnitFormComponent);
@@ -169,13 +179,18 @@ export class LectureUpdateUnitsComponent implements OnInit {
     /** The newest change of the details, which replaces an older one that was not sent yet. */
     private readonly pendingDetails = signal<PendingUnitSave | undefined>(undefined);
     /** Confirmed files and video links in the order they were confirmed; they are sent before the details. */
-    private readonly pendingConfirmed = signal<PendingUnitSave[]>([]);
+    private readonly pendingConfirmed = signal<ConfirmedUnitSave[]>([]);
     private readonly heldConfirmed = signal<HeldUnitSave[]>([]);
-    /** The item whose save runs; a save of an item that was deleted meanwhile does not count for the item opened next. */
-    private readonly inFlightUnitId = signal<number | undefined>(undefined);
-    private readonly isSaveInFlight = computed(() => this.inFlightUnitId() !== undefined && this.inFlightUnitId() === this.editingUnitId());
+    /** The save that runs and its item; a save of an item that was deleted meanwhile does not count for the item opened next. */
+    private readonly inFlight = signal<{ unitId?: number; confirmed?: ConfirmedContent } | undefined>(undefined);
+    private readonly isSaveInFlight = computed(() => this.inFlight()?.unitId !== undefined && this.inFlight()?.unitId === this.editingUnitId());
+    /** The confirmed file or video link whose request runs, which the form can no longer take back. */
+    readonly savingConfirmed = computed(() => (this.isSaveInFlight() ? this.inFlight()?.confirmed : undefined));
     /** Whether the form reported last that it cannot be saved as it is. */
     private readonly isFormInvalid = signal(false);
+    /** Set when Save, opening another item or adding one waited for a new file or video link that the user did not confirm or discard. */
+    private readonly isCloseBlocked = signal(false);
+    readonly showsUnconfirmedContentHint = computed(() => this.isCloseBlocked() && !!this.attachmentVideoUnitForm()?.hasUnconfirmedContent());
     /** A failed save of the details, which the next change or Retry sends again. */
     private readonly saveFailure = signal<{ reason?: string } | undefined>(undefined);
     private readonly lastSavedAt = signal<dayjs.Dayjs | undefined>(undefined);
@@ -212,6 +227,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
     private lastSavedKey?: string;
     /** The details sent last, which the server has or is about to have. */
     private lastRequestedKey?: string;
+    /** The newest details of the file item that can be saved, which a confirmed file or video link is sent with. */
+    private latestAttachmentDetails?: AttachmentVideoUnitFormData;
     private autosaveTimer?: ReturnType<typeof setTimeout>;
     /** Runs once the item is saved, such as closing its form after Save. */
     private afterAutosave?: () => void;
@@ -439,14 +456,18 @@ export class LectureUpdateUnitsComponent implements OnInit {
             }
             case LectureUnitType.ATTACHMENT_VIDEO: {
                 this.attachmentVideoUnitFormData.set(this.toAttachmentVideoUnitFormData(unit));
+                this.latestAttachmentDetails = this.attachmentVideoUnitFormData();
                 this.lastSavedKey = this.attachmentVideoUnitSaveKey(this.attachmentVideoUnitFormData()!);
                 this.lastRequestedKey = this.lastSavedKey;
                 break;
             }
         }
 
-        // Scroll to the edit form after a brief delay to allow the form to render
-        setTimeout(() => this.scrollToEditForm(), 100);
+        // Scroll to the edit form after a brief delay to allow the form to render, and continue typing in its first field.
+        setTimeout(() => {
+            this.scrollToEditForm();
+            this.editFormContainer()?.nativeElement.querySelector<HTMLElement>('input:not([type="file"]), textarea')?.focus({ preventScroll: true });
+        }, 100);
     }
 
     private toAttachmentVideoUnitFormData(unit: AttachmentVideoUnit): AttachmentVideoUnitFormData {
@@ -471,13 +492,24 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * @param then runs after the form closed, such as opening the next item
      */
     saveAndCloseEditor(then?: () => void): void {
+        const unitId = this.editingUnitId();
         const close = () => {
             this.closeEditor();
-            then?.();
+            if (then) {
+                then();
+            } else {
+                this.focusEditButtonOf(unitId);
+            }
         };
         // The markdown editor reports typing only after a short pause, which closing the form would cut off.
         this.textUnitForm()?.flushPendingEdits();
         if (this.isFormInvalid()) {
+            return;
+        }
+        // A new file or video link is saved only on confirmation, so closing would drop it without asking; the rest is saved already.
+        if (this.attachmentVideoUnitForm()?.hasUnconfirmedContent()) {
+            this.isCloseBlocked.set(true);
+            this.flushAutosave();
             return;
         }
         // Save is a retry of a confirmed file or link that failed.
@@ -490,9 +522,18 @@ export class LectureUpdateUnitsComponent implements OnInit {
         close();
     }
 
-    /** Closes the item without the change that makes its form invalid; everything saved before stays. */
-    discardInvalidChange(): void {
+    /** Closes the item without the change that cannot be saved or failed to save; everything saved before stays. */
+    discardUnsavedChange(): void {
+        const unitId = this.editingUnitId();
         this.closeEditor();
+        this.focusEditButtonOf(unitId);
+    }
+
+    /** The form and the Save button of the item are gone once it closes, so the keyboard focus continues at its Edit button. */
+    private focusEditButtonOf(unitId: number | undefined): void {
+        if (unitId !== undefined) {
+            afterNextRender(() => this.unitManagementComponent()?.focusEditButton(unitId), { injector: this.injector });
+        }
     }
 
     private closeEditor(): void {
@@ -508,9 +549,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.pendingConfirmed.set([]);
         this.heldConfirmed.set([]);
         this.isFormInvalid.set(false);
+        this.isCloseBlocked.set(false);
         this.saveFailure.set(undefined);
         this.lastSavedAt.set(undefined);
         this.afterAutosave = undefined;
+        this.latestAttachmentDetails = undefined;
     }
 
     onTextUnitChanged(change: UnitFormChange<TextUnitFormData>): void {
@@ -522,6 +565,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     onAttachmentVideoUnitChanged(change: UnitFormChange<AttachmentVideoUnitFormData>): void {
+        if (change.valid) {
+            this.latestAttachmentDetails = change.data;
+        }
         this.queueDetails(change, {
             key: this.attachmentVideoUnitSaveKey(change.data),
             request: () => this.saveAttachmentVideoUnit(change.data, { withFile: false, withVideoSource: false }),
@@ -530,21 +576,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     /** Saves the file the user confirmed as the next version of the item, and notifies students if they asked for it. */
     onAttachmentFileUploadRequested(data: AttachmentVideoUnitFormData): void {
-        this.queueConfirmed({
-            key: this.attachmentVideoUnitSaveKey(data),
-            request: () => this.saveAttachmentVideoUnit(data, { withFile: true, withVideoSource: false }),
-            confirmed: 'file',
-            file: data.fileProperties.file,
-        });
+        this.queueConfirmed({ confirmed: 'file', data });
     }
 
     /** Saves the video link the user confirmed. */
     onVideoSourceSaveRequested(data: AttachmentVideoUnitFormData): void {
-        this.queueConfirmed({
-            key: this.attachmentVideoUnitSaveKey(data),
-            request: () => this.saveAttachmentVideoUnit(data, { withFile: false, withVideoSource: true }),
-            confirmed: 'videoSource',
-        });
+        this.queueConfirmed({ confirmed: 'videoSource', data });
     }
 
     /** Takes back a confirmed file or video link that waits or failed, because the user kept the current one or chose another. */
@@ -557,6 +594,18 @@ export class LectureUpdateUnitsComponent implements OnInit {
     onEditorFocusOut(): void {
         this.textUnitForm()?.flushPendingEdits();
         this.flushAutosave();
+    }
+
+    /**
+     * Enter in a single-line field saves a waiting change at once. The form of an item edited in place has no submit button, so the
+     * browser does not submit it on Enter.
+     * @param event the keydown event
+     */
+    onEditorEnter(event: Event): void {
+        const inEditor = !!this.inPlaceEditor()?.nativeElement.contains(event.target as Node);
+        if (inEditor && isSingleLineField(event.target) && !event.defaultPrevented) {
+            this.onEditorFocusOut();
+        }
     }
 
     /** Sends the change again after a failed save, including a confirmed file or link. */
@@ -579,9 +628,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
         this.clearAutosaveTimer();
         this.isFormInvalid.set(!change.valid);
-        // The details the server ends up with: those of the last confirmed save that waits, else those sent last.
-        const expectedKey = this.pendingConfirmed().at(-1)?.key ?? this.lastRequestedKey;
-        if (!change.valid || pending.key === expectedKey) {
+        // A change back to the details sent last needs no request. A confirmed save that waits sends the newest details anyway.
+        if (!change.valid || pending.key === this.lastRequestedKey) {
             // An invalid form waits until it is corrected; a change back to what is sent needs no request, even while that request runs.
             this.pendingDetails.set(undefined);
             // No change of the details is left to retry.
@@ -596,10 +644,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
     }
 
-    private queueConfirmed(pending: PendingUnitSave): void {
+    private queueConfirmed(pending: ConfirmedUnitSave): void {
         if (!this.editingUnit()) {
             return;
         }
+        this.latestAttachmentDetails = pending.data;
         // A newer confirmation of the same kind replaces one that waits or failed; a change of the details never does.
         this.heldConfirmed.update((held) => held.filter((failed) => failed.save.confirmed !== pending.confirmed));
         this.pendingConfirmed.update((waiting) => [...waiting.filter((save) => save.confirmed !== pending.confirmed), pending]);
@@ -625,11 +674,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
         const unitId = this.editingUnitId();
         this.lastRequestedKey = pending.key;
-        this.inFlightUnitId.set(unitId);
+        this.inFlight.set({ unitId, confirmed: pending.confirmed?.confirmed });
         this.saveFailure.set(undefined);
         const requestDone = () => {
-            if (this.inFlightUnitId() === unitId) {
-                this.inFlightUnitId.set(undefined);
+            if (this.inFlight()?.unitId === unitId) {
+                this.inFlight.set(undefined);
             }
         };
         // Not tied to the page: a save that already runs completes even when the user leaves.
@@ -660,6 +709,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 this.lastRequestedKey = this.lastSavedKey;
                 this.afterAutosave = undefined;
                 this.keepForRetry(pending, error?.error?.title);
+                if (pending.confirmed) {
+                    // Only the file or link waits for Retry; a change of the details that waited behind it is still sent.
+                    this.flushAutosave();
+                }
             },
         });
     }
@@ -669,7 +722,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         const [confirmed, ...laterConfirmed] = this.pendingConfirmed();
         if (confirmed) {
             this.pendingConfirmed.set(laterConfirmed);
-            return confirmed;
+            return this.confirmedRequest(confirmed);
         }
         const details = this.pendingDetails();
         this.pendingDetails.set(undefined);
@@ -681,9 +734,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * held until Retry or Save, so later changes do not send it again and again.
      */
     private keepForRetry(pending: PendingUnitSave, reason: string | undefined): void {
-        if (pending.confirmed) {
-            if (!this.pendingConfirmed().some((save) => save.confirmed === pending.confirmed)) {
-                this.heldConfirmed.update((held) => [...held.filter((failed) => failed.save.confirmed !== pending.confirmed), { save: pending, reason }]);
+        const confirmed = pending.confirmed;
+        if (confirmed) {
+            if (!this.pendingConfirmed().some((save) => save.confirmed === confirmed.confirmed)) {
+                this.heldConfirmed.update((held) => [...held.filter((failed) => failed.save.confirmed !== confirmed.confirmed), { save: confirmed, reason }]);
             }
             return;
         }
@@ -697,11 +751,35 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     private takeOverSavedContent(pending: PendingUnitSave, savedUnit: AttachmentVideoUnit): void {
         const form = this.attachmentVideoUnitForm();
-        if (pending.confirmed === 'file') {
-            form?.takeOverSavedFile(savedUnit.attachment?.link, savedUnit.attachment?.version, pending.file);
-        } else if (pending.confirmed === 'videoSource') {
+        if (pending.confirmed?.confirmed === 'file') {
+            form?.takeOverSavedFile(savedUnit.attachment?.link, savedUnit.attachment?.version, pending.confirmed.data.fileProperties.file);
+        } else if (pending.confirmed?.confirmed === 'videoSource') {
             form?.takeOverSavedVideoSource(savedUnit.videoSource);
         }
+    }
+
+    /**
+     * Builds the request of a confirmed file or video link when it starts, with the newest details that can be saved. So a retry does not
+     * send the details of the time of the confirmation, which would undo a change that was saved meanwhile.
+     */
+    private confirmedRequest(confirmed: ConfirmedUnitSave): PendingUnitSave {
+        const details = (this.latestAttachmentDetails ?? confirmed.data).formProperties;
+        const data: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: details.name,
+                description: details.description,
+                releaseDate: details.releaseDate,
+                competencyLinks: details.competencyLinks,
+                videoSource: confirmed.data.formProperties.videoSource,
+            },
+            fileProperties: confirmed.data.fileProperties,
+        };
+        const withFile = confirmed.confirmed === 'file';
+        return {
+            key: this.attachmentVideoUnitSaveKey(data),
+            request: () => this.saveAttachmentVideoUnit(data, { withFile, withVideoSource: !withFile }),
+            confirmed,
+        };
     }
 
     private clearAutosaveTimer(): void {

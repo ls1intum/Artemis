@@ -209,16 +209,19 @@ describe('CreateExerciseUnitComponent', () => {
             expect(createExerciseUnitComponent.exercisesToCreateUnitFor()).toEqual([]);
         });
 
-        it('should sort by the column the user chose', () => {
+        it.each([
+            [1, true],
+            [-1, false],
+        ])('should sort by the column the user chose in the direction it shows (order %s)', (order, ascending) => {
             const sortService = TestBed.inject(SortService);
             const sortSpy = vi.spyOn(sortService, 'sortByProperty');
             loadCourse([textExercise, modelingExercise]);
 
-            createExerciseUnitComponent.onSortChange({ field: 'title', order: -1 });
+            createExerciseUnitComponent.onSortChange({ field: 'title', order });
 
             expect(createExerciseUnitComponent.predicate()).toBe('title');
-            expect(createExerciseUnitComponent.reverse()).toBe(true);
-            expect(sortSpy).toHaveBeenCalledWith(expect.any(Array), 'title', true);
+            expect(createExerciseUnitComponent.ascending()).toBe(ascending);
+            expect(sortSpy).toHaveBeenLastCalledWith(expect.any(Array), 'title', ascending);
         });
 
         it.each([

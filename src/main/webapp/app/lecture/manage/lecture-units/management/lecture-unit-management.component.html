@@ -1,6 +1,7 @@
 @if (isLoading()) {
-    <div class="flex justify-center py-6">
-        <fa-icon [icon]="faSpinner" animation="spin" size="2x" [attr.aria-label]="'loading' | artemisTranslate" />
+    <div class="flex justify-center py-6" role="status">
+        <fa-icon [icon]="faSpinner" animation="spin" size="2x" aria-hidden="true" />
+        <span class="sr-only" jhiTranslate="loading"></span>
     </div>
 }
 @if (!isLoading() && lecture(); as currentLecture) {
@@ -30,10 +31,14 @@
                     >
                         <div class="flex flex-wrap items-center gap-x-3.5 gap-y-2 py-2.5 ps-2 pe-3.5">
                             <fa-icon [icon]="faGripVertical" class="lecture-unit-grip hidden sm:inline" [class.cursor-grab]="editingUnitId() === undefined" aria-hidden="true" />
-                            <fa-icon [icon]="getTypeIcon(lectureUnit)" [fixedWidth]="true" class="lecture-unit-type-icon text-lg" aria-hidden="true" />
-                            <div class="flex min-w-0 grow basis-48 flex-col gap-1.5">
+                            <fa-icon
+                                [icon]="getTypeIcon(lectureUnit)"
+                                [fixedWidth]="true"
+                                class="lecture-unit-type-icon text-lg max-sm:mt-1 max-sm:self-start"
+                                aria-hidden="true"
+                            />
+                            <div class="flex min-w-0 grow basis-40 flex-col gap-1.5">
                                 <div class="flex min-w-0 flex-wrap items-baseline gap-x-2">
-                                    <span class="lecture-unit-type text-xs font-medium uppercase" [jhiTranslate]="getTypeLabelKey(lectureUnit)"></span>
                                     <h4 class="m-0 min-w-0 text-base font-semibold break-words sm:truncate" data-testid="lecture-unit-name" [title]="unitName">{{ unitName }}</h4>
                                     @if (isEditing) {
                                         <tumaet-ui-tag severity="info" data-testid="lecture-unit-editing-tag"
@@ -41,7 +46,9 @@
                                         ></tumaet-ui-tag>
                                     }
                                 </div>
-                                <div class="flex flex-wrap gap-1.5" data-testid="lecture-unit-tags">
+                                <!-- The kind of item leads the row below the title, so the titles of all items start at the same place. -->
+                                <div class="flex flex-wrap items-center gap-1.5" data-testid="lecture-unit-tags">
+                                    <span class="lecture-unit-type me-1 text-xs font-medium uppercase" [jhiTranslate]="getTypeLabelKey(lectureUnit)"></span>
                                     @let releaseDate = getLectureUnitReleaseDate(lectureUnit);
                                     @if (releaseDate && isReleasedLater(lectureUnit)) {
                                         <tumaet-ui-tag severity="warn">
@@ -185,6 +192,7 @@
                                     @let editLabel = 'entity.action.edit' | artemisTranslate;
                                     @if (emitEditEvents()) {
                                         <button
+                                            #editButton
                                             tumAetUiButton
                                             type="button"
                                             severity="secondary"
@@ -192,6 +200,7 @@
                                             size="small"
                                             class="edit"
                                             data-testid="lecture-unit-edit"
+                                            [attr.data-unit-id]="lectureUnit.id"
                                             [attr.aria-label]="editLabel"
                                             [tumAetUiTooltip]="editLabel"
                                             tumAetUiTooltipDescribesHost="false"
@@ -255,7 +264,7 @@
             <p class="lecture-unit-empty m-0" data-testid="lecture-unit-empty" jhiTranslate="artemisApp.lectureUnit.management.empty"></p>
         }
         @if (showDropZone()) {
-            <jhi-pdf-drop-zone title="artemisApp.lecture.pdfUpload.dropZoneContentTitle" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+            <jhi-pdf-drop-zone heading="artemisApp.lecture.pdfUpload.dropZoneContentTitle" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
         }
     </div>
 }

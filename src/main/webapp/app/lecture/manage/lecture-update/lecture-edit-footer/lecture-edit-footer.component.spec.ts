@@ -34,7 +34,11 @@ describe('LectureEditFooterComponent', () => {
     });
 
     function setInputs(
-        inputs: Partial<Record<'hasChanges' | 'isSaving' | 'isEditMode', boolean>> & { savedAt?: dayjs.Dayjs; changedSections?: string[]; invalidReason?: string },
+        inputs: Partial<Record<'hasChanges' | 'hasUnsavedContent' | 'isSaving' | 'isEditMode', boolean>> & {
+            savedAt?: dayjs.Dayjs;
+            changedSections?: string[];
+            invalidReason?: string;
+        },
     ): void {
         for (const [name, value] of Object.entries(inputs)) {
             fixture.componentRef.setInput(name, value);
@@ -66,6 +70,14 @@ describe('LectureEditFooterComponent', () => {
 
         element('lecture-edit-save').click();
         expect(saveSpy).not.toHaveBeenCalled();
+    });
+
+    it('should offer Cancel and name the content when only content could not be saved, which Save does not cover', () => {
+        setInputs({ hasChanges: false, hasUnsavedContent: true, changedSections: ['artemisApp.lecture.sections.units'] });
+
+        expect(text('lecture-edit-leave')).toBe('entity.action.cancel');
+        expect(text('lecture-edit-footer-status')).toContain('artemisApp.lecture.sections.units');
+        expect(element('lecture-edit-save').getAttribute('aria-disabled')).toBe('true');
     });
 
     it('should offer Cancel, name the changed sections and save once something changed', () => {

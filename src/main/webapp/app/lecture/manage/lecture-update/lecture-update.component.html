@@ -57,9 +57,14 @@
             <jhi-lecture-series-create [existingLectures]="existingLectures()" [courseId]="currentCourseId" />
         } @else {
             <div class="flex flex-col gap-6">
-                <section class="lecture-update-section flex flex-col gap-6 rounded-lg p-3.5 sm:p-6" aria-labelledby="artemisApp.lecture.sections.title">
+                <section #detailsSection class="lecture-update-section flex flex-col gap-6 rounded-lg p-3.5 sm:p-6" aria-labelledby="artemisApp.lecture.sections.title">
                     <div class="flex flex-col gap-1">
-                        <h3 id="artemisApp.lecture.sections.title" class="m-0 scroll-mt-4 text-lg font-semibold" jhiTranslate="artemisApp.lecture.sections.title"></h3>
+                        <h3
+                            id="artemisApp.lecture.sections.title"
+                            tabindex="-1"
+                            class="m-0 scroll-mt-4 text-lg font-semibold"
+                            jhiTranslate="artemisApp.lecture.sections.title"
+                        ></h3>
                         <p class="lecture-update-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.sections.titleDescription"></p>
                     </div>
                     <jhi-lecture-title-channel-name [lecture]="lecture()" (lectureChange)="onLectureChange($event)" />
@@ -92,7 +97,7 @@
                         </button>
                     </div>
                 </section>
-                <section class="lecture-update-section rounded-lg p-3.5 sm:p-6">
+                <section #periodSection class="lecture-update-section rounded-lg p-3.5 sm:p-6">
                     <jhi-lecture-timeline
                         [(startDate)]="lecture().startDate"
                         [(endDate)]="lecture().endDate"
@@ -114,7 +119,8 @@
             [isSaving]="isSaving()"
             [invalidReason]="saveBlockedReason()"
             [savedAt]="lastSavedAt()"
-            [changedSections]="changedSections()"
+            [changedSections]="unsavedSections()"
+            [hasUnsavedContent]="!!unitSection()?.hasUnsavedContent()"
             [isEditMode]="isEditMode()"
             (save)="save()"
             (leave)="previousState()"

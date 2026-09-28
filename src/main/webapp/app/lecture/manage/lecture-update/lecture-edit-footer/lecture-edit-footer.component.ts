@@ -38,6 +38,8 @@ export class LectureEditFooterComponent {
     readonly savedAt = input<dayjs.Dayjs>();
     /** Translation keys of the sections that hold unsaved changes. */
     readonly changedSections = input<string[]>([]);
+    /** Content that could not be saved; the content saves itself, so Save does not cover it, but leaving would lose it. */
+    readonly hasUnsavedContent = input(false);
     /** Whether the lecture already exists, so its content can be edited on the page. */
     readonly isEditMode = input(false);
 
@@ -57,7 +59,7 @@ export class LectureEditFooterComponent {
         return this.invalidReason();
     });
 
-    protected readonly leaveLabel = computed(() => (this.hasChanges() ? 'entity.action.cancel' : 'entity.action.close'));
+    protected readonly leaveLabel = computed(() => (this.hasChanges() || this.hasUnsavedContent() ? 'entity.action.cancel' : 'entity.action.close'));
 
     // The save button is aria-disabled rather than disabled, so it stays focusable and can explain itself, which leaves it clickable.
     protected onSave(): void {

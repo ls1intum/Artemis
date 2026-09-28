@@ -53,7 +53,8 @@ export class CreateExerciseUnitComponent implements OnInit {
     private resolvedCourseId = signal<number | undefined>(undefined);
 
     readonly predicate = signal('type');
-    readonly reverse = signal(false);
+    /** Starts descending, which lists the exercises in the order this page always had. */
+    readonly ascending = signal(false);
     isLoading = signal(false);
 
     exercisesAvailableForUnitCreation = signal<Exercise[]>([]);
@@ -117,13 +118,13 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     onSortChange(event: TumAetUiTableSortEvent): void {
         this.predicate.set(event.field);
-        this.reverse.set(event.order < 0);
+        this.ascending.set(event.order > 0);
         this.sortRows();
     }
 
     sortRows() {
         const sorted = [...this.exercisesAvailableForUnitCreation()];
-        this.sortService.sortByProperty(sorted, this.predicate(), this.reverse());
+        this.sortService.sortByProperty(sorted, this.predicate(), this.ascending());
         this.exercisesAvailableForUnitCreation.set(sorted);
     }
 

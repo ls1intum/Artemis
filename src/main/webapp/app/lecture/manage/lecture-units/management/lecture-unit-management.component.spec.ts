@@ -45,7 +45,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 @Component({ selector: 'jhi-pdf-drop-zone', template: '' })
 class PdfDropZoneStubComponent {
     disabled = input<boolean>(false);
-    title = input<string>();
+    heading = input<string>();
 }
 
 /** Renders the list the way the lecture editor does, with the form of the unit that is edited in place. */
@@ -838,6 +838,16 @@ describe('LectureUnitManagementComponent', () => {
             queryAll('lecture-unit-save')[0].nativeElement.click();
 
             expect(host.saved).toEqual([expect.objectContaining({ id: textUnit.id })]);
+        });
+
+        it('should move the keyboard focus to the Edit button of a unit once its form closed', () => {
+            host.editingUnitId.set(undefined);
+            hostFixture.detectChanges();
+
+            list().focusEditButton(textUnit.id!);
+
+            expect(document.activeElement?.getAttribute('data-unit-id')).toBe(String(textUnit.id));
+            expect(document.activeElement?.getAttribute('data-testid')).toBe('lecture-unit-edit');
         });
 
         it('should keep the list and the form of the edited unit while the lecture loads again', () => {

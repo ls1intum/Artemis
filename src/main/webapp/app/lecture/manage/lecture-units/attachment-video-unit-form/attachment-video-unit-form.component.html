@@ -122,6 +122,7 @@
                                 variant="text"
                                 size="small"
                                 data-testid="keep-current-file-button"
+                                [disabled]="savingConfirmed() === 'file'"
                                 (click)="keepCurrentFile()"
                             >
                                 <fa-icon [icon]="faRotateLeft" />
@@ -135,35 +136,14 @@
                             [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementHint' | artemisTranslate"
                         />
                         @if (autosave()) {
-                            <!-- A new file is processed again, so an item edited in place saves it only when the user confirms it. -->
-                            <div class="mt-2 flex flex-col gap-3.5" data-testid="replacement-confirm">
-                                <div class="flex items-center gap-2">
-                                    <tumaet-ui-checkbox inputId="notify-students" [checked]="notifyStudents()" (checkedChange)="notifyStudents.set($event)" />
-                                    <label class="m-0" for="notify-students" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.notifyStudents"></label>
-                                </div>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <button
-                                        tumAetUiButton
-                                        type="button"
-                                        size="small"
-                                        data-testid="upload-new-version-button"
-                                        [disabled]="!canUploadFile()"
-                                        (click)="uploadNewFile()"
-                                    >
-                                        <fa-icon [icon]="faFileArrowUp" />
-                                        <span>{{
-                                            'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadVersion' | artemisTranslate: { version: nextFileVersion() }
-                                        }}</span>
-                                    </button>
-                                    <span class="text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadHint"></span>
-                                </div>
-                            </div>
+                            <ng-container [ngTemplateOutlet]="uploadConfirm" />
                         }
                     }
                 </div>
             } @else {
                 <div class="flex flex-wrap items-center gap-2">
                     <button
+                        #chooseFileButton
                         type="button"
                         tumAetUiButton
                         severity="secondary"
@@ -179,7 +159,25 @@
                     <span id="chosenFileName" class="min-w-0 truncate" aria-live="polite" data-testid="chosen-file-name" [title]="fileName() ?? ''">{{
                         fileName() ?? ('artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.noFileChosen' | artemisTranslate)
                     }}</span>
+                    @if (autosave() && hasNewFile()) {
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="text"
+                            size="small"
+                            data-testid="discard-new-file-button"
+                            [disabled]="savingConfirmed() === 'file'"
+                            (click)="keepCurrentFile()"
+                        >
+                            <fa-icon [icon]="faRotateLeft" />
+                            <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.discardNewFile"></span>
+                        </button>
+                    }
                 </div>
+                @if (autosave() && hasNewFile()) {
+                    <ng-container [ngTemplateOutlet]="uploadConfirm" />
+                }
             }
         </div>
         @if (isFileTooBig()) {
@@ -245,6 +243,7 @@
     @let videoSourceInvalid = !!videoSourceControl?.invalid && (!!videoSourceControl?.dirty || !!videoSourceControl?.touched);
     <tumaet-ui-form-field controlId="videoSource" [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.source' | artemisTranslate" [invalid]="videoSourceInvalid">
         <input
+            #videoSourceInput
             tumAetUiInput
             id="videoSource"
             type="text"
@@ -282,9 +281,24 @@
             <button tumAetUiButton type="button" size="small" data-testid="save-video-source-button" [disabled]="!canSaveVideoSource()" (click)="saveVideoSource()">
                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.saveVideoSource"></span>
             </button>
-            <button tumAetUiButton type="button" size="small" severity="secondary" variant="text" data-testid="discard-video-source-button" (click)="discardVideoSource()">
+            <button
+                tumAetUiButton
+                type="button"
+                size="small"
+                severity="secondary"
+                variant="text"
+                data-testid="discard-video-source-button"
+                [disabled]="savingConfirmed() === 'videoSource'"
+                (click)="discardVideoSource()"
+            >
                 <fa-icon [icon]="faRotateLeft" />
-                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.discardVideoSource"></span>
+                <span
+                    [jhiTranslate]="
+                        hasSavedVideoSource()
+                            ? 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.discardVideoSource'
+                            : 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.discardNewVideoSource'
+                    "
+                ></span>
             </button>
             <span class="text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoSourceHint"></span>
         </div>
@@ -309,3 +323,38 @@
         </div>
     }
 </form>
+
+<!-- A new file is processed, so an item edited in place saves it only when the user confirms it. -->
+<ng-template #uploadConfirm>
+    @let replacesFile = !!currentFileName();
+    <div class="mt-2 flex flex-col gap-3.5" data-testid="replacement-confirm">
+        <div class="flex items-center gap-2">
+            <tumaet-ui-checkbox inputId="notify-students" [checked]="notifyStudents()" (checkedChange)="notifyStudents.set($event)" />
+            <label
+                class="m-0"
+                for="notify-students"
+                [jhiTranslate]="
+                    replacesFile
+                        ? 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.notifyStudents'
+                        : 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.notifyStudentsNewFile'
+                "
+            ></label>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button tumAetUiButton type="button" size="small" data-testid="upload-new-version-button" [disabled]="!canUploadFile()" (click)="uploadNewFile()">
+                <fa-icon [icon]="faFileArrowUp" />
+                @if (replacesFile) {
+                    <span>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadVersion' | artemisTranslate: { version: nextFileVersion() } }}</span>
+                } @else {
+                    <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadFile"></span>
+                }
+            </button>
+            <span
+                class="text-sm text-muted-color"
+                [jhiTranslate]="
+                    replacesFile ? 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadHint' : 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadFileHint'
+                "
+            ></span>
+        </div>
+    </div>
+</ng-template>

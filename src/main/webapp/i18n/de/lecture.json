@@ -158,7 +158,8 @@
                 "failed": "Nicht gespeichert. Deine Änderungen bleiben erhalten.",
                 "retry": "Erneut versuchen",
                 "discard": "Änderung verwerfen und schließen",
-                "failedAfterLeaving": "Eine Änderung an einem Vorlesungsinhalt konnte nicht gespeichert werden. Öffne die Vorlesung erneut, um ihre Inhalte zu prüfen."
+                "failedAfterLeaving": "Eine Änderung an einem Vorlesungsinhalt konnte nicht gespeichert werden. Öffne die Vorlesung erneut, um ihre Inhalte zu prüfen.",
+                "unconfirmedContent": "Speichere oder verwirf zuerst die neue Datei oder Video-URL."
             }
         },
         "attachment": {

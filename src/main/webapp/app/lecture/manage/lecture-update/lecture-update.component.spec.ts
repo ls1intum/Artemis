@@ -137,6 +137,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.titleSection = signal({ isValid: () => true } as any);
         lectureUpdateComponent.unitSection = signal({
             isUnitConfigurationValid: () => true,
+            hasUnsavedContent: () => false,
         } as any);
         lectureUpdateComponentFixture.detectChanges();
         await lectureUpdateComponentFixture.whenStable();
@@ -227,6 +228,30 @@ describe('LectureUpdateComponent', () => {
         });
         // The editor of the new lecture takes over, so the creation page is left without asking.
         expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(false);
+    });
+
+    it.each([
+        ['cancels the navigation to its editor', () => Promise.resolve(false)],
+        ['cannot load its editor', () => Promise.reject(new Error('The editor could not be loaded'))],
+    ])('should keep the created lecture when the router %s, so saving again updates it', async (_, navigation) => {
+        await configureActiveRouteMockAndCompileComponents();
+        lectureUpdateComponentFixture.detectChanges();
+        await lectureUpdateComponentFixture.whenStable();
+        lectureUpdateComponent.isEditMode.set(false);
+        lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'lecture-test1' } as Lecture);
+        vi.spyOn(router, 'navigate').mockImplementation(navigation);
+        const created = new HttpResponse({ body: { id: 3, title: 'test1', course: { id: 1 } } as Lecture });
+        const createSpy = vi.spyOn(lectureService, 'create').mockReturnValue(of(created));
+        const updateSpy = vi.spyOn(lectureService, 'update').mockReturnValue(of(created));
+
+        lectureUpdateComponent.save();
+
+        await vi.waitFor(() => expect(lectureUpdateComponent.lecture().id).toBe(3));
+        expect(lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection()).toBe(false);
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(true);
+        lectureUpdateComponent.save();
+        expect(createSpy).toHaveBeenCalledOnce();
+        expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }));
     });
 
     it('should keep its own lecture after saving and count what was typed meanwhile as unsaved', async () => {
@@ -369,6 +394,93 @@ describe('LectureUpdateComponent', () => {
 
         const expectedPath = ['course-management', '1', 'lectures', '6'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
+    });
+
+    it('should leave at once without unsaved changes', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title', course: { id: 1 } } });
+        lectureUpdateComponentFixture.detectChanges();
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const confirmSpy = vi.spyOn(lectureUpdateComponent, 'confirmDiscardChanges');
+
+        lectureUpdateComponent.previousState();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', '1', 'lectures', '6']);
+    });
+
+    it('should ask before leaving unsaved changes, stay when the user keeps editing and leave without asking again on discard', async () => {
+        await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title', course: { id: 1 } } });
+        lectureUpdateComponentFixture.detectChanges();
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        const confirmationService = lectureUpdateComponentFixture.debugElement.injector.get(TumAetUiConfirmationService);
+        lectureUpdateComponent.onLectureChange({ id: 6, title: 'New title', course: { id: 1 } } as Lecture);
+
+        lectureUpdateComponent.previousState();
+        confirmationService.request(undefined)?.reject?.();
+
+        // Nothing navigated yet, so the history keeps the entry the user came from.
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(true);
+
+        lectureUpdateComponent.previousState();
+        confirmationService.request(undefined)?.accept();
+
+        expect(lectureUpdateComponent.shouldDisplayDismissWarning).toBe(false);
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', '1', 'lectures', '6']);
+    });
+
+    describe('Enter in the details', () => {
+        function pressEnter(target: HTMLElement): KeyboardEvent {
+            const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+            target.dispatchEvent(event);
+            return event;
+        }
+
+        function addField(type: string): HTMLInputElement {
+            const field = document.createElement('input');
+            field.type = type;
+            lectureUpdateComponentFixture.nativeElement.querySelector('section').appendChild(field);
+            return field;
+        }
+
+        it('should save changed details from a single-line field, as the form of the page did', async () => {
+            await configureValidLectureUpdateForm();
+            const saveSpy = vi.spyOn(lectureUpdateComponent, 'save').mockImplementation(() => {});
+            const textField = addField('text');
+
+            pressEnter(textField);
+            expect(saveSpy).not.toHaveBeenCalled();
+
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+            const event = pressEnter(textField);
+
+            expect(saveSpy).toHaveBeenCalledOnce();
+            expect(event.defaultPrevented).toBe(true);
+        });
+
+        it('should not save from a checkbox, from a field of the content, nor while saving is blocked', async () => {
+            await configureValidLectureUpdateForm();
+            const saveSpy = vi.spyOn(lectureUpdateComponent, 'save').mockImplementation(() => {});
+            lectureUpdateComponent.isChangeMadeToTitleOrPeriodSection.set(true);
+
+            pressEnter(addField('checkbox'));
+            const contentField = document.createElement('input');
+            contentField.type = 'text';
+            lectureUpdateComponentFixture.nativeElement.querySelector('jhi-lecture-update-units').appendChild(contentField);
+            pressEnter(contentField);
+            lectureUpdateComponent.isPeriodValid.set(false);
+            pressEnter(addField('text'));
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should move the keyboard focus to the section the user jumps to', async () => {
+        await configureValidLectureUpdateForm();
+
+        lectureUpdateComponent.scrollToSection('artemisApp.lecture.sections.title');
+
+        expect(document.activeElement?.id).toBe('artemisApp.lecture.sections.title');
     });
 
     it('should disable saving when the timeline is invalid', async () => {
@@ -568,7 +680,7 @@ describe('LectureUpdateComponent', () => {
             hasUnsavedContent.set(true);
 
             expect(lectureUpdateComponent.hasUnsavedChanges()).toBe(true);
-            // The footer names only the details, which its Save button saves.
+            // Only the details count as changed, which Save saves; the content saves itself.
             expect(lectureUpdateComponent.changedSections()).toEqual([]);
             const instantSpy = vi.spyOn(TestBed.inject(TranslateService), 'instant');
             lectureUpdateComponent.confirmDiscardChanges().subscribe();
@@ -602,6 +714,8 @@ describe('LectureUpdateComponent', () => {
             lectureUpdateComponentFixture.detectChanges();
 
             expect(lectureUpdateComponentFixture.nativeElement.querySelector('[data-testid="pdf-upload-confirmation"]')).toBeFalsy();
+            // The dismiss button is gone, so the keyboard focus continues at the details.
+            expect(document.activeElement?.id).toBe('artemisApp.lecture.sections.title');
             // Reloading the page must not confirm the upload a second time.
             expect(location.getState()).toEqual({ navigationId: 2 });
         });

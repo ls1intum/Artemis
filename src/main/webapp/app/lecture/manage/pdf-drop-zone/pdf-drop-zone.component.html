@@ -10,7 +10,7 @@
     <input #fileInput type="file" accept=".pdf,application/pdf" multiple class="hidden" tabindex="-1" aria-hidden="true" (change)="onFileInputChange($event)" />
     <fa-icon [icon]="faCloudUploadAlt" class="pdf-drop-zone-icon text-2xl" />
     <div class="flex min-w-0 grow flex-col gap-0.5">
-        <span class="font-medium" [jhiTranslate]="title()"></span>
+        <span class="font-medium" [jhiTranslate]="heading()"></span>
         <span [id]="hintId" class="pdf-drop-zone-hint text-sm" jhiTranslate="artemisApp.lecture.pdfUpload.dropZoneHint"></span>
     </div>
     <button

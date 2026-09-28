@@ -93,7 +93,7 @@
     </div>
 
     @if (lectures()) {
-        <jhi-pdf-drop-zone class="d-block mb-3" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+        <jhi-pdf-drop-zone class="mb-4 block" [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
         <jhi-pdf-upload-target-dialog
             [(visible)]="isPdfUploadTargetDialogVisible"
             [lectures]="lectures()"

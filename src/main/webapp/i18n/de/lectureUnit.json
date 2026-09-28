@@ -227,7 +227,12 @@
                 "uploadHint": "Artemis teilt danach die Folien und verarbeitet den Inhalt erneut.",
                 "saveVideoSource": "Video-URL speichern",
                 "discardVideoSource": "Aktuelle URL behalten",
-                "videoSourceHint": "Artemis transkribiert das Video danach und verarbeitet es erneut."
+                "videoSourceHint": "Artemis transkribiert das Video danach und verarbeitet es erneut.",
+                "discardNewFile": "Datei verwerfen",
+                "notifyStudentsNewFile": "Studierende über die neue Datei benachrichtigen",
+                "uploadFile": "Datei hochladen",
+                "uploadFileHint": "Artemis teilt danach die Folien und verarbeitet den Inhalt.",
+                "discardNewVideoSource": "URL verwerfen"
             },
             "editAttachmentVideoUnit": {
                 "title": "Datei-/Video-Inhalt bearbeiten"

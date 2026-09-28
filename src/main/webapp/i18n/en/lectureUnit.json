@@ -227,7 +227,12 @@
                 "uploadHint": "Artemis then splits the slides and processes the content again.",
                 "saveVideoSource": "Save video URL",
                 "discardVideoSource": "Keep current URL",
-                "videoSourceHint": "Artemis then transcribes the video and processes it again."
+                "videoSourceHint": "Artemis then transcribes the video and processes it again.",
+                "discardNewFile": "Discard file",
+                "notifyStudentsNewFile": "Notify students about the new file",
+                "uploadFile": "Upload file",
+                "uploadFileHint": "Artemis then splits the slides and processes the content.",
+                "discardNewVideoSource": "Discard URL"
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit File/Video Content"

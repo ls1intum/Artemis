@@ -1,4 +1,5 @@
 import { Component, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { buildEmbedUrl, parseVideoUrl } from './video-url-parser';
@@ -117,6 +118,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     imports: [
         FormsModule,
         ReactiveFormsModule,
+        NgTemplateOutlet,
         TranslateDirective,
         FaIconComponent,
         TumAetUiButtonDirective,
@@ -167,6 +169,8 @@ export class AttachmentVideoUnitFormComponent {
     readonly videoSourceSaveRequested = output<AttachmentVideoUnitFormData>();
     /** Emits when the user takes back a confirmed file or video link, so it is not sent if it still waits or failed. */
     readonly confirmedContentWithdrawn = output<ConfirmedContent>();
+    /** The confirmed file or video link whose request runs; it can no longer be taken back. */
+    readonly savingConfirmed = input<ConfirmedContent | undefined>(undefined);
     /** Whether students hear about the new version of the file. */
     readonly notifyStudents = signal(false);
     /** Set once the new file or video link was confirmed, until it is saved or taken back, so it is not confirmed twice. */
@@ -182,8 +186,10 @@ export class AttachmentVideoUnitFormComponent {
 
     // have to handle the file input as a special case at is not part of the reactive form
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
-    // read the element explicitly, as the button is focused through its DOM API
+    // read the elements explicitly, as they are focused through their DOM API
     private readonly replaceFileButton = viewChild('replaceFileButton', { read: ElementRef<HTMLButtonElement> });
+    private readonly chooseFileButton = viewChild('chooseFileButton', { read: ElementRef<HTMLButtonElement> });
+    private readonly videoSourceInput = viewChild('videoSourceInput', { read: ElementRef<HTMLInputElement> });
     file?: File;
     readonly fileInputTouched = signal(false);
 
@@ -208,6 +214,8 @@ export class AttachmentVideoUnitFormComponent {
         return url ? this.fileService.addAttachmentVersionToUrl(url, this.currentFileVersion()) : undefined;
     });
     readonly isReplacingFile = computed(() => !!this.currentFileLink() && !!this.fileName() && this.fileName() !== this.currentFileLink());
+    /** Whether a file was chosen that the item does not have yet, as a replacement or as the first file of a video item. */
+    readonly hasNewFile = computed(() => !!this.fileName() && this.fileName() !== this.currentFileLink());
 
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
@@ -254,10 +262,13 @@ export class AttachmentVideoUnitFormComponent {
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+    /** Every change of a control, also one that leaves the status of the whole form as it was, such as the name turning invalid while the video link is invalid. */
+    private readonly formEvent = toSignal(this.form.events);
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
     readonly isVideoSourceChanged = computed(() => this.autosave() && (this.videoSourceSignal() || undefined) !== (this.savedVideoSource() || undefined));
     readonly nextFileVersion = computed(() => (this.currentFileVersion() ?? 0) + 1);
+    readonly hasSavedVideoSource = computed(() => !!this.savedVideoSource());
 
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.isReleaseDateTextValid() && (!!this.fileName() || !!this.videoSourceSignal());
@@ -265,17 +276,17 @@ export class AttachmentVideoUnitFormComponent {
 
     /** Whether the details that an item edited in place saves automatically can be saved; a new video link or its helper do not count. */
     readonly areDetailsValid = computed(() => {
-        this.statusChanges();
+        this.formEvent();
         return this.detailsValid();
     });
     readonly canUploadFile = computed(() => this.areDetailsValid() && !this.isFileTooBig() && !this.isFileUploadRequested());
-    readonly canSaveVideoSource = computed(() => {
-        this.videoSourceSignal();
-        return this.areDetailsValid() && !this.videoSourceControl?.invalid && !this.isVideoSourceSaveRequested();
-    });
+    /** An item keeps a file or a video link, so the link can only be removed from an item that has a file. */
+    readonly canSaveVideoSource = computed(
+        () => this.areDetailsValid() && !this.videoSourceControl?.invalid && (!!this.currentFileLink() || !!this.videoSourceSignal()) && !this.isVideoSourceSaveRequested(),
+    );
     /** A new file or video link that the user chose for an item edited in place but did not confirm yet. */
     readonly hasUnconfirmedContent = computed(
-        () => this.autosave() && ((this.isReplacingFile() && !this.isFileUploadRequested()) || (this.isVideoSourceChanged() && !this.isVideoSourceSaveRequested())),
+        () => this.autosave() && ((this.hasNewFile() && !this.isFileUploadRequested()) || (this.isVideoSourceChanged() && !this.isVideoSourceSaveRequested())),
     );
 
     private detailsValid(): boolean {
@@ -333,7 +344,8 @@ export class AttachmentVideoUnitFormComponent {
     takeOverSavedFile(fileLink: string | undefined, version: number | undefined, uploadedFile?: File): void {
         this.currentFileLink.set(fileLink);
         this.currentFileVersion.set(version);
-        if (uploadedFile && this.file !== uploadedFile) {
+        // A file chosen after the upload started stays; without one, the uploaded file is the item's file now, also when the user kept the old one meanwhile.
+        if (uploadedFile && this.file && this.file !== uploadedFile) {
             return;
         }
         this.isFileUploadRequested.set(false);
@@ -360,6 +372,8 @@ export class AttachmentVideoUnitFormComponent {
         this.videoSourceControl?.setValue(this.savedVideoSource());
         this.urlHelperControl?.setValue(undefined);
         this.withdraw('videoSource');
+        // the button that triggered this disappears, so keep the keyboard focus at the video link
+        this.videoSourceInput()?.nativeElement.focus();
     }
 
     private withdraw(content: ConfirmedContent): void {
@@ -430,7 +444,7 @@ export class AttachmentVideoUnitFormComponent {
     }
 
     /**
-     * Discards the file chosen to replace the unit's current file, so saving keeps the current file.
+     * Discards the file chosen to replace the unit's current file, or to be the first file of a video item, so saving keeps the current state.
      */
     keepCurrentFile(): void {
         this.withdraw('file');
@@ -440,7 +454,7 @@ export class AttachmentVideoUnitFormComponent {
         this.isFileTypeUnsupported.set(false);
         this.fileInput().nativeElement.value = '';
         // the button that triggered this disappears, so keep the keyboard focus in the file field
-        this.replaceFileButton()?.nativeElement.focus();
+        (this.replaceFileButton() ?? this.chooseFileButton())?.nativeElement.focus();
     }
 
     get nameControl() {
@@ -474,11 +488,6 @@ export class AttachmentVideoUnitFormComponent {
     }
 
     submitForm() {
-        if (this.autosave()) {
-            // Enter in a field of an item that saves itself saves at once instead of creating an item.
-            this.reportChange(true);
-            return;
-        }
         this.formSubmitted.emit(this.currentFormData());
     }
 

@@ -250,14 +250,7 @@ describe('TextUnitFormComponent', () => {
             expect(changes).toHaveLength(1);
         });
 
-        it('should save at once on Enter instead of submitting, and offer no Submit button', () => {
-            const submitSpy = vi.fn();
-            textUnitFormComponent.formSubmitted.subscribe(submitSpy);
-
-            textUnitFormComponent.submitForm();
-
-            expect(submitSpy).not.toHaveBeenCalled();
-            expect(changes.at(-1)).toEqual(expect.objectContaining({ immediate: true, valid: true }));
+        it('should offer no Submit button, since Enter in an item that saves itself saves through the page', () => {
             expect(textUnitFormComponentFixture.nativeElement.querySelector('#submitButton')).toBeNull();
         });
     });

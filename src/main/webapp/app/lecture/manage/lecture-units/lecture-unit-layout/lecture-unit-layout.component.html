@@ -1,6 +1,7 @@
 @if (isLoading()) {
-    <div class="flex justify-center py-6">
-        <fa-icon [icon]="faSpinner" animation="spin" size="2x" [attr.aria-label]="'loading' | artemisTranslate" />
+    <div class="flex justify-center py-6" role="status">
+        <fa-icon [icon]="faSpinner" animation="spin" size="2x" aria-hidden="true" />
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
     </div>
 } @else {
     <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">

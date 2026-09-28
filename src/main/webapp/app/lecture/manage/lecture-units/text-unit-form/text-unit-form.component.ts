@@ -194,11 +194,6 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     }
 
     submitForm() {
-        if (this.autosave()) {
-            // Enter in a field of an item that saves itself saves at once instead of creating an item.
-            this.reportChange(true);
-            return;
-        }
         this.localStorageService.remove(this.router.url);
         this.formSubmitted.emit(this.currentFormData());
     }
