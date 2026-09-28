@@ -26,12 +26,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.FailureReason;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AtlasCompetencyUpdateNotification;
 import de.tum.cit.aet.artemis.notification.dto.payload.AtlasCompetencyUpdatePayloadDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
@@ -49,10 +49,10 @@ class AtlasCompetencyUpdateNotificationServiceTest {
     private CourseNotificationService courseNotificationService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     private AtlasCompetencyUpdateNotificationService service;
 

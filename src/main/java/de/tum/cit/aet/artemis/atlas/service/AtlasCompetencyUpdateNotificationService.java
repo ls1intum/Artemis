@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -46,6 +47,9 @@ public class AtlasCompetencyUpdateNotificationService {
 
     /** The ASCII punctuation CommonMark lets a backslash escape; escaping all of it renders model and instructor text literally. */
     private static final String MARKDOWN_PUNCTUATION = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+
+    /** Any run of whitespace, including line breaks, which {@link #escapeMarkdown} collapses to a single space. */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
 
     /** How a reported run ended, stored as the {@code outcome} of the notification payload. */
     enum Outcome {
@@ -165,7 +169,7 @@ public class AtlasCompetencyUpdateNotificationService {
      * competency titles and model output render literally instead of as markdown.
      */
     static String escapeMarkdown(String text) {
-        String singleLine = text.replaceAll("\\s+", " ").strip();
+        String singleLine = WHITESPACE_RUN.matcher(text).replaceAll(" ").strip();
         StringBuilder escaped = new StringBuilder(singleLine.length() + 16);
         for (char character : singleLine.toCharArray()) {
             if (MARKDOWN_PUNCTUATION.indexOf(character) >= 0) {
