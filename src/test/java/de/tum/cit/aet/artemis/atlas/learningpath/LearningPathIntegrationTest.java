@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -552,6 +553,29 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
         verifyNavigationResult(result, textUnit, textExercise, null);
         assertThat(result.progress()).isEqualTo(20);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationWithGradedAndPracticeParticipation() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userTestRepository.getUserWithAuthorities(STUDENT1_OF_COURSE);
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        participationUtilService.createAndSaveParticipationForExercise(textExercise, STUDENT1_OF_COURSE);
+        StudentParticipation practiceParticipation = new StudentParticipation();
+        practiceParticipation.setInitializationDate(now());
+        practiceParticipation.setParticipant(student);
+        practiceParticipation.setExercise(textExercise);
+        practiceParticipation.setPracticeMode(true);
+        studentParticipationRepository.save(practiceParticipation);
+        assertThat(studentParticipationRepository.findByExerciseIdAndStudentId(textExercise.getId(), student.getId())).hasSize(2);
+
+        competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
+
+        final var result = request.get("/api/atlas/learning-paths/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+
+        verifyNavigationResult(result, textUnit, textExercise, null);
     }
 
     /**
