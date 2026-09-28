@@ -160,6 +160,28 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void updateTextUnit_ofAnotherLecture_shouldReturnBadRequest() throws Exception {
+        persistTextUnitWithLecture();
+        Lecture otherLecture = lectureUtilService.createLecture(lecture.getCourse());
+
+        request.putWithResponseBody("/api/lecture/lectures/" + otherLecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void createTextUnit_withId_shouldReturnBadRequest() throws Exception {
+        request.postWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitDtoWithId(21312321L), TextUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getTextUnit_textUnitDoesNotExist_shouldReturnNotFound() throws Exception {
+        // Administrators pass the access check without the text unit, so the text unit itself is looked up.
+        request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/21312321", HttpStatus.NOT_FOUND, TextUnitDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
         persistTextUnitWithLecture();
         TextUnitDTO textUnitFromRequest = request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnitDTO.class);
