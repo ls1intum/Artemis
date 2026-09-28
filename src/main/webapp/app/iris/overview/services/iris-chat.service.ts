@@ -1160,7 +1160,7 @@ export class IrisChatService implements OnDestroy {
             next: (versions) => {
                 const currentVersion = pinnedVersion.kind === 'video' ? versions.videoVersion : versions.attachmentVersion;
                 if (currentVersion != undefined && currentVersion === pinnedVersion.version) {
-                    this.navigateToPointOutUnchecked(pointOut);
+                    this.navigateToPointOutUnchecked(this.keepVerifiedCoordinates(pointOut));
                     return;
                 }
                 if (!markerClick) {
@@ -1187,6 +1187,14 @@ export class IrisChatService implements OnDestroy {
                 this.navigateToPointOutUnit(pointOut);
             },
         });
+    }
+
+    /** Keeps only positions covered by the material version that was checked. */
+    private keepVerifiedCoordinates(pointOut: IrisPointOut): IrisPointOut {
+        if (pointOut.pinnedVersion?.kind === 'video') {
+            return cloneWith(pointOut, { page: undefined, displayPage: undefined });
+        }
+        return cloneWith(pointOut, { timestamp: undefined });
     }
 
     /** Performs the existing exact navigation after either a successful version check or for a legacy point-out. */

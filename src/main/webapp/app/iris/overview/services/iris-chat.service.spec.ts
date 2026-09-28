@@ -702,6 +702,43 @@ describe('IrisChatService', () => {
         });
     });
 
+    it('should drop an unverified PDF page from routed and in-place video point-outs', () => {
+        const getMaterialVersions = vi.spyOn(materialVersionService, 'getMaterialVersions');
+        getMaterialVersions.mockReturnValue(of({ videoVersion: 7, hasVideo: true, attachmentVersion: 4 }));
+        const pointOut = {
+            lectureUnitId: 7,
+            lectureId: 27,
+            page: 2,
+            displayPage: 8,
+            timestamp: 42,
+            pinnedVersion: { kind: 'video' as const, version: 7 },
+            forceOpen: true,
+        };
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        // The video transcription is still current, but the independently uploaded PDF is not covered by its version.
+        service.navigateToPointOut(pointOut);
+
+        expect(routerMock.navigate).toHaveBeenCalledExactlyOnceWith(['/courses', courseId, 'lectures', 27], {
+            queryParams: { unit: 7, combined: true, timestamp: 42 },
+        });
+
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service.navigateToPointOut(pointOut);
+
+        expect(emitted).toHaveBeenCalledExactlyOnceWith({
+            lectureUnitId: 7,
+            lectureId: 27,
+            page: undefined,
+            displayPage: undefined,
+            timestamp: 42,
+            pinnedVersion: { kind: 'video', version: 7 },
+            forceOpen: true,
+        });
+    });
+
     it('should forward point-out commands addressed to this tab or to any tab', async () => {
         vi.spyOn(Date, 'now').mockReturnValue(1_000);
         const commandSubject = new Subject<IrisCommand>();
