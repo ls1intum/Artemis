@@ -45,6 +45,8 @@ public class WeaviateMigrationStartupService {
 
     private final TaskScheduler taskScheduler;
 
+    private final WeaviateOutboxDispatcher outboxDispatcher;
+
     /**
      * Delay before the first migration attempt, so it does not compete with application startup. The migration runs on a background thread, so this only affects when the one-off
      * background work begins, not whether it blocks anything. Overridable via {@code artemis.weaviate.migration.initial-delay-seconds} (default 30).
@@ -66,10 +68,11 @@ public class WeaviateMigrationStartupService {
     private final long retryDelaySeconds;
 
     public WeaviateMigrationStartupService(WeaviateMigrationService migrationService, WeaviateService weaviateService, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
-            WeaviateMigrationProperties migrationProperties) {
+            WeaviateMigrationProperties migrationProperties, WeaviateOutboxDispatcher outboxDispatcher) {
         this.migrationService = migrationService;
         this.weaviateService = weaviateService;
         this.taskScheduler = taskScheduler;
+        this.outboxDispatcher = outboxDispatcher;
         this.initialDelaySeconds = migrationProperties.initialDelaySeconds();
         this.maxMigrationAttempts = migrationProperties.maxAttempts();
         this.retryDelaySeconds = migrationProperties.retryDelaySeconds();
@@ -98,10 +101,14 @@ public class WeaviateMigrationStartupService {
      * Runs all pending Weaviate migrations and reconciles collections afterwards, on a background thread. A failure (for example, the embedding service being cold or unavailable)
      * is logged and never propagated, so it can never crash or block the node; the attempt is retried a bounded number of times, and otherwise re-runs on the next scheduling-node
      * restart. Search may return incomplete results until a migration completes.
+     * <p>
+     * Outbox drains are paused while the migration runs, so a dispatcher write cannot land between the migration's
+     * existence check and its batch insert and then be overwritten with older content (see
+     * {@link WeaviateOutboxDispatcher#runWithDrainsPaused}). Changes made meanwhile are applied right after it.
      */
     private void runPendingMigrations(int attempt) {
         try {
-            migrationService.runPendingMigrations();
+            outboxDispatcher.runWithDrainsPaused(migrationService::runPendingMigrations);
             // Future-proofing: if a later migration drops one of the managed collections, recreate it here. The current
             // V0→V1 migration drops only the unmanaged legacy collection, so this is a no-op for it.
             weaviateService.ensureAllCollectionsExist();

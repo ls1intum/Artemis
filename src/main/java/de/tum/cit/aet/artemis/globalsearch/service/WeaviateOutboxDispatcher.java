@@ -157,6 +157,29 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
+     * Runs the given work while no drain can apply anything, waiting first for an in-flight drain to finish.
+     * <p>
+     * The V0→V1 migration is the only code that writes the collection without going through the outbox: it checks
+     * that an exercise is absent, loads it from the database, then batch-inserts it. A drain landing inside that
+     * sequence would be overwritten with the older content the migration loaded, and the ledger would then vouch for a
+     * row that no longer holds it. Holding the drain lock for the migration keeps this dispatcher the collection's only
+     * concurrent writer: every change made meanwhile stays queued and is applied afterwards, re-derived from the
+     * database, so it always lands on top of the migration's write. A drain triggered in the meantime returns at once
+     * ({@link #drain()} only tries the lock), and the next tick after the work finishes picks up the backlog.
+     *
+     * @param work the work to run exclusively with respect to drains; its exceptions propagate
+     */
+    public void runWithDrainsPaused(Runnable work) {
+        drainLock.lock();
+        try {
+            work.run();
+        }
+        finally {
+            drainLock.unlock();
+        }
+    }
+
+    /**
      * Reads one batch of due rows (no transaction, no lock) and processes each.
      *
      * @return the number of rows read (equal to the configured batch size while more may remain)
