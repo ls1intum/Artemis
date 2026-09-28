@@ -166,6 +166,37 @@ public final class AtlasToolCallBudget {
         return budget == null ? extract.get() : budget.contentSnapshots.computeIfAbsent(key, ignored -> extract.get());
     }
 
+    /**
+     * Seeds the invocation cache with content that initial preparation already extracted, so the first
+     * detail read of a changed learning object reuses it instead of extracting and flavor-stripping it
+     * again. Existing entries are kept.
+     *
+     * @param prepared extracted content keyed by {@link #exerciseContentKey} or {@link #lectureUnitContentKey}
+     */
+    public void seedContent(Map<String, ExtractedContentDTO> prepared) {
+        prepared.forEach(contentSnapshots::putIfAbsent);
+    }
+
+    /**
+     * Cache key under which the exercise detail read stores extracted content.
+     *
+     * @param exerciseId the exercise id
+     * @return the invocation cache key
+     */
+    static String exerciseContentKey(long exerciseId) {
+        return "exercise:" + exerciseId;
+    }
+
+    /**
+     * Cache key under which the lecture-unit detail read stores extracted content.
+     *
+     * @param lectureUnitId the lecture unit id
+     * @return the invocation cache key
+     */
+    static String lectureUnitContentKey(long lectureUnitId) {
+        return "lectureUnit:" + lectureUnitId;
+    }
+
     private static String argumentHash(String arguments) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(arguments.getBytes(StandardCharsets.UTF_8)));

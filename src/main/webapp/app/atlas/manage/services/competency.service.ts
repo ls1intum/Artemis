@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import {
@@ -35,9 +35,7 @@ type EntityArrayResponseType = HttpResponse<Competency[]>;
 type EntityResponseDTOType = HttpResponse<CourseCompetencyResponseDTO>;
 type EntityArrayResponseDTOType = HttpResponse<CourseCompetencyResponseDTO[]>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CompetencyService extends CourseCompetencyService {
     /**
      * Get competency suggestions from AtlasML API

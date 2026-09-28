@@ -17,7 +17,7 @@ export async function navigateToExamSubpage(page: Page, subpage: string, examId?
     }
     const panel = page.locator(`#exam-${id}`);
     await panel.waitFor({ state: 'visible', timeout: 30_000 });
-    const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+    const toggler = panel.locator('.tumaet-ui-panel-toggler[aria-expanded="false"]');
     if (await toggler.isVisible()) {
         await toggler.click();
     }

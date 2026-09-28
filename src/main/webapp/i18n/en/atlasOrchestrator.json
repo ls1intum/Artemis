@@ -31,6 +31,7 @@
             "autoToast": {
                 "success": "Atlas ran automatically on {{count}} learning object(s).",
                 "partial": "Atlas ran on {{count}} learning object(s): {{success}} succeeded, {{failure}} failed.",
+                "incomplete": "Atlas applied some changes for {{count}} learning object(s) but could not finish the run. Please review the course competencies.",
                 "failure": "Atlas ran automatically on {{count}} learning object(s), but all runs failed. Please try again later."
             }
         }

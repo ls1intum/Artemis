@@ -134,9 +134,11 @@ async function preAuthenticateUsers(): Promise<string | undefined> {
  * truth defines what the warmer touches.
  *
  * The flow:
- *   1. Strict health gate — one `GET /management/health` must return 200, otherwise
- *      we throw. This separates "server down" (real outage, fail loud) from "endpoint
- *      slow" (warm-up, fail soft).
+ *   1. Strict health gate — one `GET /management/health/readiness` must return 200,
+ *      otherwise we throw. This separates "server down" (real outage, fail loud) from
+ *      "endpoint slow" (warm-up, fail soft). The readiness probe is used instead of the
+ *      aggregate `/management/health`, which also reports external connectors (e.g. the
+ *      Hermes push relay) and would fail every run while one of them is degraded.
  *   2. Soft warm pass — fire ~12 GETs in parallel. Each result is logged but never
  *      throws; a 404 because seed-data drifted or a 503 because one module is still
  *      starting up is acceptable.
@@ -149,13 +151,13 @@ async function prewarmServer(adminJwt: string): Promise<void> {
         extraHTTPHeaders: { cookie: `jwt=${adminJwt}` },
     });
     try {
-        // Strict health gate
+        // Strict readiness gate
         const healthStart = Date.now();
-        const healthResp = await ctx.get('/management/health', { timeout: 30_000 });
+        const healthResp = await ctx.get('/management/health/readiness', { timeout: 30_000 });
         if (!healthResp.ok()) {
-            throw new Error(`[prewarm] server health check failed: HTTP ${healthResp.status()}`);
+            throw new Error(`[prewarm] server readiness check failed: HTTP ${healthResp.status()}`);
         }
-        console.log(`[prewarm] health OK (${Date.now() - healthStart} ms)`);
+        console.log(`[prewarm] readiness OK (${Date.now() - healthStart} ms)`);
 
         // Soft warm pass — read endpoints against seed entities, no side effects
         const atlas = SEED_COURSES.atlas1.id;

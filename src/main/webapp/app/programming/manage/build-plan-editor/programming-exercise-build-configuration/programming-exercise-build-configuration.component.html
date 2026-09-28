@@ -18,7 +18,7 @@
         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
         <jhi-table-view id="envVarsTable" [cols]="envVarColumns()" [vals]="envVars()" [rowActions]="envVarActionsRef" [options]="envVarTableOptions" />
-        <button class="btn btn-sm btn-primary mb-2" (click)="addEnvVar()">
+        <button type="button" class="btn btn-sm btn-primary mb-2" (click)="addEnvVar()">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
         </button>

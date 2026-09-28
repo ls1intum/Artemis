@@ -530,6 +530,7 @@ class AssignerToolsServiceTest {
         TextUnit unit = new TextUnit();
         unit.setId(id);
         unit.setName(name);
+        unit.setContent(name + " content");
         unit.setLecture(lectureInCourse(course));
         return unit;
     }

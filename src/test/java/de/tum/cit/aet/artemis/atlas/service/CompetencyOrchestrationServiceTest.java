@@ -51,6 +51,7 @@ import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
@@ -293,6 +294,32 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.appliedActions()).hasSize(1);
         assertThat(result.appliedActions().getFirst().type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
         verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void run_detailReadReusesPreparedExerciseContent() {
+        ProgrammingExercise exercise = courseExercise(15L);
+        when(exerciseRepository.findByIdElseThrow(15L)).thenReturn(exercise);
+        stubRunMap();
+        ExtractedContentDTO prepared = new ExtractedContentDTO("Test Exercise", "Learn loops", Map.of());
+        when(contentExtractionService.extractContent(exercise)).thenReturn(prepared);
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        AtomicReference<ExtractedContentDTO> detailRead = new AtomicReference<>();
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> ctx = invocation.getArgument(3);
+                    detailRead.set(AtlasToolCallBudget.content(new ToolContext(ctx), "exercise:15", () -> {
+                        throw new AssertionError("detail read must reuse the prepared content");
+                    }));
+                    throw new RuntimeException("stop after detail read");
+                });
+
+        createServiceWithRunMap(mock(ChatClient.class)).run(15L);
+
+        assertThat(detailRead.get()).isSameAs(prepared);
+        verify(contentExtractionService).extractContent(exercise);
     }
 
     @Test
@@ -618,6 +645,41 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
+    void runBatch_detailReadsReusePreparedExerciseAndLectureUnitContent() {
+        ProgrammingExercise exercise = courseExercise(10L);
+        TextUnit lectureUnit = courseTextUnit(30L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(exercise));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(lectureUnit));
+        stubRunMap();
+        ExtractedContentDTO preparedExercise = new ExtractedContentDTO("Exercise Title", "Exercise body", Map.of());
+        ExtractedContentDTO preparedUnit = new ExtractedContentDTO("Unit Title", "Unit learning text", Map.of("lectureUnitType", "text"));
+        when(contentExtractionService.extractContent(exercise)).thenReturn(preparedExercise);
+        when(contentExtractionService.extractContent(lectureUnit)).thenReturn(preparedUnit);
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        AtomicReference<ExtractedContentDTO> exerciseRead = new AtomicReference<>();
+        AtomicReference<ExtractedContentDTO> unitRead = new AtomicReference<>();
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> ctx = invocation.getArgument(3);
+                    ToolContext toolContext = new ToolContext(ctx);
+                    exerciseRead.set(AtlasToolCallBudget.content(toolContext, "exercise:10", () -> {
+                        throw new AssertionError("exercise detail read must reuse the prepared content");
+                    }));
+                    unitRead.set(AtlasToolCallBudget.content(toolContext, "lectureUnit:30", () -> {
+                        throw new AssertionError("lecture-unit detail read must reuse the prepared content");
+                    }));
+                    throw new RuntimeException("stop after detail reads");
+                });
+
+        createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L), Set.of(30L));
+
+        assertThat(exerciseRead.get()).isSameAs(preparedExercise);
+        assertThat(unitRead.get()).isSameAs(preparedUnit);
+    }
+
+    @Test
     void runBatch_lectureUnitAtLimit_preservesCompleteText() {
         TextUnit lectureUnit = courseTextUnit(30L);
         String content = "x".repeat(16_000);
@@ -675,6 +737,102 @@ class CompetencyOrchestrationServiceTest {
     @Test
     void runLectureUnitWithQueuedFlush_blankAttachmentDescription_returnsUnsupportedBeforeClaiming() {
         AttachmentVideoUnit lectureUnit = courseAttachmentVideoUnit(30L);
+        when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(lectureUnit));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(30L);
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(CompetencyOrchestrationResultDTO.FailureReason.UNSUPPORTED_LEARNING_OBJECT);
+        verify(runMap, never()).put(anyLong(), any());
+        verify(contentChangeAccumulatorService, never()).claimBatchNow(anyLong());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = { " ", "\t\n" })
+    void runBatch_blankTextUnit_returnsNoOpWithoutExtractionOrLock(String content) {
+        TextUnit lectureUnit = courseTextUnit(30L);
+        lectureUnit.setContent(content);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.of());
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.of(lectureUnit));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(), Set.of(30L));
+
+        assertThat(result.status()).isEqualTo(NO_OP);
+        verify(contentExtractionService, never()).extractContent(lectureUnit);
+        verify(orchestratorPlanningToolsService, never()).listCompetencyIndex(anyLong());
+        verify(runMap, never()).put(anyLong(), any());
+    }
+
+    @Test
+    void runBatch_mixedBatchWithBlankTextUnit_orchestratesOnlyTheExercise() {
+        ProgrammingExercise exercise = courseExercise(10L);
+        TextUnit blankUnit = courseTextUnit(30L);
+        blankUnit.setContent("   ");
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(exercise));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(blankUnit));
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Exercise Title", "Exercise body", Map.of()));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
+
+        createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L), Set.of(30L));
+
+        verify(contentExtractionService, never()).extractContent(blankUnit);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, String>> modelCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(templateService).render(anyString(), modelCaptor.capture());
+        assertThat(modelCaptor.getValue().get("exerciseChanges")).contains("[UPDATE exercise id=10]").doesNotContain("lecture-unit id=30");
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runBatch_textUnitBlankAfterFlavorStrip_isExcludedFromProcessedCount() {
+        // Nonblank raw content passes eligibility, but flavor stripping leaves no learning text, so the unit never
+        // reaches the prompt and must not be reported as processed alongside the orchestrated exercise.
+        ProgrammingExercise exercise = courseExercise(10L);
+        TextUnit strippedToBlank = courseTextUnit(30L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(exercise));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(strippedToBlank));
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Exercise Title", "Exercise body", Map.of()));
+        when(contentExtractionService.extractContent(strippedToBlank)).thenReturn(new ExtractedContentDTO("Unit 30", "", Map.of("lectureUnitType", "text")));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class)))
+                .thenAnswer(invocation -> completeRound(invocation.getArgument(3), chatResponse));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L), Set.of(30L));
+
+        assertThat(result.status()).isEqualTo(SUCCESS);
+        assertThat(result.processedCount()).isEqualTo(1);
+    }
+
+    @Test
+    void runBatch_llmFailureWithoutActions_reportsPromptedCount() {
+        ProgrammingExercise first = courseExercise(10L);
+        ProgrammingExercise second = courseExercise(11L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(first, second));
+        stubRunMap();
+        when(contentExtractionService.extractContent(first)).thenReturn(new ExtractedContentDTO("First", "First body", Map.of()));
+        when(contentExtractionService.extractContent(second)).thenReturn(new ExtractedContentDTO("Second", "Second body", Map.of()));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenThrow(new RuntimeException("provider down"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L, 11L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.processedCount()).isEqualTo(2);
+    }
+
+    @Test
+    void runLectureUnitWithQueuedFlush_blankTextUnit_returnsUnsupportedBeforeClaiming() {
+        TextUnit lectureUnit = courseTextUnit(30L);
+        lectureUnit.setContent(" ");
         when(lectureUnitRepositoryApi.findWithLectureById(30L)).thenReturn(Optional.of(lectureUnit));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runLectureUnitWithQueuedFlush(30L);
@@ -902,6 +1060,7 @@ class CompetencyOrchestrationServiceTest {
         TextUnit unit = new TextUnit();
         unit.setId(id);
         unit.setName("Unit " + id);
+        unit.setContent("Unit " + id + " content");
         unit.setLecture(lecture);
         return unit;
     }

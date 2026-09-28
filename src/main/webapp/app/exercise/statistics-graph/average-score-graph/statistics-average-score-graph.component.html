@@ -13,7 +13,7 @@
             [class.hidden]="!(currentSize() > MAX_SPAN_SIZE && currentPeriod() > 0)"
         />
         <div class="col-lg-8 ps-0 chart-container" style="height: 300px">
-            <tum-ui-bar-chart
+            <tumaet-ui-bar-chart
                 [labels]="chartData().labels"
                 [series]="chartData().series"
                 [config]="chartConfig()"
@@ -37,6 +37,7 @@
             @if (exerciseTypeFilter.typeSet.size > 0) {
                 <div class="filter my-3" aria-label="Filter Dropdown" ngbDropdown>
                     <button
+                        type="button"
                         class="btn"
                         [class.btn-secondary]="!(chartCategoryFilter.numberOfActiveFilters + exerciseTypeFilter.numberOfActiveFilters)"
                         [class.btn-success]="chartCategoryFilter.numberOfActiveFilters + exerciseTypeFilter.numberOfActiveFilters > 0"
@@ -109,7 +110,17 @@
             <div class="d-flex align-items-center">
                 <div class="legend-container">
                     @for (interval of performanceIntervals; track interval) {
-                        <div class="legend-entry" (click)="togglePerformanceInterval(interval)">
+                        <div
+                            class="legend-entry"
+                            (click)="togglePerformanceInterval(interval)"
+                            [attr.aria-pressed]="displayColorMap.get(interval) !== ''"
+                            #keyboardAction112
+                            role="button"
+                            tabindex="0"
+                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction112.click() : undefined"
+                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction112.click() : undefined"
+                        >
                             <div class="color-legend" [ngClass]="displayColorMap.get(interval)!"></div>
                             <span>{{ 'artemisApp.courseStatistics.chartLegend.' + interval | artemisTranslate }}</span>
                         </div>

@@ -13,7 +13,7 @@
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
     </div>
     <div class="chart bg-light">
-        <tum-ui-bar-chart
+        <tumaet-ui-bar-chart
             [labels]="weightChartData().labels"
             [series]="weightChartData().series"
             [config]="weightChartConfig()"
@@ -27,7 +27,7 @@
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
     </div>
     <div class="points-chart bg-light">
-        <tum-ui-bar-chart
+        <tumaet-ui-bar-chart
             [labels]="pointsChartData().labels"
             [series]="pointsChartData().series"
             [config]="pointsChartConfig()"

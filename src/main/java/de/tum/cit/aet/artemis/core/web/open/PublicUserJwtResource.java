@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
@@ -57,7 +58,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("authentication/jwt-tokens")
+@FeatureUsage(UserFeature.SIGN_IN)
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicUserJwtResource {
@@ -117,7 +118,8 @@ public class PublicUserJwtResource {
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-            artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
+            // The resolved login rather than what was typed: a login with an email address or an alias of it would not find the user again
+            artemisSuccessfulLoginService.sendLoginEmail(authentication.getName(), AuthenticationMethod.PASSWORD, HttpRequestUtils.getClientEnvironment(request));
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }

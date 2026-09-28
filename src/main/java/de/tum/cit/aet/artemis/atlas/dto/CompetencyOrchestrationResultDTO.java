@@ -5,10 +5,35 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * Outcome of an Atlas orchestrator run.
+ * <p>
+ * {@code processedCount} is server-internal bookkeeping and never serialized: the number of changed learning
+ * objects that actually reached the orchestrator prompt. It is {@code null} when no prompt was built (for
+ * example a preparation failure or a no-op), in which case the automatic scheduler falls back to the size of
+ * the claimed batch. Units dropped before the prompt (blank learning text, failed extraction) are excluded, so
+ * the completion toast never reports them as processed.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
+public record CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason,
+        @JsonIgnore @Nullable Integer processedCount) {
+
+    public CompetencyOrchestrationResultDTO(@NonNull Status status, @NonNull String summary, List<AppliedActionDTO> appliedActions, @Nullable FailureReason failureReason) {
+        this(status, summary, appliedActions, failureReason, null);
+    }
+
+    /**
+     * Returns a copy of this result that records how many changed learning objects reached the orchestrator prompt.
+     *
+     * @param count the number of exercises and lecture units rendered into the prompt
+     * @return a copy carrying the processed count
+     */
+    public CompetencyOrchestrationResultDTO withProcessedCount(int count) {
+        return new CompetencyOrchestrationResultDTO(status, summary, appliedActions, failureReason, count);
+    }
 
     public CompetencyOrchestrationResultDTO {
         appliedActions = appliedActions == null ? List.of() : List.copyOf(appliedActions);

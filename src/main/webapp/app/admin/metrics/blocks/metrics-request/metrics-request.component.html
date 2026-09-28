@@ -1,6 +1,6 @@
 <h3 id="requestMetrics" jhiTranslate="metrics.jvm.http.title"></h3>
 @if (!updating() && requestMetrics()) {
-    <table tumUiTable aria-describedby="requestMetrics" data-testid="request-table">
+    <table tumAetUiTable aria-describedby="requestMetrics" data-testid="request-table">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="metrics.jvm.http.table.code"></th>
@@ -14,9 +14,9 @@
                 <tr>
                     <td>{{ entry.key }}</td>
                     <td>
-                        <tum-ui-progress-bar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" severity="success">
+                        <tumaet-ui-progress-bar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" severity="success">
                             {{ entry.value.count }}
-                        </tum-ui-progress-bar>
+                        </tumaet-ui-progress-bar>
                     </td>
                     <td class="text-end">
                         {{ filterNaN(entry.value.mean) | number: '1.0-2' }}

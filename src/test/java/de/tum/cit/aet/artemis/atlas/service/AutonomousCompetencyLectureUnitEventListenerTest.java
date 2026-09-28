@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
+import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -195,6 +196,42 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
         assertThat(realAccumulator.claimBatchNow(COURSE_ID)).isEmpty();
     }
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t\n" })
+    void blankTextUpdate_doesNotRecord(String content) {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        TextUnit unit = textUnit(content);
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(unit));
+
+        verifyRefresh(false);
+    }
+
+    @Test
+    void nonblankToBlankTextBurst_dropsTextUnitButKeepsQueuedExercise() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        stubCourseEnabled(true);
+        LocalDataProviderService provider = new LocalDataProviderService();
+        AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("test", 1.0, "", "test", "high", false, 60, 3, 30000L, 10);
+        ContentChangeAccumulatorService realAccumulator = new ContentChangeAccumulatorService(Optional.of(provider), Clock.systemUTC(), properties, courseConfigurationRepository);
+        listener = new AutonomousCompetencyLectureUnitEventListener(realAccumulator, featureToggleService, courseConfigurationRepository, Optional.of(lectureUnitRepositoryApi));
+        TextUnit nonblank = textUnit("Recursion calls itself until a base case is reached.");
+        TextUnit blank = textUnit("   ");
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(nonblank), Optional.of(blank));
+
+        realAccumulator.record(COURSE_ID, 10L);
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(nonblank));
+        assertThat(provider.<Long, ContentChangeAccumulator>getMap(ContentChangeAccumulatorService.MAP_NAME).get(COURSE_ID).lectureUnitIds()).containsExactly(LECTURE_UNIT_ID);
+        listener.onLectureUnitContentChanged(new LectureUnitContentChangedEvent(blank));
+
+        BatchClaim claim = realAccumulator.claimBatchNow(COURSE_ID).orElseThrow();
+        assertThat(claim.exerciseIds()).containsExactly(10L);
+        assertThat(claim.lectureUnitIds()).isEmpty();
+    }
+
     @Test
     void delayedEligibleEvent_usesCurrentBlankDescription() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
@@ -232,9 +269,14 @@ class AutonomousCompetencyLectureUnitEventListenerTest {
     }
 
     private TextUnit courseLectureUnit() {
+        return textUnit("A recursive function calls itself until a base case is reached.");
+    }
+
+    private TextUnit textUnit(String content) {
         TextUnit unit = new TextUnit();
         unit.setId(LECTURE_UNIT_ID);
         unit.setName("Recursion basics");
+        unit.setContent(content);
         unit.setLecture(lectureInCourse());
         return unit;
     }

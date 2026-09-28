@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import static de.tum.cit.aet.artemis.atlas.web.AtlasWebsocketTopics.ORCHESTRATION_SUMMARY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Clock;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasLLMEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO.Outcome;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
@@ -45,8 +47,6 @@ import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 public class ContentChangeScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(ContentChangeScheduler.class);
-
-    private static final String TOPIC_TEMPLATE = "/topic/atlas/orchestrator/%d";
 
     private final ContentChangeAccumulatorService accumulator;
 
@@ -134,8 +134,8 @@ public class ContentChangeScheduler {
     private void processBatch(long courseId, String runId, BatchClaim claim) {
         Set<Long> exerciseIds = claim.exerciseIds();
         Set<Long> lectureUnitIds = claim.lectureUnitIds();
-        // The toast counts total changed learning objects (exercises + lecture units) in this batch.
-        int changeCount = exerciseIds.size() + lectureUnitIds.size();
+        // Until the run reports otherwise, the toast counts every claimed learning object (exercises + lecture units).
+        int claimedCount = exerciseIds.size() + lectureUnitIds.size();
         log.info("atlas.automatic course {} firing run {} with {} exercise(s) and {} lecture unit(s)", courseId, runId, exerciseIds.size(), lectureUnitIds.size());
 
         CompetencyOrchestrationResultDTO result;
@@ -148,14 +148,17 @@ public class ContentChangeScheduler {
             // cannot throw here — so the changes are safe to requeue rather than discard.
             log.warn("atlas.automatic batch run failed for course {} (run {}): {}", courseId, runId, ex.getMessage(), ex);
             accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
-            broadcastSummary(courseId, runId, changeCount, false);
+            broadcastSummary(courseId, runId, claimedCount, Outcome.FAILED);
             return;
         }
 
+        // Once a prompt was built, count only the learning objects that reached it: claimed units dropped before the
+        // prompt (deleted, ineligible, blank after extraction, failed extraction) were never processed by this run.
+        int changeCount = result != null && result.processedCount() != null ? result.processedCount() : claimedCount;
         CompetencyOrchestrationResultDTO.Status status = result == null ? null : result.status();
         if (result != null && (result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.TOOL_CALL_LIMIT_EXCEEDED
                 || result.failureReason() == CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)) {
-            broadcastSummary(courseId, runId, changeCount, false);
+            broadcastSummary(courseId, runId, changeCount, status == CompetencyOrchestrationResultDTO.Status.PARTIAL ? Outcome.PARTIAL : Outcome.FAILED);
             return;
         }
         switch (status) {
@@ -178,18 +181,21 @@ public class ContentChangeScheduler {
                 // bounds how many failed retries a day can burn.
                 log.debug("atlas.automatic course {} run {} failed; requeueing {} change(s) for retry", courseId, runId, changeCount);
                 accumulator.requeueAfterFailedRun(courseId, exerciseIds, lectureUnitIds);
-                broadcastSummary(courseId, runId, changeCount, false);
+                broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
             }
-            case SUCCESS -> broadcastSummary(courseId, runId, changeCount, true);
-            // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply). null:
-            // unknown state, do not requeue. Both surface as a failure toast.
-            case null, default -> broadcastSummary(courseId, runId, changeCount, false);
+            case SUCCESS -> broadcastSummary(courseId, runId, changeCount, Outcome.SUCCESS);
+            // PARTIAL: some mutations were already committed — must NOT requeue (would re-apply), and the
+            // toast must not claim that the whole batch failed.
+            case PARTIAL -> broadcastSummary(courseId, runId, changeCount, Outcome.PARTIAL);
+            // null: unknown state, do not requeue.
+            case null, default -> broadcastSummary(courseId, runId, changeCount, Outcome.FAILED);
         }
     }
 
-    private void broadcastSummary(long courseId, String runId, int changeCount, boolean success) {
-        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, changeCount, success ? changeCount : 0, success ? 0 : changeCount,
+    private void broadcastSummary(long courseId, String runId, int changeCount, Outcome outcome) {
+        boolean success = outcome == Outcome.SUCCESS;
+        AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, changeCount, success ? changeCount : 0, success ? 0 : changeCount, outcome,
                 Instant.now(clock));
-        websocketMessagingService.sendMessage(TOPIC_TEMPLATE.formatted(courseId), summary);
+        websocketMessagingService.sendMessage(ORCHESTRATION_SUMMARY.at(courseId), summary);
     }
 }

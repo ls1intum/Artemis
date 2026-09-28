@@ -481,7 +481,8 @@ public class CompetencyOrchestrationService {
 
     /**
      * Resolves lecture-unit ids into orchestratable, course-owned units. Unknown units, unsupported
-     * subtypes, blank-description attachment/video units, and wrong-course units are skipped.
+     * subtypes, blank-content text units, blank-description attachment/video units, and wrong-course
+     * units are skipped.
      * The lecture and course are fetch-joined for the ownership check. Input order is preserved.
      * Returns an empty list when no ids are requested or the lecture module is unavailable.
      */
@@ -542,8 +543,10 @@ public class CompetencyOrchestrationService {
     private CompetencyOrchestrationResultDTO orchestrateExercise(Exercise exercise, long courseId) {
         long exerciseId = exercise.getId();
         String systemPrompt;
+        Map<String, ExtractedContentDTO> preparedContent;
         try {
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
+            preparedContent = Map.of(AtlasToolCallBudget.exerciseContentKey(exerciseId), extracted);
             List<ExerciseChange> changes = List.of(new ExerciseChange(exerciseId, extracted.title(), extracted.extractedLearningText()));
             CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
@@ -564,7 +567,7 @@ public class CompetencyOrchestrationService {
         List<AppliedActionDTO> appliedActions = Collections.synchronizedList(new ArrayList<>());
         String content;
         try {
-            content = callChatClient(systemPrompt, courseId, exerciseId, appliedActions);
+            content = callChatClient(systemPrompt, courseId, exerciseId, appliedActions, preparedContent);
         }
         catch (AtlasToolCallBudget.LimitReachedException ex) {
             log.warn("Atlas orchestration tool budget exhausted for exercise {}", exerciseId);
@@ -596,12 +599,15 @@ public class CompetencyOrchestrationService {
     private CompetencyOrchestrationResultDTO orchestrateBatch(List<Exercise> exercises, List<LectureUnit> lectureUnits, long courseId) {
         Set<Long> skippedExercises = new LinkedHashSet<>();
         Set<Long> skippedLectureUnits = new LinkedHashSet<>();
+        Map<String, ExtractedContentDTO> preparedContent = new HashMap<>();
         String systemPrompt;
+        int processedCount;
         try {
             List<ExerciseChange> exerciseChanges = new ArrayList<>();
             for (Exercise exercise : exercises) {
                 try {
                     ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
+                    preparedContent.put(AtlasToolCallBudget.exerciseContentKey(exercise.getId()), extracted);
                     exerciseChanges.add(new ExerciseChange(exercise.getId(), extracted.title(), extracted.extractedLearningText()));
                 }
                 catch (Exception ex) {
@@ -614,6 +620,7 @@ public class CompetencyOrchestrationService {
             for (LectureUnit lectureUnit : lectureUnits) {
                 try {
                     ExtractedContentDTO extracted = contentExtractionService.extractContent(lectureUnit);
+                    preparedContent.put(AtlasToolCallBudget.lectureUnitContentKey(lectureUnit.getId()), extracted);
                     boolean blankLearningText = extracted.extractedLearningText() == null || extracted.extractedLearningText().isBlank();
                     boolean hasSourceMetadata = extracted.metadata().entrySet().stream()
                             .anyMatch(entry -> !"lectureUnitType".equals(entry.getKey()) && entry.getValue() != null && !entry.getValue().isBlank());
@@ -638,6 +645,8 @@ public class CompetencyOrchestrationService {
                 return CompetencyOrchestrationResultDTO.noOp("No learning-relevant content in batch.");
             }
 
+            // Only learning objects rendered into the prompt count as processed; blank or failed extractions do not.
+            processedCount = exerciseChanges.size() + lectureUnitChanges.size();
             CompetencyIndexResponseDTO competencyIndex = orchestratorPlanningToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderChangeBatch(exerciseChanges, lectureUnitChanges);
@@ -654,33 +663,36 @@ public class CompetencyOrchestrationService {
         String content;
         Long trackingExerciseId = exercises.isEmpty() ? null : exercises.getFirst().getId();
         try {
-            content = callChatClient(systemPrompt, courseId, trackingExerciseId, appliedActions);
+            content = callChatClient(systemPrompt, courseId, trackingExerciseId, appliedActions, preparedContent);
         }
         catch (AtlasToolCallBudget.LimitReachedException ex) {
             log.warn("Atlas orchestration tool budget exhausted for course {}", courseId);
             requeueSkipped(courseId, skippedExercises, skippedLectureUnits);
-            return toolLimitResult(appliedActions, ex.summary());
+            return toolLimitResult(appliedActions, ex.summary()).withProcessedCount(processedCount);
         }
         catch (IncompleteOrchestrationException ex) {
             requeueSkipped(courseId, skippedExercises, skippedLectureUnits);
-            return appliedActions.isEmpty() ? CompetencyOrchestrationResultDTO.failed(ex.getMessage(), CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)
+            CompetencyOrchestrationResultDTO result = appliedActions.isEmpty()
+                    ? CompetencyOrchestrationResultDTO.failed(ex.getMessage(), CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION)
                     : CompetencyOrchestrationResultDTO.partial(ex.getMessage(), List.copyOf(appliedActions),
                             CompetencyOrchestrationResultDTO.FailureReason.INCOMPLETE_ORCHESTRATION);
+            return result.withProcessedCount(processedCount);
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) LLM call failed for course {} after applying {} action(s): {}", courseId, appliedActions.size(), ex.getMessage(), ex);
             if (appliedActions.isEmpty()) {
-                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR)
+                        .withProcessedCount(processedCount);
             }
             requeueSkipped(courseId, skippedExercises, skippedLectureUnits);
             return CompetencyOrchestrationResultDTO.partial("Atlas orchestrator run failed after applying " + appliedActions.size() + " action(s).", List.copyOf(appliedActions),
-                    CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
+                    CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR).withProcessedCount(processedCount);
         }
         log.info("Atlas orchestrator (batch) completed for course {} over {} exercise(s) and {} lecture unit(s) with {} applied action(s)", courseId, exercises.size(),
                 lectureUnits.size(), appliedActions.size());
         requeueSkipped(courseId, skippedExercises, skippedLectureUnits);
         String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
-        return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
+        return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions)).withProcessedCount(processedCount);
     }
 
     /**
@@ -727,8 +739,12 @@ public class CompetencyOrchestrationService {
      * is persisted via {@link LLMTokenUsageService}, feeding the existing per-course LLM cost views.
      * Tracking is best-effort: it never throws, and {@code userId} resolves to {@code null} when there
      * is no {@code SecurityContext} (e.g. a scheduler-driven run).
+     * <p>
+     * {@code preparedContent} seeds the invocation content cache, so orchestrator and worker detail reads
+     * of a changed learning object reuse the extraction from initial preparation instead of repeating it.
      */
-    private String callChatClient(String systemPrompt, long courseId, @Nullable Long exerciseId, List<AppliedActionDTO> appliedActions) {
+    private String callChatClient(String systemPrompt, long courseId, @Nullable Long exerciseId, List<AppliedActionDTO> appliedActions,
+            Map<String, ExtractedContentDTO> preparedContent) {
         OpenAiChatOptions.Builder options = buildChatOptions();
         Map<String, Object> toolContext = new HashMap<>();
         toolContext.put(OrchestratorToolContextKeys.COURSE_ID_KEY, courseId);
@@ -738,6 +754,7 @@ public class CompetencyOrchestrationService {
         }
         toolContext.put(OrchestratorToolContextKeys.DELEGATION_COUNT_KEY, new AtomicInteger());
         AtlasToolCallBudget budget = AtlasToolCallBudget.budgetForContext(toolContext);
+        budget.seedContent(preparedContent);
         ChatResponse chatResponse;
         try {
             chatResponse = delegationService.delegateOrchestratorRound(systemPrompt,

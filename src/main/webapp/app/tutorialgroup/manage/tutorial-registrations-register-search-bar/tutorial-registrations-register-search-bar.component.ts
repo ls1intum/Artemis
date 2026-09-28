@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, comput
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faMagnifyingGlass, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumUiIconFieldComponent, TumUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiIconFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
@@ -17,21 +17,22 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
-    imports: [FormsModule, FaIconComponent, TumUiIconFieldComponent, TumUiInputDirective, OverlayModule, ScrollingModule, TranslateDirective],
+    imports: [FormsModule, FaIconComponent, TumAetUiIconFieldComponent, TumAetUiInputDirective, OverlayModule, ScrollingModule, TranslateDirective],
     templateUrl: './tutorial-registrations-register-search-bar.component.html',
     styleUrl: './tutorial-registrations-register-search-bar.component.scss',
 })
 export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestroy {
-    private readonly PAGE_SIZE = 25;
-
     private translateService = inject(TranslateService);
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
     private overlay = inject(Overlay);
+    private viewContainerRef = inject(ViewContainerRef);
+
+    private readonly PAGE_SIZE = 25;
+
     private overlayRef: OverlayRef | undefined = undefined;
     private viewportScrollSubscription: Subscription | undefined = undefined;
     private loadFirstPageSubscription: Subscription | undefined = undefined;
-    private viewContainerRef = inject(ViewContainerRef);
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
     private viewport = viewChild<CdkVirtualScrollViewport>(CdkVirtualScrollViewport);

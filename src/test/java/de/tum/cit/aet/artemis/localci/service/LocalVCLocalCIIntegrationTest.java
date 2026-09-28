@@ -10,10 +10,14 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -22,6 +26,7 @@ import java.util.Optional;
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 
+import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -47,12 +52,14 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueu
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.localvc.service.AuthenticationContext;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -254,6 +261,30 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         log.info("Found {} failed access logs", failedAccessLogs.size());
         testUserLogs.forEach(accessLog -> log.info("VCS Access Log: action={}, user={}, authMechanism={}", accessLog.getRepositoryActionType(), accessLog.getUser().getLogin(),
                 accessLog.getAuthenticationMechanism()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testVcsAccessLog_sshClientAddressWithHostnameFitsTheColumn() throws UnknownHostException {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
+
+        // An ssh peer the way a production node sees it: the address carries a reverse-resolved hostname
+        var clientAddress = new InetSocketAddress(InetAddress.getByAddress("host-203-0-113-42.dialup.example.net", new byte[] { (byte) 203, 0, (byte) 113, 42 }), 52134);
+        assertThat(clientAddress.toString()).as("the address the session prints exceeds the ip_address column").hasSizeGreaterThan(45);
+
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(clientAddress);
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        // Storing the printed socket address here failed with "value too long for type character varying(45)", which
+        // lost the entire audit entry
+        var accessLog = new VcsAccessLog(student1, participation, student1.getName(), student1.getEmail(), RepositoryActionType.PULL, AuthenticationMechanism.SSH, "", ipAddress);
+        vcsAccessLogRepository.saveAndFlush(accessLog);
+
+        assertThat(vcsAccessLogRepository.findAllByParticipationId(participation.getId())).hasSize(1);
+        assertThat(ipAddress).isEqualTo("203.0.113.42");
     }
 
     @Test

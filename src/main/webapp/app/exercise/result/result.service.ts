@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -55,7 +55,7 @@ export interface IResultService {
     triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ResultService implements IResultService {
     private http = inject(HttpClient);
     private translateService = inject(TranslateService);

@@ -215,6 +215,7 @@ describe('LectureUnitManagementComponent', () => {
 
     it('should offer orchestration only for supported lecture units with extractable content', () => {
         attachmentVideoUnit.description = 'Attachment description';
+        textUnit.content = 'Recursion calls itself until a base case is reached.';
 
         expect(lectureUnitManagementComponent.isOrchestrationAvailable(textUnit)).toBe(true);
         expect(lectureUnitManagementComponent.isOrchestrationAvailable(new OnlineUnit())).toBe(true);
@@ -223,6 +224,12 @@ describe('LectureUnitManagementComponent', () => {
 
         attachmentVideoUnit.description = '   ';
         expect(lectureUnitManagementComponent.isOrchestrationAvailable(attachmentVideoUnit)).toBe(false);
+    });
+
+    it.each([undefined, '', '   ', '\n\t'])('should not offer orchestration for a text unit with blank content %j', (content) => {
+        textUnit.content = content;
+
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(textUnit)).toBe(false);
     });
 
     it('should give the correct confirmation text translation key', () => {

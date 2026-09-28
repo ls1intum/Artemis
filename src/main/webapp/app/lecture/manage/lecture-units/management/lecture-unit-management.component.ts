@@ -12,6 +12,7 @@ import { LectureUnitCombinedStatus, LectureUnitProcessingStatus, LectureUnitServ
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { faClock, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -58,6 +59,14 @@ import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestrati
     ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly lectureService = inject(LectureService);
+    private readonly alertService = inject(AlertService);
+    protected readonly lectureUnitService = inject(LectureUnitService);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly websocketService = inject(WebsocketService);
+
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faEye = faEye;
@@ -70,14 +79,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
     protected readonly ProcessingPhase = ProcessingPhase;
-
-    private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly router = inject(Router);
-    private readonly lectureService = inject(LectureService);
-    private readonly alertService = inject(AlertService);
-    protected readonly lectureUnitService = inject(LectureUnitService);
-    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly websocketService = inject(WebsocketService);
 
     showCreationCard = input<boolean>(true);
     showCompetencies = input<boolean>(true);
@@ -259,9 +260,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Client mirror of the server's ContentExtractionService.isLectureUnitEligibleForOrchestration: only offer a manual
+     * Atlas run for units whose learning text the orchestrator can actually read, so a blank unit never gets a trigger
+     * that could only end as a no-op.
+     */
     isOrchestrationAvailable(lectureUnit: LectureUnit): boolean {
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:
+                return !!(lectureUnit as TextUnit).content?.trim();
             case LectureUnitType.ONLINE:
                 return true;
             case LectureUnitType.ATTACHMENT_VIDEO:

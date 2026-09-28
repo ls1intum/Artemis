@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.QUIZ_STATISTICS;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -165,7 +166,7 @@ public class QuizStatisticsService {
         try {
             taskScheduler.schedule(() -> {
                 pendingNotifications.remove(quizExerciseId, claim);
-                websocketMessagingService.sendMessage("/topic/statistic/" + quizExerciseId, quizExerciseId);
+                websocketMessagingService.sendMessage(QUIZ_STATISTICS.at(quizExerciseId), quizExerciseId);
             }, Instant.now().plus(NOTIFICATION_DEBOUNCE));
         }
         catch (RuntimeException exception) {

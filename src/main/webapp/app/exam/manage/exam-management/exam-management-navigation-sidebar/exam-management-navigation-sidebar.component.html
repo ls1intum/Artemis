@@ -16,7 +16,7 @@
                 <div class="scrollable-content flex flex-col gap-2">
                     @for (exam of exams(); track exam.id) {
                         <div [id]="'exam-' + exam.id">
-                            <tum-ui-panel
+                            <tumaet-ui-panel
                                 [toggleable]="true"
                                 [collapsed]="!expandedExams().has(exam.id!)"
                                 (collapsedChange)="toggleExam(exam.id!)"
@@ -28,10 +28,10 @@
                                 "
                                 (click)="onPanelClick(exam.id!, $event)"
                             >
-                                <div tumUiPanelHeader class="flex items-center gap-2 min-w-0 mr-2 flex-1 cursor-pointer select-none">
+                                <div tumAetUiPanelHeader class="flex items-center gap-2 min-w-0 mr-2 flex-1 cursor-pointer select-none">
                                     <fa-icon
                                         [icon]="exam.testExam ? faVial : faGraduationCap"
-                                        [tumUiTooltip]="
+                                        [tumAetUiTooltip]="
                                             (exam.testExam ? 'artemisApp.examManagement.testExam.testExam' : 'artemisApp.examManagement.testExam.realExam') | artemisTranslate
                                         "
                                     />
@@ -86,7 +86,7 @@
                                         <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="scores" [icon]="faEye" [title]="'entity.action.scores' | artemisTranslate" />
                                     }
                                 </div>
-                            </tum-ui-panel>
+                            </tumaet-ui-panel>
                         </div>
                     } @empty {
                         <div class="p-2 text-center text-muted">

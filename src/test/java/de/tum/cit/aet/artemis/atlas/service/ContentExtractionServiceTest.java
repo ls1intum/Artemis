@@ -177,6 +177,25 @@ class ContentExtractionServiceTest {
     }
 
     @Test
+    void isLectureUnitEligibleForOrchestration_textUnitWithContent_isEligible() {
+        TextUnit unit = new TextUnit();
+        unit.setContent("A recursive function calls itself until a base case is reached.");
+
+        assertThat(ContentExtractionService.isLectureUnitEligibleForOrchestration(unit)).isTrue();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t\n" })
+    void isLectureUnitEligibleForOrchestration_blankTextUnit_isIneligible(String content) {
+        // Blank text extracts to an empty learning text that batch orchestration drops, so it must never be queued or offered.
+        TextUnit unit = new TextUnit();
+        unit.setContent(content);
+
+        assertThat(ContentExtractionService.isLectureUnitEligibleForOrchestration(unit)).isFalse();
+    }
+
+    @Test
     void extractContent_onlineUnit_usesDescriptionAndRecordsSource() {
         OnlineUnit unit = new OnlineUnit();
         unit.setName("Spring docs");

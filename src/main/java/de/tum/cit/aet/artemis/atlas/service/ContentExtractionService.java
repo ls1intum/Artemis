@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO.EditDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -197,19 +198,28 @@ public class ContentExtractionService {
 
     /**
      * Whether Atlas can inspect and mutate competency links for the given lecture unit.
-     * Attachment/video units require instructor-authored descriptive text because Atlas does not
-     * inspect attachments, videos, or transcripts.
+     * Text units require nonblank prose content, and attachment/video units require
+     * instructor-authored descriptive text because Atlas does not inspect attachments, videos, or
+     * transcripts. Both would otherwise extract to an empty learning text that batch orchestration
+     * drops, so accepting them here would let a blank unit stay queued, consume an automatic run, and
+     * be offered for a manual run that can only end as a no-op.
+     * <p>
+     * The lecture-unit management client mirrors this rule in {@code isOrchestrationAvailable}.
      *
      * @param lectureUnit the lecture unit to validate
      * @return whether the unit has a supported, learning-relevant representation
      */
     public static boolean isLectureUnitEligibleForOrchestration(LectureUnit lectureUnit) {
         return switch (lectureUnit) {
-            case TextUnit ignored -> true;
+            case TextUnit textUnit -> hasText(textUnit.getContent());
             case OnlineUnit ignored -> true;
-            case AttachmentVideoUnit attachmentVideoUnit -> attachmentVideoUnit.getDescription() != null && !attachmentVideoUnit.getDescription().isBlank();
+            case AttachmentVideoUnit attachmentVideoUnit -> hasText(attachmentVideoUnit.getDescription());
             default -> false;
         };
+    }
+
+    private static boolean hasText(@Nullable String value) {
+        return value != null && !value.isBlank();
     }
 
     /**
@@ -228,10 +238,19 @@ public class ContentExtractionService {
      * @return the cleaned text, or the original text if stripping is disabled or fails
      */
     public String stripFlavorText(String rawText) {
-        return stripFlavorText(rawText, null);
+        return stripFlavorText(rawText, null, null);
     }
 
     private String stripFlavorText(String rawText, @Nullable Exercise exercise) {
+        Course course = exercise != null ? exercise.getCourseViaExerciseGroupOrCourseMember() : null;
+        return stripFlavorText(rawText, course != null ? course.getId() : null, exercise != null ? exercise.getId() : null);
+    }
+
+    /**
+     * Strips flavor text and attributes the provider usage to the given course and exercise. Lecture units
+     * pass their lecture's course, so course statistics include flavor stripping of text units.
+     */
+    private String stripFlavorText(String rawText, @Nullable Long courseId, @Nullable Long exerciseId) {
         if (rawText == null || rawText.isBlank()) {
             return "";
         }
@@ -244,7 +263,7 @@ public class ContentExtractionService {
             String systemPrompt = templateService.render(FLAVOR_STRIP_PROMPT_PATH, Map.of());
             OpenAiChatOptions.Builder options = buildChatOptions(flavorStripModel, flavorStripReasoningEffort, flavorStripTemperature);
             var responseEntity = chatClient.prompt().system(systemPrompt).user(rawText).options(options).call().responseEntity(FlavorStripEditsDTO.class);
-            trackFlavorStripUsage(responseEntity.response(), exercise);
+            trackFlavorStripUsage(responseEntity.response(), courseId, exerciseId);
             FlavorStripEditsDTO parsedEdits = responseEntity.entity();
             if (parsedEdits == null || parsedEdits.edits() == null || parsedEdits.edits().isEmpty()) {
                 return rawText;
@@ -260,12 +279,10 @@ public class ContentExtractionService {
         }
     }
 
-    private void trackFlavorStripUsage(@Nullable ChatResponse response, @Nullable Exercise exercise) {
+    private void trackFlavorStripUsage(@Nullable ChatResponse response, @Nullable Long courseId, @Nullable Long exerciseId) {
         if (llmTokenUsageService == null) {
             return;
         }
-        Long courseId = exercise != null && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-        Long exerciseId = exercise != null ? exercise.getId() : null;
         Long userId = userRepository == null ? null : SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
         llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, FLAVOR_STRIP_PIPELINE_ID,
                 builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
@@ -433,7 +450,8 @@ public class ContentExtractionService {
     private ExtractedContentDTO extractFromTextUnit(TextUnit unit, boolean applyFlavorStrip) {
         String title = Objects.requireNonNullElse(unit.getName(), "");
         String raw = Objects.requireNonNullElse(unit.getContent(), "");
-        String learningText = applyFlavorStrip ? stripFlavorText(raw) : raw;
+        Course course = unit.getLecture() != null ? unit.getLecture().getCourse() : null;
+        String learningText = applyFlavorStrip ? stripFlavorText(raw, course != null ? course.getId() : null, null) : raw;
         return new ExtractedContentDTO(title, learningText, lectureUnitMetadata(unit));
     }
 

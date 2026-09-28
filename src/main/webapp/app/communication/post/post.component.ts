@@ -14,7 +14,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { DOCUMENT, NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
@@ -47,7 +47,6 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
         PostingReactionsBarComponent,
         MessageInlineInputComponent,
         PostingFooterComponent,
-        NgStyle,
         CdkOverlayOrigin,
         CdkConnectedOverlay,
         EmojiPickerComponent,

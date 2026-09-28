@@ -54,6 +54,17 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
+    private translateService = inject(TranslateService);
+    /** Shared helper that encapsulates all AI-powered problem statement operations. */
+    readonly aiOps = new ProblemStatementAiOperationsHelper(
+        inject(ProblemStatementService),
+        inject(AlertService),
+        inject(ArtemisIntelligenceService),
+        inject(ProfileService),
+        inject(DestroyRef),
+        inject(Injector),
+    );
+
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
     protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
 
@@ -66,22 +77,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     /** Tracks the authoritative competency links state, updated whenever links change from any source. */
     readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);
 
-    private translateService = inject(TranslateService);
-
     // Child component reference for refreshing competency selection
     private competencySelectionComponent = viewChild(CompetencySelectionComponent);
 
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
-
-    /** Shared helper that encapsulates all AI-powered problem statement operations. */
-    readonly aiOps = new ProblemStatementAiOperationsHelper(
-        inject(ProblemStatementService),
-        inject(AlertService),
-        inject(ArtemisIntelligenceService),
-        inject(ProfileService),
-        inject(DestroyRef),
-        inject(Injector),
-    );
 
     // Delegate signals for template binding compatibility
     readonly userPrompt = this.aiOps.userPrompt;

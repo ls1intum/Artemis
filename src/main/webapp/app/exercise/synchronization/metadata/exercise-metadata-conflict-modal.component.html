@@ -30,7 +30,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction30
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 @for (entry of getBuildConfigValues(conflict.currentValue); track entry.labelKey) {
@@ -45,7 +52,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction45
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction45.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 @for (entry of getBuildConfigValues(conflict.incomingValue); track entry.labelKey) {
@@ -63,7 +77,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction63
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction63.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction63.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="d-flex flex-wrap gap-2">
@@ -77,7 +98,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction77
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction77.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction77.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="d-flex flex-wrap gap-2">
@@ -94,7 +122,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction94
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction94.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction94.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="d-flex flex-column gap-2">
@@ -111,7 +146,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction111
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction111.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="d-flex flex-column gap-2">
@@ -131,7 +173,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction131
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction131.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction131.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 @for (criterion of toGradingCriteriaDisplay(conflict.currentValue); track criterion.title) {
@@ -165,7 +214,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction165
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction165.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction165.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-2" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 @for (criterion of toGradingCriteriaDisplay(conflict.incomingValue); track criterion.title) {
@@ -202,7 +258,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-2 px-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': !decisions()[conflict.field] }"
+                                [attr.aria-pressed]="!decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, false)"
+                                #keyboardAction202
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction202.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction202.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
                                 <div class="text-break">{{ formatValue(conflict.currentValue) }}</div>
@@ -212,7 +275,14 @@
                             <div
                                 class="conflict-tile rounded-3 p-2 px-3 h-100"
                                 [ngClass]="{ 'conflict-tile--selected bg-light': decisions()[conflict.field] }"
+                                [attr.aria-pressed]="decisions()[conflict.field]"
                                 (click)="updateDecision(conflict.field, true)"
+                                #keyboardAction212
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction212.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction212.click() : undefined"
                             >
                                 <div class="small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
                                 <div class="text-break">{{ formatValue(conflict.incomingValue) }}</div>
