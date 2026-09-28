@@ -1,6 +1,6 @@
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -36,7 +36,7 @@ export class AttachmentVideoUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    update(lectureId: number, attachmentVideoUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
+    update(lectureId: number, attachmentVideoUnitId: number, formData: FormData, notificationText?: string, context?: HttpContext): Observable<EntityResponseType> {
         /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
          * See: https://issues.chromium.org/issues/374550348
          **/
@@ -45,7 +45,7 @@ export class AttachmentVideoUnitService {
                 `${this.resourceURL}/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}?keepFilename=true` +
                     (notificationText ? `&notificationText=${notificationText}` : ''),
                 formData,
-                { headers: { 'ngsw-bypass': 'true' }, observe: 'response' },
+                { headers: { 'ngsw-bypass': 'true' }, observe: 'response', context },
             )
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }

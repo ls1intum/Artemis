@@ -59,7 +59,7 @@
                 "periodDescription": "Wann die Vorlesung stattfindet. Beide Angaben sind optional.",
                 "periodOrderInvalid": "Das Ende muss nach dem Start liegen.",
                 "units": "Inhalte",
-                "unitsDescription": "Studierende sehen diese Inhalte in dieser Reihenfolge. Ziehe einen Inhalt, um ihn zu verschieben.",
+                "unitsDescription": "Studierende sehen diese Inhalte in dieser Reihenfolge. Ziehe einen Inhalt, um ihn zu verschieben. Änderungen an Inhalten werden automatisch gespeichert.",
                 "navigation": "Abschnitte der Vorlesung",
                 "needsAttention": "muss überprüft werden"
             },
@@ -68,14 +68,13 @@
                 "unsavedChanges": "Ungespeicherte Änderungen:",
                 "saving": "Die Vorlesungsdetails werden gespeichert…",
                 "saved": "Vorlesungsdetails um {{ time }} gespeichert",
-                "contentHint": "Inhalte werden jeweils einzeln gespeichert.",
+                "contentHint": "Änderungen an Inhalten werden automatisch gespeichert.",
                 "createHint": "Speichere die Vorlesung, um Inhalte hinzuzufügen.",
                 "nothingToSave": "Es gibt keine Änderungen zum Speichern.",
                 "detailsIncomplete": "Fülle die Pflichtangaben aus, um zu speichern.",
                 "periodInvalid": "Korrigiere den Zeitraum der Vorlesung, um zu speichern."
             },
             "newLectureUnit": "Neuer Inhalt",
-            "editLectureUnit": "Inhalt bearbeiten",
             "dismissChangesModal": {
                 "title": "Ungespeicherte Änderungen der Vorlesung verwerfen?",
                 "message": "Ungespeicherte Änderungen in: {{ sections }}. Willst du sie verwerfen?",
@@ -141,11 +140,22 @@
             },
             "splitPdf": {
                 "title": "Ein Vorlesungs-PDF in mehrere Inhalte aufteilen",
-                "description": "Artemis sucht die Gliederungsfolie und schlägt einen Inhalt pro Abschnitt vor. Du prüfst den Vorschlag, bevor etwas erstellt wird, und der PDF-Inhalt bleibt, wie er ist.",
+                "description": "Artemis findet die Gliederungsfolie und schlägt einen Inhalt pro Abschnitt vor. Du prüfst den Vorschlag, bevor etwas erstellt wird.",
                 "unit": "Aufzuteilendes PDF",
                 "unitPlaceholder": "PDF auswählen",
                 "start": "In Abschnitte aufteilen",
-                "noPdf": "Füge das Vorlesungs-PDF zuerst als Inhalt hinzu, zum Beispiel indem du es oben ablegst."
+                "noPdf": "Füge das Vorlesungs-PDF zuerst als Inhalt hinzu, zum Beispiel indem du es oben ablegst.",
+                "otherPdf": "Anderes PDF hochladen",
+                "otherPdfHint": "Für ein PDF, das noch nicht Teil dieser Vorlesung ist."
+            },
+            "unitEditor": {
+                "title": "Dieser Inhalt wird bearbeitet",
+                "autosaveHint": "Änderungen werden automatisch gespeichert.",
+                "saving": "Wird gespeichert…",
+                "saved": "Alle Änderungen gespeichert · {{ time }}",
+                "invalid": "Noch nicht gespeichert: Korrigiere die markierten Felder.",
+                "failed": "Nicht gespeichert. Deine Änderungen bleiben erhalten.",
+                "retry": "Erneut versuchen"
             }
         },
         "attachment": {

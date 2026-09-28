@@ -59,7 +59,7 @@
                 "periodDescription": "When the lecture takes place. Both dates are optional.",
                 "periodOrderInvalid": "The end has to be after the start.",
                 "units": "Content",
-                "unitsDescription": "Students see these items in this order. Drag an item to move it.",
+                "unitsDescription": "Students see these items in this order. Drag an item to move it. Changes to content are saved automatically.",
                 "navigation": "Sections of the lecture",
                 "needsAttention": "needs attention"
             },
@@ -68,14 +68,13 @@
                 "unsavedChanges": "Unsaved changes:",
                 "saving": "Saving the lecture details…",
                 "saved": "Lecture details saved at {{ time }}",
-                "contentHint": "Content items are saved on their own.",
+                "contentHint": "Content changes are saved automatically.",
                 "createHint": "Save the lecture to add content to it.",
                 "nothingToSave": "There are no changes to save.",
                 "detailsIncomplete": "Fill in the required details to save.",
                 "periodInvalid": "Correct the lecture period to save."
             },
             "newLectureUnit": "New content item",
-            "editLectureUnit": "Edit content item",
             "dismissChangesModal": {
                 "title": "Discard unsaved lecture changes?",
                 "message": "Unsaved changes in: {{ sections }}. Do you want to discard them?",
@@ -141,11 +140,22 @@
             },
             "splitPdf": {
                 "title": "Split a lecture PDF into several items",
-                "description": "Artemis finds the outline slide and proposes one item per section. You review the proposal before anything is created, and the PDF item stays as it is.",
+                "description": "Artemis finds the outline slide and proposes one item per section. You review the proposal before anything is created.",
                 "unit": "PDF to split",
                 "unitPlaceholder": "Select a PDF",
                 "start": "Split into sections",
-                "noPdf": "Add the lecture PDF as content first, for example by dropping it above."
+                "noPdf": "Add the lecture PDF as content first, for example by dropping it above.",
+                "otherPdf": "Upload another PDF",
+                "otherPdfHint": "For a PDF that is not part of this lecture yet."
+            },
+            "unitEditor": {
+                "title": "Editing this item",
+                "autosaveHint": "Changes are saved automatically.",
+                "saving": "Saving…",
+                "saved": "All changes saved · {{ time }}",
+                "invalid": "Not saved yet: correct the marked fields.",
+                "failed": "Not saved. Your changes are kept.",
+                "retry": "Retry"
             }
         },
         "attachment": {

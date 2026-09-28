@@ -124,10 +124,14 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     readonly formStatusSections = signal<FormSectionStatus[]>(undefined!);
     domainActionsDescription = [new FormulaAction()];
     readonly isChangeMadeToTitleOrPeriodSection = signal(false);
-    /** What leaving the page would discard: the single-lecture form is not shown while a series is created. */
-    readonly hasUnsavedChanges = computed(() => !this.isLectureSeriesCreationMode() && this.isChangeMadeToTitleOrPeriodSection());
     /** Translation keys of the sections whose unsaved changes the footer names. */
     readonly changedSections = signal<string[]>([]);
+    /** Translation keys of the sections whose changes leaving the page would discard: the details, and content that could not be saved. */
+    private readonly unsavedSections = computed(() =>
+        this.unitSection()?.hasUnsavedContent() ? [...this.changedSections(), 'artemisApp.lecture.sections.units'] : this.changedSections(),
+    );
+    /** What leaving the page would discard: the single-lecture form is not shown while a series is created. */
+    readonly hasUnsavedChanges = computed(() => !this.isLectureSeriesCreationMode() && (this.isChangeMadeToTitleOrPeriodSection() || !!this.unitSection()?.hasUnsavedContent()));
     /** When the lecture details were last saved on this page, for the footer's confirmation. */
     readonly lastSavedAt = signal<dayjs.Dayjs | undefined>(undefined);
     /** Set when the lecture list opened this page after PDFs were dropped on it; cleared when the user dismisses it. */
@@ -273,7 +277,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     }
 
     /**
-     * Asks whether to discard the unsaved changes of the lecture details, naming the sections that hold them.
+     * Asks whether to discard the unsaved changes of the lecture details and content, naming the sections that hold them.
      * Emits once: true when the user discards the changes, false when they keep editing or close the dialog.
      */
     confirmDiscardChanges(): Observable<boolean> {
@@ -284,7 +288,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
                 subscriber.next(discard);
                 subscriber.complete();
             };
-            const sections = this.changedSections()
+            const sections = this.unsavedSections()
                 .map((section) => this.translateService.instant(section))
                 .join(', ');
             this.confirmationService.confirm({

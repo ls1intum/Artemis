@@ -17,7 +17,7 @@
             labelName="artemisApp.lectureUnit.releaseDate"
             [value]="releaseDateControl?.value ?? undefined"
             (valueChange)="onReleaseDateChange($event)"
-            (inputValidityChange)="isReleaseDateTextValid.set($event)"
+            (inputValidityChange)="onReleaseDateTextValidityChange($event)"
         />
         <jhi-competency-selection
             id="competencies"
@@ -30,16 +30,18 @@
             <!-- not included in reactive form -->
             <jhi-markdown-editor-monaco id="content" class="markdown-editor" aria-labelledby="content-label" [(markdown)]="content" (markdownChange)="onMarkdownChange($event)" />
         </div>
-        <div class="flex flex-wrap gap-2">
-            <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
-                <span jhiTranslate="entity.action.submit"></span>
-            </button>
-            @if (hasCancelButton()) {
-                <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
-                    <fa-icon [icon]="faTimes" />
-                    <span jhiTranslate="entity.action.cancel"></span>
+        @if (!autosave()) {
+            <div class="flex flex-wrap gap-2">
+                <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
+                    <span jhiTranslate="entity.action.submit"></span>
                 </button>
-            }
-        </div>
+                @if (hasCancelButton()) {
+                    <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
+                        <fa-icon [icon]="faTimes" />
+                        <span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                }
+            </div>
+        }
     </form>
 }

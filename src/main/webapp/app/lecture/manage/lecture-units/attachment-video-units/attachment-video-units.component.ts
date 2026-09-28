@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { faBan, faExclamationTriangle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -16,6 +17,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
     TumAetUiDatePickerComponent,
     TumAetUiFormFieldComponent,
     TumAetUiInputDirective,
@@ -38,6 +40,12 @@ export type LectureUnitInformationDTO = {
     removeSlidesCommaSeparatedKeyPhrases: string;
 };
 
+/** The PDF item whose file is split, when the lecture editor opened this page for one of its items. */
+export interface SplitSourceUnit {
+    id: number;
+    name?: string;
+}
+
 @Component({
     selector: 'jhi-attachment-video-units',
     templateUrl: './attachment-video-units.component.html',
@@ -47,6 +55,7 @@ export type LectureUnitInformationDTO = {
         FormsModule,
         FaIconComponent,
         TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
         TumAetUiDatePickerComponent,
         TumAetUiFormFieldComponent,
         TumAetUiInputDirective,
@@ -60,6 +69,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly lectureUnitService = inject(LectureUnitService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
 
@@ -69,6 +79,17 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     isProcessingMode = false;
     readonly units = signal<LectureUnitDTOS[]>([]);
     readonly numberOfPages = signal<number>(undefined!);
+    /** How many sections Artemis found in the PDF, before the user changed the proposal. */
+    readonly foundSections = signal(0);
+    /** What Artemis found, which also says how many slides the ranges can use. */
+    readonly summaryKey = computed(() => {
+        const found = this.foundSections();
+        return `artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.${found === 0 ? 'summaryNone' : found === 1 ? 'summarySingle' : 'summary'}`;
+    });
+    readonly createLabelKey = computed(() => {
+        const count = this.units().length;
+        return `artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.${count === 0 ? 'createEmpty' : count === 1 ? 'createSingle' : 'create'}`;
+    });
     faBan = faBan;
     faTimes = faTimes;
     faPlus = faPlus;
@@ -80,13 +101,21 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     private search = new Subject<void>();
     readonly removedSlidesNumbers = signal<number[]>([]);
 
-    file: File;
+    /** What the page that opened this one passed: the file, and from the lecture editor the PDF item it comes from. */
+    private readonly navigationState = this.router.currentNavigation()?.extras?.state;
+    file: File = this.navigationState?.file;
+    /** The PDF item the file comes from; the lecture editor passes it only to instructors, who may delete content. */
+    readonly sourceUnit: SplitSourceUnit | undefined = this.navigationState?.sourceUnit;
+    /** Whether the PDF item is deleted once its sections exist as items, so the lecture does not hold the slides twice. */
+    readonly removeSourceUnit = signal(true);
+    readonly isRemovingSourceUnit = computed(() => !!this.sourceUnit && this.removeSourceUnit());
+    /** Set when the lecture editor opened this page, which is where the page leads back to. */
+    private readonly returnToEditor = this.navigationState?.returnToEditor === true;
     filename!: string; // set asynchronously after the slides upload completes, before subsequent reads
     //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentVideoUnitResource.java
     readonly MINUTES_UNTIL_DELETION = 29;
 
     constructor() {
-        this.file = this.router.currentNavigation()?.extras?.state?.file;
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {
             this.lectureId = Number(params.get('lectureId'));
@@ -142,7 +171,13 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             )
             .subscribe({
                 next: (res) => {
-                    this.units.set(res.body!.units || this.units());
+                    const proposedUnits = res.body!.units ?? [];
+                    // The server sends the release dates as text, but the date picker works with dates.
+                    for (const unit of proposedUnits) {
+                        unit.releaseDate = unit.releaseDate ? dayjs(unit.releaseDate) : undefined;
+                    }
+                    this.units.set(res.body!.units ? proposedUnits : this.units());
+                    this.foundSections.set(proposedUnits.length);
                     this.numberOfPages.set(res.body!.numberOfPages);
                     this.isLoading.set(false);
                 },
@@ -172,7 +207,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     }
 
     /**
-     * Creates the attachment video units with the information given on this page
+     * Creates the attachment video units with the information given on this page, then deletes the PDF item they come from if the user chose so.
      */
     createAttachmentVideoUnits(): void {
         if (this.validUnitInformation()) {
@@ -185,14 +220,42 @@ export class AttachmentVideoUnitsComponent implements OnInit {
 
             this.attachmentVideoUnitService.createUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
                 next: () => {
-                    void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                    this.isLoading.set(false);
+                    if (this.isRemovingSourceUnit()) {
+                        this.deleteSourceUnitAndLeave(this.sourceUnit!.id);
+                    } else {
+                        this.leaveAfterCreation();
+                    }
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
+                    this.isLoading.set(false);
                 },
             });
         }
+    }
+
+    private deleteSourceUnitAndLeave(sourceUnitId: number): void {
+        this.lectureUnitService.delete(sourceUnitId, this.lectureId).subscribe({
+            next: () => this.leaveAfterCreation(),
+            error: (res: HttpErrorResponse) => {
+                // The new items exist, so the page is left anyway; the alert tells that the PDF item is still there.
+                onError(this.alertService, res);
+                this.leaveAfterCreation();
+            },
+        });
+    }
+
+    private leaveAfterCreation(): void {
+        this.isLoading.set(false);
+        if (this.returnToEditor) {
+            void this.router.navigate(this.editorRoute());
+        } else {
+            void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+        }
+    }
+
+    private editorRoute(): string[] {
+        return ['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString(), 'edit'];
     }
 
     set searchTerm(searchTerm: string) {
@@ -210,10 +273,10 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     }
 
     /**
-     * Go back to the lecture page
+     * Goes back to the lecture editor when it opened this page, else to the lecture page
      */
     cancelSplit() {
-        void this.router.navigate(['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString()]);
+        void this.router.navigate(this.returnToEditor ? this.editorRoute() : ['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString()]);
     }
 
     addRow() {

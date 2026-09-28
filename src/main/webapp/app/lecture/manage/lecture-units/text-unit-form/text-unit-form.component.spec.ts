@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -197,5 +198,70 @@ describe('TextUnitFormComponent', () => {
         // The markdown editor component receives content via input binding - verify the editor exists
         const markdownEditor = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent));
         expect(markdownEditor).not.toBeNull();
+    });
+
+    describe('when the item saves itself', () => {
+        let changes: UnitFormChange<TextUnitFormData>[];
+
+        beforeEach(async () => {
+            changes = [];
+            textUnitFormComponent.formChanged.subscribe((change) => changes.push(change));
+            textUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            textUnitFormComponentFixture.componentRef.setInput('autosave', true);
+            textUnitFormComponentFixture.componentRef.setInput('formData', { name: 'Reading', content: 'Lorem Ipsum' });
+            textUnitFormComponentFixture.detectChanges();
+            await textUnitFormComponentFixture.whenStable();
+        });
+
+        it('should not report the data of the item as a change', () => {
+            expect(textUnitFormComponent.nameControl!.value).toBe('Reading');
+            expect(changes).toEqual([]);
+        });
+
+        it('should report typed text for saving after a pause and choices for saving at once', () => {
+            const releaseDate = dayjs('2026-10-01T10:00:00Z');
+
+            textUnitFormComponent.nameControl!.setValue('Reading list');
+            textUnitFormComponent.content = 'New content';
+            textUnitFormComponent.onMarkdownChange('New content');
+            textUnitFormComponent.onReleaseDateChange(releaseDate);
+
+            expect(changes.map((change) => change.immediate)).toEqual([false, false, true]);
+            expect(changes[2]).toEqual({ data: expect.objectContaining({ name: 'Reading list', content: 'New content', releaseDate }), immediate: true, valid: true });
+        });
+
+        it('should report a form that cannot be saved', () => {
+            textUnitFormComponent.nameControl!.setValue('');
+            expect(changes.at(-1)?.valid).toBe(false);
+
+            textUnitFormComponent.nameControl!.setValue('Reading');
+            textUnitFormComponent.onReleaseDateTextValidityChange(false);
+            expect(changes.at(-1)?.valid).toBe(false);
+        });
+
+        it('should save at once on Enter instead of submitting, and offer no Submit button', () => {
+            const submitSpy = vi.fn();
+            textUnitFormComponent.formSubmitted.subscribe(submitSpy);
+
+            textUnitFormComponent.submitForm();
+
+            expect(submitSpy).not.toHaveBeenCalled();
+            expect(changes.at(-1)).toEqual(expect.objectContaining({ immediate: true, valid: true }));
+            expect(textUnitFormComponentFixture.nativeElement.querySelector('#submitButton')).toBeNull();
+        });
+    });
+
+    it('should not offer a draft from the browser for an item that saves itself', async () => {
+        const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+        routerMock.setUrl('/test');
+        mockLocalStorageService.setStoreValue('/test', { markdown: 'Draft', date: 'Oct 01 2026, 10:00:00' } satisfies MarkdownCache);
+        const confirmSpy = vi.spyOn(window, 'confirm');
+
+        textUnitFormComponentFixture.componentRef.setInput('autosave', true);
+        textUnitFormComponentFixture.detectChanges();
+        await textUnitFormComponentFixture.whenStable();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(textUnitFormComponent.content).toBeUndefined();
     });
 });

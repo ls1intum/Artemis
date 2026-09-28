@@ -7,7 +7,8 @@ import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
 import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -65,6 +66,12 @@ export class OnlineUnitFormComponent {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
+    /** Reports every change instead of offering Submit, for an item that is edited in place and saved automatically. */
+    readonly autosave = input<boolean>(false);
+    readonly formChanged = output<UnitFormChange<OnlineUnitFormData>>();
+    /** Set while the form takes over the data of the item, which is not a change of the user. */
+    private applyingFormData = false;
+
     /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
     readonly isReleaseDateTextValid = signal(true);
 
@@ -98,6 +105,17 @@ export class OnlineUnitFormComponent {
                 this.setFormValues(data);
             }
         });
+
+        for (const typedField of ['name', 'description', 'source']) {
+            this.form
+                .get(typedField)!
+                .valueChanges.pipe(takeUntilDestroyed())
+                .subscribe(() => this.reportChange(false));
+        }
+        this.form
+            .get('competencyLinks')!
+            .valueChanges.pipe(takeUntilDestroyed())
+            .subscribe(() => this.reportChange(true));
     }
 
     get nameControl() {
@@ -115,6 +133,25 @@ export class OnlineUnitFormComponent {
     onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
         this.releaseDateControl?.setValue(releaseDate);
         this.releaseDateControl?.markAsDirty();
+        this.reportChange(true);
+    }
+
+    onReleaseDateTextValidityChange(valid: boolean): void {
+        // The picker also reports the validity it starts with, which is no change of the user.
+        if (valid === this.isReleaseDateTextValid()) {
+            return;
+        }
+        this.isReleaseDateTextValid.set(valid);
+        this.reportChange(false);
+    }
+
+    private reportChange(immediate: boolean): void {
+        if (!this.autosave() || this.applyingFormData) {
+            return;
+        }
+        // A control reports its change before the form takes it over, so the form's own value and validity lag one change behind here.
+        const valid = Object.values(this.form.controls).every((control) => !control.invalid) && this.isReleaseDateTextValid();
+        this.formChanged.emit({ data: deepClone(this.form.getRawValue()), immediate, valid });
     }
 
     get sourceControl() {
@@ -122,7 +159,9 @@ export class OnlineUnitFormComponent {
     }
 
     private setFormValues(formData: OnlineUnitFormData) {
+        this.applyingFormData = true;
         this.form.patchValue(formData);
+        this.applyingFormData = false;
     }
 
     /**
@@ -143,9 +182,11 @@ export class OnlineUnitFormComponent {
                 .pipe(map((response: HttpResponse<OnlineResourceDTO>) => response.body!))
                 .subscribe({
                     next: (onlineResource) => {
+                        // An item that saves itself keeps the name and description it has, so only empty fields are filled in.
+                        const keepCurrent = this.autosave();
                         const updateForm = {
-                            name: onlineResource.title || undefined,
-                            description: onlineResource.description || undefined,
+                            name: (keepCurrent && this.nameControl?.value) || onlineResource.title || undefined,
+                            description: (keepCurrent && this.descriptionControl?.value) || onlineResource.description || undefined,
                         };
                         this.form.patchValue(updateForm);
                     },
@@ -154,6 +195,11 @@ export class OnlineUnitFormComponent {
     }
 
     submitForm() {
+        if (this.autosave()) {
+            // Enter in a field of an item that saves itself saves at once instead of creating an item.
+            this.reportChange(true);
+            return;
+        }
         const onlineUnitFormData: OnlineUnitFormData = deepClone(this.form.value);
         this.formSubmitted.emit(onlineUnitFormData);
     }

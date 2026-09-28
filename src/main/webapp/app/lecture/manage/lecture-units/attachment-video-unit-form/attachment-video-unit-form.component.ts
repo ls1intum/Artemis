@@ -6,11 +6,13 @@ import { faArrowUp, faArrowUpRightFromSquare, faCircleInfo, faFileArrowUp, faQue
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE, UPLOAD_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
     TumAetUiDatePickerComponent,
     TumAetUiFormFieldComponent,
     TumAetUiInputDirective,
@@ -110,6 +112,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
         TranslateDirective,
         FaIconComponent,
         TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
         TumAetUiDatePickerComponent,
         TumAetUiFormFieldComponent,
         TumAetUiInputDirective,
@@ -144,6 +147,23 @@ export class AttachmentVideoUnitFormComponent {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
+    /**
+     * Reports changes instead of offering Submit, for an item that is edited in place and saved automatically. A new file or video
+     * link is saved only when the user confirms it, because Artemis then processes the content again.
+     */
+    readonly autosave = input<boolean>(false);
+    readonly formChanged = output<UnitFormChange<AttachmentVideoUnitFormData>>();
+    /** Emits when the user confirms the new file, with whether and how to notify students. */
+    readonly fileUploadRequested = output<AttachmentVideoUnitFormData>();
+    /** Emits when the user confirms a new video link. */
+    readonly videoSourceSaveRequested = output<AttachmentVideoUnitFormData>();
+    /** Whether students hear about the new version of the file; the notification text is optional. */
+    readonly notifyStudents = signal(false);
+    /** Set while the form takes over the data of the item, which is not a change of the user. */
+    private applyingFormData = false;
+    /** The video link the item has, to tell a new link, which needs confirming, apart from the saved one. */
+    private readonly savedVideoSource = signal<string | undefined>(undefined);
+
     /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
     readonly isReleaseDateTextValid = signal(true);
 
@@ -167,7 +187,8 @@ export class AttachmentVideoUnitFormComponent {
         const link = this.currentFileLink();
         return link ? this.fileService.replaceAttachmentPrefixAndUnderscores(decodeFileName(link.substring(link.lastIndexOf('/') + 1))) : undefined;
     });
-    readonly currentFileVersion = computed(() => this.formData()?.formProperties?.version);
+    /** Version of the unit's current file when it is edited. */
+    readonly currentFileVersion = signal<number | undefined>(undefined);
     /** The version is part of the URL so that the browser does not serve an older, cached file after a replacement. */
     readonly currentFileUrl = computed(() => {
         const url = addPublicFilePrefix(this.currentFileLink());
@@ -187,6 +208,13 @@ export class AttachmentVideoUnitFormComponent {
         // write reschedules the reactive flush, which re-runs this effect, which patches again — an
         // infinite change-detection loop that leaves the edit form stuck behind the loading spinner.
         // Guarding on the formData reference breaks the cycle and avoids clobbering in-progress edits.
+        this.nameControl!.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reportChange(false));
+        this.descriptionControl!.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reportChange(false));
+        this.form
+            .get('competencyLinks')!
+            .valueChanges.pipe(takeUntilDestroyed())
+            .subscribe(() => this.reportChange(true));
+
         effect(() => {
             const formData = this.formData();
             if (this.isEditMode()) {
@@ -215,10 +243,86 @@ export class AttachmentVideoUnitFormComponent {
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
+    readonly isVideoSourceChanged = computed(() => this.autosave() && (this.videoSourceSignal() || undefined) !== (this.savedVideoSource() || undefined));
+    readonly nextFileVersion = computed(() => (this.currentFileVersion() ?? 0) + 1);
 
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.isReleaseDateTextValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });
+
+    private reportChange(immediate: boolean): void {
+        if (!this.autosave() || this.applyingFormData) {
+            return;
+        }
+        // A control reports its change before the form takes it over, so the form's own value and validity lag one change behind here.
+        const valid = Object.values(this.form.controls).every((control) => !control.invalid) && this.isReleaseDateTextValid();
+        this.formChanged.emit({ data: this.currentFormData(), immediate, valid });
+    }
+
+    private currentFormData(): AttachmentVideoUnitFormData {
+        const formProperties: FormProperties = deepClone(this.form.getRawValue());
+        if (this.autosave() && !this.notifyStudents()) {
+            formProperties.updateNotificationText = undefined;
+        }
+        return { formProperties, fileProperties: { file: this.file, fileName: this.fileName() } };
+    }
+
+    onReleaseDateTextValidityChange(valid: boolean): void {
+        // The picker also reports the validity it starts with, which is no change of the user.
+        if (valid === this.isReleaseDateTextValid()) {
+            return;
+        }
+        this.isReleaseDateTextValid.set(valid);
+        this.reportChange(false);
+    }
+
+    /** Confirms the new file; saving it splits the slides again and processes the content for Iris again. */
+    uploadNewFile(): void {
+        if (this.file && !this.isFileTooBig()) {
+            this.fileUploadRequested.emit(this.currentFormData());
+        }
+    }
+
+    /** Confirms the new video link; saving it has the video transcribed and processed for Iris. */
+    saveVideoSource(): void {
+        if (!this.videoSourceControl?.invalid) {
+            this.videoSourceSaveRequested.emit(this.currentFormData());
+        }
+    }
+
+    /**
+     * Takes the file as the item's own after the user confirmed it and it was saved. Everything else stays as typed.
+     * @param fileLink the stored link of the saved file
+     * @param version the version of the saved file
+     */
+    takeOverSavedFile(fileLink: string | undefined, version: number | undefined): void {
+        this.applyingFormData = true;
+        this.updateNotificationTextControl?.setValue(undefined);
+        this.applyingFormData = false;
+        this.notifyStudents.set(false);
+        this.file = undefined;
+        this.fileName.set(fileLink);
+        this.currentFileLink.set(fileLink);
+        this.currentFileVersion.set(version);
+        this.fileInput().nativeElement.value = '';
+    }
+
+    /**
+     * Takes the video link as the item's own after the user confirmed it and it was saved.
+     * @param videoSource the saved video link
+     */
+    takeOverSavedVideoSource(videoSource: string | undefined): void {
+        this.savedVideoSource.set(videoSource);
+        this.applyingFormData = true;
+        this.urlHelperControl?.setValue(undefined);
+        this.applyingFormData = false;
+    }
+
+    /** Goes back to the video link the item has. */
+    discardVideoSource(): void {
+        this.videoSourceControl?.setValue(this.savedVideoSource());
+        this.urlHelperControl?.setValue(undefined);
+    }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
@@ -305,6 +409,7 @@ export class AttachmentVideoUnitFormComponent {
     onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
         this.releaseDateControl?.setValue(releaseDate);
         this.releaseDateControl?.markAsDirty();
+        this.reportChange(true);
     }
 
     get updateNotificationTextControl() {
@@ -320,28 +425,28 @@ export class AttachmentVideoUnitFormComponent {
     }
 
     submitForm() {
-        const formValue = this.form.value;
-        const formProperties: FormProperties = deepClone(formValue);
-        const fileProperties: FileProperties = {
-            file: this.file,
-            fileName: this.fileName(),
-        };
-
-        this.formSubmitted.emit({
-            formProperties,
-            fileProperties,
-        });
+        if (this.autosave()) {
+            // Enter in a field of an item that saves itself saves at once instead of creating an item.
+            this.reportChange(true);
+            return;
+        }
+        this.formSubmitted.emit(this.currentFormData());
     }
 
     private setFormValues(formData: AttachmentVideoUnitFormData) {
+        this.applyingFormData = true;
         if (formData?.formProperties) {
             this.form.patchValue(formData.formProperties);
         }
+        this.savedVideoSource.set(formData?.formProperties?.videoSource);
+        this.notifyStudents.set(false);
+        this.applyingFormData = false;
         // take over the file state completely, so switching to a unit without a file does not keep the previous unit's file
         const { file, fileName } = formData?.fileProperties ?? {};
         this.file = file;
         this.fileName.set(fileName);
         this.currentFileLink.set(file ? undefined : fileName);
+        this.currentFileVersion.set(formData?.formProperties?.version);
         this.isFileTooBig.set(false);
         this.isFileTypeUnsupported.set(false);
     }
@@ -351,6 +456,7 @@ export class AttachmentVideoUnitFormComponent {
         this.file = undefined;
         this.fileName.set(undefined);
         this.currentFileLink.set(undefined);
+        this.currentFileVersion.set(undefined);
         this.isFileTooBig.set(false);
         this.isFileTypeUnsupported.set(false);
         this.fileInputTouched.set(false);

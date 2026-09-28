@@ -41,7 +41,8 @@
                     "text": "Text",
                     "exercise": "Übung",
                     "online": "Online-Ressource"
-                }
+                },
+                "editing": "In Bearbeitung"
             }
         },
         "textUnit": {
@@ -89,7 +90,8 @@
                 "sourcePlaceHolder": "Gib eine URL zu einem externen Onlineangebot ein.",
                 "sourceRequiredValidationError": "Link ist ein Pflichtfeld",
                 "sourceURLValidationError": "Keine valide URL",
-                "urlHelperPlaceholder": "Name und Beschreibung werden von den Metadaten des Links geladen"
+                "urlHelperPlaceholder": "Name und Beschreibung werden von den Metadaten des Links geladen",
+                "urlHelperKeepHint": "Ein leerer Name oder eine leere Beschreibung wird aus den Metadaten des Links übernommen."
             },
             "editOnlineUnit": {
                 "title": "Online-Inhalt bearbeiten"
@@ -164,13 +166,23 @@
                 },
                 "split": {
                     "empty": "",
-                    "unit": "Vorlesungsinhalte",
-                    "unitName": "Inhaltsname",
+                    "unitName": "Name des Inhalts",
                     "releaseDate": "Veröffentlichungsdatum",
-                    "startPage": "Startseite",
-                    "endPage": "Letzte Seite"
+                    "startPage": "Erste Folie",
+                    "endPage": "Letzte Folie",
+                    "title": "PDF in Inhalte aufteilen",
+                    "summary": "Artemis hat {{ count }} Abschnitte in {{ slides }} Folien gefunden.",
+                    "summarySingle": "Artemis hat 1 Abschnitt in {{ slides }} Folien gefunden.",
+                    "hint": "Jede Zeile wird ein Inhalt mit ihren Folien. Prüfe die Namen und Folienbereiche, bevor du die Inhalte erstellst.",
+                    "slides": "Folien",
+                    "summaryNone": "Artemis hat in {{ slides }} Folien keine Abschnitte gefunden."
                 },
-                "processTimeInfo": "Die Verarbeitung der Vorlesungsinhalte kann einige Sekunden dauern. Habe bitte etwas Geduld."
+                "processTimeInfo": "Die Verarbeitung der Vorlesungsinhalte kann einige Sekunden dauern. Habe bitte etwas Geduld.",
+                "removeSource": "Den ursprünglichen PDF-Inhalt „{{ name }}“ nach dem Aufteilen entfernen",
+                "removeSourceHint": "Die Abschlüsse der Studierenden und die Kompetenzverknüpfungen des Inhalts werden mit ihm gelöscht.",
+                "create": "{{ count }} Inhalte erstellen",
+                "createSingle": "1 Inhalt erstellen",
+                "createEmpty": "Inhalte erstellen"
             },
             "createAttachmentVideoUnit": {
                 "title": "Datei-/Video-Inhalt erstellen",
@@ -209,7 +221,13 @@
                 "videoTranscription": "Video Transkription",
                 "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein.",
                 "transcriptionHint": "Videos aus unterstützten Quellen werden nach dem Speichern automatisch transkribiert. Den Fortschritt der Transkription kannst du auf der Vorlesungsverwaltungsseite verfolgen.",
-                "useAsVideoSource": "Als Video-URL verwenden"
+                "useAsVideoSource": "Als Video-URL verwenden",
+                "notifyStudents": "Studierende über die neue Version benachrichtigen",
+                "uploadVersion": "Version {{ version }} hochladen",
+                "uploadHint": "Artemis teilt danach die Folien und verarbeitet den Inhalt erneut.",
+                "saveVideoSource": "Video-URL speichern",
+                "discardVideoSource": "Aktuelle URL behalten",
+                "videoSourceHint": "Artemis transkribiert das Video danach und verarbeitet es erneut."
             },
             "editAttachmentVideoUnit": {
                 "title": "Datei-/Video-Inhalt bearbeiten"

@@ -41,7 +41,8 @@
                     "text": "Text",
                     "exercise": "Exercise",
                     "online": "Online resource"
-                }
+                },
+                "editing": "Editing"
             }
         },
         "textUnit": {
@@ -89,7 +90,8 @@
                 "sourcePlaceHolder": "Enter an URL to an external online resource",
                 "sourceRequiredValidationError": "Link is required",
                 "sourceURLValidationError": "Not a valid URL",
-                "urlHelperPlaceholder": "Name and description will be loaded from the metadata of the link"
+                "urlHelperPlaceholder": "Name and description will be loaded from the metadata of the link",
+                "urlHelperKeepHint": "An empty name or description is filled in from the metadata of the link."
             },
             "editOnlineUnit": {
                 "title": "Edit Online Content"
@@ -141,7 +143,7 @@
                 "noFile": "There is no file for automatic processing. Please go back and try again.",
                 "noUnitDetected": "No content was detected and could not split automatically. Please add information for each content section!",
                 "pageTitle": "Process content",
-                "addUnit": "Add content",
+                "addUnit": "Add item",
                 "removeSlides": "Remove slides",
                 "removeSlidesInfo": {
                     "firstLine": "All slides that contain any of the following key phrases will be removed from all content.",
@@ -164,13 +166,23 @@
                 },
                 "split": {
                     "empty": "",
-                    "unit": "Lecture Content",
-                    "unitName": "Content Name",
-                    "releaseDate": "Release Date",
-                    "startPage": "Start Page",
-                    "endPage": "End Page"
+                    "unitName": "Item name",
+                    "releaseDate": "Release date",
+                    "startPage": "First slide",
+                    "endPage": "Last slide",
+                    "title": "Split the PDF into items",
+                    "summary": "Artemis found {{ count }} sections in {{ slides }} slides.",
+                    "summarySingle": "Artemis found 1 section in {{ slides }} slides.",
+                    "hint": "Each row becomes one content item with its slides. Check the names and slide ranges before you create the items.",
+                    "slides": "Slides",
+                    "summaryNone": "Artemis found no sections in {{ slides }} slides."
                 },
-                "processTimeInfo": "The processing of lecture content can take a few seconds. Please be patient."
+                "processTimeInfo": "The processing of lecture content can take a few seconds. Please be patient.",
+                "removeSource": "Remove the original PDF item “{{ name }}” after splitting",
+                "removeSourceHint": "Students’ completions of the item and its competency links are deleted with it.",
+                "create": "Create {{ count }} items",
+                "createSingle": "Create 1 item",
+                "createEmpty": "Create items"
             },
             "createAttachmentVideoUnit": {
                 "title": "Create File/Video Content",
@@ -209,7 +221,13 @@
                 "videoTranscription": "Video Transcription",
                 "videoTranscriptionPlaceholder": "Insert the transcription of the video here.",
                 "transcriptionHint": "Videos from supported sources are automatically transcribed after saving. You can track the transcription progress on the lecture management page.",
-                "useAsVideoSource": "Use as video URL"
+                "useAsVideoSource": "Use as video URL",
+                "notifyStudents": "Notify students about the new version",
+                "uploadVersion": "Upload version {{ version }}",
+                "uploadHint": "Artemis then splits the slides and processes the content again.",
+                "saveVideoSource": "Save video URL",
+                "discardVideoSource": "Keep current URL",
+                "videoSourceHint": "Artemis then transcribes the video and processes it again."
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit File/Video Content"

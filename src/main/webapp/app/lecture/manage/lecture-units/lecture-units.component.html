@@ -7,19 +7,15 @@
     <jhi-lecture-unit-management
         [lectureId]="lecture().id"
         [emitEditEvents]="true"
+        [editingUnitId]="editingUnitId()"
+        [editorTemplate]="unitEditor"
         (onEditLectureUnitClicked)="startEditLectureUnit($event)"
-        (lectureUnitsChange)="lectureUnits.set($event)"
+        (onSaveEditingClicked)="saveAndCloseEditor()"
+        (lectureUnitsChange)="onLectureUnitsChange($event)"
         [showCreationCard]="false"
         [showCompetencies]="true"
         [showDropZone]="false"
     />
-
-    @if (isEditingLectureUnit() && isAnyUnitFormOpen()) {
-        <div #editFormContainer class="lecture-unit-form flex scroll-mt-4 flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" data-testid="lecture-unit-edit-form">
-            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.editLectureUnit"></h4>
-            <ng-container [ngTemplateOutlet]="unitForms" />
-        </div>
-    }
 
     <section class="lecture-units-panel flex flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" aria-labelledby="lecture-add-content-title" data-testid="lecture-add-content">
         <h4 id="lecture-add-content-title" class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.addContent.title"></h4>
@@ -68,34 +64,98 @@
         } @else {
             <p class="lecture-units-hint m-0 text-sm" data-testid="lecture-split-pdf-none" jhiTranslate="artemisApp.lecture.splitPdf.noPdf"></p>
         }
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <button tumAetUiButton type="button" severity="secondary" variant="text" size="small" data-testid="lecture-split-other-pdf" (click)="chooseOtherPdf()">
+                <fa-icon [icon]="faFileArrowUp" />
+                <span jhiTranslate="artemisApp.lecture.splitPdf.otherPdf"></span>
+            </button>
+            <span class="lecture-units-hint text-sm" jhiTranslate="artemisApp.lecture.splitPdf.otherPdfHint"></span>
+            <input #otherPdfInput hidden type="file" accept="application/pdf,.pdf" data-testid="lecture-split-other-pdf-input" (change)="onOtherPdfChosen(otherPdfInput)" />
+        </div>
     </section>
 </div>
+
+<!-- The form of an item that is edited in place, which the list shows right below the item. -->
+<ng-template #unitEditor>
+    @let state = autosaveState();
+    <div #editFormContainer class="flex scroll-mt-4 flex-col gap-3.5" data-testid="lecture-unit-edit-form" (focusout)="onEditorFocusOut()">
+        <div class="flex flex-wrap items-center justify-between gap-x-3.5 gap-y-1">
+            <span class="text-sm font-semibold" jhiTranslate="artemisApp.lecture.unitEditor.title"></span>
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+                <span class="flex items-center gap-1.5" role="status" data-testid="lecture-unit-save-status" [attr.data-state]="state.kind">
+                    @switch (state.kind) {
+                        @case ('saving') {
+                            <fa-icon [icon]="faSpinner" animation="spin" class="lecture-units-hint" />
+                            <span class="lecture-units-hint" jhiTranslate="artemisApp.lecture.unitEditor.saving"></span>
+                        }
+                        @case ('saved') {
+                            <fa-icon [icon]="faCheck" class="text-state-success" />
+                            <span class="lecture-units-hint">{{
+                                'artemisApp.lecture.unitEditor.saved' | artemisTranslate: { time: (state.at | artemisDate: 'time' : true) }
+                            }}</span>
+                        }
+                        @case ('invalid') {
+                            <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" />
+                            <span jhiTranslate="artemisApp.lecture.unitEditor.invalid"></span>
+                        }
+                        @case ('failed') {
+                            <fa-icon [icon]="faTriangleExclamation" class="text-state-danger" />
+                            <span>
+                                <span jhiTranslate="artemisApp.lecture.unitEditor.failed"></span>
+                                @if (state.reason) {
+                                    <span> {{ state.reason }}</span>
+                                }
+                            </span>
+                        }
+                        @default {
+                            <span class="lecture-units-hint" jhiTranslate="artemisApp.lecture.unitEditor.autosaveHint"></span>
+                        }
+                    }
+                </span>
+                @if (state.kind === 'failed') {
+                    <button tumAetUiButton type="button" size="small" severity="danger" variant="outlined" data-testid="lecture-unit-save-retry" (click)="retryAutosave()">
+                        <span jhiTranslate="artemisApp.lecture.unitEditor.retry"></span>
+                    </button>
+                }
+            </div>
+        </div>
+        <ng-container [ngTemplateOutlet]="unitForms" />
+    </div>
+</ng-template>
 
 <ng-template #unitForms>
     @if (isTextUnitFormOpen()) {
         <jhi-text-unit-form
             [isEditMode]="isEditingLectureUnit()"
+            [autosave]="isEditingLectureUnit()"
             [hasCancelButton]="true"
             (onCancel)="onCloseLectureUnitForms()"
-            (formSubmitted)="createEditTextUnit($event)"
+            (formSubmitted)="createTextUnit($event)"
+            (formChanged)="onTextUnitChanged($event)"
             [formData]="textUnitFormData()"
         />
     }
     @if (isOnlineUnitFormOpen()) {
         <jhi-online-unit-form
             [isEditMode]="isEditingLectureUnit()"
+            [autosave]="isEditingLectureUnit()"
             [hasCancelButton]="true"
             (onCancel)="onCloseLectureUnitForms()"
-            (formSubmitted)="createEditOnlineUnit($event)"
+            (formSubmitted)="createOnlineUnit($event)"
+            (formChanged)="onOnlineUnitChanged($event)"
             [formData]="onlineUnitFormData()"
         />
     }
     @if (isAttachmentVideoUnitFormOpen()) {
         <jhi-attachment-video-unit-form
             [isEditMode]="isEditingLectureUnit()"
+            [autosave]="isEditingLectureUnit()"
             [hasCancelButton]="true"
             (onCancel)="onCloseLectureUnitForms()"
-            (formSubmitted)="createEditAttachmentVideoUnit($event)"
+            (formSubmitted)="createAttachmentVideoUnit($event)"
+            (formChanged)="onAttachmentVideoUnitChanged($event)"
+            (fileUploadRequested)="onAttachmentFileUploadRequested($event)"
+            (videoSourceSaveRequested)="onVideoSourceSaveRequested($event)"
             [formData]="attachmentVideoUnitFormData()"
         />
     }

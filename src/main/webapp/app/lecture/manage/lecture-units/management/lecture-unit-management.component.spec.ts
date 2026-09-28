@@ -5,7 +5,7 @@ import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/ent
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -17,7 +17,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
@@ -27,7 +27,9 @@ import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -44,6 +46,29 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 class PdfDropZoneStubComponent {
     disabled = input<boolean>(false);
     title = input<string>();
+}
+
+/** Renders the list the way the lecture editor does, with the form of the unit that is edited in place. */
+@Component({
+    template: `
+        <ng-template #editor let-unit
+            ><p>Editing {{ unit.id }}</p></ng-template
+        >
+        <jhi-lecture-unit-management
+            [lectureId]="1"
+            [emitEditEvents]="true"
+            [showCreationCard]="false"
+            [showDropZone]="false"
+            [editingUnitId]="editingUnitId()"
+            [editorTemplate]="editor"
+            (onSaveEditingClicked)="saved.push($event)"
+        />
+    `,
+    imports: [LectureUnitManagementComponent],
+})
+class EditingHostComponent {
+    readonly editingUnitId = signal<number | undefined>(undefined);
+    readonly saved: LectureUnit[] = [];
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -774,5 +799,74 @@ describe('LectureUnitManagementComponent', () => {
 
             expect(announced.at(-1)).toEqual([textUnit, exerciseUnit, attachmentVideoUnit]);
         });
+    });
+
+    describe('editing a unit in place', () => {
+        let hostFixture: ComponentFixture<EditingHostComponent>;
+        let host: EditingHostComponent;
+        const queryAll = (testId: string) => hostFixture.debugElement.queryAll(By.css(`[data-testid="${testId}"]`));
+        const list = () => hostFixture.debugElement.query(By.directive(LectureUnitManagementComponent)).componentInstance as LectureUnitManagementComponent;
+
+        beforeEach(() => {
+            hostFixture = TestBed.createComponent(EditingHostComponent);
+            host = hostFixture.componentInstance;
+            hostFixture.detectChanges();
+            host.editingUnitId.set(textUnit.id);
+            hostFixture.detectChanges();
+        });
+
+        it('should mark the edited unit, dim the others, fix the order and show its form below it', () => {
+            const rows = queryAll('lecture-unit');
+            const editingRow = rows.find((row) => row.attributes['data-editing'] === 'true')!;
+
+            expect(rows.filter((row) => row.attributes['data-editing'] === 'true')).toHaveLength(1);
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-editing-tag"]'))).not.toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-save"]'))).not.toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-edit"]'))).toBeNull();
+            expect(editingRow.query(By.css('[data-testid="lecture-unit-editor"]')).nativeElement.textContent).toContain(`Editing ${textUnit.id}`);
+            expect(rows.filter((row) => row !== editingRow).every((row) => row.classes['opacity-60'])).toBe(true);
+            expect(queryAll('lecture-unit-editor')).toHaveLength(1);
+            expect(hostFixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList).disabled).toBe(true);
+        });
+
+        it('should report Save of the edited unit', () => {
+            queryAll('lecture-unit-save')[0].nativeElement.click();
+
+            expect(host.saved).toEqual([expect.objectContaining({ id: textUnit.id })]);
+        });
+
+        it('should keep the list and the form of the edited unit while the lecture loads again', () => {
+            const reload = new Subject<HttpResponse<Lecture>>();
+            findLectureWithDetailsSpy.mockReturnValue(reload);
+            const editor = queryAll('lecture-unit-editor')[0].nativeElement;
+
+            list().loadData();
+            hostFixture.detectChanges();
+            expect(queryAll('lecture-unit')).toHaveLength(3);
+
+            const reloadedLecture = new Lecture();
+            reloadedLecture.id = 1;
+            reloadedLecture.course = course;
+            reloadedLecture.lectureUnits = [exerciseUnit, textUnit, attachmentVideoUnit].map((unit) => deepClone(unit));
+            reload.next(new HttpResponse({ body: reloadedLecture, status: 200 }));
+            reload.complete();
+            hostFixture.detectChanges();
+
+            expect(queryAll('lecture-unit-editor')[0].nativeElement).toBe(editor);
+        });
+    });
+
+    it('should show a saved unit without loading the lecture again', () => {
+        const savedUnit = new AttachmentVideoUnit();
+        savedUnit.id = attachmentVideoUnit.id;
+        savedUnit.name = 'Slides';
+        savedUnit.attachment = { link: 'attachments/slides.pdf' } as Attachment;
+        const loadCount = findLectureWithDetailsSpy.mock.calls.length;
+
+        lectureUnitManagementComponent.replaceLectureUnit(savedUnit);
+
+        expect(lectureUnitManagementComponent.lectureUnits()).toEqual([textUnit, exerciseUnit, savedUnit]);
+        expect(lectureUnitManagementComponent.viewButtonAvailable()[savedUnit.id!]).toBe(true);
+        expect(findLectureWithDetailsSpy).toHaveBeenCalledTimes(loadCount);
     });
 });

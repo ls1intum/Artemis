@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -707,5 +708,114 @@ describe('AttachmentVideoUnitFormComponent', () => {
         // Valid -> true
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
         expect(attachmentVideoUnitFormComponent.isTransformable).toBe(true);
+    });
+
+    describe('when the item saves itself', () => {
+        const storedLink = 'attachments/attachment-video-units/7/Slides.pdf';
+        const query = (testId: string) => attachmentVideoUnitFormComponentFixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+        const chooseFile = (file: File) => attachmentVideoUnitFormComponent.onFileChange({ target: { files: [file] } as unknown as EventTarget } as Event);
+        let changes: UnitFormChange<AttachmentVideoUnitFormData>[];
+
+        beforeEach(() => {
+            changes = [];
+            attachmentVideoUnitFormComponent.formChanged.subscribe((change) => changes.push(change));
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('autosave', true);
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', {
+                formProperties: { name: 'Slides', version: 1, videoSource: 'https://www.youtube.com/embed/old' },
+                fileProperties: { fileName: storedLink },
+            } as AttachmentVideoUnitFormData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+        });
+
+        it('should report typed text for saving after a pause and choices for saving at once, but not the data of the item', () => {
+            expect(changes).toEqual([]);
+
+            attachmentVideoUnitFormComponent.nameControl!.setValue('Slides week 1');
+            attachmentVideoUnitFormComponent.onReleaseDateChange(dayjs('2026-10-01T10:00:00Z'));
+
+            expect(changes.map((change) => change.immediate)).toEqual([false, true]);
+            expect(changes[1].data.formProperties.name).toBe('Slides week 1');
+            expect(changes[1].valid).toBe(true);
+        });
+
+        it('should save at once on Enter and offer neither Submit nor a notification without a new file', () => {
+            const submitSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponent.submitForm();
+
+            expect(submitSpy).not.toHaveBeenCalled();
+            expect(changes.at(-1)?.immediate).toBe(true);
+            expect(attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#submitButton')).toBeNull();
+            expect(attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#updateNotificationText')).toBeNull();
+        });
+
+        it('should upload a new file only when confirmed, and notify students only when asked', () => {
+            const uploadSpy = vi.fn();
+            attachmentVideoUnitFormComponent.fileUploadRequested.subscribe(uploadSpy);
+            const replacement = new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' });
+
+            chooseFile(replacement);
+            attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue('Typed before choosing to notify');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(changes).toEqual([]);
+            expect(attachmentVideoUnitFormComponent.nextFileVersion()).toBe(2);
+            query('upload-new-version-button').nativeElement.click();
+            expect(uploadSpy).toHaveBeenCalledOnce();
+            expect(uploadSpy.mock.lastCall![0].fileProperties).toEqual({ file: replacement, fileName: 'Slides v2.pdf' });
+            expect(uploadSpy.mock.lastCall![0].formProperties.updateNotificationText).toBeUndefined();
+
+            attachmentVideoUnitFormComponent.notifyStudents.set(true);
+            attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue('New slides');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(attachmentVideoUnitFormComponentFixture.nativeElement.querySelector('#updateNotificationText')).not.toBeNull();
+            query('upload-new-version-button').nativeElement.click();
+            expect(uploadSpy.mock.lastCall![0].formProperties.updateNotificationText).toBe('New slides');
+        });
+
+        it('should take the saved file over and keep what else was typed', () => {
+            chooseFile(new File(['content'], 'Slides v2.pdf', { type: 'application/pdf' }));
+            attachmentVideoUnitFormComponent.notifyStudents.set(true);
+            attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue('New slides');
+            attachmentVideoUnitFormComponent.nameControl!.setValue('Slides week 1');
+
+            attachmentVideoUnitFormComponent.takeOverSavedFile('attachments/attachment-video-units/7/Slides_v2.pdf', 2);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(attachmentVideoUnitFormComponent.isReplacingFile()).toBe(false);
+            expect(attachmentVideoUnitFormComponent.currentFileVersion()).toBe(2);
+            expect(attachmentVideoUnitFormComponent.nextFileVersion()).toBe(3);
+            expect(attachmentVideoUnitFormComponent.notifyStudents()).toBe(false);
+            expect(attachmentVideoUnitFormComponent.updateNotificationTextControl?.value).toBeFalsy();
+            expect(attachmentVideoUnitFormComponent.nameControl?.value).toBe('Slides week 1');
+            expect(query('replacement-confirm')).toBeNull();
+            expect(changes.map((change) => change.data.formProperties.name)).toEqual(['Slides week 1']);
+        });
+
+        it('should save a new video URL only when confirmed and let it be discarded', () => {
+            const saveSpy = vi.fn();
+            attachmentVideoUnitFormComponent.videoSourceSaveRequested.subscribe(saveSpy);
+            expect(query('video-source-confirm')).toBeNull();
+
+            attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/new');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(changes).toEqual([]);
+            query('save-video-source-button').nativeElement.click();
+            expect(saveSpy).toHaveBeenCalledExactlyOnceWith(
+                expect.objectContaining({ formProperties: expect.objectContaining({ videoSource: 'https://www.youtube.com/embed/new' }) }),
+            );
+
+            attachmentVideoUnitFormComponent.takeOverSavedVideoSource('https://www.youtube.com/embed/new');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(query('video-source-confirm')).toBeNull();
+
+            attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/other');
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            query('discard-video-source-button').nativeElement.click();
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://www.youtube.com/embed/new');
+            expect(query('video-source-confirm')).toBeNull();
+        });
     });
 });

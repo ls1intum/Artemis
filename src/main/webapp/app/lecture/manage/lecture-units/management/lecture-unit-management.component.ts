@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, inject, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -30,6 +31,7 @@ import {
     faLink,
     faPencilAlt,
     faRepeat,
+    faSave,
     faScroll,
     faSpinner,
     faTrash,
@@ -59,6 +61,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         TumAetUiButtonDirective,
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,
+        NgTemplateOutlet,
         FaIconComponent,
         RouterLink,
         DeleteButtonDirective,
@@ -87,6 +90,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faEyeSlash = faEyeSlash;
     protected readonly faFlag = faFlag;
     protected readonly faGripVertical = faGripVertical;
+    protected readonly faSave = faSave;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
@@ -98,6 +102,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lectureId = input<number | undefined>(undefined);
 
     onEditLectureUnitClicked = output<LectureUnit>();
+    /** The unit that is edited in place, if any. Only one is; the others are dimmed and the order is fixed meanwhile. */
+    readonly editingUnitId = input<number | undefined>(undefined);
+    /** The form of the unit that is edited in place, shown right below it. */
+    readonly editorTemplate = input<TemplateRef<{ $implicit: LectureUnit }>>();
+    /** Emits when Save of the unit that is edited in place is pressed. */
+    readonly onSaveEditingClicked = output<LectureUnit>();
 
     lectureUnits = signal<LectureUnit[]>([]);
     /** The units whenever they are loaded, reordered or deleted, for a page that works with them too. */
@@ -143,7 +153,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     loadData() {
-        this.isLoading.set(true);
+        // A reload keeps the list in place, so the form of a unit that is edited in place stays open with what was typed.
+        this.isLoading.set(!this.lecture());
         this.isStatusLoading.set(true);
         // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
@@ -199,8 +210,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.updateOrder();
     }
 
-    identify(index: number, lectureUnit: LectureUnit) {
-        return `${index}-${lectureUnit.id}`;
+    /**
+     * Shows a unit as it was just saved, without loading the whole lecture again, which would replace the form of a unit that is edited in place.
+     * @param lectureUnit the saved unit
+     */
+    replaceLectureUnit(lectureUnit: LectureUnit): void {
+        this.lectureUnits.update((units) => units.map((unit) => (unit.id === lectureUnit.id ? lectureUnit : unit)));
+        if (lectureUnit.id !== undefined) {
+            this.viewButtonAvailable.set(cloneWith(this.viewButtonAvailable(), { [lectureUnit.id]: this.isViewButtonAvailable(lectureUnit) }));
+        }
     }
 
     getDeleteQuestionKey(lectureUnit: LectureUnit) {

@@ -5,7 +5,7 @@
             controlId="source"
             [label]="'artemisApp.onlineUnit.createOnlineUnit.source' | artemisTranslate"
             required
-            [hint]="'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate"
+            [hint]="(autosave() ? 'artemisApp.onlineUnit.createOnlineUnit.urlHelperKeepHint' : 'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder') | artemisTranslate"
             [invalid]="sourceInvalid"
         >
             <input
@@ -65,7 +65,7 @@
             labelName="artemisApp.lectureUnit.releaseDate"
             [value]="releaseDateControl?.value ?? undefined"
             (valueChange)="onReleaseDateChange($event)"
-            (inputValidityChange)="isReleaseDateTextValid.set($event)"
+            (inputValidityChange)="onReleaseDateTextValidityChange($event)"
         />
         <jhi-competency-selection
             id="competencies"
@@ -73,16 +73,18 @@
             [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
             formControlName="competencyLinks"
         />
-        <div class="flex flex-wrap gap-2">
-            <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
-                <span jhiTranslate="entity.action.submit"></span>
-            </button>
-            @if (hasCancelButton()) {
-                <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
-                    <fa-icon [icon]="faTimes" />
-                    <span jhiTranslate="entity.action.cancel"></span>
+        @if (!autosave()) {
+            <div class="flex flex-wrap gap-2">
+                <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
+                    <span jhiTranslate="entity.action.submit"></span>
                 </button>
-            }
-        </div>
+                @if (hasCancelButton()) {
+                    <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
+                        <fa-icon [icon]="faTimes" />
+                        <span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                }
+            </div>
+        }
     </form>
 }

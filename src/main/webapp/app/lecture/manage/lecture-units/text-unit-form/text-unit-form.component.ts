@@ -7,7 +7,8 @@ import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
 import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -62,6 +63,12 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
+    /** Reports every change instead of offering Submit, for an item that is edited in place and saved automatically. */
+    readonly autosave = input<boolean>(false);
+    readonly formChanged = output<UnitFormChange<TextUnitFormData>>();
+    /** Set while the form takes over the data of the item, which is not a change of the user. */
+    private applyingFormData = false;
+
     /** The release date picker keeps its last valid date while the typed text is not a date yet, so that text is tracked separately. */
     readonly isReleaseDateTextValid = signal(true);
 
@@ -106,6 +113,12 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
                 this.setFormValues(data);
             }
         });
+
+        this.nameControl!.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.reportChange(false));
+        this.form
+            .get('competencyLinks')!
+            .valueChanges.pipe(takeUntilDestroyed())
+            .subscribe(() => this.reportChange(true));
     }
 
     get nameControl() {
@@ -119,6 +132,31 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     onReleaseDateChange(releaseDate: dayjs.Dayjs | undefined): void {
         this.releaseDateControl?.setValue(releaseDate);
         this.releaseDateControl?.markAsDirty();
+        this.reportChange(true);
+    }
+
+    onReleaseDateTextValidityChange(valid: boolean): void {
+        // The picker also reports the validity it starts with, which is no change of the user.
+        if (valid === this.isReleaseDateTextValid()) {
+            return;
+        }
+        this.isReleaseDateTextValid.set(valid);
+        this.reportChange(false);
+    }
+
+    private reportChange(immediate: boolean): void {
+        if (!this.autosave() || this.applyingFormData) {
+            return;
+        }
+        // A control reports its change before the form takes it over, so the form's own value and validity lag one change behind here.
+        const valid = Object.values(this.form.controls).every((control) => !control.invalid) && this.isReleaseDateTextValid();
+        this.formChanged.emit({ data: this.currentFormData(), immediate, valid });
+    }
+
+    private currentFormData(): TextUnitFormData {
+        const textUnitFormData: TextUnitFormData = deepClone(this.form.getRawValue());
+        textUnitFormData.content = this.content;
+        return textUnitFormData;
     }
 
     ngOnDestroy() {
@@ -126,7 +164,8 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        const cache = this.localStorageService.retrieve<MarkdownCache>(this.router.url);
+        // An item edited in place is saved automatically, so there is no draft to keep in the browser.
+        const cache = this.autosave() ? undefined : this.localStorageService.retrieve<MarkdownCache>(this.router.url);
         if (cache) {
             if (confirm(this.translateService.instant('artemisApp.textUnit.cachedMarkdown') + ' ' + cache.date)) {
                 this.content = cache.markdown;
@@ -144,24 +183,33 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     }
 
     private setFormValues(formData: TextUnitFormData) {
+        this.applyingFormData = true;
         this.form.patchValue(formData);
         if (!this.contentLoadedFromCache) {
             this.content = formData.content;
         }
+        this.applyingFormData = false;
     }
 
     submitForm() {
-        const textUnitFormData: TextUnitFormData = deepClone(this.form.value);
-        textUnitFormData.content = this.content;
+        if (this.autosave()) {
+            // Enter in a field of an item that saves itself saves at once instead of creating an item.
+            this.reportChange(true);
+            return;
+        }
         this.localStorageService.remove(this.router.url);
-        this.formSubmitted.emit(textUnitFormData);
+        this.formSubmitted.emit(this.currentFormData());
     }
 
     onMarkdownChange(markdown: string) {
         this.markdownChanges.next(markdown);
+        this.reportChange(false);
     }
 
     private writeToLocalStorage(markdown: string) {
+        if (this.autosave()) {
+            return;
+        }
         const cache: MarkdownCache = { markdown, date: dayjs().format('MMM DD YYYY, HH:mm:ss') };
         this.localStorageService.store<MarkdownCache>(this.router.url, cache);
     }

@@ -1,13 +1,18 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading()">
-    <h2 id="page-heading" class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.unit"></h2>
+    <div class="flex flex-col gap-1">
+        <h2 id="page-heading" class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.title"></h2>
+        @if (numberOfPages() > 0) {
+            <p class="m-0 text-muted-color" data-testid="split-summary">{{ summaryKey() | artemisTranslate: { count: foundSections(), slides: numberOfPages() } }}</p>
+        }
+        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.hint"></p>
+    </div>
     <div class="overflow-x-auto">
         <table tumAetUiTable size="small" striped>
             <thead>
                 <tr>
                     <th jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.unitName"></th>
+                    <th jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.slides"></th>
                     <th jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.releaseDate"></th>
-                    <th jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.startPage"></th>
-                    <th jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.endPage"></th>
                     <th><span class="sr-only" jhiTranslate="entity.action.delete"></span></th>
                 </tr>
             </thead>
@@ -26,6 +31,35 @@
                                 [(ngModel)]="units()[i].unitName"
                             />
                         </td>
+                        <td>
+                            <div class="flex items-center gap-1.5">
+                                <input
+                                    tumAetUiInput
+                                    class="w-20"
+                                    required
+                                    type="number"
+                                    name="startPage"
+                                    autocomplete="off"
+                                    [min]="1"
+                                    [max]="unit.endPage"
+                                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.startPage' | artemisTranslate"
+                                    [(ngModel)]="unit.startPage"
+                                />
+                                <span aria-hidden="true">–</span>
+                                <input
+                                    tumAetUiInput
+                                    class="w-20"
+                                    required
+                                    type="number"
+                                    name="endPage"
+                                    autocomplete="off"
+                                    [min]="unit.startPage"
+                                    [max]="numberOfPages()"
+                                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.endPage' | artemisTranslate"
+                                    [(ngModel)]="unit.endPage"
+                                />
+                            </div>
+                        </td>
                         <td class="min-w-56">
                             <tumaet-ui-date-picker
                                 [inputId]="'release-date-' + i"
@@ -33,34 +67,6 @@
                                 [shouldDisplayTimeZoneWarning]="false"
                                 [ariaLabel]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.releaseDate' | artemisTranslate"
                                 [(value)]="units()[i].releaseDate"
-                            />
-                        </td>
-                        <td class="w-28">
-                            <input
-                                tumAetUiInput
-                                class="w-full"
-                                required
-                                type="number"
-                                name="startPage"
-                                autocomplete="off"
-                                [min]="1"
-                                [max]="unit.endPage"
-                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.startPage' | artemisTranslate"
-                                [(ngModel)]="unit.startPage"
-                            />
-                        </td>
-                        <td class="w-28">
-                            <input
-                                tumAetUiInput
-                                class="w-full"
-                                required
-                                type="number"
-                                name="endPage"
-                                autocomplete="off"
-                                [min]="unit.startPage"
-                                [max]="numberOfPages()"
-                                [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.endPage' | artemisTranslate"
-                                [(ngModel)]="unit.endPage"
                             />
                         </td>
                         <td>
@@ -112,6 +118,17 @@
             </li>
         </ul>
     </tumaet-ui-message>
+    @if (sourceUnit; as source) {
+        <div class="flex flex-col gap-1" data-testid="split-remove-source">
+            <div class="flex items-center gap-2">
+                <tumaet-ui-checkbox inputId="remove-source-unit" [checked]="removeSourceUnit()" (checkedChange)="removeSourceUnit.set($event)" />
+                <label class="m-0" for="remove-source-unit">{{
+                    'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSource' | artemisTranslate: { name: source.name ?? '' }
+                }}</label>
+            </div>
+            <p id="remove-source-unit-hint" class="m-0 ps-7 text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSourceHint"></p>
+        </div>
+    }
     @if (units().length < 1) {
         <tumaet-ui-message severity="error" [icon]="faExclamationTriangle" [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noUnitDetected' | artemisTranslate" />
     }
@@ -122,11 +139,12 @@
         <button
             tumAetUiButton
             type="button"
+            data-testid="split-create"
             [disabled]="units().length < 1"
             [tumAetUiTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processTimeInfo' | artemisTranslate"
             (click)="createAttachmentVideoUnits()"
         >
-            <span jhiTranslate="entity.action.submit"></span>
+            <span>{{ createLabelKey() | artemisTranslate: { count: units().length } }}</span>
         </button>
         <button tumAetUiButton type="button" severity="secondary" (click)="cancelSplit()">
             <fa-icon [icon]="faBan" />

@@ -15,6 +15,20 @@
     &.cdk-drag-placeholder {
         opacity: 0.4;
     }
+
+    // The item that is edited in place stands out, and its form reads as part of it.
+    &.lecture-unit-row-editing {
+        border: 2px solid var(--primary);
+        background-color: color-mix(in srgb, var(--primary) 3%, transparent);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--primary) 3%, transparent);
+        }
+    }
+}
+
+.lecture-unit-editor {
+    border-top: 1px solid var(--border-color);
 }
 
 .lecture-unit-grip,

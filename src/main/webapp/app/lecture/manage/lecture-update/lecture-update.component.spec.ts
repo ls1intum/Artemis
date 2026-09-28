@@ -508,6 +508,23 @@ describe('LectureUpdateComponent', () => {
 
             expect(decisions).toEqual([false]);
         });
+
+        it('should ask before content that could not be saved is left, and name the content', async () => {
+            await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6, title: 'Old title' } });
+            const hasUnsavedContent = signal(false);
+            lectureUpdateComponent.unitSection = signal({ isUnitConfigurationValid: () => true, hasUnsavedContent } as any);
+            lectureUpdateComponentFixture.detectChanges();
+            expect(lectureUpdateComponent.hasUnsavedChanges()).toBe(false);
+
+            hasUnsavedContent.set(true);
+
+            expect(lectureUpdateComponent.hasUnsavedChanges()).toBe(true);
+            // The footer names only the details, which its Save button saves.
+            expect(lectureUpdateComponent.changedSections()).toEqual([]);
+            const instantSpy = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+            lectureUpdateComponent.confirmDiscardChanges().subscribe();
+            expect(instantSpy).toHaveBeenCalledWith('artemisApp.lecture.dismissChangesModal.message', { sections: 'artemisApp.lecture.sections.units' });
+        });
     });
 
     describe('PDF upload confirmation', () => {

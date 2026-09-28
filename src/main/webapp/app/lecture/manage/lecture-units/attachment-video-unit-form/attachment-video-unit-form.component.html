@@ -134,6 +134,48 @@
                             data-testid="replacement-hint"
                             [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.replacementHint' | artemisTranslate"
                         />
+                        @if (autosave()) {
+                            <!-- A new file is processed again, so an item edited in place saves it only when the user confirms it. -->
+                            <div class="mt-2 flex flex-col gap-3.5" data-testid="replacement-confirm">
+                                <div class="flex items-center gap-2">
+                                    <tumaet-ui-checkbox inputId="notify-students" [checked]="notifyStudents()" (checkedChange)="notifyStudents.set($event)" />
+                                    <label class="m-0" for="notify-students" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.notifyStudents"></label>
+                                </div>
+                                @if (notifyStudents()) {
+                                    <tumaet-ui-form-field
+                                        controlId="updateNotificationText"
+                                        [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationText' | artemisTranslate"
+                                        [invalid]="!!updateNotificationTextControl?.invalid"
+                                        [error]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextMaxLengthValidationError' | artemisTranslate"
+                                    >
+                                        <textarea
+                                            tumAetUiTextarea
+                                            id="updateNotificationText"
+                                            rows="2"
+                                            maxlength="255"
+                                            formControlName="updateNotificationText"
+                                            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextPlaceholder' | artemisTranslate"
+                                        ></textarea>
+                                    </tumaet-ui-form-field>
+                                }
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        size="small"
+                                        data-testid="upload-new-version-button"
+                                        [disabled]="isFileTooBig() || !!updateNotificationTextControl?.invalid"
+                                        (click)="uploadNewFile()"
+                                    >
+                                        <fa-icon [icon]="faFileArrowUp" />
+                                        <span>{{
+                                            'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadVersion' | artemisTranslate: { version: nextFileVersion() }
+                                        }}</span>
+                                    </button>
+                                    <span class="text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploadHint"></span>
+                                </div>
+                            </div>
+                        }
                     }
                 </div>
             } @else {
@@ -191,7 +233,7 @@
         labelName="artemisApp.lectureUnit.releaseDate"
         [value]="releaseDateControl?.value ?? undefined"
         (valueChange)="onReleaseDateChange($event)"
-        (inputValidityChange)="isReleaseDateTextValid.set($event)"
+        (inputValidityChange)="onReleaseDateTextValidityChange($event)"
     />
     <jhi-competency-selection
         id="competencies"
@@ -199,7 +241,7 @@
         [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
         formControlName="competencyLinks"
     />
-    @if (isEditMode()) {
+    @if (isEditMode() && !autosave()) {
         @let notificationInvalid = !!updateNotificationTextControl?.invalid && (!!updateNotificationTextControl?.dirty || !!updateNotificationTextControl?.touched);
         <tumaet-ui-form-field
             controlId="updateNotificationText"
@@ -251,21 +293,36 @@
             </button>
         </div>
     </tumaet-ui-form-field>
+    @if (isVideoSourceChanged()) {
+        <!-- A new video link is transcribed and processed again, so an item edited in place saves it only when the user confirms it. -->
+        <div class="flex flex-wrap items-center gap-2" data-testid="video-source-confirm">
+            <button tumAetUiButton type="button" size="small" data-testid="save-video-source-button" [disabled]="!!videoSourceControl?.invalid" (click)="saveVideoSource()">
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.saveVideoSource"></span>
+            </button>
+            <button tumAetUiButton type="button" size="small" severity="secondary" variant="text" data-testid="discard-video-source-button" (click)="discardVideoSource()">
+                <fa-icon [icon]="faRotateLeft" />
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.discardVideoSource"></span>
+            </button>
+            <span class="text-sm text-muted-color" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoSourceHint"></span>
+        </div>
+    }
     <tumaet-ui-message
         severity="info"
         [icon]="faCircleInfo"
         [text]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.transcriptionHint' | artemisTranslate"
         [jhiFeatureToggleHide]="FeatureToggle.LectureContentProcessing"
     />
-    <div class="flex flex-wrap gap-2">
-        <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
-            <span jhiTranslate="entity.action.submit"></span>
-        </button>
-        @if (hasCancelButton()) {
-            <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
-                <fa-icon [icon]="faTimes" />
-                <span jhiTranslate="entity.action.cancel"></span>
+    @if (!autosave()) {
+        <div class="flex flex-wrap gap-2">
+            <button tumAetUiButton id="submitButton" type="submit" [disabled]="!isFormValid()">
+                <span jhiTranslate="entity.action.submit"></span>
             </button>
-        }
-    </div>
+            @if (hasCancelButton()) {
+                <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
+                    <fa-icon [icon]="faTimes" />
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </button>
+            }
+        </div>
+    }
 </form>

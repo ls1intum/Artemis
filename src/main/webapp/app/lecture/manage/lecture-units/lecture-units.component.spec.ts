@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Mock, MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -23,7 +23,9 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
+import { AUTOSAVE_DELAY_MS, LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
+import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -47,6 +49,8 @@ class TextUnitFormStubComponent {
     isEditMode = input<boolean>(false);
     hasCancelButton = input<boolean>(false);
     formSubmitted = output<TextUnitFormData>();
+    autosave = input<boolean>(false);
+    formChanged = output<UnitFormChange<TextUnitFormData>>();
     isFormValid = () => true;
 }
 
@@ -56,6 +60,8 @@ class OnlineUnitFormStubComponent {
     isEditMode = input<boolean>(false);
     hasCancelButton = input<boolean>(false);
     formSubmitted = output<OnlineUnitFormData>();
+    autosave = input<boolean>(false);
+    formChanged = output<UnitFormChange<OnlineUnitFormData>>();
     isFormValid = () => true;
 }
 
@@ -65,6 +71,10 @@ class AttachmentVideoUnitFormStubComponent {
     isEditMode = input<boolean>(false);
     hasCancelButton = input<boolean>(false);
     formSubmitted = output<AttachmentVideoUnitFormData>();
+    autosave = input<boolean>(false);
+    formChanged = output<UnitFormChange<AttachmentVideoUnitFormData>>();
+    fileUploadRequested = output<AttachmentVideoUnitFormData>();
+    videoSourceSaveRequested = output<AttachmentVideoUnitFormData>();
     isFormValid = () => true;
 }
 
@@ -72,7 +82,7 @@ describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
     let wizardUnitComponent: LectureUpdateUnitsComponent;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
-    let unitManagementComponentMock: Pick<LectureUnitManagementComponent, 'loadData'>;
+    let unitManagementComponentMock: Pick<LectureUnitManagementComponent, 'loadData' | 'replaceLectureUnit'>;
 
     const getAttachmentVideoUnitPayload = async (formData: FormData) => {
         const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
@@ -82,7 +92,8 @@ describe('LectureUpdateUnitsComponent', () => {
     const mockUnitManagementComponent = () => {
         unitManagementComponentMock = {
             loadData: vi.fn(),
-        } as Pick<LectureUnitManagementComponent, 'loadData'>;
+            replaceLectureUnit: vi.fn(),
+        };
 
         wizardUnitComponent.unitManagementComponent = signal(unitManagementComponentMock as LectureUnitManagementComponent).asReadonly() as Signal<
             LectureUnitManagementComponent | undefined
@@ -246,7 +257,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const updateSpy = vi.spyOn(unitManagementComponentMock, 'loadData');
 
         wizardUnitComponent.isTextUnitFormOpen.set(true);
-        wizardUnitComponent.createEditTextUnit(formData);
+        wizardUnitComponent.createTextUnit(formData);
         await wizardUnitComponentFixture.whenStable();
 
         const textUnitCallArgument: TextUnit = createStub.mock.calls[0][0];
@@ -275,7 +286,7 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         wizardUnitComponent.isTextUnitFormOpen.set(true);
-        wizardUnitComponent.createEditTextUnit(formData);
+        wizardUnitComponent.createTextUnit(formData);
         await wizardUnitComponentFixture.whenStable();
 
         expect(createStub).not.toHaveBeenCalled();
@@ -298,7 +309,7 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         wizardUnitComponent.isTextUnitFormOpen.set(true);
-        wizardUnitComponent.createEditTextUnit(formData);
+        wizardUnitComponent.createTextUnit(formData);
         await wizardUnitComponentFixture.whenStable();
 
         expect(createStub).toHaveBeenCalledTimes(1);
@@ -323,7 +334,7 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         wizardUnitComponent.isOnlineUnitFormOpen.set(true);
-        wizardUnitComponent.createEditOnlineUnit(formData);
+        wizardUnitComponent.createOnlineUnit(formData);
         await wizardUnitComponentFixture.whenStable();
 
         expect(createStub).toHaveBeenCalledTimes(1);
@@ -351,7 +362,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const updateSpy = vi.spyOn(unitManagementComponentMock, 'loadData');
 
         wizardUnitComponent.isOnlineUnitFormOpen.set(true);
-        wizardUnitComponent.createEditOnlineUnit(formDate);
+        wizardUnitComponent.createOnlineUnit(formDate);
         await wizardUnitComponentFixture.whenStable();
 
         const onlineUnitCallArgument: OnlineUnit = createStub.mock.calls[0][0];
@@ -381,7 +392,7 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         wizardUnitComponent.isOnlineUnitFormOpen.set(true);
-        wizardUnitComponent.createEditOnlineUnit(formData);
+        wizardUnitComponent.createOnlineUnit(formData);
         await wizardUnitComponentFixture.whenStable();
 
         expect(createStub).not.toHaveBeenCalled();
@@ -434,7 +445,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const updateSpy = vi.spyOn(unitManagementComponentMock, 'loadData');
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
+        wizardUnitComponent.createAttachmentVideoUnit(attachmentVideoUnitFormData);
         await wizardUnitComponentFixture.whenStable();
 
         const lectureIdCallArgument: number = createAttachmentVideoUnitStub.mock.calls[0][1];
@@ -442,82 +453,6 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(lectureIdCallArgument).toBe(1);
         expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1);
         expect(updateSpy).toHaveBeenCalledTimes(1);
-
-        updateSpy.mockRestore();
-    });
-
-    it('should send POST request upon attachment form submission and update units when editing lecture', async () => {
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-
-        const fakeFile = new File(['content'], 'Test-File.pdf', { type: 'application/pdf' });
-
-        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: 'test',
-                description: 'lorem ipsum',
-                releaseDate: dayjs().year(2010).month(3).date(5),
-                version: 2,
-                updateNotificationText: 'lorem ipsum',
-            },
-            fileProperties: {
-                file: fakeFile,
-                fileName: 'lorem ipsum',
-            },
-        };
-
-        const examplePath = '/path/to/file';
-
-        const attachment = new Attachment();
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = attachmentVideoUnitFormData.formProperties.releaseDate;
-        attachment.name = attachmentVideoUnitFormData.formProperties.name;
-        attachment.link = examplePath;
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
-        attachmentVideoUnit.attachment = attachment;
-
-        const formData = new FormData();
-        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
-        formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-
-        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({ body: attachmentVideoUnit, status: 201 });
-        const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(of(attachmentVideoUnitResponse));
-
-        wizardUnitComponentFixture.detectChanges();
-        await wizardUnitComponentFixture.whenStable();
-
-        const updateSpy = vi.spyOn(unitManagementComponentMock, 'loadData');
-
-        wizardUnitComponent.isEditingLectureUnit.set(true);
-        const editingAttachmentVideoUnit = new AttachmentVideoUnit();
-        editingAttachmentVideoUnit.attachment = new Attachment();
-        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.set(editingAttachmentVideoUnit);
-        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-
-        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
-        await wizardUnitComponentFixture.whenStable();
-
-        expect(createAttachmentVideoUnitStub).toHaveBeenCalledTimes(1);
-        const updateFormData = createAttachmentVideoUnitStub.mock.calls[0][2] as FormData;
-        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
-        expect(updateSpy).toHaveBeenCalledTimes(1);
-
-        createAttachmentVideoUnitStub.mockClear();
-        wizardUnitComponent.isEditingLectureUnit.set(true);
-        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.set(editingAttachmentVideoUnit);
-        wizardUnitComponent.createEditAttachmentVideoUnit({
-            ...attachmentVideoUnitFormData,
-            formProperties: { ...attachmentVideoUnitFormData.formProperties, videoSource: 'https://video.example/source' },
-            fileProperties: { file: new File([], 'empty.pdf', { type: 'application/pdf' }), fileName: '' },
-        });
-        await wizardUnitComponentFixture.whenStable();
-
-        const zeroByteUpdateFormData = createAttachmentVideoUnitStub.mock.calls[0][2] as FormData;
-        await expect(getAttachmentVideoUnitPayload(zeroByteUpdateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
-        expect(zeroByteUpdateFormData.has('file')).toBe(false);
 
         updateSpy.mockRestore();
     });
@@ -567,7 +502,7 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
+        wizardUnitComponent.createAttachmentVideoUnit(attachmentVideoUnitFormData);
         await wizardUnitComponentFixture.whenStable();
 
         expect(createAttachmentVideoUnitStub).toHaveBeenCalledTimes(1);
@@ -621,7 +556,7 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
+        wizardUnitComponent.createAttachmentVideoUnit(attachmentVideoUnitFormData);
         await wizardUnitComponentFixture.whenStable();
 
         expect(createAttachmentVideoUnitStub).toHaveBeenCalledTimes(1);
@@ -642,7 +577,7 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+        wizardUnitComponent.createAttachmentVideoUnit(formData);
         await wizardUnitComponentFixture.whenStable();
 
         expect(createStub).not.toHaveBeenCalled();
@@ -943,10 +878,51 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(getFileSpy).toHaveBeenCalledExactlyOnceWith(7, 3);
             const [commands, extras] = navigateSpy.mock.calls[0];
             expect(commands).toEqual(['course-management', 7, 'lectures', 1, 'unit-management', 'attachment-video-units', 'process']);
-            const file = (extras?.state as { file: File; fileName: string }).file;
-            expect(file.name).toBe('Introduction.pdf');
-            expect(file.type).toBe('application/pdf');
+            const state = extras?.state as { file: File; fileName: string; sourceUnit?: unknown; returnToEditor: boolean };
+            expect(state.file.name).toBe('Introduction.pdf');
+            expect(state.file.type).toBe('application/pdf');
+            expect(state.fileName).toBe('Introduction.pdf');
+            expect(state.returnToEditor).toBe(true);
+            // Only instructors may delete content, so only they are offered to remove the PDF item after the split.
+            expect(state.sourceUnit).toBeUndefined();
             expect(wizardUnitComponent.isPreparingSplit()).toBe(false);
+        });
+
+        it('should let an instructor remove the PDF item after the split', async () => {
+            const lecture = new Lecture();
+            lecture.id = 1;
+            lecture.course = { id: 7 } as Lecture['course'];
+            lecture.isAtLeastInstructor = true;
+            wizardUnitComponentFixture.componentRef.setInput('lecture', lecture);
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+            vi.spyOn(attachmentVideoUnitService, 'getAttachmentFile').mockReturnValue(of(new Blob(['%PDF'], { type: 'application/pdf' })));
+            wizardUnitComponent.lectureUnits.set([pdfUnit(3, 'Introduction')]);
+
+            wizardUnitComponent.splitSelectedPdf();
+            await wizardUnitComponentFixture.whenStable();
+
+            expect(navigateSpy.mock.calls[0][1]?.state).toMatchObject({ sourceUnit: { id: 3, name: 'Introduction' }, returnToEditor: true });
+        });
+
+        it('should open the split page with another PDF the user chooses', () => {
+            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+            wizardUnitComponentFixture.detectChanges();
+            const input: HTMLInputElement = wizardUnitComponentFixture.nativeElement.querySelector('[data-testid="lecture-split-other-pdf-input"]');
+            const pickerSpy = vi.spyOn(input, 'click').mockImplementation(() => {});
+
+            wizardUnitComponentFixture.nativeElement.querySelector('[data-testid="lecture-split-other-pdf"]').click();
+            expect(pickerSpy).toHaveBeenCalledOnce();
+
+            Object.defineProperty(input, 'files', { value: [new File(['%PDF'], 'Week 2.PDF', { type: 'application/pdf' })] });
+            input.dispatchEvent(new Event('change'));
+
+            const [commands, extras] = navigateSpy.mock.calls[0];
+            expect(commands).toEqual(['course-management', 7, 'lectures', 1, 'unit-management', 'attachment-video-units', 'process']);
+            const state = extras?.state as { file: File; fileName: string; sourceUnit?: unknown; returnToEditor: boolean };
+            // The split only accepts file names that end in a lowercase .pdf.
+            expect(state.file.name).toBe('Week 2.pdf');
+            expect(state.sourceUnit).toBeUndefined();
+            expect(state.returnToEditor).toBe(true);
         });
 
         it('should stay on the page and report it when the PDF cannot be loaded', async () => {
@@ -963,6 +939,327 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(navigateSpy).not.toHaveBeenCalled();
             expect(errorSpy).toHaveBeenCalled();
             expect(wizardUnitComponent.isPreparingSplit()).toBe(false);
+        });
+    });
+
+    describe('editing an item in place', () => {
+        let textUnitService: TextUnitService;
+
+        const competencyLink = () => new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Testing' }, undefined, 1);
+
+        function savedTextUnit(id: number, name: string): TextUnit {
+            const unit = new TextUnit();
+            unit.id = id;
+            unit.name = name;
+            unit.content = 'Content';
+            return unit;
+        }
+
+        function savedOnlineUnit(): OnlineUnit {
+            const unit = new OnlineUnit();
+            unit.id = 4;
+            unit.name = 'Artemis';
+            unit.source = 'https://artemis.tum.de';
+            return unit;
+        }
+
+        function textChange(name: string, immediate = false, valid = true): UnitFormChange<TextUnitFormData> {
+            return { data: { name, content: 'Content' }, immediate, valid };
+        }
+
+        const savedResponse = () => of(new HttpResponse<TextUnit>({ status: 200 }));
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            textUnitService = TestBed.inject(TextUnitService);
+            wizardUnitComponentFixture.detectChanges();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should open the form of the item with its data, including its competencies', () => {
+            const unit = savedTextUnit(3, 'Reading');
+            unit.competencyLinks = [competencyLink()];
+
+            wizardUnitComponent.startEditLectureUnit(unit);
+
+            expect(wizardUnitComponent.editingUnitId()).toBe(3);
+            expect(wizardUnitComponent.isEditingLectureUnit()).toBe(true);
+            expect(wizardUnitComponent.isTextUnitFormOpen()).toBe(true);
+            expect(wizardUnitComponent.textUnitFormData()).toEqual({ name: 'Reading', releaseDate: undefined, content: 'Content', competencyLinks: unit.competencyLinks });
+            expect(wizardUnitComponent.autosaveState()).toEqual({ kind: 'idle' });
+        });
+
+        it('should save typed text after the pause, without an alert, and show when it was saved', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+            expect(wizardUnitComponent.autosaveState().kind).toBe('saving');
+            vi.advanceTimersByTime(AUTOSAVE_DELAY_MS - 1);
+            expect(updateSpy).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(1);
+            expect(updateSpy).toHaveBeenCalledOnce();
+            const [sentUnit, lectureId, context] = updateSpy.mock.calls[0];
+            expect(sentUnit.id).toBe(3);
+            expect(sentUnit.name).toBe('Reading list');
+            expect(lectureId).toBe(1);
+            expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
+            expect(unitManagementComponentMock.replaceLectureUnit).toHaveBeenCalledWith(expect.objectContaining({ id: 3, name: 'Reading list' }));
+            expect(unitManagementComponentMock.loadData).not.toHaveBeenCalled();
+            expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
+        });
+
+        it('should save a choice at once and send nothing for a change that restores the saved state', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading', true));
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(wizardUnitComponent.autosaveState()).toEqual({ kind: 'idle' });
+
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+            expect(updateSpy).toHaveBeenCalledOnce();
+
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
+        });
+
+        it('should send one save at a time and the newest change once it completes', () => {
+            const firstResponse = new Subject<HttpResponse<TextUnit>>();
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValueOnce(firstResponse).mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading l', true));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
+
+            firstResponse.next(new HttpResponse({ status: 200 }));
+            firstResponse.complete();
+
+            expect(updateSpy).toHaveBeenCalledTimes(2);
+            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+            expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
+        });
+
+        it('should keep a failed change, say so in the item instead of an alert, and send it again on retry', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const updateSpy = vi
+                .spyOn(textUnitService, 'update')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The name is too long' } })))
+                .mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
+            expect(wizardUnitComponent.autosaveState()).toEqual({ kind: 'failed', reason: 'The name is too long' });
+            expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+            expect(alertSpy).not.toHaveBeenCalled();
+
+            wizardUnitComponent.retryAutosave();
+            expect(updateSpy).toHaveBeenCalledTimes(2);
+            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+            expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
+            expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
+        });
+
+        it('should not save a form that cannot be saved and keep it open on Save', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update');
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+
+            wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
+            vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
+            wizardUnitComponent.saveAndCloseEditor();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(wizardUnitComponent.autosaveState().kind).toBe('invalid');
+            expect(wizardUnitComponent.hasUnsavedContent()).toBe(true);
+            expect(wizardUnitComponent.editingUnitId()).toBe(3);
+        });
+
+        it('should save at once and close the form on Save', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+
+            wizardUnitComponent.saveAndCloseEditor();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(wizardUnitComponent.editingUnitId()).toBeUndefined();
+            expect(wizardUnitComponent.isTextUnitFormOpen()).toBe(false);
+            vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
+            expect(updateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should save and close the open item before opening another one', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+
+            wizardUnitComponent.startEditLectureUnit(savedOnlineUnit());
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(updateSpy.mock.calls[0][0].name).toBe('Reading list');
+            expect(wizardUnitComponent.editingUnitId()).toBe(4);
+            expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBe(true);
+            expect(wizardUnitComponent.isTextUnitFormOpen()).toBe(false);
+            expect(wizardUnitComponent.autosaveState()).toEqual({ kind: 'idle' });
+        });
+
+        it('should save and close the open item before a new item is added', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+
+            wizardUnitComponent.onCreateLectureUnit(LectureUnitType.ONLINE);
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(wizardUnitComponent.editingUnitId()).toBeUndefined();
+            expect(wizardUnitComponent.isEditingLectureUnit()).toBe(false);
+            expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBe(true);
+        });
+
+        it('should close the form when its item is deleted', () => {
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+
+            wizardUnitComponent.onLectureUnitsChange([savedTextUnit(3, 'Reading')]);
+            expect(wizardUnitComponent.editingUnitId()).toBe(3);
+
+            wizardUnitComponent.onLectureUnitsChange([]);
+            expect(wizardUnitComponent.editingUnitId()).toBeUndefined();
+            expect(wizardUnitComponent.isTextUnitFormOpen()).toBe(false);
+            expect(wizardUnitComponent.lectureUnits()).toEqual([]);
+        });
+
+        it('should save a waiting change as soon as the user leaves a field', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+
+            wizardUnitComponent.onEditorFocusOut();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should send a waiting change when the page is left', () => {
+            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
+            wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
+
+            wizardUnitComponentFixture.destroy();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(updateSpy.mock.calls[0][0].name).toBe('Reading list');
+        });
+
+        it('should save an online resource without an alert', () => {
+            const updateSpy = vi.spyOn(TestBed.inject(OnlineUnitService), 'update').mockReturnValue(of(new HttpResponse<OnlineUnit>({ status: 200 })));
+            wizardUnitComponent.startEditLectureUnit(savedOnlineUnit());
+
+            wizardUnitComponent.onOnlineUnitChanged({ data: { name: 'Artemis', source: 'https://artemis.tum.de', description: 'Start here' }, immediate: false, valid: true });
+            vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            const [sentUnit, , context] = updateSpy.mock.calls[0];
+            expect(sentUnit.description).toBe('Start here');
+            expect(sentUnit.source).toBe('https://artemis.tum.de');
+            expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        });
+
+        describe('file and video items', () => {
+            let updateSpy: MockInstance<AttachmentVideoUnitService['update']>;
+            let formMock: { takeOverSavedFile: Mock; takeOverSavedVideoSource: Mock };
+
+            function savedFileUnit(): AttachmentVideoUnit {
+                const unit = new AttachmentVideoUnit();
+                unit.id = 5;
+                unit.name = 'Slides';
+                unit.videoSource = 'https://live.rbg.tum.de/w/old';
+                unit.attachment = { id: 8, link: 'attachments/slides.pdf', version: 1 } as Attachment;
+                return unit;
+            }
+
+            function fileFormData(formProperties: AttachmentVideoUnitFormData['formProperties'], file?: File): AttachmentVideoUnitFormData {
+                return {
+                    formProperties: { name: 'Slides', videoSource: 'https://live.rbg.tum.de/w/old', ...formProperties },
+                    fileProperties: { file, fileName: file?.name ?? 'attachments/slides.pdf' },
+                };
+            }
+
+            beforeEach(() => {
+                const responseUnit = new AttachmentVideoUnit();
+                responseUnit.attachment = { id: 8, link: 'attachments/slides-v2.pdf', version: 2 } as Attachment;
+                updateSpy = vi.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(of(new HttpResponse({ body: responseUnit, status: 200 })));
+                formMock = { takeOverSavedFile: vi.fn(), takeOverSavedVideoSource: vi.fn() };
+                wizardUnitComponent.attachmentVideoUnitForm = signal(formMock as unknown as AttachmentVideoUnitFormComponent).asReadonly() as Signal<
+                    AttachmentVideoUnitFormComponent | undefined
+                >;
+                wizardUnitComponent.startEditLectureUnit(savedFileUnit());
+            });
+
+            it('should save the details but neither a new file nor a video URL that were not confirmed', async () => {
+                const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
+                const data = fileFormData({ description: 'Week 1', videoSource: 'https://live.rbg.tum.de/w/new', updateNotificationText: 'New slides' }, newFile);
+
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data, immediate: true, valid: true });
+
+                expect(updateSpy).toHaveBeenCalledOnce();
+                const [lectureId, unitId, formData, notificationText, context] = updateSpy.mock.calls[0];
+                expect([lectureId, unitId]).toEqual([1, 5]);
+                expect(formData.has('file')).toBe(false);
+                expect(notificationText).toBeUndefined();
+                expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+                await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({
+                    description: 'Week 1',
+                    videoSource: 'https://live.rbg.tum.de/w/old',
+                    attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+                });
+                expect(formMock.takeOverSavedFile).not.toHaveBeenCalled();
+                expect(formMock.takeOverSavedVideoSource).not.toHaveBeenCalled();
+            });
+
+            it('should upload a confirmed file as the next version and notify students when asked', async () => {
+                const newFile = new File(['%PDF'], 'slides-v2.pdf', { type: 'application/pdf' });
+
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({ updateNotificationText: 'New slides' }, newFile));
+
+                expect(updateSpy).toHaveBeenCalledOnce();
+                const [, , formData, notificationText] = updateSpy.mock.calls[0];
+                expect(formData.get('file')).toBeInstanceOf(File);
+                expect(notificationText).toBe('New slides');
+                await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
+                expect(formMock.takeOverSavedFile).toHaveBeenCalledExactlyOnceWith('attachments/slides-v2.pdf', 2);
+                expect(unitManagementComponentMock.replaceLectureUnit).toHaveBeenCalledWith(
+                    expect.objectContaining({ id: 5, attachment: expect.objectContaining({ version: 2 }) }),
+                );
+                expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
+            });
+
+            it('should not upload an empty file', async () => {
+                wizardUnitComponent.onAttachmentFileUploadRequested(fileFormData({}, new File([], 'empty.pdf', { type: 'application/pdf' })));
+
+                const formData = updateSpy.mock.calls[0][2];
+                expect(formData.has('file')).toBe(false);
+                await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
+            });
+
+            it('should save a confirmed video URL and let the form take it over', async () => {
+                wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/new' }));
+
+                const formData = updateSpy.mock.calls[0][2];
+                expect(formData.has('file')).toBe(false);
+                await expect(getAttachmentVideoUnitPayload(formData)).resolves.toMatchObject({
+                    videoSource: 'https://live.rbg.tum.de/w/new',
+                    attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+                });
+                expect(formMock.takeOverSavedVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/new');
+                expect(formMock.takeOverSavedFile).not.toHaveBeenCalled();
+            });
         });
     });
 });
