@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { By, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
@@ -455,6 +455,22 @@ describe('NavbarComponent', () => {
 
         expect(useSpy).toHaveBeenCalledWith('elvish');
         expect(languageChangeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should update the tab title when the lecture is renamed after the page loaded', () => {
+        const titleService = TestBed.inject(Title);
+        const lectureTitle = new BehaviorSubject('Old lecture');
+        entityTitleServiceStub.mockImplementation((type: EntityType) =>
+            type === EntityType.LECTURE ? lectureTitle : of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()),
+        );
+        router.setUrl('/course-management/1/lectures/2/edit');
+        fixture.detectChanges();
+        expect(titleService.getTitle()).toContain('Old lecture');
+
+        lectureTitle.next('Renamed lecture');
+
+        expect(titleService.getTitle()).toContain('Renamed lecture');
+        expect(component.breadcrumbs().some((crumb) => crumb.label === 'Renamed lecture')).toBe(true);
     });
 
     it('should not build breadcrumbs for students', () => {
