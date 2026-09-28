@@ -46,6 +46,8 @@
                 "src/main/webapp/app/shared-ui/confirm-entity-name/**/*.scss",
                 "src/main/webapp/app/shared-ui/delete-dialog/**/*.scss",
                 "src/main/webapp/app/core/alert/**/*.scss",
+                "src/main/webapp/app/core/about-us/**/*.scss",
+                "src/main/webapp/app/core/feature-overview/**/*.scss",
                 "src/main/webapp/app/core/layouts/footer/**/*.scss",
                 "src/main/webapp/app/course/overview/setup-passkey-modal/**/*.scss",
                 "src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.scss",
