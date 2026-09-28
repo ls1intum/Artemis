@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Distributed per-course accumulator for Atlas content-change events. Exercise version created
@@ -62,13 +64,17 @@ public class ContentChangeAccumulatorService {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
+    /** Source of persisted lecture-unit state for re-checking requeued ids; absent when the lecture module is disabled. */
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
+
     public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, Clock clock, AtlasOrchestratorProperties properties,
-            CourseConfigurationRepository courseConfigurationRepository) {
+            CourseConfigurationRepository courseConfigurationRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.distributedDataProvider = distributedDataProvider;
         this.clock = clock;
         this.defaultDebounceWindowSeconds = properties.debounceWindowSeconds();
         this.defaultDailyCap = properties.maxDailyOrchestrations();
         this.courseConfigurationRepository = courseConfigurationRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
     /**
@@ -308,7 +314,8 @@ public class ContentChangeAccumulatorService {
     /**
      * Lecture-unit-aware variant of {@link #requeueAfterConcurrentRun(long, Set)}: re-merges both the
      * exercise and lecture-unit ids of a claimed batch that could not run because a concurrent
-     * orchestration held the per-course run lock, refunding the single daily-run reservation.
+     * orchestration held the per-course run lock, refunding the single daily-run reservation. Lecture
+     * units that were deleted or became ineligible since the claim are dropped instead of restored.
      *
      * @param courseId       the course whose batch is being requeued
      * @param exerciseIds    the exercise ids to re-add to the accumulator
@@ -340,7 +347,8 @@ public class ContentChangeAccumulatorService {
     /**
      * Lecture-unit-aware variant of {@link #requeueAfterFailedRun(long, Set)}: re-merges both the
      * exercise and lecture-unit ids of a claimed batch that failed before committing any mutation,
-     * keeping the daily-run reservation so failed retries stay bounded by the per-course cap.
+     * keeping the daily-run reservation so failed retries stay bounded by the per-course cap. Lecture
+     * units that were deleted or became ineligible since the claim are dropped instead of restored.
      *
      * @param courseId       the course whose batch is being requeued
      * @param exerciseIds    the exercise ids to re-add to the accumulator
@@ -355,6 +363,14 @@ public class ContentChangeAccumulatorService {
      * (concurrent-run requeue) one daily-run reservation is released so a retry-only tick does not
      * burn automatic quota; when unset (failed-run requeue) the reservation is kept so the per-day
      * cap bounds how many failed retries a course can attempt. A no-op when both id sets are empty.
+     * <p>
+     * Exercise ids are restored unchanged. Lecture-unit ids are re-checked against their persisted
+     * state first and only restored while they still exist, belong to the course, and are eligible:
+     * the claim cleared the buffered ids, so an edit made while the run was in flight (e.g. blanking
+     * a text unit) found nothing to remove in {@link #refreshLectureUnit}, and restoring the claimed
+     * id blindly would let the next claim spend a daily slot on a unit that batch resolution drops.
+     * The lookup runs under the course lock, like {@link #refreshLectureUnit}, so a later edit's
+     * refresh serialises behind this requeue and always sees the restored id.
      */
     private void requeue(long courseId, Set<Long> exerciseIds, Set<Long> lectureUnitIds, boolean refundDailyRun) {
         if (exerciseIds.isEmpty() && lectureUnitIds.isEmpty()) {
@@ -363,11 +379,15 @@ public class ContentChangeAccumulatorService {
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
         Set<Long> exerciseIdsToRequeue = new HashSet<>(exerciseIds);
-        Set<Long> lectureUnitIdsToRequeue = new HashSet<>(lectureUnitIds);
         DistributedMap<Long, ContentChangeAccumulator> currentMap = map();
         currentMap.lock(courseId);
         try {
+            Set<Long> lectureUnitIdsToRequeue = findEligibleLectureUnitIds(courseId, lectureUnitIds);
             ContentChangeAccumulator current = currentMap.get(courseId);
+            if (exerciseIdsToRequeue.isEmpty() && lectureUnitIdsToRequeue.isEmpty() && (!refundDailyRun || current == null)) {
+                // Every claimed unit became ineligible: nothing to restore and no reservation to release.
+                return;
+            }
             ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
             for (Long exerciseId : exerciseIdsToRequeue) {
                 next = next.with(exerciseId, now);
@@ -380,6 +400,24 @@ public class ContentChangeAccumulatorService {
         finally {
             currentMap.unlock(courseId);
         }
+    }
+
+    /**
+     * Load the given lecture units in one query and keep the ids whose persisted state still passes
+     * {@link ContentExtractionService#isCourseLectureUnitEligibleForOrchestration}; deleted units are
+     * absent from the result and therefore dropped, as is everything when the lecture module is disabled.
+     */
+    private Set<Long> findEligibleLectureUnitIds(long courseId, Set<Long> lectureUnitIds) {
+        if (lectureUnitIds.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
+            return Set.of();
+        }
+        Set<Long> eligible = new HashSet<>();
+        for (LectureUnit lectureUnit : lectureUnitRepositoryApi.get().findAllByIdsWithLecture(lectureUnitIds)) {
+            if (lectureUnitIds.contains(lectureUnit.getId()) && ContentExtractionService.isCourseLectureUnitEligibleForOrchestration(lectureUnit, courseId)) {
+                eligible.add(lectureUnit.getId());
+            }
+        }
+        return eligible;
     }
 
     /**

@@ -218,6 +218,24 @@ public class ContentExtractionService {
         };
     }
 
+    /**
+     * Whether a persisted lecture unit may stay queued for automatic orchestration of the given
+     * course: it must belong to that course and satisfy
+     * {@link #isLectureUnitEligibleForOrchestration(LectureUnit)}. The accumulator applies this
+     * single rule both when a content-change event refreshes a buffered id and when a claimed batch
+     * is requeued, so neither path can keep a unit that batch resolution would drop.
+     *
+     * @param lectureUnit the current persisted lecture unit with its lecture loaded, or {@code null} when it no longer exists
+     * @param courseId    the course whose queue is being updated
+     * @return whether the unit exists, belongs to the course, and is eligible for orchestration
+     */
+    public static boolean isCourseLectureUnitEligibleForOrchestration(@Nullable LectureUnit lectureUnit, long courseId) {
+        if (lectureUnit == null || lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
+            return false;
+        }
+        return Long.valueOf(courseId).equals(lectureUnit.getLecture().getCourse().getId()) && isLectureUnitEligibleForOrchestration(lectureUnit);
+    }
+
     private static boolean hasText(@Nullable String value) {
         return value != null && !value.isBlank();
     }
