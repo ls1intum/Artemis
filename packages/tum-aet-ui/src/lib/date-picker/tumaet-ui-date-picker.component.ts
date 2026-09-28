@@ -159,8 +159,10 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
         this.dateOnly() ? 'tumAetUi.datePicker.open' : this.timeOnly() ? 'tumAetUi.datePicker.openTime' : 'tumAetUi.datePicker.open',
     );
     protected readonly showClear = computed(() => !!this.inputText());
-    protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : '00'));
-    protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : '00'));
+    // Empty, not '00', until a real time is committed - otherwise an unset required field reads as midnight, and
+    // a user who wants midnight cannot commit it without first changing the shown value and changing it back.
+    protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : ''));
+    protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : ''));
 
     constructor() {
         this.destroyRef.onDestroy(() => this.overlayRef?.dispose());

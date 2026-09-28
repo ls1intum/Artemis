@@ -309,6 +309,12 @@ describe('TumAetUiDatePickerComponent', () => {
             expect(minute()).not.toBeNull();
         });
 
+        it('leaves the steppers empty until a value is committed, so an unset field does not read as 00:00', () => {
+            expect(component.value()).toBeUndefined();
+            expect(hour().value).toBe('');
+            expect(minute().value).toBe('');
+        });
+
         it('reflects an external value in the steppers', () => {
             fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
             fixture.detectChanges();
