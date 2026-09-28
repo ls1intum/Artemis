@@ -7,6 +7,8 @@ import { StatisticsService } from 'app/exercise/statistics-graph/service/statist
 import { CourseManagementStatisticsDTO } from 'app/course/shared/entities/course-management-statistics-dto';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 
 describe('StatisticsService', () => {
     let service: StatisticsService;
@@ -22,6 +24,60 @@ describe('StatisticsService', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+
+    it('should load the data of an Artemis wide graph for the chosen span and period', () => {
+        let data: number[] | undefined;
+        service.getChartData(SpanType.WEEK, -1, Graphs.SUBMISSIONS).subscribe((result) => (data = result));
+
+        httpMock.expectOne('api/admin/management/statistics/data?span=WEEK&periodIndex=-1&graphType=SUBMISSIONS').flush([1, 2, 3]);
+
+        expect(data).toEqual([1, 2, 3]);
+    });
+
+    it('should load the data of a graph of one course or exercise', () => {
+        let data: number[] | undefined;
+        service.getChartDataForContent(SpanType.MONTH, 0, Graphs.ACTIVE_USERS, StatisticsView.COURSE, 7).subscribe((result) => (data = result));
+
+        httpMock.expectOne('api/core/management/statistics/data-for-content?span=MONTH&periodIndex=0&graphType=ACTIVE_USERS&view=COURSE&entityId=7').flush([4, 5]);
+
+        expect(data).toEqual([4, 5]);
+    });
+
+    describe('getExerciseStatistics', () => {
+        const url = 'api/core/management/statistics/exercise-statistics?exerciseId=3';
+        const statistics = (overrides: Partial<ExerciseManagementStatisticsDto>): ExerciseManagementStatisticsDto => ({
+            averageScoreOfExercise: 50,
+            maxPointsOfExercise: 10,
+            scoreDistribution: [],
+            numberOfExerciseScores: 3,
+            numberOfParticipations: 1,
+            numberOfStudentsOrTeamsInCourse: 3,
+            numberOfPosts: 4,
+            numberOfResolvedPosts: 1,
+            ...overrides,
+        });
+
+        it('should add the participation rate, the share of resolved posts and the average points', () => {
+            let result: ExerciseManagementStatisticsDto | undefined;
+            service.getExerciseStatistics(3).subscribe((response) => (result = response));
+
+            httpMock.expectOne(url).flush(statistics({}));
+
+            expect(result?.participationsInPercent).toBe(33.3);
+            expect(result?.resolvedPostsInPercent).toBe(25);
+            expect(result?.absoluteAveragePoints).toBe(5);
+        });
+
+        it('should report no participations and no resolved posts without students or posts', () => {
+            let result: ExerciseManagementStatisticsDto | undefined;
+            service.getExerciseStatistics(3).subscribe((response) => (result = response));
+
+            httpMock.expectOne(url).flush(statistics({ numberOfStudentsOrTeamsInCourse: 0, numberOfPosts: 0 }));
+
+            expect(result?.participationsInPercent).toBe(0);
+            expect(result?.resolvedPostsInPercent).toBe(0);
+        });
     });
 
     describe('getCourseStatistics', () => {
