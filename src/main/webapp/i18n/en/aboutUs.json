@@ -6,7 +6,7 @@
             "portraitAlt": "Portrait of {{ name }}",
             "courseRequests": "Request a new course",
             "installation": {
-                "title": "Who runs Artemis here",
+                "title": "Responsible organization",
                 "operator": "Operated by",
                 "testServer": "Test server"
             },
