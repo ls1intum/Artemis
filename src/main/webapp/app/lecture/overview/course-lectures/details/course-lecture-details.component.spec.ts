@@ -172,7 +172,7 @@ describe('CourseLectureDetailsComponent', () => {
                  * run as an unhandled rejection, without failing a single test.
                  */
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                { provide: IrisChatService, useValue: { openChat: vi.fn() } },
+                { provide: IrisChatService, useValue: { openChat: vi.fn(), pointOut$: EMPTY } },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -577,7 +577,7 @@ describe('CourseLectureDetailsComponent', () => {
             secondResponse.complete();
 
             expect(courseLecturesDetailsComponent.lecture()).toBe(currentLecture);
-            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, page: 2 }));
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
             expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
         });
     });
@@ -636,6 +636,11 @@ describe('CourseLectureDetailsComponent', () => {
         it.each([
             { name: 'keeps every target', params: { unit: '7', timestamp: '30', page: '4' }, expected: { unitId: 7, timestamp: 30, page: 4 } },
             {
+                name: 'keeps the combined-view request',
+                params: { unit: '7', timestamp: '30', page: '4', combined: 'true' },
+                expected: { unitId: 7, timestamp: 30, page: 4, combined: true },
+            },
+            {
                 name: 'drops a negative timestamp and a page below one',
                 params: { unit: '7', timestamp: '-5', page: '0' },
                 expected: { unitId: 7, timestamp: undefined, page: undefined },
@@ -648,12 +653,12 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining(expected));
         });
 
-        it('should pass a target on even when the unit cannot honour it', () => {
-            respondWith([attachmentUnit(7, '/path/to/slides.zip', undefined)]);
+        it('should drop targets the unit cannot honour', () => {
+            respondWith([attachmentUnit(7, '/path/to/slides.zip', '')]);
 
             reInit({ unit: '7', timestamp: '30', page: '4' });
 
-            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, timestamp: 30, page: 4 }));
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, timestamp: undefined, page: undefined }));
         });
 
         it('should clear the previous deep link when the unit param is not a positive integer', () => {

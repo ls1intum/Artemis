@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Entity
 @Table(name = "science_setting", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "setting_id" }) })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Keyed by user login rather than by foreign key.")
 public class ScienceSetting extends DomainObject {
 
     @Column(name = "setting_id", nullable = false)

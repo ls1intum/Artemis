@@ -150,13 +150,36 @@ public final class CourseValidator {
     }
 
     /**
-     * Validates if the start and end dates of the course fulfill all requirements.
+     * Validates that the start and end dates of the course are set and in the correct order.
+     * <p>
+     * Both dates are mandatory. The data-protection features select courses by their end date, so a course without
+     * one would never be archived, warned about or cleaned up.
      *
      * @param course the course to validate
      */
     public static void validateStartAndEndDate(Course course) {
-        if (course.getStartDate() != null && course.getEndDate() != null && !course.getStartDate().isBefore(course.getEndDate())) {
+        if (course.getStartDate() == null || course.getEndDate() == null) {
+            throw new BadRequestAlertException("For Courses, both the start date and the end date are required", Course.ENTITY_NAME, "courseStartOrEndDateMissing", true);
+        }
+        if (!course.getStartDate().isBefore(course.getEndDate())) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
+        }
+    }
+
+    /**
+     * Validates that the semester of the course is set.
+     * <p>
+     * No format is enforced: installations outside TUM use other conventions, and the client only offers its date
+     * auto-fill for values it recognises.
+     *
+     * @param course the course to validate
+     */
+    public static void validateSemester(Course course) {
+        if (course.getSemester() == null || course.getSemester().isBlank()) {
+            throw new BadRequestAlertException("For Courses, the semester is required", Course.ENTITY_NAME, "semesterMissing", true);
+        }
+        if (course.getSemester().length() > Course.SEMESTER_MAX_LENGTH) {
+            throw new BadRequestAlertException("The semester must not be longer than " + Course.SEMESTER_MAX_LENGTH + " characters", Course.ENTITY_NAME, "semesterTooLong", true);
         }
     }
 
@@ -182,10 +205,7 @@ public final class CourseValidator {
             throw new BadRequestAlertException("Enrollment start date must be before the end date.", Course.ENTITY_NAME, errorKey, true);
         }
 
-        if (course.getStartDate() == null || course.getEndDate() == null) {
-            throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", Course.ENTITY_NAME, errorKey, true);
-        }
-
+        // validateStartAndEndDate rejects a missing start or end date itself, so there is nothing to check here first.
         validateStartAndEndDate(course);
 
         if (course.getEnrollmentEndDate().isAfter(course.getEndDate())) {

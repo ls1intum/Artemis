@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -221,10 +222,16 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
      *
      * @param job          The job to handle
      * @param statusUpdate The status update to handle
-     * @return The updated job
+     * @return The updated job, or {@code null} if the session no longer exists
      */
+    @Nullable
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, TutorSuggestionStatusUpdateDTO statusUpdate) {
         var session = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping status update for Iris tutor suggestion job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return null;
+        }
         IrisMessage savedMessage;
         IrisMessage savedArtifact;
         if (statusUpdate.artifact() != null || statusUpdate.result() != null) {

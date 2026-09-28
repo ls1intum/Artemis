@@ -151,7 +151,7 @@ await esbuild.build({
 });
 
 await new Promise((resolve, reject) => {
-    const buildScript = `tum-ui:build${developFlag ? ':dev' : ''}`;
+    const buildScript = `tum-aet-ui:build${developFlag ? ':dev' : ''}`;
     const command = process.platform === 'win32' ? 'cmd.exe' : 'pnpm';
     const commandArguments = process.platform === 'win32' ? ['/d', '/s', '/c', `pnpm run ${buildScript}`] : ['run', buildScript];
     const child = spawn(command, commandArguments, {
@@ -164,7 +164,7 @@ await new Promise((resolve, reject) => {
             resolve();
             return;
         }
-        reject(new Error(`TUM UI package build failed${signal ? ` with signal ${signal}` : ` with exit code ${code}`}.`));
+        reject(new Error(`TUM AET UI package build failed${signal ? ` with signal ${signal}` : ` with exit code ${code}`}.`));
     });
 });
 

@@ -31,10 +31,11 @@ export const enum ImageLoadingStatus {
 })
 export class ImageComponent implements OnDestroy {
     private domSanitizer = inject(DomSanitizer);
+    element = inject(ElementRef);
+
     private retried = false;
     private rawLocalImageUrl?: string;
 
-    element = inject(ElementRef);
     mobileDragAndDrop = input<boolean>(false);
     src = input.required<string>();
     alt = input<string | undefined>(undefined);

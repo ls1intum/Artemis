@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -18,7 +18,7 @@ export type Response<T> = Observable<HttpResponse<T>>;
 /**
  * Provides a set of methods to perform CRUD operations on messages
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisChatHttpService {
     protected httpClient = inject(HttpClient);
 
@@ -79,15 +79,20 @@ export class IrisChatHttpService {
      * @param {IrisUserMessage} message
      * @return {Response<IrisMessage>}
      */
-    resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessageResponseDTO> {
+    resendMessage(sessionId: number, message: IrisUserMessage, clientId: string): Response<IrisMessageResponseDTO> {
         message.messageDifferentiator = message.messageDifferentiator ?? randomInt();
-        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
-            tap((response) => {
-                if (response.body && response.body.id) {
-                    message.id = response.body.id;
-                }
-            }),
-        );
+        return this.httpClient
+            .post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, {
+                observe: 'response',
+                params: { clientId },
+            })
+            .pipe(
+                tap((response) => {
+                    if (response.body && response.body.id) {
+                        message.id = response.body.id;
+                    }
+                }),
+            );
     }
 
     /**

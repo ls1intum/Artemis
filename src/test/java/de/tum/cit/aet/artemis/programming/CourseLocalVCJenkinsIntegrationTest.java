@@ -52,6 +52,24 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithoutStartDate() throws Exception {
+        courseTestService.testCreateCourseWithoutStartDate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithoutEndDate() throws Exception {
+        courseTestService.testCreateCourseWithoutEndDate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithoutSemester() throws Exception {
+        courseTestService.testCreateCourseWithoutSemester();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateCourseWithNegativeMaxComplainTimeDays() throws Exception {
         courseTestService.testCreateCourseWithNegativeMaxComplainTimeDays();
     }
@@ -126,6 +144,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateCourseWithMaxPointsZero() throws Exception {
         courseTestService.testUpdateCourseWithMaxPointsZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseWithBlankSemester() throws Exception {
+        courseTestService.testUpdateCourseWithBlankSemester();
     }
 
     @Test
@@ -380,6 +404,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes() throws Exception {
+        courseTestService.testGetCourseWithExercisesQueryCountStaysBoundedWithAllExerciseTypes();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseWithOrganizations() throws Exception {
         courseTestService.testGetCourseWithOrganizations();
     }
@@ -606,6 +636,198 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_byLogin_returnsMatchingUsers() throws Exception {
+        courseTestService.searchUsersForCourseRole_byLogin_returnsMatchingUsers();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_marksAlreadyEnrolledUser() throws Exception {
+        courseTestService.searchUsersForCourseRole_marksAlreadyEnrolledUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_nonEnrolledUserNotFlagged() throws Exception {
+        courseTestService.searchUsersForCourseRole_nonEnrolledUserNotFlagged();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_noResultsForUnknownTerm() throws Exception {
+        courseTestService.searchUsersForCourseRole_noResultsForUnknownTerm();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void searchUsersForCourseRole_forbiddenForTutor() throws Exception {
+        courseTestService.searchUsersForCourseRole_forbiddenForNonInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersForCourseRole_forbiddenForStudent() throws Exception {
+        courseTestService.searchUsersForCourseRole_forbiddenForNonInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_returnsRequestedPageSize() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_returnsRequestedPageSize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_rejectsZeroPageSize() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_rejectsZeroPageSize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_rejectsNegativePage() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_rejectsNegativePage();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_rejectsTooLargePageSize() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_rejectsTooLargePageSize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_searchByEmail_returnsMatchingUser() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_searchByEmail_returnsMatchingUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_searchByRegistrationNumber_returnsMatchingUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void addUsersToCourseRole_unknownSlug_returnsBadRequest() throws Exception {
+        courseTestService.addUsersToCourseRole_unknownSlug_returnsBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_rejectsOverflowingOffset() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_rejectsOverflowingOffset();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getPagedUsersInCourseRole_nonExistentCourse_returnsNotFound() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_nonExistentCourse_returnsNotFound();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_rejectsOverflowingOffset() throws Exception {
+        courseTestService.searchUsersForCourseRole_rejectsOverflowingOffset();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void searchUsersForCourseRole_nonExistentCourse_returnsNotFound() throws Exception {
+        courseTestService.searchUsersForCourseRole_nonExistentCourse_returnsNotFound();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_searchByLogin_returnsMatchingUser() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_searchByLogin_returnsMatchingUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_searchByName_returnsMatchingUser() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_searchByName_returnsMatchingUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_sortsDescendingByLogin() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_sortsDescendingByLogin();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_sortsByConcatenatedNameNotTuple() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_sortsByConcatenatedNameNotTuple();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_returnsCorrectDtoFields() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_returnsCorrectDtoFields();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_setsTotalCountHeader() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_setsTotalCountHeader();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_returnsSecondPage() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_returnsSecondPage();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getPagedUsersInCourseRole_forbiddenForTutor() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_forbiddenForNonInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPagedUsersInCourseRole_forbiddenForStudent() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_forbiddenForNonInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getPagedUsersInCourseRole_unknownSlug_returnsBadRequest() throws Exception {
+        courseTestService.getPagedUsersInCourseRole_unknownSlug_returnsBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_rejectsZeroSize() throws Exception {
+        courseTestService.searchUsersForCourseRole_rejectsZeroSize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_rejectsTooLargeSize() throws Exception {
+        courseTestService.searchUsersForCourseRole_rejectsTooLargeSize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_rejectsNegativePage() throws Exception {
+        courseTestService.searchUsersForCourseRole_rejectsNegativePage();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_searchByEmail_returnsMatchingUser() throws Exception {
+        courseTestService.searchUsersForCourseRole_searchByEmail_returnsMatchingUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchUsersForCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
+        courseTestService.searchUsersForCourseRole_searchByRegistrationNumber_returnsMatchingUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden();
     }
@@ -777,6 +999,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCleanupCourseAsInstructor() throws Exception {
         courseTestService.testCleanupCourseAsInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCourseIncludesArchivePathWhenCourseIsArchived() throws Exception {
+        courseTestService.testGetCourseIncludesArchivePathWhenCourseIsArchived();
     }
 
     @Test

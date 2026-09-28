@@ -29,6 +29,17 @@ public record PlagiarismDetectionConfigDTO(Long id, boolean continuousPlagiarism
     }
 
     /**
+     * Returns the same configuration without the row id, for payloads that are written to a file and read back by
+     * another instance, which must not adopt the id of this exercise's configuration.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public PlagiarismDetectionConfigDTO withoutId() {
+        return new PlagiarismDetectionConfigDTO(null, continuousPlagiarismControlEnabled, continuousPlagiarismControlPostDueDateChecksEnabled,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, similarityThreshold, minimumScore, minimumSize);
+    }
+
+    /**
      * Creates a new {@link PlagiarismDetectionConfig} entity carrying the values of this DTO.
      *
      * @return a new, transient plagiarism detection config entity

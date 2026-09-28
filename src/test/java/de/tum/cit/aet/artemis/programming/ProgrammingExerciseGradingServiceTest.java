@@ -170,7 +170,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
-            programmingExercise.setBuildConfig(super.programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
             programmingExercise = super.programmingExerciseRepository.save(programmingExercise);
             programmingExercise = super.programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
             programmingExercise = super.programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -622,7 +621,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(scoresBefore.values()).anyMatch(score -> score > 0);
 
         final String endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
-        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExercise.class, HttpStatus.OK);
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // nothing about the grading configuration changed, so every score has to come out the same

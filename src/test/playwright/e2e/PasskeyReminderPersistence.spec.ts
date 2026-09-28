@@ -5,12 +5,13 @@ import { BASE_API } from '../support/constants';
 
 const TEST_USER = { username: 'passkey_reminder_e2e', password: 'passkey_reminder_e2e', email: 'passkey_reminder_e2e@example.com' };
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, userManagementAPIRequests }) => {
     await page.request.post(`${BASE_API}/core/public/authenticate`, {
         data: { username: admin.username, password: admin.password, rememberMe: true },
     });
-    await page.request.delete(`${BASE_API}/core/admin/users/${TEST_USER.username}`, { failOnStatusCode: false });
-    await page.request.post(`${BASE_API}/core/admin/users`, {
+    // Deletion confirms against the impact fingerprint, which is why this goes through the helper rather than a bare DELETE.
+    await userManagementAPIRequests.deleteUser(TEST_USER.username);
+    await page.request.post(`${BASE_API}/account/admin/users`, {
         data: {
             login: TEST_USER.username,
             password: TEST_USER.password,
@@ -23,12 +24,12 @@ test.beforeEach(async ({ page }) => {
     });
 });
 
-test.afterEach(async ({ page }) => {
+test.afterEach(async ({ page, userManagementAPIRequests }) => {
     await page.context().clearCookies();
     await page.request.post(`${BASE_API}/core/public/authenticate`, {
         data: { username: admin.username, password: admin.password, rememberMe: true },
     });
-    await page.request.delete(`${BASE_API}/core/admin/users/${TEST_USER.username}`, { failOnStatusCode: false });
+    await userManagementAPIRequests.deleteUser(TEST_USER.username);
 });
 
 test('Passkey reminder modal is not displayed on re-login after remind me in 30 days was chosen', async ({ page, loginPage, navigationBar }) => {

@@ -105,6 +105,16 @@ public record ProgrammingExerciseStudentParticipationDTO(Long id, String type, I
                 participation.getParticipantName(), participation.getParticipantIdentifier(), student, team, participation.getSubmissionCount(), exercise, submissions);
     }
 
+    /**
+     * Removes participant information and repository metadata while retaining the submissions and results for assessment.
+     *
+     * @return an anonymous participation response
+     */
+    public ProgrammingExerciseStudentParticipationDTO withoutParticipantInformation() {
+        return new ProgrammingExerciseStudentParticipationDTO(id, type, initializationState, initializationDate, individualDueDate, testRun, null, null, null, null, null, null,
+                null, submissionCount, exercise, submissions);
+    }
+
     private static List<ProgrammingSubmissionWithResultsDTO> mapSubmissions(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getSubmissions() == null || !Hibernate.isInitialized(participation.getSubmissions())) {
             return null;

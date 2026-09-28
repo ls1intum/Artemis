@@ -19,6 +19,13 @@
         [autoClose]="false"
         [animation]="true"
         [placement]="popoverPlacement()"
+        #keyboardAction13
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="(isDarkTheme() ? 'artemisApp.theme.lightMode' : 'artemisApp.theme.darkMode') | artemisTranslate"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction13.click() : undefined"
     >
         <div class="theme-toggle" [class.dark]="isDarkTheme()" id="theme-toggle">
             <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">

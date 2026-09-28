@@ -25,6 +25,16 @@ public record TeamAssignmentConfigDTO(Long id, Integer minTeamSize, Integer maxT
     }
 
     /**
+     * Returns the same configuration without the row id, for payloads that are written to a file and read back by
+     * another instance, which must not adopt the id of this exercise's configuration.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public TeamAssignmentConfigDTO withoutId() {
+        return new TeamAssignmentConfigDTO(null, minTeamSize, maxTeamSize);
+    }
+
+    /**
      * Builds a transient {@link TeamAssignmentConfig} entity from this DTO (min/max team size only).
      *
      * @return the transient entity

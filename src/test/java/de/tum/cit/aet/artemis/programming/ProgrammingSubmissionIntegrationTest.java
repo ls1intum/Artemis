@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
@@ -275,7 +276,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(optionalUpdatedProgrammingExercise).isPresent();
         ProgrammingExercise updatedProgrammingExercise = optionalUpdatedProgrammingExercise.get();
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isFalse();
-        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed", false);
+        verify(websocketMessagingService).sendMessage(topic("/topic/programming-exercises/" + exercise.getId() + "/test-cases-changed"), eq(false));
     }
 
     @Test
@@ -388,7 +389,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         final Long submissionId = submission.getId();
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq(NEW_SUBMISSION_TOPIC),
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), userTopic("/topic/newSubmissions"),
                 argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.id().equals(submissionId)));
 
         // Perform the request again and make sure no new submission was created
@@ -582,6 +583,29 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
         assertThat(exercise.getGradingCriteria().stream().map(GradingCriterion::getStructuredGradingInstructions).map(Set::size)).containsExactlyInAnyOrder(1, 1, 3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionForTheResultOfAComplaintResponse() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(50), submission);
+        // The response to a complaint is stored as an additional manual result with the next correction round
+        Result complaintResponseResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusMinutes(10), submission);
+        complaintResponseResult.setCorrectionRound(1);
+        resultRepository.save(complaintResponseResult);
+        long numberOfResults = resultRepository.countBySubmissionId(submission.getId());
+
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        // the course exercise has one correction round, but the result of the complaint response exists and can be opened
+        paramMap.add("correction-round", "1");
+        request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmission.class, paramMap);
+
+        assertThat(resultRepository.countBySubmissionId(submission.getId())).as("opening the existing result creates no further result").isEqualTo(numberOfResults);
     }
 
     @Test

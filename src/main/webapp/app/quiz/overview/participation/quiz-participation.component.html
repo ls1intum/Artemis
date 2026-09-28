@@ -21,6 +21,7 @@
                                 @case ('solution') {
                                     <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
                                 }
+                                @default {}
                             }
                             <ng-template #modeBadge let-modeTranslation>
                                 <span class="small">
@@ -133,6 +134,7 @@
                                             }"
                                         />
                                     }
+                                    @default {}
                                 }
                                 <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
                                 <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
@@ -143,6 +145,12 @@
                                         (click)="navigateToQuestion(index)"
                                         [ngbTooltip]="!!questionAnswers.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                         [ngClass]="!!questionAnswers.get(question.id!)?.length ? 'changed-question' : ''"
+                                        #keyboardAction142
+                                        role="button"
+                                        tabindex="0"
+                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction142.click() : undefined"
+                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction142.click() : undefined"
                                     >
                                         <b class="fa">{{ abbreviation }}</b>
                                     </span>
@@ -159,7 +167,7 @@
                         @if (!submission().submitted && !showingResult() && remainingTimeSeconds() >= 0) {
                             <p jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
                         }
-                        @if (!showingResult() && !waitingForQuizStart() && (submission().submitted || remainingTimeSeconds() < 0) && hasAnyAnswer()) {
+                        @if (mode() !== 'practice' && !showingResult() && !waitingForQuizStart() && (submission().submitted || remainingTimeSeconds() < 0) && hasAnyAnswer()) {
                             <p jhiTranslate="artemisApp.quizExercise.quizInstructions.wait"></p>
                         }
                         @if (showingResult() && mode() !== 'solution') {
@@ -295,7 +303,7 @@
                         </div>
                     }
                 }
-                @if (quizExercise()?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart() && !showingResult() && submission().submitted) {
+                @if (mode() !== 'practice' && quizExercise()?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart() && !showingResult() && submission().submitted) {
                     <div class="quiz-submitted-overlay alert alert-success">
                         <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
                     </div>

@@ -327,6 +327,32 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('should hide the complaints shortcut when the course has complaints disabled', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        exerciseServiceGetStatsForTutorsStub.mockReturnValue(
+            of(new HttpResponse({ body: { ...stats, complaintsEnabled: false } as StatsForDashboard, headers: new HttpHeaders() })),
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.complaintsEnabled()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]')).toBeNull();
+    });
+
+    it('should show the complaints shortcut when the course has complaints enabled', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        exerciseServiceGetStatsForTutorsStub.mockReturnValue(
+            of(new HttpResponse({ body: { ...stats, complaintsEnabled: true } as StatsForDashboard, headers: new HttpHeaders() })),
+        );
+
+        fixture.detectChanges();
+
+        expect(comp.complaintsEnabled()).toBe(true);
+        const complaintsLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]') as HTMLAnchorElement;
+        expect(complaintsLink).not.toBeNull();
+        expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
+    });
+
     it('should initialize with tutor leaderboard entry', () => {
         const tutor = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(tutor);

@@ -496,10 +496,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (optionalExistingResult.isPresent()) {
             Result existingResult = optionalExistingResult.get();
             automaticFeedbacks = existingResult.getFeedbacks().stream().map(feedbackService::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
+            // Each copy names the new result before it is written: result_id is not nullable, so saving it detached and
+            // attaching it afterwards fails the insert instead of updating the row.
             for (Feedback feedback : automaticFeedbacks) {
-                feedback = feedbackRepository.save(feedback);
                 feedback.setResult(newResult);
             }
+            automaticFeedbacks = new ArrayList<>(feedbackRepository.saveAll(automaticFeedbacks));
 
             // Copy the typed automatic feedback (test cases + static code analysis); the rows are loaded
             // from the database (the collections may be uninitialized) and the copies share the

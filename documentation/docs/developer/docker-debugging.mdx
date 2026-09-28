@@ -11,9 +11,7 @@ Sometimes it is useful to debug Artemis while it is running in a Docker containe
 
 Follow these steps to set up debugging:
 
----
-
-## 1. Adjust the Docker Setup
+## Adjust the Docker Setup
 
 Adjust the docker setup to start the JVM with the correct arguments and to expose a debug port.
 
@@ -32,18 +30,14 @@ This will start the JVM with the Java Debug Wire Protocol (JDWP) agent, allowing
     If you use a multi-node setup, you need to add this to all nodes that you want to debug. Make sure that all use different host ports.
 </Callout>
 
----
-
-## 2. Use Your Own PR Image (Optional)
+## Use Your Own PR Image (Optional)
 
 If you want to debug your own PR, replace the image name with your own PR image
 ```bash
 ghcr.io/ls1intum/artemis:pr-<pr-number>
 ```
 
----
-
-## 3. Configure IntelliJ Remote Debugging
+## Configure IntelliJ Remote Debugging
 
 Use the `Remote Java Debugging for Docker` run configuration:
 
@@ -52,9 +46,7 @@ Use the `Remote Java Debugging for Docker` run configuration:
 - You can find the run configuration in the `Run/Debug Configurations` dialog in IntelliJ under `Remote JVM Debug -> Remote Java Debugging for Docker`.
 - For each Artemis node you want to debug, you need to create a separate run configuration with the correct port.
 
----
-
-## 4. Start the Docker Compose File
+## Start the Docker Compose File
 
 Start the relevant docker compose file with:
 
@@ -62,9 +54,7 @@ Start the relevant docker compose file with:
 docker compose -f <docker compose file name> up -d
 ```
 
----
-
-## 5. Handle Liquibase Errors (If Necessary)
+## Handle Liquibase Errors (If Necessary)
 
 If the server fails to start with Liquibase errors, you can run the following command to reset the database:
 
@@ -76,16 +66,13 @@ If the server fails to start with Liquibase errors, you can run the following co
 docker exec -i artemis-mysql mysql -u root -p'' -e "DROP DATABASE artemis;"
 ```
 
-Afterward, you can start the server again with the same command as in step 4.
+Afterward, you can start the server again with the same command as under
+[Start the Docker Compose File](#start-the-docker-compose-file).
 
----
-
-## 6. Start the Remote Debugger
+## Start the Remote Debugger
 
 Start the Remote JVM Debug configuration in IntelliJ.
 
----
-
-## 7. Set Breakpoints
+## Set Breakpoints
 
 Set breakpoints in the code you want to debug and start debugging!

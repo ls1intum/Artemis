@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "long_feedback_text")
@@ -32,6 +33,7 @@ public class LongFeedbackText extends DomainObject {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "feedback_id", nullable = false)
     @JsonIgnore
+    @Parent
     private Feedback feedback;
 
     public String getText() {

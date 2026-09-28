@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_COMMUNICATION } from 'app/foundation/constants/input.constants';
 import { lastValueFrom } from 'rxjs';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
@@ -8,7 +8,7 @@ export interface FileUploadResponse {
     path?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FileUploaderService {
     private readonly http = inject(HttpClient);
     readonly acceptedMarkdownFileExtensions = UPLOAD_MARKDOWN_FILE_EXTENSIONS;

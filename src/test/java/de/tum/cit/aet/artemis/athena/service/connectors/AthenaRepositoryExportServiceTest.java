@@ -134,6 +134,9 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Test
     void shouldThrowServiceUnavailableWhenFeedbackSuggestionsNotEnabled() {
         var programmingExercise = new ProgrammingExercise();
+        // The course carries no Athena configuration, which is what makes feedback suggestions unavailable. It is
+        // named here rather than left out because an exercise row belongs to a course or to an exercise group.
+        programmingExercise.setCourse(courseUtilService.addEmptyCourse());
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         assertThatExceptionOfType(ServiceUnavailableException.class).as("Should throw ServiceUnavailableException when feedback suggestions are not enabled")
@@ -144,6 +147,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Test
     void shouldThrowBadRequestAlertExceptionForInvalidRepositoryType() {
         var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setCourse(courseUtilService.addEmptyCourse());
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         var invalidRepositoryTypes = Set.of(RepositoryType.USER, RepositoryType.AUXILIARY);

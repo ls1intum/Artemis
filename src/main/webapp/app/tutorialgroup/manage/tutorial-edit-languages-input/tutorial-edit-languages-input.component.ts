@@ -7,16 +7,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faFlag } from '@fortawesome/free-solid-svg-icons';
-import { TumUiInputDirective, TumUiInputGroupAddonComponent, TumUiInputGroupComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective, TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutorial-edit-languages-input',
     imports: [
         FaIconComponent,
-        TumUiInputDirective,
-        TumUiInputGroupComponent,
-        TumUiInputGroupAddonComponent,
-        TumUiTooltipDirective,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupComponent,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiTooltipDirective,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -25,12 +25,13 @@ import { TumUiInputDirective, TumUiInputGroupAddonComponent, TumUiInputGroupComp
     styleUrl: './tutorial-edit-languages-input.component.scss',
 })
 export class TutorialEditLanguagesInputComponent implements OnDestroy {
+    private overlay = inject(Overlay);
+    private viewContainerRef = inject(ViewContainerRef);
+
     protected readonly TutorialEditValidationStatus = ValidationStatus;
     protected readonly faFlag = faFlag;
     protected readonly faCircleInfo = faCircleInfo;
-    private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
-    private viewContainerRef = inject(ViewContainerRef);
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
     private languageValidationResultInternal = computed<Validation>(() => this.computeLanguageValidation());

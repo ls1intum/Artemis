@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -54,8 +55,6 @@ import org.xml.sax.SAXException;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
@@ -78,10 +77,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -103,6 +104,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     private Path repoDownloadClonePath;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
@@ -145,10 +148,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
             RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, JsonMapper objectMapper,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         // Programming exercises do not have a submission export service
         super(objectMapper, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;
@@ -216,9 +221,26 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // Used for a save typecast, this should always be true since this class only works with programming exercises.
             programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
-            programmingExercise.setAuxiliaryRepositories(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()));
+            programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId())));
         }
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The cast is safe: this class only works with programming exercises. The record is the same one the programming
+     * exercise endpoints return, so an archive stays readable by the import from file and by the sharing import, which
+     * both bind it to {@link de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO}. The export
+     * variant leaves out the ids of the plagiarism detection configuration, the team assignment configuration and the
+     * auxiliary repositories, so that an importer of any version creates its own rows instead of adopting this
+     * exercise's.
+     */
+    @Override
+    protected Record exerciseDetailsForExport(Exercise exercise) {
+        // The build configuration is a row of its own that names the exercise, so the export reads it here.
+        return ProgrammingExerciseResponseDTO.forExport((ProgrammingExercise) exercise,
+                programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()));
     }
 
     /**
@@ -252,16 +274,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @throws IOException if an error occurs while accessing the file system
      */
     public Path exportProgrammingExerciseForDownload(@NonNull ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
-        // Reset grading criterion ids to null, such that Hibernate can persist them.
-        if (exercise.getGradingCriteria() != null) {
-            for (GradingCriterion gradingCriterion : exercise.getGradingCriteria()) {
-                gradingCriterion.setId(null);
-                for (GradingInstruction gradingInstruction : gradingCriterion.getStructuredGradingInstructions()) {
-                    gradingInstruction.setId(null);
-                }
-            }
-        }
-
         List<Path> pathsToBeZipped = new ArrayList<>();
         Path exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
@@ -723,7 +735,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 filterLateSubmissions(repositoryExportOptions, relevantCommitHash, participation, repository);
             }
 
-            if (repositoryExportOptions.addParticipantName()) {
+            if (repositoryExportOptions.addParticipantName() && !repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Adding student or team name to participation {}", participation);
                 addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
             }

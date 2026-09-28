@@ -128,11 +128,11 @@ artemis:
 
     compatible-versions:
       android:
-        min: "2.1.2"
-        recommended: "2.1.2"
+        min: "3.0.0"
+        recommended: "3.0.0"
       ios:
-        min: "2.0.0"
-        recommended: "2.5.0"
+        min: "3.0.0"
+        recommended: "3.0.0"
 
     # Theia configuration for online IDE functionality
     theia:

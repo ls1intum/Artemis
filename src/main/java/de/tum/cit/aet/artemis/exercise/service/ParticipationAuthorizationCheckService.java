@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
@@ -183,6 +184,48 @@ public class ParticipationAuthorizationCheckService {
         // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
         final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
+     * Whether the participation is locked, for a caller holding a projection of the exercise.
+     * <p>
+     * The same decision as {@link #isLocked(ProgrammingExerciseStudentParticipation, ProgrammingExercise)}, for the
+     * git request path. Everything it needs from the exercise is an id, a flag or a date, so the projection carries
+     * all of it.
+     *
+     * @param participation the student's participation
+     * @param exercise      the projected exercise
+     * @return true if the participation is locked
+     */
+    public boolean isLocked(ProgrammingExerciseStudentParticipation participation, GitRepositoryAccessDTO exercise) {
+        if (participation.isPracticeMode()) {
+            return false;
+        }
+
+        if (exerciseDateService.isAfterDueDate(participation, exercise)) {
+            return true;
+        }
+
+        if (exercise.isExamExercise()) {
+            var api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            Optional<Boolean> studentExamSubmitted;
+            if (exercise.isTestExamExercise()) {
+                studentExamSubmitted = api.isSubmitted(participation.getId());
+            }
+            else {
+                studentExamSubmitted = api.isSubmitted(exercise.examId(), participation.getParticipant().getId());
+            }
+            // if the corresponding student exam was already submitted, the participation is locked
+            // if the student exam does not exist yet, the participation should not exist either
+            return studentExamSubmitted.orElse(true);
+        }
+
+        var submissionPolicy = submissionPolicyRepository.findByProgrammingExerciseId(exercise.exerciseId());
+
+        if (submissionPolicy != null && submissionPolicy.isActive() && submissionPolicy instanceof LockRepositoryPolicy) {
+            return submissionRepository.countByParticipationId(participation.getId()) >= submissionPolicy.getSubmissionLimit();
+        }
+        return false;
     }
 
     /**

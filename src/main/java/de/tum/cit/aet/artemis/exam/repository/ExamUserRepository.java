@@ -44,6 +44,23 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
 
     List<ExamUser> findAllByExamId(long examId);
 
+    /**
+     * Get the ids of the users registered for an exam, without loading the users themselves.
+     * <p>
+     * Generating student exams only needs to know which students to create one for. Reading it through
+     * {@code exam.getExamUsers()} instead loads an {@link ExamUser} per student, and its {@code user} association is
+     * eager, so a 4000 student exam issued 4000 selects to assemble a set of ids.
+     *
+     * @param examId the exam to query for
+     * @return the ids of the registered users
+     */
+    @Query("""
+            SELECT eu.user.id
+            FROM ExamUser eu
+            WHERE eu.exam.id = :examId
+            """)
+    Set<Long> findUserIdsByExamId(@Param("examId") long examId);
+
     List<ExamUser> findAllByUserId(long userId);
 
     @Query("""

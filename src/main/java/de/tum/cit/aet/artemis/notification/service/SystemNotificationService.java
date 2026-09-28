@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.notification.web.NotificationWebsocketTopics.SYSTEM_NOTIFICATIONS;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -72,15 +73,13 @@ public class SystemNotificationService {
         return findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList();
     }
 
-    static final String SYSTEM_NOTIFICATION_TOPIC = "/topic/notification/system-notification";
-
     /**
      * Sends the current list of active and future system notifications to all connected clients.
      * Call this method after changing any system notification.
      */
     public void distributeActiveAndFutureNotificationsToClients() {
         List<SystemNotificationDTO> notifications = findAllActiveAndFutureSystemNotificationDTOs();
-        websocketMessagingService.sendMessage(SYSTEM_NOTIFICATION_TOPIC, notifications);
+        websocketMessagingService.sendMessage(SYSTEM_NOTIFICATIONS.at(), notifications);
     }
 
     /**
@@ -130,7 +129,7 @@ public class SystemNotificationService {
             try {
                 String langKey = (recipient.langKey() != null && !recipient.langKey().isBlank()) ? recipient.langKey().strip() : "en";
 
-                var mailRecipient = new MailRecipientDTO(recipient.email(), langKey, null, recipient.firstName(), recipient.lastName(), null, null);
+                var mailRecipient = new MailRecipientDTO(recipient.email(), langKey, null, recipient.firstName(), recipient.lastName());
 
                 String[] formattedDates = formattedDatesByLocale.computeIfAbsent(langKey, lk -> {
                     Locale locale = Locale.forLanguageTag(lk);

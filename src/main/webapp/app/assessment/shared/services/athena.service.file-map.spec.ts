@@ -115,7 +115,7 @@ describe('AthenaService file map behaviour', () => {
         const [feedback] = await suggestionsPromise;
 
         expect(feedback.type).toBe(FeedbackType.MANUAL_UNREFERENCED);
-        expect(feedback.text).toBe('FeedbackSuggestion:Model');
+        expect(feedback.text).toBe('FeedbackSuggestion:accepted:Model');
         expect(feedback.detailText).toBe('Needs work');
         expect(feedback.reference).toBeUndefined();
     });

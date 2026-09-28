@@ -6,8 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchNavigationViewComponent } from './global-search-navigation-view.component';
-import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -15,8 +13,6 @@ import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import {
@@ -31,6 +27,7 @@ import {
     faQuestion,
     faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('GlobalSearchNavigationViewComponent', () => {
     let component: GlobalSearchNavigationViewComponent;
@@ -45,11 +42,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 GlobalSearchNavigationViewComponent,
-                MockComponent(GlobalSearchActionItemComponent),
                 MockComponent(GlobalSearchIrisAnswerComponent),
                 MockComponent(SearchResultItemComponent),
-                MockComponent(SearchableEntityItemComponent),
-                MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
@@ -82,34 +76,22 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('itemCount', () => {
-            it('should equal action button count plus searchable entities when not searching', () => {
-                // actionButtonCount = 1 (lecture button; iris is inline), searchableEntities.length = 6
-                expect(component.itemCount()).toBe(7);
+            it('should be zero when there are no results', () => {
+                expect(component.itemCount()).toBe(0);
             });
 
-            it('should equal action button count plus results when searching', () => {
+            it('should equal the result count when searching', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '1' }, { id: '2' }] as GlobalSearchResult[]);
                 fixture.detectChanges();
-                expect(component.itemCount()).toBe(3); // 1 button + 2 results
+                expect(component.itemCount()).toBe(2);
             });
         });
 
         describe('Keyboard navigation', () => {
-            it('should emit SearchView.Lecture when Enter is pressed at index 0', () => {
-                const spy = vi.fn();
-                component.viewSelected.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 0);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(SearchView.Lecture);
-            });
-
-            it('should call preventDefault when Enter is pressed at index 0', () => {
+            it('should call preventDefault when Enter is pressed on a result', () => {
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', [{ id: '1', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
                 fixture.componentRef.setInput('selectedIndex', 0);
                 fixture.detectChanges();
 
@@ -121,63 +103,10 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(preventDefaultSpy).toHaveBeenCalled();
             });
 
-            it('should not emit when Enter is pressed at index -1', () => {
-                const spy = vi.fn();
-                component.viewSelected.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', -1);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).not.toHaveBeenCalled();
-            });
-
-            it('should not emit for non-Enter keys', () => {
-                const spy = vi.fn();
-                component.viewSelected.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 0);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
-                component.handleKeydown(event);
-
-                expect(spy).not.toHaveBeenCalled();
-            });
-
-            it('should handle Enter on first entity at index 1', () => {
-                // Lecture button is at index 0; first entity starts at index 1 (Lecture(0), Entity(1))
-                const spy = vi.fn();
-                component.entityClick.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 1);
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][0]);
-            });
-
-            it('should handle Enter on entities', () => {
-                const spy = vi.fn();
-                component.entityClick.subscribe(spy);
-
-                fixture.componentRef.setInput('selectedIndex', 2); // Lecture(0), Entity(1), Entity(2)
-                fixture.detectChanges();
-
-                const event = new KeyboardEvent('keydown', { key: 'Enter' });
-                component.handleKeydown(event);
-
-                expect(spy).toHaveBeenCalledWith(component['searchableEntities'][1]);
-            });
-
-            it('should handle Enter on results', () => {
+            it('should navigate to the result at the selected index on Enter', () => {
                 fixture.componentRef.setInput('showResults', true);
                 fixture.componentRef.setInput('results', [{ id: '123', type: 'exercise', metadata: { courseId: 1 } }] as GlobalSearchResult[]);
-                fixture.componentRef.setInput('selectedIndex', 1); // Lecture(0), Result(1)
+                fixture.componentRef.setInput('selectedIndex', 0);
                 fixture.detectChanges();
 
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
@@ -192,7 +121,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 expect(component['getIconForType']('exercise', 'programming')).toBe(faKeyboard);
                 expect(component['getIconForType']('exercise', 'modeling')).toBe(faProjectDiagram);
                 expect(component['getIconForType']('exercise', 'text')).toBe(faFont);
-                expect(component['getIconForType']('exercise', 'File Upload')).toBe(faFileUpload);
+                expect(component['getIconForType']('exercise', 'file-upload')).toBe(faFileUpload);
                 expect(component['getIconForType']('exercise', 'quiz')).toBe(faCheckDouble);
                 expect(component['getIconForType']('exercise', 'unknown')).toBe(faQuestion);
             });
@@ -224,9 +153,21 @@ describe('GlobalSearchNavigationViewComponent', () => {
                     type: 'exercise',
                     id: '42',
                     badge: 'Programming',
+                    badgeKey: 'programming',
                     metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastEditor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups', 3, 'programming-exercises', '42']);
+            });
+
+            it('should navigate to the exam exercise groups when the exam exercise has no recognisable type', () => {
+                component['navigateToResult']({
+                    type: 'exercise',
+                    id: '42',
+                    badge: 'Exercise',
+                    badgeKey: 'exercise',
+                    metadata: { courseId: 10, examId: 5, exerciseGroupId: 3, isAtLeastEditor: true },
+                } as GlobalSearchResult);
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'exercise-groups']);
             });
 
             it('should navigate to assessment dashboard for exam exercise when user is tutor', () => {
@@ -234,6 +175,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                     type: 'exercise',
                     id: '42',
                     badge: 'Programming',
+                    badgeKey: 'programming',
                     metadata: { courseId: 10, examId: 5, isAtLeastTutor: true },
                 } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/course-management', 10, 'exams', 5, 'assessment-dashboard', '42']);
@@ -256,6 +198,18 @@ describe('GlobalSearchNavigationViewComponent', () => {
             it('should navigate to lecture unit', () => {
                 component['navigateToResult']({ type: 'lecture_unit', id: '3', metadata: { courseId: 10, lectureId: 20 } } as GlobalSearchResult);
                 expect(router.navigate).toHaveBeenCalledWith(['/courses', 10, 'lectures', 20]);
+            });
+
+            it('should navigate to lecture content with a marked deep-link navigation', () => {
+                component['navigateToResult']({
+                    type: 'lecture_content',
+                    metadata: { link: '/courses/10/lectures/20', queryParams: { unit: 3, page: 4 } },
+                } as GlobalSearchResult);
+
+                expect(router.navigate).toHaveBeenCalledWith(['/courses/10/lectures/20'], {
+                    queryParams: { unit: 3, page: 4 },
+                    state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+                });
             });
 
             it('should navigate to student exam view when user is a student', () => {
@@ -293,9 +247,12 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('template', () => {
-            it('should render the lecture content action button', () => {
-                const button = fixture.nativeElement.querySelector('jhi-global-search-action-item');
-                expect(button).toBeTruthy();
+            it('should prompt for a search term while the slides and videos filter is active', () => {
+                fixture.componentRef.setInput('contentSearchActive', true);
+                fixture.componentRef.setInput('showResults', true);
+                fixture.componentRef.setInput('results', []);
+                fixture.detectChanges();
+                expect(fixture.nativeElement.textContent).toContain('global.search.contentSearchPrompt');
             });
 
             it('should render results when showResults is true', () => {
@@ -368,27 +325,12 @@ describe('GlobalSearchNavigationViewComponent', () => {
             expect(component).toBeTruthy();
         });
 
-        it('itemCount should equal searchableEntities count when iris is disabled', () => {
-            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 6
-            expect(component.itemCount()).toBe(6);
+        it('itemCount should be zero with no results', () => {
+            expect(component.itemCount()).toBe(0);
         });
 
-        it('should not emit when Enter is pressed at index 0', () => {
-            const spy = vi.fn();
-            component.viewSelected.subscribe(spy);
-
-            fixture.componentRef.setInput('selectedIndex', 0);
-            fixture.detectChanges();
-
-            const event = new KeyboardEvent('keydown', { key: 'Enter' });
-            component.handleKeydown(event);
-
-            expect(spy).not.toHaveBeenCalled();
-        });
-
-        it('should not render the lecture content action button', () => {
-            const button = fixture.nativeElement.querySelector('jhi-global-search-action-item');
-            expect(button).toBeNull();
+        it('should not render the iris answer card', () => {
+            expect(fixture.nativeElement.querySelector('jhi-global-search-iris-answer')).toBeNull();
         });
     });
 
@@ -402,13 +344,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
             expect(fixture.nativeElement.querySelector('jhi-global-search-iris-answer')).toBeNull();
         });
 
-        it('should not render the lecture search button', () => {
-            expect(fixture.nativeElement.querySelector('jhi-global-search-action-item')).toBeNull();
-        });
-
-        it('itemCount should equal searchableEntities count only', () => {
-            // actionButtonCount = 0 (user opted out), searchableEntities.length = 6
-            expect(component.itemCount()).toBe(6);
+        it('itemCount should be zero with no results', () => {
+            expect(component.itemCount()).toBe(0);
         });
     });
 });

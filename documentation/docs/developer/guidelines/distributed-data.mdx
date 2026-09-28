@@ -208,7 +208,9 @@ node before starting a release with a new distributed-data schema.
 
 The first versioned release treats existing unversioned structures as schema version `0` and drains preserved data into
 the `artemis:v1:` namespace. It cannot safely delete all other unversioned keys because version `0` covered the entire
-keyspace. Those obsolete keys are ignored by the new release. The administrator guide describes safe upgrade,
+keyspace. Those obsolete keys are ignored by the new release. A store that reaches a release declaring a later schema
+continues through every remaining transition in the same startup, each with its own carry-over list, so `artemis:v1:`
+can be an intermediate namespace rather than the final one. The administrator guide describes safe upgrade,
 verification, cleanup, and rollback procedures.
 
 ## Testing

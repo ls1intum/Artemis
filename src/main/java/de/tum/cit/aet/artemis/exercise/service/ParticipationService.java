@@ -331,29 +331,16 @@ public class ParticipationService {
      * @return started participation
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
-        // The template participation and the build config are only needed to resolve the source repository and its branch,
-        // and copyRepository skips both entirely once the participation has its own repository. Loading them lazily keeps
-        // the common path free of a query it never reads: exam participations are prepared up front, so every student who
-        // (re)starts an exam exercise takes the already-copied branch.
-        Supplier<ProgrammingExercise> exerciseWithTemplateAndBuildConfig = memoize(
-                () -> programmingExerciseRepository.findByIdWithTemplateParticipationAndBuildConfigElseThrow(exercise.getId()));
-        // Step 1a) create the student repository (based on the template repository). The template uri and the branch both
-        // come out of that single memoized load, so the branch no longer needs a query of its own either.
-        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateAndBuildConfig.get()),
-                () -> branchOf(exerciseWithTemplateAndBuildConfig.get()), participation);
+        // The template participation and the branch are only needed to resolve the source repository, and copyRepository
+        // skips both entirely once the participation has its own repository. Loading them lazily keeps the common path
+        // free of queries it never reads: exam participations are prepared up front, so every student who (re)starts an
+        // exam exercise takes the already-copied branch.
+        Supplier<ProgrammingExercise> exerciseWithTemplateParticipation = memoize(() -> programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exercise.getId()));
+        Supplier<String> branch = memoize(() -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()));
+        // Step 1a) create the student repository (based on the template repository).
+        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, participation);
 
         return startProgrammingParticipation(participation);
-    }
-
-    /**
-     * Reads the branch off an exercise whose build config was loaded eagerly, so the caller does not need a separate
-     * {@code findBranchByExerciseId} query.
-     *
-     * @param exerciseWithBuildConfig a programming exercise loaded together with its build config
-     * @return the configured branch, or null if the exercise has no build config
-     */
-    private static String branchOf(ProgrammingExercise exerciseWithBuildConfig) {
-        return exerciseWithBuildConfig.getBuildConfig() != null ? exerciseWithBuildConfig.getBuildConfig().getBranch() : null;
     }
 
     /**

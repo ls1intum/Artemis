@@ -8,8 +8,9 @@
         <div [ngbTooltip]="'artemisApp.examManagement.testRun.createTestRunDisabled' | artemisTranslate" [disableTooltip]="examContainsExercises()">
             @if (course()?.isAtLeastInstructor) {
                 <button
+                    type="button"
                     id="createTestRunButton"
-                    tumUiButton
+                    tumAetUiButton
                     size="small"
                     (click)="openCreateTestRunModal()"
                     [disabled]="isLoading() || !examContainsExercises()"
@@ -28,7 +29,7 @@
                 @if (course()?.isAtLeastInstructor) {
                     <a
                         [title]="'artemisApp.examManagement.testRun.assess' | artemisTranslate"
-                        tumUiButton
+                        tumAetUiButton
                         size="small"
                         [routerLink]="['/course-management', course()?.id, 'exams', exam()?.id, 'test-runs', 'assess']"
                         [class.disabled]="isLoading() || !testRunCanBeAssessed()"
@@ -121,6 +122,7 @@
                                             </a>
                                             @if (testRun.id) {
                                                 <button
+                                                    type="button"
                                                     jhiDeleteButton
                                                     [entityTitle]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
                                                     deleteQuestion="artemisApp.examManagement.testRun.delete.question"

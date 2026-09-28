@@ -30,6 +30,9 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import dayjs from 'dayjs/esm';
+import { Subject } from 'rxjs';
 
 describe('ExerciseHeaderActionsComponent', () => {
     let fixture: ComponentFixture<ExerciseHeaderActionsComponent>;
@@ -63,7 +66,10 @@ describe('ExerciseHeaderActionsComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
-                MockProvider(ParticipationService),
+                MockProvider(ParticipationService, {
+                    getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
+                        participations.find((participation) => !!participation.testRun === testRun),
+                }),
                 { provide: ProfileService, useValue: { isModuleFeatureActive: () => athenaEnabled } },
                 { provide: AccountService, useValue: accountService },
             ],
@@ -93,6 +99,29 @@ describe('ExerciseHeaderActionsComponent', () => {
         fixture.detectChanges();
         return fixture;
     }
+
+    describe('start exercise', () => {
+        it('should send only one start request while the request is pending', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 7;
+            exercise.studentParticipations = [];
+            createComponent(exercise);
+            const participationSubject = new Subject<StudentParticipation>();
+            const startExerciseStub = vi.spyOn(TestBed.inject(CourseExerciseService), 'startExercise').mockReturnValue(participationSubject);
+
+            fixture.componentInstance.startExercise();
+            fixture.componentInstance.startExercise();
+
+            expect(startExerciseStub).toHaveBeenCalledOnce();
+            expect(fixture.componentInstance.isLoading()).toBe(true);
+
+            participationSubject.error(new Error('failed'));
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+
+            fixture.componentInstance.startExercise();
+            expect(startExerciseStub).toHaveBeenCalledTimes(2);
+        });
+    });
 
     describe('feedback button participation', () => {
         // Lives here rather than in the header spec, which mocks the button away.
@@ -168,6 +197,77 @@ describe('ExerciseHeaderActionsComponent', () => {
             createComponent(withCourse(exercise, true));
 
             expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
+        });
+    });
+
+    describe('showQuizStartPracticeButton', () => {
+        const quizOpenForPractice = (options: { withPracticeParticipation?: boolean; dueDatePassed?: boolean } = {}): QuizExercise => {
+            const { withPracticeParticipation = false, dueDatePassed = true } = options;
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.id = 42;
+            quiz.dueDate = dueDatePassed ? dayjs().subtract(1, 'day') : dayjs().add(1, 'day');
+            quiz.studentParticipations = [{ id: 1, testRun: false } as StudentParticipation];
+            if (withPracticeParticipation) {
+                quiz.studentParticipations.push({ id: 2, testRun: true } as StudentParticipation);
+            }
+            return quiz;
+        };
+
+        const setQuizInputs = (inputs: { participationMode?: ParticipationMode; quizPracticeAttemptFinished?: boolean; onContinueExercise?: () => void }) => {
+            if (inputs.participationMode) {
+                fixture.componentRef.setInput('participationMode', inputs.participationMode);
+            }
+            if (inputs.quizPracticeAttemptFinished !== undefined) {
+                fixture.componentRef.setInput('quizPracticeAttemptFinished', inputs.quizPracticeAttemptFinished);
+            }
+            if (inputs.onContinueExercise) {
+                fixture.componentRef.setInput('onContinueExercise', inputs.onContinueExercise);
+            }
+        };
+
+        it('should not show the button when practice is not available yet', () => {
+            createComponent(quizOpenForPractice({ dueDatePassed: false }));
+
+            expect(fixture.componentInstance.showQuizStartPracticeButton()).toBe(false);
+        });
+
+        it('should not show the button in exam mode', () => {
+            createComponent(quizOpenForPractice(), { examMode: true });
+
+            expect(fixture.componentInstance.showQuizStartPracticeButton()).toBe(false);
+        });
+
+        it('should show the button in the graded view before the first practice attempt', () => {
+            createComponent(quizOpenForPractice());
+
+            expect(fixture.componentInstance.showQuizStartPracticeButton()).toBe(true);
+        });
+
+        it('should hide the button in the graded view once a practice attempt exists', () => {
+            createComponent(quizOpenForPractice({ withPracticeParticipation: true }));
+
+            expect(fixture.componentInstance.showQuizStartPracticeButton()).toBe(false);
+        });
+
+        it('should hide the button while a practice attempt is in progress', () => {
+            createComponent(quizOpenForPractice({ withPracticeParticipation: true }));
+            setQuizInputs({ participationMode: 'practice', quizPracticeAttemptFinished: false });
+
+            expect(fixture.componentInstance.showQuizStartPracticeButton()).toBe(false);
+        });
+
+        it('should show the button once the practice attempt is finished', () => {
+            createComponent(quizOpenForPractice({ withPracticeParticipation: true }));
+            setQuizInputs({ participationMode: 'practice', quizPracticeAttemptFinished: true });
+
+            expect(fixture.componentInstance.showQuizStartPracticeButton()).toBe(true);
+        });
+
+        it('should hide the button while a previous result is open', () => {
+            createComponent(quizOpenForPractice({ withPracticeParticipation: true }));
+            setQuizInputs({ participationMode: 'practice', quizPracticeAttemptFinished: true, onContinueExercise: () => {} });
+
+            expect(fixture.componentInstance.showQuizStartPracticeButton()).toBe(false);
         });
     });
 });

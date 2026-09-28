@@ -15,4 +15,15 @@ public record ParticipationScoreDTO(long participationId, ZonedDateTime initiali
         Long studentId, Long teamId, Long resultId, Double score, Boolean successful, ZonedDateTime completionDate, AssessmentType assessmentType, String assessmentNote,
         Long durationInSeconds, Long submissionId, Boolean buildFailed, String buildPlanId, String repositoryUri, boolean testRun, Integer testCaseCount,
         Integer passedTestCaseCount, Integer codeIssueCount, List<CorrectionRoundResultDTO> correctionRoundResults) {
+
+    /**
+     * Removes participant information, including repository identifiers that contain the student login or team name.
+     *
+     * @return an anonymous participation response
+     */
+    public ParticipationScoreDTO withoutParticipantInformation() {
+        return new ParticipationScoreDTO(participationId, initializationDate, submissionCount, null, null, null, null, resultId, score, successful, completionDate, assessmentType,
+                assessmentNote, durationInSeconds, submissionId, buildFailed, null, null, testRun, testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults);
+    }
+
 }

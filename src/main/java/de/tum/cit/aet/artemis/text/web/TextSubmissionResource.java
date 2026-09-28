@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -33,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -65,7 +65,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
  */
 @Conditional(TextEnabled.class)
 @Lazy
-@FeatureUsage("participation/submissions")
+@FeatureUsage(UserFeature.TEXT_EXERCISES)
 @RestController
 @RequestMapping("api/text/")
 public class TextSubmissionResource extends AbstractSubmissionResource {
@@ -101,15 +101,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ExerciseDateService exerciseDateService;
 
-    private final ResultRepository resultRepository;
-
     private final CourseAthenaConfigRepository courseAthenaConfigRepository;
 
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
             Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
-            ResultRepository resultRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -122,7 +120,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionApi = examSubmissionApi;
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
-        this.resultRepository = resultRepository;
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
     }
 
@@ -162,14 +159,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             return createTextSubmission(exerciseId, textSubmissionDTO);
         }
         final TextSubmission textSubmission = toTextSubmission(textSubmissionDTO);
-        // The request DTO no longer carries results, so reconstruct the Athena-result fork signal from the persisted
-        // submission: if the existing submission already has a result (e.g. Athena auto-feedback), autosave must create a
-        // fresh submission instead of overwriting the result-bearing one.
-        // Only the existence of a result matters here, so ask for exactly that instead of loading the submission with its
-        // results and their assessors (this is the autosave path, so it runs repeatedly per student per exercise).
-        // ModelingSubmissionService already uses the same narrow check.
-        boolean existingSubmissionHasResults = resultRepository.existsBySubmissionId(textSubmissionDTO.id());
-        return handleTextSubmission(exerciseId, textSubmission, existingSubmissionHasResults);
+        return handleTextSubmission(exerciseId, textSubmission);
     }
 
     /**
@@ -190,11 +180,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     @NonNull
     private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
-        return handleTextSubmission(exerciseId, textSubmission, false);
-    }
-
-    @NonNull
-    private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission, boolean forceNewSubmission) {
         long start = System.currentTimeMillis();
         // Course roles are loaded with the user so the course-membership checks on this path (the submission
         // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
@@ -226,9 +211,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
         long allowanceNanos = System.nanoTime() - stageStart;
 
-        if (forceNewSubmission) {
-            textSubmission.setId(null);
-        }
         stageStart = System.nanoTime();
         var saved = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, participationFromExamGate);
         textSubmission = saved.submission();
@@ -281,6 +263,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param assessedByTutor mark if only assessed Submissions should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextSubmissionResponseDTO>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
@@ -310,6 +293,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param lockSubmission                  optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/text-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<TextSubmissionWithoutAssessmentDTO> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,

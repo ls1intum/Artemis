@@ -32,8 +32,9 @@ public interface AuxiliaryRepositoryRepository extends ArtemisJpaRepository<Auxi
      */
     @Nullable
     @Query("""
-            SELECT DISTINCT a.exercise.buildConfig.branch
+            SELECT DISTINCT config.branch
             FROM AuxiliaryRepository a
+                JOIN ProgrammingExerciseBuildConfig config ON config.programmingExercise = a.exercise
             WHERE a.id = :auxiliaryRepositoryId
             """)
     String findBranchByRepoId(@Param("auxiliaryRepositoryId") long auxiliaryRepositoryId);

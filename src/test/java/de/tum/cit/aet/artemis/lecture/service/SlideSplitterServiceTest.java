@@ -8,7 +8,6 @@ import static org.awaitility.Awaitility.await;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,10 +32,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -118,8 +117,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     /**
      * Re-uploading a file replaces the deck rather than adding a second copy of it. This path creates a slide per page
-     * unconditionally, so without detaching the previous set the unit would carry both: a three page file uploaded
-     * twice left six slides attached, each page present twice, and nothing in the UI to tell them apart.
+     * unconditionally, so without superseding the previous set the unit would carry both: a three page file uploaded
+     * twice left six slides in the deck, each page present twice, and nothing in the UI to tell them apart.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
@@ -138,22 +137,19 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(attachedImagePaths).as("the unit carries exactly one slide per page of the re-uploaded file").hasSize(3).doesNotHaveDuplicates();
         assertThat(attachedImagePaths).as("every attached slide belongs to the new deck").doesNotContainAnyElementsOf(firstImagePaths);
 
-        // Detached rather than deleted: the rows may still be referenced, and they keep pointing at files that exist.
+        // Superseded rather than deleted: the rows may still be referenced, and they keep pointing at files that exist.
         assertThat(firstSlides).allSatisfy(slide -> {
             Slide reloaded = slideRepository.findById(slide.getId()).orElseThrow();
-            assertThat(reloaded.getAttachmentVideoUnit()).as("a superseded slide is detached from the unit").isNull();
-            Path imageFile = FilePathConverter.fileSystemPathForExternalUri(URI.create(reloaded.getSlideImagePath()), FilePathType.SLIDE);
-            assertThat(imageFile).as("a detached slide still points at a file that exists").exists();
+            assertThat(reloaded.isSuperseded()).as("a slide of the previous deck is marked superseded").isTrue();
+            assertThat(reloaded.getAttachmentVideoUnit()).as("a superseded slide still names the unit it was uploaded to").isEqualTo(testAttachmentVideoUnit);
+            assertThat(slideImageFile(reloaded)).as("a superseded slide still points at a file that exists").exists();
         });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
-        // Create and save an Exercise
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -286,8 +282,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             Slide savedSlide = slideRepository.save(slide);
             slideIds.add(savedSlide.getId());
 
-            // Create the proper directory structure for the slide
-            Path slideDir = slideImagesDir.resolve(savedSlide.getId().toString());
+            // Create the proper directory structure for the slide, which the service names by the slide number rather than by the slide id
+            Path slideDir = slideImagesDir.resolve(String.valueOf(i));
             Files.createDirectories(slideDir);
             Path slidePath = slideDir.resolve("slide" + i + ".png");
 
@@ -296,7 +292,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             ImageIO.write(image, "png", slidePath.toFile());
 
             // Update the slide with the proper path format
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, savedSlide.getId()).toString());
+            savedSlide.setSlideImagePath(slidePath.getFileName().toString());
             slideRepository.save(savedSlide);
         }
 
@@ -311,28 +307,16 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(2); // Should only have 2 slides attached to unit
 
-        // Check if slide 3 exists but is detached - use actual ID
-        Long thirdSlideId = slideIds.get(2);
-        Slide slide3 = slideRepository.findById(thirdSlideId).orElse(null);
-
-        // If slide3 is null, the service is completely removing it rather than detaching
-        if (slide3 == null) {
-            // Test that it was removed instead
-            assertThat(slideRepository.existsById(thirdSlideId)).isFalse();
-        }
-        else {
-            // Test that it was detached
-            assertThat(slide3.getAttachmentVideoUnit()).isNull();
-        }
+        // Slide 3 is out of the deck, which keeps the row and marks it rather than deleting it
+        Slide slide3 = slideRepository.findById(slideIds.get(2)).orElseThrow();
+        assertThat(slide3.isSuperseded()).isTrue();
+        assertThat(slide3.getAttachmentVideoUnit()).isEqualTo(testAttachmentVideoUnit);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
-        // Create and save an Exercise1
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -406,10 +390,12 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide firstSlide = slides.get(0);
         Slide secondSlide = slides.get(1);
         Path slideDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString()).resolve("slide");
-        Path firstSlideOriginalFile = slideDirectory.resolve(firstSlide.getId().toString()).resolve(Path.of(firstSlide.getSlideImagePath()).getFileName());
-        Path secondSlideOriginalFile = slideDirectory.resolve(secondSlide.getId().toString()).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
-        firstSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(firstSlideOriginalFile, FilePathType.SLIDE, firstSlide.getId()).toString());
-        secondSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(secondSlideOriginalFile, FilePathType.SLIDE, secondSlide.getId()).toString());
+        // The slide number, not the slide id: that is the directory the service writes to. The two coincide only while
+        // ids happen to start at one, which made this test pass alone and fail after any test that inserts a slide.
+        Path firstSlideOriginalFile = slideDirectory.resolve(String.valueOf(firstSlide.getSlideNumber())).resolve(Path.of(firstSlide.getSlideImagePath()).getFileName());
+        Path secondSlideOriginalFile = slideDirectory.resolve(String.valueOf(secondSlide.getSlideNumber())).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
+        firstSlide.setSlideImagePath(firstSlideOriginalFile.getFileName().toString());
+        secondSlide.setSlideImagePath(secondSlideOriginalFile.getFileName().toString());
         slideRepository.saveAll(List.of(firstSlide, secondSlide));
         String firstSlideOriginalImagePath = firstSlide.getSlideImagePath();
         Files.delete(secondSlideOriginalFile);
@@ -446,10 +432,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     void slideSplitRollbackRemovesSlidesCreatedBeforeTheFailure() throws IOException {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide brokenSlide = slides.getFirst();
-        Path slideDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(testAttachmentVideoUnit.getId().toString()).resolve("slide");
-        Path brokenSlideFile = slideDirectory.resolve(brokenSlide.getId().toString()).resolve(Path.of(brokenSlide.getSlideImagePath()).getFileName());
-        brokenSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(brokenSlideFile, FilePathType.SLIDE, brokenSlide.getId()).toString());
-        slideRepository.save(brokenSlide);
+        // Resolved the way the service resolves it: the stored value is a file name, under a directory named by the
+        // slide's number.
+        Path brokenSlideFile = slideImageFile(brokenSlide);
         // Removing the file makes updateExistingSlideImage throw once the loop reaches this slide.
         Files.delete(brokenSlideFile);
 
@@ -494,10 +479,12 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         // Verify the slide was saved properly
         assertThat(slideId).isNotNull();
 
-        Path directoryFilePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(Path.of(testAttachmentVideoUnit.getId().toString(), "slide", slideId.toString()));
+        // A slide image is stored under the slide's number, not under its id, which is what the service writes and therefore what it has to find again.
+        Path directoryFilePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath()
+                .resolve(Path.of(testAttachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber())));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
-        slide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
+        slide.setSlideImagePath(originalSlidePath.getFileName().toString());
         slideRepository.save(slide);
         // Create a test image file
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -542,8 +529,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(originalSlidePath.toFile().exists()).isFalse();
 
         // Verify the new file exists by resolving the path
-        Path newImagePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(updatedSlide.getSlideImagePath()), FilePathType.SLIDE);
-        assert newImagePath != null;
+        Path newImagePath = slideImageFile(updatedSlide);
         assertThat(newImagePath.toFile().exists()).isTrue();
 
         // Verify the image content is preserved
@@ -664,10 +650,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithExistingAndNewSlides() throws IOException {
-        // Create and save an Exercise
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise for Mixed Slides");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise for Mixed Slides");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -691,8 +674,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentVideoUnit.getAttachment()
-                .setLink(FilePathConverter.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentVideoUnit.getId()).toString());
+        testAttachmentVideoUnit.getAttachment().setLink(pdfPath.getFileName().toString());
         testAttachmentVideoUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
@@ -713,12 +695,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
             // Save the slide and add it to our collection
             Slide savedSlide = slideRepository.save(slide);
-            Files.createDirectories(slideImagesDir.resolve(savedSlide.getId().toString()));
-            Path slidePath = slideImagesDir.resolve(Path.of(savedSlide.getId().toString(), "slide" + i + ".png"));
+            // The service names the directory by the slide number rather than by the slide id
+            Files.createDirectories(slideImagesDir.resolve(String.valueOf(i)));
+            Path slidePath = slideImagesDir.resolve(Path.of(String.valueOf(i), "slide" + i + ".png"));
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            savedSlide.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
+            savedSlide.setSlideImagePath(slidePath.getFileName().toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }
@@ -775,10 +758,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStrings() throws IOException, InterruptedException {
-        // Create and save an Exercise for testing
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -863,9 +843,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             assertThat(slide.getSlideImagePath()).isNotNull().isNotEmpty();
 
             // Check that image files actually exist on filesystem
-            Path imagePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(slide.getSlideImagePath()), FilePathType.SLIDE);
-            assert imagePath != null;
-            assertThat(imagePath.toFile().exists()).isTrue();
+            assertThat(slideImageFile(slide).toFile().exists()).isTrue();
         }
 
         // Clean up
@@ -975,10 +953,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStringsJson() throws IOException, InterruptedException {
-        // Create and save an Exercise for testing
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -1066,4 +1041,30 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
             }
         });
     }
+
+    /**
+     * The image file of a slide, located from the slide itself: the unit it belongs to and the number it currently has name the directory, and only the filename comes out of the
+     * stored value.
+     *
+     * @param slide the slide whose image is wanted
+     * @return the location of the slide image on disk
+     */
+    private static Path slideImageFile(Slide slide) {
+        return new FileSystemLocation.Slide(slide.getAttachmentVideoUnit().getId(), slide.getSlideNumber(), slide.getSlideImagePath()).path();
+    }
+
+    /**
+     * Creates and saves a text exercise that a hidden page can point at. It names a course because an exercise row
+     * belongs to a course or to an exercise group, never to neither.
+     *
+     * @param title the title of the exercise
+     * @return the saved exercise
+     */
+    private Exercise createAndSaveExercise(String title) {
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle(title);
+        testExercise.setCourse(courseUtilService.addEmptyCourse());
+        return exerciseRepository.save(testExercise);
+    }
+
 }

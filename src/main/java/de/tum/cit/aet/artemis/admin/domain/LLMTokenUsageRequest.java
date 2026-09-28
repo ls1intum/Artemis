@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.admin.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * Represents the token usage details of a single LLM request, including model, service pipeline, token counts, and costs.
@@ -42,6 +44,8 @@ public class LLMTokenUsageRequest extends DomainObject {
     private float costPerMillionOutputTokens;
 
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     private LLMTokenUsageTrace trace;
 
     public String getModel() {

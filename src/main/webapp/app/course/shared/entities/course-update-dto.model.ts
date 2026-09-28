@@ -1,6 +1,7 @@
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
-import { Course, CourseInformationSharingConfiguration, Language } from './course.model';
-import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from './course.model';
+import type { CourseInformationSharingConfiguration, Language } from './course.model';
+import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 /**
  * DTO for creating a new course.

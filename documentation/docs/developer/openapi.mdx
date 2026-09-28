@@ -15,15 +15,13 @@ Currently, the OpenAPI specs are only generated for the `globalsearch`, `tutoria
     If you want to make use of the OpenAPI specs, you need to ensure that the endpoint you are working on is a DTO-only endpoint. This means that the endpoint should not return or expect any domain objects, but only Data Transfer Objects (DTOs) or primitives.
 </Callout>
 
----
-
 ## Generating OpenAPI Specs and Client Files
 
 When you update a REST endpoint or a DTO, you need to generate a new OpenAPI spec and generate new client files.
 
 Follow these steps to generate the OpenAPI spec and client files:
 
-### 1. Generate the OpenAPI Spec
+### Generate the OpenAPI Spec
 
 To generate the OpenAPI spec, run the following command in the root directory:
 
@@ -33,7 +31,7 @@ To generate the OpenAPI spec, run the following command in the root directory:
 
 This will generate an `openapi.yaml` file in the `openapi` directory.
 
-### 2. Generate the Client Files
+### Generate the Client Files
 
 To generate the client files, run the following command in the root directory:
 

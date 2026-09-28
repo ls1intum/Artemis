@@ -13,6 +13,7 @@ import org.springframework.data.annotation.CreatedDate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventType;
 
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventType;
 @Entity
 @Table(name = "text_assessment_event")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Analytics event; ids are plain columns with no foreign key.")
 public class TextAssessmentEvent extends DomainObject {
 
     @Column(name = "user_id")

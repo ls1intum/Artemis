@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -61,7 +62,7 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
  */
 @Conditional(LtiEnabled.class)
 @Lazy
-@FeatureUsage("lti/launch")
+@FeatureUsage(UserFeature.LTI)
 @RestController
 @RequestMapping("api/lti/")
 public class LtiResource {
@@ -172,7 +173,7 @@ public class LtiResource {
      * @throws BadRequestAlertException If LTI is not configured for the course, if no valid deep linking type is provided,
      *                                      or if content IDs are required but not provided for the specified resource type.
      */
-    @PostMapping({ "lti13/courses/{courseId}/deep-linking", "lti13/deep-linking/{courseId}" })
+    @PostMapping("lti13/courses/{courseId}/deep-linking")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "resourceType") DeepLinkingType resourceType,
             @RequestParam(name = "contentIds", required = false) Set<Long> contentIds, @RequestParam(name = "ltiIdToken") String ltiIdToken,

@@ -15,8 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
@@ -27,7 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  * REST controller for managing Iris tutor suggestion sessions.
  */
 @Conditional(IrisEnabled.class)
-@FeatureUsage("chat/tutor-suggestions")
+@FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
 @RestController
 @RequestMapping("api/iris/tutor-suggestion/")
 @Lazy
@@ -54,13 +57,14 @@ public class IrisTutorSuggestionSessionResource {
     }
 
     /**
-     * POST /{postId}/sessions/current : Get the current session for the post or create a new one if it does not exist.
+     * POST /posts/{postId}/sessions/current : Get the current session for the post or create a new one if it does not exist.
      *
      * @param postId post ID
      * @return the ResponseEntity with status 200 (OK) and the current session, or status 201 (Created) and the new session
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping({ "posts/{postId}/sessions/current", "{postId}/sessions/current" })
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @PostMapping("posts/{postId}/sessions/current")
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
@@ -79,13 +83,13 @@ public class IrisTutorSuggestionSessionResource {
     }
 
     /**
-     * POST /{postId}/sessions : Create a new session for the post.
+     * POST /posts/{postId}/sessions : Create a new session for the post.
      *
      * @param postId post ID
      * @return the ResponseEntity with status 201 (Created) and the new session
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping({ "posts/{postId}/sessions", "{postId}/sessions" })
+    @PostMapping("posts/{postId}/sessions")
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 

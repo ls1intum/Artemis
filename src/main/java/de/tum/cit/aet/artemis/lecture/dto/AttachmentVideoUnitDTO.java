@@ -66,7 +66,10 @@ public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime release
         Set<CompetencyLinkDTO> competencyLinks = unit.getCompetencyLinks() != null && Hibernate.isInitialized(unit.getCompetencyLinks())
                 ? unit.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
                 : Set.of();
-        List<SlideDTO> slides = unit.getSlides() != null && Hibernate.isInitialized(unit.getSlides()) ? unit.getSlides().stream().map(SlideDTO::from).toList() : List.of();
+        // The deck the unit shows, which is every slide it has that a later upload or page order has not superseded.
+        List<SlideDTO> slides = unit.getSlides() != null && Hibernate.isInitialized(unit.getSlides())
+                ? unit.getSlides().stream().filter(slide -> !slide.isSuperseded()).map(SlideDTO::from).toList()
+                : List.of();
         AttachmentDTO attachment = unit.getAttachment() != null ? AttachmentDTO.of(unit.getAttachment()) : null;
         // The PDF preview reads attachmentVideoUnit.lecture.id when saving/updating, so keep the lightweight lecture reference.
         LectureReferenceDTO lecture = LectureReferenceDTO.of(unit.getLecture());

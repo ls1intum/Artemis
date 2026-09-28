@@ -422,11 +422,9 @@ public class TextExerciseUtilService {
         for (Feedback feedback : feedbacks) {
             // Important note to prevent 'JpaSystemException: null index column for collection':
             // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value
-            feedback = feedbackRepo.save(feedback);
-            // this also invokes feedback.setResult(result)
-            // Important note to prevent 'JpaSystemException: null index column for collection':
-            // 2) connect child and parent entity
+            // The feedback names its result, so it is connected to the parent before it is written.
             result.addFeedback(feedback);
+            feedback = feedbackRepo.save(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
         // Important note to prevent 'JpaSystemException: null index column for collection':

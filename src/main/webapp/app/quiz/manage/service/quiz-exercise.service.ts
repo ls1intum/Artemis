@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -24,7 +24,7 @@ export type StatisticsOverviewResponseType = HttpResponse<QuizStatisticsOverview
 export type PointStatisticsResponseType = HttpResponse<QuizPointStatisticsResponse>;
 export type QuestionStatisticResponseType = HttpResponse<QuizQuestionStatisticResponse>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class QuizExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
@@ -314,7 +314,12 @@ export class QuizExerciseService {
                         if (dragItem.pictureFilePath) {
                             const filePath = dragItem.pictureFilePath;
                             const fileNameExtension = filePath.split('.').last();
-                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.${fileNameExtension}`, zip, filePath));
+                            // A drag item picture is stored under its filename alone, so the question-scoped path it is served under has to be assembled from the two ids.
+                            const downloadPath =
+                                question.id !== undefined && dragItem.id !== undefined
+                                    ? `drag-and-drop/questions/${question.id}/drag-items/${dragItem.id}/${filePath.substring(filePath.lastIndexOf('/') + 1)}`
+                                    : filePath;
+                            filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.${fileNameExtension}`, zip, downloadPath));
                         }
                     });
                 }

@@ -99,14 +99,20 @@ public class SpringAIConfiguration {
     }
 
     /**
-     * Condition that enables Spring AI configuration when either Atlas or Hyperion is enabled.
+     * Condition that enables Spring AI configuration when either the LLM-backed part of Atlas or Hyperion is enabled.
+     * <p>
+     * Atlas alone is not enough. Its competency features need no model, and every consumer of the beans below sits
+     * behind one of these two flags, so keying on the Atlas module would build a chat memory repository on every
+     * installation that has competencies. That is not free: it opens a connection and reads the database metadata to
+     * pick a dialect, and the eager initialization of lazy singletons means it happens during startup rather than on
+     * first use.
      */
     public static class SpringAIEnabled implements Condition {
 
         @Override
         public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
             ArtemisConfigHelper artemisConfigHelper = new ArtemisConfigHelper();
-            return artemisConfigHelper.isAtlasEnabled(context.getEnvironment()) || artemisConfigHelper.isHyperionEnabled(context.getEnvironment());
+            return artemisConfigHelper.isAtlasLLMEnabled(context.getEnvironment()) || artemisConfigHelper.isHyperionEnabled(context.getEnvironment());
         }
     }
 }

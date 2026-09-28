@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
@@ -12,6 +12,8 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -71,7 +73,9 @@ describe('Course Management Exercises Component', () => {
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
                 MockProvider(ModelingExerciseService),
-                MockProvider(ProgrammingExerciseService),
+                ProgrammingExerciseService,
+                MockProvider(ExerciseService),
+                MockProvider(SortService),
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -87,6 +91,7 @@ describe('Course Management Exercises Component', () => {
     });
 
     afterEach(() => {
+        TestBed.inject(HttpTestingController).verify();
         vi.restoreAllMocks();
         localStorage.clear();
     });
@@ -141,6 +146,7 @@ describe('Course Management Exercises Component', () => {
         comp.onSearchChange('zzz_nomatch_zzz');
         const filteredCount = comp.cards().reduce((sum, b) => sum + b.exercises.length, 0);
         expect(filteredCount).toBeLessThan(initialCount);
+        expect(comp.cards()).toHaveLength(0);
     });
 
     it('should only mark itself loaded after the initial load (gating the empty state)', () => {
@@ -310,7 +316,7 @@ describe('Course Management Exercises Component', () => {
 
             comp.deleteSelectedExercises();
 
-            expect(programmingDelete).toHaveBeenCalledWith(1, false, false);
+            expect(programmingDelete).toHaveBeenCalledWith(1, undefined, undefined);
             expect(textDelete).toHaveBeenCalledWith(2);
             expect(comp.selectedCount()).toBe(0);
             expect(reloadSpy).toHaveBeenCalled();
@@ -369,6 +375,42 @@ describe('Course Management Exercises Component', () => {
             expect(quizDelete).toHaveBeenCalledWith(3);
             expect(modelingDelete).toHaveBeenCalledWith(4);
             expect(fileUploadDelete).toHaveBeenCalledWith(5);
+        });
+    });
+
+    describe('bulk programming exercise deletion requests', () => {
+        it('omits cleanup flags on LocalCI so the server deletes the repositories by default', () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'isProfileActive').mockImplementation((profile: string) => profile === PROFILE_LOCALCI);
+            const localCIComp = TestBed.createComponent(CourseManagementExercisesComponent).componentInstance;
+            localCIComp.ngOnInit();
+            localCIComp.toggleSelection(1);
+
+            // LocalCI does not offer cleanup checkboxes, so the delete dialog emits an empty object.
+            localCIComp.deleteSelectedExercises({});
+
+            const request = TestBed.inject(HttpTestingController).expectOne((req) => req.method === 'DELETE' && req.url === 'api/programming/programming-exercises/1');
+            expect(request.request.params.has('deleteStudentReposBuildPlans')).toBe(false);
+            expect(request.request.params.has('deleteBaseReposBuildPlans')).toBe(false);
+            request.flush(null);
+            expect(localCIComp.selectedCount()).toBe(0);
+        });
+
+        it.each([
+            [false, false],
+            [false, true],
+            [true, false],
+            [true, true],
+        ])('preserves explicit cleanup choices (student: %s, base: %s)', (deleteStudentReposBuildPlans, deleteBaseReposBuildPlans) => {
+            comp.ngOnInit();
+            comp.toggleSelection(1);
+
+            comp.deleteSelectedExercises({ deleteStudentReposBuildPlans, deleteBaseReposBuildPlans });
+
+            const request = TestBed.inject(HttpTestingController).expectOne((req) => req.method === 'DELETE' && req.url === 'api/programming/programming-exercises/1');
+            expect(request.request.params.get('deleteStudentReposBuildPlans')).toBe(String(deleteStudentReposBuildPlans));
+            expect(request.request.params.get('deleteBaseReposBuildPlans')).toBe(String(deleteBaseReposBuildPlans));
+            request.flush(null);
+            expect(comp.selectedCount()).toBe(0);
         });
     });
 

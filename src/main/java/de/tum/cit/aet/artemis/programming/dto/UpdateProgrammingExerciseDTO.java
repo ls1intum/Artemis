@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
@@ -68,7 +69,7 @@ public record UpdateProgrammingExerciseDTO(
      * @param exercise the ProgrammingExercise entity to convert
      * @return a new UpdateProgrammingExerciseDTO with data from the entity
      */
-    public static UpdateProgrammingExerciseDTO of(ProgrammingExercise exercise) {
+    public static UpdateProgrammingExerciseDTO of(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
         if (exercise == null) {
             throw new BadRequestAlertException("No programming exercise was provided.", "programmingExercise", "programmingExercise.isNull");
         }
@@ -116,6 +117,6 @@ public record UpdateProgrammingExerciseDTO(
                 exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(), exercise.getPackageName(),
                 exercise.getShowTestNamesToStudents(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(),
                 submissionPolicyDTO, exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(),
-                UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), plagiarismDetectionConfigDTO);
+                UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), plagiarismDetectionConfigDTO);
     }
 }

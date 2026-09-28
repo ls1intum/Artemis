@@ -11,8 +11,6 @@ import description from "../assets/quiz-training-mode/description.png";
 import leaderboard from "../assets/quiz-training-mode/leaderboard.png";
 import userSettings from "../assets/quiz-training-mode/user-settings.png";
 import userLeaderboardSettings from "../assets/quiz-training-mode/user-leaderboard-settings.png";
-import startTrainingButton from "../assets/quiz-training-mode/start-training-button.png";
-import viewDescriptionButton from "../assets/quiz-training-mode/description-button.png";
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -21,11 +19,9 @@ import {Footnote, FootnoteText} from "../../../src/components/Footnote/Footnote"
 
 The Quiz Training Mode allows you to reinforce your knowledge through repeated practice of quiz questions. Artemis uses a spaced-repetition<Footnote id="1"/>  algorithm to ensure you review questions at optimal intervals.
 
----
-
 ## Getting Started
 
-You can find the Quiz Training Mode in the course sidebar under the **"Quiz Training"** tab:
+You can find the Quiz Training Mode in the course sidebar under the **Quiz Training** tab:
 
 <Image src={trainingTab} alt={"Quiz Training Tab"} size={ImageSize.small}></Image>
 
@@ -63,15 +59,13 @@ Quiz Training is based on the principle of spaced-repetition. Questions you answ
 
 You can choose whether your name appears in the course leaderboard. You can change this setting at any time:
 
-- **From the Overview Page:** Click<Image src={viewDescriptionButton} alt={"View Description Button"} size={ImageSize.small} inline hideBorder={true}></Image>in the scorecard to open the description dialog and settings
+- **From the Overview Page:** Click **View description** in the scorecard to open the description dialog and settings
 - **From User Settings:** Navigate to your user settings and change the quiz training leaderboard visibility
 
 <div style={{display: 'flex', alignItems: 'flex-start', gap: '20px'}}>
     <Image src={userSettings} alt={"User Settings"} size={ImageSize.small}></Image>
     <Image src={userLeaderboardSettings} alt={"User Leaderboard Settings"} size={ImageSize.medium}></Image>
 </div>
-
----
 
 ## Overview Page
 
@@ -99,11 +93,9 @@ The right side shows the course leaderboard (if enabled):
 
 <Image src={leaderboard} alt={"Leaderboard"} size={ImageSize.large}></Image>
 
----
-
 ## Starting Training
 
-Click<Image src={startTrainingButton} alt={"Start Training Button"} size={ImageSize.small} inline hideBorder={true}></Image>to begin practicing.
+Click **Start Training** to begin practicing.
 
 ### Answering Questions
 
@@ -124,13 +116,9 @@ Artemis presents questions in three different formats:
         Unrated questions don't count toward your score but help with practice.
 </Callout>
 
----
-
 ## Video Tutorial
 
 <TumLiveVideo src="67223" title="Quiz Training Mode Tutorial" height={400} />
-
----
 
 ## Tips for Effective Training
 
@@ -140,15 +128,13 @@ Artemis presents questions in three different formats:
 4. **Use the Leaderboard:** Get motivated by others and compare your progress
 5. **Work Toward Higher Leagues:** Set goals for the next league level
 
----
-
 ## Frequently Asked Questions
 
 **When should I answer questions again?**
 The system displays a countdown showing when the next questions are available for review. This is based on your past performance.
 
 **Can I change my leaderboard visibility?**
-Yes, click the **"View description"** button on the overview page to adjust your settings. You can also change the settings in your user settings under Quiz Training.
+Yes, click **View description** on the overview page to adjust your settings. You can also change the settings in your user settings under Quiz Training.
 
 **What happens if I answer a question incorrectly?**
 The question will be repeated at shorter intervals until you answer it correctly. You will not earn or lose points for wrongly answered questions.
@@ -167,8 +153,6 @@ Correctly answered questions are shown less frequently, while incorrectly answer
         Use Quiz Training regularly to reinforce your knowledge long-term.
         The spaced-repetition method is scientifically proven to be one of the most effective learning methods!
 </Callout>
-
----
 
 ## References
 <FootnoteText id="1">

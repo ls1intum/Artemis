@@ -42,8 +42,8 @@ import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
-import { LectureDeepLink, isLectureDeepLinkNavigationState, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { LectureDeepLink, isLectureDeepLinkNavigationState, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -85,6 +85,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly destroyRef = inject(DestroyRef);
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
+    private readonly courseStorageService = inject(CourseStorageService);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -96,7 +97,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
 
     lectureId?: number;
-    private readonly courseStorageService = inject(CourseStorageService);
 
     readonly courseId = signal<number | undefined>(undefined);
 
@@ -278,7 +278,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         const deepLink = parseLectureDeepLink(this.activatedRoute.snapshot.queryParams);
         return {
             routeKey: `${this.activatedRoute.parent?.parent?.snapshot?.params?.['courseId'] ?? ''}/${this.activatedRoute.snapshot.params['lectureId'] ?? ''}`,
-            deepLinkKey: deepLink ? `${deepLink.unitId}/${deepLink.timestamp ?? ''}/${deepLink.page ?? ''}` : undefined,
+            deepLinkKey: deepLink ? `${deepLink.unitId}/${deepLink.timestamp ?? ''}/${deepLink.page ?? ''}/${deepLink.combined ?? ''}` : undefined,
             urlAfterRedirects,
         };
     }
@@ -367,8 +367,31 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
+        const targetUnit = this.lectureUnits().find((unit) => unit.id === pending.deepLink.unitId);
+        if (!targetUnit) {
+            this.pendingDeepLink = undefined;
+            this.deepLink.set(undefined);
+            return;
+        }
+
+        let { timestamp, page } = pending.deepLink;
+        if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+            const attachmentUnit = targetUnit as AttachmentVideoUnit;
+            const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
+            const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
+            if (!hasVideo) {
+                timestamp = undefined;
+            }
+            if (!isPdf) {
+                page = undefined;
+            }
+        } else {
+            timestamp = undefined;
+            page = undefined;
+        }
+
         this.pendingDeepLink = undefined;
-        this.deepLink.set(pending.deepLink);
+        this.deepLink.set(cloneWith(pending.deepLink, { timestamp, page }));
     }
 
     createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {

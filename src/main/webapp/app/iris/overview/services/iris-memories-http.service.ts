@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -7,7 +7,7 @@ import { MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } from 'app/iris/sh
 /**
  * Lightweight HTTP service for Memiris memories (current user scope).
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisMemoriesHttpService {
     private readonly http = inject(HttpClient);
     private readonly apiPrefix = 'api/iris/user';

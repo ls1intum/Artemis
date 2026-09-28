@@ -59,4 +59,16 @@ public record QuizExerciseWithoutQuestionsDTO(Long id, String title, String shor
                 quizExercise.getBonusPoints(), variantGroupRef);
     }
 
+    /**
+     * Returns the same record without the course reference, for the course-management exercise list: the course is
+     * the enclosing object there, so a per-exercise copy is a redundant back-reference. {@code @JsonIgnoreProperties}
+     * on the containing collection does not reach this field because it arrives through {@code @JsonUnwrapped}.
+     *
+     * @return the same record with {@code course} set to {@code null}
+     */
+    public QuizExerciseWithoutQuestionsDTO withoutCourse() {
+        return new QuizExerciseWithoutQuestionsDTO(id, title, shortName, releaseDate, startDate, dueDate, assessmentDueDate, difficulty, visibleToStudents, null, type,
+                randomizeQuestionOrder, allowedNumberOfAttempts, remainingNumberOfAttempts, quizMode, duration, quizBatches, quizStarted, quizEnded, includedInOverallScore, mode,
+                maxPoints, bonusPoints, exerciseVariantGroup);
+    }
 }

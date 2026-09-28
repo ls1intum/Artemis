@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -53,7 +54,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/variant-groups")
+@FeatureUsage(UserFeature.EXERCISE_VARIANT_GROUPS)
 @RestController
 @RequestMapping("api/exercise/")
 public class ExerciseVariantGroupResource {

@@ -1,9 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { CourseLearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/course-learner-profile-dto.model';
 import { LearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LearnerProfileApiService extends BaseApiHttpService {
     async getCourseLearnerProfilesForCurrentUser(): Promise<CourseLearnerProfileDTO[]> {
         return await this.get<CourseLearnerProfileDTO[]>('atlas/course-learner-profiles');

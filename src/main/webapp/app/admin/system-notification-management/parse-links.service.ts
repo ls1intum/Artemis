@@ -1,11 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 
 /**
  * A utility service for link parsing. Note: this class comes from the jhipster template
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class ParseLinks {
     /**
      * Method to parse the links

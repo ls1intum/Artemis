@@ -42,13 +42,15 @@ test.describe('Exam import validation messages', { tag: '@fast' }, () => {
         // Importing the exam into its own course renders the exercise-import table with editable group / exercise fields.
         await login(instructor, `/course-management/${course.id}/exams/import/${exam.id}`);
 
-        const groupTitleInput = page.locator(`#exerciseGroup-${exerciseGroup.id}-title`);
-        const groupTitleError = page.locator(`#exerciseGroup-${exerciseGroup.id}-title ~ .invalid-feedback`);
+        // Group form controls use their row index because imported groups can have no server ID.
+        const groupTitleInput = page.locator('#exerciseGroup-0-title');
+        const groupTitleError = groupTitleInput.locator('..').getByText('Please enter a title for the exercise group.', { exact: true });
         const textTitleInput = page.locator(`#exercise-${textExercise.id}-title`);
         const textTitleError = page.locator(`#exercise-${textExercise.id}-title ~ .invalid-feedback`);
 
         // Wait for the import table to render with the seeded (valid) values -> no messages yet.
         await expect(groupTitleInput).toBeVisible();
+        await expect(groupTitleInput).toHaveValue(exerciseGroup.title!);
         await expect(groupTitleError).toBeHidden();
         await expect(textTitleError).toBeHidden();
 

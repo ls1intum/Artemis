@@ -35,7 +35,7 @@ def sharedExclusions = [
     // Storybook stories and the Angular wrapper decorators: static examples that trip the
     // html-in-template-string rule through Storybook's rendering API.
     "**/*.stories.ts",
-    "packages/tum-ui/.storybook/story-decorators.ts",
+    "packages/tum-aet-ui/.storybook/story-decorators.ts",
     // Internal developer/CI tooling (coverage reporting, course setup, transcription, benchmarks).
     // Not part of the deployed application and not exposed to untrusted end-user input.
     "supporting_scripts/**",
@@ -58,13 +58,13 @@ sonar {
 
         // The plugin derives `sonar.sources` from the Java source sets alone, which would leave the
         // entire Angular client unanalyzed. Naming the roots explicitly brings the client and the
-        // TUM UI package in. `sonar.java.binaries` / `sonar.java.libraries` are set by the plugin
+        // TUM AET UI package in. `sonar.java.binaries` / `sonar.java.libraries` are set by the plugin
         // independently of this property, so overriding it does not disturb the Java analysis.
         property "sonar.sources", [
             "src/main/java",
             "src/main/resources",
             "src/main/webapp",
-            "packages/tum-ui/src",
+            "packages/tum-aet-ui/src",
         ].join(",")
 
         property "sonar.exclusions", sharedExclusions.join(",")
@@ -91,10 +91,10 @@ sonar {
         //
         // The list mirrors that file's `coverage.exclude`, and it has to: Sonar computes the ratio over
         // whatever it indexed, so a file the LCOV report never mentions counts as fully uncovered
-        // rather than as absent. The same reasoning excludes `packages/tum-ui/src` — it is in
+        // rather than as absent. The same reasoning excludes `packages/tum-aet-ui/src` — it is in
         // `sonar.sources` because the package ships, but the only LCOV report imported here covers
-        // `src/main/webapp/app/**/*.ts` (`vitest.config.ts`, `coverage.include`). TUM UI is tested by
-        // its own run (`pnpm run tum-ui:test:coverage`, `ng test tum-ui --coverage`), which neither
+        // `src/main/webapp/app/**/*.ts` (`vitest.config.ts`, `coverage.include`). TUM AET UI is tested by
+        // its own run (`pnpm run tum-aet-ui:test:coverage`, `ng test tum-aet-ui --coverage`), which neither
         // emits LCOV nor uploads an artifact for `ci-sonar.yml` to download. Leaving it in the
         // denominator would report a tested package as 0% covered. Drop this entry as soon as that run
         // publishes a report the Sonar job imports.
@@ -106,7 +106,7 @@ sonar {
             "src/main/webapp/app/core/config/dayjs.ts",
             "src/main/webapp/app/core/config/monaco.config.ts",
             "src/main/webapp/app/core/config/prod.config.ts",
-            "packages/tum-ui/src/**",
+            "packages/tum-aet-ui/src/**",
         ].join(",")
     }
 }

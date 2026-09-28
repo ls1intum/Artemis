@@ -49,6 +49,10 @@
                     "name": "Atlas (Adaptive Learning)",
                     "description": "Enables competency-based learning features including learning paths, competency tracking, and analytics."
                 },
+                "atlasllm": {
+                    "name": "Atlas AI (LLM)",
+                    "description": "Enables the Atlas course chat agent and the autonomous competency orchestrator. Requires a configured chat model. Competencies, learning paths and analytics work without it."
+                },
                 "hyperion": {
                     "name": "Hyperion (Exercise Creation)",
                     "description": "Enables AI-assisted exercise creation using Hyperion for generating programming exercises."
@@ -197,6 +201,11 @@
                     "name": "Deimos Analysis",
                     "description": "Enables manual malicious participation analysis runs for programming exercises.",
                     "disableWarning": "Instructors will not be able to trigger Deimos analysis runs."
+                },
+                "IrisProactiveStruggle": {
+                    "name": "Iris Proactive Struggle Detection",
+                    "description": "Lets Iris watch for students who are stuck in a programming exercise and offer help unprompted. Instructors switch it on per course; this switch decides whether they can.",
+                    "disableWarning": "Iris will not offer help on its own in any course. Students can still start a chat themselves, and a course keeps its own setting for when this is switched back on."
                 }
             }
         }

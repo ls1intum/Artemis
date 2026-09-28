@@ -180,6 +180,9 @@ public class LLMTokenUsageService {
             }
             ChatResponseMetadata metadata = chatResponse.getMetadata();
             Usage usage = metadata.getUsage();
+            if (usage instanceof org.springframework.ai.chat.metadata.EmptyUsage) {
+                return;
+            }
             String model = metadata.getModel() != null ? metadata.getModel() : "";
             LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens() != null ? usage.getPromptTokens() : DEFAULT_TOKEN_COUNT,
                     usage.getCompletionTokens() != null ? usage.getCompletionTokens() : DEFAULT_TOKEN_COUNT, pipelineId);

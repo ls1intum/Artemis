@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -24,6 +24,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
+import { Course } from 'app/course/shared/entities/course.model';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -224,6 +225,28 @@ describe('CourseTutorialGroupsComponent', () => {
             ungroupedData: [expectedSidebarCardElement1, expectedSidebarCardElement2, expectedSidebarCardElement3, expectedSidebarCardElement4],
         };
         expect(component.sidebarData()).toEqual(expectedSidebarData);
+    });
+
+    it('should not reload groups and lectures when the stored course changes', async () => {
+        const storedCourse = signal<Course | undefined>({ id: 42 } as Course);
+        vi.spyOn(courseStorageService, 'getCourse').mockImplementation(() => storedCourse());
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse');
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(tutorialGroupFetchSpy).toHaveBeenCalledOnce();
+        expect(tutorialLectureFetchSpy).toHaveBeenCalledOnce();
+
+        storedCourse.set({ id: 42, title: 'Updated course' } as Course);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(tutorialGroupFetchSpy).toHaveBeenCalledOnce();
+        expect(tutorialLectureFetchSpy).toHaveBeenCalledOnce();
     });
 
     it('should enrich the cached course with the fetched groups and lectures', async () => {

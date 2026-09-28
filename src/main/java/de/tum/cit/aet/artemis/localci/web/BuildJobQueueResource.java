@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -33,11 +34,12 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -45,9 +47,9 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
-@FeatureUsage("build-system/build-queue")
+@FeatureUsage(UserFeature.BUILD_OVERVIEW)
 @RestController
-@RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
+@RequestMapping("api/localci/")
 public class BuildJobQueueResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobQueueResource.class);
@@ -79,7 +81,7 @@ public class BuildJobQueueResource {
      * @param buildJobId the id of the build job
      * @return the build job, or 404 if not found or does not belong to the course
      */
-    @GetMapping({ "courses/{courseId}/build-jobs/{buildJobId}", "courses/{courseId}/build-job/{buildJobId}" })
+    @GetMapping("courses/{courseId}/build-jobs/{buildJobId}")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
         if (buildJobId == null || buildJobId.isBlank()) {
@@ -149,7 +151,7 @@ public class BuildJobQueueResource {
      * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping({ "courses/{courseId}/build-jobs/{buildJobId}/cancel", "courses/{courseId}/cancel-job/{buildJobId}" })
+    @DeleteMapping("courses/{courseId}/build-jobs/{buildJobId}/cancel")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> cancelBuildJob(@PathVariable long courseId, @PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job for course {} and with id {}", courseId, buildJobId);
@@ -262,6 +264,8 @@ public class BuildJobQueueResource {
      * @param participationId the id of the participation
      * @return the estimated queue duration
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("queued-jobs/queue-duration-estimation")
     @EnforceAtLeastStudent
     public ResponseEntity<ZonedDateTime> getBuildJobEstimatedStartDate(@RequestParam long participationId) {

@@ -107,6 +107,14 @@ export interface HiddenPageMap {
     ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
+    // Injected services
+    private readonly route = inject(ActivatedRoute);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly alertService = inject(AlertService);
+    private readonly router = inject(Router);
+    private readonly pdfEngineService = inject(PdfEngineService);
+
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     showPopover = viewChild.required<NgbPopover>('showPopover');
 
@@ -155,14 +163,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             .filter((page) => this.hiddenPages()[page.slideId])
             .sort((a, b) => a.order - b.order);
     });
-
-    // Injected services
-    private readonly route = inject(ActivatedRoute);
-    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly lectureUnitService = inject(LectureUnitService);
-    private readonly alertService = inject(AlertService);
-    private readonly router = inject(Router);
-    private readonly pdfEngineService = inject(PdfEngineService);
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();

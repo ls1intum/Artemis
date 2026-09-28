@@ -8,13 +8,9 @@ import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 import Image, { ImageSize } from '../../src/components/Image/Image';
 import sharingHealth1 from './assets/sharing/sharing_health1.png';
 import sharingHealth2 from './assets/sharing/sharing_health2.png';
-import sharingButton1 from './assets/sharing/sharingButtonArtemis.png';
-import sharingButton2 from './assets/sharing/sharingButtonSharing.png';
 import Callout from '../../src/components/Callout/Callout';
 
 This section describes the required setup for various extension services that can be used to activate additional functionality in your Artemis instance.
-
----
 
 ## EduTelligence Suite
 
@@ -23,8 +19,6 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
 **Compatibility**: EduTelligence maintains compatibility with different versions of Artemis. Please refer to the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions for optimal integration and functionality.
 
 **Repository**: <a href="https://github.com/ls1intum/edutelligence">github.com/ls1intum/edutelligence</a>
-
----
 
 ## EduTelligence / Iris
 
@@ -59,8 +53,6 @@ For Pyris deployment and configuration, refer to the <a href="https://ls1intum.g
 ### Global search (Weaviate)
 
 Artemis's keyword and semantic search feature (global search) uses Weaviate independently of Iris. For full setup instructions — deploying Weaviate, choosing an embedding strategy, configuring Artemis, and operating the instance — see the [Global Search & Weaviate Setup](./global-search-weaviate) admin page.
-
----
 
 ## Athena Service
 
@@ -97,8 +89,6 @@ artemis:
 
 Use a deployment-managed shared secret. For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
 
----
-
 ## Other Extension Services
 
 ### Text Assessment Analytics Service
@@ -121,8 +111,6 @@ These events are tracked by attaching a POST call to the respective DOM elements
 info:
     textAssessmentAnalyticsEnabled: true
 ```
-
----
 
 ### Apollon Service
 
@@ -147,8 +135,6 @@ artemis:
     apollon:
         conversion-service-url: http://localhost:8080
 ```
-
----
 
 ### Hermes Service
 
@@ -186,8 +172,6 @@ artemis:
     push-notification-relay: <url>
 ```
 
----
-
 ### Hyperion Service
 
 <Callout variant={CalloutVariant.info}>
@@ -195,8 +179,6 @@ artemis:
 This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
 
 </Callout>
-
----
 
 ### Setup Guide for Exchange with the Sharing Platform
 
@@ -272,8 +254,8 @@ If the health status is not **`up`**, check the error message in the details. If
 
 #### Conclusion
 
-Once everything is set up correctly, you should see the <Image src={sharingButton1} alt={"Sharing button Artemis"} inline /> button in the **Programming Exercise Details** dialog in Artemis.
+Once everything is set up correctly, you should see the **Export to Sharing** button in the **Programming Exercise Details** dialog in Artemis.
 
-Similarly, the <Image src={sharingButton2} alt={"Sharing button Sharing"} inline /> button should appear on the sharing platform for any programming exercise available there.
+Similarly, an **Export to Artemis** button should appear on the sharing platform for any programming exercise available there.
 
 Before testing the import and export functionality, refer to the user documentation for further details.

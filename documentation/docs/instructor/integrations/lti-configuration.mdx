@@ -4,6 +4,8 @@ title: LTI Configuration
 sidebar_label: LTI Configuration
 ---
 
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
@@ -100,8 +102,6 @@ This guide is structured as follows:
 > **Warning**
 > Before instructors integrate Artemis or students access and start Artemis content through LMS via LTI, server administrators must ensure that LTI is active with the necessary profile on the Artemis server. If you are a server admin, please configure this setting to allow instructors and students to utilize the LTI integration.
 
----
-
 ## Enabling Online Course
 
 > **Note**
@@ -122,8 +122,6 @@ As an instructor to enable the Online Course setting in Artemis, follow the step
 
 With the Online Course setting enabled, you can now integrate Artemis with LMSs using the LTI 1.3 standard. The subsequent sections of this guide will provide detailed steps for achieving this integration.
 
----
-
 ## Register Artemis with the platform
 
 LTI 1.3 and LTI Advantage services use OAuth 2.0 and OpenID Connect as security models. The Tool and the Platform need to register with each other ahead of time so that the platform can access Artemis course content.
@@ -136,6 +134,15 @@ There are a few different ways to register:
 
 Dynamic registration makes it much easier for administrators to set up, so administrators should use it whenever possible, as long as the platform supports it.
 It is best to use manual registration when the platform doesn't yet support dynamic registration because it will work on all LTI Advantage-compliant platforms.
+
+<Callout variant={CalloutVariant.info}>
+
+    The recordings in this section were made in March 2024 and mostly show Moodle and edX, which have not changed in
+    the parts they walk through. Artemis has been restyled since, so the Artemis screens in them look different from
+    what you will see; the values they exchange are the same ones. The written steps beside each recording are
+    current.
+
+</Callout>
 
 ### Dynamic Registration
 
@@ -354,8 +361,6 @@ This video describes how to manually configure Artemis and edX in practice:
     <TumLiveVideo src="42794" title="Artemis and edX Manual Registration" height={300} />
 </div>
 
----
-
 ## Sharing access to a course
 
 To unlock the full potential of the LTI configuration and enable the Deep Linking Service for your online course, Artemis administrators must carefully choose an LTI platform and apply the following steps.
@@ -367,8 +372,6 @@ To unlock the full potential of the LTI configuration and enable the Deep Linkin
 5. After selecting the desired configuration, hit Save to apply your changes.
 
 <Image src={courseEditLtiConfigurationImg} alt={"Edit Course-wise LTI Configuration"} size={ImageSize.large} />
-
----
 
 ## Artemis user account provisioning
 
@@ -383,8 +386,6 @@ However, if instructors prefer to restrict exercise and lecture participation to
 3. Find and click the *Edit* button. This action will allow you to modify the LTI configuration settings for your course.
 4. In the *General Configuration* section, enable the *Require existing user* checkbox.
 5. Hit *Save* to apply your changes.
-
----
 
 ## Linking Artemis Content
 
@@ -424,12 +425,6 @@ Below, we explain both methods to assist instructors in choosing the best approa
 <Image src={moodleSelectContentLinkGroupedImg} alt={"Moodle Deep Linking Select Grouped Content"} size={ImageSize.medium} />
 
 12. Save and return the course.
-
-This video describes how you can use the LTI Deep Linking Service to integrate content from an Artemis course into a Moodle course using the example of an exercise:
-
-<div style={{ textAlign: "center" }}>
-    <TumLiveVideo src="42795" title="Artemis and Moodle Deep Linking" height={300} />
-</div>
 
 #### Deep Linking for edX
 
@@ -512,8 +507,6 @@ This video describes how to use manually link exercises from an Artemis course i
 <div style={{ textAlign: "center" }}>
     <TumLiveVideo src="42769" title="Artemis and edX Manual Linking" height={300} />
 </div>
-
----
 
 ## Common Issues
 

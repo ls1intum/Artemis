@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -42,12 +43,17 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.ActiveExamForCourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
@@ -67,7 +73,7 @@ import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStat
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("student-view/course-overview")
+@FeatureUsage(UserFeature.COURSE_OVERVIEW)
 @RestController
 @RequestMapping({ "api/course/" })
 public class CourseOverviewResource {
@@ -239,6 +245,7 @@ public class CourseOverviewResource {
      *         DTO contains the total scores for the course, the scores per exercise
      *         type for each exercise, and the participation result for each participation.
      */
+    @FeatureUsage(UserFeature.COURSE_DASHBOARD)
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -267,11 +274,11 @@ public class CourseOverviewResource {
             // Not fetching plagiarism cases before the calculation also affects calculation as plagiarism cases are not considered in the scores, but this is fine for the
             // dashboard.
             // We prefer to have better performance for 99.9% of the users without plagiarism cases over accurate scores for the 0.1% of users with plagiarism cases.
-            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, null, user.getId(), false);
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, null, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
-        final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams);
+        final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams.stream().map(ActiveExamForCourseDashboardDTO::of).collect(Collectors.toSet()));
         return ResponseEntity.ok(dto);
     }
 
@@ -291,12 +298,14 @@ public class CourseOverviewResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the set of courses (the user has access to)
      */
+    @FeatureUsage(UserFeature.COURSE_NOTIFICATIONS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/for-notifications")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<Course>> getCoursesForNotifications() {
+    public ResponseEntity<Set<CourseWithIdDTO>> getCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        return ResponseEntity.ok(courseService.findAllActiveForUser(user));
+        return ResponseEntity.ok(courseService.findAllActiveForUser(user).stream().map(course -> new CourseWithIdDTO(course.getId())).collect(Collectors.toSet()));
     }
 
     /**
@@ -309,7 +318,7 @@ public class CourseOverviewResource {
     // configuration in such cases.
     @GetMapping("courses/{courseId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
+    public ResponseEntity<CourseManagementDTO> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get course {} for students", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
 
@@ -327,9 +336,10 @@ public class CourseOverviewResource {
             userRepository.setUserCountsForCourse(course);
         }
 
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(CourseManagementDTO.of(course));
     }
 
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/{courseId}/title")
     @EnforceAtLeastStudent
     @ResponseBody
@@ -348,6 +358,7 @@ public class CourseOverviewResource {
      * @param teamMode whether to return the number of allowed complaints per team (instead of per student)
      * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
      */
+    @FeatureUsage(UserFeature.COMPLAINTS)
     @GetMapping("courses/{courseId}/allowed-complaints")
     @EnforceAtLeastStudent
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean teamMode) {

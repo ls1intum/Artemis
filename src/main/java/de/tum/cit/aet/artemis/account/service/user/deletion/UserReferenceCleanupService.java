@@ -101,11 +101,14 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.REPOSITORY_TOKEN, bind(programming::countRepositoryAccessTokens, programming::deleteRepositoryAccessTokens));
         bindings.put(UserDeletionReferencePolicy.SSH_PUBLIC_KEY, bind(programming::countSshPublicKeys, programming::deleteSshPublicKeys));
         bindings.put(UserDeletionReferencePolicy.IDE_MAPPING, bind(programming::countIdeMappings, programming::deleteIdeMappings));
+        bindings.put(UserDeletionReferencePolicy.VCS_ACCESS_LOG, bind(programming::countVcsAccessLogs, programming::detachVcsAccessLogs));
 
         bindings.put(UserDeletionReferencePolicy.QUIZ_QUESTION_PROGRESS, bind(learning::countQuizQuestionProgress, learning::deleteQuizQuestionProgress));
         bindings.put(UserDeletionReferencePolicy.QUIZ_TRAINING_LEADERBOARD, bind(learning::countQuizLeaderboardEntries, learning::deleteQuizLeaderboardEntries));
         bindings.put(UserDeletionReferencePolicy.COMPETENCY_PROGRESS, bind(learning::countCompetencyProgress, learning::deleteCompetencyProgress));
         bindings.put(UserDeletionReferencePolicy.LECTURE_PROGRESS, bind(learning::countLectureUnitCompletions, learning::deleteLectureUnitCompletions));
+        bindings.put(UserDeletionReferencePolicy.LEARNER_PROFILE, bind(learning::countLearnerProfiles, learning::deleteLearnerProfile));
+        bindings.put(UserDeletionReferencePolicy.LEARNING_PATH, bind(learning::countLearningPaths, learning::deleteLearningPaths));
 
         bindings.put(UserDeletionReferencePolicy.COURSE_ROLE, bind(courseContext::countCourseRoles, courseContext::deleteCourseRoles));
         bindings.put(UserDeletionReferencePolicy.COURSE_REQUEST, bind(courseContext::countCourseRequests, courseContext::deleteCourseRequests));
@@ -123,6 +126,7 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.LTI_LAUNCH, bind(platform::countLtiResourceLaunches, platform::deleteLtiResourceLaunches));
         bindings.put(UserDeletionReferencePolicy.USER_LTI_IDENTITY, bind(platform::countLtiIdentities, platform::deleteLtiIdentities));
         bindings.put(UserDeletionReferencePolicy.IRIS_SESSION, bind(platform::countIrisSessions, platform::deleteIrisSessions));
+        bindings.put(UserDeletionReferencePolicy.IRIS_PROACTIVE_EPISODE, bind(platform::countIrisProactiveEpisodes, platform::deleteIrisProactiveEpisodes));
 
         this.cleanups = bindings;
     }

@@ -265,7 +265,7 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).add("must-remain-unversioned");
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> migrationServiceFor(VERSION + 1).migrateToCurrentVersion())
-                .withMessageContaining("no migration step from 1").withMessageContaining("explicit adjacent-version migration");
+                .withMessageContaining("no migration step from " + VERSION).withMessageContaining("explicit adjacent-version migration");
         assertThat(storedVersion()).isNull();
         assertThat(redissonClient.getQueue(keyFor(UNVERSIONED, "buildResultQueue")).readAll()).containsExactly("must-remain-unversioned");
         assertThat(redissonClient.getQueue(keyFor(VERSION, "buildResultQueue"))).isEmpty();

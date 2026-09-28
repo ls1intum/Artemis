@@ -446,9 +446,13 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
+        // The feedback has to belong to a result: result_id is not nullable, and the exercise reports the grading
+        // instruction as used by looking for feedback that references it, which a detached row could never provide.
+        var participation = participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, TEST_PREFIX + "student1");
+        Result result = participationUtilService.createSubmissionAndResult(participation, 50, true);
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
-        feedbackRepository.save(feedback);
+        participationUtilService.addFeedbackToResult(feedback, result);
 
         conversationUtilService.addChannelToExercise(fileUploadExercise);
 

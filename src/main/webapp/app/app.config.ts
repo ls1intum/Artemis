@@ -31,14 +31,14 @@ import { LoadingNotificationInterceptor } from 'app/core/loading-notification/lo
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
-import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import { AuraArtemis } from './primeng-artemis-theme';
 import { RoleAwarePreloadingStrategy } from 'app/core/config/role-aware-preloading.strategy';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
-        provideArtemisTumUiTranslator(),
+        provideArtemisTumAetUiTranslator(),
         // Keep CDK overlays inside the active browser-fullscreen element. This is required by the modeling editor and
         // also applies to every other CDK overlay in the application; PrimeNG overlays use a separate container.
         { provide: OverlayContainer, useClass: FullscreenOverlayContainer },

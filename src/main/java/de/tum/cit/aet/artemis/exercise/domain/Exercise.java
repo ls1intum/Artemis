@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -134,9 +135,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private Boolean secondCorrectionEnabled = false;
 
     @ManyToOne
+    @Parent(enforcedBy = "CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP")
     private Course course;
 
     @ManyToOne
+    @Parent(enforcedBy = "CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP")
     private ExerciseGroup exerciseGroup;
 
     @ManyToOne(fetch = FetchType.LAZY)

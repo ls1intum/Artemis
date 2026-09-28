@@ -4,6 +4,7 @@ export interface LectureDeepLink {
     readonly unitId: number;
     readonly timestamp?: number;
     readonly page?: number;
+    readonly combined?: boolean;
 }
 
 export const LECTURE_DEEP_LINK_NAVIGATION_STATE = { lectureDeepLink: true } as const;
@@ -12,7 +13,7 @@ export function isLectureDeepLinkNavigationState(state: unknown): boolean {
     return !!state && typeof state === 'object' && (state as Record<string, unknown>)['lectureDeepLink'] === true;
 }
 
-export function lectureDeepLink(unitId: number, timestamp?: number, page?: number): LectureDeepLink | undefined {
+export function lectureDeepLink(unitId: number, timestamp?: number, page?: number, combined = false): LectureDeepLink | undefined {
     if (!Number.isInteger(unitId) || unitId <= 0) {
         return undefined;
     }
@@ -21,11 +22,12 @@ export function lectureDeepLink(unitId: number, timestamp?: number, page?: numbe
         unitId,
         timestamp: timestamp !== undefined && Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined,
         page: page !== undefined && Number.isInteger(page) && page > 0 ? page : undefined,
+        combined: combined || undefined,
     };
 }
 
 export function parseLectureDeepLink(params: Params): LectureDeepLink | undefined {
-    return lectureDeepLink(Number(params['unit']), Number(params['timestamp']), Number(params['page']));
+    return lectureDeepLink(Number(params['unit']), Number(params['timestamp']), Number(params['page']), params['combined'] === true || params['combined'] === 'true');
 }
 
 export function lectureDeepLinkQueryParams(deepLink: LectureDeepLink): Params {
@@ -35,6 +37,9 @@ export function lectureDeepLinkQueryParams(deepLink: LectureDeepLink): Params {
     }
     if (deepLink.page !== undefined) {
         params.page = deepLink.page;
+    }
+    if (deepLink.combined) {
+        params.combined = true;
     }
 
     return params;
@@ -48,7 +53,7 @@ export function normalizeLectureDeepLinkQueryParams(params: Params): Params {
 
     const normalizedParams: Params = {};
     Object.entries(params).forEach(([key, value]) => {
-        if (key !== 'unit' && key !== 'timestamp' && key !== 'page') {
+        if (key !== 'unit' && key !== 'timestamp' && key !== 'page' && key !== 'combined') {
             normalizedParams[key] = value;
         }
     });

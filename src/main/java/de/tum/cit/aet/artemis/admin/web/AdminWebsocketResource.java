@@ -16,23 +16,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.WebsocketNodeDTO;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionMessagingService;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService;
 
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("monitoring/websocket-broker")
+@FeatureUsage(UserFeature.MONITORING)
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/websocket/", LegacyAdminRestPaths.CORE_ADMIN_WEBSOCKET_PREFIX })
+@RequestMapping("api/admin/websocket/")
 public class AdminWebsocketResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminWebsocketResource.class);
@@ -55,10 +57,11 @@ public class AdminWebsocketResource {
     }
 
     /**
-     * GET core/admin/websocket/nodes: returns the live core nodes (id and address).
+     * GET api/admin/websocket/nodes: returns the live core nodes (id and address).
      *
      * @return list of websocket nodes with metadata used by the admin UI
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("nodes")
     public ResponseEntity<Iterable<WebsocketNodeDTO>> getWebsocketNodes() {
         String localId = nodeRegistryService.getLocalNodeId();
@@ -72,7 +75,7 @@ public class AdminWebsocketResource {
     }
 
     /**
-     * POST core/admin/websocket/reconnect: manually trigger reconnect attempts to the external websocket broker.
+     * POST api/admin/websocket/reconnect: manually trigger reconnect attempts to the external websocket broker.
      *
      * @param targetNodeId optional cluster node id. If omitted, all nodes will reconnect.
      * @param action       desired control action (RECONNECT, DISCONNECT, CONNECT)

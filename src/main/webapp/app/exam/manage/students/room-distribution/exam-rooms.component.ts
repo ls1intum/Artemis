@@ -32,14 +32,14 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe, HelpIconComponent],
 })
 export class ExamRoomsComponent implements OnInit {
-    private readonly baseTranslationPath = 'artemisApp.examRooms.management';
-
-    protected readonly faSort = faSort;
-
     private readonly examRoomsService = inject(ExamRoomsService);
     private readonly sortService = inject(SortService);
     private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
+
+    private readonly baseTranslationPath = 'artemisApp.examRooms.management';
+
+    protected readonly faSort = faSort;
 
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);

@@ -18,10 +18,10 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     styleUrls: ['../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsConfigurationComponent {
-    protected readonly faSpinner = faSpinner;
-
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
+
+    protected readonly faSpinner = faSpinner;
 
     readonly courseId = input.required<number>();
 

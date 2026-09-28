@@ -59,6 +59,7 @@
                         </div>
                         @if (hasPdfLectureUnit()) {
                             <button
+                                type="button"
                                 id="downloadButton"
                                 class="col-auto btn btn-primary btn-sm rounded-pill"
                                 (click)="downloadMergedFiles()"
@@ -90,6 +91,7 @@
                                 @case (LectureUnitType.ONLINE) {
                                     <jhi-online-unit [courseId]="courseId()!" [lectureUnit]="lectureUnit" [deepLink]="deepLink()" (onCompletion)="completeLectureUnit($event)" />
                                 }
+                                @default {}
                             }
                         </div>
                     </div>

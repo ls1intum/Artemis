@@ -104,6 +104,7 @@ export class ResultHistoryDropdownComponent {
     });
 
     viewingSubmissionChange = output<boolean>();
+    displayedResultChange = output<Result | undefined>();
 
     constructor() {
         effect(() => {
@@ -128,6 +129,7 @@ export class ResultHistoryDropdownComponent {
             if (matchingResult?.id) {
                 this.selectedResultId.set(matchingResult.id);
                 this.viewingSubmissionChange.emit(true);
+                this.displayedResultChange.emit(matchingResult);
                 return;
             }
         }
@@ -138,11 +140,13 @@ export class ResultHistoryDropdownComponent {
             if (matchingResult?.id) {
                 this.selectedResultId.set(matchingResult.id);
                 this.viewingSubmissionChange.emit(true);
+                this.displayedResultChange.emit(matchingResult);
                 return;
             }
         }
         this.selectedResultId.set(undefined);
         this.viewingSubmissionChange.emit(false);
+        this.displayedResultChange.emit(undefined);
     }
 
     resultsPopover = viewChild<Popover>('resultsPopover');
@@ -291,6 +295,7 @@ export class ResultHistoryDropdownComponent {
         }
         this.selectedResultId.set(result.id);
         this.viewingSubmissionChange.emit(true);
+        this.displayedResultChange.emit(result);
         this.resultsPopover()?.hide();
         const exercise = this.exercise();
         const courseId = getCourseFromExercise(exercise)?.id;

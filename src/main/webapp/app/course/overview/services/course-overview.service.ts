@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faBarsProgress, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLayerGroup, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -83,9 +83,7 @@ export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDa
 /** The exam fields the sidebar renders; see {@link SidebarLecture}. */
 export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'testExam'>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseOverviewService {
     private participationService = inject(ParticipationService);
     private translate = inject(TranslateService);

@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
@@ -42,6 +41,7 @@ import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
@@ -51,10 +51,10 @@ import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 @Profile(PROFILE_LOCALCI)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("build-system/build-queue-administration")
+@FeatureUsage(UserFeature.BUILD_AGENTS)
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
+@RequestMapping("api/admin/")
 public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
@@ -85,7 +85,7 @@ public class AdminBuildJobQueueResource {
      * @param buildJobId the id of the build job
      * @return the build job, or 404 if not found
      */
-    @GetMapping({ "build-jobs/{buildJobId}", "build-job/{buildJobId}" })
+    @GetMapping("build-jobs/{buildJobId}")
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable String buildJobId) {
         if (buildJobId == null || buildJobId.isBlank()) {
             return ResponseEntity.badRequest().build();
@@ -246,7 +246,7 @@ public class AdminBuildJobQueueResource {
      * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping({ "build-jobs/{buildJobId}/cancel", "cancel-job/{buildJobId}" })
+    @DeleteMapping("build-jobs/{buildJobId}/cancel")
     public ResponseEntity<Void> cancelBuildJob(@PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job with id {}", buildJobId);
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService

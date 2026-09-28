@@ -32,16 +32,17 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     private static final String TEST_PREFIX = "localcitriggercount";
 
     /**
-     * Loading the exercise with its build config and auxiliary repositories, the course it eagerly brings with it, and
-     * the exercise's build statistics. All three are per exercise, not per participation.
+     * Loading the exercise with its auxiliary repositories, the course it eagerly brings with it, the exercise's build
+     * statistics and its build configuration. All four are per exercise, not per participation: the configuration is a
+     * row of its own that names the exercise, so it is read once for the batch rather than with the exercise.
      */
-    private static final int PER_EXERCISE_QUERY_COUNT = 3;
+    private static final int PER_EXERCISE_QUERY_COUNT = 4;
 
     /**
-     * Only the exercise's build statistics: the caller of the projection based path hands over an exercise it already
-     * loaded, so that load is not part of this measurement.
+     * The exercise's build statistics and its build configuration: the caller of the projection based path hands over
+     * an exercise it already loaded, so that load is not part of this measurement.
      */
-    private static final int PER_EXERCISE_QUERY_COUNT_WITH_LOADED_EXERCISE = 1;
+    private static final int PER_EXERCISE_QUERY_COUNT_WITH_LOADED_EXERCISE = 2;
 
     /** The insert of the build job itself, which is the only unavoidable per-participation write. */
     private static final int PER_PARTICIPATION_QUERY_COUNT = 1;
@@ -118,7 +119,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void theDetachedParticipationCarriesEverythingTheTriggerReads() throws Exception {
         createParticipationsWithSubmissions(1);
-        var exercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        var exercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         var data = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(programmingExercise.getId()).getFirst();
 
         var participation = data.toDetachedParticipation(exercise);
@@ -184,7 +185,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     void triggeringFromTheProjectionOnlyAddsOneQueryEach() throws Exception {
         int participationCount = 4;
         List<ParticipationBuildTriggerDTO> triggerData = createParticipationsWithSubmissions(participationCount);
-        var exercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        var exercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
 
         assertThatDb(() -> {
             programmingTriggerService.triggerBuildForParticipationData(triggerData, exercise);

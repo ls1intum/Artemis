@@ -31,6 +31,7 @@
                 [studentParticipation]="activeParticipation()"
                 [course]="exercise().course"
                 [isPractice]="participationMode() === 'practice'"
+                [quizPracticeInProgress]="quizPracticeInProgress()"
                 [quizLiveStatus]="quizLiveStatus()"
                 [quizLiveHeaderInfo]="quizLiveHeaderInfo()"
             />
@@ -55,6 +56,7 @@
             [onRestartPractice]="onRestartPractice()"
             [submitDisabled]="submitDisabled()"
             [submitLabel]="submitLabel()"
+            [quizPracticeAttemptFinished]="quizPracticeAttemptFinished()"
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
             (newParticipation)="onNewParticipation($event)"

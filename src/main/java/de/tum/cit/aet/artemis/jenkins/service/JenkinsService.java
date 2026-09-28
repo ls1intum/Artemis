@@ -80,9 +80,6 @@ public class JenkinsService implements ContinuousIntegrationService {
     @Override
     public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        // Make sure the build config is loaded
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(sourceExercise);
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(targetExercise);
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
     }
 

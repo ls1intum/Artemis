@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionPipelineExecutionDTO;
 
 @Component
 @Conditional(IrisEnabled.class)
@@ -170,6 +171,10 @@ public class IrisRequestMockProvider {
         mockPostRequest("/autonomous-tutor/run", PyrisAutonomousTutorPipelineExecutionDTO.class, responseConsumer);
     }
 
+    public void mockStruggleInterventionResponse(Consumer<PyrisStruggleInterventionPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/struggle-intervention/run", PyrisStruggleInterventionPipelineExecutionDTO.class, responseConsumer);
+    }
+
     public void mockRunCompetencyExtractionResponseAnd(Consumer<PyrisCompetencyExtractionPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
@@ -224,6 +229,18 @@ public class IrisRequestMockProvider {
 
     public void mockIngestionWebhookRunError(int httpStatus) {
         mockPostError(webhooksApiURL.toString(), "/lectures/ingest", httpStatus);
+    }
+
+    /**
+     * Answers the lecture unit visibility webhook with an error and a body, so that a caller which distinguishes
+     * Pyris's own "not ingested" answer from any other 404 can be exercised.
+     *
+     * @param httpStatus the status to answer with
+     * @param body       the response body
+     */
+    public void mockLectureVisibilityWebhookError(int httpStatus, String body) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/visibility")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.valueOf(httpStatus)).body(body).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockDeletionWebhookRunError(int httpStatus) {

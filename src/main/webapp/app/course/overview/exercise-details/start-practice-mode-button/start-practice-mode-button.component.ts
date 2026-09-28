@@ -55,9 +55,13 @@ export class StartPracticeModeButtonComponent {
     }
 
     startPractice(useGradedParticipation: boolean): void {
+        // The buttons are only disabled after the next render, so ignore a second click that arrives before that
+        if (this._startingPracticeMode()) {
+            return;
+        }
         this._startingPracticeMode.set(true);
         this.courseExerciseService
-            .startPractice(this.exercise().id!, useGradedParticipation)
+            .startPractice(this.exercise().id!, useGradedParticipation, this.exercise())
             .pipe(finalize(() => this._startingPracticeMode.set(false)))
             .subscribe({
                 next: (participation) => {

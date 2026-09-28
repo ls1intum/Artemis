@@ -1,12 +1,13 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -96,9 +98,49 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
         ProgrammingLanguage programmingLanguage, ProjectType projectType, String projectKey, String testRepositoryUri, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
+        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup, SourceParticipationRefDTO templateParticipation,
         SourceParticipationRefDTO solutionParticipation) implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
+
+    /**
+     * Builds the import request body describing an exercise and the build configuration the import should use. The
+     * exercise does not carry that configuration - it is a row of its own that names the exercise - so both are
+     * mapped here. A {@code null} configuration leaves the source exercise's in place.
+     *
+     * @param exercise    the exercise the import should create
+     * @param buildConfig the build configuration the request carries, or {@code null} to inherit the source's
+     * @return the request body
+     */
+    public static ImportProgrammingExerciseRequestDTO of(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfig) {
+        // Every collection below is lazy: a detached exercise carries an uninitialized handle the request must not read.
+        List<GradingCriterionDTO> gradingCriteria = Hibernate.isInitialized(exercise.getGradingCriteria())
+                ? exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).toList()
+                : null;
+        Set<CompetencyLinkDTO> competencyLinks = Hibernate.isInitialized(exercise.getCompetencyLinks())
+                ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
+                : null;
+        List<AuxiliaryRepositoryDTO> auxiliaryRepositories = Hibernate.isInitialized(exercise.getAuxiliaryRepositories())
+                ? exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList()
+                : null;
+        var submissionPolicyEntity = exercise.getSubmissionPolicy();
+        var submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity) : null;
+        var plagiarismDetectionConfigEntity = exercise.getPlagiarismDetectionConfig();
+        var plagiarismDetectionConfig = plagiarismDetectionConfigEntity != null && Hibernate.isInitialized(plagiarismDetectionConfigEntity)
+                ? PlagiarismDetectionConfigDTO.of(plagiarismDetectionConfigEntity)
+                : null;
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return new ImportProgrammingExerciseRequestDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getPackageName(),
+                exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getCategories(), exercise.getDifficulty(), exercise.getMode(),
+                TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
+                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
+                exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(),
+                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
+                exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
+                exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), exercise.getProjectKey(),
+                exercise.getTestRepositoryUri(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy,
+                plagiarismDetectionConfig, exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
+                exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()), null, null);
+    }
 
     /**
      * Reference to a source template or solution participation. The from-file import reads the repository URI off the
@@ -134,9 +176,12 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         // The three collections below are where import and create deliberately differ: import normalizes a missing
         // collection to an empty one, create leaves it at the entity default.
         exercise.setCategories(categories == null ? new HashSet<>() : new HashSet<>(categories));
+        // A list, not a set, on the wire: the export nulls the criterion and instruction ids, and GradingCriterionDTO
+        // is a record with value equality, so a set would merge two criteria that only differ by id and drop a rubric
+        // row. The entities are distinct even without ids, so they only go into a set once they are built.
         exercise.setGradingCriteria(
                 gradingCriteria == null ? new HashSet<>() : gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toCollection(HashSet::new)));
-        exercise.setAuxiliaryRepositories(new ArrayList<>());
+        exercise.setAuxiliaryRepositories(new LinkedHashSet<>());
         if (auxiliaryRepositories != null) {
             List<AuxiliaryRepository> repositories = auxiliaryRepositories.stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
             repositories.forEach(exercise::addAuxiliaryRepository);

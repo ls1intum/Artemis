@@ -71,6 +71,17 @@ public record SubmissionPolicyDTO(@Nullable Long id, String type, Integer submis
     }
 
     /**
+     * Returns the same policy without the row id, for payloads that are written to a file and read back by another
+     * instance. {@link #toEntity()} carries the id through for the update path, so an exported id would make the
+     * importing instance save onto the exported exercise's policy row.
+     *
+     * @return a copy of this DTO with a {@code null} id
+     */
+    public SubmissionPolicyDTO withoutId() {
+        return new SubmissionPolicyDTO(null, type, submissionLimit, exceedingPenalty, active);
+    }
+
+    /**
      * Builds the matching {@link SubmissionPolicy} subclass from this DTO. The id is copied through so that a policy
      * loaded from the database and sent back keeps its identity — an id-less transient policy would insert a second
      * {@code submission_policy} row on the update path. The back-reference to the programming exercise is never set.
