@@ -12,7 +12,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
@@ -26,6 +29,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -33,11 +37,13 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
+import inet.ipaddr.IPAddress;
 
 /**
  * Unit tests for authenticating a git operation over SSH by public key.
@@ -192,6 +198,36 @@ class GitPublickeyAuthenticatorServiceTest {
         doThrow(new RuntimeException("too many attempts")).when(rateLimitService).enforcePerMinute(any(), any());
 
         assertThat(authenticatorService.authenticate("ge12abc", keyPair.getPublic(), session)).isFalse();
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    void authenticate_fromAPeerWhoseAddressCarriesAHostname_stillRateLimitsPerClient() throws UnknownHostException {
+        // A reverse-resolved peer reports its hostname from getHostString(), which parses to no address at all. Keying
+        // the bucket on that put every such client into one shared bucket, so they spent each other's budget.
+        withStoredKey(storedKey(keyPair.getPublic(), null));
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user(true, false)));
+        when(session.getClientAddress())
+                .thenReturn(new InetSocketAddress(InetAddress.getByAddress("host-192-0-2-10.dialup.example.net", new byte[] { (byte) 192, 0, 2, 10 }), 52000));
+
+        assertThat(authenticatorService.authenticate("ge12abc", keyPair.getPublic(), session)).isTrue();
+
+        ArgumentCaptor<IPAddress> clientId = ArgumentCaptor.forClass(IPAddress.class);
+        verify(rateLimitService).enforcePerMinute(clientId.capture(), eq(RateLimitType.AUTHENTICATION));
+        assertThat(clientId.getValue()).isNotNull();
+        assertThat(clientId.getValue().toString()).isEqualTo("192.0.2.10");
+    }
+
+    @Test
+    void authenticate_fromAPeerWithoutAUsableAddress_isRefusedWithoutReadingTheAccount() {
+        // Nothing identifies the client, so there is no bucket to charge and no way to bound the guessing.
+        withStoredKey(storedKey(keyPair.getPublic(), null));
+        when(session.getClientAddress()).thenReturn(new SocketAddress() {
+        });
+
+        assertThat(authenticatorService.authenticate("ge12abc", keyPair.getPublic(), session)).isFalse();
+
+        verify(rateLimitService, never()).enforcePerMinute(any(), any());
         verify(userRepository, never()).findById(any());
     }
 

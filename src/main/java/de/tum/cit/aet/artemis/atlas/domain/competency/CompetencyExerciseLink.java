@@ -58,6 +58,7 @@ public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     }
 
     @Embeddable
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CompetencyExerciseId implements Serializable {
 
         @Serial

@@ -41,6 +41,9 @@ function urlValidator(control: AbstractControl) {
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, CompetencySelectionComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class OnlineUnitFormComponent {
+    private readonly formBuilder = inject(FormBuilder);
+    private readonly onlineUnitService = inject(OnlineUnitService);
+
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faTimes = faTimes;
 
@@ -55,9 +58,6 @@ export class OnlineUnitFormComponent {
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     urlValidator = urlValidator;
-
-    private readonly formBuilder = inject(FormBuilder);
-    private readonly onlineUnitService = inject(OnlineUnitService);
 
     form: FormGroup = this.formBuilder.group({
         name: [undefined, [Validators.required, Validators.maxLength(255)]],

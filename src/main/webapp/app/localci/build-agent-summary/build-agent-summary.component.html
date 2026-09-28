@@ -1,18 +1,18 @@
 <div>
     <h5 *adminTitleBarTitle id="build-agents-heading" class="mb-0" jhiTranslate="artemisApp.buildAgents.title"></h5>
     <div *adminTitleBarActions class="flex items-center gap-2">
-        <tum-ui-button severity="success" size="small" (clicked)="resumeAllBuildAgents()">
+        <tumaet-ui-button severity="success" size="small" (clicked)="resumeAllBuildAgents()">
             <fa-icon [icon]="faPlay" />
             <span jhiTranslate="artemisApp.buildAgents.resumeAll"></span>
-        </tum-ui-button>
-        <tum-ui-button severity="danger" size="small" (clicked)="displayPauseBuildAgentModal()">
+        </tumaet-ui-button>
+        <tumaet-ui-button severity="danger" size="small" (clicked)="displayPauseBuildAgentModal()">
             <fa-icon [icon]="faPause" />
             <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
-        </tum-ui-button>
-        <tum-ui-button severity="danger" size="small" (clicked)="displayClearDistributedDataModal()">
+        </tumaet-ui-button>
+        <tumaet-ui-button severity="danger" size="small" (clicked)="displayClearDistributedDataModal()">
             <fa-icon [icon]="faTrash" />
             <span jhiTranslate="artemisApp.buildAgents.clearDistributedData.title"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
     @if (buildAgents()) {
         <div class="flex justify-between items-center border-b border-surface pb-2 mb-3">
@@ -22,7 +22,7 @@
             </p>
         </div>
         <div class="build-agents-section">
-            <table tumUiTable [size]="'small'" [striped]="true">
+            <table tumAetUiTable [size]="'small'" [striped]="true">
                 <thead>
                     <tr>
                         <th scope="col" class="build-agents-column-strings" jhiTranslate="artemisApp.buildAgents.name"></th>
@@ -57,17 +57,18 @@
                             <td class="build-agents-column">
                                 @switch (agent.status) {
                                     @case ('ACTIVE') {
-                                        <tum-ui-tag severity="success" [value]="'artemisApp.buildAgents.running' | artemisTranslate" />
+                                        <tumaet-ui-tag severity="success" [value]="'artemisApp.buildAgents.running' | artemisTranslate" />
                                     }
                                     @case ('IDLE') {
-                                        <tum-ui-tag severity="secondary" [value]="'artemisApp.buildAgents.idle' | artemisTranslate" />
+                                        <tumaet-ui-tag severity="secondary" [value]="'artemisApp.buildAgents.idle' | artemisTranslate" />
                                     }
                                     @case ('PAUSED') {
-                                        <tum-ui-tag severity="warn" [value]="'artemisApp.buildAgents.paused' | artemisTranslate" />
+                                        <tumaet-ui-tag severity="warn" [value]="'artemisApp.buildAgents.paused' | artemisTranslate" />
                                     }
                                     @case ('SELF_PAUSED') {
-                                        <tum-ui-tag severity="warn" [value]="'artemisApp.buildAgents.selfPaused' | artemisTranslate" />
+                                        <tumaet-ui-tag severity="warn" [value]="'artemisApp.buildAgents.selfPaused' | artemisTranslate" />
                                     }
+                                    @default {}
                                 }
                             </td>
                             <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>
@@ -79,24 +80,24 @@
                                             {{ job.name ?? job.id }}
                                         </a>
                                         @if (job.id) {
-                                            <tum-ui-button
+                                            <tumaet-ui-button
                                                 severity="danger"
                                                 size="small"
                                                 (clicked)="cancelBuildJob(job.id)"
                                                 [ariaLabel]="'artemisApp.buildQueue.cancel' | artemisTranslate"
                                             >
                                                 <fa-icon [icon]="faTimes" />
-                                            </tum-ui-button>
+                                            </tumaet-ui-button>
                                         }
                                     </div>
                                 }
                             </td>
                             <td class="build-agents-column" (click)="$event.stopPropagation()">
                                 @if ((agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0) > 0) {
-                                    <tum-ui-button severity="danger" size="small" (clicked)="cancelAllBuildJobs(agent.buildAgent)">
+                                    <tumaet-ui-button severity="danger" size="small" (clicked)="cancelAllBuildJobs(agent.buildAgent)">
                                         <fa-icon [icon]="faTimes" />
                                         <span class="ms-1" jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 }
                             </td>
                         </tr>

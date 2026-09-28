@@ -41,7 +41,6 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
-import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
 import { stringifyIgnoringFields } from 'app/foundation/util/utils';
@@ -77,7 +76,6 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
     host: { '(window:beforeunload)': 'unloadNotification($event)' },
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
-    private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private alertService = inject(AlertService);
@@ -182,8 +180,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly autoSaveTimer = signal(0);
 
     explanation = '';
-
-    automaticSubmissionSubscription?: Subscription;
 
     isAfterAssessmentDueDate = false;
     readonly isLoading = signal(true);
@@ -492,43 +488,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private subscribeToWebsockets(): void {
-        this.automaticSubmissionSubscription?.unsubscribe();
-        this.automaticSubmissionSubscription = undefined;
         this.manualResultUpdateListener?.unsubscribe();
         this.manualResultUpdateListener = undefined;
         this.athenaResultUpdateListener?.unsubscribe();
         this.athenaResultUpdateListener = undefined;
 
-        if (this.submission() && this.submission().id) {
-            if (this.submission().submitted) {
-                this.subscribeToNewResultsWebsocket();
-            } else {
-                this.subscribeToAutomaticSubmissionWebsocket();
-            }
+        if (this.submission()?.id && this.submission().submitted) {
+            this.subscribeToNewResultsWebsocket();
         }
-    }
-
-    private subscribeToAutomaticSubmissionWebsocket(): void {
-        if (!this.submission() || !this.submission().id) {
-            return;
-        }
-        this.automaticSubmissionSubscription?.unsubscribe();
-        this.automaticSubmissionSubscription = this.websocketService
-            .subscribe<ModelingSubmission>('/user/topic/modelingSubmission/' + this.submission().id)
-            .subscribe((submission: ModelingSubmission) => {
-                if (submission.submitted) {
-                    this.submission.set(submission);
-                    this.refreshNonCollaborativeEditorFromSavedSubmission();
-                    const latestResult = getLatestSubmissionResult(this.submission());
-                    if (latestResult && latestResult.completionDate && (this.isAfterAssessmentDueDate || latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) {
-                        this.modelingAssessmentService.getAssessment(this.submission().id!).subscribe((assessmentResult: Result) => {
-                            this.assessmentResult.set(assessmentResult);
-                            this.prepareAssessmentData();
-                        });
-                    }
-                    this.alertService.info('artemisApp.modelingEditor.autoSubmit');
-                }
-            });
     }
 
     private subscribeToNewResultsWebsocket(): void {
@@ -638,7 +605,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 next: (submission) => {
                     this.submission.set(submission.body!);
                     this.result.set(getLatestSubmissionResult(this.submission()));
-                    this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
                 error: () => this.onSaveError(),
@@ -678,7 +644,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     }
 
                     this.subscribeToWebsockets();
-                    this.automaticSubmissionSubscription?.unsubscribe();
                     this.onSaveSuccess();
                 },
                 error: () => this.onSaveError(),
@@ -697,7 +662,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     } else {
                         this.alertService.success('artemisApp.modelingEditor.submitSuccessful');
                     }
-                    this.subscribeToAutomaticSubmissionWebsocket();
                     this.onSaveSuccess();
                 },
                 error: () => this.onSaveError(),
@@ -735,7 +699,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.subscription?.unsubscribe();
         clearInterval(this.autoSaveInterval);
 
-        this.automaticSubmissionSubscription?.unsubscribe();
         this.manualResultUpdateListener?.unsubscribe();
         this.athenaResultUpdateListener?.unsubscribe();
     }

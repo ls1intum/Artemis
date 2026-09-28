@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PlagiarismPostCreationDtoModel } from 'app/plagiarism/shared/entities/plagiarism-post-creation-dto.model';
 import { PlagiarismPostCreationResponseDtoModel, mapResponseToPost } from 'app/plagiarism/shared/entities/plagiarism-post-creation-response-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { map } from 'rxjs/operators';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PlagiarismPostService {
     private http = inject(HttpClient);
 

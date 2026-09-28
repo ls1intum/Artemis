@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -104,7 +104,7 @@ class ContentChangeSchedulerTest {
         verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
         verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().exerciseCount()).isEqualTo(2);
         assertThat(payload.getValue().successCount()).isEqualTo(0);
         assertThat(payload.getValue().failureCount()).isEqualTo(2);
@@ -123,7 +123,7 @@ class ContentChangeSchedulerTest {
         verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
         verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().exerciseCount()).isEqualTo(2);
         assertThat(payload.getValue().successCount()).isEqualTo(0);
         assertThat(payload.getValue().failureCount()).isEqualTo(2);
@@ -154,7 +154,7 @@ class ContentChangeSchedulerTest {
         verify(orchestrationService).runBatch(COURSE_ID, exerciseIds, Set.of());
 
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         AutoOrchestrationSummaryDTO summary = payload.getValue();
         assertThat(summary.courseId()).isEqualTo(COURSE_ID);
         assertThat(summary.exerciseCount()).isEqualTo(2);
@@ -178,7 +178,7 @@ class ContentChangeSchedulerTest {
         // Both exercises and lecture units go through a single batched orchestrator invocation.
         verify(orchestrationService).runBatch(COURSE_ID, exerciseIds, lectureUnitIds);
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         AutoOrchestrationSummaryDTO summary = payload.getValue();
         // The change count spans exercises + lecture units (2 + 1), and the success invariant still holds.
         assertThat(summary.exerciseCount()).isEqualTo(3);
@@ -215,7 +215,7 @@ class ContentChangeSchedulerTest {
 
         verify(orchestrationService).runBatch(COURSE_ID, Set.of(10L), Set.of());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().exerciseCount()).isEqualTo(1);
         assertThat(payload.getValue().successCount()).isEqualTo(1);
         assertThat(payload.getValue().failureCount()).isEqualTo(0);
@@ -254,7 +254,7 @@ class ContentChangeSchedulerTest {
         // daily reservation) so it retries on a later tick instead of being silently discarded.
         verify(accumulator).requeueAfterFailedRun(COURSE_ID, exerciseIds, Set.of());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         AutoOrchestrationSummaryDTO summary = payload.getValue();
         assertThat(summary.exerciseCount()).isEqualTo(2);
         assertThat(summary.successCount()).isEqualTo(0);
@@ -279,7 +279,7 @@ class ContentChangeSchedulerTest {
         verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
         verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().failureCount()).isEqualTo(2);
         assertThat(payload.getValue().outcome()).isEqualTo(AutoOrchestrationSummaryDTO.Outcome.PARTIAL);
     }
@@ -298,7 +298,7 @@ class ContentChangeSchedulerTest {
 
         verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().outcome()).isEqualTo(AutoOrchestrationSummaryDTO.Outcome.PARTIAL);
     }
 
@@ -317,7 +317,7 @@ class ContentChangeSchedulerTest {
         // requeue, so a deleted/exam-only batch is not reported as a fake success.
         verify(accumulator, never()).requeueAfterFailedRun(anyLong(), any(), any());
         verify(accumulator, never()).requeueAfterConcurrentRun(anyLong(), any(), any());
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
     }
 
     @Test
@@ -331,7 +331,7 @@ class ContentChangeSchedulerTest {
 
         // Another tick (on any node) already drained the batch via the atomic claim — nothing to run.
         verify(orchestrationService, never()).runBatch(anyLong(), any(), any());
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
     }
 
     @Test
@@ -349,7 +349,7 @@ class ContentChangeSchedulerTest {
         // reservation so retry ticks do not burn quota) and nothing is surfaced.
         verify(accumulator).requeueAfterConcurrentRun(COURSE_ID, exerciseIds, Set.of());
         verify(accumulator, never()).record(anyLong(), anyLong());
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
     }
 
     @Test
@@ -367,7 +367,7 @@ class ContentChangeSchedulerTest {
         // requeued rather than discarded.
         verify(accumulator).requeueAfterFailedRun(COURSE_ID, exerciseIds, Set.of());
         ArgumentCaptor<AutoOrchestrationSummaryDTO> payload = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), payload.capture());
         assertThat(payload.getValue().successCount()).isEqualTo(0);
         assertThat(payload.getValue().failureCount()).isEqualTo(2);
     }
@@ -388,7 +388,7 @@ class ContentChangeSchedulerTest {
         verify(accumulator, never()).claimDueBatch(anyLong());
         verify(accumulator, never()).claimDueBatch(anyLong(), anyInt(), anyInt());
         verify(orchestrationService, never()).runBatch(anyLong(), any(), any());
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
     }
 
     private static TextUnit courseTextUnit(long id, String content) {

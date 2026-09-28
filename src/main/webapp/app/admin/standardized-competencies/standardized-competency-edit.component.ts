@@ -12,7 +12,7 @@ import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxono
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 /** Option shown in the source select, with a precomputed display label. */
 interface SourceOption {
     id?: number;
@@ -48,11 +48,11 @@ interface StandardizedCompetencyForm {
         TaxonomySelectComponent,
         MarkdownDirective,
         ArtemisTranslatePipe,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiInputDirective,
-        TumUiSelectComponent,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class StandardizedCompetencyEditComponent {

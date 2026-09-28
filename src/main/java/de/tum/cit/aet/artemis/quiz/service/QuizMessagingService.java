@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.quiz.domain.QuizAction.START_BATCH;
+import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.COURSE_QUIZ_EXERCISES;
+import static de.tum.cit.aet.artemis.quiz.web.QuizWebsocketTopics.QUIZ_BATCH;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -15,6 +17,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -76,10 +79,8 @@ public class QuizMessagingService {
                             quizExercise.getExerciseNotificationTitle());
                 }
                 // Send quiz via websocket.
-                String destination = "/topic/courses/" + course.getId() + "/quizExercises";
-                if (quizChange == START_BATCH && quizBatch != null) {
-                    destination = destination + "/" + quizBatch.getId();
-                }
+                WebsocketDestination destination = quizChange == START_BATCH && quizBatch != null ? QUIZ_BATCH.at(course.getId(), quizBatch.getId())
+                        : COURSE_QUIZ_EXERCISES.at(course.getId());
                 // TODO the view could also be passed as conversion hint to the message converter
                 websocketMessagingService.sendMessage(destination, MessageBuilder.withPayload(payload).build());
                 log.info("Sent '{}' for quiz {} to all listening clients in {} ms", quizChange, quizExercise.getId(), System.currentTimeMillis() - start);

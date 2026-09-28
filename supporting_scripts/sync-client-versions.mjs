@@ -69,8 +69,11 @@ function writePkg(path, pkg) {
 
 // ── Version mapping: which .env variable controls which packages ─────────────
 
-/** Packages with independent release cycles, excluded from ANGULAR_VERSION sync. */
-const ANGULAR_INDEPENDENT_PACKAGES = new Set(['@angular/cdk', '@angular/material', '@angular/youtube-player', '@angular/build', '@angular/cli']);
+/**
+ * Packages with independent release cycles, excluded from ANGULAR_VERSION sync. The components repository releases
+ * `@angular/aria`, `@angular/cdk` and `@angular/material` together, and aria requires exactly its own cdk version.
+ */
+const ANGULAR_INDEPENDENT_PACKAGES = new Set(['@angular/aria', '@angular/cdk', '@angular/material', '@angular/youtube-player', '@angular/build', '@angular/cli']);
 
 /** Given a package name and current version, return the .env key that controls it. */
 function envKeyForPackage(name) {

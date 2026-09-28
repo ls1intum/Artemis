@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import static de.tum.cit.aet.artemis.atlas.web.AtlasWebsocketTopics.ORCHESTRATION_SUMMARY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Clock;
@@ -46,8 +47,6 @@ import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 public class ContentChangeScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(ContentChangeScheduler.class);
-
-    private static final String TOPIC_TEMPLATE = "/topic/atlas/orchestrator/%d";
 
     private final ContentChangeAccumulatorService accumulator;
 
@@ -194,6 +193,6 @@ public class ContentChangeScheduler {
         boolean success = outcome == Outcome.SUCCESS;
         AutoOrchestrationSummaryDTO summary = new AutoOrchestrationSummaryDTO(courseId, runId, changeCount, success ? changeCount : 0, success ? 0 : changeCount, outcome,
                 Instant.now(clock));
-        websocketMessagingService.sendMessage(TOPIC_TEMPLATE.formatted(courseId), summary);
+        websocketMessagingService.sendMessage(ORCHESTRATION_SUMMARY.at(courseId), summary);
     }
 }

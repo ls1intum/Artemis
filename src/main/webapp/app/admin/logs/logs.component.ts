@@ -11,7 +11,7 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SlicePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiInputDirective, TumUiTableVirtualScrollComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiInputDirective, TumAetUiTableVirtualScrollComponent } from '@tumaet/ui-angular';
 /**
  * Component for managing application log levels.
  * Allows viewing and changing log levels for different loggers.
@@ -28,10 +28,10 @@ import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiInputDirective, T
         FaIconComponent,
         SlicePipe,
         AdminTitleBarTitleDirective,
-        TumUiButtonComponent,
-        TumUiButtonGroupComponent,
-        TumUiTableVirtualScrollComponent,
-        TumUiInputDirective,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
+        TumAetUiTableVirtualScrollComponent,
+        TumAetUiInputDirective,
     ],
 })
 export class LogsComponent implements OnInit {

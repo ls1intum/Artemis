@@ -1,20 +1,20 @@
 <div class="frame">
     <div class="controls">
-        <tum-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
+        <tumaet-ui-icon-field class="search-field" [icon]="faMagnifyingGlass">
             <input
-                tumUiInput
-                tumUiInputSize="small"
+                tumAetUiInput
+                tumAetUiInputSize="small"
                 class="search-input"
                 type="text"
                 [placeholder]="searchFieldPlaceholder()"
                 [attr.aria-label]="searchFieldPlaceholder()"
                 [(ngModel)]="searchString"
             />
-        </tum-ui-icon-field>
+        </tumaet-ui-icon-field>
         @if (loggedInUserIsAtLeastInstructorInCourse()) {
             <button
                 type="button"
-                tumUiButton
+                tumAetUiButton
                 severity="secondary"
                 size="small"
                 jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importButtonLabel"
@@ -23,7 +23,7 @@
             ></button>
             <button
                 type="button"
-                tumUiButton
+                tumAetUiButton
                 severity="secondary"
                 size="small"
                 jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.exportButtonLabel"
@@ -34,7 +34,7 @@
         @if (loggedInUserIsAtLeastTutorOfGroup()) {
             <button
                 type="button"
-                tumUiButton
+                tumAetUiButton
                 size="small"
                 jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.addStudentsButtonLabel"
                 data-testid="new-students-button"
@@ -47,6 +47,6 @@
         [removeActionColumnInfo]="loggedInUserIsAtLeastTutorOfGroup() ? studentsTableRemoveActionColumnInfo : undefined"
     />
 </div>
-<tum-ui-confirm-dialog />
+<tumaet-ui-confirm-dialog />
 <jhi-tutorial-registrations-import-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" #importModal />
 <jhi-tutorial-registrations-register-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" #registerModal />

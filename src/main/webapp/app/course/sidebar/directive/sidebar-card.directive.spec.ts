@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Type, signal, viewChild } from '@angular/core';
+import { DirectiveFixture, TestBed } from '@angular/core/testing';
+import { Type, WritableSignal, inputBinding, signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { SidebarCardDirective } from 'app/course/sidebar/directive/sidebar-card.directive';
@@ -16,25 +16,15 @@ function getCreatedComponentName(spy: ReturnType<typeof vi.spyOn>): string {
     return (spy.mock.calls[0][0] as Type<unknown>).name;
 }
 
-@Component({
-    template: ` <div jhiSidebarCard [size]="size()" [itemSelected]="false" [sidebarItem]="sidebarItem()" [groupKey]="groupKey()"></div>`,
-    imports: [SidebarCardDirective],
-})
-class TestHostComponent {
-    directive = viewChild.required(SidebarCardDirective);
-    size = signal<string>('');
-    sidebarItem = signal<SidebarCardElement | undefined>(undefined);
-    groupKey = signal<string | undefined>(undefined);
-}
-
 describe('SidebarCardDirective', () => {
-    let component: TestHostComponent;
-    let fixture: ComponentFixture<TestHostComponent>;
+    let fixture: DirectiveFixture<SidebarCardDirective>;
+    let size: WritableSignal<string>;
+    let sidebarItem: WritableSignal<SidebarCardElement | undefined>;
+    let groupKey: WritableSignal<string | undefined>;
     const router = new MockRouter();
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [TestHostComponent, SidebarCardDirective],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             providers: [
                 { provide: Router, useValue: router },
                 {
@@ -52,12 +42,17 @@ describe('SidebarCardDirective', () => {
                     },
                 },
             ],
-        }).compileComponents();
+        });
 
-        fixture = TestBed.createComponent(TestHostComponent);
-        component = fixture.componentInstance;
+        size = signal('');
+        sidebarItem = signal<SidebarCardElement | undefined>(undefined);
+        groupKey = signal<string | undefined>(undefined);
+        fixture = TestBed.createDirective(SidebarCardDirective, {
+            tagName: 'div',
+            bindings: [inputBinding('size', size), inputBinding('itemSelected', () => false), inputBinding('sidebarItem', sidebarItem), inputBinding('groupKey', groupKey)],
+        });
         TestBed.inject(ActivatedRoute);
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -65,42 +60,42 @@ describe('SidebarCardDirective', () => {
     });
 
     it('directive and viewContainerRef should be defined', () => {
-        expect(component.directive()).toBeDefined();
-        expect(component.directive().viewContainerRef).toBeDefined();
+        expect(fixture.directiveInstance).toBeDefined();
+        expect(fixture.directiveInstance.viewContainerRef).toBeDefined();
     });
 
     it('should create SidebarCardSmallComponent when size is "S"', () => {
-        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent');
-        component.size.set('S');
-        component.sidebarItem.set({ title: 'exercise-TestTitle', id: '1', size: 'S' });
-        component.groupKey.set('exerciseChannels');
+        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
+        size.set('S');
+        sidebarItem.set({ title: 'exercise-TestTitle', id: '1', size: 'S' });
+        groupKey.set('exerciseChannels');
 
-        fixture.changeDetectorRef.detectChanges();
-        component.directive().ngOnInit();
+        fixture.detectChanges();
+        fixture.directiveInstance.ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalled();
         expect(getCreatedComponentName(createComponentSpy)).toBe('SidebarCardSmallComponent');
     });
 
     it('should create SidebarCardMediumComponent when size is "M"', () => {
-        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent');
-        component.size.set('M');
-        component.sidebarItem.set({ title: 'exercise-TestTitle', id: '1', size: 'M' });
-        component.groupKey.set('exerciseChannels');
-        fixture.changeDetectorRef.detectChanges();
-        component.directive().ngOnInit();
+        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
+        size.set('M');
+        sidebarItem.set({ title: 'exercise-TestTitle', id: '1', size: 'M' });
+        groupKey.set('exerciseChannels');
+        fixture.detectChanges();
+        fixture.directiveInstance.ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalled();
         expect(getCreatedComponentName(createComponentSpy)).toBe('SidebarCardMediumComponent');
     });
 
     it('should create SidebarCardLargeComponent when size is "L"', () => {
-        const createComponentSpy = vi.spyOn(component.directive().viewContainerRef, 'createComponent');
-        component.size.set('L');
-        component.sidebarItem.set({ title: 'exercise-TestTitle', id: '1', size: 'L' });
-        component.groupKey.set('exerciseChannels');
-        fixture.changeDetectorRef.detectChanges();
-        component.directive().ngOnInit();
+        const createComponentSpy = vi.spyOn(fixture.directiveInstance.viewContainerRef, 'createComponent');
+        size.set('L');
+        sidebarItem.set({ title: 'exercise-TestTitle', id: '1', size: 'L' });
+        groupKey.set('exerciseChannels');
+        fixture.detectChanges();
+        fixture.directiveInstance.ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalled();
         expect(getCreatedComponentName(createComponentSpy)).toBe('SidebarCardLargeComponent');
@@ -112,12 +107,12 @@ describe('SidebarCardDirective', () => {
 
         for (let i = 0; i < prefixes.length; i++) {
             const prefix = prefixes[i];
-            const groupKey = channelTypes[i];
+            const channelType = channelTypes[i];
             const nameWithPrefix = prefix + 'TestName';
 
-            component.groupKey.set(groupKey);
-            fixture.changeDetectorRef.detectChanges();
-            const result = component.directive().removeChannelPrefix(nameWithPrefix);
+            groupKey.set(channelType);
+            fixture.detectChanges();
+            const result = fixture.directiveInstance.removeChannelPrefix(nameWithPrefix);
 
             expect(result).toBe('TestName');
         }
@@ -125,45 +120,45 @@ describe('SidebarCardDirective', () => {
 
     it('should not remove the prefix if groupKey is not in channelTypes', () => {
         const nameWithPrefix = 'exercise-TestName';
-        component.groupKey.set('otherGroup');
-        fixture.changeDetectorRef.detectChanges();
-        const result = component.directive().removeChannelPrefix(nameWithPrefix);
+        groupKey.set('otherGroup');
+        fixture.detectChanges();
+        const result = fixture.directiveInstance.removeChannelPrefix(nameWithPrefix);
 
         expect(result).toBe(nameWithPrefix);
     });
 
     it('should not remove the prefix if name does not start with any of the prefixes', () => {
         const nameWithoutPrefix = 'TestName';
-        component.groupKey.set('exerciseChannels');
-        fixture.changeDetectorRef.detectChanges();
-        const result = component.directive().removeChannelPrefix(nameWithoutPrefix);
+        groupKey.set('exerciseChannels');
+        fixture.detectChanges();
+        const result = fixture.directiveInstance.removeChannelPrefix(nameWithoutPrefix);
 
         expect(result).toBe(nameWithoutPrefix);
     });
 
     it('should handle empty name input', () => {
         const emptyName = '';
-        component.groupKey.set('exerciseChannels');
-        fixture.changeDetectorRef.detectChanges();
-        const result = component.directive().removeChannelPrefix(emptyName);
+        groupKey.set('exerciseChannels');
+        fixture.detectChanges();
+        const result = fixture.directiveInstance.removeChannelPrefix(emptyName);
 
         expect(result).toBe('');
     });
 
     it('should handle undefined name input', () => {
         const undefinedName = undefined as unknown as string;
-        component.groupKey.set('exerciseChannels');
-        fixture.changeDetectorRef.detectChanges();
-        const result = component.directive().removeChannelPrefix(undefinedName);
+        groupKey.set('exerciseChannels');
+        fixture.detectChanges();
+        const result = fixture.directiveInstance.removeChannelPrefix(undefinedName);
 
         expect(result).toBe(undefinedName);
     });
 
     it('should handle null name input', () => {
         const nullName = null as unknown as string;
-        component.groupKey.set('exerciseChannels');
-        fixture.changeDetectorRef.detectChanges();
-        const result = component.directive().removeChannelPrefix(nullName);
+        groupKey.set('exerciseChannels');
+        fixture.detectChanges();
+        const result = fixture.directiveInstance.removeChannelPrefix(nullName);
 
         expect(result).toBe(nullName);
     });

@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -64,7 +65,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
-@FeatureUsage("assessment/manual-assessment")
+@FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingAssessmentResource extends AssessmentResource {
@@ -103,6 +104,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param resultId     optional id of a specific result to retrieve; if not provided, returns the latest result
      * @return the assessment of the given submission
      */
+    @FeatureUsage(UserFeature.EXERCISE_FEEDBACK)
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
     public ResponseEntity<ResultDTO> getAssessmentBySubmissionId(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
@@ -139,6 +141,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
+    @FeatureUsage(UserFeature.TUTOR_TRAINING)
     @GetMapping("exercises/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ResultDTO> getModelingExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
@@ -175,6 +178,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving example modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
+    @FeatureUsage(UserFeature.TUTOR_TRAINING)
     @PutMapping("modeling-submissions/{submissionId}/example-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ResultDTO> saveModelingExampleAssessment(@PathVariable("submissionId") long exampleSubmissionId, @RequestBody List<FeedbackDTO> feedbacks) {

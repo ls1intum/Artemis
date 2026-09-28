@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -7,7 +7,7 @@ import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, Sbom } from './
 /**
  * Service for fetching Software Bill of Materials (SBOM) data from the server.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AdminSbomService {
     private readonly http = inject(HttpClient);
     private readonly resourceUrl = '/api/admin/sbom';

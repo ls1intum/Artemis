@@ -1,0 +1,38 @@
+<ng-template #panel>
+    <div
+        class="tumaet-ui-dialog tumaet:flex tumaet:max-h-[90dvh] tumaet:max-w-[90dvw] tumaet:flex-col tumaet:overflow-hidden tumaet:rounded-xl tumaet:border tumaet:border-border tumaet:bg-overlay-background tumaet:text-text tumaet:shadow-xl"
+        [class]="sizeClasses()"
+    >
+        @if (showHeader()) {
+            <div class="tumaet-ui-dialog-header tumaet:flex tumaet:shrink-0 tumaet:items-center tumaet:justify-between tumaet:gap-2 tumaet:p-4">
+                <div [id]="titleId" class="tumaet-ui-dialog-title tumaet:text-xl tumaet:font-semibold">
+                    @if (headerTemplate(); as headerTpl) {
+                        <ng-container [ngTemplateOutlet]="headerTpl" />
+                    } @else {
+                        {{ header() }}
+                    }
+                </div>
+                @if (closable()) {
+                    <button
+                        type="button"
+                        class="tumaet-ui-dialog-close tumaet:inline-flex tumaet:h-8 tumaet:w-8 tumaet:shrink-0 tumaet:cursor-pointer tumaet:appearance-none tumaet:items-center tumaet:justify-center tumaet:rounded-full tumaet:border-0 tumaet:bg-transparent tumaet:text-muted tumaet:transition-colors tumaet:hover:bg-hover-background"
+                        [attr.aria-label]="closeButtonAriaLabel() ?? ('tumAetUi.dialog.close' | tumAetUiTranslate)"
+                        (click)="close()"
+                    >
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                }
+            </div>
+        }
+
+        <div class="tumaet-ui-dialog-content tumaet:grow tumaet:overflow-y-auto tumaet:px-4 tumaet:pb-4">
+            <ng-content />
+        </div>
+
+        @if (footerTemplate(); as footerTpl) {
+            <div class="tumaet-ui-dialog-footer tumaet:flex tumaet:shrink-0 tumaet:justify-end tumaet:gap-2 tumaet:px-4 tumaet:pb-4">
+                <ng-container [ngTemplateOutlet]="footerTpl" />
+            </div>
+        }
+    </div>
+</ng-template>

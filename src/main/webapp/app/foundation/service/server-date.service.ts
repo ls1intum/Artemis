@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient } from '@angular/common/http';
 
@@ -14,7 +14,7 @@ export interface ServerDateService {
     now: () => dayjs.Dayjs;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ArtemisServerDateService implements ServerDateService {
     resourceUrl: string;
     recentOffsets: number[];

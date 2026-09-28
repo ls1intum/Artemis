@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { DialogStubComponent } from 'test/helpers/stubs/tutorialgroup/dialog-stub.component';
 import { TutorialRegistrationsRegisterModalComponent } from './tutorial-registrations-register-modal.component';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
@@ -79,7 +79,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         })
             .overrideComponent(TutorialRegistrationsRegisterModalComponent, {
                 remove: {
-                    imports: [TumUiDialogComponent, TutorialRegistrationsRegisterSearchBarComponent, TutorialRegistrationsStudentsTableComponent],
+                    imports: [TumAetUiDialogComponent, TutorialRegistrationsRegisterSearchBarComponent, TutorialRegistrationsStudentsTableComponent],
                 },
                 add: {
                     imports: [DialogStubComponent, TutorialRegistrationsRegisterSearchBarStubComponent, TutorialRegistrationsStudentsTableStubComponent],

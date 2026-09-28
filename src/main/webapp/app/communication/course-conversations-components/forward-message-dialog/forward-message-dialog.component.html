@@ -4,6 +4,7 @@
 </div>
 <div class="modal-body">
     <div class="autocomplete-container mt-1 mb-2 form-group">
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Pointer clicks on the wrapper focus the native input, which is already keyboard focusable. -->
         <div class="tag-input-container form-control" (click)="focusInput()">
             @for (channel of selectedChannels; track channel) {
                 <ng-container>

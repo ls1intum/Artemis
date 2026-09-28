@@ -13,9 +13,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [FaIconComponent, ArtemisTranslatePipe],
 })
 export class GlobalSearchNavbarComponent {
-    protected readonly faSearch = faSearch;
     private readonly osDetector = inject(OsDetectorService);
     private readonly searchOverlay = inject(SearchOverlayService);
+
+    protected readonly faSearch = faSearch;
     protected actionKeyLabel = this.osDetector.actionKeyLabel;
     protected isMac = this.osDetector.isMac;
 

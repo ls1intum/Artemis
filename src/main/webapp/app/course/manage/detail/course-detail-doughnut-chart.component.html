@@ -7,7 +7,17 @@
     @if (!titleLink()) {
         <h5 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate }}</h5>
     }
-    <div class="doughnut-chart-container position-relative" [ngClass]="titleLink() ? 'clickable' : ''" (click)="openCorrespondingPage()">
+    <div
+        class="doughnut-chart-container position-relative"
+        [ngClass]="titleLink() ? 'clickable' : ''"
+        (click)="openCorrespondingPage()"
+        #keyboardAction10
+        [attr.role]="titleLink() ? 'button' : null"
+        [attr.tabindex]="titleLink() ? 0 : null"
+        (keydown.enter)="titleLink() && $event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+        (keydown.space)="titleLink() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="titleLink() && $event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
+    >
         <div class="doughnut-chart-text" data-testid="course-chart-values">
             @if (receivedStats()) {
                 @if (currentPercentage() !== undefined) {
@@ -26,7 +36,7 @@
                 </div>
             }
         </div>
-        <tum-ui-doughnut-chart
+        <tumaet-ui-doughnut-chart
             [labels]="chartData().labels"
             [series]="chartData().series"
             [config]="chartConfig()"

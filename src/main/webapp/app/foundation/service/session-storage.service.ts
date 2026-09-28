@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { parseJson } from 'app/foundation/util/json.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SessionStorageService {
     /**
      * Stores a value in the session storage under the specified key.

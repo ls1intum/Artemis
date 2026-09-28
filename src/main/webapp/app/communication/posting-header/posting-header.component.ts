@@ -29,6 +29,9 @@ import { TagModule } from 'primeng/tag';
     imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent, TagModule],
 })
 export class PostingHeaderComponent implements OnInit {
+    private metisService = inject(MetisService);
+    private accountService = inject(AccountService);
+
     lastReadDate = input<dayjs.Dayjs>();
     posting = input<Posting>();
     readOnlyMode = input<boolean>(false);
@@ -56,9 +59,6 @@ export class PostingHeaderComponent implements OnInit {
     readonly faPencilAlt = faPencilAlt;
     readonly faCheckSquare = faCheckSquare;
     readonly faTriangleExclamation = faTriangleExclamation;
-
-    private metisService = inject(MetisService);
-    private accountService = inject(AccountService);
 
     constructor() {
         effect(() => {

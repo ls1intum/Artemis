@@ -36,7 +36,9 @@ public class AtlasWorkerTerminalToolService {
     }
 
     /**
-     * Completes a worker request after it has inspected course state or received a mutation outcome.
+     * Completes a worker request after it has inspected course state or received a mutation outcome. A read that
+     * returned an error is sufficient evidence only for {@code success=false}, so a worker blocked by a stale id or an
+     * extraction failure can report that specific blocker instead of being treated as never having completed.
      *
      * @param success     whether the assigned semantic batch was completed
      * @param message     concise outcome or actionable failure reason
@@ -54,8 +56,14 @@ public class AtlasWorkerTerminalToolService {
         if (holder == null) {
             return errorJson(objectMapper, "No worker completion context available.");
         }
-        if (!hasWorkerEvidence(toolContext)) {
-            return errorJson(objectMapper, "Inspect course state or receive a mutation outcome before completing the worker task.");
+        if (!hasSuccessEvidence(toolContext)) {
+            boolean hasReadOutcome = hasPositiveCount(toolContext, OrchestratorToolContextKeys.WORKER_READ_OUTCOME_COUNT_KEY);
+            if (!hasReadOutcome) {
+                return errorJson(objectMapper, "Inspect course state or receive a mutation outcome before completing the worker task.");
+            }
+            if (success) {
+                return errorJson(objectMapper, "success=true requires a successful course-state read or a mutation outcome; report the failed read with success=false.");
+            }
         }
         WorkerCompletionDTO completion = new WorkerCompletionDTO(success, message);
         if (!holder.compareAndSet(null, completion)) {
@@ -65,18 +73,24 @@ public class AtlasWorkerTerminalToolService {
         return toJson(objectMapper, Map.of("completed", true, "success", success));
     }
 
-    private static boolean hasWorkerEvidence(@Nullable ToolContext toolContext) {
+    /**
+     * Evidence that can back any completion: a successful read, a completed mutation outcome (including errors and
+     * no-ops), or an applied action. Failed reads are deliberately excluded; they only back a {@code success=false}
+     * completion that reports the read failure as the blocker.
+     */
+    private static boolean hasSuccessEvidence(@Nullable ToolContext toolContext) {
         if (toolContext == null || toolContext.getContext() == null) {
             return false;
         }
-        Object readValue = toolContext.getContext().get(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY);
-        boolean hasRead = readValue instanceof AtomicInteger readCount && readCount.get() > 0;
         OrchestratorToolContextKeys.AppliedActionsBuffer buffer = OrchestratorToolHelpers.appliedActionsBufferFromContext(toolContext);
         Object startValue = toolContext.getContext().get(OrchestratorToolContextKeys.WORKER_ACTION_START_KEY);
         int start = startValue instanceof Number number ? number.intValue() : 0;
-        Object mutationValue = toolContext.getContext().get(OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY);
-        boolean hasMutationOutcome = mutationValue instanceof AtomicInteger count && count.get() > 0;
-        return hasRead || hasMutationOutcome || buffer != null && buffer.actions().size() > start;
+        return hasPositiveCount(toolContext, OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY)
+                || hasPositiveCount(toolContext, OrchestratorToolContextKeys.WORKER_MUTATION_OUTCOME_COUNT_KEY) || buffer != null && buffer.actions().size() > start;
+    }
+
+    private static boolean hasPositiveCount(@Nullable ToolContext toolContext, String key) {
+        return toolContext != null && toolContext.getContext() != null && toolContext.getContext().get(key) instanceof AtomicInteger count && count.get() > 0;
     }
 
     @Nullable
