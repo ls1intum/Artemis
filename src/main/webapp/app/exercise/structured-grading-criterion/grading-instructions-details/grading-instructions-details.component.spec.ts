@@ -36,7 +36,6 @@ describe('GradingInstructionsDetailsComponent', () => {
     let gradingInstructionWithoutId: GradingInstruction;
     let gradingCriterionWithoutId: GradingCriterion;
     let exercise: Exercise;
-    let backupExercise: Exercise;
     let generationService: { generate: ReturnType<typeof vi.fn> };
     let accountService: { isAtLeastEditorForExercise: ReturnType<typeof vi.fn> };
     let alertService: MockAlertService;
@@ -70,9 +69,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService) as unknown as MockAlertService;
         exercise = { id: 1 } as Exercise;
-        backupExercise = { id: 1 } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
-        component.backupExercise = backupExercise;
         gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
         gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] };
         gradingInstructionWithoutId = { credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 };
@@ -407,7 +404,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             generationService.generate.mockReturnValue(response);
 
             component.generateAssessmentCriteria();
-            component.switchMode();
+            component.setEditMode('text');
             response.next([generatedCriterion]);
             response.complete();
 
@@ -543,7 +540,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.addNewGradingCriterion();
             component.deleteGradingCriterion(gradingCriterion);
             component.onCriterionTitleChange({ target: { value: 'changed' } } as unknown as Event, gradingCriterion);
-            component.switchMode();
+            component.setEditMode('text');
 
             expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
             expect(gradingCriterion.title).toBe(originalTitle);
@@ -806,33 +803,6 @@ describe('GradingInstructionsDetailsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(exercise.gradingCriteria).toHaveLength(0);
-    });
-
-    it('should reset the grading criterion', () => {
-        exercise.gradingCriteria = [gradingCriterion];
-        component.backupExercise.gradingCriteria = [gradingCriterion];
-        component.resetCriterionTitle(gradingCriterion);
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(exercise.gradingCriteria).toEqual(component.backupExercise.gradingCriteria);
-    });
-
-    it('should reset only the selected no-ID instruction when multiple no-ID objects exist', () => {
-        const firstInstruction = { credits: 1, gradingScale: 'first' } as GradingInstruction;
-        const secondInstruction = { credits: 2, gradingScale: 'second' } as GradingInstruction;
-        const firstCriterion = { title: 'first', structuredGradingInstructions: [firstInstruction] } as GradingCriterion;
-        const secondCriterion = { title: 'second', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
-        exercise.gradingCriteria = [firstCriterion, secondCriterion];
-        component.backupExercise.gradingCriteria = [
-            { title: 'first', structuredGradingInstructions: [{ credits: 3, gradingScale: 'backup first' }] },
-            { title: 'second', structuredGradingInstructions: [{ credits: 4, gradingScale: 'backup second' }] },
-        ] as GradingCriterion[];
-
-        component.resetInstruction(secondInstruction, secondCriterion);
-
-        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0]).toBe(firstInstruction);
-        expect(exercise.gradingCriteria[1].structuredGradingInstructions[0]).not.toBe(secondInstruction);
-        expect(exercise.gradingCriteria[1].structuredGradingInstructions[0]).toEqual(new GradingInstruction());
     });
 
     it('should add new grading criteria to corresponding exercise', () => {
@@ -1205,7 +1175,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
         const markdown = component.generateMarkdown();
         expect(markdown).not.toContain('{@id:');
-        expect(markdown).not.toContain(GradingCriterionAction.IDENTIFIER);
+        expect(markdown).toContain(GradingCriterionAction.IDENTIFIER);
         expect(markdown).toContain(GradingInstructionAction.IDENTIFIER);
 
         component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
@@ -1215,6 +1185,58 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(exercise.gradingCriteria![0].title).toBeUndefined();
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0]).toBe(instruction);
         expect(exercise.gradingCriteria![0].structuredGradingInstructions[0].id).toBe(11);
+    });
+
+    it('keeps a title-less criterion with two instructions grouped with their IDs after a text round trip', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, instructionDescription: 'second' };
+        const criterion = { id: 3, structuredGradingInstructions: [gradingInstruction, secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [criterion];
+        component.ngOnInit();
+
+        const markdown = component.generateMarkdown();
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toEqual([criterion]);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
+    });
+
+    it('keeps a persisted title-less group when parsing legacy top-level instructions', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, instructionDescription: 'second' };
+        const criterion = { id: 3, structuredGradingInstructions: [gradingInstruction, secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [criterion];
+        const legacyMarkdown = component.generateInstructionsMarkdown(criterion);
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(legacyMarkdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toEqual([criterion]);
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions.map(({ id }) => id)).toEqual([1, 2]);
+    });
+
+    it('rejects an edit to one of two identical persisted instructions without swapping IDs', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2 };
+        gradingCriterion.structuredGradingInstructions.push(secondInstruction);
+        exercise.gradingCriteria = [gradingCriterion];
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component.generateMarkdown().replace('[feedback] feedback', '[feedback] edited feedback');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondInstruction.feedback).toBe('feedback');
+    });
+
+    it('keeps both IDs when identical persisted instructions are unchanged', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2 };
+        gradingCriterion.structuredGradingInstructions.push(secondInstruction);
+        exercise.gradingCriteria = [gradingCriterion];
+        const markdown = component.generateMarkdown();
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria![0].structuredGradingInstructions).toEqual([gradingInstruction, secondInstruction]);
     });
 
     it('should not adopt unknown legacy criterion markers as ids', () => {

@@ -105,7 +105,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     private readonly instructionBaseline = new Map<GradingCriterion, GradingInstruction[]>();
     private parseAccepted = true;
 
-    backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
     readonly showEditMode = signal<boolean>(undefined!);
     /** Whether an assessment-criteria request is currently in flight. */
@@ -190,7 +189,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 (criterion.structuredGradingInstructions ?? []).filter((instruction) => instruction.id != undefined),
             );
         }
-        this.backupExercise = deepClone(this.exercise());
         this.markdownEditorText.set(this.generateMarkdown());
         // Always start in the structured field editor; edit-as-text remains available via the mode toggle.
         this.showEditMode.set(true);
@@ -202,13 +200,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         const gradingCriteria = this.exercise().gradingCriteria;
         if (gradingCriteria) {
             for (const criterion of gradingCriteria) {
-                if (criterion.title == undefined) {
-                    // Title-less (dummy) criterion: omit the [criterion] line; instructions alone round-trip
-                    // by content fingerprint. honey: identical instruction reorders can swap ids.
-                    markdownText += this.generateInstructionsMarkdown(criterion);
-                } else {
-                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
-                }
+                markdownText += `${GradingCriterionAction.IDENTIFIER}${criterion.title ? ` ${criterion.title}` : ''}\n\t${this.generateInstructionsMarkdown(criterion)}`;
             }
         }
         return markdownText;
@@ -523,6 +515,21 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
         this.createSubInstructionActions(textWithDomainActions);
+        const previousGroup = previousCriteria.length === 1 ? previousCriteria[0] : undefined;
+        const parsedCriteria = this.exercise().gradingCriteria ?? [];
+        if (
+            previousGroup &&
+            previousGroup.title == undefined &&
+            (previousGroup.structuredGradingInstructions?.length ?? 0) > 1 &&
+            parsedCriteria.length === previousGroup.structuredGradingInstructions.length &&
+            parsedCriteria.every((criterion) => !criterion.title && criterion.structuredGradingInstructions.length === 1)
+        ) {
+            // Older text omitted the criterion marker; use the existing group for its boundaries.
+            const group = new GradingCriterion();
+            group.structuredGradingInstructions = parsedCriteria.flatMap((criterion) => criterion.structuredGradingInstructions);
+            this.exercise().gradingCriteria = [group];
+            this.criteria.set([group]);
+        }
         this.parseAccepted = this.reconcileParsedCriteria(previousCriteria);
         if (!this.parseAccepted) {
             this.instructions = previousInstructions;
@@ -535,7 +542,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
     /**
      * Reuses previously persisted criterion/instruction objects so unchanged (or positionally leftover)
      * rows keep their database IDs and feedback links. Identity is content-only — no markers in text.
-     * honey: two instructions with identical fingerprints that swap order can keep the wrong ids.
      */
     private reconcileParsedCriteria(previousCriteria: GradingCriterion[]): boolean {
         const parsedCriteria = this.exercise().gradingCriteria ?? [];
@@ -582,7 +588,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
      * the id when only one criterion remains unmatched). Never zip multiple leftovers by position —
      * that would hand an unrelated criterion’s id to an insert/reorder. Reject ambiguous instruction
      * leftovers before changing persisted objects.
-     * honey: two instructions with identical fingerprints that swap order can keep the wrong ids.
      */
     private planReconciliation(previousCriteria: GradingCriterion[], parsedCriteria: GradingCriterion[]): ReconciliationPlan | undefined {
         const unusedCriteria = [...previousCriteria];
@@ -630,6 +635,18 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
                 parsedInstruction,
                 previousInstruction: undefined as GradingInstruction | undefined,
             }));
+            const candidates = [...unusedInstructions, ...unusedFallbackInstructions];
+            const fingerprints = candidates.map((instruction) => this.instructionFingerprint(instruction));
+            // A changed duplicate count cannot identify which persisted copy was edited or removed.
+            for (const fingerprint of new Set(candidates.filter((instruction) => instruction.id != undefined).map((instruction) => this.instructionFingerprint(instruction)))) {
+                const previousCount = fingerprints.filter((candidate) => candidate === fingerprint).length;
+                if (
+                    previousCount > 1 &&
+                    instructionEntries.filter(({ parsedInstruction }) => this.instructionFingerprint(parsedInstruction) === fingerprint).length !== previousCount
+                ) {
+                    return undefined;
+                }
+            }
             for (const entry of instructionEntries) {
                 entry.previousInstruction =
                     this.takeContentMatch(unusedInstructions, entry.parsedInstruction, (instruction) => this.instructionFingerprint(instruction)) ??
@@ -700,41 +717,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         return [instruction.credits ?? '', instruction.gradingScale ?? '', instruction.instructionDescription ?? '', instruction.feedback ?? '', instruction.usageCount ?? ''].join(
             '\0',
         );
-    }
-
-    /**
-     * @function resetInstruction
-     * @desc Resets the whole instruction
-     * @param instruction {GradingInstruction} the instruction, which will be reset
-     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be reset
-     */
-    resetInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
-        if (!this.editable()) {
-            return;
-        }
-        const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
-        const gradingCriteria = this.exercise().gradingCriteria;
-        if (gradingCriteria === undefined || criterionIndex < 0 || gradingCriteria[criterionIndex] === undefined) {
-            return;
-        }
-        const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
-        const instructions = gradingCriteria[criterionIndex].structuredGradingInstructions;
-        const instructionIndex = instructions.indexOf(instruction);
-        if (instructionIndex < 0) {
-            return;
-        }
-        let backupInstructionIndex = undefined;
-
-        if (backupCriterionIndex >= 0) {
-            backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
-
-            if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
-                instructions[instructionIndex] = deepClone(this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex]);
-            }
-        }
-        if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
-            instructions[instructionIndex] = new GradingInstruction();
-        }
     }
 
     findCriterionIndex(criterion: GradingCriterion, exercise: Exercise) {
@@ -810,19 +792,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         this.exercise().gradingCriteria![criterionIndex].title = ($event.target as HTMLInputElement).value;
     }
 
-    resetCriterionTitle(criterion: GradingCriterion) {
-        if (!this.editable()) {
-            return;
-        }
-        const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
-        const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
-        if (backupCriterionIndex >= 0) {
-            this.exercise().gradingCriteria![criterionIndex].title = deepClone(this.backupExercise.gradingCriteria![backupCriterionIndex].title);
-        } else {
-            criterion.title = '';
-        }
-    }
-
     deleteGradingCriterion(criterion: GradingCriterion) {
         if (!this.editable()) {
             return;
@@ -846,14 +815,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, DoCheck {
         if (action === undefined && text.length > 0 && text.trim() !== GRADING_INSTRUCTION_PLACEHOLDER) {
             this.exercise().gradingInstructions = text;
         }
-    }
-
-    /**
-     * Switches edit mode
-     * Updates markdown text between mode switches
-     */
-    switchMode() {
-        this.setEditMode(!this.showEditMode());
     }
 
     /** Sets the structured editor mode and refreshes the markdown snapshot used by the text editor. */
