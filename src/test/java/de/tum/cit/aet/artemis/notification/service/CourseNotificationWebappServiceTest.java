@@ -130,19 +130,19 @@ class CourseNotificationWebappServiceTest {
         ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", courseA, List.of(createTestUser(1L, "a-only"), shared));
         ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", courseB, List.of(createTestUser(2L, "b-only"), shared));
 
-        verify(websocketMessagingService).sendMessageToUser("a-only", "/topic/notification/42", courseA);
-        verify(websocketMessagingService).sendMessageToUser("a-only", "/topic/notification/all", courseA);
-        verify(websocketMessagingService).sendMessageToUser("shared", "/topic/notification/42", courseA);
-        verify(websocketMessagingService).sendMessageToUser("shared", "/topic/notification/all", courseA);
-        verify(websocketMessagingService).sendMessageToUser("b-only", "/topic/notification/43", courseB);
-        verify(websocketMessagingService).sendMessageToUser("b-only", "/topic/notification/all", courseB);
-        verify(websocketMessagingService).sendMessageToUser("shared", "/topic/notification/43", courseB);
-        verify(websocketMessagingService).sendMessageToUser("shared", "/topic/notification/all", courseB);
+        verify(websocketMessagingService).sendMessageToUser(eq("a-only"), userTopic("/topic/notification/42"), eq(courseA));
+        verify(websocketMessagingService).sendMessageToUser(eq("a-only"), userTopic("/topic/notification/all"), eq(courseA));
+        verify(websocketMessagingService).sendMessageToUser(eq("shared"), userTopic("/topic/notification/42"), eq(courseA));
+        verify(websocketMessagingService).sendMessageToUser(eq("shared"), userTopic("/topic/notification/all"), eq(courseA));
+        verify(websocketMessagingService).sendMessageToUser(eq("b-only"), userTopic("/topic/notification/43"), eq(courseB));
+        verify(websocketMessagingService).sendMessageToUser(eq("b-only"), userTopic("/topic/notification/all"), eq(courseB));
+        verify(websocketMessagingService).sendMessageToUser(eq("shared"), userTopic("/topic/notification/43"), eq(courseB));
+        verify(websocketMessagingService).sendMessageToUser(eq("shared"), userTopic("/topic/notification/all"), eq(courseB));
         verifyNoMoreInteractions(websocketMessagingService);
     }
 
     private void mockSuccessfulWebsocketDelivery() {
-        when(websocketMessagingService.sendMessageToUser(anyString(), anyString(), any())).thenReturn(CompletableFuture.completedFuture(null));
+        when(websocketMessagingService.sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any())).thenReturn(CompletableFuture.completedFuture(null));
     }
 
     private CourseNotificationRecipientDTO createTestUser(Long id, String login) {

@@ -102,8 +102,8 @@ class ContentChangeSchedulerTest {
 
         var courseA = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
         var courseB = ArgumentCaptor.forClass(AutoOrchestrationSummaryDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/42"), courseA.capture());
-        verify(websocketMessagingService).sendMessage(eq("/topic/atlas/orchestrator/43"), courseB.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/42"), courseA.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/atlas/orchestrator/43"), courseB.capture());
         assertThat(courseA.getValue().courseId()).isEqualTo(42L);
         assertThat(courseA.getValue().exerciseCount()).isEqualTo(1);
         assertThat(courseA.getValue().successCount()).isEqualTo(1);
