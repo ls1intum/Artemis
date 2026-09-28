@@ -301,6 +301,51 @@ describe('GenerateCompetenciesComponent', () => {
             expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe('B');
         });
 
+        it('keeps the previous course description out of the form until the new course description loads', async () => {
+            const descriptionA = 'A'.repeat(150);
+            const descriptionB = 'B'.repeat(150);
+            const oldDescription = new Subject<HttpResponse<Course>>();
+            const newDescription = new Subject<HttpResponse<Course>>();
+            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) => (id === 1 ? oldDescription : newDescription));
+            const generateButton = () => fixture.debugElement.query(By.css('#generateButton button')).nativeElement as HTMLButtonElement;
+            fixture.detectChanges();
+            expect(generateButton().disabled).toBe(true);
+
+            route.setParameters({ courseId: 2 });
+            // A late response for the previous course must not repopulate the form for the new course.
+            oldDescription.next(new HttpResponse({ body: { description: descriptionA } }));
+            await Promise.resolve();
+            fixture.detectChanges();
+            expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe('');
+            expect(comp.isDescriptionLoading()).toBe(true);
+            expect(generateButton().disabled).toBe(true);
+
+            newDescription.next(new HttpResponse({ body: { description: descriptionB } }));
+            await Promise.resolve();
+            fixture.detectChanges();
+            expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe(descriptionB);
+            expect(comp.isDescriptionLoading()).toBe(false);
+            expect(generateButton().disabled).toBe(false);
+        });
+
+        it('clears a loaded description as soon as the component is reused for another course', async () => {
+            const newDescription = new Subject<HttpResponse<Course>>();
+            vi.mocked(TestBed.inject(CourseManagementService).find).mockImplementation((id) =>
+                id === 1 ? of(new HttpResponse({ body: { description: 'A'.repeat(150) } })) : newDescription,
+            );
+            const generateButton = () => fixture.debugElement.query(By.css('#generateButton button')).nativeElement as HTMLButtonElement;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(generateButton().disabled).toBe(false);
+
+            route.setParameters({ courseId: 2 });
+            fixture.detectChanges();
+            expect(comp.courseDescriptionForm().courseDescriptionControl.value).toBe('');
+            expect(comp.courseDescriptionForm().isSubmitPossible).toBe(false);
+            expect(generateButton().disabled).toBe(true);
+        });
+
         it('ignores duplicate submissions and same-course route emissions during generation', () => {
             fixture.detectChanges();
             comp.getCompetencyRecommendations('A');

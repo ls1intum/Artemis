@@ -79,6 +79,8 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
 
     courseId!: number; // set in ngOnInit() from the route params
     readonly isLoading = signal(false);
+    /** True until the current course's description has loaded; generation stays disabled so no other course's text can be submitted. */
+    readonly isDescriptionLoading = signal(false);
     submitted = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
 
@@ -100,20 +102,28 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
                 return;
             }
             this.generationSubscription?.unsubscribe();
+            const isCourseSwitch = this.courseId !== undefined;
             const epoch = ++this.courseEpoch;
             this.courseId = courseId;
             this.competencies.clear();
             this.isLoading.set(false);
+            this.isDescriptionLoading.set(true);
             this.submitted = false;
+            if (isCourseSwitch) {
+                // A reused component still shows the previous course's description; it must not be submittable for this course.
+                this.courseDescriptionForm().setCourseDescription('');
+            }
             // Description loading is asynchronous so the child view exists before its form is populated.
             firstValueFrom(this.courseManagementService.find(courseId))
                 .then((course) => {
                     if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
                         this.courseDescriptionForm().setCourseDescription(course.body?.description ?? '');
+                        this.isDescriptionLoading.set(false);
                     }
                 })
                 .catch((res: HttpErrorResponse) => {
                     if (!this.destroyRef.destroyed && this.courseEpoch === epoch && this.courseId === courseId) {
+                        this.isDescriptionLoading.set(false);
                         onError(this.alertService, res);
                     }
                 });
