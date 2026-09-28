@@ -61,7 +61,8 @@
                 "units": "Content",
                 "unitsDescription": "Students see these items in this order. Drag an item to move it. Changes to content are saved automatically.",
                 "navigation": "Sections of the lecture",
-                "needsAttention": "needs attention"
+                "needsAttention": "needs attention",
+                "jumpTo": "Jump to"
             },
             "editFooter": {
                 "noChanges": "No unsaved changes",

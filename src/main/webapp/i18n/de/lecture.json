@@ -61,7 +61,8 @@
                 "units": "Inhalte",
                 "unitsDescription": "Studierende sehen diese Inhalte in dieser Reihenfolge. Ziehe einen Inhalt, um ihn zu verschieben. Änderungen an Inhalten werden automatisch gespeichert.",
                 "navigation": "Abschnitte der Vorlesung",
-                "needsAttention": "muss überprüft werden"
+                "needsAttention": "muss überprüft werden",
+                "jumpTo": "Springe zu"
             },
             "editFooter": {
                 "noChanges": "Keine ungespeicherten Änderungen",

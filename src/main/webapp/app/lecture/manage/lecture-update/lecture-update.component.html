@@ -4,6 +4,25 @@
 </div>
 @let currentCourseId = courseId();
 @let showsSingleLectureForm = !(isLectureSeriesCreationMode() && currentCourseId);
+@if (showsSingleLectureForm) {
+    <!-- The sections stay reachable from the title bar, which stays in view while the page scrolls. -->
+    <nav *titleBarActions class="flex items-center gap-2" [attr.aria-label]="'artemisApp.lecture.sections.navigation' | artemisTranslate" data-testid="lecture-section-links">
+        <span class="hidden text-sm text-muted-color sm:inline" jhiTranslate="artemisApp.lecture.sections.jumpTo"></span>
+        <tumaet-ui-button-group>
+            @for (section of formStatusSections(); track section.title) {
+                <tumaet-ui-button severity="secondary" size="small" variant="outlined" data-testid="lecture-section-link" (clicked)="scrollToSection(section.title)">
+                    @if (!section.valid) {
+                        <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" aria-hidden="true" />
+                    }
+                    <span [jhiTranslate]="section.title"></span>
+                    @if (!section.valid) {
+                        <span class="sr-only">({{ 'artemisApp.lecture.sections.needsAttention' | artemisTranslate }})</span>
+                    }
+                </tumaet-ui-button>
+            }
+        </tumaet-ui-button-group>
+    </nav>
+}
 <!-- The footer is a sibling of the centered column, so it spans the whole content area; a sticky element only sticks within its parent. -->
 <div class="flex flex-col gap-6">
     <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
@@ -38,27 +57,6 @@
             <jhi-lecture-series-create [existingLectures]="existingLectures()" [courseId]="currentCourseId" />
         } @else {
             <div class="flex flex-col gap-6">
-                <nav
-                    class="flex flex-wrap gap-x-5 gap-y-1 text-sm"
-                    [attr.aria-label]="'artemisApp.lecture.sections.navigation' | artemisTranslate"
-                    data-testid="lecture-section-links"
-                >
-                    @for (section of formStatusSections(); track section.title) {
-                        <button
-                            type="button"
-                            class="inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-primary hover:underline"
-                            (click)="scrollToSection(section.title)"
-                        >
-                            @if (!section.valid) {
-                                <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" aria-hidden="true" />
-                            }
-                            <span [jhiTranslate]="section.title"></span>
-                            @if (!section.valid) {
-                                <span class="sr-only">({{ 'artemisApp.lecture.sections.needsAttention' | artemisTranslate }})</span>
-                            }
-                        </button>
-                    }
-                </nav>
                 <section class="lecture-update-section flex flex-col gap-6 rounded-lg p-3.5 sm:p-6" aria-labelledby="artemisApp.lecture.sections.title">
                     <div class="flex flex-col gap-1">
                         <h3 id="artemisApp.lecture.sections.title" class="m-0 scroll-mt-4 text-lg font-semibold" jhiTranslate="artemisApp.lecture.sections.title"></h3>

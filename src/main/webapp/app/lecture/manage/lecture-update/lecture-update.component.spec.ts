@@ -16,6 +16,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -245,6 +246,18 @@ describe('LectureUpdateComponent', () => {
         expect(lectureUpdateComponent.lecture().title).toBe('Newer title');
         expect(lectureUpdateComponent.lectureOnInit.title).toBe('New title');
         expect(lectureUpdateComponent.changedSections()).toEqual(['artemisApp.lecture.sections.title']);
+    });
+
+    it('should offer the sections in the title bar, but not while a series is created', async () => {
+        await configureValidLectureUpdateForm();
+        const titleBar = TestBed.inject(CourseTitleBarService);
+        expect(titleBar.actionsTemplate()).toBeDefined();
+
+        lectureUpdateComponent.isEditMode.set(false);
+        lectureUpdateComponent.selectedCreateLectureOption.set(LectureCreationMode.SERIES);
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(titleBar.actionsTemplate()).toBeUndefined();
     });
 
     it('should not ask about the single lecture form while a series is created', async () => {

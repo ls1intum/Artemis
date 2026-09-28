@@ -22,6 +22,7 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/c
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { LectureService } from '../services/lecture.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -29,6 +30,8 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonGroupComponent,
     TumAetUiCheckboxComponent,
     TumAetUiConfirmDialogComponent,
     TumAetUiConfirmationService,
@@ -78,6 +81,9 @@ interface PdfUploadConfirmationText {
         ArtemisTranslatePipe,
         LectureSeriesCreateComponent,
         CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
         TumAetUiCheckboxComponent,
         TumAetUiConfirmDialogComponent,
         TumAetUiMessageComponent,
