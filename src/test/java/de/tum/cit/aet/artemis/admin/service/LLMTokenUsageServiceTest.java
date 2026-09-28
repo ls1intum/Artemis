@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -31,6 +32,9 @@ import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 
+// Two tests assert log output through an appender on the service logger. A Spring context starting in parallel resets
+// Logback and detaches that appender mid-test, so the class runs alone.
+@Isolated
 class LLMTokenUsageServiceTest {
 
     @Mock
